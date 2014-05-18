@@ -17,9 +17,9 @@ import com.aventura.tools.vector3d.vector.Vector3;
  */
 public class Transformation {
 	
-	Homothety scale;
-	Rotation rotate;
-	Translation translate;
+	protected Homothety scale;
+	protected Rotation rotate;
+	protected Translation translate;
 	
 	/**
 	 * y = transform(x)

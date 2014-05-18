@@ -8,7 +8,7 @@ public abstract class Element {
 
 	// An Element can have 0 to n other Element
 	//private Element[] elements;
-	private ArrayList<Element> elements;
-	private Transformation transform;
+	protected ArrayList<Element> elements;
+	protected Transformation transform;
 	
 }
