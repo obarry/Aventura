@@ -1,0 +1,173 @@
+package com.aventura.tools.tracing;
+
+import java.io.*;
+
+/**
+ * New Tracer implementation.
+ * Static methods
+ * Allow to test activation at tracing stage
+ * Less heavy (no additional methods in each class)
+ * 
+ * @author Olivier BARRY
+ * @version 1.0
+ */
+
+public class Tracer {
+    
+    //static boolean isActivated = true;
+    public static boolean isdate = false;
+    
+    public static boolean error     = true;
+    public static boolean exception = true;
+    public static boolean warning   = true;
+    public static boolean info      = true;
+    public static boolean function  = true;
+    public static boolean state     = true;
+	public static boolean object    = true;
+	public static boolean stats     = true;
+	public static boolean debug     = true;
+    
+    // For output to file
+    public static boolean isfile = false;
+    public static String file = null;
+    private static FileOutputStream fout = null;
+    
+    private static String ERROR     = "ERROR";
+    private static String EXCEPTION = "EXCEPTION";
+    private static String WARNING   = "WARNING";
+    private static String INFO      = "INFO";
+    private static String FUNCTION  = "FUNCTION";
+    private static String STATE     = "STATE";
+    private static String OBJECT    = "OBJECT";
+    private static String STATS     = "STATS";
+    private static String DEBUG     = "DEBUG";
+    
+    /*
+    public static void activateTracingLevels() {
+        
+        // Get config manager reference for config parameters
+        ConfigManager cfg = ConfigManager.getConfigManager();
+        
+        isdate               = cfg.getIsTracingDate();
+        
+        info      = cfg.getIsTracingInfo();
+        warning   = cfg.getIsTracingWarning();
+        error     = cfg.getIsTracingError();
+        exception = cfg.getIsTracingException();
+        function  = cfg.getIsTracingFunction();
+        state     = cfg.getIsTracingState();
+        object    = cfg.getIsTracingObject();
+        stats     = cfg.getIsTracingStats();
+        debug     = cfg.getIsTracingDebug();
+        
+        isfile = cfg.getIsTracingToFile();
+        if (isfile) {
+            file = cfg.getTracingFile();
+            // Open stream in append mode
+            try {
+                fout = new FileOutputStream(file,true);
+                trace("Tracing to file: "+file);
+            } catch (Exception e) {
+                //traceException(Class.forName("Tracer"), e);
+                try {
+                    traceError(Class.forName("Tracer"),"Error trying to open tracing file. Going to trace to output instead.");
+                } catch (Exception ex) {
+                    trace("Error trying to open tracing file. Going to trace to output instead.");
+                }
+                // No longer use a file
+                isfile = false;
+            }
+        }
+    }
+    */
+    
+    //
+    // For test methods (e.g. main() methods in classes)
+    // Will activate all levels of tracing
+    //
+    public static void activateAllLevels() {
+                
+        info      = true;
+        warning   = true;
+        error     = true;
+        exception = true;
+        function  = true;
+        state     = true;
+        object    = true;
+        stats     = true;
+        debug     = true;
+        
+    }
+
+ 
+    public static void traceError(Class cls, String str) {
+        trace(ERROR,cls,str);
+    }
+    
+    public static void traceException(Class cls, String str) {
+        trace(EXCEPTION,cls,str);
+    }
+    
+    public static void traceWarning(Class cls, String str) {
+        trace(WARNING,cls,str);
+    }
+    
+    public static void traceInfo(Class cls, String str) {
+        trace(INFO,cls,str);
+    }
+    
+    public static void traceFunction(Class cls, String str) {
+        trace(FUNCTION,cls,str);
+    }
+    
+    public static void traceState(Class cls, String str) {
+        trace(STATE,cls,str);
+    }
+    
+	public static void traceObject(Class cls, String str) {
+		trace(OBJECT,cls,str);
+	}
+    
+	public static void traceStats(Class cls, String str) {
+		trace(STATS,cls,str);
+	}
+	
+	public static void traceDebug(Class cls, String str) {
+		trace(DEBUG,cls,str);
+	}
+    
+    private static void trace(String level, Class cls, String str) {
+        if (isdate) {
+            output("** " + date()+" * "+cls.toString()+" * "+level+" * "+str + " **");
+        } else {
+            output("** " + cls.getName() + " * " + level + " * " + str + " **");
+        }      
+    }
+    public static void trace(String str) {
+        //Date date = new Date();
+        if (isdate) {
+            System.out.println("** " + date()+" * "+str + " **");
+        } else {
+            System.out.println("** " + str + " **");
+        }      
+    }
+    
+    private static void output(String out) {
+        if (!isfile) {
+            System.out.println(out);
+        } else {
+            // Print to file
+            try {
+                // \n is needed for notepad, DOS text files.
+                fout.write((out+"\r\n").getBytes());
+            } catch (Exception e) {
+                System.out.println(out);
+            }
+        }
+    }
+    
+    private static String date() {
+        return Long.toString(System.currentTimeMillis());
+    }
+    
+}
