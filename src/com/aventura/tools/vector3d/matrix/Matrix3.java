@@ -50,7 +50,7 @@ public class Matrix3 {
 	 * Initialize a Matrix with a constant value for all elements of the matrix
 	 * @param val the initialization value
 	 */
-	private void initialize(double val) {
+	protected void initialize(double val) {
 		// Create the array
 		array = new double[SIZE][SIZE];
 		// Initialize values
@@ -98,6 +98,16 @@ public class Matrix3 {
 	 */
 	public double get(int i, int j) {
 		return array[i][j];
+	}
+	
+	/**
+	 * Set all elements of the diagonal of this Matrix to a given value
+	 * @param v the value to set
+	 */
+	public void setDiagonal(double v) {
+		array[0][0] = v; 
+		array[1][1] = v; 
+		array[2][2] = v; 
 	}
 	
 	

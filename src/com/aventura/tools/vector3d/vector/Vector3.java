@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 
 
+
 import com.aventura.tools.vector3d.IndiceOutOfBoundException;
 //import com.aventura.tools.vector3d.matrix.Matrix;
 import com.aventura.tools.vector3d.matrix.Matrix3;
@@ -140,6 +141,10 @@ public class Vector3 {
 	 */
 	public double getZ() {
 		return array[2];
+	}
+	
+	public double length() {
+		return Math.sqrt(array[0]*array[0]+array[1]*array[1]+array[2]*array[2]);
 	}
 	
 	/**
