@@ -3,13 +3,12 @@ package com.aventura.tools.vector3d.matrix;
 import java.util.Arrays;
 
 import com.aventura.tools.tracing.Tracer;
+import com.aventura.tools.vector3d.Constants;
 import com.aventura.tools.vector3d.IndiceOutOfBoundException;
 import com.aventura.tools.vector3d.vector.Vector3;
 import com.aventura.tools.vector3d.vector.VectorArrayWrongSizeException;
 
 public class Matrix3 {
-
-	public static final int SIZE = 3;
 	
 	// Some constants
 	//double dbl [][]  = {{0.0, 0.0, 0.0},{0.0, 0.0, 0.0},{0.0, 0.0, 0.0}};
@@ -40,8 +39,8 @@ public class Matrix3 {
 	 * @param a the 2D array of double
 	 */
 	public Matrix3(double[][] a) throws MatrixArrayWrongSizeException {
-		if (a.length != SIZE) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix3 from array"); 
-		if (a[0].length != SIZE) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array"); 
+		if (a.length != Constants.SIZE) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix3 from array"); 
+		if (a[0].length != Constants.SIZE) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array"); 
 
 		this.array = a;
 	}
@@ -52,29 +51,29 @@ public class Matrix3 {
 	 */
 	protected void initialize(double val) {
 		// Create the array
-		array = new double[SIZE][SIZE];
+		array = new double[Constants.SIZE][Constants.SIZE];
 		// Initialize values
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				array[i][j] = val;
 			}
 		}
 	}
 	
 	public void setArray(double[][] a) throws MatrixArrayWrongSizeException {
-		if (a.length != SIZE) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix3 from array"); 
-		if (a[0].length != SIZE) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array"); 
+		if (a.length != Constants.SIZE) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix3 from array"); 
+		if (a[0].length != Constants.SIZE) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array"); 
 		this.array = a;
 	}
 	
 	@Override
 	public String toString() {
 		String s = "[";
-		for (int i=0; i<SIZE-1; i++) {
+		for (int i=0; i<Constants.SIZE-1; i++) {
 			s = s + Arrays.toString(array[i]);
 			s = s+"\n";
 		}
-		s = s + Arrays.toString(array[SIZE-1])+"]";
+		s = s + Arrays.toString(array[Constants.SIZE-1])+"]";
 		return s;
 	}
 	
@@ -85,8 +84,8 @@ public class Matrix3 {
 	 * @param val value to set
 	 */
 	public void set(int i, int j, double val) throws IndiceOutOfBoundException {
-		if (i<0 || i>SIZE) throw new IndiceOutOfBoundException("Row indice ("+i+") out of bound while setting element ("+i+","+j+") of Matrix3"); 
-		if (j<0 || j>SIZE) throw new IndiceOutOfBoundException("Column indice ("+j+") out of bound while setting element ("+i+","+j+") of Matrix3"); 
+		if (i<0 || i>Constants.SIZE) throw new IndiceOutOfBoundException("Row indice ("+i+") out of bound while setting element ("+i+","+j+") of Matrix3"); 
+		if (j<0 || j>Constants.SIZE) throw new IndiceOutOfBoundException("Column indice ("+j+") out of bound while setting element ("+i+","+j+") of Matrix3"); 
 		array[i][j] = val;
 	}
 
@@ -118,8 +117,8 @@ public class Matrix3 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public Vector3 getRow(int r) throws IndiceOutOfBoundException {
-		if (r<0 || r>SIZE) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix3"); 
-		double[] array = new double[SIZE];
+		if (r<0 || r>Constants.SIZE) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix3"); 
+		double[] array = new double[Constants.SIZE];
 		Vector3 v = null;
 		// No loop for optimization
 		array[0] = this.array[r][0];
@@ -143,8 +142,8 @@ public class Matrix3 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public Vector3 getColumn(int c) throws IndiceOutOfBoundException {
-		if (c<0 || c>SIZE) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix3"); 
-		double[] array = new double[SIZE];
+		if (c<0 || c>Constants.SIZE) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix3"); 
+		double[] array = new double[Constants.SIZE];
 		Vector3 v = null;
 		// No loop for optimization
 		array[0] = this.array[0][c];
@@ -168,8 +167,8 @@ public class Matrix3 {
 	 */
 	public boolean equals(Matrix3 B) {
 		
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				if (this.get(i,j) != B.get(i,j)) return false;
 			}
 		}
@@ -185,8 +184,8 @@ public class Matrix3 {
 	public Matrix3 times(Matrix3 b) {
 		Matrix3 r = new Matrix3();
 		
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				try {
 					r.set(i,j, this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j));
 				} catch (IndiceOutOfBoundException e) {
@@ -205,9 +204,9 @@ public class Matrix3 {
 	 * @param B
 	 */
 	public void timesEquals(Matrix3 b) {
-		double[][] array = new double[SIZE][SIZE];
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		double[][] array = new double[Constants.SIZE][Constants.SIZE];
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				array[i][j] = this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j);
 			}
 		}
@@ -221,8 +220,8 @@ public class Matrix3 {
 	 */
 	public Matrix3 times(double s) {
 		Matrix3 r = new Matrix3();
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				try {
 					r.set(i,j, this.array[i][j]*s);
 				} catch (IndiceOutOfBoundException e) {
@@ -240,8 +239,8 @@ public class Matrix3 {
 	 * @param s the scalar value
 	 */
 	public void timesEquals(double s) {
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				this.array[i][j] = this.array[i][j]*s;
 			}
 		}
@@ -254,8 +253,8 @@ public class Matrix3 {
 	 */
 	public Matrix3 plus(Matrix3 B) {
 		Matrix3 r = new Matrix3();
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				try {
 					r.set(i,j, this.array[i][j]+B.get(i,j));
 				} catch (IndiceOutOfBoundException e) {
@@ -273,8 +272,8 @@ public class Matrix3 {
 	 * @param B the Matrix to be added to this Matrix
 	 */
 	public void plusEquals(Matrix3 B) {
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				this.array[i][j] = this.array[i][j]+B.get(i,j);
 			}
 		}
@@ -287,8 +286,8 @@ public class Matrix3 {
 	 */
 	public Matrix3 minus(Matrix3 B) {
 		Matrix3 r = new Matrix3();
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				try {
 					r.set(i,j, this.array[i][j]-B.get(i,j));
 				} catch (IndiceOutOfBoundException e) {
@@ -309,8 +308,8 @@ public class Matrix3 {
 	 * @param B
 	 */
 	public void minusEquals(Matrix3 B) {
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				this.array[i][j] = this.array[i][j]-B.get(i,j);
 			}
 		}

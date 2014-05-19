@@ -5,8 +5,8 @@ import java.util.Arrays;
 
 
 
+import com.aventura.tools.vector3d.Constants;
 import com.aventura.tools.vector3d.IndiceOutOfBoundException;
-//import com.aventura.tools.vector3d.matrix.Matrix;
 import com.aventura.tools.vector3d.matrix.Matrix3;
 import com.aventura.tools.tracing.Tracer;
 
@@ -17,15 +17,12 @@ import com.aventura.tools.tracing.Tracer;
  *
  */
 public class Vector3 {
-
-	// Size of the matrix is 3x3
-	public static final int SIZE = 3;
 	
 	double[] array;
 	
 	public Vector3() {
 		// Create the array
-		array = new double[SIZE];
+		array = new double[Constants.SIZE];
 	}
 
 	public Vector3(double v) {
@@ -34,11 +31,17 @@ public class Vector3 {
 		
 	public Vector3(double[] array) throws VectorArrayWrongSizeException {
 		// TBD Add size control for the array
-		if (array.length != SIZE) throw new VectorArrayWrongSizeException("Array passed in parameter of Vector3 constructor is out of bound: "+array.length); 
+		if (array.length != Constants.SIZE) throw new VectorArrayWrongSizeException("Array passed in parameter of Vector3 constructor is out of bound: "+array.length); 
 		this.array = array;
 
 	}
 	
+	public Vector3(Vector3 v) {
+		this.array[0] = v.getX();
+		this.array[1] = v.getY();
+		this.array[2] = v.getZ();
+	}
+
 	public Vector3(int r, Matrix3 A) {
 		this.array[0] = A.get(r, 0);
 		this.array[1] = A.get(r, 1);
@@ -51,14 +54,13 @@ public class Vector3 {
 		this.array[2] = A.get(2, c);
 	}
 	
-	
 	/**
 	 * Initialize a Vector3 with a constant value for all elements of the Vector3
 	 * @param val the initialization value
 	 */
 	private void initialize(double val) {
 		// Create the array
-		array = new double[SIZE];
+		array = new double[Constants.SIZE];
 		
 		// Initialize values
 		this.array[0] = val;
@@ -80,7 +82,7 @@ public class Vector3 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public void set(int i, double v) throws IndiceOutOfBoundException {
-		if (i<0 || i>SIZE) throw new IndiceOutOfBoundException("Indice out of bound while setting coordinate ("+i+") of Vector3"); 
+		if (i<0 || i>Constants.SIZE) throw new IndiceOutOfBoundException("Indice out of bound while setting coordinate ("+i+") of Vector3"); 
 		array[i]= v;
 	}
 	
@@ -115,7 +117,7 @@ public class Vector3 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public double get(int i) throws IndiceOutOfBoundException {
-		if (i<0 || i>SIZE) throw new IndiceOutOfBoundException("Indice out of bound while getting coordinate ("+i+") of Vector3"); 
+		if (i<0 || i>Constants.SIZE) throw new IndiceOutOfBoundException("Indice out of bound while getting coordinate ("+i+") of Vector3"); 
 		return array[i];
 	}
 	
@@ -256,7 +258,7 @@ public class Vector3 {
 	 * @return
 	 */
 	public void timesEquals(Vector3 w) {
-		double[] array = new double[SIZE];
+		double[] array = new double[Constants.SIZE];
 		array[0] = this.getY()*w.getZ()-this.getZ()*w.getY();
 		array[1] = this.getZ()*w.getX()-this.getX()*w.getZ();
 		array[2] = this.getX()*w.getY()-this.getY()*w.getX();
@@ -274,8 +276,8 @@ public class Vector3 {
 	public Vector3 times(Matrix3 A) {
 		Vector3 r = new Vector3();
 		
-		for (int i=0; i<SIZE; i++) {
-			for (int j=0; j<SIZE; j++) {
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				try {
 					r.set(i, r.get(i)+A.get(i,j)*this.array[j]);
 				} catch (IndiceOutOfBoundException e) {
@@ -297,9 +299,9 @@ public class Vector3 {
 	public void timesEquals(Matrix3 A) {
 		double[] array = new double[3];
 		
-		for (int i=0; i<SIZE; i++) {
+		for (int i=0; i<Constants.SIZE; i++) {
 			array[i] = 0;
-			for (int j=0; j<SIZE; j++) {
+			for (int j=0; j<Constants.SIZE; j++) {
 				array[i]+=A.get(i,j)*this.array[j];
 			}
 		}
