@@ -15,7 +15,7 @@ public class Matrix3 {
 	//public static final Matrix  MATRIX_NULL = new Matrix(double[][] {{0.0, 0.0, 0.0},{0.0, 0.0, 0.0},{0.0, 0.0, 0.0}});
 	//public static final Matrix  MATRIX_ONE = new Matrix ({{1, 0, 0},{0, 1, 0},{0, 0, 1}});
 	
-	double[][] array;
+	protected double[][] array;
 	
 	/**
 	 * Initialize a square Matrix of size s with 0 for all elements of the matrix

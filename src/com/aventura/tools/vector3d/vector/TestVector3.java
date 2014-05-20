@@ -24,6 +24,31 @@ public class TestVector3 {
 	}
 
 	@Test
+	public void testVector2() {
+		System.out.println("***** Test Vector3 : testVector2 *****");
+		
+		double[] x_axis = {1.0, 0.0, 0.0};
+		double[] y_axis = {0.0, 1.0, 0.0};
+		double[] z_axis = {0.0, 0.0, 1.0};
+		
+		Vector3 V1 = Vector3.X_AXIS;
+		Vector3 V2 = Vector3.Y_AXIS;
+		Vector3 V3 = Vector3.Z_AXIS;
+		
+		System.out.println("V1="+V1);
+		System.out.println("V2="+V2);
+		System.out.println("V3="+V3);
+		
+		try {
+			if (!V1.equals(new Vector3(x_axis))) fail("V1 does not equals X axis");
+			if (!V2.equals(new Vector3(y_axis))) fail("V2 does not equals Y axis");
+			if (!V3.equals(new Vector3(z_axis))) fail("V3 does not equals Z axis");
+		} catch (VectorArrayWrongSizeException e) {
+			fail("V1 array is out of bound");
+		}
+	}
+
+	@Test
 	public void testVector_array_0() {
 		System.out.println("***** Test Vector3 : testVector_array_0 *****");
 		

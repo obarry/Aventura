@@ -2,9 +2,6 @@ package com.aventura.tools.vector3d.vector;
 
 import java.util.Arrays;
 
-
-
-
 import com.aventura.tools.vector3d.Constants;
 import com.aventura.tools.vector3d.IndiceOutOfBoundException;
 import com.aventura.tools.vector3d.matrix.Matrix3;
@@ -17,7 +14,11 @@ import com.aventura.tools.tracing.Tracer;
  *
  */
 public class Vector3 {
-	
+
+    public static final Vector3 X_AXIS = new Vector3(1,0,0);
+    public static final Vector3 Y_AXIS = new Vector3(0,1,0);
+    public static final Vector3 Z_AXIS = new Vector3(0,0,1);
+
 	double[] array;
 	
 	public Vector3() {
@@ -27,6 +28,13 @@ public class Vector3 {
 
 	public Vector3(double v) {
 		initialize(v);
+	}
+	
+	public Vector3(double x, double y, double z) {
+		array = new double[Constants.SIZE];
+		this.array[0] = x;
+		this.array[1] = y;
+		this.array[2] = z;		
 	}
 		
 	public Vector3(double[] array) throws VectorArrayWrongSizeException {
@@ -147,6 +155,20 @@ public class Vector3 {
 	
 	public double length() {
 		return Math.sqrt(array[0]*array[0]+array[1]*array[1]+array[2]*array[2]);
+	}
+	
+	/**
+	 * Normalize the vector. Vector is modified (same direction, length becomes 1)
+	 * @return this vector (modified)
+	 */
+	public Vector3 normalize() {
+		double length = this.length();
+		// Normalize values
+		this.array[0]/=length;
+		this.array[1]/=length;
+		this.array[2]/=length;
+		
+		return this;
 	}
 	
 	/**
