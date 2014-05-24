@@ -19,7 +19,7 @@ public class Vector3 {
     public static final Vector3 Y_AXIS = new Vector3(0,1,0);
     public static final Vector3 Z_AXIS = new Vector3(0,0,1);
 
-	double[] array;
+	protected double[] array;
 	
 	public Vector3() {
 		// Create the array
@@ -45,9 +45,11 @@ public class Vector3 {
 	}
 	
 	public Vector3(Vector3 v) {
-		this.array[0] = v.getX();
-		this.array[1] = v.getY();
-		this.array[2] = v.getZ();
+		// Create the array
+		array = new double[Constants.SIZE];
+		this.array[0] = v.array[0];
+		this.array[1] = v.array[1];
+		this.array[2] = v.array[2];
 	}
 
 	public Vector3(int r, Matrix3 A) {

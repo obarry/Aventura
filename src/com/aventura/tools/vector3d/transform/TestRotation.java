@@ -34,9 +34,5 @@ public class TestRotation {
 			
 	}
 
-	@Test
-	public void testRotationDoubleInt() {
-		fail("Not yet implemented");
-	}
 
 }

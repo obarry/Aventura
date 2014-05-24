@@ -19,7 +19,8 @@ public class Rotation extends Matrix3 {
 	 */
 	public Rotation(double a, Vector3 v) {
 		super();
-		Vector3 v1 = new Vector3(v.normalize());
+		Vector3 v1 = new Vector3(v);
+		v1.normalize();
 		double cos = Math.cos(a);
 		double sin = Math.sin(a);
 		
