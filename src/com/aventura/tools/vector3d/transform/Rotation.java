@@ -1,6 +1,8 @@
 package com.aventura.tools.vector3d.transform;
 
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.tools.vector3d.Constants;
+import com.aventura.tools.vector3d.IndiceOutOfBoundException;
 import com.aventura.tools.vector3d.WrongAxisException;
 import com.aventura.tools.vector3d.matrix.Matrix3;
 import com.aventura.tools.vector3d.vector.Vector3;
@@ -47,8 +49,8 @@ public class Rotation extends Matrix3 {
 	public Rotation(double a, int axis) throws WrongAxisException {
 		// Create the array
 		array = new double[Constants.SIZE][Constants.SIZE];
-		double cos = Math.cos(a);
-		double sin = Math.sin(a);
+		double cosa = Math.cos(a);
+		double sina = Math.sin(a);
 		// Initialize the array, depending on axis
 		if (axis == Constants.X_axis) {
 			// First row
@@ -57,35 +59,35 @@ public class Rotation extends Matrix3 {
 			this.array[0][2] = 0.0;
 			// Second row
 			this.array[1][0] = 0.0;
-			this.array[1][1] = cos;
-			this.array[1][2] = -sin;
+			this.array[1][1] = cosa;
+			this.array[1][2] = -sina;
 			// Third row
 			this.array[2][0] = 0.0;
-			this.array[2][1] = sin;
-			this.array[2][2] = cos;			
+			this.array[2][1] = sina;
+			this.array[2][2] = cosa;			
 
 		} else if (axis == Constants.Y_axis) {
 			// First row
-			this.array[0][0] = cos;
+			this.array[0][0] = cosa;
 			this.array[0][1] = 0.0;
-			this.array[0][2] = sin;
+			this.array[0][2] = sina;
 			// Second row
 			this.array[1][0] = 0.0;
 			this.array[1][1] = 1.0;
 			this.array[1][2] = 0.0;
 			// Third row
-			this.array[2][0] = -sin;
+			this.array[2][0] = -sina;
 			this.array[2][1] = 0.0;
-			this.array[2][2] = cos;			
+			this.array[2][2] = cosa;			
 			
 		} else if (axis == Constants.Z_axis) {
 			// First row
-			this.array[0][0] = cos;
-			this.array[0][1] = -sin;
+			this.array[0][0] = cosa;
+			this.array[0][1] = -sina;
 			this.array[0][2] = 0.0;
 			// Second row
-			this.array[1][0] = sin;
-			this.array[1][1] = cos;
+			this.array[1][0] = sina;
+			this.array[1][1] = cosa;
 			this.array[1][2] = 0.0;
 			// Third row
 			this.array[2][0] = 0.0;
@@ -95,6 +97,44 @@ public class Rotation extends Matrix3 {
 		} else {
 			throw new WrongAxisException("axis value not in expected range: "+axis);
 		}
+	}
+	
+	public Rotation(Matrix3 a) throws NotARotationException {
+		super(a);
+		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+a); 
+	}
+	
+	protected boolean isRotation() {
+		
+		Vector3 V1;
+		Vector3 V2;
+		Vector3 V3;
+		
+		try {
+			V1=this.getColumn(0);
+			V2=this.getColumn(1);
+			V3=this.getColumn(2);
+		} catch (IndiceOutOfBoundException e) {
+			if (Tracer.exception) Tracer.traceException(this.getClass(), "Unexpected exception: "+e);
+			return false;
+		}
+		
+		// A matrix is a Rotation matrix when the 3 column vectors represent a direct orthonormal basis (length of vectors is 1, 2 first vectors are orthogonal and the 3d 1 is eqals to the vector product of 2 first problems
+		if (V1.length() != 1 || V2.length() !=1 || V3.length() != 1) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column vectors length is not equals to 1. V1 length: "+V1.length()+" V2 length: "+V2.length()+"  V3 length: "+V3.length());
+			return false;
+		}
+		if(V1.scalar(V2) != 0) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column Vectors V1 and V2 are not orthogonal. V1: "+V1+" V2: "+V2+" V1.V2: "+V1.scalar(V2));
+			return false;
+		}
+		if(!(V1.times(V2)).equals(V3)) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "V3 is not equals to V1^V2. V3: "+V3+" V1^V2: "+V1.times(V2));
+			return false;
+		}
+		
+		// Else is Ok
+		return true;
 	}
 
 }

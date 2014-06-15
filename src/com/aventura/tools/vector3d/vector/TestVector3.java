@@ -47,6 +47,23 @@ public class TestVector3 {
 			fail("V1 array is out of bound");
 		}
 	}
+	
+	@Test
+	public void testVectorLengthAndNormalization() {
+		System.out.println("***** Test Vector3 : testVectorLengthAndNormalization *****");
+		// Test init Vector(double, double, double) + Normalization
+		
+		Vector3 V1 = new Vector3(12.0, -12.0, 24.0);
+		System.out.println("V1="+V1);
+	if (V1.getX() != 12.0 || V1.getY() != -12.0 || V1.getZ() != 24.0 ) fail("V1 wrongly initialized with Vector(double, double, double)");
+		
+		V1.normalize();
+		System.out.println("V1="+V1);
+	
+		if (V1.length() != 1) fail("Normalized Vector length not equals to 1: "+V1.length());
+		
+	}
+		
 
 	@Test
 	public void testVector_array_0() {

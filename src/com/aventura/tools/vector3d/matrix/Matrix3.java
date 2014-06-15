@@ -27,7 +27,7 @@ public class Matrix3 {
 
 		
 	/**
-	 * Initialize a Matrix with a constant value for all elements of the matrix
+	 * Initialize Matrix with a constant value for all elements of the matrix
 	 * @param val the initialization value
 	 */
 	public Matrix3(double val) {
@@ -35,7 +35,7 @@ public class Matrix3 {
 	}
 	
 	/**
-	 * Initialize a Matrix with a 2D array of double
+	 * Initialize Matrix with a 2D array of double
 	 * @param a the 2D array of double
 	 */
 	public Matrix3(double[][] a) throws MatrixArrayWrongSizeException {
@@ -43,6 +43,21 @@ public class Matrix3 {
 		if (a[0].length != Constants.SIZE) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array"); 
 
 		this.array = a;
+	}
+	
+	/**
+	 * Initialize Matrix with data from another Matrix
+	 * @param a the other Matrix
+	 */
+	public Matrix3(Matrix3 a) {
+		// Create the array
+		array = new double[Constants.SIZE][Constants.SIZE];
+		
+		for (int i=0; i<Constants.SIZE; i++) {
+			for (int j=0; j<Constants.SIZE; j++) {
+				this.array[i][j] = a.array[i][j];
+			}
+		}
 	}
 		
 	/**
