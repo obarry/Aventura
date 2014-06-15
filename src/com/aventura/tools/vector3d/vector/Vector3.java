@@ -19,6 +19,7 @@ public class Vector3 {
     public static final Vector3 Y_AXIS = new Vector3(0,1,0);
     public static final Vector3 Z_AXIS = new Vector3(0,0,1);
 
+    // Components of the Vector
 	protected double[] c;
 	
 	public Vector3() {
@@ -202,9 +203,9 @@ public class Vector3 {
 	 * @param w the Vector3 to be added to this Vector3
 	 */
 	public void plusEquals(Vector3 w) {
-		this.c[0]+=w.getX();
-		this.c[1]+=w.getY();
-		this.c[2]+=w.getZ();
+		this.c[0]+=w.c[0];
+		this.c[1]+=w.c[1];
+		this.c[2]+=w.c[2];
 	}
 	
 	/**
@@ -215,9 +216,9 @@ public class Vector3 {
 	public Vector3 minus(Vector3 w) {
 		Vector3 r = new Vector3();
 		
-		r.setX(this.c[0]-w.getX());
-		r.setY(this.c[1]-w.getY());
-		r.setZ(this.c[2]-w.getZ());
+		r.setX(this.c[0]-w.c[0]);
+		r.setY(this.c[1]-w.c[1]);
+		r.setZ(this.c[2]-w.c[2]);
 		
 		return r;
 	}
@@ -227,9 +228,9 @@ public class Vector3 {
 	 * @param w the Vector3 to be subtracted to this Vector3
 	 */
 	public void minusEquals(Vector3 w) {
-		this.c[0]-=w.getX();
-		this.c[1]-=w.getY();
-		this.c[2]-=w.getZ();
+		this.c[0]-=w.c[0];
+		this.c[1]-=w.c[1];
+		this.c[2]-=w.c[2];
 	}
 	
 	/**
@@ -238,7 +239,7 @@ public class Vector3 {
 	 * @return s, the scalar product (double)
 	 */
 	public double scalar(Vector3 w) {
-		return c[0]*w.getX()+c[1]*w.getY()+c[2]*w.getZ();
+		return c[0]*w.c[0]+c[1]*w.c[1]+c[2]*w.c[2];
 	}
 	
 	public Vector3 times(double val) {
@@ -269,9 +270,9 @@ public class Vector3 {
 		 * a=(a1,a2,a3) and b=(b1,b2,b3) then a^b=(a2b3−a3b2, a3b1−a1b3, a1b2−a2b1)
 		 */
 		Vector3 r = new Vector3();
-		r.setX(this.getY()*w.getZ()-this.getZ()*w.getY());
-		r.setY(this.getZ()*w.getX()-this.getX()*w.getZ());
-		r.setZ(this.getX()*w.getY()-this.getY()*w.getX());
+		r.setX(this.c[1]*w.c[2]-this.c[2]*w.c[1]);
+		r.setY(this.c[2]*w.c[0]-this.c[0]*w.c[2]);
+		r.setZ(this.c[0]*w.c[1]-this.c[1]*w.c[0]);
 		
 		return r;
 	}
@@ -283,9 +284,9 @@ public class Vector3 {
 	 */
 	public void timesEquals(Vector3 w) {
 		double[] array = new double[Constants.SIZE];
-		array[0] = this.getY()*w.getZ()-this.getZ()*w.getY();
-		array[1] = this.getZ()*w.getX()-this.getX()*w.getZ();
-		array[2] = this.getX()*w.getY()-this.getY()*w.getX();
+		array[0] = this.c[1]*w.c[2]-this.c[2]*w.c[1];
+		array[1] = this.c[2]*w.c[0]-this.c[0]*w.c[2];
+		array[2] = this.c[0]*w.c[1]-this.c[1]*w.c[0];
 		
 		this.c[0] = array[0];
 		this.c[1] = array[1];
@@ -310,8 +311,7 @@ public class Vector3 {
 					e.printStackTrace();
 				}
 			}
-		}
-		
+		}		
 		return r;
 	}
 	
@@ -328,8 +328,7 @@ public class Vector3 {
 			for (int j=0; j<Constants.SIZE; j++) {
 				array[i]+=A.get(i,j)*this.c[j];
 			}
-		}
-		
+		}		
 		this.c[0] = array[0];
 		this.c[1] = array[1];
 		this.c[2] = array[2];

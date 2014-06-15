@@ -5,6 +5,7 @@ import com.aventura.tools.vector3d.Constants;
 import com.aventura.tools.vector3d.IndiceOutOfBoundException;
 import com.aventura.tools.vector3d.WrongAxisException;
 import com.aventura.tools.vector3d.matrix.Matrix3;
+import com.aventura.tools.vector3d.matrix.MatrixArrayWrongSizeException;
 import com.aventura.tools.vector3d.vector.Vector3;
 
 public class Rotation extends Matrix3 {
@@ -101,7 +102,12 @@ public class Rotation extends Matrix3 {
 	
 	public Rotation(Matrix3 a) throws NotARotationException {
 		super(a);
-		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+a); 
+		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+this); 
+	}
+	
+	public Rotation(double[][] array) throws NotARotationException, MatrixArrayWrongSizeException {
+		super(array);
+		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+this); 
 	}
 	
 	protected boolean isRotation() {

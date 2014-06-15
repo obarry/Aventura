@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import com.aventura.tools.vector3d.Constants;
 import com.aventura.tools.vector3d.WrongAxisException;
+import com.aventura.tools.vector3d.matrix.MatrixArrayWrongSizeException;
 import com.aventura.tools.vector3d.vector.Vector3;
 
 public class TestRotation {
@@ -38,7 +39,6 @@ public class TestRotation {
 		if (!r11.equals(r21)) fail("Rotation around x axis incorrect");
 		if (!r12.equals(r22)) fail("Rotation around y axis incorrect");
 		if (!r13.equals(r23)) fail("Rotation around z axis incorrect");
-			
 	}
 
 	@Test
@@ -51,13 +51,28 @@ public class TestRotation {
 		try {
 			r2 = new Rotation(r1);
 		} catch (NotARotationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			fail("r2 is not a rotation");
 		}
-
+		assertFalse(r2==null);
 	}
 
+	@Test
+	public void testRotationMatrixFail() {
+		System.out.println("***** Test Rotation : testRotationMatrixFail *****");
+		
+		double array[][] = {{3.0, -4.0, 1.0}, {5.0, 3.0, -7.0}, {-9.0, 2.0, 6.0}};
+		
+		Rotation r = null;
+		try {
+			r = new Rotation(array);
+		} catch (MatrixArrayWrongSizeException e) {
+			e.printStackTrace();
+			fail("rotation array has wrong size");		
+		} catch (NotARotationException e) {
+			e.printStackTrace();
+		}
+		assertTrue(r==null);
+	}
 	
-
 }
