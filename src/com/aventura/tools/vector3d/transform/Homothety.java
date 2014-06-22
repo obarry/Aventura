@@ -20,5 +20,10 @@ public class Homothety extends Matrix3 {
 		initialize(0);
 		setDiagonal(s);
 	}
+	
+	public double getScale() {
+		// Any value of the diagonal should be the same
+		return array[0][0];
+	}
 
 }

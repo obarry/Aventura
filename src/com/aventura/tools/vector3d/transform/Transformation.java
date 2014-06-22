@@ -1,5 +1,6 @@
 package com.aventura.tools.vector3d.transform;
 
+import com.aventura.tools.vector3d.matrix.Matrix3;
 import com.aventura.tools.vector3d.vector.Vector3;
 
 /**
@@ -21,14 +22,30 @@ public class Transformation {
 	protected Rotation rotate;
 	protected Translation translate;
 	
+	protected Matrix3 transform; // scale.rotation
+	
+	public Transformation(Homothety h, Rotation r, Translation t) {
+		scale = h;
+		rotate = r;
+		translate = t;
+		updateTransformation();
+	}
+	
+	/**
+	 * Update the transformation matrix if rotation or scale has been modified
+	 */
+	public void updateTransformation() {
+		// Multiply rotation and scale
+		transform = rotate.times(scale);
+	}
+	
 	/**
 	 * y = transform(x)
 	 * @param x
 	 * @return new vector, result of the transformation of x
 	 */
 	public Vector3 transform(Vector3 x) {
-		return new Vector3();
-		
+		return (transform.times(x)).plus(translate);
 	}
 	
 	/**
@@ -36,7 +53,8 @@ public class Transformation {
 	 * @param x is modified by the transformation and becomes the new transformed vector
 	 */
 	public void transformEquals(Vector3 x) {
-		
+		x.timesEquals(transform);
+		x.plusEquals(translate);
 	}
 
 }

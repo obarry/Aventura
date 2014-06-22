@@ -336,5 +336,5 @@ public class Matrix3 {
 		// Optimal call is to use Vector3D method directly
 		return v.times(this);
 	}
-	
+		
 }

@@ -10,13 +10,13 @@ import com.aventura.tools.vector3d.vector.Vector3;
  * @date May 2014
  */
 public class Translation extends Vector3 {
-
-	public Translation() {
-		super();
-	}
 	
 	public Translation(Vector3 v) {
 		super(v);
+	}
+	
+	public Translation plus(Translation t) {
+		return new Translation((Vector3)this.plus((Vector3)t));
 	}
 	
 }
