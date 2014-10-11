@@ -40,6 +40,7 @@ public class Transformation {
 	}
 	
 	/**
+	 * Transforms the vector x into y based on transformation characteristics
 	 * y = transform(x)
 	 * @param x
 	 * @return new vector, result of the transformation of x

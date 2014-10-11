@@ -16,6 +16,12 @@ public class Homothety extends Matrix3 {
 		// TODO Auto-generated constructor stub
 	}
 	
+	public Homothety(double s) {
+		super();
+		setScale(s);
+	}
+
+	
 	public void setScale(double s) {
 		initialize(0);
 		setDiagonal(s);
