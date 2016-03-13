@@ -1,6 +1,6 @@
-com.aventura.model
+com.aventura.math
+com.aventura.math.transform
+com.aventura.math.vector
+com.aventura.model.old
+com.aventura.model.world
 com.aventura.tools.tracing
-com.aventura.tools.vector3d
-com.aventura.tools.vector3d.matrix
-com.aventura.tools.vector3d.transform
-com.aventura.tools.vector3d.vector
