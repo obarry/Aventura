@@ -1,4 +1,4 @@
-package com.aventura.model;
+package com.aventura.model.old;
 
 /**
  * Abstract class to represent a termination element (no sub-element)

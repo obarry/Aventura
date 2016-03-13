@@ -1,4 +1,4 @@
-package com.aventura.model;
+package com.aventura.model.old;
 
 /**
  * This class is a specific termination Element: a triangle face made of 3 points

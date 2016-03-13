@@ -1,4 +1,4 @@
-package com.aventura.model;
+package com.aventura.model.old;
 
 /**
  * This class is a specific termination Element: a square face made of 4 points

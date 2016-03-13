@@ -1,4 +1,4 @@
-package com.aventura.model;
+package com.aventura.model.old;
 
 public class Model {
 	private String name; // name of the model
