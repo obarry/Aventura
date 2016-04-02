@@ -232,11 +232,11 @@ public class Vector3 {
 	}
 	
 	/**
-	 * V.W : Scalar product of this Vector3 with W, another Vector3. 
+	 * V.W : Dot product of this Vector3 with W, another Vector3. 
 	 * @param w, the other Vector3
-	 * @return s, the scalar product (double)
+	 * @return s, the dot product (double)
 	 */
-	public double scalar(Vector3 w) {
+	public double dot(Vector3 w) {
 		return c[0]*w.c[0]+c[1]*w.c[1]+c[2]*w.c[2];
 	}
 	

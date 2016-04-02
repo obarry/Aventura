@@ -87,7 +87,7 @@
 <li>java.lang.Object</li>
 <li>
 <ul class="inheritance">
-<li>com.aventura.tools.vector3d.vector.Vector3</li>
+<li>com.aventura.math.vector.Vector3</li>
 </ul>
 </li>
 </ul>
@@ -163,15 +163,15 @@ extends java.lang.Object</pre>
        double&nbsp;z)</code>&nbsp;</td>
 </tr>
 <tr class="altColor">
-<td class="colOne"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#Vector3(int, com.aventura.tools.vector3d.matrix.Matrix3)">Vector3</a></strong>(int&nbsp;r,
+<td class="colOne"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#Vector3(int, com.aventura.math.vector.Matrix3)">Vector3</a></strong>(int&nbsp;r,
        <a href="../../../../../com/aventura/tools/vector3d/matrix/Matrix3.html" title="class in com.aventura.tools.vector3d.matrix">Matrix3</a>&nbsp;A)</code>&nbsp;</td>
 </tr>
 <tr class="rowColor">
-<td class="colOne"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#Vector3(com.aventura.tools.vector3d.matrix.Matrix3, int)">Vector3</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/matrix/Matrix3.html" title="class in com.aventura.tools.vector3d.matrix">Matrix3</a>&nbsp;A,
+<td class="colOne"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#Vector3(com.aventura.math.vector.Matrix3, int)">Vector3</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/matrix/Matrix3.html" title="class in com.aventura.tools.vector3d.matrix">Matrix3</a>&nbsp;A,
        int&nbsp;c)</code>&nbsp;</td>
 </tr>
 <tr class="altColor">
-<td class="colOne"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#Vector3(com.aventura.tools.vector3d.vector.Vector3)">Vector3</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;v)</code>&nbsp;</td>
+<td class="colOne"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#Vector3(com.aventura.math.vector.Vector3)">Vector3</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;v)</code>&nbsp;</td>
 </tr>
 </table>
 </li>
@@ -190,7 +190,7 @@ extends java.lang.Object</pre>
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>boolean</code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#equals(com.aventura.tools.vector3d.vector.Vector3)">equals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#equals(com.aventura.math.vector.Vector3)">equals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
 <div class="block">Compare this Vector3 with another</div>
 </td>
 </tr>
@@ -224,13 +224,13 @@ extends java.lang.Object</pre>
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a></code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#minus(com.aventura.tools.vector3d.vector.Vector3)">minus</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#minus(com.aventura.math.vector.Vector3)">minus</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
 <div class="block">Subtraction of this Vector3 V and another Vector3 W, returns a newly created Vector3</div>
 </td>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#minusEquals(com.aventura.tools.vector3d.vector.Vector3)">minusEquals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#minusEquals(com.aventura.math.vector.Vector3)">minusEquals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
 <div class="block">Vector3 subtraction V=V-W.</div>
 </td>
 </tr>
@@ -242,19 +242,19 @@ extends java.lang.Object</pre>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a></code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#plus(com.aventura.tools.vector3d.vector.Vector3)">plus</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#plus(com.aventura.math.vector.Vector3)">plus</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
 <div class="block">Sum of this Vector3 V and another Vector3 W, returns a newly created Vector3</div>
 </td>
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#plusEquals(com.aventura.tools.vector3d.vector.Vector3)">plusEquals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#plusEquals(com.aventura.math.vector.Vector3)">plusEquals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
 <div class="block">Vector3 addition V=V+W.</div>
 </td>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code>double</code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#scalar(com.aventura.tools.vector3d.vector.Vector3)">scalar</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#scalar(com.aventura.math.vector.Vector3)">scalar</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
 <div class="block">V.W : Scalar product of this Vector3 with W, another Vector3.</div>
 </td>
 </tr>
@@ -289,13 +289,13 @@ extends java.lang.Object</pre>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a></code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#times(com.aventura.tools.vector3d.matrix.Matrix3)">times</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/matrix/Matrix3.html" title="class in com.aventura.tools.vector3d.matrix">Matrix3</a>&nbsp;A)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#times(com.aventura.math.vector.Matrix3)">times</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/matrix/Matrix3.html" title="class in com.aventura.tools.vector3d.matrix">Matrix3</a>&nbsp;A)</code>
 <div class="block">W = A.V; Multiplication of a this Vector3 V by a Matrix3 A</div>
 </td>
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a></code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#times(com.aventura.tools.vector3d.vector.Vector3)">times</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#times(com.aventura.math.vector.Vector3)">times</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
 <div class="block">V^W : Vector product of this Vector3 with W, another Vector3.</div>
 </td>
 </tr>
@@ -305,13 +305,13 @@ extends java.lang.Object</pre>
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#timesEquals(com.aventura.tools.vector3d.matrix.Matrix3)">timesEquals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/matrix/Matrix3.html" title="class in com.aventura.tools.vector3d.matrix">Matrix3</a>&nbsp;A)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#timesEquals(com.aventura.math.vector.Matrix3)">timesEquals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/matrix/Matrix3.html" title="class in com.aventura.tools.vector3d.matrix">Matrix3</a>&nbsp;A)</code>
 <div class="block">V = A.V - Multiplication of a this Vector3 V by a Matrix3.</div>
 </td>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#timesEquals(com.aventura.tools.vector3d.vector.Vector3)">timesEquals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
+<td class="colLast"><code><strong><a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html#timesEquals(com.aventura.math.vector.Vector3)">timesEquals</a></strong>(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;w)</code>
 <div class="block">V^W : Vector product of this Vector3 with W, another Vector3.</div>
 </td>
 </tr>
@@ -417,7 +417,7 @@ extends java.lang.Object</pre>
 <dd><code><a href="../../../../../com/aventura/tools/vector3d/vector/VectorArrayWrongSizeException.html" title="class in com.aventura.tools.vector3d.vector">VectorArrayWrongSizeException</a></code></dd></dl>
 </li>
 </ul>
-<a name="Vector3(com.aventura.tools.vector3d.vector.Vector3)">
+<a name="Vector3(com.aventura.math.vector.Vector3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -426,7 +426,7 @@ extends java.lang.Object</pre>
 <pre>public&nbsp;Vector3(<a href="../../../../../com/aventura/tools/vector3d/vector/Vector3.html" title="class in com.aventura.tools.vector3d.vector">Vector3</a>&nbsp;v)</pre>
 </li>
 </ul>
-<a name="Vector3(int, com.aventura.tools.vector3d.matrix.Matrix3)">
+<a name="Vector3(int, com.aventura.math.vector.Matrix3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -436,7 +436,7 @@ extends java.lang.Object</pre>
        <a href="../../../../../com/aventura/tools/vector3d/matrix/Matrix3.html" title="class in com.aventura.tools.vector3d.matrix">Matrix3</a>&nbsp;A)</pre>
 </li>
 </ul>
-<a name="Vector3(com.aventura.tools.vector3d.matrix.Matrix3, int)">
+<a name="Vector3(com.aventura.math.vector.Matrix3, int)">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -583,7 +583,7 @@ extends java.lang.Object</pre>
 <dl><dt><span class="strong">Returns:</span></dt><dd>this vector (modified)</dd></dl>
 </li>
 </ul>
-<a name="equals(com.aventura.tools.vector3d.vector.Vector3)">
+<a name="equals(com.aventura.math.vector.Vector3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -595,7 +595,7 @@ extends java.lang.Object</pre>
 <dt><span class="strong">Returns:</span></dt><dd>true if all the elements of this Vector3 are equals to the elements of V</dd></dl>
 </li>
 </ul>
-<a name="plus(com.aventura.tools.vector3d.vector.Vector3)">
+<a name="plus(com.aventura.math.vector.Vector3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -607,7 +607,7 @@ extends java.lang.Object</pre>
 <dt><span class="strong">Returns:</span></dt><dd>V+W</dd></dl>
 </li>
 </ul>
-<a name="plusEquals(com.aventura.tools.vector3d.vector.Vector3)">
+<a name="plusEquals(com.aventura.math.vector.Vector3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -618,7 +618,7 @@ extends java.lang.Object</pre>
 <dl><dt><span class="strong">Parameters:</span></dt><dd><code>w</code> - the Vector3 to be added to this Vector3</dd></dl>
 </li>
 </ul>
-<a name="minus(com.aventura.tools.vector3d.vector.Vector3)">
+<a name="minus(com.aventura.math.vector.Vector3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -630,7 +630,7 @@ extends java.lang.Object</pre>
 <dt><span class="strong">Returns:</span></dt><dd>V-W</dd></dl>
 </li>
 </ul>
-<a name="minusEquals(com.aventura.tools.vector3d.vector.Vector3)">
+<a name="minusEquals(com.aventura.math.vector.Vector3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -641,7 +641,7 @@ extends java.lang.Object</pre>
 <dl><dt><span class="strong">Parameters:</span></dt><dd><code>w</code> - the Vector3 to be subtracted to this Vector3</dd></dl>
 </li>
 </ul>
-<a name="scalar(com.aventura.tools.vector3d.vector.Vector3)">
+<a name="scalar(com.aventura.math.vector.Vector3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -672,7 +672,7 @@ extends java.lang.Object</pre>
 <dl><dt><span class="strong">Parameters:</span></dt><dd><code>val</code> - </dd></dl>
 </li>
 </ul>
-<a name="times(com.aventura.tools.vector3d.vector.Vector3)">
+<a name="times(com.aventura.math.vector.Vector3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -684,7 +684,7 @@ extends java.lang.Object</pre>
 <dt><span class="strong">Returns:</span></dt><dd>a new Vector3 corresponding to the product</dd></dl>
 </li>
 </ul>
-<a name="timesEquals(com.aventura.tools.vector3d.vector.Vector3)">
+<a name="timesEquals(com.aventura.math.vector.Vector3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -696,7 +696,7 @@ extends java.lang.Object</pre>
 <dl><dt><span class="strong">Parameters:</span></dt><dd><code>w</code> - </dd></dl>
 </li>
 </ul>
-<a name="times(com.aventura.tools.vector3d.matrix.Matrix3)">
+<a name="times(com.aventura.math.vector.Matrix3)">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -708,7 +708,7 @@ extends java.lang.Object</pre>
 <dt><span class="strong">Returns:</span></dt><dd>W, a new Vector3, result of the multiplication</dd></dl>
 </li>
 </ul>
-<a name="timesEquals(com.aventura.tools.vector3d.matrix.Matrix3)">
+<a name="timesEquals(com.aventura.math.vector.Matrix3)">
 <!--   -->
 </a>
 <ul class="blockListLast">

@@ -39,5 +39,52 @@ public class Vector2 {
 	public double length() {
 		return Math.sqrt(x*x+y*y);
 	}
+	
+	public double dot(Vector2 w) {
+		return x*w.x+y*w.y;
+	}
+	
+	public void times(double d) {
+		this.x = x*d;
+		this.y = y*d;
+	}
+	
+	public Vector2 equals() {
+		Vector2 w = new Vector2(this.x, this.y);
+		return w;
+	}
+	
+	public static boolean equals(Vector2 v1, Vector2 v2) {
+		if (v1.x == v2.x && v1.y == v2.y)  return true; else return false;
+	}
+	
+	/**
+	 * return sum of V = this vector + W the provided vector
+	 * 
+	 * @param w provided vector
+	 * @return v+w
+	 */
+	public Vector2 plus(Vector2 w) {
+		Vector2 s = new Vector2(x+w.x, y+w.y);
+		return s;
+	}
+	
+	/**
+	 * return difference of V = this vector - W the provided vector
+	 * 
+	 * @param w provided vector
+	 * @return v+w
+	 */
+	public Vector2 minus(Vector2 w) {
+		Vector2 d = new Vector2(x-w.x, y-w.y);
+		return d;
+	}
+	
+	
+	public void normalize() {
+		double length = this.length();
+		this.x = x/length;
+		this.y = y/length;
+	}
 
 }

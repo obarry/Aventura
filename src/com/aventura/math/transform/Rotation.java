@@ -129,8 +129,8 @@ public class Rotation extends Matrix3 {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column vectors length is not equals to 1. V1 length: "+V1.length()+" V2 length: "+V2.length()+"  V3 length: "+V3.length());
 			return false;
 		}
-		if(V1.scalar(V2) != 0) {
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column Vectors V1 and V2 are not orthogonal. V1: "+V1+" V2: "+V2+" V1.V2: "+V1.scalar(V2));
+		if(V1.dot(V2) != 0) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column Vectors V1 and V2 are not orthogonal. V1: "+V1+" V2: "+V2+" V1.V2: "+V1.dot(V2));
 			return false;
 		}
 		if(!(V1.times(V2)).equals(V3)) {
