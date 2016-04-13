@@ -1,7 +1,6 @@
 package com.aventura.model.world;
 
 import java.awt.Color;
-
 import com.aventura.math.vector.*;
 
 public class Vertex {

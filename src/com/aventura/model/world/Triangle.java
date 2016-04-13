@@ -1,11 +1,17 @@
 package com.aventura.model.world;
 
-import java.util.ArrayList;
-
 public class Triangle {
 	
 	// Made of 3 vertices
-	Vertex v1, v2, v3;
+	Vertex v1;
+	Vertex v2;
+	Vertex v3;
+	
+	public Triangle(Vertex v1, Vertex v2, Vertex v3) {
+		this.v1 = v1;
+		this.v2 = v2;
+		this.v3 = v3;
+	}
 	
 
 }
