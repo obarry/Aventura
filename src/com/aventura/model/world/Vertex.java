@@ -17,5 +17,38 @@ public class Vertex {
 	// Reflectivity
 	// TBD
 	
+	public Vertex(Vector4 p) {
+		position = p;
+		normal = null;
+	}
+	
+	public Vertex(Vector4 p, Vector3 n) {
+		position = p;
+		normal = n;
+	}
+	
+	public void setPosition(Vector4 p) {
+		position = p;
+	}
+	
+	public Vector4 getPosition() {
+		return position;
+	}
+	
+	public void setNormal(Vector3 n) {
+		normal = n;
+	}
+	
+	public Vector3 getNormal() {
+		return normal;
+	}
+	
+	/**
+	 * Calculate the normal from a set of vertices surrounding this Vertex
+	 * @param setOfVertices
+	 */
+	public void calculateNormal(Vertex[] setOfVertices) {
+		// Use the position of the other Vertices relative to this Vertex to calculate an average plan and define the normal
+	}
 
 }
