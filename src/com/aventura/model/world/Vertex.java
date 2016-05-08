@@ -48,7 +48,11 @@ public class Vertex {
 	 * @param setOfVertices
 	 */
 	public void calculateNormal(Vertex[] setOfVertices) {
+	
 		// Use the position of the other Vertices relative to this Vertex to calculate an average plan and define the normal
+		for (int i=0; i<setOfVertices.length; i++) {
+			// TODO
+		}
 	}
 
 }
