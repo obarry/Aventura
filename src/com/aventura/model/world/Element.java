@@ -41,5 +41,13 @@ public class Element {
 			addTriangle(triangles[i]);
 		}
 	}
+	
+	public ArrayList<Triangle> getTriangles() {
+		return triangles;
+	}
+	
+	public Triangle getTriangle(int i) {
+		return triangles.get(i);
+	}
 
 }

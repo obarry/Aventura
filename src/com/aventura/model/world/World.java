@@ -24,5 +24,13 @@ public class World {
 		elements.add(e);
 		return e;
 	}
+	
+	public ArrayList<Element> getElements() {
+		return elements;
+	}
+	
+	public Element getElement(int i) {
+		return elements.get(i);
+	}
 
 }
