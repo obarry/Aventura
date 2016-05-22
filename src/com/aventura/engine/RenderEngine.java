@@ -66,6 +66,13 @@ public class RenderEngine {
 	 */
 	public void render(Triangle t) {
 		// TODO implementation
+		
+		// Scissor test for the triangle
+		
+		// If triangle is totally or partially in the View Frustum
+		// Then render its fragments
+		
+		
 	}
 
 }
