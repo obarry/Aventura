@@ -5,6 +5,7 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.World;
+import com.aventura.view.View;
 
 /**
  * This class is the core rendering engine of the Aventura API
@@ -21,11 +22,17 @@ import com.aventura.model.world.World;
  */
 public class RenderEngine {
 	
+	// Context's parameters
 	RenderContext render;
 	GraphicContext graphic;
+	
+	// Model
 	World world;
 	Lighting light;
 	Camera camera;
+	
+	// View
+	View view;
 	
 	public RenderEngine(RenderContext render, GraphicContext graphic, World world, Lighting light, Camera camera) {
 		this.render = render;

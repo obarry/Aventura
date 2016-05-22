@@ -4,12 +4,69 @@ import java.util.ArrayList;
 
 /**
  * 
- * This class is the base class representing an element of the world
- * This element is made of multiple Vertices associated in Triangles
- * The class provides facilities to create and associate Triangles and Vertices
+ * This class is the class representing a base element of the world. An element can be a Sphere, a Box, a Cube or a much complex thing.
+ * This element is made of multiple Triangles all made of Vertices.
  * 
- * This class could be derived to create more specialized elements e.g. geometry (cubes, sphere, cylinder, etc.)
+ * An element is then positioned in the World through a Transformation applied to all vertices / triangles (see below). This transformation
+ * is an attribute of the Element.
  * 
+ * An element can be recursively made of sub-elements, this can be useful to build complex elements made of more basic forms. This then
+ *  builds a tree of elements.
+ * 
+ * This class is derived to provide the basic geometries (cubes, sphere, cylinder, etc.) or can be derived by the application to create
+ * more specialized objects.
+ * 
+ * 
+ * Each Element is positioned within the World by a specific Transformation :
+ * 
+ *     +-----------------------+
+ *     |  Element Coordinates  |
+ *     +-----------------------+
+ *                 |
+ *                 |   [Model Matrix] 4x4 Transformation Matrix
+ *                 v
+ *      +---------------------+
+ *      |  World Coordinates  |
+ *      +---------------------+
+ *
+ * The Model Matrix will transform the Model into the World through the following operations: 
+ * 		1) scaling
+ * 		2) Rotation
+ * 		3) Translation
+
+ *  * This can be modeled as follows :
+ * 
+ *  	TransformedVector = [TranslationMatrix * RotationMatrix * ScaleMatrix] * OriginalVector
+ *  	TransformedVector = [4x4 Transformation Matrix] * OriginalVector
+ *
+
+ * In case of sub-elements, the matrix will transform the SubElement coordinates into its father Element coordinates.
+ * Hence the transformation to the world is done recursively:
+ * 
+ *     +--------------------------+
+ *     |  SubElement Coordinates  |
+ *     +--------------------------+
+ *                  |
+ *                  |   [SubElement Matrix] 4x4 Transformation Matrix
+ *                  v
+ *      +-----------------------+
+ *      |  Element Coordinates  |
+ *      +-----------------------+
+ *                  |
+ *                  |   [Element Matrix] 4x4 Transformation Matrix
+ *                  v
+ *       +---------------------+
+ *       |  World Coordinates  |
+ *       +---------------------+
+ * 
+ * Leading to :
+ *  	TransformedVector = [Element Matrix] * [SubElement Matrix] * OriginalVector
+ *  And recursively (L0, L1, ...Ln figuring the level of depth of the sub-element in the hierachy) :
+ *  	TransformedVector = [Element Matrix (L0)] * [SubElement Matrix (L1)] * ... * [SubElement Matrix (Ln)] * OriginalVector
+ *  
+ *  Note that although the Transformation matrix is owned by the Element, the transformation of the vectors (Vertices) is performed
+ *  by the Render Engine when necessary and the way it is configured for.
+ *
  * @author Bricolage Olivier
  * @since March 2016
  *
@@ -22,6 +79,14 @@ public class Element {
 	
 	public Element() {
 		super();
+	}
+	
+	public boolean isLeaf() {
+		if (subelements == null) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 //	public void addVertex(Vertex v) {
