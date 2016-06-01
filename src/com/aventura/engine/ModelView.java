@@ -1,6 +1,7 @@
 package com.aventura.engine;
 
 import com.aventura.model.world.Element;
+import com.aventura.model.world.Triangle;
 
 /**
  * This class represents and manages the transformations from model to view.
@@ -51,5 +52,9 @@ import com.aventura.model.world.Element;
  * 
  */
 public class ModelView {
+	
+	public void transform(Triangle t) {
+		
+	}
 
 }

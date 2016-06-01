@@ -20,6 +20,7 @@ import com.aventura.view.View;
  * @author Bricolage Olivier
  * @since May 2016
  */
+
 public class RenderEngine {
 	
 	// Context's parameters
@@ -34,19 +35,23 @@ public class RenderEngine {
 	// View
 	View view;
 	
+	// ModelView transformation
+	ModelView transformation;
+	
 	public RenderEngine(RenderContext render, GraphicContext graphic, World world, Lighting light, Camera camera) {
 		this.render = render;
 		this.graphic = graphic;
 		this.world = world;
 		this.light = light;
 		this.camera = camera;
+		this.transformation = new ModelView(); // TODO pass parameters for Camera and Word Matrices
 	}
 	
 	/**
 	 * 
 	 * Rasterization of all triangles of the world
 	 * This assumes that the initialization is already done
-	 * - projection matrix
+	 * - Projection matrix
 	 * - Screen and display area
 	 * - etc.
 	 */
@@ -54,6 +59,9 @@ public class RenderEngine {
 		
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {
+			
+			// Calculate the ModelView matrix for this Element (Element <-> Model)
+			// TODO Calculate ModelView for this element
 			
 			Element e = world.getElement(i);
 			
@@ -74,11 +82,13 @@ public class RenderEngine {
 	public void render(Triangle t) {
 		// TODO implementation
 		
+		// Project this Triangle in the View in homogeneous coordinates
+		transformation.transform(t);
+		
 		// Scissor test for the triangle
 		
-		// If triangle is totally or partially in the View Frustum
-		// Then render its fragments
-		
+		// If triangle is totally or partially in the View Frustrum
+		// Then render its fragments in the View
 		
 	}
 
