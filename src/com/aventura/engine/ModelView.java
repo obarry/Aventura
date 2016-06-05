@@ -1,5 +1,7 @@
 package com.aventura.engine;
 
+import com.aventura.math.perspective.Perspective;
+import com.aventura.math.vector.Matrix4;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
 
@@ -53,7 +55,33 @@ import com.aventura.model.world.Triangle;
  */
 public class ModelView {
 	
+	Perspective projection;
+	Matrix4 view;
+	Matrix4 model;
+	
+	public ModelView() {
+		
+	}
+	
+	public ModelView(Perspective projection, Matrix4 view) {
+		this.projection = projection;
+		this.view = view;
+	}
+	
+	public void setProjection(Perspective projection) {
+		this.projection = projection;
+	}
+	
+	public void setView(Matrix4 view) {
+		this.view = view;
+	}
+	
+	public void setModel(Matrix4 model) {
+		this.model = model;
+	}
+	
 	public void transform(Triangle t) {
+		
 		
 	}
 
