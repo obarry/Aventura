@@ -2,6 +2,9 @@ package com.aventura.model.world;
 
 import java.util.ArrayList;
 
+import com.aventura.math.transform.Transformable;
+import com.aventura.math.vector.Matrix4;
+
 /**
  * 
  * This class is the class representing a base element of the world. An element can be a Sphere, a Box, a Cube or a much complex thing.
@@ -71,11 +74,12 @@ import java.util.ArrayList;
  * @since March 2016
  *
  */
-public class Element {
+public class Element implements Transformable {
 	
 	protected ArrayList<Element> subelements; // To create a hierarchy of elements - not necessarily used
 	protected ArrayList<Triangle> triangles;  // Triangles related to this element
 	//protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
+	protected Matrix4 transform;  // Element to World Transformation Matrix (Model Matrix)
 	
 	public Element() {
 		super();
@@ -113,6 +117,17 @@ public class Element {
 	
 	public Triangle getTriangle(int i) {
 		return triangles.get(i);
+	}
+
+	@Override
+	public void setTransformation(Matrix4 transformation) {
+		this.transform = transformation;
+		
+	}
+
+	@Override
+	public Matrix4 getTransformation() {
+		return transform;
 	}
 
 }

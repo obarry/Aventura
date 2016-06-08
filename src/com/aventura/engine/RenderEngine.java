@@ -11,11 +11,32 @@ import com.aventura.view.View;
  * This class is the core rendering engine of the Aventura API
  * It provides the render method
  * It needs to be initialized with proper:
- * - world
- * - camera
- * - lighting information
- * - some display and graphics
- * - a render context to provide the information on how to render the world
+ * - The world information
+ * - A camera
+ * - Some lighting
+ * - some display and graphics (called View)
+ * - a render context to provide information on how to render the world
+ * - a graphic context to provide information on how to display the view 
+ *
+ *     +---------------------+														
+ *     |        World        | <------+											
+ *     +---------------------+        |										+---------------------+
+ *                					  |						  +------------>|    RenderContext    |
+ *                   				  |						  |				+---------------------+
+ *                					  |						  |
+ *     +---------------------+		  |		+---------------------+							   			   +---------------------+
+ *     |      Lighting       | <-----+------|    RenderEngine     |--------------------------------------->|        View         |
+ *     +---------------------+		  |		+---------------------+ 									   +---------------------+
+ *                					  |				   |	  |
+ *                   				  |				   |	  |				+---------------------+
+ *                	 				  |				   |	  +------------>|   GraphicContext    |
+ *     +---------------------+        |        		   v					+---------------------+
+ *     |       Camera        | <------+     +---------------------+
+ *     +---------------------+			    |      ModelView      |
+ *					   				    	+---------------------+
+ *
+ *          	 Model												 Engine										 View
+ *			com.aventura.model									com.aventura.engine							com.aventura.view
  * 
  * @author Bricolage Olivier
  * @since May 2016
@@ -61,9 +82,11 @@ public class RenderEngine {
 		for (int i=0; i<world.getElements().size(); i++) {
 			
 			// Calculate the ModelView matrix for this Element (Element <-> Model)
-			// TODO Calculate ModelView for this element
 			
 			Element e = world.getElement(i);
+			transformation.setModel(e.getTransformation()); // set the Model Matrix (the one attached to each Element) in the ModelView Transformation
+			
+			// TODO Do a recursive call for SubElements
 			
 			// Process each Triangle
 			for (int j=0; j<e.getTriangles().size(); j++) {
@@ -87,7 +110,7 @@ public class RenderEngine {
 		
 		// Scissor test for the triangle
 		
-		// If triangle is totally or partially in the View Frustrum
+		// If triangle is totally or partially in the View Frustum
 		// Then render its fragments in the View
 		
 	}

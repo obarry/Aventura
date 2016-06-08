@@ -15,19 +15,19 @@ import com.aventura.model.world.Triangle;
  *     |  Model Coordinates  |
  *     +---------------------+
  *                |
- *                |   [Model Matrix] 4x4 Transformation Matrix
+ *                |   [Model Matrix] 4x4 Transformation Matrix -> to transform an element into the World coordinates
  *                v
  *     +---------------------+
  *     |  World Coordinates  |
  *     +---------------------+
  *                |
- *                |   [View Matrix] 4x4 Transformation Matrix
+ *                |   [View Matrix] 4x4 Transformation Matrix -> to transform the world into the camara coordinates
  *                v
  *     +----------------------+
  *     |  Camera Coordinates  |
  *     +----------------------+
  *                |
- *                |   [Projection Matrix] 4x4 Transformation Matrix
+ *                |   [Projection Matrix] 4x4 Transformation Matrix -> to transform any point or vector into homogeneous coordinates
  *                v
  *   +--------------------------+
  *   | Homogeneous Coordinates  |
