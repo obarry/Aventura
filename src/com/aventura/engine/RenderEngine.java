@@ -59,7 +59,7 @@ public class RenderEngine {
 	// ModelView transformation
 	ModelView transformation;
 	
-	public RenderEngine(RenderContext render, GraphicContext graphic, World world, Lighting light, Camera camera) {
+	public RenderEngine(World world, Lighting light, Camera camera, RenderContext render, GraphicContext graphic) {
 		this.render = render;
 		this.graphic = graphic;
 		this.world = world;

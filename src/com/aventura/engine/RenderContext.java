@@ -20,5 +20,7 @@ package com.aventura.engine;
  *
  */
 public class RenderContext {
+	
+	public static RenderContext RENDER_DEFAULT = new RenderContext();
 
 }
