@@ -8,6 +8,31 @@ import com.aventura.model.world.World;
 import com.aventura.view.View;
 
 /**
+ * ------------------------------------------------------------------------------ 
+ * MIT License
+ * 
+ * Copyright (c) 2016 Olivier BARRY
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ------------------------------------------------------------------------------ 
+ * 
+ * 
  * This class is the core rendering engine of the Aventura API
  * It provides the render method
  * It needs to be initialized with proper:
@@ -41,7 +66,6 @@ import com.aventura.view.View;
  * @author Bricolage Olivier
  * @since May 2016
  */
-
 public class RenderEngine {
 	
 	// Context's parameters
@@ -59,6 +83,20 @@ public class RenderEngine {
 	// ModelView transformation
 	ModelView transformation;
 	
+	/**
+	 * Create a Rendering Engine with required dependencies and context
+	 * There should be a Rendering Engine for a single World, a single (consolidated) Lighting, a single Camera
+	 * The parameters for the rendering and the display are respectively passed into the RenderContext and the GraphicContext
+	 * 
+	 * Rendering a World on different Views e.g. with several Cameras will require multiple RenderEngine instances
+	 * 
+	 * 
+	 * @param world
+	 * @param light
+	 * @param camera
+	 * @param render
+	 * @param graphic
+	 */
 	public RenderEngine(World world, Lighting light, Camera camera, RenderContext render, GraphicContext graphic) {
 		this.render = render;
 		this.graphic = graphic;
@@ -109,10 +147,25 @@ public class RenderEngine {
 		transformation.transform(t);
 		
 		// Scissor test for the triangle
-		
 		// If triangle is totally or partially in the View Frustum
 		// Then render its fragments in the View
+		if (isInView(t)) {
+			// Render triangle
+		} else {
+			// Do not render this triangle
+		}
 		
+	}
+	
+	/**
+	 * Is true if all Vertices of the Triangle is within the defined View
+	 * 
+	 * @param t the Triangle
+	 * @return
+	 */
+	protected boolean isInView(Triangle t) {
+		//TODO implementation
+		return false;
 	}
 
 }
