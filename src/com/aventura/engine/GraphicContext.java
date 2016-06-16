@@ -69,29 +69,100 @@ public class GraphicContext {
 	
 	public static final int PERSPECTIVE_TYPE_FRUSTUM = 1;
 	public static final int PERSPECTIVE_TYPE_ORTHOGRAPHIC = 2;
+	
+	public static final int DRAWING_TYPE_LINE = 1;
+	public static final int DRAWING_TYPE_PLAIN = 2;
+	
 
 
 	// Window & frustum
-	double width;
-	double height;
-	double depth;
-	double dist;
+	double width = 0;
+	double height = 0;
+	double depth = 0;
+	double dist = 0;
 	
 	int perspective_type = 0;
+	int drawing_type = 0;
+
+	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(800,450,400,10000, PERSPECTIVE_TYPE_FRUSTUM, DRAWING_TYPE_PLAIN);
+
 	
+	/**
+	 * Empty constructor
+	 */
 	public GraphicContext() {
-		
+		// To be used when creating manually GraphicContext by using setter/getters
 	}
 	
-	public GraphicContext(double width, double height, double dist, double depth, int type) {
+	public GraphicContext(double width, double height, double dist, double depth, int perspective, int drawing) {
 		this.width = width;
 		this.height = height;
 		this.dist = dist;
 		this.depth = depth;
-		this.perspective_type = type;
+		this.perspective_type = perspective;
+		this.drawing_type = drawing;
 	}
 	
-	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(800,450,400,10000, PERSPECTIVE_TYPE_FRUSTUM);
+	public GraphicContext(double top, double bottom, double right, double left, double far, double near, int perspective, int drawing) {
+		this.width = right - left;
+		this.height = top - bottom;
+		this.dist = near;
+		this.depth = far - near;
+		this.perspective_type = perspective;
+		this.drawing_type = drawing;
+	}
 	
+	public String toString() {
+		//TODO To be implemented
+		return "To Be Implemented";
+	}
+	
+	public void setWidth(double width) {
+		this.width = width;
+	}
+	
+	public double getWidth() {
+		return width;
+	}
+	
+	public void setHeight(double height) {
+		this.height = height;
+	}
+	
+	public double getHeight() {
+		return height;
+	}
+
+	public void setDepth(double depth) {
+		this.depth = depth;
+	}
+	
+	public double getDepth() {
+		return depth;
+	}
+
+	public void setDist(double dist) {
+		this.dist = dist;
+	}
+	
+	public double getDist() {
+		return dist;
+	}
+	
+	public void setPerspective(int perspective) {
+		this.perspective_type = perspective;
+	}
+	
+	public int getPerspective() {
+		return perspective_type;
+	}
+
+	public void setDrawing(int drawing) {
+		this.drawing_type = drawing;
+	}
+	
+	public int getDrawing() {
+		return drawing_type;
+	}
 
 }
