@@ -69,11 +69,6 @@ public class GraphicContext {
 	
 	public static final int PERSPECTIVE_TYPE_FRUSTUM = 1;
 	public static final int PERSPECTIVE_TYPE_ORTHOGRAPHIC = 2;
-	
-	public static final int DRAWING_TYPE_LINE = 1;
-	public static final int DRAWING_TYPE_PLAIN = 2;
-	
-
 
 	// Window & frustum
 	double width = 0;
@@ -82,9 +77,8 @@ public class GraphicContext {
 	double dist = 0;
 	
 	int perspective_type = 0;
-	int drawing_type = 0;
 
-	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(800,450,400,10000, PERSPECTIVE_TYPE_FRUSTUM, DRAWING_TYPE_PLAIN);
+	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(800,450,400,10000, PERSPECTIVE_TYPE_FRUSTUM);
 
 	
 	/**
@@ -94,22 +88,22 @@ public class GraphicContext {
 		// To be used when creating manually GraphicContext by using setter/getters
 	}
 	
-	public GraphicContext(double width, double height, double dist, double depth, int perspective, int drawing) {
+	public GraphicContext(double width, double height, double dist, double depth, int perspective) {
 		this.width = width;
 		this.height = height;
 		this.dist = dist;
 		this.depth = depth;
 		this.perspective_type = perspective;
-		this.drawing_type = drawing;
+
 	}
 	
-	public GraphicContext(double top, double bottom, double right, double left, double far, double near, int perspective, int drawing) {
+	public GraphicContext(double top, double bottom, double right, double left, double far, double near, int perspective) {
 		this.width = right - left;
 		this.height = top - bottom;
 		this.dist = near;
 		this.depth = far - near;
 		this.perspective_type = perspective;
-		this.drawing_type = drawing;
+
 	}
 	
 	public String toString() {
@@ -155,14 +149,6 @@ public class GraphicContext {
 	
 	public int getPerspective() {
 		return perspective_type;
-	}
-
-	public void setDrawing(int drawing) {
-		this.drawing_type = drawing;
-	}
-	
-	public int getDrawing() {
-		return drawing_type;
 	}
 
 }

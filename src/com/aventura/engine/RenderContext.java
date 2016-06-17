@@ -45,6 +45,34 @@ package com.aventura.engine;
  */
 public class RenderContext {
 	
-	public static RenderContext RENDER_DEFAULT = new RenderContext();
+	public static final int RENDERING_TYPE_LINE = 1;
+	public static final int RENDERING_TYPE_MONOCHROME = 2;
+	public static final int RENDERING_TYPE_PLAIN = 3;
+	public static final int RENDERING_TYPE_INTERPOLATE = 4;
+	
+	public int rendering_type = 0;
+	
+	
+	public static RenderContext RENDER_DEFAULT = new RenderContext(RENDERING_TYPE_LINE);
+	
+	/**
+	 * Empty constructor
+	 */
+	public RenderContext() {
+		// To be used when creating manually GraphicContext by using setter/getters
+	}
+	
+	public RenderContext(int type) {
+		this.rendering_type = type;
+	}
+	
+	public void setRendering(int type) {
+		this.rendering_type = type;
+	}
+	
+	public int getRendering() {
+		return rendering_type;
+	}
+
 
 }
