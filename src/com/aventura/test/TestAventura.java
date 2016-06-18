@@ -26,6 +26,8 @@ public class TestAventura {
 		
 		Camera camera = new Camera();
 		
+		System.out.println(GraphicContext.GRAPHIC_DEFAULT);
+		
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, GraphicContext.GRAPHIC_DEFAULT);
 		renderer.render();
 		

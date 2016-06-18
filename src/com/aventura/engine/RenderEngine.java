@@ -151,8 +151,31 @@ public class RenderEngine {
 		// Then render its fragments in the View
 		if (isInView(t)) {
 			// Render triangle
+			rasterize(t);
 		} else {
 			// Do not render this triangle
+		}
+	}
+	
+	protected void rasterize(Triangle t) {
+		
+		switch (render.rendering_type) {
+		case RenderContext.RENDERING_TYPE_LINE:
+			//TODO First one to be implemented
+			break;
+		case RenderContext.RENDERING_TYPE_MONOCHROME:
+			//TODO To be implemented
+			break;
+		case RenderContext.RENDERING_TYPE_PLAIN:
+			//TODO To be implemented
+			break;
+		case RenderContext.RENDERING_TYPE_INTERPOLATE:
+			//TODO To be implemented
+			break;
+		default:
+			// Invalid rendering type
+			break;
+
 		}
 		
 	}

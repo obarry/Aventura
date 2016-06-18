@@ -69,6 +69,12 @@ public class GraphicContext {
 	
 	public static final int PERSPECTIVE_TYPE_FRUSTUM = 1;
 	public static final int PERSPECTIVE_TYPE_ORTHOGRAPHIC = 2;
+	
+	public static final String PERSPECTIVE_TYPE_FRUSTUM_STRING = "PERSPECTIVE_TYPE_FRUSTUM";
+	public static final String PERSPECTIVE_TYPE_ORTHOGRAPHIC_STRING = "PERSPECTIVE_TYPE_ORTHOGRAPHIC";
+
+	// Perspective type
+	int perspective_type = 0;
 
 	// Window & frustum
 	double width = 0;
@@ -76,7 +82,6 @@ public class GraphicContext {
 	double depth = 0;
 	double dist = 0;
 	
-	int perspective_type = 0;
 
 	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(800,450,400,10000, PERSPECTIVE_TYPE_FRUSTUM);
 
@@ -106,9 +111,20 @@ public class GraphicContext {
 
 	}
 	
+	public String perspectiveString(int perspective) {
+		switch (perspective) {
+			case PERSPECTIVE_TYPE_FRUSTUM:
+				return PERSPECTIVE_TYPE_FRUSTUM_STRING;
+			case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+				return PERSPECTIVE_TYPE_ORTHOGRAPHIC_STRING;
+			default:
+				return "Undefined perspective: "+perspective;
+		}
+	}
+	
 	public String toString() {
 		//TODO To be implemented
-		return "To Be Implemented";
+		return "GraphicContext:\n* Perpective type: "+perspectiveString(perspective_type)+"\n* Width: "+width+"\n* Height: "+height+"\n* Dist: "+dist+"\n* Depth: "+depth;
 	}
 	
 	public void setWidth(double width) {
