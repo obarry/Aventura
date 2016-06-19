@@ -45,10 +45,10 @@ package com.aventura.engine;
  */
 public class RenderContext {
 	
-	public static final int RENDERING_TYPE_LINE = 1;
-	public static final int RENDERING_TYPE_MONOCHROME = 2;
-	public static final int RENDERING_TYPE_PLAIN = 3;
-	public static final int RENDERING_TYPE_INTERPOLATE = 4;
+	public static final int RENDERING_TYPE_LINE = 1;		// Draw only lines
+	public static final int RENDERING_TYPE_MONOCHROME = 2;  // Draw lines and fill with monochrome color each triangle
+	public static final int RENDERING_TYPE_PLAIN = 3;		// Fill each triangle with one color depending on Lighting and orientation
+	public static final int RENDERING_TYPE_INTERPOLATE = 4; // Fill each triangle by interpolating each pixel's color
 	
 	public int rendering_type = 0;
 	

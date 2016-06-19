@@ -24,7 +24,12 @@ package com.aventura.view;
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 * ------------------------------------------------------------------------------
+* 
+* This class should be derived to create a display specific class (e.g. SWING or SWT or any display device)
 */
-public class View {
+public abstract class View {
+	
+	public abstract void drawPixel(int x, int y);
+	public abstract void drawLine(int x1, int y1, int x2, int y2);
 
 }

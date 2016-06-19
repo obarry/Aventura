@@ -66,6 +66,4 @@ public class Vertex {
 		return position;
 	}
 	
-	
-
 }

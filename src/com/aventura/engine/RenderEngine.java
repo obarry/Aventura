@@ -91,11 +91,11 @@ public class RenderEngine {
 	 * Rendering a World on different Views e.g. with several Cameras will require multiple RenderEngine instances
 	 * 
 	 * 
-	 * @param world
-	 * @param light
-	 * @param camera
-	 * @param render
-	 * @param graphic
+	 * @param world the world to render
+	 * @param light the lights lighting the world
+	 * @param camera the camera watching the world
+	 * @param render the render context containing parameters to render the scene
+	 * @param graphic the graphic context to contain parameters to display the scene
 	 */
 	public RenderEngine(World world, Lighting light, Camera camera, RenderContext render, GraphicContext graphic) {
 		this.render = render;
@@ -119,18 +119,15 @@ public class RenderEngine {
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {
 			
-			// Calculate the ModelView matrix for this Element (Element <-> Model)
-			
+			// Calculate the ModelView matrix for this Element (Element <-> Model)		
 			Element e = world.getElement(i);
 			transformation.setModel(e.getTransformation()); // set the Model Matrix (the one attached to each Element) in the ModelView Transformation
 			
 			// TODO Do a recursive call for SubElements
 			
 			// Process each Triangle
-			for (int j=0; j<e.getTriangles().size(); j++) {
-				
-				render(e.getTriangle(j));
-				
+			for (int j=0; j<e.getTriangles().size(); j++) {				
+				render(e.getTriangle(j));	
 			}
 		}
 	}
@@ -151,6 +148,11 @@ public class RenderEngine {
 		// Then render its fragments in the View
 		if (isInView(t)) {
 			// Render triangle
+			
+			// If the rendering type is LINE, then draw lines directly
+			if (render.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
+				drawTriangleLines(t);
+			}
 			rasterize(t);
 		} else {
 			// Do not render this triangle
@@ -160,9 +162,6 @@ public class RenderEngine {
 	protected void rasterize(Triangle t) {
 		
 		switch (render.rendering_type) {
-		case RenderContext.RENDERING_TYPE_LINE:
-			//TODO First one to be implemented
-			break;
 		case RenderContext.RENDERING_TYPE_MONOCHROME:
 			//TODO To be implemented
 			break;
@@ -175,9 +174,13 @@ public class RenderEngine {
 		default:
 			// Invalid rendering type
 			break;
-
 		}
-		
+	}
+	
+	protected void drawTriangleLines(Triangle t) {
+		//view.drawLine(t.getV1(), t.getV2());
+		//view.drawLine(t.getV2(), t.getV3());
+		//view.drawLine(t.getV3(), t.getV1());
 	}
 	
 	/**
