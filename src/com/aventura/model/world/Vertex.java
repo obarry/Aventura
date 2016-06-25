@@ -48,6 +48,10 @@ public class Vertex {
 	// Reflectivity
 	// TBD
 	
+	public Vertex() {
+		
+	}
+	
 	public Vertex(Vector4 p) {
 		position = p;
 		//normal = null;

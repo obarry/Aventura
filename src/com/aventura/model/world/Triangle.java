@@ -35,6 +35,12 @@ public class Triangle {
 	Vertex v2;
 	Vertex v3;
 	
+	public Triangle() {
+		this.v1 = null;
+		this.v2 = null;
+		this.v3 = null;		
+	}
+	
 	public Triangle(NVertex v1, NVertex v2, NVertex v3) {
 		this.v1 = v1;
 		this.v2 = v2;
@@ -57,6 +63,18 @@ public class Triangle {
 
 	public Vertex getV3() {
 		return v3;
+	}
+	
+	public void setV1(Vertex v) {
+		this.v1 = v;
+	}
+
+	public void setV2(Vertex v) {
+		this.v2 = v;
+	}
+	
+	public void setV3(Vertex v) {
+		this.v3 = v;
 	}
 
 }

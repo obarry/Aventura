@@ -4,6 +4,7 @@ import com.aventura.math.perspective.Perspective;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
+import com.aventura.model.world.Vertex;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -104,7 +105,30 @@ public class ModelView {
 		this.model = model;
 	}
 	
-	public void transform(Triangle t) {
+	/**
+	 * Return a new triangle containing (new) projected vertices
+	 * Relies on the transform method transforming vertices
+	 * 
+	 * @param t the triangle to transform
+	 * @return the new triangle
+	 */
+	public Triangle transform(Triangle t) {
+		
+		Triangle transformed = new Triangle();
+		
+		transformed.setV1(transform(t.getV1()));
+		
+		return transformed;
+		
+	}
+	
+	public Vertex transform(Vertex v) {
+		
+		Vertex transformed = new Vertex();
+		
+		// TODO Calculate transformation
+		
+		return transformed;
 		
 		
 	}

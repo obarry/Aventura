@@ -138,22 +138,26 @@ public class RenderEngine {
 	 * @param t the triangle to rasterize
 	 */
 	public void render(Triangle t) {
-		// TODO implementation
+		
+		Triangle triangle; // The projected model view triangle in homogeneous coordinates 
 		
 		// Project this Triangle in the View in homogeneous coordinates
-		transformation.transform(t);
+		// This new triangle contains vertices that are transformed
+		triangle = transformation.transform(t);
 		
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
 		// Then render its fragments in the View
-		if (isInView(t)) {
+		if (isInView(triangle)) {
 			// Render triangle
 			
 			// If the rendering type is LINE, then draw lines directly
 			if (render.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
-				drawTriangleLines(t);
+				drawTriangleLines(triangle);
+			} else {
+				//TODO to be implemented
+				rasterize(triangle);
 			}
-			rasterize(t);
 		} else {
 			// Do not render this triangle
 		}
