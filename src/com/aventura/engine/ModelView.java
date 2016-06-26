@@ -2,6 +2,7 @@ package com.aventura.engine;
 
 import com.aventura.math.perspective.Perspective;
 import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
@@ -78,11 +79,18 @@ import com.aventura.model.world.Vertex;
  * @since May 2016
  * 
  */
+/**
+ * @author Bricolage Olivier
+ *
+ */
 public class ModelView {
 	
 	Perspective projection;
 	Matrix4 view;
 	Matrix4 model;
+	
+	// This matrix is the result of the multiplication of all Matrices
+	Matrix4 transformation;
 	
 	public ModelView() {
 		
@@ -106,6 +114,14 @@ public class ModelView {
 	}
 	
 	/**
+	 *  The complete transformation, from model to homogeneous coordinates, is done through the following formula:
+	 * TransformedVector = [Projection Matrix] * [View Matrix] * [Model Matrix] * OriginalVector
+	 */
+	public void computeTransformation() {
+		transformation = projection.times(view.times(model));
+	}
+	
+	/**
 	 * Return a new triangle containing (new) projected vertices
 	 * Relies on the transform method transforming vertices
 	 * 
@@ -119,18 +135,34 @@ public class ModelView {
 		transformed.setV1(transform(t.getV1()));
 		
 		return transformed;
-		
 	}
 	
-	public Vertex transform(Vertex v) {
+	/**
+	 * Return a new Vertex resulting from the ModelView transformation ("projection") of the provided Vertex
+	 * 
+	 * @param vert the provided Vertex (not modified by this call)
+	 * @return the new projected Vertex
+	 */
+	public Vertex transform(Vertex vert) {
 		
 		Vertex transformed = new Vertex();
 		
-		// TODO Calculate transformation
-		
+		// Create the Vertex having its Vector4 position set to the resulting of the transformation of the provided Vertex's 
+		// Vector4 position by the transformation Matrix
+		transformed.setPosition(transformation.times(vert.getPosition()));
+				
 		return transformed;
-		
-		
+	}
+	
+	/**
+	 * Return a new Vector4 resulting from the ModelView transformation ("projection") of the provided Vector4
+	 * TransformedVector = [4x4 Transformation Matrix] * OriginalVector
+	 * 
+	 * @param v
+	 * @return
+	 */
+	public Vector4 transform(Vector4 v) {
+		return transformation.times(v);
 	}
 
 }

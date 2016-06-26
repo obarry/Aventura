@@ -122,6 +122,7 @@ public class RenderEngine {
 			// Calculate the ModelView matrix for this Element (Element <-> Model)		
 			Element e = world.getElement(i);
 			transformation.setModel(e.getTransformation()); // set the Model Matrix (the one attached to each Element) in the ModelView Transformation
+			transformation.computeTransformation(); // Compute the whole ModelView transformation matrix
 			
 			// TODO Do a recursive call for SubElements
 			

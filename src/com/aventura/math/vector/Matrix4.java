@@ -3,6 +3,7 @@ package com.aventura.math.vector;
 import java.util.Arrays;
 
 import com.aventura.math.Constants;
+import com.aventura.tools.tracing.Tracer;
 
 public class Matrix4 {
 
@@ -115,6 +116,237 @@ public class Matrix4 {
 		}
 	}
 	
+	/**
+	 * Get row of a Matrix4 in the format of a Vector4
+	 * @param r the rank of the row
+	 * @return a Vector4 representing the row
+	 * @throws IndiceOutOfBoundException
+	 */
+	public Vector4 getRow(int r) throws IndiceOutOfBoundException {
+		if (r<0 || r>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix4"); 
+		double[] array = new double[Constants.SIZE_4];
+		Vector4 v = null;
+		// No loop for optimization
+		array[0] = this.array[r][0];
+		array[1] = this.array[r][1];
+		array[2] = this.array[r][2];
+		array[3] = this.array[r][3];
+		
+		try {
+			v = new Vector4(array);
+		} catch (VectorArrayWrongSizeException e) {
+			// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+			e.printStackTrace();
+		}
+		 return v;
+	}
+	
+	/**
+	 * Get column of a Matrix4 in the format of a Vector4
+	 * @param c the rank of the column
+	 * @return a Vector4 representing the column
+	 * @throws IndiceOutOfBoundException
+	 */
+	public Vector4 getColumn(int c) throws IndiceOutOfBoundException {
+		if (c<0 || c>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix4"); 
+		double[] array = new double[Constants.SIZE_4];
+		Vector4 v = null;
+		// No loop for optimization
+		array[0] = this.array[0][c];
+		array[1] = this.array[1][c];
+		array[2] = this.array[2][c];
+		array[3] = this.array[3][c];
+		
+		try {
+			v = new Vector4(array);
+		} catch (VectorArrayWrongSizeException e) {
+			// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+			e.printStackTrace();
+		}
+		 return v;	
+	}
+	
+	/**
+	 * Compare this Matrix with another
+	 * @param B the other Matrix
+	 * @return true if all the elements of this Matrix are equals to the elements of B
+	 */
+	public boolean equals(Matrix4 B) {
+		
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				if (this.get(i,j) != B.get(i,j)) return false;
+			}
+		}
+		return true;
+		
+	}
+	
+	/**
+	 * C=A^B
+	 * @param B
+	 * @return
+	 */
+	public Matrix4 times(Matrix4 b) {
+		Matrix4 r = new Matrix4();
+		
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				try {
+					r.set(i,j, this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j) + this.get(i,3)*b.get(3, j));
+				} catch (IndiceOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();				
+				}
+			}
+		}
+		
+		return r;
+	}
+	
+	/**
+	 * A=A^B
+	 * @param B
+	 */
+	public void timesEquals(Matrix4 b) {
+		double[][] array = new double[Constants.SIZE_4][Constants.SIZE_4];
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				array[i][j] = this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j) + this.get(i,3)*b.get(3, j);
+			}
+		}
+		this.array = array;
+	}
+	
+	/**
+	 * Multiply a Matrix by a scalar B=A*s
+	 * @param s the scalar value
+	 * @return a new Matrix B=A*s
+	 */
+	public Matrix4 times(double s) {
+		Matrix4 r = new Matrix4();
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				try {
+					r.set(i,j, this.array[i][j]*s);
+				} catch (IndiceOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();				
+				}
+			}
+		}
+		return r;
+	}
+	
+	/**
+	 * Multiply this Matrix by a scalar A = A*s
+	 * @param s the scalar value
+	 */
+	public void timesEquals(double s) {
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				this.array[i][j] = this.array[i][j]*s;
+			}
+		}
+	}
+	
+	/**
+	 * Matrix addition C=A+B. Do not modify this Matrix (A), this Matrix and return C a newly created Matrix.
+	 * @param B the Matrix to be added
+	 * @return C, a new Matrix, sum of this Matrix (A) and B Matrix
+	 */
+	public Matrix4 plus(Matrix4 B) {
+		Matrix4 r = new Matrix4();
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				try {
+					r.set(i,j, this.array[i][j]+B.get(i,j));
+				} catch (IndiceOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();				
+				}
+			}
+		}
+		return r;		
+	}
 
+	/**
+	 * Matrix addition A=A+B. This Matrix (A) is modified and contains the result of the operation.
+	 * @param B the Matrix to be added to this Matrix
+	 */
+	public void plusEquals(Matrix4 B) {
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				this.array[i][j] = this.array[i][j]+B.get(i,j);
+			}
+		}
+	}
 
+	/**
+	 * Matrix subtraction C=A-B. Do not modify this Matrix (A), this Matrix and return C a newly created Matrix.
+	 * @param B the Matrix to be subtracted
+	 * @return C, a new Matrix, subtraction of this Matrix (A) and B Matrix
+	 */
+	public Matrix4 minus(Matrix4 B) {
+		Matrix4 r = new Matrix4();
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				try {
+					r.set(i,j, this.array[i][j]-B.get(i,j));
+				} catch (IndiceOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();				
+				}
+			}
+		}
+		return r;		
+	}
+	
+	/**
+	 * Matrix subtraction A=A-B. This Matrix (A) is modified and contains the result of the operation.
+	 * @param B the Matrix to be subtracted to this Matrix
+	 */
+	/**
+	 * @param B
+	 */
+	public void minusEquals(Matrix4 B) {
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				this.array[i][j] = this.array[i][j]-B.get(i,j);
+			}
+		}
+	}
+
+	public Vector4 times(Vector4 v) {
+		// Rely on the service provided by the Vector3D class
+		// Optimal call is to use Vector3D method directly
+		return v.times(this);
+	}
+	
+	/**
+	 * Provide the subMatrix 3x3 of the matrix 4x4 (first 3 lines and 3 columns)
+	 * @return a new Matrix corresponding to the subMatrix 3x3
+	 */
+	public Matrix3 getMatrix3() {
+		Matrix3 r = new Matrix3();
+		for (int i=0; i<Constants.SIZE_3; i++) {
+			for (int j=0; j<Constants.SIZE_3; j++) {
+				try {
+					r.set(i,j,this.array[i][j]);
+				} catch (IndiceOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();
+				}
+			}
+		}
+		return r;
+	}
+	
 }
