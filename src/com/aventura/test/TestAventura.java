@@ -6,8 +6,16 @@ import com.aventura.engine.RenderEngine;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
+import com.aventura.view.SwingView;
+import com.aventura.view.View;
 
 public class TestAventura {
+	
+	public static View createView() {
+		View view = new SwingView();
+		return view;
+	
+	}
 		
 	public static World createWorld() {
 		World world = new World();

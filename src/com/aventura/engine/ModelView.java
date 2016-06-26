@@ -133,6 +133,8 @@ public class ModelView {
 		Triangle transformed = new Triangle();
 		
 		transformed.setV1(transform(t.getV1()));
+		transformed.setV2(transform(t.getV2()));
+		transformed.setV3(transform(t.getV3()));
 		
 		return transformed;
 	}
