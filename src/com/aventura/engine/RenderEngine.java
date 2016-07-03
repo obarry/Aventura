@@ -157,6 +157,9 @@ public class RenderEngine {
 				drawTriangleLines(triangle);
 			} else {
 				//TODO to be implemented
+				
+				// if triangle is Ntriangle then calculate the normal of the triangle ?
+				
 				rasterize(triangle);
 			}
 		} else {
