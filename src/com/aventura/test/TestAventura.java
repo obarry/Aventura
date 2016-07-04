@@ -1,6 +1,8 @@
 package com.aventura.test;
 
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Toolkit;
 
 import javax.swing.JFrame;
@@ -46,17 +48,25 @@ import com.aventura.view.View;
 
 public class TestAventura {
 	
-	public static View createView() {
-		
+	public void createView() {
+
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Aventura");
 		// Set the size of the frame
 		frame.setSize(500,200);
 		
 		// Create a panel and add it to the frame
-		JPanel panel = new JPanel();
+		JPanel panel = new JPanel() {
+			
+			// Create the view to be displayed
+			View view = new SwingView();
+			
+		    public void paintComponent(Graphics graph) {
+		    	Graphics2D graph2D = (Graphics2D)graph;
+		    	((SwingView)view).draw(graph);
+		    }
+		};
 		frame.getContentPane().add(panel);
-
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
  
 		// Locate application frame in the center of the screen
@@ -64,31 +74,29 @@ public class TestAventura {
 		frame.setLocation(dim.width/2 - frame.getWidth()/2, dim.height/2 - frame.getHeight()/2);
 		
 		// Render the frame on the display
-		frame.setVisible(true);
-		
-		View view = new SwingView();
-		return view;
-	
+		frame.setVisible(true);	
 	}
 		
-	public static World createWorld() {
+	public World createWorld() {
 		World world = new World();
 		return world;
 	}
 
-	public static Lighting createLight() {
+	public Lighting createLight() {
 		Lighting lighting = new Lighting();
 		return lighting;
 	}
 
 	public static void main(String[] args) {
+		
+		TestAventura test = new TestAventura();
 				
-		World world = createWorld();
-		Lighting light = createLight();
+		World world = test.createWorld();
+		Lighting light = test.createLight();
 		
 		Camera camera = new Camera();
 		
-		createView();
+		test.createView();
 		
 		System.out.println(GraphicContext.GRAPHIC_DEFAULT);
 		

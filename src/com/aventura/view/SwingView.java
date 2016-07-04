@@ -1,5 +1,7 @@
 package com.aventura.view;
 
+import java.awt.Graphics;
+
 /**
 * ------------------------------------------------------------------------------ 
 * MIT License
@@ -39,5 +41,19 @@ public class SwingView extends View {
 		// TODO Auto-generated method stub
 
 	}
+	
+	/**
+	 * This is "THE" method triggering all the rendering !!!
+	 * It is called by the JPanel while this component is repainting (the method paintComponent() is called)
+	 * As we initialized the JPanel with a View (actually a SwingView as this is a Swing GUI), then all the
+	 * Aventura related processing is done by the API implementation, using the provided Graphics context: graph
+	 * (Graphics -> Graphics2D can be easily extracted).
+	 * 
+	 * @param graph, the Swing interface graphic context to be used to display in the frame/panel
+	 */
+	public void draw(Graphics graph) {
+		// TODO To be implemented
+	}
+	
 
 }
