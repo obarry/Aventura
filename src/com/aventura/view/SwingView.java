@@ -29,7 +29,38 @@ import java.awt.Graphics;
 * 
 */
 public class SwingView extends View {
+	
+	// buffer image #1 to be displayed
+	// TBD find the appropriate Swing object
+	
+	// back buffer image #2 to be used while creating the view
+	// TBD find the appropriate Swing object
+	
+	public SwingView() {
+		// Initialize the buffer image to white
+	}
 
+	@Override
+	public void initView() {
+		// TODO Auto-generated method stub
+		// Reinitialize the back buffer image #2 - need to define color of the back as per Graphic context definition
+		
+	}
+
+	@Override
+	public void renderView() {
+		// TODO Auto-generated method stub
+		// Swap : copy the back buffer image #2 into #1 
+		
+		
+	}
+
+	@Override
+	public void setColor(Color c) {
+		// TODO Auto-generated method stub
+		
+	}
+	
 	@Override
 	public void drawPixel(int x, int y) {
 		// TODO Auto-generated method stub
@@ -44,16 +75,21 @@ public class SwingView extends View {
 	
 	/**
 	 * This is "THE" method triggering all the rendering !!!
+	 * This method is GUI type specific : as this is a callback method, it is known by the GUI, not by the engine.
+	 * 
 	 * It is called by the JPanel while this component is repainting (the method paintComponent() is called)
 	 * As we initialized the JPanel with a View (actually a SwingView as this is a Swing GUI), then all the
 	 * Aventura related processing is done by the API implementation, using the provided Graphics context: graph
 	 * (Graphics -> Graphics2D can be easily extracted).
 	 * 
+	 * This method should trigger the repaint() but not (necessarily) the rendering generation.
+	 * This means that (assuming this is implemented by the API) there is a double buffering -> this method will display the generated view only
+	 * not the one under construction (if any is under construction).
+	 * 
 	 * @param graph, the Swing interface graphic context to be used to display in the frame/panel
 	 */
 	public void draw(Graphics graph) {
 		// TODO To be implemented
+		// Display the buffer image #1
 	}
-	
-
 }

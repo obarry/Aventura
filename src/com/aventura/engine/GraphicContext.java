@@ -72,9 +72,16 @@ public class GraphicContext {
 	
 	public static final String PERSPECTIVE_TYPE_FRUSTUM_STRING = "PERSPECTIVE_TYPE_FRUSTUM";
 	public static final String PERSPECTIVE_TYPE_ORTHOGRAPHIC_STRING = "PERSPECTIVE_TYPE_ORTHOGRAPHIC";
+	
+	public static final int DISPLAY_LANDMARK_DISABLED = 0;
+	public static final int DISPLAY_LANDMARK_ENABLED_STANDARD = 1;
+	public static final int DISPLAY_LANDMARK_ENABLED_ARROW = 2;
+	public static final int DISPLAY_LANDMARK_ENABLED_3D = 3;
 
+	
 	// Perspective type
-	int perspective_type = 0;
+	int perspective_type = 0; // uninitialized
+	int display_landmark = DISPLAY_LANDMARK_DISABLED; // by default
 
 	// Window & frustum
 	double width = 0;
@@ -123,7 +130,6 @@ public class GraphicContext {
 	}
 	
 	public String toString() {
-		//TODO To be implemented
 		return "GraphicContext:\n* Perpective type: "+perspectiveString(perspective_type)+"\n* Width: "+width+"\n* Height: "+height+"\n* Dist: "+dist+"\n* Depth: "+depth;
 	}
 	
@@ -165,6 +171,14 @@ public class GraphicContext {
 	
 	public int getPerspective() {
 		return perspective_type;
+	}
+	
+	public void setDisplayLandmark(int landmark) {
+		this.display_landmark = landmark;
+	}
+	
+	public int getDisplayLandmark() {
+		return display_landmark;
 	}
 
 }
