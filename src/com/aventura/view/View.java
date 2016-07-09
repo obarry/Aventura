@@ -40,6 +40,9 @@ package com.aventura.view;
 */
 public abstract class View {
 	
+	protected int width;
+	protected int height;
+	
 	public abstract void initView(); // init back buffer
 	public abstract void renderView(); // swap back buffer to front buffer, ready to display once the GUI will refresh
 	public abstract void setColor(Color c); // Color class TBD

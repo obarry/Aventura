@@ -1,6 +1,8 @@
 package com.aventura.view;
 
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 /**
 * ------------------------------------------------------------------------------ 
@@ -31,19 +33,24 @@ import java.awt.Graphics;
 public class SwingView extends View {
 	
 	// buffer image #1 to be displayed
-	// TBD find the appropriate Swing object
+	BufferedImage frontbuffer;
 	
 	// back buffer image #2 to be used while creating the view
-	// TBD find the appropriate Swing object
+	BufferedImage backbuffer;
 	
-	public SwingView() {
-		// Initialize the buffer image to white
+	public SwingView(int w, int h) {
+		width = w;
+		height = h;
+		frontbuffer = new BufferedImage(w,h, BufferedImage.TYPE_INT_RGB);
+		
+		// Initialize the buffer image to white for display
 	}
 
 	@Override
 	public void initView() {
-		// TODO Auto-generated method stub
+
 		// Reinitialize the back buffer image #2 - need to define color of the back as per Graphic context definition
+		backbuffer = new BufferedImage(w,h, BufferedImage.TYPE_INT_RGB);
 		
 	}
 
@@ -51,7 +58,7 @@ public class SwingView extends View {
 	public void renderView() {
 		// TODO Auto-generated method stub
 		// Swap : copy the back buffer image #2 into #1 
-		
+		frontbuffer = backbuffer;
 		
 	}
 
@@ -63,14 +70,15 @@ public class SwingView extends View {
 	
 	@Override
 	public void drawPixel(int x, int y) {
-		// TODO Auto-generated method stub
-
+		Graphics2D graph = (Graphics2D)backbuffer.getGraphics();
+		graph.drawLine(x,y,x,y);
 	}
+
 
 	@Override
 	public void drawLine(int x1, int y1, int x2, int y2) {
-		// TODO Auto-generated method stub
-
+		Graphics2D graph = (Graphics2D)backbuffer.getGraphics();
+		graph.drawLine(x1,y1,x2,y2);
 	}
 	
 	/**
@@ -91,5 +99,8 @@ public class SwingView extends View {
 	public void draw(Graphics graph) {
 		// TODO To be implemented
 		// Display the buffer image #1
+		((Graphics2D)graph).drawImage(frontbuffer, null, null);
+		
+
 	}
 }
