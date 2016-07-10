@@ -1,5 +1,7 @@
 package com.aventura.engine;
 
+import com.aventura.math.vector.Matrix4;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -89,6 +91,8 @@ public class GraphicContext {
 	double depth = 0;
 	double dist = 0;
 	
+	// Projection Matrix
+	Matrix4 projection;
 
 	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(800,450,400,10000, PERSPECTIVE_TYPE_FRUSTUM);
 
@@ -127,6 +131,10 @@ public class GraphicContext {
 			default:
 				return "Undefined perspective: "+perspective;
 		}
+	}
+	
+	public Matrix4 getProjectionMatrix() {
+		return projection;
 	}
 	
 	public String toString() {

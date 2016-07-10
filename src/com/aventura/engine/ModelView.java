@@ -47,7 +47,7 @@ import com.aventura.model.world.Vertex;
  *     |  World Coordinates  |
  *     +---------------------+
  *                |
- *                |   [View Matrix] 4x4 Transformation Matrix -> to transform the world into the camara coordinates
+ *                |   [View Matrix] 4x4 Transformation Matrix -> to transform the world into the camera coordinates
  *                v
  *     +----------------------+
  *     |  Camera Coordinates  |

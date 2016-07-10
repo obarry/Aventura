@@ -103,7 +103,12 @@ public class RenderEngine {
 		this.world = world;
 		this.light = light;
 		this.camera = camera;
-		this.transformation = new ModelView(); // TODO pass parameters for Camera and Word Matrices
+		
+		// View matrix (World -> Camera) -> can be calculated from the camera Rep and position but this needs to be inversed
+		// (camera Rep provides orientation of the camera into the World coordinates, position of the camera provides position into World rep)
+		// Projection matrix (Camera -> Homogeneous) -> can be calculated from the view frustum information (should be provided by GraphicContext)
+
+		this.transformation = new ModelView(); // TODO pass parameters for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
 	}
 	
 	/**
