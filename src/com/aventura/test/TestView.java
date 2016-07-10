@@ -44,10 +44,10 @@ import com.aventura.view.View;
 * SOFTWARE.
 * ------------------------------------------------------------------------------
 * 
-* This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
+* This class is a Test class to test the View
 */
 
-public class TestAventura {
+public class TestView {
 	
 	// Create the view to be displayed
 	private SwingView view;
@@ -68,7 +68,7 @@ public class TestAventura {
 		    public void paintComponent(Graphics graph) {
 				System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura.this.view.draw(graph);
+		    	TestView.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -84,31 +84,24 @@ public class TestAventura {
 		return view;
 	}
 		
-	public World createWorld() {
-		World world = new World();
-		return world;
-	}
-
-	public Lighting createLight() {
-		Lighting lighting = new Lighting();
-		return lighting;
-	}
-
 	public static void main(String[] args) {
 		
-		TestAventura test = new TestAventura();
+		TestView test = new TestView();
 				
-		World world = test.createWorld();
-		Lighting light = test.createLight();
-		
-		Camera camera = new Camera();
-		
 		View view = test.createView();
 		
+		// Test of the view
+		view.initView();
+		view.setColor(Color.WHITE);
+		view.drawLine(0, 0, 500, 200);
+		view.drawLine(0, 200, 500, 0);
+		view.setColor(Color.RED);
+		view.drawLine(0, 100, 500, 100);
+		view.setColor(Color.BLUE);
+		view.drawLine(250, 0, 250, 200);
+		view.renderView();
+
 		System.out.println(GraphicContext.GRAPHIC_DEFAULT);
-		
-		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, GraphicContext.GRAPHIC_DEFAULT);
-		renderer.render();
 		
 	}
 
