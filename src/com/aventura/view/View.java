@@ -1,5 +1,7 @@
 package com.aventura.view;
 
+import java.awt.Color;
+
 /**
 * ------------------------------------------------------------------------------ 
 * MIT License
@@ -45,7 +47,7 @@ public abstract class View {
 	
 	public abstract void initView(); // init back buffer
 	public abstract void renderView(); // swap back buffer to front buffer, ready to display once the GUI will refresh
-	public abstract void setColor(Color c); // Color class TBD
+	public abstract void setColor(Color c); // Using java.awt.Color class
 	public abstract void drawPixel(int x, int y);
 	public abstract void drawLine(int x1, int y1, int x2, int y2);
 

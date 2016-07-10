@@ -1,5 +1,6 @@
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -48,22 +49,26 @@ import com.aventura.view.View;
 
 public class TestAventura {
 	
-	public void createView() {
+	// Create the view to be displayed
+	private SwingView view;
+	
+	public View createView() {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Aventura");
 		// Set the size of the frame
 		frame.setSize(500,200);
 		
+		// Create the view to be displayed
+		view = new SwingView(500, 200);
+		
 		// Create a panel and add it to the frame
 		JPanel panel = new JPanel() {
 			
-			// Create the view to be displayed
-			View view = new SwingView();
-			
 		    public void paintComponent(Graphics graph) {
+				System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	((SwingView)view).draw(graph);
+		    	TestAventura.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -74,7 +79,9 @@ public class TestAventura {
 		frame.setLocation(dim.width/2 - frame.getWidth()/2, dim.height/2 - frame.getHeight()/2);
 		
 		// Render the frame on the display
-		frame.setVisible(true);	
+		frame.setVisible(true);
+		
+		return view;
 	}
 		
 	public World createWorld() {
@@ -96,8 +103,19 @@ public class TestAventura {
 		
 		Camera camera = new Camera();
 		
-		test.createView();
+		View view = test.createView();
 		
+		// Test of the view
+		view.initView();
+		view.setColor(Color.WHITE);
+		view.drawLine(0, 0, 500, 200);
+		view.drawLine(0, 200, 500, 0);
+		view.setColor(Color.RED);
+		view.drawLine(0, 100, 500, 100);
+		view.setColor(Color.BLUE);
+		view.drawLine(250, 0, 250, 200);
+		view.renderView();
+
 		System.out.println(GraphicContext.GRAPHIC_DEFAULT);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, GraphicContext.GRAPHIC_DEFAULT);

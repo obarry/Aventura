@@ -2,7 +2,10 @@ package com.aventura.view;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
+
+import com.aventura.tools.tracing.Tracer;
 
 /**
 * ------------------------------------------------------------------------------ 
@@ -29,28 +32,45 @@ import java.awt.image.BufferedImage;
 * SOFTWARE.
 * ------------------------------------------------------------------------------
 * 
+* This class manages the front and back buffer image.
+* While the back buffer image is being drawn, the front image can be safely displayed/rendered.
+* As the rendering of the GUI is not under the control of the API, this method is safer and 
+* avoids calculating the same image each time the display should be rendered (e.g. window moved).
+* 
+*  The implementation of this class is SWING based and specific, but the public methods are generic
+*  and inherited from the abstract View class.
+* 
 */
 public class SwingView extends View {
 	
 	// buffer image #1 to be displayed
 	BufferedImage frontbuffer;
+	Graphics2D frontgraph;
 	
 	// back buffer image #2 to be used while creating the view
 	BufferedImage backbuffer;
+	Graphics2D backgraph;
 	
 	public SwingView(int w, int h) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView w: "+w+" h: "+h);
 		width = w;
 		height = h;
 		frontbuffer = new BufferedImage(w,h, BufferedImage.TYPE_INT_RGB);
-		
+		frontgraph = (Graphics2D)frontbuffer.getGraphics();
+	
 		// Initialize the buffer image to white for display
+		//frontgraph.setBackground(java.awt.Color.WHITE);
+		//frontgraph.drawLine(0, 0, width,  height); // test
+		
 	}
 
 	@Override
 	public void initView() {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Initializing SwingView");
 
 		// Reinitialize the back buffer image #2 - need to define color of the back as per Graphic context definition
-		backbuffer = new BufferedImage(w,h, BufferedImage.TYPE_INT_RGB);
+		backbuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
+		backgraph = (Graphics2D)backbuffer.getGraphics();
 		
 	}
 
@@ -59,26 +79,26 @@ public class SwingView extends View {
 		// TODO Auto-generated method stub
 		// Swap : copy the back buffer image #2 into #1 
 		frontbuffer = backbuffer;
+		frontgraph = backgraph;
 		
 	}
 
 	@Override
 	public void setColor(Color c) {
 		// TODO Auto-generated method stub
+		backgraph.setColor(c);
 		
 	}
 	
 	@Override
 	public void drawPixel(int x, int y) {
-		Graphics2D graph = (Graphics2D)backbuffer.getGraphics();
-		graph.drawLine(x,y,x,y);
+		backgraph.drawLine(x,y,x,y);
 	}
 
 
 	@Override
 	public void drawLine(int x1, int y1, int x2, int y2) {
-		Graphics2D graph = (Graphics2D)backbuffer.getGraphics();
-		graph.drawLine(x1,y1,x2,y2);
+		backgraph.drawLine(x1,y1,x2,y2);
 	}
 	
 	/**
@@ -97,10 +117,10 @@ public class SwingView extends View {
 	 * @param graph, the Swing interface graphic context to be used to display in the frame/panel
 	 */
 	public void draw(Graphics graph) {
-		// TODO To be implemented
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "draw Swing View");
+
 		// Display the buffer image #1
 		((Graphics2D)graph).drawImage(frontbuffer, null, null);
 		
-
 	}
 }
