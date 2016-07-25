@@ -85,7 +85,7 @@ import com.aventura.model.world.Vertex;
  */
 public class ModelView {
 	
-	Perspective projection;
+	Matrix4 projection;
 	Matrix4 view;
 	Matrix4 model;
 	
@@ -96,12 +96,12 @@ public class ModelView {
 		
 	}
 	
-	public ModelView(Perspective projection, Matrix4 view) {
-		this.projection = projection;
+	public ModelView(Matrix4 view, Matrix4 projection) {
 		this.view = view;
+		this.projection = projection;
 	}
 	
-	public void setProjection(Perspective projection) {
+	public void setProjection(Matrix4 projection) {
 		this.projection = projection;
 	}
 	

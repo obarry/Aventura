@@ -1,7 +1,5 @@
 package com.aventura.math.perspective;
 
-//import com.aventura.math.vector.Matrix4;
-
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
