@@ -51,11 +51,12 @@ public class TestView {
 	
 	// Create the view to be displayed
 	private SwingView view;
+	JFrame frame;
 	
 	public View createView() {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura");
+		frame = new JFrame("Test Aventura");
 		// Set the size of the frame
 		frame.setSize(500,200);
 		
@@ -93,13 +94,36 @@ public class TestView {
 		// Test of the view
 		view.initView();
 		view.setColor(Color.WHITE);
-		view.drawLine(0, 0, 500, 200);
-		view.drawLine(0, 200, 500, 0);
+		view.drawLine(-250, -100, 250, 100);
+		view.drawLine(-250, 100, 250, -100);
 		view.setColor(Color.RED);
-		view.drawLine(0, 100, 500, 100);
+		view.drawLine(-250, 0, 250, 0);
 		view.setColor(Color.BLUE);
-		view.drawLine(250, 0, 250, 200);
+		view.drawLine(0, -100, 0, 100);
+		view.setColor(Color.YELLOW);
+		view.drawLine(-250, 50, 250, 75);
+		view.drawLine(-250, -50, 250, -25);
 		view.renderView();
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// Test of the view
+		view.initView();
+		view.setColor(Color.GREEN);
+		view.drawLine(-250, -100, 250, 100);
+		view.drawLine(-250, 100, 250, -100);
+		view.setColor(Color.WHITE);
+		view.drawLine(-250, 0, 250, 0);
+		view.setColor(Color.BLUE);
+		view.drawLine(0, -100, 0, 100);
+		view.setColor(Color.CYAN);
+		view.drawLine(50, -100, 75, 100);
+		view.drawLine(-50, -100, -25, 100);
+		view.renderView();
+		test.frame.repaint();
 
 		System.out.println(GraphicContext.GRAPHIC_DEFAULT);
 		
