@@ -141,18 +141,18 @@ public class ModelView {
 	
 	/**
 	 * Return a new Vertex resulting from the ModelView transformation ("projection") of the provided Vertex
+	 * Do not modify the provided Vertex.
 	 * 
-	 * @param vert the provided Vertex (not modified by this call)
+	 * @param vert the provided Vertex (left unchanged)
 	 * @return the new projected Vertex
 	 */
 	public Vertex transform(Vertex vert) {
 		
-		Vertex transformed = new Vertex();
-		
-		// Create the Vertex having its Vector4 position set to the resulting of the transformation of the provided Vertex's 
+		// Create a new Vertex having its Vector4 position set to the resulting of the transformation of the provided Vertex's 
 		// Vector4 position by the transformation Matrix
-		transformed.setPosition(transformation.times(vert.getPosition()));
-				
+		Vertex transformed = new Vertex(transformation.times(vert.getPosition()));
+		
+		// Return the newly created Vertex (hence preserve the original Vertex of the Element)
 		return transformed;
 	}
 	

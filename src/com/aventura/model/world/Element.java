@@ -102,6 +102,7 @@ public class Element implements Transformable {
 	protected ArrayList<Element> subelements; // To create a hierarchy of elements - not necessarily used
 	protected ArrayList<Triangle> triangles;  // Triangles related to this element
 	//protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
+	
 	protected Matrix4 transform;  // Element to World Transformation Matrix (Model Matrix)
 	
 	public Element() {
@@ -122,6 +123,7 @@ public class Element implements Transformable {
 	
 	public void addTriangle(Triangle t) {
 		//TODO To be implemented
+		this.triangles.add(t);
 	}
 	
 	/**
@@ -141,15 +143,19 @@ public class Element implements Transformable {
 	public Triangle getTriangle(int i) {
 		return triangles.get(i);
 	}
+	
+	public int getNbOfTriangles() {
+		return triangles.size();
+	}
 
 	@Override
-	public void setTransformation(Matrix4 transformation) {
+	public void setTransformationMatrix(Matrix4 transformation) {
 		this.transform = transformation;
 		
 	}
 
 	@Override
-	public Matrix4 getTransformation() {
+	public Matrix4 getTransformationMatrix() {
 		return transform;
 	}
 
