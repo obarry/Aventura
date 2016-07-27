@@ -1,5 +1,6 @@
 package com.aventura.view;
 
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Color;
@@ -53,6 +54,9 @@ import com.aventura.tools.tracing.Tracer;
 */
 
 public class SwingView extends View {
+
+	// Swing component to which this View is associated. Used to pro-actively repaint when needed.
+	Component component = null;
 	
 	// buffer image #1 to be displayed
 	BufferedImage frontbuffer;
@@ -71,12 +75,23 @@ public class SwingView extends View {
 		frontbuffer = new BufferedImage(w,h, BufferedImage.TYPE_INT_RGB);
 		frontgraph = (Graphics2D)frontbuffer.getGraphics();
 	
-		// Initialize the buffer image to white for display
-		//frontgraph.setBackground(java.awt.Color.WHITE);
-		//frontgraph.drawLine(0, 0, width,  height); // test
-		
         // Translate origin of the graphic
 		frontgraph.translate(width/2, height/2);
+	}
+
+	public SwingView(int w, int h, Component comp) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView w: "+w+" h: "+h);
+		width = w;
+		height = h;
+
+		frontbuffer = new BufferedImage(w,h, BufferedImage.TYPE_INT_RGB);
+		frontgraph = (Graphics2D)frontbuffer.getGraphics();
+	
+        // Translate origin of the graphic
+		frontgraph.translate(width/2, height/2);
+		
+		// Initialize the Jcomponent to which this view is associated
+		component = comp;
 	}
 
 	@Override
@@ -98,6 +113,8 @@ public class SwingView extends View {
 		frontbuffer = backbuffer;
 		frontgraph = backgraph;
 		
+		// Repaint the component since the buffer has been updated
+		component.repaint();
 	}
 
 	@Override

@@ -6,16 +6,12 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
 
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
 import com.aventura.engine.GraphicContext;
-import com.aventura.engine.RenderContext;
-import com.aventura.engine.RenderEngine;
-import com.aventura.model.camera.Camera;
-import com.aventura.model.light.Lighting;
-import com.aventura.model.world.World;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -61,7 +57,7 @@ public class TestView {
 		frame.setSize(500,200);
 		
 		// Create the view to be displayed
-		view = new SwingView(500, 200);
+		view = new SwingView(500, 200, frame);
 		
 		// Create a panel and add it to the frame
 		JPanel panel = new JPanel() {
@@ -86,47 +82,57 @@ public class TestView {
 	}
 		
 	public static void main(String[] args) {
-		
+
 		TestView test = new TestView();
-				
+
 		View view = test.createView();
-		
-		// Test of the view
-		view.initView();
-		view.setColor(Color.WHITE);
-		view.drawLine(-250, -100, 250, 100);
-		view.drawLine(-250, 100, 250, -100);
-		view.setColor(Color.RED);
-		view.drawLine(-250, 0, 250, 0);
-		view.setColor(Color.BLUE);
-		view.drawLine(0, -100, 0, 100);
-		view.setColor(Color.YELLOW);
-		view.drawLine(-250, 50, 250, 75);
-		view.drawLine(-250, -50, 250, -25);
-		view.renderView();
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		// Test of the view
-		view.initView();
-		view.setColor(Color.GREEN);
-		view.drawLine(-250, -100, 250, 100);
-		view.drawLine(-250, 100, 250, -100);
-		view.setColor(Color.WHITE);
-		view.drawLine(-250, 0, 250, 0);
-		view.setColor(Color.BLUE);
-		view.drawLine(0, -100, 0, 100);
-		view.setColor(Color.CYAN);
-		view.drawLine(50, -100, 75, 100);
-		view.drawLine(-50, -100, -25, 100);
-		view.renderView();
-		test.frame.repaint();
 
 		System.out.println(GraphicContext.GRAPHIC_DEFAULT);
-		
+
+		for (int i=0; i<20; i++) {
+
+			// Test of the view
+			view.initView();
+			view.setColor(Color.WHITE);
+			view.drawLine(-250, -100, 250, 100);
+			view.drawLine(-250, 100, 250, -100);
+			view.setColor(Color.RED);
+			view.drawLine(-250, 0, 250, 0);
+			view.setColor(Color.BLUE);
+			view.drawLine(0, -100, 0, 100);
+			view.setColor(Color.YELLOW);
+			view.drawLine(-250, 50, 250, 75);
+			view.drawLine(-250, -50, 250, -25);
+			view.renderView();
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			// Test of the view
+			view.initView();
+			view.setColor(Color.GREEN);
+			view.drawLine(-250, -100, 250, 100);
+			view.drawLine(-250, 100, 250, -100);
+			view.setColor(Color.WHITE);
+			view.drawLine(-250, 0, 250, 0);
+			view.setColor(Color.BLUE);
+			view.drawLine(0, -100, 0, 100);
+			view.setColor(Color.CYAN);
+			view.drawLine(50, -100, 75, 100);
+			view.drawLine(-50, -100, -25, 100);
+			view.renderView();
+			//test.frame.repaint();
+			
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 	}
 
 }
