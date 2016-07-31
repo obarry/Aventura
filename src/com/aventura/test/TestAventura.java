@@ -10,8 +10,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.engine.GraphicContext;
-import com.aventura.engine.RenderContext;
+import com.aventura.context.GraphicContext;
+import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
@@ -52,7 +52,7 @@ public class TestAventura {
 	// Create the view to be displayed
 	private SwingView view;
 	
-	public View createView() {
+	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Aventura");
@@ -60,7 +60,7 @@ public class TestAventura {
 		frame.setSize(500,200);
 		
 		// Create the view to be displayed
-		view = new SwingView(500, 200);
+		view = new SwingView(context);
 		
 		// Create a panel and add it to the frame
 		JPanel panel = new JPanel() {
@@ -103,11 +103,11 @@ public class TestAventura {
 		
 		Camera camera = new Camera();
 		
-		View view = test.createView();
+		GraphicContext context = GraphicContext.GRAPHIC_DEFAULT;
+		System.out.println(context);
 		
-		System.out.println(GraphicContext.GRAPHIC_DEFAULT);
-		
-		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, GraphicContext.GRAPHIC_DEFAULT);
+		View view = test.createView(context);
+		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
 		renderer.render();
 		
 	}

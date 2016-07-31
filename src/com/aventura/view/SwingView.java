@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
+import com.aventura.context.GraphicContext;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -67,30 +68,28 @@ public class SwingView extends View {
 	Graphics2D backgraph;
 	
 	
-	public SwingView(int w, int h) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView w: "+w+" h: "+h);
-		width = w;
-		height = h;
+	public SwingView(GraphicContext context) {
+		super(context);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView. Width: "+width+", Height: "+height);
 
-		frontbuffer = new BufferedImage(w,h, BufferedImage.TYPE_INT_RGB);
+		frontbuffer = new BufferedImage(width , height, BufferedImage.TYPE_INT_RGB);
 		frontgraph = (Graphics2D)frontbuffer.getGraphics();
 	
         // Translate origin of the graphic
 		frontgraph.translate(width/2, height/2);
 	}
 
-	public SwingView(int w, int h, Component comp) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView w: "+w+" h: "+h);
-		width = w;
-		height = h;
+	public SwingView(GraphicContext context, Component comp) {
+		super(context);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView with Swing Component. Width: "+width+", Height: "+height);
 
-		frontbuffer = new BufferedImage(w,h, BufferedImage.TYPE_INT_RGB);
+		frontbuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		frontgraph = (Graphics2D)frontbuffer.getGraphics();
 	
         // Translate origin of the graphic
 		frontgraph.translate(width/2, height/2);
 		
-		// Initialize the Jcomponent to which this view is associated
+		// Initialize the Component/JComponent to which this view is associated
 		component = comp;
 	}
 

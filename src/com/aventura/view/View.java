@@ -2,6 +2,8 @@ package com.aventura.view;
 
 import java.awt.Color;
 
+import com.aventura.context.GraphicContext;
+
 /**
 * ------------------------------------------------------------------------------ 
 * MIT License
@@ -44,6 +46,19 @@ public abstract class View {
 	
 	protected int width;
 	protected int height;
+	
+	/**
+	 * Create the view based on GraphicContext to get width and height information of the view frustum
+	 * Indeed the View is expected to match exactly these dimensions. 
+	 * 
+	 * @param context
+	 */
+	public View(GraphicContext context) {
+		
+		// Both width and height are cast to (int) for the View that is pixel based
+		width = (int)context.getWidth();
+		height = (int)context.getHeight();
+	}
 	
 	public abstract void initView(); // init back buffer
 	public abstract void renderView(); // swap back buffer to front buffer, ready to display once the GUI will refresh

@@ -1,5 +1,7 @@
 package com.aventura.engine;
 
+import com.aventura.context.GraphicContext;
+import com.aventura.context.RenderContext;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Element;

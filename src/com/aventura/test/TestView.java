@@ -11,7 +11,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.engine.GraphicContext;
+import com.aventura.context.GraphicContext;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -49,7 +49,7 @@ public class TestView {
 	private SwingView view;
 	JFrame frame;
 	
-	public View createView() {
+	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
 		frame = new JFrame("Test Aventura");
@@ -57,7 +57,7 @@ public class TestView {
 		frame.setSize(500,200);
 		
 		// Create the view to be displayed
-		view = new SwingView(500, 200, frame);
+		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
 		JPanel panel = new JPanel() {
@@ -82,12 +82,11 @@ public class TestView {
 	}
 		
 	public static void main(String[] args) {
-
+		
 		TestView test = new TestView();
 
-		View view = test.createView();
+		View view = test.createView(GraphicContext.GRAPHIC_DEFAULT);
 
-		System.out.println(GraphicContext.GRAPHIC_DEFAULT);
 
 		for (int i=0; i<20; i++) {
 

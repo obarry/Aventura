@@ -1,4 +1,4 @@
-package com.aventura.engine;
+package com.aventura.context;
 
 import com.aventura.math.vector.Matrix4;
 
@@ -94,6 +94,7 @@ public class GraphicContext {
 	// Projection Matrix
 	Matrix4 projection;
 
+	// Width/Height ratio = 16/9
 	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(800,450,400,10000, PERSPECTIVE_TYPE_FRUSTUM);
 
 	
