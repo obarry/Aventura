@@ -54,16 +54,16 @@ import com.aventura.view.View;
  *     +---------------------+		  |		+---------------------+							   			   +---------------------+
  *     |      Lighting       | <-----+------|    RenderEngine     |--------------------------------------->|        View         |
  *     +---------------------+		  |		+---------------------+ 									   +---------------------+
- *                					  |				   |	  |
- *                   				  |				   |	  |				+---------------------+
- *                	 				  |				   |	  +------------>|   GraphicContext    |
+ *                					  |				   |	  |														  |
+ *                   				  |				   |	  |				+---------------------+					  |
+ *                	 				  |				   |	  +------------>|   GraphicContext    |<------------------+
  *     +---------------------+        |        		   v					+---------------------+
  *     |       Camera        | <------+     +---------------------+
  *     +---------------------+			    |      ModelView      |
  *					   				    	+---------------------+
  *
- *          	 Model												 Engine										 View
- *			com.aventura.model									com.aventura.engine							com.aventura.view
+ *          	 Model								 Engine						Context(s)							 View
+ *			com.aventura.model					com.aventura.engine			com.aventura.context				com.aventura.view
  * 
  * @author Bricolage Olivier
  * @since May 2016

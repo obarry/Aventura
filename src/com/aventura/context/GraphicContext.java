@@ -1,6 +1,10 @@
 package com.aventura.context;
 
+import com.aventura.math.perspective.Frustum;
+import com.aventura.math.perspective.Orthographic;
+import com.aventura.math.perspective.Perspective;
 import com.aventura.math.vector.Matrix4;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -111,7 +115,15 @@ public class GraphicContext {
 		this.dist = dist;
 		this.depth = depth;
 		this.perspective_type = perspective;
-
+		
+		double left = -width/2;
+		double right = width/2;
+		double bottom = -height/2;
+		double top = height/2;
+		double near = dist;
+		double far = dist + depth;
+		
+		createPerspective(perspective, left , right, bottom, top, near, far);
 	}
 	
 	public GraphicContext(double top, double bottom, double right, double left, double far, double near, int perspective) {
@@ -120,7 +132,8 @@ public class GraphicContext {
 		this.dist = near;
 		this.depth = far - near;
 		this.perspective_type = perspective;
-
+		
+		createPerspective(perspective, left , right, bottom, top, near, far);
 	}
 	
 	public String perspectiveString(int perspective) {
@@ -132,6 +145,19 @@ public class GraphicContext {
 			default:
 				return "Undefined perspective: "+perspective;
 		}
+	}
+	
+	protected void createPerspective(int perspective, double left, double right, double bottom, double top, double near, double far) {
+		
+		switch (perspective) {
+		case PERSPECTIVE_TYPE_FRUSTUM:
+			projection = new Frustum(left , right, bottom, top, near, far);
+		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+			projection = new Orthographic(left , right, bottom, top, near, far);
+		default:
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+perspective);
+		}
+		
 	}
 	
 	public Matrix4 getProjectionMatrix() {
@@ -176,10 +202,24 @@ public class GraphicContext {
 	
 	public void setPerspective(int perspective) {
 		this.perspective_type = perspective;
+		
+		double left = -width/2;
+		double right = width/2;
+		double bottom = -height/2;
+		double top = height/2;
+		double near = dist;
+		double far = dist + depth;
+		
+		createPerspective(perspective, left , right, bottom, top, near, far);
+
 	}
 	
-	public int getPerspective() {
+	public int getPerspectiveType() {
 		return perspective_type;
+	}
+	
+	public Perspective getPerspective() {
+		return (Perspective)projection;
 	}
 	
 	public void setDisplayLandmark(int landmark) {

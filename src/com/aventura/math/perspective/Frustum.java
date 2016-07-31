@@ -33,7 +33,7 @@ package com.aventura.math.perspective;
  */
 public class Frustum extends Perspective {
 	
-	Frustum(double left, double right, double bottom, double top, double near, double far) {
+	public Frustum(double left, double right, double bottom, double top, double near, double far) {
 		
 		double[][] array = { { (2-near)/(right-left), 0.0,                   (right+left)/(right-left), 0.0                   },
 				 			 { 0.0                  , (2-near)/(top-bottom), (top+bottom)/(top-bottom), 0.0                   },

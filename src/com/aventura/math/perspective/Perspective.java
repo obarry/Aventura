@@ -34,5 +34,36 @@ import com.aventura.math.vector.Matrix4;
  *
  */
 public abstract class Perspective extends Matrix4 {
+	
+	double left = 0;
+	double right = 0;
+	double top = 0;
+	double bottom = 0;
+	double near = 0;
+	double far = 0;
+	
+	public double getLeft() {
+		return left;
+	}
+	
+	public double getRight() {
+		return right;
+	}
+	
+	public double getTop() {
+		return top;
+	}
+	
+	public double getBottom() {
+		return bottom;
+	}
+	
+	public double getNear() {
+		return near;
+	}
+	
+	public double getFar() {
+		return far;
+	}
 
 }
