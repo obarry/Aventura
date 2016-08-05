@@ -66,6 +66,14 @@ import com.aventura.tools.tracing.Tracer;
  *    far    = dist + depth
  *    near   = dist
  * 
+ * ------------------------------------------------------------------------------ 
+ * 
+ * PPU - Pixel Per Unit
+ * The above data (width, height, depth, dist) are given in (camera) coordinates (floating point)
+ * in a given Unit (can be meter or millimeter or whatever unit).
+ * The size of the screen is thus defined in this unit.
+ * To define the number of pixel, a ratio should be provided: the number of pixel per unit: PPU
+ * 
  * 
  * @author Bricolage Olivier
  * @since May 2016
@@ -95,11 +103,14 @@ public class GraphicContext {
 	double depth = 0;
 	double dist = 0;
 	
+	// Pixel Per Unit
+	int ppu = 0;
+	
 	// Projection Matrix
 	Matrix4 projection;
 
 	// Width/Height ratio = 16/9
-	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(800,450,400,10000, PERSPECTIVE_TYPE_FRUSTUM);
+	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5,4,100, PERSPECTIVE_TYPE_FRUSTUM, 100);
 
 	
 	/**
@@ -109,12 +120,13 @@ public class GraphicContext {
 		// To be used when creating manually GraphicContext by using setter/getters
 	}
 	
-	public GraphicContext(double width, double height, double dist, double depth, int perspective) {
+	public GraphicContext(double width, double height, double dist, double depth, int perspective, int ppu) {
 		this.width = width;
 		this.height = height;
 		this.dist = dist;
 		this.depth = depth;
 		this.perspective_type = perspective;
+		this.ppu = ppu;
 		
 		double left = -width/2;
 		double right = width/2;
@@ -126,12 +138,13 @@ public class GraphicContext {
 		createPerspective(perspective, left , right, bottom, top, near, far);
 	}
 	
-	public GraphicContext(double top, double bottom, double right, double left, double far, double near, int perspective) {
+	public GraphicContext(double top, double bottom, double right, double left, double far, double near, int perspective, int ppu) {
 		this.width = right - left;
 		this.height = top - bottom;
 		this.dist = near;
 		this.depth = far - near;
 		this.perspective_type = perspective;
+		this.ppu = ppu;
 		
 		createPerspective(perspective, left , right, bottom, top, near, far);
 	}
@@ -178,6 +191,18 @@ public class GraphicContext {
 	
 	public void setHeight(double height) {
 		this.height = height;
+	}
+	
+	public int getPPU() {
+		return ppu;
+	}
+	
+	public int getPixelWidth() {
+		return (int)(width*ppu);
+	}
+	
+	public int getPixelHeight() {
+		return (int)(height*ppu);
 	}
 	
 	public double getHeight() {

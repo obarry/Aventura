@@ -56,8 +56,8 @@ public abstract class View {
 	public View(GraphicContext context) {
 		
 		// Both width and height are cast to (int) for the View that is pixel based
-		width = (int)context.getWidth();
-		height = (int)context.getHeight();
+		width = context.getPixelWidth();
+		height = context.getPixelHeight();
 	}
 	
 	public abstract void initView(); // init back buffer
