@@ -1,6 +1,5 @@
 package com.aventura.test;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -13,9 +12,13 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
+import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Triangle;
+import com.aventura.model.world.Vertex;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -85,8 +88,33 @@ public class TestAventura {
 	}
 		
 	public World createWorld() {
+		
+		// Create a new World
 		World world = new World();
+		
+		// Create an Element in the World
+		Element e = world.createElement();
+		
+		// Build the Element: Create vertices and add Triangles to it
+		Vertex v1 = new Vertex(new Vector4(0,   0,   0,  0));
+		Vertex v2 = new Vertex(new Vector4(0, 10,   0,  0));
+		Vertex v3 = new Vertex(new Vector4(0,   0, 10,  0));
+		
+		Triangle t = new Triangle(v1, v2, v3);
+		
+		e.addTriangle(t);
+		
 		return world;
+	}
+	
+	public Camera createCamera() {
+		
+		Vector4 eye = new Vector4(-100,-100,-100,0);
+		Vector4 poi = new Vector4(0,0,0,0);
+		
+		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);
+		
+		return cam;
 	}
 
 	public Lighting createLight() {
@@ -101,7 +129,7 @@ public class TestAventura {
 		World world = test.createWorld();
 		Lighting light = test.createLight();
 		
-		Camera camera = new Camera();
+		Camera camera = test.createCamera();
 		
 		GraphicContext context = GraphicContext.GRAPHIC_DEFAULT;
 		System.out.println(context);

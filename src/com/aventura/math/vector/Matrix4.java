@@ -32,6 +32,14 @@ import com.aventura.tools.tracing.Tracer;
 **/
 public class Matrix4 {
 
+    private static final double[][] IDENTITY_ARRAY =
+    		{{1.0, 0.0, 0.0, 0.0},
+    		 {0.0, 1.0 ,0.0, 0.0},
+    		 {0.0, 0.0, 1.0, 0.0},
+    		 {0.0, 0.0, 0.0, 1.0}};
+
+    public static final Matrix4 IDENTITY = new Matrix4(IDENTITY_ARRAY);
+
 	protected double[][] array;
 
 	/**
@@ -39,6 +47,8 @@ public class Matrix4 {
 	 * @param s the size of the Matrix (number of rows and columns)
 	 */
 	public Matrix4() {
+		// Only create the array
+		array = new double[Constants.SIZE_4][Constants.SIZE_4];
 		//initialize(0); // optimize -> no init or use Matrix4(0) instead
 	}
 
@@ -55,10 +65,13 @@ public class Matrix4 {
 	 * Initialize Matrix with a 2D array of double
 	 * @param a the 2D array of double
 	 */
-	public Matrix4(double[][] a) throws MatrixArrayWrongSizeException {
-		if (a.length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix4 from array"); 
-		if (a[0].length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix4 from array"); 
-
+//	public Matrix4(double[][] a) throws MatrixArrayWrongSizeException {
+//		if (a.length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix4 from array"); 
+//		if (a[0].length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix4 from array"); 
+//
+//		this.array = a;
+//	}
+	public Matrix4(double[][] a) {
 		this.array = a;
 	}
 

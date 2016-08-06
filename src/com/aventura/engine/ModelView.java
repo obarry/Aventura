@@ -118,7 +118,9 @@ public class ModelView {
 	 * TransformedVector = [Projection Matrix] * [View Matrix] * [Model Matrix] * OriginalVector
 	 */
 	public void computeTransformation() {
-		transformation = projection.times(view.times(model));
+		Matrix4 m = view.times(model);
+		transformation = projection.times(m);
+		//transformation = projection.times(view.times(model));
 	}
 	
 	/**

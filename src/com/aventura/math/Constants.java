@@ -30,7 +30,7 @@ public interface Constants {
 	
 	public static final int SIZE_2 = 2;
 	public static final int SIZE_3 = 3;
-	public static final int SIZE_4 = 3;
+	public static final int SIZE_4 = 4;
 	
 	public static final int X_axis = 0;
 	public static final int Y_axis = 1;

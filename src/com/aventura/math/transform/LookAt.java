@@ -85,7 +85,7 @@ public class LookAt extends Matrix4 {
 	 * @param p the Point of interest
 	 * @param u the Up vector for the World to leverage for the Camera
 	 */
-	LookAt(Vector4 e, Vector4 p, Vector4 u) {
+	public LookAt(Vector4 e, Vector4 p, Vector4 u) {
 		
 		Vector4 f =  (p.minus(e)).normalize();
 		Vector4 s =  f.times(u);
@@ -112,7 +112,7 @@ public class LookAt extends Matrix4 {
 	 * @param p the Point of interest
 	 * @param u the Up vector for the World to leverage for the Camera
 	 */
-	LookAt(Vector3 e, Vector3 p, Vector3 u) {
+	public LookAt(Vector3 e, Vector3 p, Vector3 u) {
 		
 		Vector3 f =  (p.minus(e)).normalize();
 		Vector3 s =  f.times(u);

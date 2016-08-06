@@ -107,6 +107,8 @@ public class Element implements Transformable {
 	
 	public Element() {
 		super();
+		triangles = new ArrayList<Triangle>();
+		transform = Matrix4.IDENTITY; // By default
 	}
 	
 	public boolean isLeaf() {

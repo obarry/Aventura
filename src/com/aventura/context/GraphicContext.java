@@ -178,7 +178,7 @@ public class GraphicContext {
 	}
 	
 	public String toString() {
-		return "GraphicContext:\n* Perpective type: "+perspectiveString(perspective_type)+"\n* Width: "+width+"\n* Height: "+height+"\n* Dist: "+dist+"\n* Depth: "+depth;
+		return "GraphicContext:\n* Perpective type: "+perspectiveString(perspective_type)+"\n* Width: "+width+"\n* Height: "+height+"\n* Dist: "+dist+"\n* Depth: "+depth+"\n* PPU: "+ppu;
 	}
 	
 	public void setWidth(double width) {
