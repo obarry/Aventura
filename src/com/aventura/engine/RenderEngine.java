@@ -1,12 +1,16 @@
 package com.aventura.engine;
 
+import java.awt.Color;
+
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
+import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.View;
 
 /**
@@ -110,6 +114,10 @@ public class RenderEngine {
 		this.transformation = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix()); 
 	}
 	
+	public void setView(View v) {
+		view = v;
+	}
+	
 	/**
 	 * 
 	 * Rasterization of all triangles of the world
@@ -119,6 +127,10 @@ public class RenderEngine {
 	 * - etc.
 	 */
 	public void render() {
+		
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Start rendering...");
+		
+		view.initView();
 		
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {
@@ -135,6 +147,9 @@ public class RenderEngine {
 				render(e.getTriangle(j));	
 			}
 		}
+		
+		view.renderView();
+
 	}
 	
 	/**
@@ -143,6 +158,8 @@ public class RenderEngine {
 	 * @param t the triangle to rasterize
 	 */
 	public void render(Triangle t) {
+		
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle: "+t);
 		
 		Triangle triangle; // The projected model view triangle in homogeneous coordinates 
 		
@@ -189,12 +206,6 @@ public class RenderEngine {
 		}
 	}
 	
-	protected void drawTriangleLines(Triangle t) {
-		//view.drawLine(t.getV1(), t.getV2());
-		//view.drawLine(t.getV2(), t.getV3());
-		//view.drawLine(t.getV3(), t.getV1());
-	}
-	
 	/**
 	 * Is true if all Vertices of the Triangle is within the defined View
 	 * 
@@ -203,7 +214,37 @@ public class RenderEngine {
 	 */
 	protected boolean isInView(Triangle t) {
 		//TODO implementation
-		return false;
+		return true;
 	}
+	
+	// These methods should be later encapsulated in a dedicated class -> e.g. RenderView
+	// To Be Encapsulated
+	//
+	
+	protected void drawTriangleLines(Triangle t) {
+
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawTriangleLines(t)");
+
+		view.setColor(Color.WHITE);
+		drawLine(t.getV1(), t.getV2());
+		drawLine(t.getV2(), t.getV3());
+		drawLine(t.getV3(), t.getV1());
+	}
+	
+	protected void drawLine(Vertex v1, Vertex v2) {
+
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(v1,v2)");
+		
+		int x1, y1, x2, y2;
+		x1 = (int)(v1.getPosition().getX()*graphic.getWidth());
+		y1 = (int)(v1.getPosition().getY()*graphic.getHeight());
+		x2 = (int)(v2.getPosition().getX()*graphic.getWidth());
+		y2 = (int)(v2.getPosition().getY()*graphic.getHeight());
+
+		view.drawLine(x1, y1, x2, y2);
+	}
+
+	//
+	// End to be Encapsulated
 
 }

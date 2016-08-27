@@ -63,7 +63,7 @@ public class TestAventura {
 		frame.setSize(500,200);
 		
 		// Create the view to be displayed
-		view = new SwingView(context);
+		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
 		JPanel panel = new JPanel() {
@@ -136,6 +136,7 @@ public class TestAventura {
 		
 		View view = test.createView(context);
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
+		renderer.setView(view);
 		renderer.render();
 		
 	}
