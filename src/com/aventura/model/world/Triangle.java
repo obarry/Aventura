@@ -52,6 +52,10 @@ public class Triangle {
 		this.v2 = v2;
 		this.v3 = v3;
 	}
+	
+	public String toString() {
+		return ("Triangle vertices:\n"+" v1: "+v1+"\n v2: "+v2+"\n v3: "+v3);
+	}
 
 	public Vertex getV1() {
 		return v1;

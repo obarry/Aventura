@@ -62,6 +62,10 @@ public class Vertex {
 		//normal = n;
 	}
 	
+	public String toString() {
+		return "Position: "+position;
+	}
+	
 	public void setPosition(Vector4 p) {
 		position = p;
 	}

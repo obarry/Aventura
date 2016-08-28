@@ -60,7 +60,7 @@ public class TestAventura {
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Aventura");
 		// Set the size of the frame
-		frame.setSize(500,200);
+		frame.setSize(800,450);
 		
 		// Create the view to be displayed
 		view = new SwingView(context, frame);
@@ -97,8 +97,8 @@ public class TestAventura {
 		
 		// Build the Element: Create vertices and add Triangles to it
 		Vertex v1 = new Vertex(new Vector4(0,   0,   0,  0));
-		Vertex v2 = new Vertex(new Vector4(0, 10,   0,  0));
-		Vertex v3 = new Vertex(new Vector4(0,   0, 10,  0));
+		Vertex v2 = new Vertex(new Vector4(0, 1,   0,  0));
+		Vertex v3 = new Vertex(new Vector4(0,   0, 1,  0));
 		
 		Triangle t = new Triangle(v1, v2, v3);
 		
@@ -109,7 +109,7 @@ public class TestAventura {
 	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(-100,-100,-100,0);
+		Vector4 eye = new Vector4(5,0,0,0);
 		Vector4 poi = new Vector4(0,0,0,0);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);

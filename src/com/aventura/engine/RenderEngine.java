@@ -224,6 +224,11 @@ public class RenderEngine {
 	protected void drawTriangleLines(Triangle t) {
 
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawTriangleLines(t)");
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing triangle. "+ t);
+		
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1: "+t.getV1());
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2: "+t.getV2());
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v3: "+t.getV3());
 
 		view.setColor(Color.WHITE);
 		drawLine(t.getV1(), t.getV2());
@@ -236,10 +241,10 @@ public class RenderEngine {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(v1,v2)");
 		
 		int x1, y1, x2, y2;
-		x1 = (int)(v1.getPosition().getX()*graphic.getWidth());
-		y1 = (int)(v1.getPosition().getY()*graphic.getHeight());
-		x2 = (int)(v2.getPosition().getX()*graphic.getWidth());
-		y2 = (int)(v2.getPosition().getY()*graphic.getHeight());
+		x1 = (int)(v1.getPosition().getX()*graphic.getWidth()*graphic.getPPU());
+		y1 = (int)(v1.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
+		x2 = (int)(v2.getPosition().getX()*graphic.getWidth()*graphic.getPPU());
+		y2 = (int)(v2.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
 
 		view.drawLine(x1, y1, x2, y2);
 	}
