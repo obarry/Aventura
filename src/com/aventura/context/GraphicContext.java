@@ -165,8 +165,10 @@ public class GraphicContext {
 		switch (perspective) {
 		case PERSPECTIVE_TYPE_FRUSTUM:
 			projection = new Frustum(left , right, bottom, top, near, far);
+			break;
 		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
 			projection = new Orthographic(left , right, bottom, top, near, far);
+			break;
 		default:
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+perspective);
 		}

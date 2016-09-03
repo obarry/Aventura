@@ -168,7 +168,7 @@ public class SwingView extends View {
 	 * @param graph, the Swing interface graphic context to be used to display in the frame/panel
 	 */
 	public void draw(Graphics graph) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "draw Swing View");
+		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "draw Swing View");
 
 		// Display the buffer image #1
 		((Graphics2D)graph).drawImage(frontbuffer, null, null);

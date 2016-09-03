@@ -69,7 +69,7 @@ public class TestAventura {
 		JPanel panel = new JPanel() {
 			
 		    public void paintComponent(Graphics graph) {
-				System.out.println("Painting JPanel");		    	
+				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
 		    	TestAventura.this.view.draw(graph);
 		    }
@@ -96,9 +96,9 @@ public class TestAventura {
 		Element e = world.createElement();
 		
 		// Build the Element: Create vertices and add Triangles to it
-		Vertex v1 = new Vertex(new Vector4(0,   0,   0,  0));
-		Vertex v2 = new Vertex(new Vector4(0, 1,   0,  0));
-		Vertex v3 = new Vertex(new Vector4(0,   0, 1,  0));
+		Vertex v1 = new Vertex(new Vector4(0, 0, 0, 0));
+		Vertex v2 = new Vertex(new Vector4(1, 0, 0, 0));
+		Vertex v3 = new Vertex(new Vector4(0, 0, 1, 0));
 		
 		Triangle t = new Triangle(v1, v2, v3);
 		

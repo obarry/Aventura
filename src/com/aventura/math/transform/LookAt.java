@@ -3,6 +3,7 @@ package com.aventura.math.transform;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -86,7 +87,8 @@ public class LookAt extends Matrix4 {
 	 * @param u the Up vector for the World to leverage for the Camera
 	 */
 	public LookAt(Vector4 e, Vector4 p, Vector4 u) {
-		
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector4");
+	
 		Vector4 f =  (p.minus(e)).normalize();
 		Vector4 s =  f.times(u);
 		Vector4 up = s.times(f);
@@ -101,7 +103,7 @@ public class LookAt extends Matrix4 {
 		} catch (Exception exc) {
 			// Should never happen
 		}
-						
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);						
 	}
 
 	/**
@@ -113,6 +115,7 @@ public class LookAt extends Matrix4 {
 	 * @param u the Up vector for the World to leverage for the Camera
 	 */
 	public LookAt(Vector3 e, Vector3 p, Vector3 u) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector3");
 		
 		Vector3 f =  (p.minus(e)).normalize();
 		Vector3 s =  f.times(u);
@@ -128,7 +131,7 @@ public class LookAt extends Matrix4 {
 		} catch (Exception exc) {
 			// Should never happen
 		}
-						
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);												
 	}
 
 }

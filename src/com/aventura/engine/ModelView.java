@@ -6,6 +6,7 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -97,8 +98,12 @@ public class ModelView {
 	}
 	
 	public ModelView(Matrix4 view, Matrix4 projection) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ModelView(view, projection)");
 		this.view = view;
 		this.projection = projection;
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "View matrix:\n"+ view);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Projection matrix:\n"+ projection);
+		
 	}
 	
 	public void setProjection(Matrix4 projection) {
@@ -110,7 +115,9 @@ public class ModelView {
 	}
 	
 	public void setModel(Matrix4 model) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModel(model)");
 		this.model = model;
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model matrix:\n"+ model);
 	}
 	
 	/**
@@ -118,9 +125,11 @@ public class ModelView {
 	 * TransformedVector = [Projection Matrix] * [View Matrix] * [Model Matrix] * OriginalVector
 	 */
 	public void computeTransformation() {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
 		Matrix4 m = view.times(model);
 		transformation = projection.times(m);
 		//transformation = projection.times(view.times(model));
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ transformation);
 	}
 	
 	/**
