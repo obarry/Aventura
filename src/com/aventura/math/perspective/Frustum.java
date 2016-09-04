@@ -1,5 +1,7 @@
 package com.aventura.math.perspective;
 
+import com.aventura.tools.tracing.Tracer;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -35,6 +37,8 @@ public class Frustum extends Perspective {
 	
 	public Frustum(double left, double right, double bottom, double top, double near, double far) {
 		
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Frustrum perspective");
+		
 		double[][] array = { { (2-near)/(right-left), 0.0,                   (right+left)/(right-left), 0.0                   },
 				 			 { 0.0                  , (2-near)/(top-bottom), (top+bottom)/(top-bottom), 0.0                   },
 				 			 { 0.0                  , 0.0,                   (near+far)/(near-far)    , 2*near*far/(near-far) },
@@ -45,7 +49,9 @@ public class Frustum extends Perspective {
 		} catch (Exception e) {
 			// Should never happen
 		}
-						
+
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Frustrum matrix:\n"+ this);						
+
 	}
 
 }

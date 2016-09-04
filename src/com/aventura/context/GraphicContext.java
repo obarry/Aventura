@@ -194,7 +194,11 @@ public class GraphicContext {
 	public void setHeight(double height) {
 		this.height = height;
 	}
-	
+
+	public double getHeight() {
+		return height;
+	}
+
 	public int getPPU() {
 		return ppu;
 	}
@@ -207,10 +211,6 @@ public class GraphicContext {
 		return (int)(height*ppu);
 	}
 	
-	public double getHeight() {
-		return height;
-	}
-
 	public void setDepth(double depth) {
 		this.depth = depth;
 	}

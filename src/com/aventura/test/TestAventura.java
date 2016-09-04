@@ -96,21 +96,27 @@ public class TestAventura {
 		Element e = world.createElement();
 		
 		// Build the Element: Create vertices and add Triangles to it
-		Vertex v1 = new Vertex(new Vector4(0, 0, 0, 0));
-		Vertex v2 = new Vertex(new Vector4(1, 0, 0, 0));
-		Vertex v3 = new Vertex(new Vector4(0, 0, 1, 0));
+		Vertex v11 = new Vertex(new Vector4(1, 1, 0, 1));
+		Vertex v12 = new Vertex(new Vector4(0, 1, 0, 1));
+		Vertex v13 = new Vertex(new Vector4(1, 0, 1, 1));
 		
-		Triangle t = new Triangle(v1, v2, v3);
+		Vertex v21 = new Vertex(new Vector4(2, 0, 0, 1));
+		Vertex v22 = new Vertex(new Vector4(0, 2, 0, 1));
+		Vertex v23 = new Vertex(new Vector4(1, 0, 2, 1));
 		
-		e.addTriangle(t);
+		Triangle t1 = new Triangle(v11, v12, v13);
+		Triangle t2 = new Triangle(v21, v22, v23);
+		
+		e.addTriangle(t1);
+		e.addTriangle(t2);
 		
 		return world;
 	}
 	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(5,0,0,0);
-		Vector4 poi = new Vector4(0,0,0,0);
+		Vector4 eye = new Vector4(1,0,0,1);
+		Vector4 poi = new Vector4(0,0,0,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);
 		

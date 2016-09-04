@@ -1,5 +1,7 @@
 package com.aventura.math.perspective;
 
+import com.aventura.tools.tracing.Tracer;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -35,6 +37,8 @@ public class Orthographic extends Perspective {
 	
 	public Orthographic(double left, double right, double bottom, double top, double near, double far) {
 		
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Orthographic perspective");
+		
 		double[][] array = { { 1/(right-left)       , 0.0            ,  0.0          , (right+left)/(right-left) },
 				 			 { 0.0                  , 2/(top-bottom) ,  0.0          , (bottom+top)/(bottom-top) },
 				 			 { 0.0                  , 0.0            ,  2/(near-far) , near+far/(far-near)       },
@@ -45,7 +49,9 @@ public class Orthographic extends Perspective {
 		} catch (Exception e) {
 			// Should never happen
 		}
-						
+
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Orthographic matrix:\n"+ this);						
+
 	}
 
 }

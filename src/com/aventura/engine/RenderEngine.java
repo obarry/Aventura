@@ -241,10 +241,19 @@ public class RenderEngine {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(v1,v2)");
 		
 		int x1, y1, x2, y2;
-		x1 = (int)(v1.getPosition().getX()*graphic.getWidth()*graphic.getPPU());
-		y1 = (int)(v1.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
-		x2 = (int)(v2.getPosition().getX()*graphic.getWidth()*graphic.getPPU());
-		y2 = (int)(v2.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
+//		x1 = (int)(v1.getPosition().getX()*graphic.getWidth()*graphic.getPPU());
+//		y1 = (int)(v1.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
+//		x2 = (int)(v2.getPosition().getX()*graphic.getWidth()*graphic.getPPU());
+//		y2 = (int)(v2.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getX() : "+ v1.getPosition().getX());
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getY() : "+ v1.getPosition().getY());
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getX() : "+ v2.getPosition().getX());
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getY() : "+ v2.getPosition().getY());
+		
+		x1 = (int)(v1.getPosition().getX()*graphic.getPixelWidth()/2);
+		y1 = (int)(v1.getPosition().getY()*graphic.getPixelHeight()/2);
+		x2 = (int)(v2.getPosition().getX()*graphic.getPixelWidth()/2);
+		y2 = (int)(v2.getPosition().getY()*graphic.getPixelHeight()/2);
 
 		view.drawLine(x1, y1, x2, y2);
 	}

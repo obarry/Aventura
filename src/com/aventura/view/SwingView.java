@@ -131,6 +131,7 @@ public class SwingView extends View {
 
 	@Override
 	public void drawLine(int x1, int y1, int x2, int y2) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(x1:"+x1+", y1:"+y1+", x2:"+x2+", y2:"+y2);
 		drawSwingLine(x1,y1,x2,y2);
 	}
 	
