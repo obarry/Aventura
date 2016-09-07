@@ -97,8 +97,8 @@ public class TestAventura {
 		
 		// Build the Element: Create vertices and add Triangles to it
 		Vertex v11 = new Vertex(new Vector4(0, 0, 0, 1));
-		Vertex v12 = new Vertex(new Vector4(0, 1, 1, 1));
-		Vertex v13 = new Vertex(new Vector4(1, 1, 1, 1));
+		Vertex v12 = new Vertex(new Vector4(0, 0, 0, 1));
+		Vertex v13 = new Vertex(new Vector4(0, 0, 0, 1));
 		
 		Vertex v21 = new Vertex(new Vector4(2, 0, 1, 1));
 		Vertex v22 = new Vertex(new Vector4(0, 2, 0, 1));
@@ -115,7 +115,7 @@ public class TestAventura {
 	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(1,0,0,1);
+		Vector4 eye = new Vector4(1,1,1,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);
