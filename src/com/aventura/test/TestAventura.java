@@ -12,6 +12,7 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
+import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
@@ -97,12 +98,12 @@ public class TestAventura {
 		
 		// Build the Element: Create vertices and add Triangles to it
 		Vertex v11 = new Vertex(new Vector4(0, 0, 0, 1));
-		Vertex v12 = new Vertex(new Vector4(0, 0, 0, 1));
-		Vertex v13 = new Vertex(new Vector4(0, 0, 0, 1));
+		Vertex v12 = new Vertex(new Vector4(1, 1, 0, 1));
+		Vertex v13 = new Vertex(new Vector4(1, 0, 0, 1));
 		
-		Vertex v21 = new Vertex(new Vector4(2, 0, 1, 1));
-		Vertex v22 = new Vertex(new Vector4(0, 2, 0, 1));
-		Vertex v23 = new Vertex(new Vector4(1, 0, 2, 1));
+		Vertex v21 = new Vertex(new Vector4(0,1, 5, 1));
+		Vertex v22 = new Vertex(new Vector4(1, 1, 0, 1));
+		Vertex v23 = new Vertex(new Vector4(1, 2, 5, 1));
 		
 		Triangle t1 = new Triangle(v11, v12, v13);
 		Triangle t2 = new Triangle(v21, v22, v23);
@@ -115,10 +116,12 @@ public class TestAventura {
 	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(1,1,1,1);
-		Vector4 poi = new Vector4(0,0,0,1);
+		//Vector4 eye = new Vector4(0,0,0,1);
+		//Vector4 poi = new Vector4(0,1,1,1);
 		
-		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);
+		//Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);
+		
+		Camera cam = new Camera(Matrix4.IDENTITY); //Camera IDENTITY for testing purpose
 		
 		return cam;
 	}

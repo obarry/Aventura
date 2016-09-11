@@ -19,7 +19,7 @@ public class Camera {
 
 	public Camera(Matrix4 m) {
 		super();
-		camera = (LookAt) m;
+		camera = new LookAt(m);
 	}
 
 	/**

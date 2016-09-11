@@ -358,8 +358,7 @@ public class Vector4 {
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
 				try {
-					//r.set(i, r.get(i)+A.get(i,j)*this.c[j]);
-					r.set(i, A.get(i,j)*this.c[j]);
+					r.set(i, r.get(i)+A.get(i,j)*this.c[j]);
 				} catch (IndiceOutOfBoundException e) {
 					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
 					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);

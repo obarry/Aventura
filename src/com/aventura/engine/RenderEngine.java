@@ -159,7 +159,7 @@ public class RenderEngine {
 	 */
 	public void render(Triangle t) {
 		
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle: "+t);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
 		Triangle triangle; // The projected model view triangle in homogeneous coordinates 
 		

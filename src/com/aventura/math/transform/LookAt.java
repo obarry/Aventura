@@ -133,5 +133,9 @@ public class LookAt extends Matrix4 {
 		}
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);												
 	}
+	
+	public LookAt(Matrix4 m) {
+		super(m);
+	}
 
 }

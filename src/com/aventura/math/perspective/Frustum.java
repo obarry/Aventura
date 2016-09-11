@@ -38,6 +38,7 @@ public class Frustum extends Perspective {
 	public Frustum(double left, double right, double bottom, double top, double near, double far) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Frustrum perspective");
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Perspectives range: left: "+left+" right: "+right+" bottom: "+bottom+" top: "+top+" near: "+near+" far: "+far);						
 		
 		double[][] array = { { 2*near/(right-left) , 0.0                  , (right+left)/(right-left), 0.0                   },
 				 			 { 0.0                 , 2*near/(top-bottom)  , (top+bottom)/(top-bottom), 0.0                   },
@@ -49,7 +50,6 @@ public class Frustum extends Perspective {
 		} catch (Exception e) {
 			// Should never happen
 		}
-
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Frustrum matrix:\n"+ this);						
 
 	}
