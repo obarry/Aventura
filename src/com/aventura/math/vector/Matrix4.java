@@ -32,7 +32,7 @@ import com.aventura.tools.tracing.Tracer;
 **/
 public class Matrix4 {
 
-    private static final double[][] IDENTITY_ARRAY =
+    protected static final double[][] IDENTITY_ARRAY =
     		{{1.0, 0.0, 0.0, 0.0},
     		 {0.0, 1.0 ,0.0, 0.0},
     		 {0.0, 0.0, 1.0, 0.0},
@@ -181,6 +181,19 @@ public class Matrix4 {
 	}
 	
 	/**
+	 * Set row of a Matrix4 in the format of a Vector4
+	 * @param r the rank of the row
+	 * @param v a Vector4 representing the row
+	 */
+	public void setRow(int r, Vector4 v) throws IndiceOutOfBoundException {
+		// No loop for optimization
+		this.array[r][0] = v.get(0);
+		this.array[r][1] = v.get(1);
+		this.array[r][2] = v.get(2);
+		this.array[r][3] = v.get(3);
+	}
+	
+	/**
 	 * Get column of a Matrix4 in the format of a Vector4
 	 * @param c the rank of the column
 	 * @return a Vector4 representing the column
@@ -204,6 +217,20 @@ public class Matrix4 {
 			e.printStackTrace();
 		}
 		 return v;	
+	}
+	
+	/**
+	 * Set column of a Matrix4 in the format of a Vector4
+	 * @param c the rank of the column
+	 * @param v a Vector4 representing the column
+	 * @throws IndiceOutOfBoundException
+	 */
+	public void setColumn(int c, Vector4 v) throws IndiceOutOfBoundException {
+		// No loop for optimization
+		this.array[0][c] = v.get(0);
+		this.array[1][c] = v.get(1);
+		this.array[2][c] = v.get(2);
+		this.array[3][c] = v.get(3);
 	}
 	
 	/**
