@@ -30,7 +30,7 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * A Vector 4 in 3D Graphics is a Vector 3 (x,y,z) + a fourth component that represent the point information: if null this is a Vector, else a Point
+ * A Vector 4 in 3D Graphics is a Vector 3 (x,y,z) + w, a fourth component that represent the point information: if null this is a Vector, else a Point
  * 
  * @author Bricolage Olivier
  * @since May 2016
@@ -152,7 +152,7 @@ public class Vector4 {
 	 * Set t, the fourth coordinate of the Vector4, with value v
 	 * @param v, the value to set
 	 */
-	public void setT(double v) {
+	public void setW(double v) {
 		c[3]= v;		
 	}
 	
@@ -195,9 +195,35 @@ public class Vector4 {
 	 * Get t, the fourth coordinate of the Vector4
 	 * @return z
 	 */
-	public double getT() {
+	public double getW() {
 		return c[3];
 	}
+	
+	/**
+	 * Get x in 3D coordinates
+	 * @return x
+	 */
+	public double get3DX() {
+		return c[0]/c[3];
+	}
+	
+	/**
+	 * Get y in 3D coordinates
+	 * @return y
+	 */
+	public double get3DY() {
+		return c[1]/c[3];
+	}
+	
+	/**
+	 * Get z in 3D coordinates
+	 * @return z
+	 */
+	public double get3DZ() {
+		return c[2]/c[3];
+	}
+	
+
 	
 	public double length() {
 		return Math.sqrt(c[0]*c[0]+c[1]*c[1]+c[2]*c[2]+c[3]*c[3]);
@@ -238,7 +264,7 @@ public class Vector4 {
 		r.setX(this.c[0]+w.c[0]);
 		r.setY(this.c[1]+w.c[1]);
 		r.setZ(this.c[2]+w.c[2]);
-		r.setT(this.c[3]+w.c[3]);
+		r.setW(this.c[3]+w.c[3]);
 		
 		return r;
 	}
@@ -265,7 +291,7 @@ public class Vector4 {
 		r.setX(this.c[0]-w.c[0]);
 		r.setY(this.c[1]-w.c[1]);
 		r.setZ(this.c[2]-w.c[2]);
-		r.setT(this.c[3]-w.c[3]);
+		r.setW(this.c[3]-w.c[3]);
 		
 		return r;
 	}
@@ -295,7 +321,7 @@ public class Vector4 {
 		r.setX(this.c[0]*val);
 		r.setY(this.c[1]*val);
 		r.setZ(this.c[2]*val);
-		r.setT(this.c[3]*val);
+		r.setW(this.c[3]*val);
 
 		return r;
 	}
@@ -324,7 +350,7 @@ public class Vector4 {
 		r.setX(this.c[1]*w.c[2]-this.c[2]*w.c[1]);
 		r.setY(this.c[2]*w.c[0]-this.c[0]*w.c[2]);
 		r.setZ(this.c[0]*w.c[1]-this.c[1]*w.c[0]);
-		r.setT(0); // Assuming Vector, not Point
+		r.setW(0); // Assuming Vector, not Point
 		
 		return r;
 	}

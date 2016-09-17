@@ -245,15 +245,15 @@ public class RenderEngine {
 //		y1 = (int)(v1.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
 //		x2 = (int)(v2.getPosition().getX()*graphic.getWidth()*graphic.getPPU());
 //		y2 = (int)(v2.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getX() : "+ v1.getPosition().getX());
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getY() : "+ v1.getPosition().getY());
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getX() : "+ v2.getPosition().getX());
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getY() : "+ v2.getPosition().getY());
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getX() : "+ v1.getPosition().get3DX());
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getY() : "+ v1.getPosition().get3DY());
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getX() : "+ v2.getPosition().get3DX());
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getY() : "+ v2.getPosition().get3DY());
 		
-		x1 = (int)(v1.getPosition().getX()*graphic.getPixelWidth()/2);
-		y1 = (int)(v1.getPosition().getY()*graphic.getPixelHeight()/2);
-		x2 = (int)(v2.getPosition().getX()*graphic.getPixelWidth()/2);
-		y2 = (int)(v2.getPosition().getY()*graphic.getPixelHeight()/2);
+		x1 = (int)(v1.getPosition().get3DX()*graphic.getPixelWidth()/2);
+		y1 = (int)(v1.getPosition().get3DY()*graphic.getPixelHeight()/2);
+		x2 = (int)(v2.getPosition().get3DX()*graphic.getPixelWidth()/2);
+		y2 = (int)(v2.getPosition().get3DY()*graphic.getPixelHeight()/2);
 
 		view.drawLine(x1, y1, x2, y2);
 	}

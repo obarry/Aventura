@@ -97,19 +97,21 @@ public class TestAventura {
 		Element e = world.createElement();
 		
 		// Build the Element: Create vertices and add Triangles to it
-		Vertex v11 = new Vertex(new Vector4(0, 0, 0, 1));
-		Vertex v12 = new Vertex(new Vector4(1, 1, 0, 1));
-		Vertex v13 = new Vertex(new Vector4(1, 0, 0, 1));
+		Vertex v1 = new Vertex(new Vector4(0,    0,   -4, 1));
+		Vertex v2 = new Vertex(new Vector4(2,  1.4, -2.6, 1));
+		Vertex v3 = new Vertex(new Vector4(2, -1.4, -2.6, 1));
+		Vertex v4 = new Vertex(new Vector4(2,    0, -5.4, 1));
+				
+		Triangle t1 = new Triangle(v1, v2, v3);
+		Triangle t2 = new Triangle(v2, v3, v4);
+		Triangle t3 = new Triangle(v1, v2, v4);
+		Triangle t4 = new Triangle(v1, v4, v3);
 		
-		Vertex v21 = new Vertex(new Vector4(0,1, 5, 1));
-		Vertex v22 = new Vertex(new Vector4(1, 1, 0, 1));
-		Vertex v23 = new Vertex(new Vector4(1, 2, 5, 1));
-		
-		Triangle t1 = new Triangle(v11, v12, v13);
-		Triangle t2 = new Triangle(v21, v22, v23);
 		
 		e.addTriangle(t1);
 		e.addTriangle(t2);
+		e.addTriangle(t3);
+		e.addTriangle(t4);
 		
 		return world;
 	}
