@@ -1,6 +1,7 @@
 package com.aventura.math.transform;
 
 import com.aventura.math.vector.Matrix4;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -36,22 +37,25 @@ import com.aventura.math.vector.Matrix4;
 public class Scaling extends Matrix4 {
 
 	public Scaling() {
-		super(Matrix4.IDENTITY_ARRAY);
+		super(Matrix4.IDENTITY);
 		// TODO Auto-generated constructor stub
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Scaling matrix:\n"+this);
 	}
 	
 	public Scaling(double s) {
-		super(Matrix4.IDENTITY_ARRAY);
+		super(Matrix4.IDENTITY);
 		this.array[0][0] = s;
 		this.array[1][1] = s;
 		this.array[2][2] = s;
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Scaling matrix with parameter (s="+s+"):\n"+this);
 	}
 
 	public Scaling(double a, double b, double c) {
-		super(Matrix4.IDENTITY_ARRAY);
+		super(Matrix4.IDENTITY);
 		this.array[0][0] = a;
 		this.array[1][1] = b;
 		this.array[2][2] = c;
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Scaling matrix with parameters (a="+a+", b="+b+", c="+c+"):\n"+this);
 	}
 
 }

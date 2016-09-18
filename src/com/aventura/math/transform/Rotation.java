@@ -44,7 +44,7 @@ import com.aventura.tools.tracing.Tracer;
 public class Rotation extends Matrix4 {
 
 	public Rotation() {
-		super(Matrix4.IDENTITY_ARRAY);
+		super(Matrix4.IDENTITY);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -54,13 +54,15 @@ public class Rotation extends Matrix4 {
 	 * @param v the vector representing the axis of rotation
 	 */
 	public Rotation(double a, Vector3 v) {
-		super(Matrix4.IDENTITY_ARRAY);
+		super(Matrix4.IDENTITY);
 		initRotation(a, v);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix:\n"+this);
 	}
 	
 	public Rotation(double a, Vector4 v) {
-		super(Matrix4.IDENTITY_ARRAY);
+		super(Matrix4.IDENTITY);
 		initRotation(a, v.getVector3());
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix:\n"+this);
 	}
 	
 	protected void initRotation(double a, Vector3 v) {
@@ -90,7 +92,7 @@ public class Rotation extends Matrix4 {
 	 * @throws WrongAxisException
 	 */
 	public Rotation(double a, int axis) throws WrongAxisException {
-		super(Matrix4.IDENTITY_ARRAY);
+		super(Matrix4.IDENTITY);
 		double cosa = Math.cos(a);
 		double sina = Math.sin(a);
 		// Initialize the array, depending on axis

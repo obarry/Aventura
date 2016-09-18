@@ -57,11 +57,12 @@ public class Translation extends Matrix4 {
 	 * @param v the translation Vector
 	 */
 	public Translation(Vector4 v) {
-		super(Matrix4.IDENTITY_ARRAY);
+		super(Matrix4.IDENTITY);
 		try {
-			this.set(3, 0, v.getX());
-			this.set(3, 1, v.getY());
-			this.set(3, 2, v.getZ());
+			this.set(0, 3, v.getX());
+			this.set(1, 3, v.getY());
+			this.set(2, 3, v.getZ());
+			if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Translation matrix:\n"+this);
 		} catch (Exception e) {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected Error while creating new Translation with Vector4: "+v);			
 			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			
@@ -73,11 +74,12 @@ public class Translation extends Matrix4 {
 	 * @param v the translation Vector
 	 */
 	public Translation(Vector3 v) {
-		super(Matrix4.IDENTITY_ARRAY);
+		super(Matrix4.IDENTITY);
 		try {
-			this.set(3, 0, v.getX());
-			this.set(3, 1, v.getY());
-			this.set(3, 2, v.getZ());
+			this.set(0, 3, v.getX());
+			this.set(1, 3, v.getY());
+			this.set(2, 3, v.getZ());
+			if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Translation matrix:\n"+this);
 		} catch (Exception e) {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected Error while creating new Translation with Vector3: "+v);			
 			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			

@@ -12,7 +12,11 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-import com.aventura.math.vector.Matrix4;
+import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Scaling;
+import com.aventura.math.transform.Transformation;
+import com.aventura.math.transform.Translation;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
@@ -96,34 +100,43 @@ public class TestAventura {
 		// Create an Element in the World
 		Element e = world.createElement();
 		
-		// Build the Element: Create vertices and add Triangles to it
-		Vertex v1 = new Vertex(new Vector4(0,    0,   -4, 1));
-		Vertex v2 = new Vertex(new Vector4(2,  1.4, -2.6, 1));
-		Vertex v3 = new Vertex(new Vector4(2, -1.4, -2.6, 1));
-		Vertex v4 = new Vertex(new Vector4(2,    0, -5.4, 1));
-				
+		// Create a Transformation for this Element
+		Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
+		Scaling s = new Scaling(1.5);
+		Translation t = new Translation(new Vector3(0, 0, -5));
+		
+		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
+		Transformation trans = new Transformation(s, r, t);
+		e.setTransformationMatrix(trans);
+		
+		// Build the Element: Create Vertices
+		Vertex v1 = new Vertex(new Vector4(0,    0,    0,  1));
+		Vertex v2 = new Vertex(new Vector4(2,  1.4,  1.4,  1));
+		Vertex v3 = new Vertex(new Vector4(2, -1.4,  1.4,  1));
+		Vertex v4 = new Vertex(new Vector4(2,    0, -1.4,  1));
+		
+		// Creates Triangles from Vertices
 		Triangle t1 = new Triangle(v1, v2, v3);
 		Triangle t2 = new Triangle(v2, v3, v4);
 		Triangle t3 = new Triangle(v1, v2, v4);
 		Triangle t4 = new Triangle(v1, v4, v3);
 		
-		
+		// Add Triangles to the Element
 		e.addTriangle(t1);
 		e.addTriangle(t2);
 		e.addTriangle(t3);
 		e.addTriangle(t4);
 		
+		// World is created
 		return world;
 	}
 	
 	public Camera createCamera() {
 		
-		//Vector4 eye = new Vector4(0,0,0,1);
-		//Vector4 poi = new Vector4(0,1,1,1);
+		Vector4 eye = new Vector4(0,0,1,1);
+		Vector4 poi = new Vector4(0,0,0,1);
 		
-		//Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);
-		
-		Camera cam = new Camera(Matrix4.IDENTITY); //Camera IDENTITY for testing purpose
+		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
 		
 		return cam;
 	}

@@ -216,7 +216,7 @@ public class Matrix4 {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
 			e.printStackTrace();
 		}
-		 return v;	
+		return v;	
 	}
 	
 	/**
@@ -250,9 +250,9 @@ public class Matrix4 {
 	}
 	
 	/**
-	 * C=A^B
-	 * @param B
-	 * @return
+	 * Matrix cross product: C=A^B
+	 * @param b the Matrix B
+	 * @return C the cross product of this Matrix A with Matrix B provided in parameter 
 	 */
 	public Matrix4 times(Matrix4 b) {
 		Matrix4 r = new Matrix4();
@@ -268,7 +268,6 @@ public class Matrix4 {
 				}
 			}
 		}
-		
 		return r;
 	}
 	

@@ -41,6 +41,10 @@ public class Vector4 {
     public static final Vector4 Y_AXIS = new Vector4(0,1,0,0);
     public static final Vector4 Z_AXIS = new Vector4(0,0,1,0);
 
+    public static final Vector4 X_OPP_AXIS = new Vector4(-1,0,0,0);
+    public static final Vector4 Y_OPP_AXIS = new Vector4(0,-1,0,0);
+    public static final Vector4 Z_OPP_AXIS = new Vector4(0,0,-1,0);
+
     // Components of the Vector
 	protected double[] c;
 	
