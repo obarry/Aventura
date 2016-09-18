@@ -37,8 +37,8 @@ public class TestTransformation {
 		Translation t1 = new Translation(v_translation);
 		System.out.println("Translation: "+t1);
 		
-		Homothety h1 = new Homothety(23);
-		System.out.println("Homothety: "+h1);
+		Scaling h1 = new Scaling(23);
+		System.out.println("Scaling: "+h1);
 		
 		Transformation t = null; // TBD		
 		Vector3 v1 = new Vector3(1.0, -1.0, 1.0);		

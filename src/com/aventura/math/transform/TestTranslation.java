@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 
 public class TestTranslation {
@@ -32,7 +33,7 @@ public class TestTranslation {
 		Translation t1 = new Translation(v1);
 		Translation t2 = new Translation(v2);
 		
-		Translation t3 = t1.plus(t2);
+		Translation t3 = new Translation((Matrix4)t1.plus((Matrix4)t2));
 		System.out.println("Translation t3="+t3);
 		assertTrue(v3.equals(t3));
 	}

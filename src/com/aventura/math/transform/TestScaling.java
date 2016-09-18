@@ -6,14 +6,14 @@ import org.junit.Test;
 import com.aventura.math.vector.Matrix3;
 import com.aventura.math.vector.MatrixArrayWrongSizeException;
 
-public class TestHomothety {
+public class TestScaling {
 
 	@Test
 	public void testHomothety() {
-		System.out.println("***** Test Homotethy : testHomotethy *****");
+		System.out.println("***** Test Scaling : testScaling *****");
 		
-		Homothety h = new Homothety(12);
-		System.out.println("Homothety h: "+ h);
+		Scaling h = new Scaling(12);
+		System.out.println("Scaling h: "+ h);
 		
 		double[][] a = {
 				{12.0, 0.0, 0.0}, 
@@ -36,10 +36,9 @@ public class TestHomothety {
 
 	@Test
 	public void testSetScale() {
-		System.out.println("***** Test Homotethy : testSetScale *****");
+		System.out.println("***** Test Scaling : testSetScale *****");
 		
-		Homothety h = new Homothety();
-		System.out.println("Homothety h: "+ h);
+		Scaling h = new Scaling(7);
 		
 		double[][] a = {
 				{7.0, 0.0, 0.0}, 
@@ -50,8 +49,7 @@ public class TestHomothety {
 			Matrix3 m = new Matrix3(a);
 			System.out.println("Matrix m: "+ m);
 			
-			h.setScale(7);
-			System.out.println("Homothety h after setScale(7): "+ h);
+			System.out.println("Scaling h(7): "+ h);
 		
 			assertTrue(h.equals(m));
 			System.out.println("h = m -> success");

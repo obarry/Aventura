@@ -18,13 +18,13 @@ import com.aventura.math.vector.Vector3;
  */
 public class Transformation {
 	
-	protected Homothety scale;
+	protected Scaling scale;
 	protected Rotation rotate;
 	protected Translation translate;
 	
 	protected Matrix3 transform; // scale.rotation
 	
-	public Transformation(Homothety h, Rotation r, Translation t) {
+	public Transformation(Scaling h, Rotation r, Translation t) {
 		scale = h;
 		rotate = r;
 		translate = t;
@@ -36,7 +36,7 @@ public class Transformation {
 	 */
 	public void updateTransformation() {
 		// Multiply rotation and scale
-		transform = rotate.times(scale);
+		//transform = rotate.times(scale);
 	}
 	
 	/**
@@ -46,7 +46,8 @@ public class Transformation {
 	 * @return new vector, result of the transformation of x
 	 */
 	public Vector3 transform(Vector3 x) {
-		return (transform.times(x)).plus(translate);
+		//return (transform.times(x)).plus(translate);
+		return null;
 	}
 	
 	/**
@@ -55,7 +56,7 @@ public class Transformation {
 	 */
 	public void transformEquals(Vector3 x) {
 		x.timesEquals(transform);
-		x.plusEquals(translate);
+		//x.plusEquals(translate);
 	}
 
 }

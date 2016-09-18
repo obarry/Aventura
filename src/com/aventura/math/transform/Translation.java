@@ -1,6 +1,9 @@
 package com.aventura.math.transform;
 
+import com.aventura.tools.tracing.Tracer;
+import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
+import com.aventura.math.vector.Vector3;
 
 
 /**
@@ -28,20 +31,57 @@ import com.aventura.math.vector.Vector4;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  *
- * This class is a transformation that represents a translation
- * The translation is formalized by a vector. Thus this class extends the class Vector4.
+ * This class is a transformation that represents a translation through a Matrix 4
+ * To initialize the translation, the translation Vector can be provided either through a Vector3 or Vector4.
+ * The last coordinate (w) of a Vector4 is ignored; hence if this is a Point (w=1) it is simply ignored and
+ * considered as a Vector.
  * 
  * @author Olivier BARRY
  * @date May 2014
  */
-public class Translation extends Vector4 {
+public class Translation extends Matrix4 {
 	
-	public Translation(Vector4 v) {
-		super(v);
+	/**
+	 * Create new Translation from existing Matrix4
+	 * No specific validity test.
+	 * @param m the Matrix4
+	 */
+	public Translation(Matrix4 m) {
+		super(m);
 	}
 	
-	public Translation plus(Translation t) {
-		return new Translation((Vector4)this.plus((Vector4)t));
+	/**
+	 * Creates a Translation Matrix from a Vector4
+	 * The last coordinate (w) of a Vector4 is ignored; hence if this is a Point (w=1) it is simply ignored and
+	 * considered as a Vector.
+	 * @param v the translation Vector
+	 */
+	public Translation(Vector4 v) {
+		super(Matrix4.IDENTITY_ARRAY);
+		try {
+			this.set(3, 0, v.getX());
+			this.set(3, 1, v.getY());
+			this.set(3, 2, v.getZ());
+		} catch (Exception e) {
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected Error while creating new Translation with Vector4: "+v);			
+			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			
+		}
+	}
+	
+	/**
+	 * Creates a Translation Matrix from a Vector3
+	 * @param v the translation Vector
+	 */
+	public Translation(Vector3 v) {
+		super(Matrix4.IDENTITY_ARRAY);
+		try {
+			this.set(3, 0, v.getX());
+			this.set(3, 1, v.getY());
+			this.set(3, 2, v.getZ());
+		} catch (Exception e) {
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected Error while creating new Translation with Vector3: "+v);			
+			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			
+		}
 	}
 	
 }
