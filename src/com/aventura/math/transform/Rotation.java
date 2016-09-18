@@ -2,15 +2,49 @@ package com.aventura.math.transform;
 
 import com.aventura.math.Constants;
 import com.aventura.math.vector.IndiceOutOfBoundException;
-import com.aventura.math.vector.Matrix3;
+import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.MatrixArrayWrongSizeException;
 import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
 import com.aventura.tools.tracing.Tracer;
 
-public class Rotation extends Matrix3 {
+/**
+ * ------------------------------------------------------------------------------ 
+ * MIT License
+ * 
+ * Copyright (c) 2016 Olivier BARRY
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ------------------------------------------------------------------------------ 
+ *
+ * This class is a transformation that represents a rotation having its center at origin O through a Matrix 4
+ * The rotation is implemented in the 3x3 upper left part of the 4x4 Matrix
+ * 
+ * @author Olivier BARRY
+ * @date May 2014
+ */
+
+
+public class Rotation extends Matrix4 {
 
 	public Rotation() {
-		super();
+		super(Matrix4.IDENTITY_ARRAY);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -20,7 +54,16 @@ public class Rotation extends Matrix3 {
 	 * @param v the vector representing the axis of rotation
 	 */
 	public Rotation(double a, Vector3 v) {
-		super();
+		super(Matrix4.IDENTITY_ARRAY);
+		initRotation(a, v);
+	}
+	
+	public Rotation(double a, Vector4 v) {
+		super(Matrix4.IDENTITY_ARRAY);
+		initRotation(a, v.getVector3());
+	}
+	
+	protected void initRotation(double a, Vector3 v) {
 		Vector3 v1 = new Vector3(v);
 		v1.normalize();
 		double cos = Math.cos(a);
@@ -37,7 +80,7 @@ public class Rotation extends Matrix3 {
 		// Third row
 		this.array[2][0] = v1.getX()*v1.getZ()*(1-cos)-v1.getY()*sin;
 		this.array[2][1] = v1.getY()*v1.getZ()*(1-cos)+v1.getX()*sin;
-		this.array[2][2] = v1.getZ()*v1.getZ()+ (1-v1.getZ()*v1.getZ())*cos;			
+		this.array[2][2] = v1.getZ()*v1.getZ()+ (1-v1.getZ()*v1.getZ())*cos;					
 	}
 	
 	/**
@@ -47,8 +90,7 @@ public class Rotation extends Matrix3 {
 	 * @throws WrongAxisException
 	 */
 	public Rotation(double a, int axis) throws WrongAxisException {
-		// Create the array
-		array = new double[Constants.SIZE_3][Constants.SIZE_3];
+		super(Matrix4.IDENTITY_ARRAY);
 		double cosa = Math.cos(a);
 		double sina = Math.sin(a);
 		// Initialize the array, depending on axis
@@ -99,7 +141,7 @@ public class Rotation extends Matrix3 {
 		}
 	}
 	
-	public Rotation(Matrix3 a) throws NotARotationException {
+	public Rotation(Matrix4 a) throws NotARotationException {
 		super(a);
 		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+this); 
 	}
@@ -111,30 +153,30 @@ public class Rotation extends Matrix3 {
 	
 	protected boolean isRotation() {
 		
-		Vector3 V1;
-		Vector3 V2;
-		Vector3 V3;
+		Vector4 v1;
+		Vector4 v2;
+		Vector4 v3;
 		
 		try {
-			V1=this.getColumn(0);
-			V2=this.getColumn(1);
-			V3=this.getColumn(2);
+			v1=this.getColumn(0);
+			v2=this.getColumn(1);
+			v3=this.getColumn(2);
 		} catch (IndiceOutOfBoundException e) {
 			if (Tracer.exception) Tracer.traceException(this.getClass(), "Unexpected exception: "+e);
 			return false;
 		}
 		
 		// A matrix is a Rotation matrix when the 3 column vectors represent a direct orthonormal basis (length of vectors is 1, 2 first vectors are orthogonal and the 3d 1 is eqals to the vector product of 2 first problems
-		if (V1.length() != 1 || V2.length() !=1 || V3.length() != 1) {
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column vectors length is not equals to 1. V1 length: "+V1.length()+" V2 length: "+V2.length()+"  V3 length: "+V3.length());
+		if (v1.length() != 1 || v2.length() !=1 || v3.length() != 1) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column vectors length is not equals to 1. V1 length: "+v1.length()+" V2 length: "+v2.length()+"  V3 length: "+v3.length());
 			return false;
 		}
-		if(V1.dot(V2) != 0) {
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column Vectors V1 and V2 are not orthogonal. V1: "+V1+" V2: "+V2+" V1.V2: "+V1.dot(V2));
+		if(v1.dot(v2) != 0) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column Vectors V1 and V2 are not orthogonal. V1: "+v1+" V2: "+v2+" V1.V2: "+v1.dot(v2));
 			return false;
 		}
-		if(!(V1.times(V2)).equals(V3)) {
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "V3 is not equals to V1^V2. V3: "+V3+" V1^V2: "+V1.times(V2));
+		if(!(v1.times(v2)).equals(v3)) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "V3 is not equals to V1^V2. V3: "+v3+" V1^V2: "+v1.times(v2));
 			return false;
 		}
 		

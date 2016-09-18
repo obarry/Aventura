@@ -60,7 +60,7 @@ public class TestRotation {
 	public void testRotationMatrixFail() {
 		System.out.println("***** Test Rotation : testRotationMatrixFail *****");
 		
-		double array[][] = {{3.0, -4.0, 1.0}, {5.0, 3.0, -7.0}, {-9.0, 2.0, 6.0}};
+		double array[][] = {{3.0, -4.0, 1.0, 0.0}, {5.0, 3.0, -7.0, 0.0}, {-9.0, 2.0, 6.0, 0.0}, {0.0, 0.0, 0.0, 1.0}};
 		
 		Rotation r = null;
 		try {

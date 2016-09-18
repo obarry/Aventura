@@ -223,8 +223,30 @@ public class Vector4 {
 		return c[2]/c[3];
 	}
 	
+	/**
+	 * Get a new Vector3 representing the 3 first coordinates of this Vector
+	 * @return z
+	 */
+	public Vector3 getVector3() {
+		return new Vector3(this.c[0], this.c[1], this.c[2]);
+	}
 
-	
+	/**
+	 * Get a new Vector3 representing the 3 first coordinates of this Vector divided by the 4th coordinate (3D Point)
+	 * @return z
+	 */
+	public Vector3 get3DPoint() {
+		if (this.c[3] != 0) {
+			return new Vector3(this.c[0]/this.c[3], this.c[1]/this.c[3], this.c[2]/this.c[3]);
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Get length of the vector4 including 4th coordinate
+	 * @return the length or 'norm' of the Vector4
+	 */
 	public double length() {
 		return Math.sqrt(c[0]*c[0]+c[1]*c[1]+c[2]*c[2]+c[3]*c[3]);
 	}
@@ -232,6 +254,9 @@ public class Vector4 {
 	/**
 	 * Normalize the vector. Vector is modified (same direction, length becomes 1)
 	 * @return this vector (modified)
+	 */
+	/**
+	 * @return
 	 */
 	public Vector4 normalize() {
 		double length = this.length();
@@ -396,7 +421,7 @@ public class Vector4 {
 	}
 	
 	/**
-	 * V = A.V - Multiplication of a this Vector3 V by a Matrix4.
+	 * V = A.V - Multiplication of a this Vector4 V by a Matrix4.
 	 * This Vector4 is modified and contains the result of the operation.
 	 * @param A the Matrix4
 	 */

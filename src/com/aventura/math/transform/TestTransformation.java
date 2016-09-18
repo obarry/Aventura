@@ -4,9 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.aventura.math.vector.MatrixArrayWrongSizeException;
 import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.VectorArrayWrongSizeException;
+import com.aventura.math.vector.Vector4;
 
 public class TestTransformation {
 
@@ -41,12 +40,12 @@ public class TestTransformation {
 		System.out.println("Scaling: "+h1);
 		
 		Transformation t = null; // TBD		
-		Vector3 v1 = new Vector3(1.0, -1.0, 1.0);		
+		Vector4 v1 = new Vector4(1.0, -1.0, 1.0, 0.0);		
 		System.out.println("Vector v1: "+v1);
 
 		t = new Transformation(h1, r1, t1);
 
-		Vector3 v2 = t.transform(v1);
+		Vector4 v2 = t.transform(v1);
 		System.out.println("Vector v2 (resulting from the transfomation t(h1,r1,t1): "+v2);
 
 		t.transformEquals(v1);
