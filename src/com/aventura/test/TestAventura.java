@@ -91,29 +91,19 @@ public class TestAventura {
 		
 		return view;
 	}
-		
-	public World createWorld() {
-		
-		// Create a new World
-		World world = new World();
+	
+	public Element createElement(World w, Transformation t) {
 		
 		// Create an Element in the World
-		Element e = world.createElement();
+		Element e = w.createElement();
 		
-		// Create a Transformation for this Element
-		Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
-		Scaling s = new Scaling(1.5);
-		Translation t = new Translation(new Vector3(0, 0, -5));
-		
-		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
-		Transformation trans = new Transformation(s, r, t);
-		e.setTransformationMatrix(trans);
+		e.setTransformationMatrix(t);
 		
 		// Build the Element: Create Vertices
-		Vertex v1 = new Vertex(new Vector4(0,    0,    0,  1));
-		Vertex v2 = new Vertex(new Vector4(2,  1.4,  1.4,  1));
-		Vertex v3 = new Vertex(new Vector4(2, -1.4,  1.4,  1));
-		Vertex v4 = new Vertex(new Vector4(2,    0, -1.4,  1));
+		Vertex v1 = new Vertex(new Vector4(-1.4,   0,    0,  1));
+		Vertex v2 = new Vertex(new Vector4(0.6,  1.4,  1.4,  1));
+		Vertex v3 = new Vertex(new Vector4(0.6, -1.4,  1.4,  1));
+		Vertex v4 = new Vertex(new Vector4(0.6,    0, -1.4,  1));
 		
 		// Creates Triangles from Vertices
 		Triangle t1 = new Triangle(v1, v2, v3);
@@ -126,14 +116,39 @@ public class TestAventura {
 		e.addTriangle(t2);
 		e.addTriangle(t3);
 		e.addTriangle(t4);
+
+		return e;
+	}
 		
+	public World createWorld() {
+		
+		// Create a new World
+		World world = new World();
+		
+		// Create an Element in the World
+		Element e = world.createElement();
+		
+		// Create a Transformation for this Element
+		//Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
+		Rotation r = new Rotation(0, Vector3.Z_AXIS);
+		Scaling s = new Scaling(1);
+		
+		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
+		for (int j=-2; j<=2; j++) {
+			for (int i=-5; i<=5; i++) {
+				Translation t = new Translation(new Vector3(i*3, j*3, 0));
+				Transformation trans = new Transformation(s, r, t);
+				createElement(world, trans);
+			}
+		}
+
 		// World is created
 		return world;
 	}
 	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(0,0,1,1);
+		Vector4 eye = new Vector4(0,0,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
