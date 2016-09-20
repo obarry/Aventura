@@ -136,7 +136,7 @@ public class TestAventura {
 		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
 		for (int j=-2; j<=2; j++) {
 			for (int i=-5; i<=5; i++) {
-				Translation t = new Translation(new Vector3(i*3, j*3, 0));
+				Translation t = new Translation(new Vector3(i*3, j*3, -50));
 				Transformation trans = new Transformation(s, r, t);
 				createElement(world, trans);
 			}
@@ -148,8 +148,8 @@ public class TestAventura {
 	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(0,0,5,1);
-		Vector4 poi = new Vector4(0,0,0,1);
+		Vector4 eye = new Vector4(0,0,6,1);
+		Vector4 poi = new Vector4(0,0,5,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
 		
