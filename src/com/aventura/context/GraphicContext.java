@@ -110,7 +110,7 @@ public class GraphicContext {
 	Matrix4 projection;
 
 	// Width/Height ratio = 16/9
-	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5,10,100, PERSPECTIVE_TYPE_FRUSTUM, 100);
+	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100);
 
 	
 	/**

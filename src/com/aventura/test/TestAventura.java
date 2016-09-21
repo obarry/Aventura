@@ -148,8 +148,8 @@ public class TestAventura {
 	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(0,0,6,1);
-		Vector4 poi = new Vector4(0,0,5,1);
+		Vector4 eye = new Vector4(-10,0,10,1);
+		Vector4 poi = new Vector4(0,0,-50,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
 		
