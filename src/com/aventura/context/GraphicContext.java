@@ -120,6 +120,30 @@ public class GraphicContext {
 		// To be used when creating manually GraphicContext by using setter/getters
 	}
 	
+	/**
+	 * Duplicate GraphicContext(e.g. to start from default and update it)
+	 * @param c the GraphicContext to duplicate
+	 */
+	public GraphicContext(GraphicContext c) {
+		// To be used when creating manually GraphicContext by using setter/getters
+		this.perspective_type = c.perspective_type;
+		this.display_landmark = c.display_landmark;
+		this.width = c.width;
+		this.height = c.height;
+		this.depth = c.depth;
+		this.dist = c.dist;
+		this.ppu = c.ppu;
+		
+		double left = -width/2;
+		double right = width/2;
+		double bottom = -height/2;
+		double top = height/2;
+		double near = dist;
+		double far = dist + depth;
+		
+		createPerspective(perspective_type, left , right, bottom, top, near, far);
+	}
+	
 	public GraphicContext(double width, double height, double dist, double depth, int perspective, int ppu) {
 		this.width = width;
 		this.height = height;
@@ -239,6 +263,19 @@ public class GraphicContext {
 		
 		createPerspective(perspective, left , right, bottom, top, near, far);
 
+	}
+	
+	public void computePerspective() {
+		
+		double left = -width/2;
+		double right = width/2;
+		double bottom = -height/2;
+		double top = height/2;
+		double near = dist;
+		double far = dist + depth;
+		
+		createPerspective(perspective_type, left , right, bottom, top, near, far);
+		
 	}
 	
 	public int getPerspectiveType() {

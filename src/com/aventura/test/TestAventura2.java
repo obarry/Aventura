@@ -55,7 +55,7 @@ import com.aventura.view.View;
 * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
 */
 
-public class TestAventura {
+public class TestAventura2 {
 	
 	// Create the view to be displayed
 	private SwingView view;
@@ -63,9 +63,9 @@ public class TestAventura {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura");
+		JFrame frame = new JFrame("Test Aventura 2");
 		// Set the size of the frame
-		frame.setSize(800,450);
+		frame.setSize(1010,630);
 		
 		// Create the view to be displayed
 		view = new SwingView(context, frame);
@@ -76,7 +76,7 @@ public class TestAventura {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura.this.view.draw(graph);
+		    	TestAventura2.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -99,23 +99,48 @@ public class TestAventura {
 		
 		e.setTransformationMatrix(t);
 		
-		// Build the Element: Create Vertices
-		Vertex v1 = new Vertex(new Vector4(-1.4,   0,    0,  1));
-		Vertex v2 = new Vertex(new Vector4(0.6,  1.4,  1.4,  1));
-		Vertex v3 = new Vertex(new Vector4(0.6, -1.4,  1.4,  1));
-		Vertex v4 = new Vertex(new Vector4(0.6,    0, -1.4,  1));
+		// Build the Element: Create Vertices of the Cube: 8 vertices
+		Vertex v11 = new Vertex(new Vector4(-0.5, -0.5, -0.5,  1));
+		Vertex v12 = new Vertex(new Vector4(0.5,  -0.5, -0.5,  1));
+		Vertex v13 = new Vertex(new Vector4(0.5, -0.5, 0.5,  1));
+		Vertex v14 = new Vertex(new Vector4(-0.5,  -0.5, 0.5,  1));
+		Vertex v21 = new Vertex(new Vector4(-0.5, 0.5, -0.5,  1));
+		Vertex v22 = new Vertex(new Vector4(0.5,  0.5, -0.5,  1));
+		Vertex v23 = new Vertex(new Vector4(0.5, 0.5, 0.5,  1));
+		Vertex v24 = new Vertex(new Vector4(-0.5,  0.5, 0.5,  1));
 		
-		// Creates Triangles from Vertices
-		Triangle t1 = new Triangle(v1, v2, v3);
-		Triangle t2 = new Triangle(v2, v3, v4);
-		Triangle t3 = new Triangle(v1, v2, v4);
-		Triangle t4 = new Triangle(v1, v4, v3);
+		// Creates Triangles from Vertices: 6 faces, 2 triangles each
+		Triangle t1 = new Triangle(v11, v12, v13);
+		Triangle t2 = new Triangle(v13, v14, v11);
 		
+		Triangle t3 = new Triangle(v11, v12, v22);
+		Triangle t4 = new Triangle(v22, v21, v11);
+
+		Triangle t5 = new Triangle(v11, v14, v24);
+		Triangle t6 = new Triangle(v24, v21, v11);
+
+		Triangle t7 = new Triangle(v24, v21, v22);
+		Triangle t8 = new Triangle(v22, v23, v24);
+		
+		Triangle t9 = new Triangle(v24, v14, v13);
+		Triangle t10 = new Triangle(v13, v23, v24);
+
+		Triangle t11 = new Triangle(v13, v23, v22);
+		Triangle t12 = new Triangle(v22, v12, v13);
+
 		// Add Triangles to the Element
 		e.addTriangle(t1);
 		e.addTriangle(t2);
 		e.addTriangle(t3);
 		e.addTriangle(t4);
+		e.addTriangle(t5);
+		e.addTriangle(t6);
+		e.addTriangle(t7);
+		e.addTriangle(t8);
+		e.addTriangle(t9);
+		e.addTriangle(t10);
+		e.addTriangle(t11);
+		e.addTriangle(t12);
 
 		return e;
 	}
@@ -134,9 +159,9 @@ public class TestAventura {
 		Scaling s = new Scaling(1);
 		
 		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
-		for (int j=-2; j<=2; j++) {
-			for (int i=-5; i<=5; i++) {
-				Translation t = new Translation(new Vector3(i*3, j*3, -50));
+		for (int j=-1; j<=1; j++) {
+			for (int i=-4; i<=4; i++) {
+				Translation t = new Translation(new Vector3(i*4, j*5, -40));
 				Transformation trans = new Transformation(s, r, t);
 				createElement(world, trans);
 			}
@@ -148,8 +173,8 @@ public class TestAventura {
 	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(-10,0,10,1);
-		Vector4 poi = new Vector4(0,0,-50,1);
+		Vector4 eye = new Vector4(-30,10,0,1);
+		Vector4 poi = new Vector4(10, -5,-45,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
 		
@@ -163,14 +188,17 @@ public class TestAventura {
 
 	public static void main(String[] args) {
 		
-		TestAventura test = new TestAventura();
+		TestAventura2 test = new TestAventura2();
 				
 		World world = test.createWorld();
 		Lighting light = test.createLight();
 		
 		Camera camera = test.createCamera();
 		
-		GraphicContext context = GraphicContext.GRAPHIC_DEFAULT;
+		GraphicContext context = new GraphicContext(GraphicContext.GRAPHIC_DEFAULT);
+		context.setHeight(6);
+		context.setWidth(10);
+		context.computePerspective();
 		System.out.println(context);
 		
 		View view = test.createView(context);
