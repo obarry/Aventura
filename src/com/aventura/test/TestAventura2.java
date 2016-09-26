@@ -20,6 +20,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.world.Box;
 import com.aventura.model.world.World;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
@@ -95,54 +96,12 @@ public class TestAventura2 {
 	public Element createElement(World w, Transformation t) {
 		
 		// Create an Element in the World
-		Element e = w.createElement();
+		Box b = new Box(1,2,3);
+		w.addElement(b);
 		
-		e.setTransformationMatrix(t);
+		b.setTransformationMatrix(t);
 		
-		// Build the Element: Create Vertices of the Cube: 8 vertices
-		Vertex v11 = new Vertex(new Vector4(-0.5, -0.5, -0.5,  1));
-		Vertex v12 = new Vertex(new Vector4(0.5,  -0.5, -0.5,  1));
-		Vertex v13 = new Vertex(new Vector4(0.5, -0.5, 0.5,  1));
-		Vertex v14 = new Vertex(new Vector4(-0.5,  -0.5, 0.5,  1));
-		Vertex v21 = new Vertex(new Vector4(-0.5, 0.5, -0.5,  1));
-		Vertex v22 = new Vertex(new Vector4(0.5,  0.5, -0.5,  1));
-		Vertex v23 = new Vertex(new Vector4(0.5, 0.5, 0.5,  1));
-		Vertex v24 = new Vertex(new Vector4(-0.5,  0.5, 0.5,  1));
-		
-		// Creates Triangles from Vertices: 6 faces, 2 triangles each
-		Triangle t1 = new Triangle(v11, v12, v13);
-		Triangle t2 = new Triangle(v13, v14, v11);
-		
-		Triangle t3 = new Triangle(v11, v12, v22);
-		Triangle t4 = new Triangle(v22, v21, v11);
-
-		Triangle t5 = new Triangle(v11, v14, v24);
-		Triangle t6 = new Triangle(v24, v21, v11);
-
-		Triangle t7 = new Triangle(v24, v21, v22);
-		Triangle t8 = new Triangle(v22, v23, v24);
-		
-		Triangle t9 = new Triangle(v24, v14, v13);
-		Triangle t10 = new Triangle(v13, v23, v24);
-
-		Triangle t11 = new Triangle(v13, v23, v22);
-		Triangle t12 = new Triangle(v22, v12, v13);
-
-		// Add Triangles to the Element
-		e.addTriangle(t1);
-		e.addTriangle(t2);
-		e.addTriangle(t3);
-		e.addTriangle(t4);
-		e.addTriangle(t5);
-		e.addTriangle(t6);
-		e.addTriangle(t7);
-		e.addTriangle(t8);
-		e.addTriangle(t9);
-		e.addTriangle(t10);
-		e.addTriangle(t11);
-		e.addTriangle(t12);
-
-		return e;
+		return b;
 	}
 		
 	public World createWorld() {

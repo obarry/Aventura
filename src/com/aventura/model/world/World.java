@@ -53,6 +53,10 @@ public class World {
 		return e;
 	}
 	
+	public void addElement(Element e) {
+		elements.add(e);
+	}
+	
 	public ArrayList<Element> getElements() {
 		return elements;
 	}
