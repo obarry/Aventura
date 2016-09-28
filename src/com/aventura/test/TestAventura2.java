@@ -93,17 +93,6 @@ public class TestAventura2 {
 		return view;
 	}
 	
-	public Element createElement(World w, Transformation t) {
-		
-		// Create an Element in the World
-		Box b = new Box(1,2,3);
-		w.addElement(b);
-		
-		b.setTransformationMatrix(t);
-		
-		return b;
-	}
-		
 	public World createWorld() {
 		
 		// Create a new World
@@ -118,11 +107,13 @@ public class TestAventura2 {
 		Scaling s = new Scaling(1);
 		
 		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
-		for (int j=-1; j<=1; j++) {
+		for (int j=-2; j<=2; j++) {
 			for (int i=-4; i<=4; i++) {
 				Translation t = new Translation(new Vector3(i*4, j*5, -40));
 				Transformation trans = new Transformation(s, r, t);
-				createElement(world, trans);
+				Box b = new Box(1,2,3);
+				world.addElement(b);
+				b.setTransformationMatrix(trans);
 			}
 		}
 
