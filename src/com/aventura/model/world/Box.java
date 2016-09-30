@@ -48,7 +48,6 @@ public class Box extends Element {
 	public Box(double x_dim, double y_dim, double z_dim, Vector3 position) {
 		super();
 		subelements = null;
-		vertices = new Vertex[2][2][2];
 		createBox(x_dim, y_dim, z_dim, position);
 	}
 	
@@ -62,13 +61,14 @@ public class Box extends Element {
 	public Box(double x_dim, double y_dim, double z_dim) {
 		super();
 		subelements = null;
-		vertices = new Vertex[2][2][2];
 		Vector3 position = new Vector3(0,0,0);
 		createBox(x_dim, y_dim, z_dim, position);
 	}
 	
-	private void createBox(double x_dim, double y_dim, double z_dim, Vector3 position) {
-		
+	protected void createBox(double x_dim, double y_dim, double z_dim, Vector3 position) {
+
+		vertices = new Vertex[2][2][2];
+
 		// Calculate dimensions
 		double xh = x_dim/2;
 		double yh = y_dim/2;

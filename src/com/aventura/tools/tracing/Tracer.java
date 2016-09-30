@@ -20,8 +20,8 @@ public class Tracer {
     public static boolean error     = true;
     public static boolean exception = true;
     public static boolean warning   = true;
-    public static boolean info      = true;
-    public static boolean function  = true;
+    public static boolean info      = false;
+    public static boolean function  = false;
     public static boolean state     = true;
 	public static boolean object    = true;
 	public static boolean stats     = true;

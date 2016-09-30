@@ -59,7 +59,15 @@ import com.aventura.math.vector.Vector4;
 public class Sphere extends Element {
 	
 	protected Vertex[][] vertices;
+	protected Vertex northPole, southPole;
 	
+	public Sphere(double ray, int half_seg) {
+		super();
+		subelements = null;
+		Vector3 position = new Vector3(0,0,0);
+		createSphere(ray, half_seg, position);
+	}
+
 	/**
 	 * @param ray
 	 * @param half_seg is half the number of segments for 360 degrees
@@ -68,8 +76,17 @@ public class Sphere extends Element {
 	public Sphere(double ray, int half_seg, Vector3 position) {
 		super();
 		subelements = null;
-		vertices = new Vertex[half_seg*2][half_seg+1]; // (n) x (n/2+1) vertices (n being the number of segments)
-		Vertex northPole, southPole;
+		createSphere(ray, half_seg, position);
+	}
+	
+	/**
+	 * @param ray
+	 * @param half_seg is half the number of segments for 360 degrees
+	 * @param position
+	 */
+	protected void createSphere(double ray, int half_seg, Vector3 position) {
+		
+		vertices = new Vertex[half_seg*2][half_seg-1]; // (n) x (n/2-1) vertices (n being the number of segments)	
 		double alpha = Math.PI/half_seg;
 		
 		// Create Vertices
@@ -77,18 +94,50 @@ public class Sphere extends Element {
 		southPole = new Vertex(new Vector4(0, 0, -ray,  1));
 		
 		for (int i=0; i<half_seg*2; i++) {
-			for (int j=0; j<half_seg+1; j++) {
-				vertices[i][j] = new Vertex(new Vector4(ray*Math.cos(alpha*i), ray*Math.sin(alpha*i), 0,  1));
+			for (int j=0; j<(half_seg-1); j++) {
+				double sina = Math.sin(alpha*i);
+				double cosa = Math.cos(alpha*i);
+				double sinb = Math.sin(alpha*(j+1));
+				double cosb = Math.cos(alpha*(j+1));
+				vertices[i][j] = new Vertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
 			}
 		}
+
+		// Create Triangles - 2 triangles per "square" face, 1 triangle for each face on the north and south poles
+		Triangle t;
 		
-		// Create Triangles - 2 triangles per "square" face
+		// North pole to first meridian - "triangle" faces
+		for (int i=0; i<half_seg*2-1; i++) {
+			t = new Triangle(northPole, vertices[i][0], vertices[i+1][0]);
+			this.addTriangle(t);
+		}
+		t = new Triangle(northPole, vertices[half_seg*2-1][0], vertices[0][0]);
+		this.addTriangle(t);
+		
+		// Meridian to meridian - "square" faces
+		for (int j=0; j<half_seg-2; j++) {
+			for (int i=0; i<half_seg*2-1; i++) {
+				t = new Triangle(vertices[i][j], vertices[i+1][j], vertices[i][j+1]);
+				this.addTriangle(t);			
+				t = new Triangle(vertices[i][j+1], vertices[i+1][j], vertices[i+1][j+1]);
+				this.addTriangle(t);			
+			}
+			t = new Triangle(vertices[half_seg*2-1][j], vertices[0][j], vertices[half_seg*2-1][j+1]);
+			this.addTriangle(t);			
+			t = new Triangle(vertices[half_seg*2-1][j+1], vertices[0][j], vertices[0][j+1]);
+			this.addTriangle(t);			
+		}
+				
+		// South pole to last meridian - "triangle" faces
+		for (int i=0; i<half_seg*2-1; i++) {
+			t = new Triangle(southPole, vertices[i][half_seg-2], vertices[i+1][half_seg-2]);
+			this.addTriangle(t);			
+		}
+		t = new Triangle(northPole, vertices[half_seg*2-1][half_seg-2], vertices[0][half_seg-2]);
+		this.addTriangle(t);
 		
 		// Complete creation of this element with a translation
 		this.transform = new Translation(position);
-
 	}
-
-
 
 }
