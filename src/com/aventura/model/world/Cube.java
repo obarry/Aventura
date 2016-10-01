@@ -36,4 +36,7 @@ public class Cube extends Box {
 		super(length, length, length, position);
 	}
 
+	public Cube(double length) {
+		super(length, length, length);
+	}
 }

@@ -81,6 +81,15 @@ public class Vector4 {
 		this.c[3] = v.c[3];
 	}
 
+	public Vector4(Vector3 v) {
+		// Create the array
+		c = new double[Constants.SIZE_4];
+		this.c[0] = v.c[0];
+		this.c[1] = v.c[1];
+		this.c[2] = v.c[2];
+		this.c[3] = 0;
+	}
+
 	public Vector4(int r, Matrix4 A) {
 		this.c[0] = A.get(r, 0);
 		this.c[1] = A.get(r, 1);

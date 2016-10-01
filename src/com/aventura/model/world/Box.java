@@ -48,6 +48,22 @@ public class Box extends Element {
 	public Box(double x_dim, double y_dim, double z_dim, Vector3 position) {
 		super();
 		subelements = null;
+		Vector4 v = new Vector4(position);
+		createBox(x_dim, y_dim, z_dim, v);
+	}
+	
+	/**
+	 * Create a box aligned on axis. Need to be rotated for a different orientation.
+	 * Box is translated by the provided Vector3
+	 * 
+	 * @param x_dim dimension of the box on x axis
+	 * @param y_dim dimension of the box on y axis
+	 * @param z_dim dimension of the box on z axis
+	 * @param position the translation vector
+	 */
+	public Box(double x_dim, double y_dim, double z_dim, Vector4 position) {
+		super();
+		subelements = null;
 		createBox(x_dim, y_dim, z_dim, position);
 	}
 	
@@ -61,11 +77,11 @@ public class Box extends Element {
 	public Box(double x_dim, double y_dim, double z_dim) {
 		super();
 		subelements = null;
-		Vector3 position = new Vector3(0,0,0);
+		Vector4 position = new Vector4(0,0,0,0);
 		createBox(x_dim, y_dim, z_dim, position);
 	}
 	
-	protected void createBox(double x_dim, double y_dim, double z_dim, Vector3 position) {
+	protected void createBox(double x_dim, double y_dim, double z_dim, Vector4 position) {
 
 		vertices = new Vertex[2][2][2];
 
@@ -75,14 +91,14 @@ public class Box extends Element {
 		double zh = z_dim/2;
 		
 		// Build the Element: Create Vertices of the Cube: 8 vertices
-		vertices[0][0][0] = new Vertex(new Vector4(-xh, -yh, -zh,  1));
-		vertices[0][1][0] = new Vertex(new Vector4(xh,  -yh, -zh,  1));
-		vertices[1][1][0] = new Vertex(new Vector4(xh, -yh, zh,  1));
-		vertices[1][0][0] = new Vertex(new Vector4(-xh,  -yh, zh,  1));
-		vertices[0][0][1] = new Vertex(new Vector4(-xh, yh, -zh,  1));
-		vertices[0][1][1] = new Vertex(new Vector4(xh,  yh, -zh,  1));
-		vertices[1][1][1] = new Vertex(new Vector4(xh, yh, zh,  1));
-		vertices[1][0][1] = new Vertex(new Vector4(-xh,  yh, zh,  1));
+		vertices[0][0][0] = new Vertex(new Vector4(-xh, -yh, -zh,  1).plus(position));
+		vertices[0][1][0] = new Vertex(new Vector4(xh,  -yh, -zh,  1).plus(position));
+		vertices[1][1][0] = new Vertex(new Vector4(xh, -yh, zh,  1).plus(position));
+		vertices[1][0][0] = new Vertex(new Vector4(-xh,  -yh, zh,  1).plus(position));
+		vertices[0][0][1] = new Vertex(new Vector4(-xh, yh, -zh,  1).plus(position));
+		vertices[0][1][1] = new Vertex(new Vector4(xh,  yh, -zh,  1).plus(position));
+		vertices[1][1][1] = new Vertex(new Vector4(xh, yh, zh,  1).plus(position));
+		vertices[1][0][1] = new Vertex(new Vector4(-xh,  yh, zh,  1).plus(position));
 		
 		// Creates Triangles from Vertices: 6 faces, 2 triangles each
 		Triangle t1 = new Triangle(vertices[0][0][0], vertices[0][1][0], vertices[1][1][0]);
@@ -115,10 +131,7 @@ public class Box extends Element {
 		this.addTriangle(t9);
 		this.addTriangle(t10);
 		this.addTriangle(t11);
-		this.addTriangle(t12);
-		
-		// Complete creation of this element with a translation
-		this.transform = new Translation(position);
+		this.addTriangle(t12);		
 	}
 
 }
