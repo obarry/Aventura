@@ -1,6 +1,5 @@
 package com.aventura.model.world;
 
-import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
@@ -50,9 +49,12 @@ import com.aventura.math.vector.Vector4;
 public class Trellis extends Element {
 	
 	protected Vertex[][] vertices;
+	protected int nx, ny;
+	protected double width, length;
 
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
+	 * z axis altitudes are set to 0.
 	 * This Trellis is centered on origin
 	 * @param width
 	 * @param length
@@ -62,12 +64,18 @@ public class Trellis extends Element {
 	public Trellis(double width, double length, int nx, int ny) {
 		super();
 		subelements = null;
+		this.width = width;
+		this.length = length;
+		this.nx = nx;
+		this.ny = ny;
 		Vector4 position = new Vector4(-width/2,-length/2,0,0);
-		createTrellis(width, length, nx, ny, position);
+		createTrellis(position);
+		createTriangles();
 	}
 
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
+	 * z axis altitudes are set to 0.
 	 * The first vertex of the Trellis is translated by the Vector3 position
 	 * If position vector is 0 then the first vertex starts on origin
 	 * @param width
@@ -79,12 +87,18 @@ public class Trellis extends Element {
 	public Trellis(double width, double length, int nx, int ny, Vector3 position) {
 		super();
 		subelements = null;
+		this.width = width;
+		this.length = length;
+		this.nx = nx;
+		this.ny = ny;
 		Vector4 v = new Vector4(position);
-		createTrellis(width, length, nx, ny, v);
+		createTrellis(v);
+		createTriangles();
 	}
 
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
+	 * z axis altitudes are set to 0.
 	 * The first vertex of the Trellis is translated by the Vector3 position
 	 * If position vector is 0 then the first vertex starts on origin
 	 * @param width
@@ -96,10 +110,84 @@ public class Trellis extends Element {
 	public Trellis(double width, double length, int nx, int ny, Vector4 position) {
 		super();
 		subelements = null;
-		createTrellis(width, length, nx, ny, position);
+		this.width = width;
+		this.length = length;
+		this.nx = nx;
+		this.ny = ny;
+		createTrellis(position);
+		createTriangles();
 	}
 
-	protected void createTrellis(double width, double length, int nx, int ny, Vector4 position) {
+	/**
+	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
+	 * Use the z axis altitudes from the provided array.
+	 * This Trellis is centered on origin
+	 * @param width
+	 * @param length
+	 * @param nx
+	 * @param ny
+	 * @param array
+	 */
+	public Trellis(double width, double length, int nx, int ny, double [][] array) throws WrongArraySizeException {
+		super();
+		subelements = null;
+		this.width = width;
+		this.length = length;
+		this.nx = nx;
+		this.ny = ny;
+		Vector4 position = new Vector4(-width/2,-length/2,0,0);
+		createTrellis(position, array);
+		createTriangles();
+	}
+
+	/**
+	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
+	 * Use the z axis altitudes from the provided array.
+	 * The first vertex of the Trellis is translated by the Vector3 position
+	 * If position vector is 0 then the first vertex starts on origin
+	 * @param width
+	 * @param length
+	 * @param nx
+	 * @param ny
+	 * @param position
+	 * @param array
+	 */
+	public Trellis(double width, double length, int nx, int ny, Vector3 position, double [][] array) throws WrongArraySizeException {
+		super();
+		subelements = null;
+		this.width = width;
+		this.length = length;
+		this.nx = nx;
+		this.ny = ny;
+		Vector4 v = new Vector4(position);
+		createTrellis(v, array);
+		createTriangles();
+	}
+
+	/**
+	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
+	 * Use the z axis altitudes from the provided array.
+	 * The first vertex of the Trellis is translated by the Vector3 position
+	 * If position vector is 0 then the first vertex starts on origin
+	 * @param width
+	 * @param length
+	 * @param nx
+	 * @param ny
+	 * @param position
+	 * @param array
+	 */
+	public Trellis(double width, double length, int nx, int ny, Vector4 position, double [][] array) throws WrongArraySizeException {
+		super();
+		subelements = null;
+		this.width = width;
+		this.length = length;
+		this.nx = nx;
+		this.ny = ny;
+		createTrellis(position, array);
+		createTriangles();
+	}
+
+	protected void createTrellis(Vector4 position) {
 		
 		vertices = new Vertex[nx+1][ny+1]; // for a Trellis: number of vertices = number of segments + 1
 		
@@ -109,8 +197,25 @@ public class Trellis extends Element {
 				vertices[i][j] = new Vertex(new Vector4(i*width/nx, j*length/ny, 0, 1).plus(position));
 			}
 		}
+	}
 
-		// Create Triangles
+	protected void createTrellis(Vector4 position, double [][] array) throws WrongArraySizeException {
+		
+		if ((array.length != nx+1) || (array[0].length != ny+1)) {
+			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
+		}
+		
+		vertices = new Vertex[nx+1][ny+1]; // for a Trellis: number of vertices = number of segments + 1
+		
+		// Create Vertices
+		for (int i=0; i<=nx; i++) {
+			for (int j=0; j<=ny; j++) {
+				vertices[i][j] = new Vertex(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
+			}
+		}
+	}
+
+	protected void createTriangles() {
 		Triangle t1, t2;
 		
 		for (int i=0; i<nx; i++) {
@@ -129,6 +234,22 @@ public class Trellis extends Element {
 				}
 			}
 		}
-		
 	}
+	
+	public int getNx() {
+		return nx;
+	}
+	
+	public int getNy() {
+		return ny;
+	}
+	
+	public double getWidth() {
+		return width;
+	}
+	
+	public double getLength() {
+		return length;
+	}
+	
 }
