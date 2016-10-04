@@ -76,7 +76,7 @@ public class Trellis extends Element {
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
 	 * z axis altitudes are set to 0.
-	 * The first vertex of the Trellis is translated by the Vector3 position
+	 * All vertices of the Trellis are translated by the Vector3 position
 	 * If position vector is 0 then the first vertex starts on origin
 	 * @param width
 	 * @param length
@@ -99,7 +99,7 @@ public class Trellis extends Element {
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
 	 * z axis altitudes are set to 0.
-	 * The first vertex of the Trellis is translated by the Vector3 position
+	 * All vertices of the Trellis are translated by the Vector3 position
 	 * If position vector is 0 then the first vertex starts on origin
 	 * @param width
 	 * @param length
@@ -143,7 +143,7 @@ public class Trellis extends Element {
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
 	 * Use the z axis altitudes from the provided array.
-	 * The first vertex of the Trellis is translated by the Vector3 position
+	 * All vertices of the Trellis are translated by the Vector3 position
 	 * If position vector is 0 then the first vertex starts on origin
 	 * @param width
 	 * @param length
@@ -167,7 +167,7 @@ public class Trellis extends Element {
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
 	 * Use the z axis altitudes from the provided array.
-	 * The first vertex of the Trellis is translated by the Vector3 position
+	 * All vertices of the Trellis are translated by the Vector3 position
 	 * If position vector is 0 then the first vertex starts on origin
 	 * @param width
 	 * @param length
@@ -250,6 +250,10 @@ public class Trellis extends Element {
 	
 	public double getLength() {
 		return length;
+	}
+	
+	public String toString() {
+		return "Trellis (width: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+")\nV[0,0]="+vertices[0][0]+"\nV[nx,0]="+vertices[nx][0]+"\nV[0,ny]="+vertices[0][ny]+"\nV[nx,ny]="+vertices[nx][ny];
 	}
 	
 }

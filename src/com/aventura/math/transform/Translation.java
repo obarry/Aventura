@@ -62,7 +62,7 @@ public class Translation extends Matrix4 {
 			this.set(0, 3, v.getX());
 			this.set(1, 3, v.getY());
 			this.set(2, 3, v.getZ());
-			if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Translation matrix:\n"+this);
+			if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Translation matrix:\n");
 		} catch (Exception e) {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected Error while creating new Translation with Vector4: "+v);			
 			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			
@@ -79,7 +79,7 @@ public class Translation extends Matrix4 {
 			this.set(0, 3, v.getX());
 			this.set(1, 3, v.getY());
 			this.set(2, 3, v.getZ());
-			if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Translation matrix:\n"+this);
+			if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Translation matrix:\n");
 		} catch (Exception e) {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected Error while creating new Translation with Vector3: "+v);			
 			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			

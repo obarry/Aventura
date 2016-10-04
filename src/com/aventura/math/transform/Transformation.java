@@ -47,7 +47,8 @@ public class Transformation extends Matrix4 {
 	public Transformation(Scaling h, Rotation r, Translation t) {
 		
 		super((h.times(r)).times(t));
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of new Transformation Matrix.\n"+"Scaling:\n"+h+"\nRotation:\n"+r+"\nTranslation:\n"+t);
+		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of new Transformation Matrix.\n"+"Scaling:\n"+h+"\nRotation:\n"+r+"\nTranslation:\n"+t);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of new Transformation Matrix.");
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Transformation:\n"+this);
 	}
 		
