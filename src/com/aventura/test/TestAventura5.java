@@ -106,12 +106,12 @@ public class TestAventura5 {
 		Scaling s = new Scaling(1);
 
 		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
-		Translation t = new Translation(new Vector3(0, 0, 0));
-		Transformation trans = new Transformation(s, r, t);
+		//Translation t = new Translation(new Vector3(0, 0, 0));
+		//Transformation trans = new Transformation(s, r, t);
 		Trellis trel = new Trellis(3,2,2,1);
 		System.out.println(trel);
 		world.addElement(trel);
-		trel.setTransformationMatrix(trans);
+		//trel.setTransformationMatrix(trans);
 
 		// World is created
 		return world;
@@ -119,7 +119,7 @@ public class TestAventura5 {
 
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(0,-50,1,1);
+		Vector4 eye = new Vector4(0,-5,1,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -150,8 +150,11 @@ public class TestAventura5 {
 		
 		System.out.println("********* CREATING GRAPHIC CONTEXT");
 		GraphicContext context = new GraphicContext(GraphicContext.GRAPHIC_DEFAULT);
-		context.setHeight(6);
-		context.setWidth(10);
+		context.setDist(1);
+		context.setDepth(10);
+		context.setHeight(0.45);
+		context.setWidth(0.8);
+		context.setPpu(1000);
 		context.computePerspective();
 		System.out.println(context);
 		

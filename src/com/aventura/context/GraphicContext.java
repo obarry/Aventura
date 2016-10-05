@@ -293,5 +293,15 @@ public class GraphicContext {
 	public int getDisplayLandmark() {
 		return display_landmark;
 	}
+	
+	public void setPpu(int ppu) {
+		this.ppu = ppu;
+	}
+	
+	public int getPpu() {
+		return ppu;
+	}
+	
+	
 
 }

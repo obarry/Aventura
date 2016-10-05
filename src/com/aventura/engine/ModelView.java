@@ -126,9 +126,11 @@ public class ModelView {
 	 */
 	public void computeTransformation() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
-		Matrix4 m = view.times(model);
-		transformation = projection.times(m);
-		//transformation = projection.times(view.times(model));
+		//Matrix4 m = projection.times(view);
+		//transformation = m.times(model);
+		//Matrix4 m = view.times(model);
+		//transformation = projection.times(m);
+		transformation = projection.times(view.times(model));
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ transformation);
 	}
 	
