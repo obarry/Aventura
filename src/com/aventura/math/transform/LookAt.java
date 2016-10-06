@@ -90,8 +90,8 @@ public class LookAt extends Matrix4 {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector4");
 	
 		Vector4 f =  (p.minus(e)).normalize();
-		Vector4 s =  f.times(u);
-		Vector4 up = s.times(f);
+		Vector4 s =  (f.times(u)).normalize();
+		Vector4 up = (s.times(f)).normalize();
 		
 		double[][] array = { { s.getX(), up.getX(), f.getX(), -e.getX() },
 				 			 { s.getY(), up.getY(), f.getY(), -e.getY() },

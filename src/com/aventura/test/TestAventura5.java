@@ -102,8 +102,8 @@ public class TestAventura5 {
 		
 		// Create a Transformation for this Element
 		//Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
-		Rotation r = new Rotation(0, Vector3.Z_AXIS);
-		Scaling s = new Scaling(1);
+		//Rotation r = new Rotation(0, Vector3.Z_AXIS);
+		//Scaling s = new Scaling(1);
 
 		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
 		//Translation t = new Translation(new Vector3(0, 0, 0));
@@ -119,7 +119,7 @@ public class TestAventura5 {
 
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(0,-5,1,1);
+		Vector4 eye = new Vector4(0,-5,0,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -149,13 +149,7 @@ public class TestAventura5 {
 		Camera camera = test.createCamera();
 		
 		System.out.println("********* CREATING GRAPHIC CONTEXT");
-		GraphicContext context = new GraphicContext(GraphicContext.GRAPHIC_DEFAULT);
-		context.setDist(1);
-		context.setDepth(10);
-		context.setHeight(0.45);
-		context.setWidth(0.8);
-		context.setPpu(1000);
-		context.computePerspective();
+		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 10, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		System.out.println(context);
 		
 		System.out.println("********* CREATING VIEW");
