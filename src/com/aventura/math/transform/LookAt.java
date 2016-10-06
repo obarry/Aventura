@@ -93,13 +93,23 @@ public class LookAt extends Matrix4 {
 		Vector4 s =  (f.times(u)).normalize();
 		Vector4 up = (s.times(f)).normalize();
 		
-		double[][] array = { { s.getX(), up.getX(), f.getX(), -e.getX() },
-				 			 { s.getY(), up.getY(), f.getY(), -e.getY() },
-				 			 { s.getZ(), up.getZ(), f.getZ(), -e.getZ() },
-				 			 { 0.0     , 0.0      , 0.0     ,  1.0      } };
+//		double[][] array = { { s.getX(), up.getX(), f.getX(), -e.getX() },
+//				 			 { s.getY(), up.getY(), f.getY(), -e.getY() },
+//				 			 { s.getZ(), up.getZ(), f.getZ(), -e.getZ() },
+//				 			 { 0.0     , 0.0      , 0.0     ,  1.0      } };
+
+		double[][] array = { { s.getX(), up.getX(), f.getX(), 0.0 },
+	 			 			 { s.getY(), up.getY(), f.getY(), 0.0 },
+	 			 			 { s.getZ(), up.getZ(), f.getZ(), 0.0 },
+	 			 			 { 0.0     , 0.0      , 0.0     , 1.0 } };
 		
+		Matrix4 orientation = new Matrix4(array);
+		Vector4 em = e.times(-1); 
+		Matrix4 translation = new Translation(em);
+		Matrix4 lookat = orientation.times(translation);
 		try {
-			this.setArray(array);
+			this.setArray(lookat.getArray());
+			//this.setArray(array);
 		} catch (Exception exc) {
 			// Should never happen
 		}

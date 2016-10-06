@@ -98,20 +98,9 @@ public class TestAventura5 {
 		World world = new World();
 		
 		// Create an Element in the World
-		Element e = world.createElement();
-		
-		// Create a Transformation for this Element
-		//Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
-		//Rotation r = new Rotation(0, Vector3.Z_AXIS);
-		//Scaling s = new Scaling(1);
-
-		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
-		//Translation t = new Translation(new Vector3(0, 0, 0));
-		//Transformation trans = new Transformation(s, r, t);
-		Trellis trel = new Trellis(3,2,2,1);
+		Trellis trel = new Trellis(3,2,3,2);
 		System.out.println(trel);
 		world.addElement(trel);
-		//trel.setTransformationMatrix(trans);
 
 		// World is created
 		return world;
@@ -119,7 +108,7 @@ public class TestAventura5 {
 
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(0,-5,0,1);
+		Vector4 eye = new Vector4(0,-5,-2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		

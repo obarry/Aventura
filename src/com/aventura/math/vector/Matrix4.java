@@ -144,6 +144,10 @@ public class Matrix4 {
 		return array[i][j];
 	}
 	
+	public double[][] getArray() {
+		return array;
+	}
+	
 	/**
 	 * Set all elements of the diagonal of this Matrix to a given value
 	 * @param v the value to set
