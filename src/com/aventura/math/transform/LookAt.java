@@ -61,15 +61,15 @@ import com.aventura.tools.tracing.Tracer;
  * 			| s.z  up.z  f.z  0.0 |
  * 			\ 0.0  0.0   0.0  1.0 /
  * 
- * 5) Add to this matrix the translation to move the origin to the position of the camera (by translating the
+ * 5) Combine this matrix with the translation matrix to move the origin to the position of the camera (by translating the
  * resulting Vector of the above rotation by the negative of the camera's position)
  * 
- * 			/ s.x  up.x  f.x -e.x \
- * 		T = | s.y  up.y  f.y -e.y |
- * 			| s.z  up.z  f.z -e.z |
- * 			\ 0.0  0.0   0.0  1.0 /
+ * 			/ 1.0  0.0  0.0 -e.x \
+ * 		T = | 0.0  1.0  0.0 -e.y |
+ * 			| 0.0  0.0  1.0 -e.z |
+ * 			\ 0.0  0.0  0.0  1.0 /
  * 
- * T is the LookAt Matrix.
+ * LookAt Matrix : L = R.T
  * 
  * @author Bricolage Olivier
  * @since July 2016
@@ -89,27 +89,29 @@ public class LookAt extends Matrix4 {
 	public LookAt(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector4");
 	
+		// Build forward, up and side Vectors
 		Vector4 f =  (p.minus(e)).normalize();
 		Vector4 s =  (f.times(u)).normalize();
 		Vector4 up = (s.times(f)).normalize();
 		
-//		double[][] array = { { s.getX(), up.getX(), f.getX(), -e.getX() },
-//				 			 { s.getY(), up.getY(), f.getY(), -e.getY() },
-//				 			 { s.getZ(), up.getZ(), f.getZ(), -e.getZ() },
-//				 			 { 0.0     , 0.0      , 0.0     ,  1.0      } };
-
+		// Construct array of Reorientation Matrix
 		double[][] array = { { s.getX(), up.getX(), f.getX(), 0.0 },
 	 			 			 { s.getY(), up.getY(), f.getY(), 0.0 },
 	 			 			 { s.getZ(), up.getZ(), f.getZ(), 0.0 },
 	 			 			 { 0.0     , 0.0      , 0.0     , 1.0 } };
 		
+		// Build reorientation Matrix
 		Matrix4 orientation = new Matrix4(array);
+		
+		// Prepare translation Vector
+		
 		Vector4 em = e.times(-1); 
+		// Build the translation Matrix
 		Matrix4 translation = new Translation(em);
-		Matrix4 lookat = orientation.times(translation);
+		
+		// Then combine the reorientation with the translation. Translation first then Reorientation.
 		try {
-			this.setArray(lookat.getArray());
-			//this.setArray(array);
+			this.setArray(orientation.times(translation).getArray());
 		} catch (Exception exc) {
 			// Should never happen
 		}
@@ -117,8 +119,7 @@ public class LookAt extends Matrix4 {
 	}
 
 	/**
-	 * 
-	 * 	 * Construction of Camera's LookAt Matrix based on Points and Vector3
+	 * Construction of Camera's LookAt Matrix based on Points and Vector3
 	 * 
 	 * @param e the Eye point
 	 * @param p the Point of interest
@@ -144,6 +145,11 @@ public class LookAt extends Matrix4 {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);												
 	}
 	
+	/**
+	 * Construction of a LookAt Matrix fro, another Matrix4
+	 * 
+	 * @param m the Matrix4
+	 */
 	public LookAt(Matrix4 m) {
 		super(m);
 	}
