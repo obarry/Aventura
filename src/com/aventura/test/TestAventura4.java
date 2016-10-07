@@ -12,16 +12,10 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-import com.aventura.math.transform.Rotation;
-import com.aventura.math.transform.Scaling;
-import com.aventura.math.transform.Transformation;
-import com.aventura.math.transform.Translation;
-import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
-import com.aventura.model.world.Element;
 import com.aventura.model.world.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
@@ -97,28 +91,16 @@ public class TestAventura4 {
 		World world = new World();
 		
 		// Create an Element in the World
-		Element e = world.createElement();
-		
-		// Create a Transformation for this Element
-		//Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
-		Rotation r = new Rotation(0, Vector3.Z_AXIS);
-		Scaling s = new Scaling(1);
-
-		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
-		Translation t = new Translation(new Vector3(0, 0, -40));
-		Transformation trans = new Transformation(s, r, t);
 		Trellis trel = new Trellis(20,10,19,10);
 		world.addElement(trel);
-		trel.setTransformationMatrix(trans);
-
 		// World is created
 		return world;
 	}
 
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(-30,10,0,1);
-		Vector4 poi = new Vector4(10, -5,-45,1);
+		Vector4 eye = new Vector4(-25,10,25,1);
+		Vector4 poi = new Vector4(0, 0, 0, 1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
 		

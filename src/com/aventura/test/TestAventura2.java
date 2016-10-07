@@ -155,5 +155,4 @@ public class TestAventura2 {
 		renderer.render();
 		
 	}
-
 }

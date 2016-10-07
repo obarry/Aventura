@@ -12,9 +12,6 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-import com.aventura.math.transform.Rotation;
-import com.aventura.math.transform.Scaling;
-import com.aventura.math.transform.Transformation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -100,19 +97,14 @@ public class TestAventura3 {
 		// Create an Element in the World
 		Element e = world.createElement();
 		
-		// Create a Transformation for this Element
-		//Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
-		Rotation r = new Rotation(0, Vector3.Z_AXIS);
-		Scaling s = new Scaling(1);
 		
 		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
 		for (int j=-2; j<=2; j++) {
 			for (int i=-4; i<=4; i++) {
-				Translation t = new Translation(new Vector3(i*4, j*5, -40));
-				Transformation trans = new Transformation(s, r, t);
+				Translation t = new Translation(new Vector3(i*4, j*5, 0));
 				Sphere sph = new Sphere(1.5,12);
 				world.addElement(sph);
-				sph.setTransformationMatrix(trans);
+				sph.setTransformationMatrix(t);
 			}
 		}
 
@@ -122,8 +114,8 @@ public class TestAventura3 {
 	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(-30,10,0,1);
-		Vector4 poi = new Vector4(10, -5,-45,1);
+		Vector4 eye = new Vector4(-15,15,20,1);
+		Vector4 poi = new Vector4(-5, -0, 0,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
 		
