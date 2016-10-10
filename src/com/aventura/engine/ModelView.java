@@ -4,6 +4,7 @@ import com.aventura.math.perspective.Perspective;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Element;
+import com.aventura.model.world.Line;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.tools.tracing.Tracer;
@@ -132,6 +133,26 @@ public class ModelView {
 		//transformation = projection.times(m);
 		transformation = projection.times(view.times(model));
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ transformation);
+	}
+	
+	/**
+	 * Return a new Line containing (new) projected vertices
+	 * Relies on the transform method transforming vertices
+	 * 
+	 * @param l the Line to transform
+	 * @return the new Line
+	 */
+	public Line transform(Line l) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform line: "+l);
+		
+		Line transformed = new Line();
+		
+		transformed.setV1(transform(l.getV1()));
+		transformed.setV2(transform(l.getV2()));
+		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed line: "+ transformed);
+		
+		return transformed;
 	}
 	
 	/**

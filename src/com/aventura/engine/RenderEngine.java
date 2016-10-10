@@ -7,6 +7,7 @@ import com.aventura.context.RenderContext;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Element;
+import com.aventura.model.world.Line;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
@@ -175,6 +176,21 @@ public class RenderEngine {
 			
 			// If the rendering type is LINE, then draw lines directly
 			if (render.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
+				if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED_STANDARD) {
+					Vertex o = new Vertex(0,0,0);
+					Vertex x = new Vertex(1,0,0);
+					Vertex y = new Vertex(0,1,0);
+					Vertex z = new Vertex(0,0,1);
+					Line line_x = new Line(o, x);
+					Line line_y = new Line(o, y);
+					Line line_z = new Line(o, z);
+					Line lx = transformation.transform(line_x);
+					Line ly = transformation.transform(line_y);
+					Line lz = transformation.transform(line_z);
+					drawLine(lx);
+					drawLine(ly);
+					drawLine(lz);
+				}
 				drawTriangleLines(triangle);
 			} else {
 				//TODO to be implemented
@@ -226,14 +242,18 @@ public class RenderEngine {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawTriangleLines(t)");
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing triangle. "+ t);
 		
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1: "+t.getV1());
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2: "+t.getV2());
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v3: "+t.getV3());
-
 		view.setColor(Color.WHITE);
 		drawLine(t.getV1(), t.getV2());
 		drawLine(t.getV2(), t.getV3());
 		drawLine(t.getV3(), t.getV1());
+	}
+	
+	protected void drawLine(Line l) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(l)");
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing Line. "+ l);
+
+		view.setColor(Color.WHITE);
+		drawLine(l.getV1(), l.getV2());
 	}
 	
 	protected void drawLine(Vertex v1, Vertex v2) {
@@ -241,10 +261,6 @@ public class RenderEngine {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(v1,v2)");
 		
 		int x1, y1, x2, y2;
-//		x1 = (int)(v1.getPosition().getX()*graphic.getWidth()*graphic.getPPU());
-//		y1 = (int)(v1.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
-//		x2 = (int)(v2.getPosition().getX()*graphic.getWidth()*graphic.getPPU());
-//		y2 = (int)(v2.getPosition().getY()*graphic.getHeight()*graphic.getPPU());
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getX() : "+ v1.getPosition().get3DX());
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getY() : "+ v1.getPosition().get3DY());
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getX() : "+ v2.getPosition().get3DX());

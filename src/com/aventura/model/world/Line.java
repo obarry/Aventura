@@ -1,8 +1,5 @@
 package com.aventura.model.world;
 
-import java.awt.Color;
-import com.aventura.math.vector.*;
-
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -28,54 +25,43 @@ import com.aventura.math.vector.*;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * A generic Vertex without Normal Vector
- * Normally only used for triangles having a specific normal vector or for generic handling purpose
- * Else the general case is to use NVertex inherited class
- * 
  * @author Bricolage Olivier
- * @since May 2016
+ * @since October 2016
  */
-public class Vertex {
+
+public class Line {
 	
-	// Geometry
-	protected Vector4 position;
+	// Made of 2 vertices
+	Vertex v1;
+	Vertex v2;
 	
-	// Physical characteristic
-	protected Vector2 texture; //relative position of this vertex in the texture plane
-	protected Color color; // base color of this vertex
-	protected int material; // to be defined, a specific class/object may be needed
-	
-	// Reflectivity
-	// TBD
-	
-	public Vertex() {
-		
+	public Line() {
+		this.v1 = null;
+		this.v2 = null;
 	}
 	
-	public Vertex(double x, double y, double z) {
-		position = new Vector4(x, y, z, 1);
-	}
-	
-	public Vertex(Vector4 p) {
-		position = p;
-		//normal = null;
-	}
-	
-	public Vertex(Vector4 p, Vector3 n) {
-		position = p;
-		//normal = n;
+	public Line(Vertex v1, Vertex v2) {
+		this.v1 = v1;
+		this.v2 = v2;
 	}
 	
 	public String toString() {
-		return "Position: "+position;
+		return ("Line vertices:\n"+" v1: "+v1+"\n v2: "+v2);
 	}
-	
-	public void setPosition(Vector4 p) {
-		position = p;
+
+	public Vertex getV1() {
+		return v1;
 	}
-	
-	public Vector4 getPosition() {
-		return position;
+
+	public Vertex getV2() {
+		return v2;
 	}
-	
+
+	public void setV1(Vertex v) {
+		this.v1 = v;
+	}
+
+	public void setV2(Vertex v) {
+		this.v2 = v;
+	}
 }
