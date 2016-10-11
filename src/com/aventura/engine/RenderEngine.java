@@ -149,6 +149,25 @@ public class RenderEngine {
 			}
 		}
 		
+		if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED) {
+			Vertex o = new Vertex(0,0,0);
+			Vertex x = new Vertex(1,0,0);
+			Vertex y = new Vertex(0,1,0);
+			Vertex z = new Vertex(0,0,1);
+			Line line_x = new Line(o, x);
+			Line line_y = new Line(o, y);
+			Line line_z = new Line(o, z);
+			Line lx = transformation.transform(line_x);
+			Line ly = transformation.transform(line_y);
+			Line lz = transformation.transform(line_z);
+			view.setColor(Color.RED);
+			drawLine(lx);
+			view.setColor(Color.GREEN);
+			drawLine(ly);
+			view.setColor(Color.BLUE);
+			drawLine(lz);
+		}
+
 		view.renderView();
 
 	}
@@ -176,21 +195,6 @@ public class RenderEngine {
 			
 			// If the rendering type is LINE, then draw lines directly
 			if (render.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
-				if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED_STANDARD) {
-					Vertex o = new Vertex(0,0,0);
-					Vertex x = new Vertex(1,0,0);
-					Vertex y = new Vertex(0,1,0);
-					Vertex z = new Vertex(0,0,1);
-					Line line_x = new Line(o, x);
-					Line line_y = new Line(o, y);
-					Line line_z = new Line(o, z);
-					Line lx = transformation.transform(line_x);
-					Line ly = transformation.transform(line_y);
-					Line lz = transformation.transform(line_z);
-					drawLine(lx);
-					drawLine(ly);
-					drawLine(lz);
-				}
 				drawTriangleLines(triangle);
 			} else {
 				//TODO to be implemented
@@ -252,7 +256,6 @@ public class RenderEngine {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(l)");
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing Line. "+ l);
 
-		view.setColor(Color.WHITE);
 		drawLine(l.getV1(), l.getV2());
 	}
 	

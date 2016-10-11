@@ -88,7 +88,7 @@ public class GraphicContext {
 	public static final String PERSPECTIVE_TYPE_ORTHOGRAPHIC_STRING = "PERSPECTIVE_TYPE_ORTHOGRAPHIC";
 	
 	public static final int DISPLAY_LANDMARK_DISABLED = 0;
-	public static final int DISPLAY_LANDMARK_ENABLED_STANDARD = 1;
+	public static final int DISPLAY_LANDMARK_ENABLED = 1;
 	public static final int DISPLAY_LANDMARK_ENABLED_ARROW = 2;
 	public static final int DISPLAY_LANDMARK_ENABLED_3D = 3;
 
@@ -110,7 +110,7 @@ public class GraphicContext {
 	Matrix4 projection;
 
 	// Width/Height ratio = 16/9
-	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100);
+	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5,10,1000, PERSPECTIVE_TYPE_FRUSTUM, DISPLAY_LANDMARK_ENABLED, 100);
 
 	
 	/**
@@ -144,12 +144,13 @@ public class GraphicContext {
 		createPerspective(perspective_type, left , right, bottom, top, near, far);
 	}
 	
-	public GraphicContext(double width, double height, double dist, double depth, int perspective, int ppu) {
+	public GraphicContext(double width, double height, double dist, double depth, int perspective, int display_landmark, int ppu) {
 		this.width = width;
 		this.height = height;
 		this.dist = dist;
 		this.depth = depth;
 		this.perspective_type = perspective;
+		this.display_landmark = display_landmark;
 		this.ppu = ppu;
 		
 		double left = -width/2;
