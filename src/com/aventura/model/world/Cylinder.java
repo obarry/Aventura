@@ -34,6 +34,8 @@ import com.aventura.math.vector.Vector4;
  * The diameter of the cylinder is ray * 2
  * It is made of 2 * half_seg Vertices per circle and 2 * 2 * half_seg Triangles (each face of the cylinder is made of 2 triangles)
  * 
+ * The Cylinder, as any Element, can then be moved, rotated and transformed thanks to the Transformation matrix
+ * 
  * @author Bricolage Olivier
  * @since October 2016
  */
@@ -44,9 +46,10 @@ public class Cylinder extends Element {
 	protected Vertex[][] vertices;
 	
 	/**
-	 * @param height
-	 * @param ray
-	 * @param half_seg is half the number of segments for 360 degrees
+	 * Default creation of a Cylinder around Z axis 
+	 * @param height of the Cylinder
+	 * @param ray of the top and bottom circles of the Cylinder
+	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
 	public Cylinder(double height, double ray, int half_seg) {
 		super();
@@ -56,10 +59,11 @@ public class Cylinder extends Element {
 	}
 
 	/**
-	 * @param height
-	 * @param ray
-	 * @param half_seg is half the number of segments for 360 degrees
-	 * @param position
+	 * Creation of a Cylinder moved to a given position
+	 * @param height of the Cylinder
+	 * @param ray of the top and bottom circles of the Cylinder
+	 * @param half_seg is half the number of segments for 360 degrees circles
+	 * @param position to which the Vertices are moved at creation (Vector3)
 	 */
 	public Cylinder(double height, double ray, int half_seg, Vector3 position) {
 		super();
@@ -69,10 +73,11 @@ public class Cylinder extends Element {
 	}
 	
 	/**
-	 * @param height
-	 * @param ray
-	 * @param half_seg is half the number of segments for 360 degrees
-	 * @param position
+	 * Creation of a Cylinder moved to a given position
+	 * @param height of the Cylinder
+	 * @param ray of the top and bottom circles of the Cylinder
+	 * @param half_seg is half the number of segments for 360 degrees circles
+	 * @param position to which the Vertices are moved at creation (Vector4)
 	 */
 	public Cylinder(double height, double ray, int half_seg, Vector4 position) {
 		super();
