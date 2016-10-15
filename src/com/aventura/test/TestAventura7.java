@@ -17,7 +17,7 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
 import com.aventura.tools.tracing.Tracer;
-import com.aventura.model.world.Cube;
+import com.aventura.model.world.Cylinder;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -49,7 +49,7 @@ import com.aventura.view.View;
 * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
 */
 
-public class TestAventura6 {
+public class TestAventura7 {
 	
 	// Create the view to be displayed
 	private SwingView view;
@@ -57,7 +57,7 @@ public class TestAventura6 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 6");
+		JFrame frame = new JFrame("Test Aventura 7");
 		// Set the size of the frame
 		frame.setSize(1010,630);
 		
@@ -70,7 +70,7 @@ public class TestAventura6 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura6.this.view.draw(graph);
+		    	TestAventura7.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -92,7 +92,7 @@ public class TestAventura6 {
 		World world = new World();
 		
 		// Create an Element in the World
-		Cube trel = new Cube(2);
+		Cylinder trel = new Cylinder(3,1,12);
 		System.out.println(trel);
 		world.addElement(trel);
 
@@ -122,7 +122,7 @@ public class TestAventura6 {
 		Tracer.info = true;
 		Tracer.function = true;
 		
-		TestAventura6 test = new TestAventura6();
+		TestAventura7 test = new TestAventura7();
 				
 		World world = test.createWorld();
 		Lighting light = test.createLight();
