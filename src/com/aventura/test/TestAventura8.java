@@ -102,7 +102,7 @@ public class TestAventura8 {
 
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(1,-8,-8,1);
+		Vector4 eye = new Vector4(5,40,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -127,7 +127,7 @@ public class TestAventura8 {
 		World world = test.createWorld();
 		Lighting light = test.createLight();
 		Camera camera = test.createCamera();
-		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 10, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, GraphicContext.DISPLAY_LANDMARK_ENABLED, 1000);
+		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, GraphicContext.DISPLAY_LANDMARK_ENABLED, 1000);
 		View view = test.createView(context);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);

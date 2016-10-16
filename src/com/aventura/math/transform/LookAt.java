@@ -95,9 +95,9 @@ public class LookAt extends Matrix4 {
 		Vector4 up = (s.times(f)).normalize();
 		
 		// Construct array of Reorientation Matrix
-		double[][] array = { { s.getX(), up.getX(), f.getX(), 0.0 },
-	 			 			 { s.getY(), up.getY(), f.getY(), 0.0 },
-	 			 			 { s.getZ(), up.getZ(), f.getZ(), 0.0 },
+		double[][] array = { { s.getX(), up.getX(), -f.getX(), 0.0 },
+	 			 			 { s.getY(), up.getY(), -f.getY(), 0.0 },
+	 			 			 { s.getZ(), up.getZ(), -f.getZ(), 0.0 },
 	 			 			 { 0.0     , 0.0      , 0.0     , 1.0 } };
 		
 		// Build reorientation Matrix
