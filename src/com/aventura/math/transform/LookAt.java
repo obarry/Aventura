@@ -33,6 +33,10 @@ import com.aventura.tools.tracing.Tracer;
  * LookAt camera Matrix
  * ====================
  * 
+ * Reference:
+ * Constructing the lookat() matrix directly
+ * http://www.cs.virginia.edu/~gfx/Courses/1999/intro.fall99.html/lookat.html
+ * 
  * LookAt Matrix is built as follows:
  * 
  * Provided:
@@ -56,10 +60,10 @@ import com.aventura.tools.tracing.Tracer;
  * 
  * 4) construction of a Rotation Matrix representing a reorientation into our newly constructed orthonormal basis
  * 
- * 			/ s.x  up.x  f.x  0.0 \
- * 		R = | s.y  up.y  f.y  0.0 |
- * 			| s.z  up.z  f.z  0.0 |
- * 			\ 0.0  0.0   0.0  1.0 /
+ * 			/  s.x  s.y  s.z  0.0 \
+ * 		R = | up.x up.y up.z  0.0 |
+ * 			| -f.x -f.y -f.z  0.0 |
+ * 			\ 0.0   0.0  0.0  1.0 /
  * 
  * 5) Combine this matrix with the translation matrix to move the origin to the position of the camera (by translating the
  * resulting Vector of the above rotation by the negative of the camera's position)
@@ -89,33 +93,7 @@ public class LookAt extends Matrix4 {
 	public LookAt(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector4");
 	
-		// Build forward, up and side Vectors
-		Vector4 f =  (p.minus(e)).normalize();
-		Vector4 s =  (f.times(u)).normalize();
-		Vector4 up = (s.times(f)).normalize();
-		
-		// Construct array of Reorientation Matrix
-		double[][] array = { { s.getX(), up.getX(), -f.getX(), 0.0 },
-	 			 			 { s.getY(), up.getY(), -f.getY(), 0.0 },
-	 			 			 { s.getZ(), up.getZ(), -f.getZ(), 0.0 },
-	 			 			 { 0.0     , 0.0      , 0.0     , 1.0 } };
-		
-		// Build reorientation Matrix
-		Matrix4 orientation = new Matrix4(array);
-		
-		// Prepare translation Vector
-		
-		Vector4 em = e.times(-1); 
-		// Build the translation Matrix
-		Matrix4 translation = new Translation(em);
-		
-		// Then combine the reorientation with the translation. Translation first then Reorientation.
-		try {
-			this.setArray(orientation.times(translation).getArray());
-		} catch (Exception exc) {
-			// Should never happen
-		}
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);						
+		createLookAt(e, p, u);												
 	}
 
 	/**
@@ -128,22 +106,45 @@ public class LookAt extends Matrix4 {
 	public LookAt(Vector3 e, Vector3 p, Vector3 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector3");
 		
-		Vector3 f =  (p.minus(e)).normalize();
-		Vector3 s =  f.times(u);
-		Vector3 up = s.times(f);
+		Vector4 e4 = new Vector4(e);
+		Vector4 p4 = new Vector4(p);
+		Vector4 u4 = new Vector4(u);
 		
-		double[][] array = { { s.getX(), up.getX(), f.getX(), -e.getX() },
-				 			 { s.getY(), up.getY(), f.getY(), -e.getY() },
-				 			 { s.getZ(), up.getZ(), f.getZ(), -e.getZ() },
-				 			 { 0.0     , 0.0      , 0.0     ,  1.0      } };
-		
+		createLookAt(e4, p4, u4);												
+	}
+	
+	protected void createLookAt(Vector4 e, Vector4 p, Vector4 u) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "createLookAt(e, p, u)");
+
+		// Build forward, up and side Vectors
+		Vector4 f =  (p.minus(e)).normalize();
+		Vector4 s =  (f.times(u)).normalize();
+		Vector4 up = (s.times(f)).normalize();
+
+		// Construct array of Reorientation Matrix
+		double[][] array = { {  s.getX(),  s.getY(),  s.getZ(), 0.0 },
+				{ up.getX(), up.getY(), up.getZ(), 0.0 },
+				{ -f.getX(), -f.getY(), -f.getZ(), 0.0 },
+				{  0.0     ,  0.0     ,  0.0     , 1.0 } };
+
+		// Build reorientation Matrix
+		Matrix4 orientation = new Matrix4(array);
+
+		// Prepare translation Vector
+
+		Vector4 em = e.times(-1); 
+		// Build the translation Matrix
+		Matrix4 translation = new Translation(em);
+
+		// Then combine the reorientation with the translation. Translation first then Reorientation.
 		try {
-			this.setArray(array);
+			this.setArray(orientation.times(translation).getArray());
 		} catch (Exception exc) {
 			// Should never happen
 		}
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);												
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);						
 	}
+
 	
 	/**
 	 * Construction of a LookAt Matrix fro, another Matrix4

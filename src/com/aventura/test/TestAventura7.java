@@ -102,7 +102,7 @@ public class TestAventura7 {
 
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(2,-8,-6,1);
+		Vector4 eye = new Vector4(2,-8,6,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		

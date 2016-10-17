@@ -12,12 +12,18 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
+import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Scaling;
+import com.aventura.math.transform.Transformation;
+import com.aventura.math.transform.Translation;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.world.Box;
 import com.aventura.model.world.World;
 import com.aventura.tools.tracing.Tracer;
-import com.aventura.model.world.Cone;
+import com.aventura.model.world.Element;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -49,7 +55,7 @@ import com.aventura.view.View;
 * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
 */
 
-public class TestAventura8 {
+public class TestAventura2bis {
 	
 	// Create the view to be displayed
 	private SwingView view;
@@ -57,9 +63,9 @@ public class TestAventura8 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 8");
+		JFrame frame = new JFrame("Test Aventura 2bis");
 		// Set the size of the frame
-		frame.setSize(1000,600);
+		frame.setSize(1010,630);
 		
 		// Create the view to be displayed
 		view = new SwingView(context, frame);
@@ -70,7 +76,7 @@ public class TestAventura8 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura8.this.view.draw(graph);
+		    	TestAventura2bis.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -87,23 +93,21 @@ public class TestAventura8 {
 	}
 	
 	public World createWorld() {
-		
+
 		// Create a new World
 		World world = new World();
-		
-		// Create an Element in the World
-		Cone trel = new Cone(4,2,12);
-		System.out.println(trel);
-		world.addElement(trel);
+
+		Box b = new Box(2,4,6);
+		world.addElement(b);
 
 		// World is created
 		return world;
 	}
-
+	
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(5,40,10,1);
-		Vector4 poi = new Vector4(0,0,0,1);
+		Vector4 eye = new Vector4(10, -15, 5, 1);
+		Vector4 poi = new Vector4(0, 0, 0, 1);
 		
 		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		
 		
@@ -117,25 +121,26 @@ public class TestAventura8 {
 
 	public static void main(String[] args) {
 		
-		System.out.println("********* STARTING APPLICATION *********");
-		
-		Tracer.info = true;
 		Tracer.function = true;
-		
-		TestAventura8 test = new TestAventura8();
+
+		TestAventura2bis test = new TestAventura2bis();
 				
 		World world = test.createWorld();
 		Lighting light = test.createLight();
+		
 		Camera camera = test.createCamera();
-		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, GraphicContext.DISPLAY_LANDMARK_ENABLED, 1250);
+		
+		GraphicContext context = new GraphicContext(GraphicContext.GRAPHIC_DEFAULT);
+		context.setHeight(6);
+		context.setWidth(10);
+		context.computePerspective();
+		System.out.println(context);
+		
 		View view = test.createView(context);
-
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
 		renderer.setView(view);
 		renderer.render();
 		
-		System.out.println("********* ENDING APPLICATION *********");
-
 	}
-
 }
+
