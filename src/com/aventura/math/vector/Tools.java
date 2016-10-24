@@ -34,6 +34,17 @@ package com.aventura.math.vector;
  */
 public class Tools {
 	
+	/**
+	 * Interpolate 2 Points A and B (or Vectors) with a parameter t
+	 * t = 0: returns A
+	 * t = 1: returns B
+	 * 0<t<1: returns the interpolated point between A and B
+	 * t<0 or t>1; returns the interpolated point beyond A or beyond B (on the (AB) line)
+	 * @param A the Vector4 point
+	 * @param B the Vector4 point
+	 * @param t the interpolation parameter
+	 * @return a Vector4 interpolated on the (AB) line
+	 */
 	public static Vector4 interpolate(Vector4 A, Vector4 B, double t) {
 		
 		Vector4 P = new Vector4();

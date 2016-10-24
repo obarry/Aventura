@@ -113,7 +113,7 @@ public class LookAt extends Matrix4 {
 		createLookAt(e4, p4, u4);												
 	}
 	
-	protected void createLookAt(Vector4 e, Vector4 p, Vector4 u) {
+	public void createLookAt(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "createLookAt(e, p, u)");
 
 		// Build forward, up and side Vectors

@@ -120,12 +120,24 @@ public class RenderEngine {
 	}
 	
 	/**
+	 * This method will do the computation. No args.
 	 * 
-	 * Rasterization of all triangles of the world
-	 * This assumes that the initialization is already done
+	 * It processes all triangles of the World, Element by Element.
+	 * For each Element it takes all Triangles one by one and render them.
+	 * - Full ModelView transformation into homogeneous coordinates
+	 * - Rasterization
+	 * It uses the parameters of GraphicContext and RenderContext:
+	 * - View information contained into GraphicContext
+	 * - Rendering information (e.g. rendering modes etc) contained into RenderContext
+	 * 
+	 * It assumes initialization is already done through ModelView object and various contexts
 	 * - Projection matrix
 	 * - Screen and display area
 	 * - etc.
+	 * 
+	 * But this method will also recalculate each time the full ModelView transformation Matrix including the Camera so any change
+	 * will be taken into account.
+	 * 
 	 */
 	public void render() {
 		
@@ -139,7 +151,7 @@ public class RenderEngine {
 			// Calculate the ModelView matrix for this Element (Element <-> Model)		
 			Element e = world.getElement(i);
 			transformation.setModel(e.getTransformationMatrix()); // set the Model Matrix (the one attached to each Element) in the ModelView Transformation
-			transformation.computeTransformation(); // Compute the whole ModelView transformation matrix
+			transformation.computeTransformation(); // Compute the whole ModelView transformation matrix including Camera (view)
 			
 			// TODO Do a recursive call for SubElements
 			
@@ -149,6 +161,7 @@ public class RenderEngine {
 			}
 		}
 		
+		// TODO The landmark display should later be delegated to a dedicated function
 		if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED) {
 			Vertex o = new Vertex(0,0,0);
 			Vertex x = new Vertex(1,0,0);
@@ -179,7 +192,7 @@ public class RenderEngine {
 	 */
 	public void render(Triangle t) {
 		
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
+		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
 		Triangle triangle; // The projected model view triangle in homogeneous coordinates 
 		
@@ -243,8 +256,8 @@ public class RenderEngine {
 	
 	protected void drawTriangleLines(Triangle t) {
 
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawTriangleLines(t)");
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing triangle. "+ t);
+		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawTriangleLines(t)");
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing triangle. "+ t);
 		
 		view.setColor(Color.WHITE);
 		drawLine(t.getV1(), t.getV2());
@@ -253,21 +266,21 @@ public class RenderEngine {
 	}
 	
 	protected void drawLine(Line l) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(l)");
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing Line. "+ l);
+		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(l)");
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing Line. "+ l);
 
 		drawLine(l.getV1(), l.getV2());
 	}
 	
 	protected void drawLine(Vertex v1, Vertex v2) {
 
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(v1,v2)");
+		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(v1,v2)");
 		
 		int x1, y1, x2, y2;
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getX() : "+ v1.getPosition().get3DX());
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getY() : "+ v1.getPosition().get3DY());
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getX() : "+ v2.getPosition().get3DX());
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getY() : "+ v2.getPosition().get3DY());
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getX() : "+ v1.getPosition().get3DX());
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getY() : "+ v1.getPosition().get3DY());
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getX() : "+ v2.getPosition().get3DX());
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getY() : "+ v2.getPosition().get3DY());
 		
 		x1 = (int)(v1.getPosition().get3DX()*graphic.getPixelWidth()/2);
 		y1 = (int)(v1.getPosition().get3DY()*graphic.getPixelHeight()/2);

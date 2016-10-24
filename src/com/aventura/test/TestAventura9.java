@@ -12,12 +12,20 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
+import com.aventura.math.transform.Translation;
+import com.aventura.math.vector.Tools;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
-import com.aventura.tools.tracing.Tracer;
+import com.aventura.model.world.Box;
 import com.aventura.model.world.Cone;
+import com.aventura.model.world.Cube;
+import com.aventura.model.world.Cylinder;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Sphere;
+import com.aventura.model.world.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -49,15 +57,15 @@ import com.aventura.view.View;
 * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
 */
 
-public class TestAventura8 {
+public class TestAventura9 {
 	
-	// Create the view to be displayed
+	// View to be displayed
 	private SwingView view;
 	
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 8");
+		JFrame frame = new JFrame("Test Aventura 9");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -70,7 +78,7 @@ public class TestAventura8 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura8.this.view.draw(graph);
+		    	TestAventura9.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -90,24 +98,48 @@ public class TestAventura8 {
 		
 		// Create a new World
 		World world = new World();
+		Element e;
 		
-		// Create an Element in the World
-		Cone co = new Cone(4,2,12);
-		System.out.println(co);
-		world.addElement(co);
+		for (int i=-2; i<=2; i++) {
+			for (int j=-2; j<=2; j++) {
+				for (int k=-2; k<=2; k++) {
+										
+					// Create an Element of a random type
+					switch(Math.round((float)Math.random()*5)) {
+					case 0:
+						e = new Cone(1,0.5,8);
+						break;
+					case 1:
+						e = new Cylinder(1,0.5,8);
+						break;
+					case 2:
+						e = new Sphere(1,8);
+						break;
+					case 3:
+						e = new Cube(1);
+						break;
+					case 4:
+						e = new Box(1,0.5,0.3);
+						break;
+					case 5:
+						e = new Trellis(1,1,8,8);
+						break;
+					default:
+						e = null;
+					}
+					
+					// Translate this element at some i,j,k indices of a 3D cube:
+					Translation t = new Translation(new Vector3(i*2, j*2, k*2));
+					e.setTransformationMatrix(t);
 
+					// Add the element to the world
+					world.addElement(e);
+				}
+			}
+		}
+		
 		// World is created
 		return world;
-	}
-
-	public Camera createCamera() {
-		
-		Vector4 eye = new Vector4(5,40,10,1);
-		Vector4 poi = new Vector4(0,0,0,1);
-		
-		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		
-		
-		return cam;
 	}
 
 	public Lighting createLight() {
@@ -115,24 +147,43 @@ public class TestAventura8 {
 		return lighting;
 	}
 
+	/**
+	 * @param args
+	 */
 	public static void main(String[] args) {
-		
+
 		System.out.println("********* STARTING APPLICATION *********");
 		
-		Tracer.info = true;
-		Tracer.function = true;
-		
-		TestAventura8 test = new TestAventura8();
+		// Camera
+		Vector4 eyeA = new Vector4(60,40,20,1);
+		Vector4 eyeB = new Vector4(4,3,2,1);
+		Vector4 poi = new Vector4(0,0,0,1);
+		Camera camera = new Camera(eyeA, poi, Vector4.Z_AXIS);		
+				
+		TestAventura9 test = new TestAventura9();
 				
 		World world = test.createWorld();
 		Lighting light = test.createLight();
-		Camera camera = test.createCamera();
 		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, GraphicContext.DISPLAY_LANDMARK_ENABLED, 1250);
 		View view = test.createView(context);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
 		renderer.setView(view);
-		renderer.render();
+		int nb_images = 180;
+		for (int i=0; i<=nb_images; i++) {
+			Vector4 eye = Tools.interpolate(eyeA, eyeB, (double)i/nb_images);
+			System.out.println("Interpolation "+i+"  - Eye: "+eye);
+			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			renderer.render();
+		}
+		
+		for (int i=0; i<=5*nb_images; i++) {
+			double a = Math.PI*2*(double)i/(double)nb_images;
+			Vector4 eye = new Vector4(30*Math.cos(a),15*Math.sin(a),5,1);
+			System.out.println("Rotation "+i+"  - Eye: "+eye);
+			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			renderer.render();
+		}
 		
 		System.out.println("********* ENDING APPLICATION *********");
 

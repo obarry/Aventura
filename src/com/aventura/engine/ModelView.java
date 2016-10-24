@@ -1,9 +1,7 @@
 package com.aventura.engine;
 
-import com.aventura.math.perspective.Perspective;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Element;
 import com.aventura.model.world.Line;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
@@ -81,10 +79,6 @@ import com.aventura.tools.tracing.Tracer;
  * @since May 2016
  * 
  */
-/**
- * @author Bricolage Olivier
- *
- */
 public class ModelView {
 	
 	Matrix4 projection;
@@ -94,10 +88,21 @@ public class ModelView {
 	// This matrix is the result of the multiplication of all Matrices
 	Matrix4 transformation;
 	
+	/**
+	 * Default constructor.
+	 * Do nothing.
+	 */
 	public ModelView() {
 		
 	}
 	
+	/**
+	 * Generally the Camera Matrix and Projection Matrix do not change over time in static mode.
+	 * So we can safely create a ModelView object with these 2 matrices at initialization.
+	 * If one of these matrices change over time, the corresponding set methods should then be used. 
+	 * @param view the Camera Matrix4
+	 * @param projection the Matrix4 to transform into homogeneous coordinates
+	 */
 	public ModelView(Matrix4 view, Matrix4 projection) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ModelView(view, projection)");
 		this.view = view;
@@ -107,14 +112,26 @@ public class ModelView {
 		
 	}
 	
+	/**
+	 * Set the Projection Matrix into homogeneous coordinates
+	 * @param projection the Matrix4 to transform into homogeneous coordinates
+	 */
 	public void setProjection(Matrix4 projection) {
 		this.projection = projection;
 	}
 	
+	/**
+	 * Set the Camera transformation aka View Matrix to transform from World to Camera coordinates 
+	 * @param view the Camera Matrix4
+	 */
 	public void setView(Matrix4 view) {
 		this.view = view;
 	}
 	
+	/**
+	 * Set the model Matrix to transform from Model (Element in Aventura) coordinates into World coordinates
+	 * @param model the Model Matrix4
+	 */
 	public void setModel(Matrix4 model) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModel(model)");
 		this.model = model;
@@ -127,10 +144,6 @@ public class ModelView {
 	 */
 	public void computeTransformation() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
-		//Matrix4 m = projection.times(view);
-		//transformation = m.times(model);
-		//Matrix4 m = view.times(model);
-		//transformation = projection.times(m);
 		transformation = projection.times(view.times(model));
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ transformation);
 	}
@@ -143,14 +156,14 @@ public class ModelView {
 	 * @return the new Line
 	 */
 	public Line transform(Line l) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform line: "+l);
+		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform line: "+l);
 		
 		Line transformed = new Line();
 		
 		transformed.setV1(transform(l.getV1()));
 		transformed.setV2(transform(l.getV2()));
 		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed line: "+ transformed);
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed line: "+ transformed);
 		
 		return transformed;
 	}
@@ -163,7 +176,7 @@ public class ModelView {
 	 * @return the new triangle
 	 */
 	public Triangle transform(Triangle t) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform triangle: "+t);
+		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform triangle: "+t);
 		
 		Triangle transformed = new Triangle();
 		
@@ -171,7 +184,7 @@ public class ModelView {
 		transformed.setV2(transform(t.getV2()));
 		transformed.setV3(transform(t.getV3()));
 		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed triangle: "+ transformed);
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed triangle: "+ transformed);
 		
 		return transformed;
 	}
