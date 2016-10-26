@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
+import com.aventura.math.vector.Matrix4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Element;
@@ -142,6 +143,7 @@ public class RenderEngine {
 	public void render() {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Start rendering...");
+		int nbt = 0;
 		
 		view.initView();
 		
@@ -157,22 +159,33 @@ public class RenderEngine {
 			
 			// Process each Triangle
 			for (int j=0; j<e.getTriangles().size(); j++) {				
-				render(e.getTriangle(j));	
+				render(e.getTriangle(j));
+				nbt++;
 			}
 		}
 		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbt+" triangles.");
+
 		// TODO The landmark display should later be delegated to a dedicated function
 		if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED) {
+			
+			// Set the Model Matrix to IDENTITY (no translation)
+			transformation.setModel(Matrix4.IDENTITY);
+			transformation.computeTransformation();
+			
+			// Create Vertices to draw unit segments
 			Vertex o = new Vertex(0,0,0);
 			Vertex x = new Vertex(1,0,0);
 			Vertex y = new Vertex(0,1,0);
 			Vertex z = new Vertex(0,0,1);
+			// Create 3 unit segments
 			Line line_x = new Line(o, x);
 			Line line_y = new Line(o, y);
 			Line line_z = new Line(o, z);
 			Line lx = transformation.transform(line_x);
 			Line ly = transformation.transform(line_y);
 			Line lz = transformation.transform(line_z);
+			// Draw segments with different colors (x=RED, y=GREEN, z=BLUE) for mnemotechnic
 			view.setColor(Color.RED);
 			drawLine(lx);
 			view.setColor(Color.GREEN);
@@ -182,7 +195,6 @@ public class RenderEngine {
 		}
 
 		view.renderView();
-
 	}
 	
 	/**
