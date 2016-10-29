@@ -144,6 +144,8 @@ public class RenderEngine {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Start rendering...");
 		int nbt = 0;
+		int nbt_in = 0;
+		int nbt_out = 0;
 		
 		view.initView();
 		
@@ -159,12 +161,13 @@ public class RenderEngine {
 			
 			// Process each Triangle
 			for (int j=0; j<e.getTriangles().size(); j++) {				
-				render(e.getTriangle(j));
+				boolean ret = render(e.getTriangle(j));
 				nbt++;
+				if (ret) nbt_in++; else nbt_out++;
 			}
 		}
 		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbt+" triangles.");
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbt+" triangles. In View Frustum: "+nbt_in+", Out: "+nbt_out);
 
 		// TODO The landmark display should later be delegated to a dedicated function
 		if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED) {
@@ -201,8 +204,9 @@ public class RenderEngine {
 	 * Rasterization of a single Triangle
 	 * This assumes that the initialization is already done
 	 * @param t the triangle to rasterize
+	 * @return false if triangl is outside the View Frustum, else true
 	 */
-	public void render(Triangle t) {
+	public boolean render(Triangle t) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
@@ -215,7 +219,7 @@ public class RenderEngine {
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
 		// Then render its fragments in the View
-		if (isInView(triangle)) {
+		if (isInViewFrustum(triangle)) {
 			// Render triangle
 			
 			// If the rendering type is LINE, then draw lines directly
@@ -228,8 +232,10 @@ public class RenderEngine {
 				
 				rasterize(triangle);
 			}
+			return true;
 		} else {
 			// Do not render this triangle
+			return false;
 		}
 	}
 	
@@ -252,14 +258,38 @@ public class RenderEngine {
 	}
 	
 	/**
-	 * Is true if all Vertices of the Triangle is within the defined View
+	 * Is true if at least one Vertex of the Triangle is in the View Frustum
 	 * 
 	 * @param t the Triangle
-	 * @return
+	 * @return true if triangle is at least partially inside the View Frustum, else false
 	 */
-	protected boolean isInView(Triangle t) {
-		//TODO implementation
-		return true;
+	protected boolean isInViewFrustum(Triangle t) {
+
+		// Need at least one vertice to be in the view frustum
+		if (isInViewFrustum(t.getV1()) || isInViewFrustum(t.getV1()) || isInViewFrustum(t.getV3()))
+			return true;
+		else
+			return false;
+	}
+	
+	/**
+	 * Is true if the Vertex is in the View Frustum
+	 * 
+	 * @param v the Vertex
+	 * @return true if Vertex is inside the View Frustum, else false
+	 */
+	protected boolean isInViewFrustum(Vertex v) {
+		
+		// Get homogeneous coordinates of the Vertex
+		double x = v.getPosition().get3DX();
+		double y = v.getPosition().get3DY();
+		double z = v.getPosition().get3DZ();
+		
+		// Need all (homogeneous) coordinates to be within range [-1, 1]
+		if ((x<=1 && x>=-1) && (y<=1 && y>=-1) && (z<=1 && z>=-1))
+			return true;
+		else
+			return false;
 	}
 	
 	// These methods should be later encapsulated in a dedicated class -> e.g. RenderView
