@@ -123,8 +123,17 @@ public class Element implements Transformable {
 //		//TODO To be implemented
 //	}
 	
+	public ArrayList<Element> getSubElements() {
+		return subelements;
+	}
+	
+	public void addElement(Element e) {
+		// If never initialized then create the Array
+		if (subelements == null) subelements = new ArrayList<Element>();
+		this.subelements.add(e);
+	}
+	
 	public void addTriangle(Triangle t) {
-		//TODO To be implemented
 		this.triangles.add(t);
 	}
 	

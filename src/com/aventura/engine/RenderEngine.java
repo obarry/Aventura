@@ -77,19 +77,24 @@ import com.aventura.view.View;
 public class RenderEngine {
 	
 	// Context's parameters
-	RenderContext render;
-	GraphicContext graphic;
-	
+	private RenderContext render;
+	private GraphicContext graphic;
+
+	// Statistics
+	private int nbt = 0; // Number of triangles processed
+	private int nbt_in = 0; // Number of triangles finally displayed
+	private int nbt_out = 0; // Number of triangles not displayed
+	private int nbe = 0; // Number of Elements processed
 	// Model
-	World world;
-	Lighting light;
-	Camera camera;
+	private World world;
+	private Lighting light;
+	private Camera camera;
 	
 	// View
-	View view;
+	private View view;
 	
 	// ModelView transformation
-	ModelView transformation;
+	private ModelView transformation;
 	
 	/**
 	 * Create a Rendering Engine with required dependencies and context
@@ -143,31 +148,20 @@ public class RenderEngine {
 	public void render() {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Start rendering...");
-		int nbt = 0;
-		int nbt_in = 0;
-		int nbt_out = 0;
+		nbt = 0;
+		nbt_in = 0;
+		nbt_out = 0;
+		nbe = 0;
 		
 		view.initView();
 		
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {
-			
-			// Calculate the ModelView matrix for this Element (Element <-> Model)		
 			Element e = world.getElement(i);
-			transformation.setModel(e.getTransformationMatrix()); // set the Model Matrix (the one attached to each Element) in the ModelView Transformation
-			transformation.computeTransformation(); // Compute the whole ModelView transformation matrix including Camera (view)
-			
-			// TODO Do a recursive call for SubElements
-			
-			// Process each Triangle
-			for (int j=0; j<e.getTriangles().size(); j++) {				
-				boolean ret = render(e.getTriangle(j));
-				nbt++;
-				if (ret) nbt_in++; else nbt_out++;
-			}
+			renderElement(e);
 		}
 		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbt+" triangles. In View Frustum: "+nbt_in+", Out: "+nbt_out);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out);
 
 		// TODO The landmark display should later be delegated to a dedicated function
 		if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED) {
@@ -198,6 +192,38 @@ public class RenderEngine {
 		}
 
 		view.renderView();
+	}
+	
+	/**
+	 * Render a single Element and all its subelements recursively
+	 * @param e the Element to render
+	 */
+	public void renderElement(Element e) {
+		
+		nbe++;
+		
+		// Calculate the ModelView matrix for this Element (Element <-> Model)		
+		transformation.setModel(e.getTransformationMatrix()); // set the Model Matrix (the one attached to each Element) in the ModelView Transformation
+		transformation.computeTransformation(); // Compute the whole ModelView transformation matrix including Camera (view)
+				
+		// Process each Triangle
+		for (int j=0; j<e.getTriangles().size(); j++) {				
+			boolean ret = render(e.getTriangle(j));
+			nbt++;
+			if (ret) nbt_in++; else nbt_out++;
+		}
+	
+		// Do a recursive call for SubElements
+
+		if (!e.isLeaf()) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has "+e.getSubElements().size()+" sub element(s).");
+			for (int i=0; i<e.getSubElements().size(); i++) {
+				// Recursive call
+				renderElement(e.getSubElements().get(i));
+			}
+		} else {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has no sub elements.");			
+		}
 	}
 	
 	/**
