@@ -153,17 +153,18 @@ public class RenderEngine {
 		nbt_out = 0;
 		nbe = 0;
 		
+		// Initialize backbuffer in the View
 		view.initView();
 		
 		// For each element of the world
-		for (int i=0; i<world.getElements().size(); i++) {
+		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
-			render(e);
+			render(e, Matrix4.IDENTITY); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out);
 
-		// TODO The landmark display should later be delegated to a dedicated function
+		// Display the landmarks if enabled (GraphicContext)
 		if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED) {
 			displayLandMarkLines();
 		}
@@ -175,13 +176,15 @@ public class RenderEngine {
 	 * Render a single Element and all its subelements recursively
 	 * @param e the Element to render
 	 */
-	public void render(Element e) {
+	public void render(Element e, Matrix4 matrix) {
 		
 		// Count Element stats
 		nbe++;
 		
-		// Calculate the ModelView matrix for this Element (Element <-> Model)		
-		transformation.setModel(e.getTransformationMatrix()); // set the Model Matrix (the one attached to each Element) in the ModelView Transformation
+		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
+		// with the previous one for recursive calls (initialized to IDENTITY at first call)
+		Matrix4 model = matrix.times(e.getTransformationMatrix());
+		transformation.setModel(model);
 		transformation.computeTransformation(); // Compute the whole ModelView transformation matrix including Camera (view)
 				
 		// Process each Triangle
@@ -199,7 +202,7 @@ public class RenderEngine {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has "+e.getSubElements().size()+" sub element(s).");
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
-				render(e.getSubElements().get(i));
+				render(e.getSubElements().get(i), model);
 			}
 		} else {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has no sub elements.");			

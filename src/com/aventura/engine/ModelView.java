@@ -135,9 +135,9 @@ public class ModelView {
 	public void setModel(Matrix4 model) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModel(model)");
 		this.model = model;
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model matrix:\n"+ model);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Matrix:\n"+ model);
 	}
-	
+		
 	/**
 	 *  The complete transformation, from model to homogeneous coordinates, is done through the following formula:
 	 * TransformedVector = [Projection Matrix] * [View Matrix] * [Model Matrix] * OriginalVector

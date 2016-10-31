@@ -12,6 +12,7 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
+import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -96,15 +97,22 @@ public class TestAventura10 {
 		// Create a new World
 		World world = new World();
 		Element e, e1, e2;
+		
+		// e is the main Element
 		e = new Cylinder(2,0.5,8);
+		// e1 and e2 will be sub elements
 		e1 = new Cone(2,1,8);
 		e2 = new Cube(2);
 
-		// Translate this element at some i,j,k indices of a 3D cube:
+		// Translate Elements e1 and e2 respectively above and below main Element e:
 		Translation t1 = new Translation(new Vector3(0, 0, 2));
 		Translation t2 = new Translation(new Vector3(0, 0, -2));
 		e1.setTransformationMatrix(t1);
 		e2.setTransformationMatrix(t2);
+		
+		// Rotate Element e (and all its sub elements)
+		Rotation r = new Rotation(Math.PI/4, Vector4.X_AXIS);
+		e.setTransformationMatrix(r);
 		
 		// Add subelements to Element
 		e.addElement(e1);
