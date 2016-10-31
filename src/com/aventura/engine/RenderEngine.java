@@ -158,37 +158,14 @@ public class RenderEngine {
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {
 			Element e = world.getElement(i);
-			renderElement(e);
+			render(e);
 		}
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out);
 
 		// TODO The landmark display should later be delegated to a dedicated function
 		if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED) {
-			
-			// Set the Model Matrix to IDENTITY (no translation)
-			transformation.setModel(Matrix4.IDENTITY);
-			transformation.computeTransformation();
-			
-			// Create Vertices to draw unit segments
-			Vertex o = new Vertex(0,0,0);
-			Vertex x = new Vertex(1,0,0);
-			Vertex y = new Vertex(0,1,0);
-			Vertex z = new Vertex(0,0,1);
-			// Create 3 unit segments
-			Line line_x = new Line(o, x);
-			Line line_y = new Line(o, y);
-			Line line_z = new Line(o, z);
-			Line lx = transformation.transform(line_x);
-			Line ly = transformation.transform(line_y);
-			Line lz = transformation.transform(line_z);
-			// Draw segments with different colors (x=RED, y=GREEN, z=BLUE) for mnemotechnic
-			view.setColor(Color.RED);
-			drawLine(lx);
-			view.setColor(Color.GREEN);
-			drawLine(ly);
-			view.setColor(Color.BLUE);
-			drawLine(lz);
+			displayLandMarkLines();
 		}
 
 		view.renderView();
@@ -198,8 +175,9 @@ public class RenderEngine {
 	 * Render a single Element and all its subelements recursively
 	 * @param e the Element to render
 	 */
-	public void renderElement(Element e) {
+	public void render(Element e) {
 		
+		// Count Element stats
 		nbe++;
 		
 		// Calculate the ModelView matrix for this Element (Element <-> Model)		
@@ -209,6 +187,8 @@ public class RenderEngine {
 		// Process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {				
 			boolean ret = render(e.getTriangle(j));
+			
+			// Count Triangles stats (total, in view and out view frustum)
 			nbt++;
 			if (ret) nbt_in++; else nbt_out++;
 		}
@@ -219,7 +199,7 @@ public class RenderEngine {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has "+e.getSubElements().size()+" sub element(s).");
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
-				renderElement(e.getSubElements().get(i));
+				render(e.getSubElements().get(i));
 			}
 		} else {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has no sub elements.");			
@@ -228,9 +208,9 @@ public class RenderEngine {
 	
 	/**
 	 * Rasterization of a single Triangle
-	 * This assumes that the initialization is already done
+	 * This assumes that the initialization of ModelView transformqtion is already done
 	 * @param t the triangle to rasterize
-	 * @return false if triangl is outside the View Frustum, else true
+	 * @return false if triangle is outside the View Frustum, else true
 	 */
 	public boolean render(Triangle t) {
 		
@@ -361,4 +341,30 @@ public class RenderEngine {
 	//
 	// End to be Encapsulated
 
+	protected void displayLandMarkLines() {
+		// Set the Model Matrix to IDENTITY (no translation)
+		transformation.setModel(Matrix4.IDENTITY);
+		transformation.computeTransformation();
+
+		// Create Vertices to draw unit segments
+		Vertex o = new Vertex(0,0,0);
+		Vertex x = new Vertex(1,0,0);
+		Vertex y = new Vertex(0,1,0);
+		Vertex z = new Vertex(0,0,1);
+		// Create 3 unit segments
+		Line line_x = new Line(o, x);
+		Line line_y = new Line(o, y);
+		Line line_z = new Line(o, z);
+		Line lx = transformation.transform(line_x);
+		Line ly = transformation.transform(line_y);
+		Line lz = transformation.transform(line_z);
+		// Draw segments with different colors (x=RED, y=GREEN, z=BLUE) for mnemotechnic
+		view.setColor(Color.RED);
+		drawLine(lx);
+		view.setColor(Color.GREEN);
+		drawLine(ly);
+		view.setColor(Color.BLUE);
+		drawLine(lz);
+
+	}
 }

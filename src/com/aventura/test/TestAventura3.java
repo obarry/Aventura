@@ -20,7 +20,7 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Sphere;
-
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -94,10 +94,6 @@ public class TestAventura3 {
 		// Create a new World
 		World world = new World();
 		
-		// Create an Element in the World
-		Element e = world.createElement();
-		
-		
 		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
 		for (int j=-2; j<=2; j++) {
 			for (int i=-4; i<=4; i++) {
@@ -128,9 +124,12 @@ public class TestAventura3 {
 	}
 
 	public static void main(String[] args) {
-		
+	
+		Tracer.info = true;
+		Tracer.function = true;
+
 		TestAventura3 test = new TestAventura3();
-				
+
 		World world = test.createWorld();
 		Lighting light = test.createLight();
 		
