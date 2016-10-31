@@ -107,12 +107,12 @@ public class TestAventura10 {
 		// Translate Elements e1 and e2 respectively above and below main Element e:
 		Translation t1 = new Translation(new Vector3(0, 0, 2));
 		Translation t2 = new Translation(new Vector3(0, 0, -2));
-		e1.setTransformationMatrix(t1);
-		e2.setTransformationMatrix(t2);
+		e1.setTransformation(t1);
+		e2.setTransformation(t2);
 		
 		// Rotate Element e (and all its sub elements)
 		Rotation r = new Rotation(Math.PI/4, Vector4.X_AXIS);
-		e.setTransformationMatrix(r);
+		e.setTransformation(r);
 		
 		// Add subelements to Element
 		e.addElement(e1);

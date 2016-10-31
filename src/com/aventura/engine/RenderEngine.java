@@ -183,7 +183,7 @@ public class RenderEngine {
 		
 		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
-		Matrix4 model = matrix.times(e.getTransformationMatrix());
+		Matrix4 model = matrix.times(e.getTransformation());
 		transformation.setModel(model);
 		transformation.computeTransformation(); // Compute the whole ModelView transformation matrix including Camera (view)
 				

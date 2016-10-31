@@ -111,7 +111,7 @@ public class TestAventura2 {
 				Transformation trans = new Transformation(s, r, t);
 				Box b = new Box(1,2,3);
 				world.addElement(b);
-				b.setTransformationMatrix(trans);
+				b.setTransformation(trans);
 			}
 		}
 

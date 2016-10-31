@@ -97,7 +97,7 @@ public class TestAventura1 {
 		// Create an Element in the World
 		Element e = w.createElement();
 		
-		e.setTransformationMatrix(t);
+		e.setTransformation(t);
 		
 		// Build the Element: Create Vertices
 		Vertex v1 = new Vertex(new Vector4(-1.4,   0,    0,  1));

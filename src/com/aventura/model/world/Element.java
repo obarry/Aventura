@@ -160,13 +160,13 @@ public class Element implements Transformable {
 	}
 
 	@Override
-	public void setTransformationMatrix(Matrix4 transformation) {
+	public void setTransformation(Matrix4 transformation) {
 		this.transform = transformation;
 		
 	}
 
 	@Override
-	public Matrix4 getTransformationMatrix() {
+	public Matrix4 getTransformation() {
 		return transform;
 	}
 

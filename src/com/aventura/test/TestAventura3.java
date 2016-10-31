@@ -100,7 +100,7 @@ public class TestAventura3 {
 				Translation t = new Translation(new Vector3(i*4, j*5, 0));
 				Sphere sph = new Sphere(1.5,12);
 				world.addElement(sph);
-				sph.setTransformationMatrix(t);
+				sph.setTransformation(t);
 			}
 		}
 

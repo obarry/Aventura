@@ -31,9 +31,9 @@ import com.aventura.math.vector.Matrix4;
 
 public interface Transformable {
 	
-	public void setTransformationMatrix(Matrix4 transformation);
+	public void setTransformation(Matrix4 transformation);
 	
-	public Matrix4 getTransformationMatrix();
+	public Matrix4 getTransformation();
 	
 	// TBD add methods for translation, rotation and scaling
 	// A transformable object or element should be translated, rotated or scaled

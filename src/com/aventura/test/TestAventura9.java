@@ -130,7 +130,7 @@ public class TestAventura9 {
 					
 					// Translate this element at some i,j,k indices of a 3D cube:
 					Translation t = new Translation(new Vector3(i*2, j*2, k*2));
-					e.setTransformationMatrix(t);
+					e.setTransformation(t);
 
 					// Add the element to the world
 					world.addElement(e);
