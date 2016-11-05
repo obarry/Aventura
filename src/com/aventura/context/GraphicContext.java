@@ -86,16 +86,9 @@ public class GraphicContext {
 	
 	public static final String PERSPECTIVE_TYPE_FRUSTUM_STRING = "PERSPECTIVE_TYPE_FRUSTUM";
 	public static final String PERSPECTIVE_TYPE_ORTHOGRAPHIC_STRING = "PERSPECTIVE_TYPE_ORTHOGRAPHIC";
-	
-	public static final int DISPLAY_LANDMARK_DISABLED = 0;
-	public static final int DISPLAY_LANDMARK_ENABLED = 1;
-	public static final int DISPLAY_LANDMARK_ENABLED_ARROW = 2;
-	public static final int DISPLAY_LANDMARK_ENABLED_3D = 3;
-
-	
+		
 	// Perspective type
 	int perspective_type = 0; // uninitialized
-	int display_landmark = DISPLAY_LANDMARK_DISABLED; // by default
 
 	// Window & frustum
 	double width = 0;
@@ -110,7 +103,7 @@ public class GraphicContext {
 	Matrix4 projection;
 
 	// Width/Height ratio = 16/9
-	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5,10,1000, PERSPECTIVE_TYPE_FRUSTUM, DISPLAY_LANDMARK_ENABLED, 100);
+	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100);
 
 	
 	/**
@@ -127,7 +120,6 @@ public class GraphicContext {
 	public GraphicContext(GraphicContext c) {
 		// To be used when creating manually GraphicContext by using setter/getters
 		this.perspective_type = c.perspective_type;
-		this.display_landmark = c.display_landmark;
 		this.width = c.width;
 		this.height = c.height;
 		this.depth = c.depth;
@@ -144,13 +136,12 @@ public class GraphicContext {
 		createPerspective(perspective_type, left , right, bottom, top, near, far);
 	}
 	
-	public GraphicContext(double width, double height, double dist, double depth, int perspective, int display_landmark, int ppu) {
+	public GraphicContext(double width, double height, double dist, double depth, int perspective, int ppu) {
 		this.width = width;
 		this.height = height;
 		this.dist = dist;
 		this.depth = depth;
 		this.perspective_type = perspective;
-		this.display_landmark = display_landmark;
 		this.ppu = ppu;
 		
 		double left = -width/2;
@@ -286,15 +277,7 @@ public class GraphicContext {
 	public Perspective getPerspective() {
 		return (Perspective)projection;
 	}
-	
-	public void setDisplayLandmark(int landmark) {
-		this.display_landmark = landmark;
-	}
-	
-	public int getDisplayLandmark() {
-		return display_landmark;
-	}
-	
+		
 	public void setPpu(int ppu) {
 		this.ppu = ppu;
 	}

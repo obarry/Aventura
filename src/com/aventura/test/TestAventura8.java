@@ -127,7 +127,7 @@ public class TestAventura8 {
 		World world = test.createWorld();
 		Lighting light = test.createLight();
 		Camera camera = test.createCamera();
-		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, GraphicContext.DISPLAY_LANDMARK_ENABLED, 1250);
+		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(context);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);

@@ -50,10 +50,17 @@ public class RenderContext {
 	public static final int RENDERING_TYPE_PLAIN = 3;		// Fill each triangle with one color depending on Lighting and orientation
 	public static final int RENDERING_TYPE_INTERPOLATE = 4; // Fill each triangle by interpolating each pixel's color
 	
+	public static final int DISPLAY_LANDMARK_DISABLED = 0;
+	public static final int DISPLAY_LANDMARK_ENABLED = 1;
+	public static final int DISPLAY_LANDMARK_ENABLED_ARROW = 2;
+	public static final int DISPLAY_LANDMARK_ENABLED_3D = 3;
+
+	public int display_landmark = DISPLAY_LANDMARK_DISABLED; // by default
+
 	public int rendering_type = 0;
 	
 	
-	public static RenderContext RENDER_DEFAULT = new RenderContext(RENDERING_TYPE_LINE);
+	public static RenderContext RENDER_DEFAULT = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED);
 	
 	/**
 	 * Empty constructor
@@ -62,16 +69,25 @@ public class RenderContext {
 		// To be used when creating manually GraphicContext by using setter/getters
 	}
 	
-	public RenderContext(int type) {
+	public RenderContext(int type, int display_landmark) {
 		this.rendering_type = type;
+		this.display_landmark = display_landmark;
 	}
-	
+		
 	public void setRendering(int type) {
 		this.rendering_type = type;
 	}
 	
 	public int getRendering() {
 		return rendering_type;
+	}
+
+	public void setDisplayLandmark(int landmark) {
+		this.display_landmark = landmark;
+	}
+	
+	public int getDisplayLandmark() {
+		return display_landmark;
 	}
 
 

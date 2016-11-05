@@ -51,18 +51,19 @@ import com.aventura.view.View;
  * - a render context to provide information on how to render the world
  * - a graphic context to provide information on how to display the view 
  *
- *     +---------------------+														
- *     |        World        | <------+											
- *     +---------------------+        |										+---------------------+
- *                					  |						  +------------>|    RenderContext    |
- *                   				  |						  |				+---------------------+
- *                					  |						  |
- *     +---------------------+		  |		+---------------------+							   			   +---------------------+
- *     |      Lighting       | <-----+------|    RenderEngine     |--------------------------------------->|        View         |
- *     +---------------------+		  |		+---------------------+ 									   +---------------------+
- *                					  |				   |	  |														  |
- *                   				  |				   |	  |				+---------------------+					  |
- *                	 				  |				   |	  +------------>|   GraphicContext    |<------------------+
+ *																		    +---------------------+
+ *     +---------------------+								  +------------>|    RenderContext    |		
+ *     |        World        | <------+						  |				+---------------------+
+ *     +---------------------+        |						  |						   |			
+ *                					  |						  |				+---------------------+
+ *                   				  |						  +------------>|      Rasterizer     |-----------------+
+ *                					  |						  |				+---------------------+				    v
+ *     +---------------------+		  |		+---------------------+										 +---------------------+
+ *     |      Lighting       | <-----+------|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
+ *     +---------------------+		  |		+---------------------+ 									 +---------------------+
+ *                					  |				   |	  |													    |
+ *                   				  |				   |	  |				+---------------------+					|
+ *                	 				  |				   |	  +------------>|   GraphicContext    |<----------------+
  *     +---------------------+        |        		   v					+---------------------+
  *     |       Camera        | <------+     +---------------------+
  *     +---------------------+			    |      ModelView      |
@@ -96,6 +97,9 @@ public class RenderEngine {
 	// ModelView transformation
 	private ModelView transformation;
 	
+	// Rasterizer
+	private Rasterizer rasterizer;
+	
 	/**
 	 * Create a Rendering Engine with required dependencies and context
 	 * There should be a Rendering Engine for a single World, a single (consolidated) Lighting, a single Camera
@@ -118,11 +122,15 @@ public class RenderEngine {
 		this.camera = camera;
 		
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
-		this.transformation = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix()); 
+		this.transformation = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
+		
+		// Delegate rasterization tasks to a dedicated engine
+		this.rasterizer = new Rasterizer(graphic);
 	}
 	
 	public void setView(View v) {
 		view = v;
+		rasterizer.setView(v);
 	}
 	
 	/**
@@ -165,7 +173,7 @@ public class RenderEngine {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out);
 
 		// Display the landmarks if enabled (GraphicContext)
-		if (graphic.getDisplayLandmark() == GraphicContext.DISPLAY_LANDMARK_ENABLED) {
+		if (render.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
 			displayLandMarkLines();
 		}
 
@@ -233,7 +241,7 @@ public class RenderEngine {
 			
 			// If the rendering type is LINE, then draw lines directly
 			if (render.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
-				drawTriangleLines(triangle);
+				rasterizer.drawTriangleLines(triangle);
 			} else {
 				//TODO to be implemented
 				
@@ -301,48 +309,6 @@ public class RenderEngine {
 			return false;
 	}
 	
-	// These methods should be later encapsulated in a dedicated class -> e.g. RenderView
-	// To Be Encapsulated
-	//
-	
-	protected void drawTriangleLines(Triangle t) {
-
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawTriangleLines(t)");
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing triangle. "+ t);
-		
-		view.setColor(Color.WHITE);
-		drawLine(t.getV1(), t.getV2());
-		drawLine(t.getV2(), t.getV3());
-		drawLine(t.getV3(), t.getV1());
-	}
-	
-	protected void drawLine(Line l) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(l)");
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing Line. "+ l);
-
-		drawLine(l.getV1(), l.getV2());
-	}
-	
-	protected void drawLine(Vertex v1, Vertex v2) {
-
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(v1,v2)");
-		
-		int x1, y1, x2, y2;
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getX() : "+ v1.getPosition().get3DX());
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getY() : "+ v1.getPosition().get3DY());
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getX() : "+ v2.getPosition().get3DX());
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getY() : "+ v2.getPosition().get3DY());
-		
-		x1 = (int)(v1.getPosition().get3DX()*graphic.getPixelWidth()/2);
-		y1 = (int)(v1.getPosition().get3DY()*graphic.getPixelHeight()/2);
-		x2 = (int)(v2.getPosition().get3DX()*graphic.getPixelWidth()/2);
-		y2 = (int)(v2.getPosition().get3DY()*graphic.getPixelHeight()/2);
-
-		view.drawLine(x1, y1, x2, y2);
-	}
-
-	//
-	// End to be Encapsulated
 
 	protected void displayLandMarkLines() {
 		// Set the Model Matrix to IDENTITY (no translation)
@@ -363,11 +329,11 @@ public class RenderEngine {
 		Line lz = transformation.transform(line_z);
 		// Draw segments with different colors (x=RED, y=GREEN, z=BLUE) for mnemotechnic
 		view.setColor(Color.RED);
-		drawLine(lx);
+		rasterizer.drawLine(lx);
 		view.setColor(Color.GREEN);
-		drawLine(ly);
+		rasterizer.drawLine(ly);
 		view.setColor(Color.BLUE);
-		drawLine(lz);
+		rasterizer.drawLine(lz);
 
 	}
 }

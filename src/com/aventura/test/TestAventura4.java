@@ -126,7 +126,6 @@ public class TestAventura4 {
 		context.setHeight(6);
 		context.setWidth(10);
 		context.computePerspective();
-		context.setDisplayLandmark(GraphicContext.DISPLAY_LANDMARK_ENABLED);
 		System.out.println(context);
 		
 		View view = test.createView(context);
