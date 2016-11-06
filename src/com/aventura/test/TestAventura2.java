@@ -96,9 +96,6 @@ public class TestAventura2 {
 		// Create a new World
 		World world = new World();
 		
-		// Create an Element in the World
-		Element e = world.createElement();
-		
 		// Create a Transformation for this Element
 		//Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
 		Rotation r = new Rotation(0, Vector3.Z_AXIS);

@@ -122,4 +122,10 @@ public class Cone extends Element {
 		this.addTriangle(t);			
 			
 	}
+
+	@Override
+	public void calculateNormals() {
+		// TODO Auto-generated method stub
+		
+	}
 }

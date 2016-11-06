@@ -8,7 +8,7 @@ public class Test1 {
 	
 	static int NB = 100;
 	
-	NVertex [] vertices;
+	Vertex [] vertices;
 	Triangle [] triangles;
 
 	World world;
@@ -19,7 +19,7 @@ public class Test1 {
 	
 	public void init() {
 		
-		vertices = new NVertex[NB];
+		vertices = new Vertex[NB];
 		triangles = new Triangle[NB-2]; // Triangle strip
 
 		// Create the World

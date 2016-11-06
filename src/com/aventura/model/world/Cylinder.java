@@ -124,4 +124,10 @@ public class Cylinder extends Element {
 		this.addTriangle(t1);			
 		this.addTriangle(t2);			
 	}
+
+	@Override
+	public void calculateNormals() {
+		// TODO Auto-generated method stub
+		
+	}
 }

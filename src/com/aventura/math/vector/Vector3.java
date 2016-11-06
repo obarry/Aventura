@@ -358,5 +358,13 @@ public class Vector3 {
 		this.c[0] = array[0];
 		this.c[1] = array[1];
 		this.c[2] = array[2];
-	}	
+	}
+	
+	/**
+	 * Create a new Vector4 from this Vector3 containing 0 as w coordinate
+	 * @return a newly created Vector 4
+	 */
+	public Vector4 getVector4() {
+		return new Vector4(this);
+	}
 }

@@ -255,5 +255,11 @@ public class Trellis extends Element {
 	public String toString() {
 		return "Trellis (width: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+")\nV[0,0]="+vertices[0][0]+"\nV[nx,0]="+vertices[nx][0]+"\nV[0,ny]="+vertices[0][ny]+"\nV[nx,ny]="+vertices[nx][ny];
 	}
+
+	@Override
+	public void calculateNormals() {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }

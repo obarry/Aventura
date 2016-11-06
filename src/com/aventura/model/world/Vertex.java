@@ -28,9 +28,7 @@ import com.aventura.math.vector.*;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * A generic Vertex without Normal Vector
- * Normally only used for triangles having a specific normal vector or for generic handling purpose
- * Else the general case is to use NVertex inherited class
+ * A generic Vertex
  * 
  * @author Bricolage Olivier
  * @since May 2016
@@ -38,11 +36,12 @@ import com.aventura.math.vector.*;
 public class Vertex {
 	
 	// Geometry
-	protected Vector4 position;
+	protected Vector4 position = null;
+	protected Vector3 normal = null;
 	
 	// Physical characteristic
-	protected Vector2 texture; //relative position of this vertex in the texture plane
-	protected Color color; // base color of this vertex
+	protected Vector2 texture = null; //relative position of this vertex in the texture plane
+	protected Color color = null; // base color of this vertex
 	protected int material; // to be defined, a specific class/object may be needed
 	
 	// Reflectivity
@@ -58,12 +57,12 @@ public class Vertex {
 	
 	public Vertex(Vector4 p) {
 		position = p;
-		//normal = null;
+		normal = null;
 	}
 	
 	public Vertex(Vector4 p, Vector3 n) {
 		position = p;
-		//normal = n;
+		normal = n;
 	}
 	
 	public String toString() {
@@ -78,4 +77,24 @@ public class Vertex {
 		return position;
 	}
 	
+	public Vector3 getNormal() {
+		return normal;
+	}
+	
+	/**
+	 * Calculate the normal from a set of vertices surrounding this Vertex
+	 * @param setOfVertices
+	 */
+	public void calculateNormal(Vertex[] setOfVertices) {
+	
+		// Use the position of the other Vertices relative to this Vertex to calculate an average plan and define the normal
+		for (int i=0; i<setOfVertices.length; i++) {
+			// TODO
+		}
+	}
+
+	public void setNormal(Vector3 n) {
+		normal = n;
+	}
+
 }

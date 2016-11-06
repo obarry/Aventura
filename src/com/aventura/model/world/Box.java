@@ -134,4 +134,10 @@ public class Box extends Element {
 		this.addTriangle(t12);		
 	}
 
+	@Override
+	public void calculateNormals() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

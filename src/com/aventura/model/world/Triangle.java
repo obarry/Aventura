@@ -1,5 +1,8 @@
 package com.aventura.model.world;
 
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -31,9 +34,12 @@ package com.aventura.model.world;
 public class Triangle {
 	
 	// Made of 3 vertices
-	Vertex v1;
-	Vertex v2;
-	Vertex v3;
+	protected Vertex v1;
+	protected Vertex v2;
+	protected Vertex v3;
+	
+	// And an optional Normal to the triangle (else Vertices normal  is used)
+	protected Vector3 normal = null;
 	
 	public Triangle() {
 		this.v1 = null;
@@ -41,12 +47,6 @@ public class Triangle {
 		this.v3 = null;		
 	}
 	
-	public Triangle(NVertex v1, NVertex v2, NVertex v3) {
-		this.v1 = v1;
-		this.v2 = v2;
-		this.v3 = v3;
-	}
-
 	public Triangle(Vertex v1, Vertex v2, Vertex v3) {
 		this.v1 = v1;
 		this.v2 = v2;
@@ -80,5 +80,32 @@ public class Triangle {
 	public void setV3(Vertex v) {
 		this.v3 = v;
 	}
-
+	
+	public void setNormal(Vector3 n) {
+		this.normal = n;
+	}
+	
+	public Vector3 getNormal() {
+		return normal;
+	}
+	
+	public void setNormal(Vector4 n) {
+		this.normal = n.getVector3();
+	}
+	
+	/**
+	 * Calculate the Normal as V1V2 ^ V1V3 (normalized)
+	 * The direction of the normal is resulting from this cross product 
+	 */
+	public void calculateNormal() {
+		//P = V1V2 as a Vector3
+		Vector3 p = (v2.position.minus(v1.position)).getVector3();
+		//P = V1V3 as a Vector3
+		Vector3 q = (v3.position.minus(v1.position)).getVector3();
+		// Calculate the cross product
+		normal = p.times(q);
+		// Normalize the resulting Vector3
+		normal.normalize();
+	}
+	
 }

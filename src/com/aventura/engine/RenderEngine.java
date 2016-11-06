@@ -245,8 +245,6 @@ public class RenderEngine {
 			} else {
 				//TODO to be implemented
 				
-				// if triangle is Ntriangle then calculate the normal of the triangle ?
-				
 				rasterize(triangle);
 			}
 			return true;

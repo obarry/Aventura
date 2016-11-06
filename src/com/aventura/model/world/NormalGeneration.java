@@ -1,8 +1,5 @@
 package com.aventura.model.world;
 
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -26,41 +23,25 @@ import com.aventura.math.vector.Vector4;
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- * ------------------------------------------------------------------------------
- *  
- * A Vertex with a Normal Vector - this is the general case
- * Generally associated with a Triangle that has no specific normal vector
+ * ------------------------------------------------------------------------------ 
+ * 
+ * Normal calculation is Element specific hence each Element should implement it on its own.
+ * A Normal can be either at Vertex level (general case) or at Triangle level (this is 	a more specific case as this will not
+ * generate a smooth and continuous surface).
+ * 
  * 
  * @author Bricolage Olivier
- * @since May 2016
+ * @since November 2016
  */
-public class NVertex extends Vertex {
-	
-	protected Vector3 normal;
-	
-	public NVertex(Vector4 p, Vector3 normal) {
-		super(p);
-		this.normal = normal;
-	}
 
-	public Vector3 getNormal() {
-		return normal;
-	}
-	
+public interface NormalGeneration {
+
 	/**
-	 * Calculate the normal from a set of vertices surrounding this Vertex
-	 * @param setOfVertices
+	 * Calculate the Normals for this Element.
+	 * Normal calculation is Element specific hence each Element should implement it on its own.
+	 * A Normal can be either at Vertex level (general case) or at Triangle level (this is 	a more specific case as this will not
+	 * generate a smooth and continuous surface).
 	 */
-	public void calculateNormal(Vertex[] setOfVertices) {
-	
-		// Use the position of the other Vertices relative to this Vertex to calculate an average plan and define the normal
-		for (int i=0; i<setOfVertices.length; i++) {
-			// TODO
-		}
-	}
-
-	public void setNormal(Vector3 n) {
-		normal = n;
-	}
+	public abstract void calculateNormals();
 
 }
