@@ -6,6 +6,7 @@ import com.aventura.context.GraphicContext;
 import com.aventura.model.world.Line;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.View;
 
 /**
@@ -46,6 +47,9 @@ public class Rasterizer {
 	private GraphicContext graphic;
 	private View view;
 	
+	// Z buffer
+	private double[][] zBuffer;
+	
 	public Rasterizer(GraphicContext graphic) {
 		this.graphic = graphic;
 	}
@@ -54,14 +58,22 @@ public class Rasterizer {
 		this.view = v;
 	}
 	
-	// These methods should be later encapsulated in a dedicated class -> e.g. RenderView
-	// To Be Encapsulated
-	//
+	/**
+	 * Initialize zBuffer by creating the table. This method is deported from the constructor in order to use it only when necessary.
+	 * It is not needed in case of line rendering.
+	 */
+	public void initZBuffer() {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());	
+		zBuffer = new double[graphic.getPixelWidth()][graphic.getPixelHeight()];
+		
+		// TODO initialization loop with the correct initialization value ( 1 or -1 in homogeneous coordinates ?) as farest value since
+		// this value represent the far plane of the view frustum.
+		// Caution: if this is -1 (TBC), then the direction of the test z < zBuffer in renderTriangle() method should be adapted
+	}
 	
-	protected void drawTriangleLines(Triangle t) {
-
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawTriangleLines(t)");
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing triangle. "+ t);
+	// Method for Line only Rendering
+		
+	public void drawTriangleLines(Triangle t) {
 		
 		view.setColor(Color.WHITE);
 		drawLine(t.getV1(), t.getV2());
@@ -69,22 +81,13 @@ public class Rasterizer {
 		drawLine(t.getV3(), t.getV1());
 	}
 	
-	protected void drawLine(Line l) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(l)");
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "Drawing Line. "+ l);
-
+	public void drawLine(Line l) {
 		drawLine(l.getV1(), l.getV2());
 	}
 	
-	protected void drawLine(Vertex v1, Vertex v2) {
+	public void drawLine(Vertex v1, Vertex v2) {
 
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(v1,v2)");
-		
 		int x1, y1, x2, y2;
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getX() : "+ v1.getPosition().get3DX());
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v1.getPosition().getY() : "+ v1.getPosition().get3DY());
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getX() : "+ v2.getPosition().get3DX());
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "v2.getPosition().getY() : "+ v2.getPosition().get3DY());
 		
 		x1 = (int)(v1.getPosition().get3DX()*graphic.getPixelWidth()/2);
 		y1 = (int)(v1.getPosition().get3DY()*graphic.getPixelHeight()/2);
@@ -94,8 +97,37 @@ public class Rasterizer {
 		view.drawLine(x1, y1, x2, y2);
 	}
 
-	//
-	// End to be Encapsulated
-
+	// End methods for Line only Rendering
 	
+	public void rasterizeTriangle(Triangle t) {
+		
+		// For each pixel(xpix, ypix) of the projected Triangle corresponding to a Position(xpos, ypos, zpos) on the triangle surface in 3D world space
+		// Use bressenham for this rasterization
+		// The below may need to be factored in a separate rasterizePixel method to be called from different parts of the bressenham algo
+		
+		// z = position.getZ()   // (zpos)
+		
+		// if z < zBuffer(xpix, ypix)
+		
+		// then 
+		
+		// Calculate Normal (by interpolation and based on Normal at Triangle level or at Vertex level
+		// Calculate Lighting
+		// Calculate Color from Normal
+		// Calculate Color from Distance
+		// Calculate etc.
+		// ...
+		
+		// draw pixel with calculated Color
+		
+		// zBuffer(xpix, ypix) = z    // Update zBuffer with new value
+		// Caution: if far plane is -1 (TBC), then the direction of the test z < zBuffer may need to be adapted
+		
+		// else
+		
+		// nothing to do
+		
+		// endif
+		
+	}
 }

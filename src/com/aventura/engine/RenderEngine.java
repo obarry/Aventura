@@ -189,6 +189,11 @@ public class RenderEngine {
 		// Count Element stats
 		nbe++;
 		
+		// zBuffer initialization (if applicable)
+		if (render.rendering_type != RenderContext.RENDERING_TYPE_LINE) {
+			rasterizer.initZBuffer();
+		}
+
 		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
 		Matrix4 model = matrix.times(e.getTransformation());
@@ -264,7 +269,7 @@ public class RenderEngine {
 			//TODO To be implemented
 			break;
 		case RenderContext.RENDERING_TYPE_INTERPOLATE:
-			//TODO To be implemented
+			rasterizer.rasterizeTriangle(t);
 			break;
 		default:
 			// Invalid rendering type
