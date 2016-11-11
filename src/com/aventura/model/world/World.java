@@ -44,7 +44,7 @@ public class World implements NormalGeneration {
 	
 	// Color Management
 	protected Color backgroundColor = Color.BLACK; // Color of the background ("sky")
-	protected Color worldColor; // Color of the world's elements unless specified at Element or Vertex level (lowest level priority)
+	protected Color worldColor = Color.WHITE; // Color of the world's elements unless specified at Element or Vertex level (lowest level priority)
 
 	public World() {
 		elements  = new ArrayList<Element>();

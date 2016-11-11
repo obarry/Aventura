@@ -110,21 +110,27 @@ public class TestAventura9 {
 					switch(Math.round((float)Math.random()*5)) {
 					case 0:
 						e = new Cone(1,0.5,8);
+						e.setColor(Color.YELLOW);
 						break;
 					case 1:
 						e = new Cylinder(1,0.5,8);
+						e.setColor(Color.CYAN);
 						break;
 					case 2:
 						e = new Sphere(1,8);
+						e.setColor(Color.MAGENTA);
 						break;
 					case 3:
 						e = new Cube(1);
+						e.setColor(Color.PINK);
 						break;
 					case 4:
 						e = new Box(1,0.5,0.3);
+						e.setColor(Color.ORANGE);
 						break;
 					case 5:
 						e = new Trellis(1,1,8,8);
+						e.setColor(Color.LIGHT_GRAY);
 						break;
 					default:
 						e = null;

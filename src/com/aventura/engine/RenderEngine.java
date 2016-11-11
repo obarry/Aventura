@@ -169,7 +169,7 @@ public class RenderEngine {
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
-			render(e, Matrix4.IDENTITY); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+			render(e, Matrix4.IDENTITY, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out);
@@ -183,13 +183,17 @@ public class RenderEngine {
 	}
 	
 	/**
-	 * Render a single Element and all its subelements recursively
+	 * Render a single Element and all its sub-elements recursively
 	 * @param e the Element to render
 	 */
-	public void render(Element e, Matrix4 matrix) {
+	public void render(Element e, Matrix4 matrix, Color c) {
 		
 		// Count Element stats
 		nbe++;
+		
+		// Take color of the element else take super-element color passed in parameters
+		Color col = c;
+		if (e.getColor() != null) col = e.getColor();
 		
 		// zBuffer initialization (if applicable)
 		if (render.rendering_type != RenderContext.RENDERING_TYPE_LINE) {
@@ -204,7 +208,7 @@ public class RenderEngine {
 				
 		// Process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {				
-			boolean ret = render(e.getTriangle(j));
+			boolean ret = render(e.getTriangle(j), col);
 			
 			// Count Triangles stats (total, in view and out view frustum)
 			nbt++;
@@ -217,7 +221,7 @@ public class RenderEngine {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has "+e.getSubElements().size()+" sub element(s).");
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
-				render(e.getSubElements().get(i), model);
+				render(e.getSubElements().get(i), model, col);
 			}
 		} else {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has no sub elements.");			
@@ -230,7 +234,7 @@ public class RenderEngine {
 	 * @param t the triangle to rasterize
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
-	public boolean render(Triangle t) {
+	public boolean render(Triangle t, Color c) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
@@ -248,11 +252,11 @@ public class RenderEngine {
 			
 			// If the rendering type is LINE, then draw lines directly
 			if (render.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
-				rasterizer.drawTriangleLines(triangle);
+				rasterizer.drawTriangleLines(triangle, c);
 			} else {
 				//TODO to be implemented
 				
-				rasterize(triangle);
+				rasterize(triangle, c);
 			}
 			return true;
 		} else {
@@ -261,7 +265,7 @@ public class RenderEngine {
 		}
 	}
 	
-	protected void rasterize(Triangle t) {
+	protected void rasterize(Triangle t, Color c) {
 		
 		switch (render.rendering_type) {
 		case RenderContext.RENDERING_TYPE_MONOCHROME:
@@ -271,7 +275,7 @@ public class RenderEngine {
 			//TODO To be implemented
 			break;
 		case RenderContext.RENDERING_TYPE_INTERPOLATE:
-			rasterizer.rasterizeTriangle(t);
+			rasterizer.rasterizeTriangle(t, c);
 			break;
 		default:
 			// Invalid rendering type

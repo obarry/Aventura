@@ -1,5 +1,6 @@
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -100,9 +101,12 @@ public class TestAventura10 {
 		
 		// e is the main Element
 		e = new Cylinder(2,0.5,8);
+		e.setColor(Color.CYAN);
 		// e1 and e2 will be sub elements
 		e1 = new Cone(2,1,8);
+		e1.setColor(Color.MAGENTA);
 		e2 = new Cube(2);
+		e2.setColor(Color.ORANGE);
 
 		// Translate Elements e1 and e2 respectively above and below main Element e:
 		Translation t1 = new Translation(new Vector3(0, 0, 2));

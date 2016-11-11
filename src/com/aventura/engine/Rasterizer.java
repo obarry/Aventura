@@ -76,9 +76,9 @@ public class Rasterizer {
 	
 	// Method for Line only Rendering
 		
-	public void drawTriangleLines(Triangle t) {
+	public void drawTriangleLines(Triangle t, Color c) {
 		
-		view.setColor(Color.WHITE);
+		view.setColor(c);
 		drawLine(t.getV1(), t.getV2());
 		drawLine(t.getV2(), t.getV3());
 		drawLine(t.getV3(), t.getV1());
@@ -102,7 +102,7 @@ public class Rasterizer {
 
 	// End methods for Line only Rendering
 	
-	public void rasterizeTriangle(Triangle t) {
+	public void rasterizeTriangle(Triangle t, Color c) {
 		
 		// For each pixel(xpix, ypix) of the projected Triangle corresponding to a Position(xpos, ypos, zpos) on the triangle surface in 3D world space
 		// Use bressenham for this rasterization
