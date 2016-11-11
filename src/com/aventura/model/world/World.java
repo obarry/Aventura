@@ -1,5 +1,6 @@
 package com.aventura.model.world;
 
+import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.math.transform.Repere;
@@ -40,6 +41,10 @@ public class World implements NormalGeneration {
 	
 	//protected ArrayList<Vertex> vertices;    // All vertices of the World
 	protected ArrayList<Triangle> triangles; // All triangles of the World
+	
+	// Color Management
+	protected Color backgroundColor = Color.BLACK; // Color of the background ("sky")
+	protected Color worldColor; // Color of the world's elements unless specified at Element or Vertex level (lowest level priority)
 
 	public World() {
 		elements  = new ArrayList<Element>();
@@ -72,5 +77,23 @@ public class World implements NormalGeneration {
 				elements.get(i).calculateNormals();
 		}
 	}
+	
+	public void setColor(Color c) {
+		this.worldColor = c;
+	}
+	
+	public Color getColor() {
+		return worldColor;
+	}
+
+	public void setBackgroundColor(Color c) {
+		this.backgroundColor = c;
+	}
+	
+	public Color getBackgroundColor() {
+		return backgroundColor;
+	}
+
+
 
 }

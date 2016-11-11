@@ -1,5 +1,6 @@
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -98,6 +99,7 @@ public class TestAventura9 {
 		
 		// Create a new World
 		World world = new World();
+		world.setBackgroundColor(Color.DARK_GRAY);
 		Element e;
 		
 		for (int i=-2; i<=2; i++) {

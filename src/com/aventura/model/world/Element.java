@@ -1,5 +1,6 @@
 package com.aventura.model.world;
 
+import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.math.transform.Transformable;
@@ -104,6 +105,7 @@ public class Element implements Transformable, NormalGeneration {
 	//protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
 	
 	protected Matrix4 transform;  // Element to World Transformation Matrix (Model Matrix)
+	protected Color color; // Color of the element unless specified at Vertex level (lowest level priority)
 	
 	public Element() {
 		super();
@@ -169,6 +171,14 @@ public class Element implements Transformable, NormalGeneration {
 	public Matrix4 getTransformation() {
 		return transform;
 	}
+	
+	public void setColor(Color c) {
+		this.color = c;
+	}
+	
+	public Color getColor() {
+		return color;
+	}
 
 	/* (non-Javadoc)
 	 * @see com.aventura.model.world.NormalGeneration#calculateNormals()
@@ -182,8 +192,7 @@ public class Element implements Transformable, NormalGeneration {
 		
 		for (int i=0; i<triangles.size(); i++) {
 			this.triangles.get(i).calculateNormal();
-		}
-		
+		}	
 	}
 
 }

@@ -67,6 +67,9 @@ public class SwingView extends View {
 	BufferedImage backbuffer;
 	Graphics2D backgraph;
 	
+	// Color
+	Color backgroundColor = null;
+	
 	
 	public SwingView(GraphicContext context) {
 		super(context);
@@ -100,6 +103,10 @@ public class SwingView extends View {
 		// Reinitialize the back buffer image #2 - need to define color of the back as per Graphic context definition
 		backbuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
 		backgraph = (Graphics2D)backbuffer.getGraphics();
+		// Fill image with background color pixels
+        backgraph.setColor(backgroundColor);
+        backgraph.fillRect(backbuffer.getMinX(), backbuffer.getMinY(), backbuffer.getWidth(), backbuffer.getHeight());
+
 
         // Translate origin of the graphic
 		backgraph.translate(width/2, height/2);
@@ -122,6 +129,10 @@ public class SwingView extends View {
 		// TODO Auto-generated method stub
 		backgraph.setColor(c);
 		
+	}
+	
+	public void setBackgroundColor(Color c) {
+		this.backgroundColor = c;
 	}
 	
 	@Override

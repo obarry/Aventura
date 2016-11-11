@@ -36,16 +36,16 @@ import com.aventura.math.vector.*;
 public class Vertex {
 	
 	// Geometry
-	protected Vector4 position = null;
-	protected Vector3 normal = null;
+	protected Vector4 position = null; // Coordinates of the Vertex. Vector4 as this is a Point (not vector only) in space.
+	protected Vector3 normal = null; // Normal of this Vertex, this is context specific and can be kept null if normal at Triangle level
 	
 	// Physical characteristic
-	protected Vector2 texture = null; //relative position of this vertex in the texture plane
-	protected Color color = null; // base color of this vertex
-	protected int material; // to be defined, a specific class/object may be needed
+	protected Vector2 texture = null; // Relative position of this Vertex in the texture plane
+	protected Color color = null; // color of this Vertex, if null the Element's color (or World's color) is used. Lowest level priority.
+	protected int material; // To be defined, a specific class may be needed for a complex material representation
 	
 	// Reflectivity
-	// TBD
+	// TODO
 	
 	public Vertex() {
 		
@@ -79,6 +79,14 @@ public class Vertex {
 	
 	public Vector3 getNormal() {
 		return normal;
+	}
+	
+	public void setColor(Color c) {
+		this.color = c;
+	}
+	
+	public Color getColor() {
+		return color;
 	}
 	
 	/**

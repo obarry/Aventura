@@ -34,7 +34,10 @@ import com.aventura.view.View;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * This class represents and manages the transformations from model to view.
+ * This class provides rasterization services to the RenderEngine.
+ * It takes charge of all the algorithms to produce pixels from triangles.
+ * It requires access to the View in order to draw pixels.
+ * It also behaves according to the provided parameters e.g. in the GraphicContext
  * 
  * 
  * @author Bricolage Olivier

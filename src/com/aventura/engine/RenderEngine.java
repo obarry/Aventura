@@ -75,6 +75,7 @@ import com.aventura.view.View;
  * @author Bricolage Olivier
  * @since May 2016
  */
+
 public class RenderEngine {
 	
 	// Context's parameters
@@ -162,6 +163,7 @@ public class RenderEngine {
 		nbe = 0;
 		
 		// Initialize backbuffer in the View
+		view.setBackgroundColor(world.getBackgroundColor());
 		view.initView();
 		
 		// For each element of the world
