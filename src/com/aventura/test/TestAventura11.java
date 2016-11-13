@@ -23,6 +23,7 @@ import com.aventura.tools.tracing.Tracer;
 import com.aventura.model.world.Cube;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Sphere;
+import com.aventura.model.world.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -95,24 +96,29 @@ public class TestAventura11 {
 		
 		// Create a new World
 		World world = new World();
-		Element e1, e2;
+		Element e1, e2, e3;
 		
 		// e1 and e2  elements
-		e1 = new Sphere(1.5,8);
+		e1 = new Sphere(1.5,9);
 		e1.setColor(Color.MAGENTA);
 		e2 = new Cube(2);
 		e2.setColor(Color.ORANGE);
+		e3 = new Trellis(3, 2, 5, 4);
+		e3.setColor(Color.PINK);
 
 		// Translate Elements e1 and e2 respectively above and below main Element e:
 		Translation t1 = new Translation(new Vector3(0, 0, 2));
 		Translation t2 = new Translation(new Vector3(0, 0, -2));
+		Translation t3 = new Translation(new Vector3(0, 4, 0));
 		e1.setTransformation(t1);
 		e2.setTransformation(t2);
+		e3.setTransformation(t3);
 		
 
 		// Add Element to the world
 		world.addElement(e1);
 		world.addElement(e2);
+		world.addElement(e3);
 
 		// World is created
 		return world;
@@ -130,8 +136,8 @@ public class TestAventura11 {
 
 		System.out.println("********* STARTING APPLICATION *********");
 		
-		Tracer.info = true;
-		Tracer.function = true;
+		//Tracer.info = true;
+		//Tracer.function = true;
 
 		// Camera
 		Vector4 eye = new Vector4(14,8,4,1);
@@ -154,8 +160,17 @@ public class TestAventura11 {
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
-		renderer.render();
-				
+//		renderer.render();
+
+		int nb_images = 720;
+		for (int i=0; i<=5*nb_images; i++) {
+			double a = Math.PI*2*(double)i/(double)nb_images;
+			eye = new Vector4(15*Math.cos(a),15*Math.sin(a),4,1);
+			System.out.println("Rotation "+i+"  - Eye: "+eye);
+			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			renderer.render();
+		}
+		
 		System.out.println("********* ENDING APPLICATION *********");
 
 	}

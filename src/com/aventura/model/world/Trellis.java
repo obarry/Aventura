@@ -258,8 +258,45 @@ public class Trellis extends Element {
 
 	@Override
 	public void calculateNormals() {
-		// TODO Auto-generated method stub
-		
+
+		// This algorithm takes into account only the N, S, W and E surrounding vertices to calculate the normal vector of a given Vertex of the Trellis.
+		for (int i=0; i<=nx; i++) {
+			for (int j=0; j<=ny; j++) {
+				// Calculate 2 vectors averaging the plane around the considered Vertex
+				// One is aligned on the X axis
+				Vector4 xa, xb, ya, yb, xavg, yavg;
+				
+				if (i>0) {
+					xa = vertices[i-1][j].getPosition();
+				} else {
+					xa = vertices[i][j].getPosition(); // When on the side: take the vertex itself to calculate the average
+				}
+				if (i<nx) {
+					xb = vertices[i+1][j].getPosition();
+				} else {
+					xb = vertices[i][j].getPosition(); // When on the side: take the vertex itself to calculate the average
+				}
+				xavg = xb.minus(xa);
+				
+				// The second one is aligned on the Y axis
+				if (j>0) {
+					ya = vertices[i][j-1].getPosition();
+				} else {
+					ya = vertices[i][j].getPosition(); // When on the side: take the vertex itself to calculate the average
+				}
+				if (j<ny) {
+					yb = vertices[i][j+1].getPosition();
+				} else {
+					yb = vertices[i][j].getPosition(); // When on the side: take the vertex itself to calculate the average
+				}
+				yavg = yb.minus(ya);
+								
+				// The normal vector is the cross product of both vectors.
+				Vector4 normal = xavg.times(yavg);
+				// Need to be normalized
+				vertices[i][j].setNormal(normal.normalize().getVector3());
+			}
+		}
 	}
 	
 }
