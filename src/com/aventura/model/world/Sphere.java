@@ -1,6 +1,5 @@
 package com.aventura.model.world;
 
-import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
@@ -61,43 +60,54 @@ public class Sphere extends Element {
 	
 	protected Vertex[][] vertices;
 	protected Vertex northPole, southPole;
+	double ray;
+	int half_seg;
+	protected Vector4 center;
 	
 	public Sphere(double ray, int half_seg) {
 		super();
 		subelements = null;
-		Vector4 position = new Vector4(0,0,0,0);
-		createSphere(ray, half_seg, position);
+		this.ray = ray;
+		this.half_seg = half_seg;
+		center = new Vector4(0,0,0,0);
+		createSphere();
 	}
 
 	/**
 	 * @param ray
 	 * @param half_seg is half the number of segments for 360 degrees
-	 * @param position
+	 * @param center
 	 */
-	public Sphere(double ray, int half_seg, Vector3 position) {
+	public Sphere(double ray, int half_seg, Vector3 center) {
 		super();
 		subelements = null;
-		Vector4 v = new Vector4(position);
-		createSphere(ray, half_seg, v);
+		this.ray = ray;
+		this.half_seg = half_seg;
+		this.center = center.getVector4();
+		createSphere();
 	}
 	
 	/**
 	 * @param ray
 	 * @param half_seg is half the number of segments for 360 degrees
-	 * @param position
+	 * @param center
 	 */
-	public Sphere(double ray, int half_seg, Vector4 position) {
+	public Sphere(double ray, int half_seg, Vector4 center) {
 		super();
 		subelements = null;
-		createSphere(ray, half_seg, position);
+		this.ray = ray;
+		this.half_seg = half_seg;
+		this.center = center;
+		createSphere();
 	}
 	
 	/**
-	 * @param ray
+	 * Create vertices and triangles of a Sphere based on provided parameters
+	 * @param ray the ray of the Sphere
 	 * @param half_seg is half the number of segments for 360 degrees
-	 * @param position
+	 * @param center to translate the Sphere vertices by the Vector4 center
 	 */
-	protected void createSphere(double ray, int half_seg, Vector4 position) {
+	protected void createSphere() {
 		
 		vertices = new Vertex[half_seg*2][half_seg-1]; // (n) x (n/2-1) vertices (n being the number of segments)	
 		double alpha = Math.PI/half_seg;
@@ -112,7 +122,7 @@ public class Sphere extends Element {
 				double cosa = Math.cos(alpha*i);
 				double sinb = Math.sin(alpha*(j+1));
 				double cosb = Math.cos(alpha*(j+1));
-				vertices[i][j] = new Vertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1).plus(position));
+				vertices[i][j] = new Vertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1).plus(center));
 			}
 		}
 
@@ -153,8 +163,20 @@ public class Sphere extends Element {
 
 	@Override
 	public void calculateNormals() {
-		// TODO Auto-generated method stub
 		
+		// Create normals of poles
+		northPole.setNormal(Vector3.Z_AXIS);
+		southPole.setNormal(Vector3.Z_OPP_AXIS);
+		
+		// Create normals of vertices
+		for (int i=0; i<half_seg*2; i++) {
+			for (int j=0; j<(half_seg-1); j++) {
+				// For each Vertex, use the ray vector passing through the Vertex and normalize it 
+				Vector4 n = vertices[i][j].getPosition().minus(center);
+				n.normalize();
+				vertices[i][j].setNormal(n.getVector3());
+			}
+		}	
 	}
 
 }

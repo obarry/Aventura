@@ -3,7 +3,7 @@ package com.aventura.engine;
 import com.aventura.context.GraphicContext;
 import com.aventura.tools.tracing.Tracer;
 
-public class TestRasterizer {
+public class TestRasterizer1 {
 
 	public static void main(String[] args) {
 

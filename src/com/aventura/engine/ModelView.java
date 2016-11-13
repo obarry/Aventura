@@ -1,6 +1,7 @@
 package com.aventura.engine;
 
 import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Line;
 import com.aventura.model.world.Triangle;
@@ -210,11 +211,26 @@ public class ModelView {
 	 * Return a new Vector4 resulting from the ModelView transformation ("projection") of the provided Vector4
 	 * TransformedVector = [4x4 Transformation Matrix] * OriginalVector
 	 * 
-	 * @param v
-	 * @return
+	 * @param v the Vector4 to be transformed 
+	 * @return a newly created Vector4 resulting from the transformation
 	 */
 	public Vector4 transform(Vector4 v) {
 		return transformation.times(v);
+	}
+	
+	/**
+	 * Return a new Vector3 resulting from the ModelView transformation ("projection") of the provided Vector3
+	 * This methods calls the Vector4 transform(Vector4 v) methods
+	 * 
+	 * Caution: this method relies on Matrix4 / Vector4 computation hence creates new intermediate objects.
+	 * It is less effective in terms of performance and memory usage than the Vector4 transform method.
+	 * 
+	 * @param v the Vector3 to be transformed 
+	 * @return a newly created Vector3 resulting from the transformation
+	 */
+	public Vector3 transform(Vector3 v) {
+		Vector4 v4 = v.getVector4();
+		return transform(v4).getVector3();
 	}
 
 }

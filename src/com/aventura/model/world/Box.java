@@ -1,6 +1,5 @@
 package com.aventura.model.world;
 
-import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
@@ -136,8 +135,11 @@ public class Box extends Element {
 
 	@Override
 	public void calculateNormals() {
-		// TODO Auto-generated method stub
 		
+		// Normals for a Box are at Triangle level hence we calculate normal for each triangle of the Element
+		for (int i=0; i<triangles.size(); i++) {
+			triangles.get(i).calculateNormal();
+		}
 	}
 
 }

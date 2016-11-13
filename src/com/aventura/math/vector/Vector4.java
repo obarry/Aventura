@@ -308,6 +308,24 @@ public class Vector4 {
 	}
 	
 	/**
+	 * Sum of this Vector4 P and another Vector3 V, returns a newly created Vector4
+	 * Useful to "move" a point P (Vector4) from a vector V (Vector3)
+	 * The w coordinate of P is left unchanged
+	 * @param v
+	 * @return P+V
+	 */
+	public Vector4 plus(Vector3 v) {
+		Vector4 r = new Vector4();
+		
+		r.setX(this.c[0]+v.c[0]);
+		r.setY(this.c[1]+v.c[1]);
+		r.setZ(this.c[2]+v.c[2]);
+		r.setW(this.c[3]);
+		
+		return r;
+	}
+	
+	/**
 	 * Vector4 addition V=V+W. This Vector4 (V) is modified and contains the result of the operation.
 	 * @param w the Vector4 to be added to this Vector4
 	 */
@@ -333,7 +351,25 @@ public class Vector4 {
 		
 		return r;
 	}
-	
+
+	/**
+	 * Subtraction of this Vector4 P and another Vector3 V, returns a newly created Vector4
+	 * Useful to "move" a point P (Vector4) with a vector V (Vector3), actually -V as this is a subtraction
+	 * The w coordinate of P is left unchanged
+	 * @param v
+	 * @return P-V
+	 */
+	public Vector4 minus(Vector3 v) {
+		Vector4 r = new Vector4();
+		
+		r.setX(this.c[0]-v.c[0]);
+		r.setY(this.c[1]-v.c[1]);
+		r.setZ(this.c[2]-v.c[2]);
+		r.setW(this.c[3]);
+		
+		return r;
+	}
+
 	/**
 	 * Vector4 subtraction V=V-W. This Vector4 (V) is modified and contains the result of the operation.
 	 * @param w the Vector4 to be subtracted to this Vector4

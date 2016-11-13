@@ -3,6 +3,8 @@ package com.aventura.engine;
 import java.awt.Color;
 
 import com.aventura.context.GraphicContext;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Line;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
@@ -75,7 +77,8 @@ public class Rasterizer {
 	}
 	
 	// Method for Line only Rendering
-		
+	//
+	
 	public void drawTriangleLines(Triangle t, Color c) {
 		
 		view.setColor(c);
@@ -86,6 +89,10 @@ public class Rasterizer {
 	
 	public void drawLine(Line l) {
 		drawLine(l.getV1(), l.getV2());
+	}
+	
+	public void drawLine(Line l, Color c) {
+		drawLine(l.getV1(), l.getV2(), c);
 	}
 	
 	public void drawLine(Vertex v1, Vertex v2) {
@@ -100,6 +107,35 @@ public class Rasterizer {
 		view.drawLine(x1, y1, x2, y2);
 	}
 
+	public void drawLine(Vertex v1, Vertex v2, Color c) {
+
+		view.setColor(c);
+		drawLine(v1, v2);
+	}
+
+	
+	public void drawVectorFromPosition(Vertex position, Vector3 vector, Color c) {
+		
+		view.setColor(c);
+		drawVectorFromPosition(position, vector);
+	}
+
+	public void drawVectorFromPosition(Vertex position, Vector3 vector) {
+		int x1, y1, x2, y2;
+		
+		x1 = (int)(position.getPosition().get3DX()*graphic.getPixelWidth()/2);
+		y1 = (int)(position.getPosition().get3DY()*graphic.getPixelHeight()/2);
+		
+		Vector4 p = position.getPosition().plus(vector); 
+		
+		x2 = (int)(p.get3DX()*graphic.getPixelWidth()/2);
+		y2 = (int)(p.get3DY()*graphic.getPixelHeight()/2);
+
+		view.drawLine(x1, y1, x2, y2);
+		
+	}
+	
+	//
 	// End methods for Line only Rendering
 	
 	public void rasterizeTriangle(Triangle t, Color c) {

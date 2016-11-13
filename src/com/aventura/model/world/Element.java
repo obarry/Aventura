@@ -192,7 +192,7 @@ public class Element implements Transformable, NormalGeneration {
 		
 		for (int i=0; i<triangles.size(); i++) {
 			this.triangles.get(i).calculateNormal();
-		}	
+		}
 	}
 
 }

@@ -1,5 +1,7 @@
 package com.aventura.context;
 
+import java.awt.Color;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -54,10 +56,21 @@ public class RenderContext {
 	public static final int DISPLAY_LANDMARK_ENABLED = 1;
 	public static final int DISPLAY_LANDMARK_ENABLED_ARROW = 2;
 	public static final int DISPLAY_LANDMARK_ENABLED_3D = 3;
+	
+	public static final int DISPLAY_NORMALS_DISABLED = 0;
+	public static final int DISPLAY_NORMALS_ENABLED = 1;
+	
 
-	public int display_landmark = DISPLAY_LANDMARK_DISABLED; // by default
+	public int displayLandmark = DISPLAY_LANDMARK_DISABLED; // by default
+	public int displayNormals = DISPLAY_NORMALS_DISABLED;  // by default
 
 	public int rendering_type = 0;
+	
+	public Color landmarkXColor = Color.RED;
+	public Color landmarkYColor = Color.GREEN;
+	public Color landmarkZColor = Color.BLUE;
+	public Color normalsColor = Color.WHITE;
+
 	
 	
 	public static RenderContext RENDER_DEFAULT = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED);
@@ -69,9 +82,18 @@ public class RenderContext {
 		// To be used when creating manually GraphicContext by using setter/getters
 	}
 	
+	/**
+	 * To duplicate a standard RenderContext before customizing it
+	 */
+	public RenderContext(RenderContext r) {
+		this.displayLandmark = r.displayLandmark;
+		this.displayNormals = r.displayNormals;
+		this.rendering_type = r.rendering_type;
+	}
+	
 	public RenderContext(int type, int display_landmark) {
 		this.rendering_type = type;
-		this.display_landmark = display_landmark;
+		this.displayLandmark = display_landmark;
 	}
 		
 	public void setRendering(int type) {
@@ -83,11 +105,19 @@ public class RenderContext {
 	}
 
 	public void setDisplayLandmark(int landmark) {
-		this.display_landmark = landmark;
+		this.displayLandmark = landmark;
 	}
 	
 	public int getDisplayLandmark() {
-		return display_landmark;
+		return displayLandmark;
+	}
+
+	public void setDisplayNormals(int display_normals) {
+		this.displayNormals = display_normals;
+	}
+	
+	public int getDisplayNormals() {
+		return displayNormals;
 	}
 
 

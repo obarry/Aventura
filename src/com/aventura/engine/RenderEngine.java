@@ -5,6 +5,7 @@ import java.awt.Color;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector3;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Element;
@@ -42,13 +43,13 @@ import com.aventura.view.View;
  * 
  * 
  * This class is the core rendering engine of the Aventura API
- * It provides the render method
+ * It provides the renderContext method
  * It needs to be initialized with proper:
  * - The world information
  * - A camera
  * - Some lighting
  * - some display and graphics (called View)
- * - a render context to provide information on how to render the world
+ * - a render context to provide information on how to renderContext the world
  * - a graphic context to provide information on how to display the view 
  *
  *																		    +---------------------+
@@ -79,8 +80,8 @@ import com.aventura.view.View;
 public class RenderEngine {
 	
 	// Context's parameters
-	private RenderContext render;
-	private GraphicContext graphic;
+	private RenderContext renderContext;
+	private GraphicContext graphicContext;
 
 	// Statistics
 	private int nbt = 0; // Number of triangles processed
@@ -109,15 +110,15 @@ public class RenderEngine {
 	 * Rendering a World on different Views e.g. with several Cameras will require multiple RenderEngine instances
 	 * 
 	 * 
-	 * @param world the world to render
+	 * @param world the world to renderContext
 	 * @param light the lights lighting the world
 	 * @param camera the camera watching the world
-	 * @param render the render context containing parameters to render the scene
-	 * @param graphic the graphic context to contain parameters to display the scene
+	 * @param renderContext the renderContext context containing parameters to renderContext the scene
+	 * @param graphicContext the graphicContext context to contain parameters to display the scene
 	 */
 	public RenderEngine(World world, Lighting light, Camera camera, RenderContext render, GraphicContext graphic) {
-		this.render = render;
-		this.graphic = graphic;
+		this.renderContext = render;
+		this.graphicContext = graphic;
 		this.world = world;
 		this.light = light;
 		this.camera = camera;
@@ -128,7 +129,7 @@ public class RenderEngine {
 		// Delegate rasterization tasks to a dedicated engine
 		this.rasterizer = new Rasterizer(graphic);
 	}
-	
+		
 	public void setView(View v) {
 		view = v;
 		rasterizer.setView(v);
@@ -138,7 +139,7 @@ public class RenderEngine {
 	 * This method will do the computation. No args.
 	 * 
 	 * It processes all triangles of the World, Element by Element.
-	 * For each Element it takes all Triangles one by one and render them.
+	 * For each Element it takes all Triangles one by one and renderContext them.
 	 * - Full ModelView transformation into homogeneous coordinates
 	 * - Rasterization
 	 * It uses the parameters of GraphicContext and RenderContext:
@@ -175,7 +176,7 @@ public class RenderEngine {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out);
 
 		// Display the landmarks if enabled (GraphicContext)
-		if (render.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
+		if (renderContext.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
 			displayLandMarkLines();
 		}
 
@@ -184,7 +185,7 @@ public class RenderEngine {
 	
 	/**
 	 * Render a single Element and all its sub-elements recursively
-	 * @param e the Element to render
+	 * @param e the Element to renderContext
 	 */
 	public void render(Element e, Matrix4 matrix, Color c) {
 		
@@ -196,7 +197,7 @@ public class RenderEngine {
 		if (e.getColor() != null) col = e.getColor();
 		
 		// zBuffer initialization (if applicable)
-		if (render.rendering_type != RenderContext.RENDERING_TYPE_LINE) {
+		if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_LINE) {
 			rasterizer.initZBuffer();
 		}
 
@@ -246,28 +247,64 @@ public class RenderEngine {
 		
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
-		// Then render its fragments in the View
+		// Then renderContext its fragments in the View
 		if (isInViewFrustum(triangle)) {
 			// Render triangle
 			
 			// If the rendering type is LINE, then draw lines directly
-			if (render.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
+			if (renderContext.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
 				rasterizer.drawTriangleLines(triangle, c);
 			} else {
 				//TODO to be implemented
 				
 				rasterize(triangle, c);
 			}
+			
+			// If DISPLAY_NORMALS is activated then renderContext normals
+			if (renderContext.displayNormals == RenderContext.DISPLAY_NORMALS_ENABLED) {
+				
+				// Caution: in this section, we need to take the original triangle containing the normal and other attributes !!!
+				
+				if (Tracer.info) Tracer.traceInfo(this.getClass(), "Display normals for triangle. Normal of triangle "+t.getNormal());
+				
+				if (t.getNormal() == null) { // Normal at Vertex level
+					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level");
+					// Get the normal of each Vertex
+					Vector3 n1 = t.getV1().getNormal();
+					Vector3 n2 = t.getV2().getNormal();
+					Vector3 n3 = t.getV3().getNormal();
+					// Transform the 3 normals
+					n1 = transformation.transform(n1);
+					n2 = transformation.transform(n2);
+					n3 = transformation.transform(n3);
+					// Draw each normal vector starting from their corresponding vertex  
+					rasterizer.drawVectorFromPosition(triangle.getV1(), n1, renderContext.normalsColor);
+					rasterizer.drawVectorFromPosition(triangle.getV2(), n2, renderContext.normalsColor);
+					rasterizer.drawVectorFromPosition(triangle.getV3(), n3, renderContext.normalsColor);
+					
+				} else { // Normals at Triangle level
+					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+t.getNormal());
+					// One normal for all vertices of this triangle, the normal at Triangle level
+					Vector3 n = t.getNormal();
+					// Transform the Vector3
+					n = transformation.transform(n);
+					// Draw 3 times the normal vector starting respectively from each vertex  
+					rasterizer.drawVectorFromPosition(triangle.getV1(), n, renderContext.normalsColor);
+					rasterizer.drawVectorFromPosition(triangle.getV2(), n, renderContext.normalsColor);
+					rasterizer.drawVectorFromPosition(triangle.getV3(), n, renderContext.normalsColor);
+				}
+			}
+			
 			return true;
 		} else {
-			// Do not render this triangle
+			// Do not renderContext this triangle
 			return false;
 		}
 	}
 	
 	protected void rasterize(Triangle t, Color c) {
 		
-		switch (render.rendering_type) {
+		switch (renderContext.rendering_type) {
 		case RenderContext.RENDERING_TYPE_MONOCHROME:
 			//TODO To be implemented
 			break;
@@ -319,7 +356,7 @@ public class RenderEngine {
 	}
 	
 
-	protected void displayLandMarkLines() {
+	public void displayLandMarkLines() {
 		// Set the Model Matrix to IDENTITY (no translation)
 		transformation.setModel(Matrix4.IDENTITY);
 		transformation.computeTransformation();
@@ -337,12 +374,9 @@ public class RenderEngine {
 		Line ly = transformation.transform(line_y);
 		Line lz = transformation.transform(line_z);
 		// Draw segments with different colors (x=RED, y=GREEN, z=BLUE) for mnemotechnic
-		view.setColor(Color.RED);
-		rasterizer.drawLine(lx);
-		view.setColor(Color.GREEN);
-		rasterizer.drawLine(ly);
-		view.setColor(Color.BLUE);
-		rasterizer.drawLine(lz);
+		rasterizer.drawLine(lx, renderContext.landmarkXColor);
+		rasterizer.drawLine(ly, renderContext.landmarkYColor);
+		rasterizer.drawLine(lz, renderContext.landmarkZColor);
 
 	}
 }
