@@ -100,12 +100,17 @@ public class Triangle {
 	public void calculateNormal() {
 		//P = V1V2 as a Vector3
 		Vector3 p = (v2.position.minus(v1.position)).getVector3();
+		//Vector4 p = v2.position.minus(v1.position);
 		//P = V1V3 as a Vector3
 		Vector3 q = (v3.position.minus(v1.position)).getVector3();
+		//Vector4 q = v3.position.minus(v1.position);
 		// Calculate the cross product
 		normal = p.times(q);
+		//Vector4 n = p.times(q);
 		// Normalize the resulting Vector3
 		normal.normalize();
+		//n.normalize();
+		//normal = n.getVector3();
 	}
 	
 }

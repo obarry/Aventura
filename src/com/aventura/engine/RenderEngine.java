@@ -232,32 +232,31 @@ public class RenderEngine {
 	/**
 	 * Rasterization of a single Triangle
 	 * This assumes that the initialization of ModelView transformqtion is already done
-	 * @param t the triangle to rasterize
+	 * @param to the triangle to rasterize
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
-	public boolean render(Triangle t, Color c) {
+	public boolean render(Triangle to, Color c) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
-		Triangle triangle; // The projected model view triangle in homogeneous coordinates 
+		Triangle tf; // The projected model view triangle in homogeneous coordinates 
 		
 		// Project this Triangle in the View in homogeneous coordinates
 		// This new triangle contains vertices that are transformed
-		triangle = transformation.transform(t);
+		tf = transformation.transform(to);
 		
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
 		// Then renderContext its fragments in the View
-		if (isInViewFrustum(triangle)) {
+		if (isInViewFrustum(tf)) {
 			// Render triangle
 			
 			// If the rendering type is LINE, then draw lines directly
 			if (renderContext.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
-				rasterizer.drawTriangleLines(triangle, c);
+				rasterizer.drawTriangleLines(tf, c);
 			} else {
-				//TODO to be implemented
-				
-				rasterize(triangle, c);
+				//TODO to be implemented				
+				rasterize(tf, c);
 			}
 			
 			// If DISPLAY_NORMALS is activated then renderContext normals
@@ -265,37 +264,46 @@ public class RenderEngine {
 				
 				// Caution: in this section, we need to take the original triangle containing the normal and other attributes !!!
 				
-				if (Tracer.info) Tracer.traceInfo(this.getClass(), "Display normals for triangle. Normal of triangle "+t.getNormal());
+				if (Tracer.info) Tracer.traceInfo(this.getClass(), "Display normals for triangle. Normal of triangle "+to.getNormal());
 				
-				if (t.getNormal() == null) { // Normal at Vertex level
+				// Get the 3 vertices from Triangle
+				Vertex p1 = to.getV1();
+				Vertex p2 = to.getV2();
+				Vertex p3 = to.getV3();
+				Vertex n1, n2, n3;
+				
+				if (to.getNormal() == null) { // Normal at Vertex level
 					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level");
-					// Get the normal of each Vertex
-					Vector3 n1 = t.getV1().getNormal();
-					Vector3 n2 = t.getV2().getNormal();
-					Vector3 n3 = t.getV3().getNormal();
-					// Transform the 3 normals
-					n1 = transformation.transform(n1);
-					n2 = transformation.transform(n2);
-					n3 = transformation.transform(n3);
-					// Draw each normal vector starting from their corresponding vertex  
-					rasterizer.drawVectorFromPosition(triangle.getV1(), n1, renderContext.normalsColor);
-					rasterizer.drawVectorFromPosition(triangle.getV2(), n2, renderContext.normalsColor);
-					rasterizer.drawVectorFromPosition(triangle.getV3(), n3, renderContext.normalsColor);
+					// Create 3 vertices corresponding to the end point of the 3 normal vectors
+					n1 = new Vertex(p1.getPosition().plus(p1.getNormal()));
+					n2 = new Vertex(p2.getPosition().plus(p2.getNormal()));
+					n3 = new Vertex(p3.getPosition().plus(p3.getNormal()));
 					
 				} else { // Normals at Triangle level
-					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+t.getNormal());
-					// One normal for all vertices of this triangle, the normal at Triangle level
-					Vector3 n = t.getNormal();
-					// Transform the Vector3
-					n = transformation.transform(n);
-					// Draw 3 times the normal vector starting respectively from each vertex  
-					rasterizer.drawVectorFromPosition(triangle.getV1(), n, renderContext.normalsColor);
-					rasterizer.drawVectorFromPosition(triangle.getV2(), n, renderContext.normalsColor);
-					rasterizer.drawVectorFromPosition(triangle.getV3(), n, renderContext.normalsColor);
+					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+to.getNormal());
+					// Create 3 vertices corresponding to the end point of the 3 normal vectors
+					// In this case these vertices are calculated from a single normal vector, the one at Triangle level
+					n1 = new Vertex(p1.getPosition().plus(to.getNormal()));
+					n2 = new Vertex(p2.getPosition().plus(to.getNormal()));
+					n3 = new Vertex(p3.getPosition().plus(to.getNormal()));
 				}
+				
+				// Create 3 segments corresponding to normal vectors
+				Line line1 = new Line(p1, n1);
+				Line line2 = new Line(p2, n2);
+				Line line3 = new Line(p3, n3);
+				// Transform the 3 normals
+				Line l1 = transformation.transform(line1);
+				Line l2 = transformation.transform(line2);
+				Line l3 = transformation.transform(line3);
+				
+				// Draw each normal vector starting from their corresponding vertex  
+				rasterizer.drawLine(l1, renderContext.normalsColor);
+				rasterizer.drawLine(l2, renderContext.normalsColor);
+				rasterizer.drawLine(l3, renderContext.normalsColor);
 			}
-			
 			return true;
+			
 		} else {
 			// Do not renderContext this triangle
 			return false;

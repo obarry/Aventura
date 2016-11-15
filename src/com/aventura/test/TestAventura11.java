@@ -13,6 +13,7 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
+import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -99,17 +100,18 @@ public class TestAventura11 {
 		Element e1, e2, e3;
 		
 		// e1 and e2  elements
-		e1 = new Sphere(1.5,9);
+		e1 = new Sphere(1.5,12);
 		e1.setColor(Color.MAGENTA);
 		e2 = new Cube(2);
 		e2.setColor(Color.ORANGE);
 		e3 = new Trellis(3, 2, 5, 4);
-		e3.setColor(Color.PINK);
+		e3.setColor(Color.DARK_GRAY);
 
 		// Translate Elements e1 and e2 respectively above and below main Element e:
 		Translation t1 = new Translation(new Vector3(0, 0, 2));
 		Translation t2 = new Translation(new Vector3(0, 0, -2));
-		Translation t3 = new Translation(new Vector3(0, 4, 0));
+		//Rotation r3 = new Rotation(Math.PI/4,Vector3.X_AXIS);
+		Translation t3 = new Translation(new Vector3(0, 4, -2));
 		e1.setTransformation(t1);
 		e2.setTransformation(t2);
 		e3.setTransformation(t3);
@@ -162,8 +164,8 @@ public class TestAventura11 {
 		renderer.setView(view);
 //		renderer.render();
 
-		int nb_images = 720;
-		for (int i=0; i<=5*nb_images; i++) {
+		int nb_images = 360;
+		for (int i=0; i<=4.9*nb_images; i++) {
 			double a = Math.PI*2*(double)i/(double)nb_images;
 			eye = new Vector4(15*Math.cos(a),15*Math.sin(a),4,1);
 			System.out.println("Rotation "+i+"  - Eye: "+eye);

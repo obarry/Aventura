@@ -157,7 +157,7 @@ public class Sphere extends Element {
 			t = new Triangle(southPole, vertices[i][half_seg-2], vertices[i+1][half_seg-2]);
 			this.addTriangle(t);			
 		}
-		t = new Triangle(northPole, vertices[half_seg*2-1][half_seg-2], vertices[0][half_seg-2]);
+		t = new Triangle(southPole, vertices[half_seg*2-1][half_seg-2], vertices[0][half_seg-2]);
 		this.addTriangle(t);		
 	}
 
