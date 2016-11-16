@@ -104,7 +104,9 @@ public class Rasterizer {
 		x2 = (int)(v2.getPosition().get3DX()*graphic.getPixelWidth()/2);
 		y2 = (int)(v2.getPosition().get3DY()*graphic.getPixelHeight()/2);
 
-		view.drawLine(x1, y1, x2, y2);
+		//view.drawLine(x1, y1, x2, y2);
+		bressenham_short((short)x1, (short)y1, (short)x2, (short)y2);
+		//bressenham_int(x1, y1, x2, y2);
 	}
 
 	public void drawLine(Vertex v1, Vertex v2, Color c) {
@@ -131,7 +133,9 @@ public class Rasterizer {
 		x2 = (int)(p.get3DX()*graphic.getPixelWidth()/2);
 		y2 = (int)(p.get3DY()*graphic.getPixelHeight()/2);
 
-		view.drawLine(x1, y1, x2, y2);
+		//view.drawLine(x1, y1, x2, y2);
+		bressenham_short((short)x1, (short)y1, (short)x2, (short)y2);
+		//bressenham_int(x1, y1, x2, y2);
 		
 	}
 	
@@ -168,5 +172,85 @@ public class Rasterizer {
 		
 		// endif
 		
+	}
+	
+	protected void bressenham_int(int xi, int yi, int xf, int yf) {
+		int dx, dy, i, xinc, yinc, cumul, x, y;
+		x = xi;
+		y = yi;
+		dx = xf - xi;
+		dy = yf - yi;
+		xinc = (dx>0) ? 1 : -1;
+		yinc = (dy>0) ? 1 : -1;
+		dx = Math.abs(dx);
+		dy = Math.abs(dy);
+		
+		allume_pixel(x,y);
+		
+		if (dx>dy) {
+			cumul = dx/2;
+			for (i=1; i<=dx; i++) {
+				x+=xinc;
+				cumul+=dy;
+				if (cumul>=dx) {
+					cumul-=dx;
+					y+=yinc;
+				}
+				allume_pixel(x,y);
+			}
+		} else {
+			cumul=dy/2;
+			for (i=1; i<=dy; i++) {
+				y+=yinc;
+				cumul+=dx;
+				if (cumul>=dy) {
+					cumul-=dy;
+					x+=xinc;
+				}
+				allume_pixel(x,y);
+			}
+		}
+
+	}
+	protected void bressenham_short(short xi, short yi, short xf, short yf) {
+		short dx, dy, i, xinc, yinc, cumul, x, y;
+		x = xi;
+		y = yi;
+		dx = (short)(xf - xi);
+		dy = (short)(yf - yi);
+		xinc = (short) ((dx>0) ? 1 : -1);
+		yinc = (short) ((dy>0) ? 1 : -1);
+		dx = (short) Math.abs(dx);
+		dy = (short) Math.abs(dy);
+		
+		allume_pixel(x,y);
+		
+		if (dx>dy) {
+			cumul = (short) (dx/2);
+			for (i=1; i<=dx; i++) {
+				x+=xinc;
+				cumul+=dy;
+				if (cumul>=dx) {
+					cumul-=dx;
+					y+=yinc;
+				}
+				allume_pixel(x,y);
+			}
+		} else {
+			cumul=(short) (dy/2);
+			for (i=1; i<=dy; i++) {
+				y+=yinc;
+				cumul+=dx;
+				if (cumul>=dy) {
+					cumul-=dy;
+					x+=xinc;
+				}
+				allume_pixel(x,y);
+			}
+		}
+	}
+
+	protected void allume_pixel(int x, int y) {
+		view.drawPixel(x, y);
 	}
 }

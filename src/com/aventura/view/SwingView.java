@@ -127,8 +127,7 @@ public class SwingView extends View {
 	@Override
 	public void setColor(Color c) {
 		// TODO Auto-generated method stub
-		backgraph.setColor(c);
-		
+		backgraph.setColor(c);		
 	}
 	
 	public void setBackgroundColor(Color c) {

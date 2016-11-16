@@ -254,7 +254,7 @@ public class RenderEngine {
 			// If the rendering type is LINE, then draw lines directly
 			if (renderContext.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
 				rasterizer.drawTriangleLines(tf, c);
-			} else {
+			} else { // Generic case - Fill triangles 
 				//TODO to be implemented				
 				rasterize(tf, c);
 			}
