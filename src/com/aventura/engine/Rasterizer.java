@@ -104,8 +104,8 @@ public class Rasterizer {
 		x2 = (int)(v2.getPosition().get3DX()*graphic.getPixelWidth()/2);
 		y2 = (int)(v2.getPosition().get3DY()*graphic.getPixelHeight()/2);
 
-		//view.drawLine(x1, y1, x2, y2);
-		bressenham_short((short)x1, (short)y1, (short)x2, (short)y2);
+		view.drawLine(x1, y1, x2, y2);
+		//bressenham_short((short)x1, (short)y1, (short)x2, (short)y2);
 		//bressenham_int(x1, y1, x2, y2);
 	}
 
@@ -133,8 +133,8 @@ public class Rasterizer {
 		x2 = (int)(p.get3DX()*graphic.getPixelWidth()/2);
 		y2 = (int)(p.get3DY()*graphic.getPixelHeight()/2);
 
-		//view.drawLine(x1, y1, x2, y2);
-		bressenham_short((short)x1, (short)y1, (short)x2, (short)y2);
+		view.drawLine(x1, y1, x2, y2);
+		//bressenham_short((short)x1, (short)y1, (short)x2, (short)y2);
 		//bressenham_int(x1, y1, x2, y2);
 		
 	}

@@ -22,7 +22,6 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Box;
 import com.aventura.model.world.World;
-import com.aventura.model.world.Element;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 

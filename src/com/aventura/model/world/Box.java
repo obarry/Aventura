@@ -99,24 +99,33 @@ public class Box extends Element {
 		vertices[1][1][1] = new Vertex(new Vector4(xh, yh, zh,  1).plus(position));
 		vertices[1][0][1] = new Vertex(new Vector4(-xh,  yh, zh,  1).plus(position));
 		
+		vertices[0][0][0] = new Vertex(new Vector4(-xh, -yh, -zh,  1).plus(position));
+		vertices[0][1][0] = new Vertex(new Vector4(-xh,  yh, -zh,  1).plus(position));
+		vertices[1][1][0] = new Vertex(new Vector4(xh, yh, -zh,  1).plus(position));
+		vertices[1][0][0] = new Vertex(new Vector4(xh, -yh, -zh,  1).plus(position));
+		vertices[0][0][1] = new Vertex(new Vector4(-xh, -yh, zh,  1).plus(position));
+		vertices[0][1][1] = new Vertex(new Vector4(-xh,  yh, zh,  1).plus(position));
+		vertices[1][1][1] = new Vertex(new Vector4(xh, yh, zh,  1).plus(position));
+		vertices[1][0][1] = new Vertex(new Vector4(xh,  -yh, zh,  1).plus(position));
+		
 		// Creates Triangles from Vertices: 6 faces, 2 triangles each
 		Triangle t1 = new Triangle(vertices[0][0][0], vertices[0][1][0], vertices[1][1][0]);
 		Triangle t2 = new Triangle(vertices[1][1][0], vertices[1][0][0], vertices[0][0][0]);
 		
-		Triangle t3 = new Triangle(vertices[0][0][0], vertices[0][1][0], vertices[0][1][1]);
-		Triangle t4 = new Triangle(vertices[0][1][1], vertices[0][0][1], vertices[0][0][0]);
+		Triangle t3 = new Triangle(vertices[0][0][0], vertices[0][1][1], vertices[0][1][0]);
+		Triangle t4 = new Triangle(vertices[0][1][0], vertices[0][0][0], vertices[0][1][1]);
 
 		Triangle t5 = new Triangle(vertices[0][0][0], vertices[1][0][0], vertices[1][0][1]);
 		Triangle t6 = new Triangle(vertices[1][0][1], vertices[0][0][1], vertices[0][0][0]);
 
-		Triangle t7 = new Triangle(vertices[1][0][1], vertices[0][0][1], vertices[0][1][1]);
-		Triangle t8 = new Triangle(vertices[0][1][1], vertices[1][1][1], vertices[1][0][1]);
+		Triangle t7 = new Triangle(vertices[0][0][1], vertices[1][0][1], vertices[0][1][1]);
+		Triangle t8 = new Triangle(vertices[0][1][1], vertices[1][0][1], vertices[1][1][1]);
 		
 		Triangle t9 = new Triangle(vertices[1][0][1], vertices[1][0][0], vertices[1][1][0]);
 		Triangle t10 = new Triangle(vertices[1][1][0], vertices[1][1][1], vertices[1][0][1]);
 
-		Triangle t11 = new Triangle(vertices[1][1][0], vertices[1][1][1], vertices[0][1][1]);
-		Triangle t12 = new Triangle(vertices[0][1][1], vertices[0][1][0], vertices[1][1][0]);
+		Triangle t11 = new Triangle(vertices[0][1][1], vertices[1][1][1], vertices[1][1][0]);
+		Triangle t12 = new Triangle(vertices[1][1][0], vertices[0][1][0], vertices[0][1][1]);
 
 		// Add Triangles to the Element
 		this.addTriangle(t1);
