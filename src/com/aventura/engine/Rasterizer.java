@@ -3,6 +3,7 @@ package com.aventura.engine;
 import java.awt.Color;
 
 import com.aventura.context.GraphicContext;
+import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Line;
@@ -142,7 +143,7 @@ public class Rasterizer {
 	//
 	// End methods for Line only Rendering
 	
-	public void rasterizeTriangle(Triangle t, Color c) {
+	//public void rasterizeTriangle(Triangle t, Color c) {
 		
 		// For each pixel(xpix, ypix) of the projected Triangle corresponding to a Position(xpos, ypos, zpos) on the triangle surface in 3D world space
 		// Use bressenham for this rasterization
@@ -172,6 +173,158 @@ public class Rasterizer {
 		
 		// endif
 		
+	//}
+	
+	/**
+	 * Triangle rasterizetion and zBuffering
+	 * Extrapolated from:
+	 * https://www.davrous.com/2013/06/21/tutorial-part-4-learning-how-to-write-a-3d-software-engine-in-c-ts-or-js-rasterization-z-buffering/
+	 * 
+	 * @param t
+	 * @param c
+	 */
+	public void rasterizeTriangle(Triangle t, Color c) {
+		
+	    // Lets define p1, p2, p3 in order to always have this order on screen p1, p2 & p3
+	    // with p1 always up (thus having the Y the lowest possible to be near the top screen)
+	    // then p2 between p1 & p3 (or same level if p2 and p3 on same ordinate)
+		
+		Vector4 p1, p2, p3;
+
+		p1 = t.getV1().getPosition();
+		p2 = t.getV2().getPosition();
+		p3 = t.getV3().getPosition();
+		
+		if (p2.get3DY()>p1.get3DY()) { // p2 higher than p1
+			if (p3.get3DY()>p2.get3DY()) { // p3 higher than p2
+				p1 = t.getV3().getPosition();
+				p2 = t.getV2().getPosition();
+				p3 = t.getV1().getPosition();
+			} else { // p2 higher than p3
+				if (p3.get3DY()>p1.get3DY()) { // p3 higher than p1
+					p1 = t.getV2().getPosition();
+					p2 = t.getV3().getPosition();
+					p3 = t.getV1().getPosition();
+				} else { // p1 higher than p3
+					p1 = t.getV2().getPosition();
+					p2 = t.getV1().getPosition();
+					p3 = t.getV3().getPosition();
+				}
+			}
+		} else { // p1 higher than p2
+			if (p3.get3DY()>p1.get3DY()) { // p3 higher than p1
+				p1 = t.getV3().getPosition();
+				p2 = t.getV1().getPosition();
+				p3 = t.getV2().getPosition();
+			} else { // p1 higher than p3
+				if (p3.get3DY()>p2.get3DY()) { // p3 higher than p2
+					// No change for p1
+					p2 = t.getV3().getPosition();
+					p3 = t.getV2().getPosition();
+				}
+				// Else keep p1, p2 and p3 as defined
+			}
+		}
+		
+	    // inverse slopes
+	    double dP1P2, dP1P3;
+
+	    // http://en.wikipedia.org/wiki/Slope
+	    // Computing inverse slopes
+	    if (p2.get3DY() - p1.get3DY() > 0) {
+	        dP1P2 = (p2.get3DX()-p1.get3DY())/(p2.get3DY()-p1.get3DY());
+	    } else { // vertical segment, no slope
+	        dP1P2 = 0;
+	    }
+	    
+	    if (p3.get3DY() - p1.get3DY() > 0) {
+	        dP1P3 = (p3.get3DY() - p1.get3DY()) / (p3.get3DY() - p1.get3DY());
+	    } else { // vertical segment, no slope
+	        dP1P3 = 0;
+	    }
+
+	    
+	    if (dP1P2 > dP1P3) {
+	    	
+		    // First case where triangle is like that:
+		    // P1
+		    // +
+		    // |\
+		    // | \
+		    // |  \
+		    // |   + P2
+		    // |  /
+		    // | /
+		    // |/
+			// +
+		    // P3
+	    	
+	        for (int y = (int)p1.get3DY(); y <= (int)p3.get3DY(); y++) {
+	            if (y < p2.get3DY()) {
+	                traceLine(y, p1, p3, p1, p2, c);
+	            }
+	            else
+	            {
+	                traceLine(y, p1, p3, p2, p3, c);
+	            }
+	        }
+
+	    } else {
+	    	
+		    // Second case where triangle is like that:
+		    //       P1
+		    //        +
+		    //       /| 
+		    //      / |
+		    //     /  |
+		    // P2 +   | 
+		    //     \  |
+		    //      \ |
+		    //       \|
+			//        +
+		    //       P3
+	    	
+	        for (int y = (int)p1.get3DY(); y <= (int)p3.get3DY(); y++) {
+	            if (y < p2.get3DY()) {
+	                traceLine(y, p1, p2, p1, p3, c);
+	            } else {
+	                traceLine(y, p2, p3, p1, p3, c);
+	            }
+	        }
+	    }
+	}
+	
+	protected void traceLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c) {
+		
+	    // Thanks to current Y, we can compute the gradient to compute others values like
+	    // the starting X (sx) and ending X (ex) to draw between
+	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
+	    double gradient1 = pa.get3DY() != pb.get3DY() ? (y - pa.get3DY()) / (pb.get3DY() - pa.get3DY()) : 1;
+	    double gradient2 = pc.get3DY() != pd.get3DY() ? (y - pc.get3DY()) / (pd.get3DY() - pc.get3DY()) : 1;
+
+	    int sx = (int)Tools.interpolate(pa.get3DX(), pb.get3DX(), gradient1);
+	    int ex = (int)Tools.interpolate(pc.get3DX(), pd.get3DX(), gradient2);
+
+	    // starting Z & ending Z
+	    double z1 = Tools.interpolate(pa.get3DZ(), pb.get3DZ(), gradient1);
+	    double z2 = Tools.interpolate(pc.get3DZ(), pd.get3DZ(), gradient2);
+
+	    // drawing a line from left (sx) to right (ex) 
+	    for (int x = sx; x < ex; x++) {
+	        double gradient = (x - sx) / (double)(ex - sx);
+
+	        double z = Tools.interpolate(z1, z2, gradient);
+	        drawPoint(x, y, z, c);
+	    }
+	}
+	
+	protected void drawPoint(int x, int y, double z, Color c) {
+		if (z>zBuffer[x][y]) { // Discard pixel
+			return;
+		}
+		view.setColor(c);
+		view.drawPixel(x, y);
+		zBuffer[x][y] = z;
 	}
 	
 	protected void bressenham_int(int xi, int yi, int xf, int yf) {

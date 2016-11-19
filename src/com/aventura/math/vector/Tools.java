@@ -32,17 +32,21 @@ package com.aventura.math.vector;
  * @since June 2016
  * 
  */
+/**
+ * @author Bricolage Olivier
+ *
+ */
 public class Tools {
 	
 	/**
-	 * Interpolate 2 Points A and B (or Vectors) with a parameter t
+	 * Interpolate 2 Points A and B (or Vectors) with a parameter t (gradient)
 	 * t = 0: returns A
 	 * t = 1: returns B
 	 * 0<t<1: returns the interpolated point between A and B
 	 * t<0 or t>1; returns the interpolated point beyond A or beyond B (on the (AB) line)
 	 * @param A the Vector4 point
 	 * @param B the Vector4 point
-	 * @param t the interpolation parameter
+	 * @param t the interpolation parameter (gradient)
 	 * @return a Vector4 interpolated on the (AB) line
 	 */
 	public static Vector4 interpolate(Vector4 A, Vector4 B, double t) {
@@ -52,6 +56,20 @@ public class Tools {
 		P = A.times(1-t).plus(B.times(t));
 		
 		return P;
+	}
+	
+	/** Interpolate a scalar value with a parameter t (gradient)
+	 * t = 0: returns a
+	 * t = 1: returns b
+	 * 0<t<1: returns the interpolated value between a and b
+	 * t<0 or t>1; returns the interpolated value beyond a or beyond b
+	 * @param a
+	 * @param b
+	 * @param t the gradient
+	 * @return
+	 */
+	public static double interpolate(double a, double b, double t) {
+		return a*(1-t)+b*t;
 	}
 	
 
