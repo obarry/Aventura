@@ -1,5 +1,7 @@
 package com.aventura.model.world;
 
+import java.awt.Color;
+
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
@@ -40,6 +42,9 @@ public class Triangle {
 	
 	// And an optional Normal to the triangle (else Vertices normal  is used)
 	protected Vector3 normal = null;
+	
+	// Color if at triangle level
+	protected Color color = null;
 	
 	public Triangle() {
 		this.v1 = null;
@@ -91,6 +96,14 @@ public class Triangle {
 	
 	public void setNormal(Vector4 n) {
 		this.normal = n.getVector3();
+	}
+	
+	public void setColor(Color c) {
+		this.color = c;
+	}
+	
+	public Color getColor() {
+		return color;
 	}
 	
 	/**

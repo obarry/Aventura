@@ -208,7 +208,7 @@ public class RenderEngine {
 		transformation.computeTransformation(); // Compute the whole ModelView transformation matrix including Camera (view)
 				
 		// Process each Triangle
-		for (int j=0; j<e.getTriangles().size(); j++) {				
+		for (int j=0; j<e.getTriangles().size(); j++) {
 			boolean ret = render(e.getTriangle(j), col);
 			
 			// Count Triangles stats (total, in view and out view frustum)
@@ -238,6 +238,8 @@ public class RenderEngine {
 	public boolean render(Triangle to, Color c) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
+		Color color = to.getColor();
+		if (color == null) color = c;
 		
 		Triangle tf; // The projected model view triangle in homogeneous coordinates 
 		
@@ -253,10 +255,10 @@ public class RenderEngine {
 			
 			// If the rendering type is LINE, then draw lines directly
 			if (renderContext.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
-				rasterizer.drawTriangleLines(tf, c);
+				rasterizer.drawTriangleLines(tf, color);
 			} else { // Generic case - Fill triangles 
 				//TODO to be implemented				
-				rasterize(tf, c);
+				rasterize(tf, color);
 			}
 			
 			// If DISPLAY_NORMALS is activated then renderContext normals

@@ -98,6 +98,10 @@ public class GraphicContext {
 	
 	// Pixel Per Unit
 	int ppu = 0;
+	int pixelWidth = 0;
+	int pixelHeight = 0;
+	int pixelHalfWidth = 0;
+	int pixelHalfHeight = 0;
 	
 	// Projection Matrix
 	Matrix4 projection;
@@ -124,7 +128,12 @@ public class GraphicContext {
 		this.height = c.height;
 		this.depth = c.depth;
 		this.dist = c.dist;
-		this.ppu = c.ppu;
+		
+		this.pixelWidth = c.pixelWidth;
+		this.pixelHeight = c.pixelHeight;
+		this.pixelHalfWidth = c.pixelHalfWidth;
+		this.pixelHalfHeight = c.pixelHalfHeight;
+	
 		
 		double left = -width/2;
 		double right = width/2;
@@ -132,6 +141,7 @@ public class GraphicContext {
 		double top = height/2;
 		double near = dist;
 		double far = dist + depth;
+
 		
 		createPerspective(perspective_type, left , right, bottom, top, near, far);
 	}
@@ -143,7 +153,12 @@ public class GraphicContext {
 		this.depth = depth;
 		this.perspective_type = perspective;
 		this.ppu = ppu;
-		
+
+		this.pixelWidth = (int)(width*ppu);
+		this.pixelHeight = (int)(height*ppu);
+		this.pixelHalfWidth = pixelWidth/2;
+		this.pixelHalfHeight = pixelHeight/2;
+
 		double left = -width/2;
 		double right = width/2;
 		double bottom = -height/2;
@@ -220,13 +235,22 @@ public class GraphicContext {
 	}
 	
 	public int getPixelWidth() {
-		return (int)(width*ppu);
+		return pixelWidth;
 	}
 	
 	public int getPixelHeight() {
-		return (int)(height*ppu);
+		return pixelHeight;
 	}
 	
+
+	public int getPixelHalfWidth() {
+		return pixelHalfWidth;
+	}
+	
+	public int getPixelHalfHeight() {
+		return pixelHalfHeight;
+	}
+
 	public void setDepth(double depth) {
 		this.depth = depth;
 	}
