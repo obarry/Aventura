@@ -72,7 +72,16 @@ public class TestRasterizer2 {
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
-				
+
+		int nb_images = 360;
+		for (int i=0; i<=4.9*nb_images; i++) {
+			double a = Math.PI*2*(double)i/(double)nb_images;
+			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
+			System.out.println("Rotation "+i+"  - Eye: "+eye);
+			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			renderer.render();
+		}
+
 		System.out.println("********* ENDING APPLICATION *********");
 
 

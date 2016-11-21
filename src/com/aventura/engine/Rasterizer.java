@@ -57,7 +57,7 @@ public class Rasterizer {
 	// Z buffer
 	private double[][] zBuffer;
 	
-	// Statistics
+	// Pixel statistics
 	int rendered_pixels = 0;
 	int discarded_pixels = 0;
 	int not_rendered_pixels = 0;
@@ -118,8 +118,7 @@ public class Rasterizer {
 	
 	public void drawLine(Vertex v1, Vertex v2) {
 
-		int x1, y1, x2, y2;
-		
+		int x1, y1, x2, y2;	
 		x1 = (int)(xScreen(v1.getPosition()));
 		y1 = (int)(yScreen(v1.getPosition()));
 		x2 = (int)(xScreen(v2.getPosition()));
@@ -144,20 +143,18 @@ public class Rasterizer {
 	}
 
 	public void drawVectorFromPosition(Vertex position, Vector3 vector) {
-		int x1, y1, x2, y2;
 		
+		int x1, y1, x2, y2;
 		x1 = (int)(xScreen(position.getPosition()));
 		y1 = (int)(yScreen(position.getPosition()));
 		
 		Vector4 p = position.getPosition().plus(vector); 
-		
 		x2 = (int)(xScreen(p));
 		y2 = (int)(yScreen(p));
 
 		view.drawLine(x1, y1, x2, y2);
 		//bressenham_short((short)x1, (short)y1, (short)x2, (short)y2);
 		//bressenham_int(x1, y1, x2, y2);
-		
 	}
 	
 	//
@@ -175,12 +172,11 @@ public class Rasterizer {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
 
-		// Init stats
+		// Init pixel stats
 		rendered_pixels = 0;
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
 
-		
 	    // Lets define p1, p2, p3 in order to always have this order on screen p1, p2 & p3
 	    // with p1 always down (thus having the highest possible Y)
 	    // then p2 between p1 & p3 (or same level if p2 and p3 on same ordinate)
@@ -222,11 +218,11 @@ public class Rasterizer {
 			}
 		}
 		
-	    // inverse slopes
+	    // Slopes
 	    double dP1P2, dP1P3;
 
 	    // http://en.wikipedia.org/wiki/Slope
-	    // Computing inverse slopes
+	    // Computing slopes
 	    if (yScreen(p2) - yScreen(p1) > 0) {
 	        dP1P2 = (xScreen(p2)-xScreen(p1))/(yScreen(p2)-yScreen(p1));
 	    } else { // vertical segment, no slope
@@ -308,7 +304,7 @@ public class Rasterizer {
 	    
 	    // drawing a line from left (sx) to right (ex) 
 	    for (int x = sx; x < ex; x++) {
-	        double gradient = (x - sx) / (double)(ex - sx);
+	        double gradient = (x-sx)/(double)(ex-sx);
 
 	        double z = Tools.interpolate(z1, z2, gradient);
 	        drawPoint(x, y, z, c);
@@ -323,18 +319,22 @@ public class Rasterizer {
 	 * @param c Color of the pixel
 	 */
 	protected void drawPoint(int x, int y, double z, Color c) {
+		// Eliminate pixels outside the view screen
 		if (isInScreenX(x) && isInScreenY(y)) {
-		int zBuf_x = x + graphic.getPixelHalfWidth();
-		int zBuf_y = y + graphic.getPixelHalfHeight();
-		if (z>zBuffer[zBuf_x][zBuf_y]) { // Discard pixel
-			discarded_pixels++;
-			return;
-		}
-		view.setColor(c);
-		view.drawPixel(x, y);
-		zBuffer[zBuf_x][zBuf_y] = z;
-		//System.out.println("Pixel x: "+x+", y: "+y+". zBuffer: "+z);
-		rendered_pixels++;
+			// Z buffer is [0, width][0, height]
+			int zBuf_x = x + graphic.getPixelHalfWidth();
+			int zBuf_y = y + graphic.getPixelHalfHeight();
+			
+			if (z>zBuffer[zBuf_x][zBuf_y]) { // Discard pixel
+				discarded_pixels++;
+				return;
+			}
+			view.setColor(c);
+			view.drawPixel(x, y);
+			zBuffer[zBuf_x][zBuf_y] = z;
+			//System.out.println("Pixel x: "+x+", y: "+y+". zBuffer: "+z);
+			rendered_pixels++;
+			
 		} else {
 			not_rendered_pixels++;
 		}
