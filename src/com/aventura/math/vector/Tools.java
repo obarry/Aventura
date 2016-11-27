@@ -58,7 +58,7 @@ public class Tools {
 		return P;
 	}
 	
-	/** Interpolate a scalar value with a parameter t (gradient)
+	/** Interpolate a scalar value with a parameter t (gradient) - Double version
 	 * t = 0: returns a
 	 * t = 1: returns b
 	 * 0<t<1: returns the interpolated value between a and b
@@ -66,9 +66,23 @@ public class Tools {
 	 * @param a
 	 * @param b
 	 * @param t the gradient
-	 * @return
+	 * @return double
 	 */
 	public static double interpolate(double a, double b, double t) {
+		return a*(1-t)+b*t;
+	}
+	
+	/** Interpolate a scalar value with a parameter t (gradient) - Float version
+	 * t = 0: returns a
+	 * t = 1: returns b
+	 * 0<t<1: returns the interpolated value between a and b
+	 * t<0 or t>1; returns the interpolated value beyond a or beyond b
+	 * @param a
+	 * @param b
+	 * @param t the gradient
+	 * @return float
+	 */
+	public static float interpolate(float a, float b, float t) {
 		return a*(1-t)+b*t;
 	}
 	

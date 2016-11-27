@@ -9,11 +9,18 @@ public class TestLighting {
 		
 		Lighting lighting = new Lighting();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector4(1,1,1,0));
+		DirectionalLight dl1 = new DirectionalLight(new Vector4(-1,-1,-1,0));
+		DirectionalLight dl2 = new DirectionalLight(new Vector4(0,0,-1,0));
+		DirectionalLight dl3 = new DirectionalLight(new Vector4(0.5,0.5,-1,0));
+			
+		lighting.addLight(dl1);
+		lighting.addLight(dl2);
+		lighting.addLight(dl3);
 		
-		lighting.addLight(dl);
-		System.out.println("Light at origin: "+lighting.getLight(new Vector4(0,0,0,1)));
-
+		System.out.println("Light at origin: ");
+		Vector4[] lv = lighting.getLightVectors(new Vector4(0,0,0,1));
+		for (int i=0; i<lv.length; i++) {
+			System.out.println(lv[i]);
+		}
 	}
-
 }

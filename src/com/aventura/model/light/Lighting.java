@@ -50,20 +50,13 @@ public class Lighting {
 		lights.add(light);
 	}
 	
-	public Vector4 getLight(Vector4 point) {
-
-		// Create a light vector that is the sum of all lights in this point
-		Vector4 light = new Vector4(Vector4.ZERO_VECTOR);
-
+	public Vector4[] getLightVectors(Vector4 point) {
+		// Create a table of vector that is the result of all lights at this point
+		Vector4[] lightVectors = new Vector4[lights.size()];
 		for (int i=0; i<lights.size(); i++) {
-			Vector4 l = lights.get(i).getLight(null);
-			if (l != null) {
-				light = light.plus(l);
-			} else {
-				// Null Light created unexpectedly
-			}
+				lightVectors[i]=lights.get(i).getLight(point);
 		}
-		return null;
+		return lightVectors;
 	}
 
 }

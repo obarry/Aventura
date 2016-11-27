@@ -292,25 +292,50 @@ public class Rasterizer {
 	    // the starting X (sx) and ending X (ex) to draw between
 	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
 		
-	    double gradient1 = yScreen(pa) != yScreen(pb) ? (y - yScreen(pa)) / (yScreen(pb) - yScreen(pa)) : 1;
-	    double gradient2 = yScreen(pc) != yScreen(pd) ? (y - yScreen(pc)) / (yScreen(pd) - yScreen(pc)) : 1;
+	    float gradient1 = (float)(yScreen(pa) != yScreen(pb) ? (y - yScreen(pa)) / (yScreen(pb) - yScreen(pa)) : 1);
+	    float gradient2 = (float)(yScreen(pc) != yScreen(pd) ? (y - yScreen(pc)) / (yScreen(pd) - yScreen(pc)) : 1);
 
 	    int sx = (int)Tools.interpolate(xScreen(pa), xScreen(pb), gradient1);
 	    int ex = (int)Tools.interpolate(xScreen(pc), xScreen(pd), gradient2);
 
 	    // starting Z & ending Z
-	    double z1 = Tools.interpolate(pa.get3DZ(), pb.get3DZ(), gradient1);
-	    double z2 = Tools.interpolate(pc.get3DZ(), pd.get3DZ(), gradient2);
+	    float z1 = Tools.interpolate((float)pa.get3DZ(), (float)pb.get3DZ(), gradient1);
+	    float z2 = Tools.interpolate((float)pc.get3DZ(), (float)pd.get3DZ(), gradient2);
 	    
 	    // drawing a line from left (sx) to right (ex) 
 	    for (int x = sx; x < ex; x++) {
-	        double gradient = (x-sx)/(double)(ex-sx);
+	        float gradient = (x-sx)/(float)(ex-sx);
 
-	        double z = Tools.interpolate(z1, z2, gradient);
+	        float z = Tools.interpolate(z1, z2, gradient);
 	        drawPoint(x, y, z, c);
 	    }
 	}
-	
+
+//	protected void traceLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c) {
+//		
+//	    // Thanks to current Y, we can compute the gradient to compute others values like
+//	    // the starting X (sx) and ending X (ex) to draw between
+//	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
+//		
+//	    double gradient1 = yScreen(pa) != yScreen(pb) ? (y - yScreen(pa)) / (yScreen(pb) - yScreen(pa)) : 1;
+//	    double gradient2 = yScreen(pc) != yScreen(pd) ? (y - yScreen(pc)) / (yScreen(pd) - yScreen(pc)) : 1;
+//
+//	    int sx = (int)Tools.interpolate(xScreen(pa), xScreen(pb), gradient1);
+//	    int ex = (int)Tools.interpolate(xScreen(pc), xScreen(pd), gradient2);
+//
+//	    // starting Z & ending Z
+//	    double z1 = Tools.interpolate(pa.get3DZ(), pb.get3DZ(), gradient1);
+//	    double z2 = Tools.interpolate(pc.get3DZ(), pd.get3DZ(), gradient2);
+//	    
+//	    // drawing a line from left (sx) to right (ex) 
+//	    for (int x = sx; x < ex; x++) {
+//	        double gradient = (x-sx)/(double)(ex-sx);
+//
+//	        double z = Tools.interpolate(z1, z2, gradient);
+//	        drawPoint(x, y, z, c);
+//	    }
+//	}
+
 	/**
 	 * Draw point with zBuffer management
 	 * @param x X screen coordinate (origin is in the center of the screen)
