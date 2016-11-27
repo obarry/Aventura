@@ -1,5 +1,7 @@
 package com.aventura.model.light;
 
+import com.aventura.math.vector.Vector4;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -31,5 +33,18 @@ package com.aventura.model.light;
  */
 
 public class DirectionalLight extends Light {
+	
+	protected Vector4 direction;
+	
+	public DirectionalLight(Vector4 direction) {
+		super();
+		this.direction = direction;
+	}
+
+	@Override
+	public Vector4 getLight(Vector4 point) {
+		// Same direction vector in all world space by definition of Directional Light
+		return direction;
+	}
 
 }

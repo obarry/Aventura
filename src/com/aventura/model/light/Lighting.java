@@ -1,5 +1,8 @@
 package com.aventura.model.light;
 
+import java.util.ArrayList;
+import com.aventura.math.vector.Vector4;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -30,14 +33,13 @@ package com.aventura.model.light;
  * 
  */
 
-import java.util.ArrayList;
 
 public class Lighting {
 	
 	protected ArrayList<Light> lights; // There can be multiple sources of light
 	
 	public Lighting() {
-		
+		lights = new ArrayList<Light>();
 	}
 	
 	public Lighting(Light light) {
@@ -47,6 +49,21 @@ public class Lighting {
 	public void addLight(Light light) {
 		lights.add(light);
 	}
+	
+	public Vector4 getLight(Vector4 point) {
 
+		// Create a light vector that is the sum of all lights in this point
+		Vector4 light = new Vector4(Vector4.ZERO_VECTOR);
+
+		for (int i=0; i<lights.size(); i++) {
+			Vector4 l = lights.get(i).getLight(null);
+			if (l != null) {
+				light = light.plus(l);
+			} else {
+				// Null Light created unexpectedly
+			}
+		}
+		return null;
+	}
 
 }

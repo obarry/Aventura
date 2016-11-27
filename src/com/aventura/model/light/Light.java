@@ -1,5 +1,7 @@
 package com.aventura.model.light;
 
+import com.aventura.math.vector.Vector4;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -31,5 +33,7 @@ package com.aventura.model.light;
  */
 
 public abstract class Light {
+	
+	public abstract Vector4 getLight(Vector4 point);
 
 }

@@ -1,5 +1,7 @@
 package com.aventura.model.light;
 
+import com.aventura.math.vector.Vector4;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -31,5 +33,11 @@ package com.aventura.model.light;
  */
 
 public class SpotLight extends Light {
+
+	@Override
+	public Vector4 getLight(Vector4 point) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }
