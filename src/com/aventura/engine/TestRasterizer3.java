@@ -67,7 +67,7 @@ public class TestRasterizer3 {
 
 		// Camera
 		Vector4 eye = new Vector4(8,3,2,1);
-		Vector4 poi = new Vector4(0,0,0,1);
+		Vector4 poi = new Vector4(1,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
 		TestRasterizer3 test = new TestRasterizer3();
@@ -108,10 +108,10 @@ public class TestRasterizer3 {
 		renderer.render();
 
 		System.out.println("********* Rendering...");
-		int nb_images = 360;
-		for (int i=0; i<=1*nb_images; i++) {
+		int nb_images = 240;
+		for (int i=0; i<=3*nb_images; i++) {
 			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
+			eye = new Vector4(8*Math.cos(a),6*Math.sin(a),5,1);
 			//System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();

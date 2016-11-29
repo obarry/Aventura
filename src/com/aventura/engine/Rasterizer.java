@@ -354,7 +354,21 @@ public class Rasterizer {
 				discarded_pixels++;
 				return;
 			}
-			view.setColor(c);
+			// Else render pixel
+			if (c !=null ) {
+				view.setColor(c);
+			} else {
+			// Compute color at this stage to avoid unused pre-processing (if pixel finally not rendered)
+			// Color is computed from
+			// - natural color of the pixel/triangle
+			// - ambient (uniform) light
+			// - one or several Directional/Point/Spot light(s)
+			// - generating diffuse and specular reflection
+			// Calculating shading requires to know the normal of the point at the pixel being rendered
+			// - for this we use triangle interpolation
+				
+			}
+
 			view.drawPixel(x, y);
 			zBuffer[zBuf_x][zBuf_y] = z;
 			//System.out.println("Pixel x: "+x+", y: "+y+". zBuffer: "+z);
@@ -374,6 +388,7 @@ public class Rasterizer {
 		if (Math.abs(y)>graphic.getPixelHalfHeight()) return false;
 		return true;
 	}
+	
 	
 	//public void rasterizeTriangle(Triangle t, Color c) {
 	
