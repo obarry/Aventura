@@ -22,5 +22,7 @@ public class TestLighting {
 		for (int i=0; i<lv.length; i++) {
 			System.out.println(lv[i]);
 		}
+		
+		System.out.println("Average light vector: "+lighting.getAverageDirectionalLightVector());
 	}
 }

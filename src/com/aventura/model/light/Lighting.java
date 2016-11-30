@@ -1,6 +1,8 @@
 package com.aventura.model.light;
 
 import java.util.ArrayList;
+
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
 /**
@@ -37,6 +39,8 @@ import com.aventura.math.vector.Vector4;
 public class Lighting {
 	
 	protected ArrayList<Light> lights; // There can be multiple sources of light
+	// TODO To clarify if an average vector makes sense by addition of different Vectors which can neutralize each others instead of cumulating
+	protected Vector3 averageDirectionalLightVector = null;
 	
 	public Lighting() {
 		lights = new ArrayList<Light>();
@@ -44,10 +48,30 @@ public class Lighting {
 	
 	public Lighting(Light light) {
 		lights.add(light);
+		if (light.getClass() == DirectionalLight.class) {
+			// No matter the point, this is the same Vector
+			averageDirectionalLightVector = light.getLight(null).getVector3();
+		}
 	}
 	
 	public void addLight(Light light) {
 		lights.add(light);
+		int n=0;
+		Vector4 v = null;
+		for (int i=0; i<lights.size(); i++) {
+			if (lights.get(i).getClass() == DirectionalLight.class) {
+				// No matter the point, this is the same Vector
+				if (v==null) {
+					v = new Vector4(lights.get(i).getLight(null));
+				} else { 
+					v.plusEquals(lights.get(i).getLight(null));
+				}
+				n++;
+			}
+		}
+		// Average -> divide by number of vectors
+		// TODO Should we divide?
+		averageDirectionalLightVector = v.times(1/(double)n).getVector3();
 	}
 	
 	public Vector4[] getLightVectors(Vector4 point) {
@@ -57,6 +81,10 @@ public class Lighting {
 				lightVectors[i]=lights.get(i).getLight(point);
 		}
 		return lightVectors;
+	}
+	
+	public Vector3 getAverageDirectionalLightVector() {
+		return averageDirectionalLightVector;
 	}
 
 }

@@ -6,9 +6,11 @@ import com.aventura.context.GraphicContext;
 import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Line;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
+import com.aventura.tools.color.ColorTools;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.View;
 
@@ -40,6 +42,7 @@ import com.aventura.view.View;
  * This class provides rasterization services to the RenderEngine.
  * It takes charge of all the algorithms to produce pixels from triangles.
  * It requires access to the View in order to draw pixels.
+ * zBuffer is managed here.
  * It also behaves according to the provided parameters e.g. in the GraphicContext
  * 
  * 
@@ -50,8 +53,9 @@ import com.aventura.view.View;
 
 public class Rasterizer {
 	
-	private GraphicContext graphic;
-	private View view;
+	protected GraphicContext graphic;
+	protected View view;
+	protected Lighting lighting;
 	private static double ZBUFFER_INIT_VALUE = 1.0;
 	
 	// Z buffer
@@ -62,8 +66,21 @@ public class Rasterizer {
 	int discarded_pixels = 0;
 	int not_rendered_pixels = 0;
 	
+	/**
+	 * Creation of Rasterizer without Lighting for tests.
+	 * @param graphic
+	 */
 	public Rasterizer(GraphicContext graphic) {
 		this.graphic = graphic;
+	}
+
+	/**
+	 * Creation of Rasterizer with requested references for run time.
+	 * @param graphic
+	 */
+	public Rasterizer(GraphicContext graphic, Lighting lighting) {
+		this.graphic = graphic;
+		this.lighting = lighting;
 	}
 	
 	public void setView(View v) {
@@ -78,10 +95,9 @@ public class Rasterizer {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());	
 		zBuffer = new double[graphic.getPixelWidth()][graphic.getPixelHeight()];
 		
-		// TODO initialization loop with the correct initialization value ( 1 or -1 in homogeneous coordinates ?) as farest value since
-		// this value represent the far plane of the view frustum.
-		// Caution: if this is -1 (TBC), then the direction of the test z < zBuffer in renderTriangle() method should be adapted
-		
+		// Initialization loop with initialization value ( 1 or -1 in homogeneous coordinates ?) that is the farest value for the view Frustum
+		// Any value closer will be drawn and the zBuffer in this place will be updated by new value
+
 		for (int i=0; i<graphic.getPixelWidth(); i++)  {
 			for (int j=0; j<graphic.getPixelHeight(); j++) {
 				zBuffer[i][j] = ZBUFFER_INIT_VALUE;
@@ -165,17 +181,30 @@ public class Rasterizer {
 	 * Extrapolated from:
 	 * https://www.davrous.com/2013/06/21/tutorial-part-4-learning-how-to-write-a-3d-software-engine-in-c-ts-or-js-rasterization-z-buffering/
 	 * 
-	 * @param t
-	 * @param c
+	 * @param t the (transformed) triangle to render
+	 * @param col
 	 */
-	public void rasterizeTriangle(Triangle t, Color c) {
+	public void rasterizeTriangle(Triangle t, Color c, boolean interpolate) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
+		
+		Color col = c;
 
 		// Init pixel stats
 		rendered_pixels = 0;
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
+		
+		// If no interpolation requested -> plain faces, then calculate normal at Triangle level for shading
+		if (!interpolate) {
+			// Calculate normal if not calculated
+			if (t.getNormal()==null) t.calculateNormal();
+			Vector3 normal = t.getNormal();
+			Color shadedCol = computeShadedColor(col, normal);
+			// Then use the shaded color instead for whole triangle
+			col = shadedCol;
+		}
+
 
 	    // Lets define p1, p2, p3 in order to always have this order on screen p1, p2 & p3
 	    // with p1 always down (thus having the highest possible Y)
@@ -235,7 +264,6 @@ public class Rasterizer {
 	        dP1P3 = 0;
 	    }
 
-	    
 	    if (dP1P2 > dP1P3) {
 	    	
 		    // First case where triangle is like that:
@@ -253,9 +281,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                traceLine(y, p1, p3, p1, p2, c);
+	                traceLine(y, p1, p3, p1, p2, col, interpolate);
 	            } else {
-	                traceLine(y, p1, p3, p2, p3, c);
+	                traceLine(y, p1, p3, p2, p3, col, interpolate);
 	            }
 	        }
 
@@ -276,17 +304,16 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                traceLine(y, p1, p2, p1, p3, c);
+	                traceLine(y, p1, p2, p1, p3, col, interpolate);
 	            } else {
-	                traceLine(y, p2, p3, p1, p3, c);
+	                traceLine(y, p2, p3, p1, p3, col, interpolate);
 	            }
 	        }
 	    }
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels);
-
 	}
 	
-	protected void traceLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c) {
+	protected void traceLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c, boolean interpolate) {
 		
 	    // Thanks to current Y, we can compute the gradient to compute others values like
 	    // the starting X (sx) and ending X (ex) to draw between
@@ -389,6 +416,12 @@ public class Rasterizer {
 		return true;
 	}
 	
+	protected Color computeShadedColor(Color baseCol, Vector3 normal) {
+		// Compute the dot product
+		float dot = (float)lighting.getAverageDirectionalLightVector().normalize().dot(normal.normalize());
+		return ColorTools.multColor(baseCol, dot);
+	}
+
 	
 	//public void rasterizeTriangle(Triangle t, Color c) {
 	

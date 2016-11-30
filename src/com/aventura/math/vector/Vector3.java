@@ -81,6 +81,15 @@ public class Vector3 {
 		this.c[2] = v.c[2];
 	}
 
+	public Vector3(Vector4 v) {
+		// Create the array
+		c = new double[Constants.SIZE_3];
+		this.c[0] = v.c[0];
+		this.c[1] = v.c[1];
+		this.c[2] = v.c[2];
+		// Ignore latest coordinate
+	}
+
 	public Vector3(int r, Matrix3 A) {
 		this.c[0] = A.get(r, 0);
 		this.c[1] = A.get(r, 1);

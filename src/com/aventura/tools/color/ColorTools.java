@@ -49,9 +49,9 @@ public class ColorTools {
 	
 		float[] c_array = c.getRGBColorComponents(null);
 
-		float r = clip(c_array[1]*mult);
-		float g = clip(c_array[2]*mult);
-		float b = clip(c_array[3]*mult);
+		float r = clip(c_array[0]*mult);
+		float g = clip(c_array[1]*mult);
+		float b = clip(c_array[2]*mult);
 		
 		return new Color(r, g, b);
 	}
@@ -65,9 +65,9 @@ public class ColorTools {
 		
 		float[] c_array = c.getRGBColorComponents(null);
 
-		float r = clip(c_array[1]+inc);
-		float g = clip(c_array[2]+inc);
-		float b = clip(c_array[3]+inc);
+		float r = clip(c_array[0]+inc);
+		float g = clip(c_array[1]+inc);
+		float b = clip(c_array[2]+inc);
 		
 		return new Color(r, g, b);		
 	}
@@ -84,9 +84,9 @@ public class ColorTools {
 		float[] c1_array = c1.getRGBColorComponents(null);
 		float[] c2_array = c2.getRGBColorComponents(null);
 		
-		float r = clip(c1_array[1]+c2_array[1]);
-		float g = clip(c1_array[2]+c2_array[2]);
-		float b = clip(c1_array[3]+c2_array[3]);
+		float r = clip(c1_array[0]+c2_array[0]);
+		float g = clip(c1_array[1]+c2_array[1]);
+		float b = clip(c1_array[2]+c2_array[2]);
 		
 		return new Color(r, g, b);
 	}
@@ -103,9 +103,9 @@ public class ColorTools {
 		float[] c1_array = c1.getRGBColorComponents(null);
 		float[] c2_array = c2.getRGBColorComponents(null);
 		
-		float r = clip(c1_array[1]*c2_array[1]);
-		float g = clip(c1_array[2]*c2_array[2]);
-		float b = clip(c1_array[3]*c2_array[3]);
+		float r = clip(c1_array[0]*c2_array[0]);
+		float g = clip(c1_array[1]*c2_array[1]);
+		float b = clip(c1_array[2]*c2_array[2]);
 		
 		return new Color(r, g, b);		
 	}
@@ -124,9 +124,9 @@ public class ColorTools {
 		
 		for (int i=0; i<ctab.length; i++) {
 			float[] c_array = ctab[i].getRGBColorComponents(null);
-			r = r + c_array[1];
-			g = g + c_array[2];
-			b = b + c_array[3];
+			r = r + c_array[0];
+			g = g + c_array[1];
+			b = b + c_array[2];
 		}
 		return new Color(clip(r), clip(g), clip(b));				
 	}
@@ -144,9 +144,9 @@ public class ColorTools {
 		
 		for (int i=0; i<ctab.length; i++) {
 			float[] c_array = ctab[i].getRGBColorComponents(null);
-			r = r * c_array[1];
-			g = g * c_array[2];
-			b = b * c_array[3];
+			r = r * c_array[0];
+			g = g * c_array[1];
+			b = b * c_array[2];
 		}
 		return new Color(clip(r), clip(g), clip(b));
 		

@@ -59,15 +59,15 @@ import com.aventura.view.View;
  *                   				  |						  +------------>|      Rasterizer     |-----------------+
  *                					  |						  |				+---------------------+				    v
  *     +---------------------+		  |		+---------------------+										 +---------------------+
- *     |      Lighting       | <-----+------|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
+ *     |      Lighting       | <------+-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
  *     +---------------------+		  |		+---------------------+ 									 +---------------------+
- *                					  |				   |	  |													    |
+ *                					  				   |	  |													    |
  *                   				  |				   |	  |				+---------------------+					|
- *                	 				  |				   |	  +------------>|   GraphicContext    |<----------------+
- *     +---------------------+        |        		   v					+---------------------+
- *     |       Camera        | <------+     +---------------------+
- *     +---------------------+			    |      ModelView      |
- *					   				    	+---------------------+
+ *                	 				  				   |	  +------------>|   GraphicContext    |<----------------+
+ *     						          |        		   v					+---------------------+
+ *     +---------------------+ 		        +---------------------+
+ *     |       Camera        | <------+-----|      ModelView      |
+ *	   +---------------------+		    	+---------------------+
  *
  *          	 Model								 Engine						Context(s)							 View
  *			com.aventura.model					com.aventura.engine			com.aventura.context				com.aventura.view
@@ -90,7 +90,7 @@ public class RenderEngine {
 	// Model
 	private World world;
 	private Lighting light;
-	private Camera camera;
+	//private Camera camera;
 	
 	// View
 	private View view;
@@ -120,13 +120,13 @@ public class RenderEngine {
 		this.graphicContext = graphic;
 		this.world = world;
 		this.light = light;
-		this.camera = camera;
+		//this.camera = camera;
 		
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
 		this.transformation = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
 		
 		// Delegate rasterization tasks to a dedicated engine
-		this.rasterizer = new Rasterizer(graphic);
+		this.rasterizer = new Rasterizer(graphic, light);
 	}
 		
 	public void setView(View v) {
@@ -232,16 +232,21 @@ public class RenderEngine {
 	
 	/**
 	 * Rendering a single Triangle.
+	 * 
 	 * This method will calculate transformed triangle (which consists in transforming each vertex) then it delegates
 	 * the low level rasterization of the triangle to the Rasterizer, using appropriate methods based on the type of
 	 * rendering that is expected (lines, plain faces, interpolation, etc.). 
 	 * Pre-requisite: This assumes that the initialization of ModelView transformation is already done
+	 * 
 	 * @param to the triangle to render
+	 * @param c the color of the Element, can be overiden if color defined (not null) at Triangle level
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
 	public void render(Triangle to, Color c) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
+		
+		// Priority to lowest level -> if color defined at triangle level, then this overrides the color of above (Element) level 
 		Color color = to.getColor();
 		if (color == null) color = c;
 		
@@ -255,38 +260,36 @@ public class RenderEngine {
 		// If triangle is totally or partially in the View Frustum
 		// Then renderContext its fragments in the View
 		if (isInViewFrustum(tf)) { // Render triangle
-			
-			// If the rendering type is LINE, then draw lines directly
-			if (renderContext.rendering_type == RenderContext.RENDERING_TYPE_LINE) {
+
+			switch (renderContext.rendering_type) {
+			case RenderContext.RENDERING_TYPE_LINE:
 				rasterizer.drawTriangleLines(tf, color);
-			} else { // Generic case - Fill triangles 
-				
-				switch (renderContext.rendering_type) {
-				case RenderContext.RENDERING_TYPE_MONOCHROME:
-					//TODO To be implemented
-					// Render faces with only face (or default) color + plain lines to show the faces
-					break;
-				case RenderContext.RENDERING_TYPE_PLAIN:
-					//TODO To be implemented
-					// Draw triangles with shading full face, no interpolation.
-					// This forces the mode to be normal at Triangle level even if the normals are at Vertex ;eve;
-					break;
-				case RenderContext.RENDERING_TYPE_INTERPOLATE:
-					rasterizer.rasterizeTriangle(tf, color);
-					break;
-				default:
-					// Invalid rendering type
-					break;
-				}
+				break;
+			case RenderContext.RENDERING_TYPE_MONOCHROME:
+				//TODO To be implemented
+				// Render faces with only face (or default) color + plain lines to show the faces
+				break;
+			case RenderContext.RENDERING_TYPE_PLAIN:
+				//TODO To be implemented
+				// Draw triangles with shading full face, no interpolation.
+				// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
+				rasterizer.rasterizeTriangle(tf, color, false);
+				break;
+			case RenderContext.RENDERING_TYPE_INTERPOLATE:
+				rasterizer.rasterizeTriangle(tf, color, true);
+				break;
+			default:
+				// Invalid rendering type
+				break;
 			}
-			
+
 			// If DISPLAY_NORMALS is activated then renderContext normals
 			if (renderContext.displayNormals == RenderContext.DISPLAY_NORMALS_ENABLED) {
 				displayNormalVectors(to);
 			}
 			// Count Triangles stats (in view)
 			nbt_in++;
-			
+
 		} else {
 			// Do not renderContext this triangle
 			// Count Triangles stats (out view frustum)

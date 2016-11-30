@@ -14,6 +14,7 @@ import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
@@ -23,7 +24,7 @@ import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-public class TestRasterizer2 {
+public class TestRasterizer5 {
 
 	// View to be displayed
 	private SwingView view;
@@ -31,7 +32,7 @@ public class TestRasterizer2 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 2");
+		JFrame frame = new JFrame("Test Rasterizer 5");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -44,7 +45,7 @@ public class TestRasterizer2 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer2.this.view.draw(graph);
+		    	TestRasterizer5.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -72,7 +73,7 @@ public class TestRasterizer2 {
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestRasterizer2 test = new TestRasterizer2();
+		TestRasterizer5 test = new TestRasterizer5();
 		
 		System.out.println("********* Creating World");
 		World world = new World();
@@ -104,20 +105,22 @@ public class TestRasterizer2 {
 		world.calculateNormals();
 		
 		Lighting light = new Lighting();
+		DirectionalLight dl = new DirectionalLight(new Vector4(1,1,1,0));
+		light.addLight(dl);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
 
 		int nb_images = 360;
-		for (int i=0; i<=1.9*nb_images; i++) {
+		for (int i=0; i<=7*nb_images; i++) {
 			double a = Math.PI*2*(double)i/(double)nb_images;
 			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
 			//System.out.println("Rotation "+i+"  - Eye: "+eye);
