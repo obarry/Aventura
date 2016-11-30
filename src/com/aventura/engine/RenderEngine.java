@@ -219,22 +219,24 @@ public class RenderEngine {
 		}
 	
 		// Do a recursive call for SubElements
-
 		if (!e.isLeaf()) {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has "+e.getSubElements().size()+" sub element(s).");
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
 				render(e.getSubElements().get(i), model, col);
 			}
-		} else {
+		} else { // Leaf
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has no sub elements.");			
 		}
 	}
 	
 	/**
-	 * Rasterization of a single Triangle
-	 * This assumes that the initialization of ModelView transformqtion is already done
-	 * @param to the triangle to rasterize
+	 * Rendering a single Triangle.
+	 * This method will calculate transformed triangle (which consists in transforming each vertex) then it delegates
+	 * the low level rasterization of the triangle to the Rasterizer, using appropriate methods based on the type of
+	 * rendering that is expected (lines, plain faces, interpolation, etc.). 
+	 * Pre-requisite: This assumes that the initialization of ModelView transformation is already done
+	 * @param to the triangle to render
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
 	public void render(Triangle to, Color c) {
@@ -262,9 +264,12 @@ public class RenderEngine {
 				switch (renderContext.rendering_type) {
 				case RenderContext.RENDERING_TYPE_MONOCHROME:
 					//TODO To be implemented
+					// Render faces with only face (or default) color + plain lines to show the faces
 					break;
 				case RenderContext.RENDERING_TYPE_PLAIN:
 					//TODO To be implemented
+					// Draw triangles with shading full face, no interpolation.
+					// This forces the mode to be normal at Triangle level even if the normals are at Vertex ;eve;
 					break;
 				case RenderContext.RENDERING_TYPE_INTERPOLATE:
 					rasterizer.rasterizeTriangle(tf, color);
