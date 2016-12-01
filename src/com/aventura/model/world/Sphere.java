@@ -132,10 +132,10 @@ public class Sphere extends Element {
 		
 		// North pole to first meridian - "triangle" faces
 		for (int i=0; i<half_seg*2-1; i++) {
-			t = new Triangle(northPole, vertices[i][0], vertices[i+1][0]);
+			t = new Triangle(northPole, vertices[i+1][0], vertices[i][0]);
 			this.addTriangle(t);
 		}
-		t = new Triangle(northPole, vertices[half_seg*2-1][0], vertices[0][0]);
+		t = new Triangle(northPole, vertices[0][0], vertices[half_seg*2-1][0]);
 		this.addTriangle(t);
 		
 		// Meridian to meridian - "square" faces

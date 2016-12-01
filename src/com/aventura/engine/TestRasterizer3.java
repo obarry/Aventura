@@ -81,6 +81,7 @@ public class TestRasterizer3 {
 		// Set alternate colors to triangles
 		Color color0 = Color.ORANGE;
 		Color color1 = Color.DARK_GRAY;
+		//Color color1 = Color.ORANGE;
 		Color color;
 		int ci =0;
 		for (int i=0; i<s.getNbOfTriangles(); i++) {
@@ -116,7 +117,7 @@ public class TestRasterizer3 {
 		int nb_images = 240;
 		for (int i=0; i<=3*nb_images; i++) {
 			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(8*Math.cos(a),6*Math.sin(a),5,1);
+			eye = new Vector4(8*Math.cos(a),6*Math.sin(a),-5,1);
 			//System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();
