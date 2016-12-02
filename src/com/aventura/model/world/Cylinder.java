@@ -110,7 +110,7 @@ public class Cylinder extends Element {
 			
 			// For each face of the cylinder, create 2 Triangles
 			t1 = new Triangle(vertices[i][0], vertices[i+1][0], vertices[i][1]);
-			t2 = new Triangle(vertices[i][1], vertices[i+1][1], vertices[i][1]);
+			t2 = new Triangle(vertices[i][1], vertices[i+1][0], vertices[i+1][1]);
 			
 			// Add triangle to the Element
 			this.addTriangle(t1);			
@@ -118,7 +118,7 @@ public class Cylinder extends Element {
 		}
 		// Create 2 last triangles
 		t1 = new Triangle(vertices[half_seg*2-1][0], vertices[0][0], vertices[half_seg*2-1][1]);
-		t2 = new Triangle(vertices[half_seg*2-1][1], vertices[0][1], vertices[half_seg*2-1][1]);
+		t2 = new Triangle(vertices[half_seg*2-1][1], vertices[0][0], vertices[0][1]);
 		
 		// Add last triangles
 		this.addTriangle(t1);			
