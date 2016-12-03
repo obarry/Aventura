@@ -18,6 +18,7 @@ import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
 import com.aventura.model.world.Box;
@@ -152,6 +153,8 @@ public class TestAventura9 {
 
 	public Lighting createLight() {
 		Lighting lighting = new Lighting();
+		DirectionalLight dl = new DirectionalLight(new Vector4(1,1,1,0));
+		lighting.addLight(dl);
 		return lighting;
 	}
 
@@ -175,7 +178,10 @@ public class TestAventura9 {
 		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(context);
 
-		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
+		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
+		
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
 		renderer.setView(view);
 		int nb_images = 180;
 		for (int i=0; i<=nb_images; i++) {

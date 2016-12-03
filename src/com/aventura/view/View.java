@@ -60,6 +60,14 @@ public abstract class View {
 		height = context.getPixelHeight();
 	}
 	
+	public int getViewWidth() {
+		return width;
+	}
+	
+	public int getViewHeight() {
+		return height;
+	}
+	
 	public abstract void initView(); // init back buffer
 	public abstract void renderView(); // swap back buffer to front buffer, ready to display once the GUI will refresh
 	public abstract void setColor(Color c); // Using java.awt.Color class

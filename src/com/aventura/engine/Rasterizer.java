@@ -377,6 +377,16 @@ public class Rasterizer {
 			int zBuf_x = x + graphic.getPixelHalfWidth();
 			int zBuf_y = y + graphic.getPixelHalfHeight();
 			
+			if (zBuf_x<0 || zBuf_x>=view.getViewWidth()) {
+				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value while drawing points: "+zBuf_x);
+				return;
+			}
+			
+			if (zBuf_y<0 || zBuf_y>=view.getViewHeight()) {
+				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_y value while drawing points: "+zBuf_y);
+				return;
+			}
+			
 			if (z>zBuffer[zBuf_x][zBuf_y]) { // Discard pixel
 				discarded_pixels++;
 				return;

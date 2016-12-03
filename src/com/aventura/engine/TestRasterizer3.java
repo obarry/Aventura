@@ -101,7 +101,7 @@ public class TestRasterizer3 {
 		light.addLight(dl);
 		
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8, 0.4512, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -117,7 +117,7 @@ public class TestRasterizer3 {
 		int nb_images = 240;
 		for (int i=0; i<=3*nb_images; i++) {
 			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(8*Math.cos(a),6*Math.sin(a),-5,1);
+			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
 			//System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();
