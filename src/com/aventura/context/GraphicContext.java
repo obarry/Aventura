@@ -98,8 +98,8 @@ public class GraphicContext {
 	
 	// Pixel Per Unit
 	int ppu = 0;
-	int pixelWidth = 0;
-	int pixelHeight = 0;
+	int pixelWidth = 0; // Number of pixels on the X axis
+	int pixelHeight = 0; // Number of pixels on the Y axis
 	int pixelHalfWidth = 0;
 	int pixelHalfHeight = 0;
 	

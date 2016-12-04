@@ -60,6 +60,8 @@ public class Rasterizer {
 	
 	// Z buffer
 	private double[][] zBuffer;
+	int zBuf_width, zBuf_height;
+	
 	
 	// Pixel statistics
 	int rendered_pixels = 0;
@@ -92,14 +94,16 @@ public class Rasterizer {
 	 * It is not needed in case of line rendering.
 	 */
 	public void initZBuffer() {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());	
-		zBuffer = new double[graphic.getPixelWidth()][graphic.getPixelHeight()];
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());
+		zBuf_width = 2*graphic.getPixelHalfWidth()+1;
+		zBuf_height = 2*graphic.getPixelHalfHeight()+1;
+		zBuffer = new double[zBuf_width][zBuf_height];
 		
 		// Initialization loop with initialization value ( 1 or -1 in homogeneous coordinates ?) that is the farest value for the view Frustum
 		// Any value closer will be drawn and the zBuffer in this place will be updated by new value
 
-		for (int i=0; i<graphic.getPixelWidth(); i++)  {
-			for (int j=0; j<graphic.getPixelHeight(); j++) {
+		for (int i=0; i<zBuf_width; i++)  {
+			for (int j=0; j<zBuf_height; j++) {
 				zBuffer[i][j] = ZBUFFER_INIT_VALUE;
 			}
 		}
@@ -377,12 +381,12 @@ public class Rasterizer {
 			int zBuf_x = x + graphic.getPixelHalfWidth();
 			int zBuf_y = y + graphic.getPixelHalfHeight();
 			
-			if (zBuf_x<0 || zBuf_x>=view.getViewWidth()) {
+			if (zBuf_x<0 || zBuf_x>=zBuf_width) {
 				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value while drawing points: "+zBuf_x);
 				return;
 			}
 			
-			if (zBuf_y<0 || zBuf_y>=view.getViewHeight()) {
+			if (zBuf_y<0 || zBuf_y>=zBuf_height) {
 				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_y value while drawing points: "+zBuf_y);
 				return;
 			}
