@@ -1,5 +1,6 @@
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -93,8 +94,12 @@ public class TestAventura8 {
 		
 		// Create an Element in the World
 		Cone co = new Cone(4,2,12);
+		co.setColor(Color.MAGENTA);
 		System.out.println(co);
 		world.addElement(co);
+		
+		// Calculate normals
+		world.calculateNormals();
 
 		// World is created
 		return world;
@@ -129,8 +134,12 @@ public class TestAventura8 {
 		Camera camera = test.createCamera();
 		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(context);
+		
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
+		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 
-		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
 		renderer.setView(view);
 		renderer.render();
 		

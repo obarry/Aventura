@@ -33,7 +33,7 @@ import com.aventura.math.transform.Repere;
  * @author Bricolage Olivier
  * @since May 2016
  */
-public class World implements NormalGeneration {
+public class World {
 	
 	protected Repere rep;
 	
@@ -70,7 +70,6 @@ public class World implements NormalGeneration {
 		return elements.get(i);
 	}
 
-	@Override
 	public void calculateNormals() {
 		
 		for (int i=0; i<elements.size(); i++) {

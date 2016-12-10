@@ -98,7 +98,7 @@ import com.aventura.math.vector.Matrix4;
  * @since March 2016
  *
  */
-public class Element implements Transformable, NormalGeneration {
+public class Element implements Transformable {
 	
 	protected ArrayList<Element> subelements; // To create a hierarchy of elements - not necessarily used
 	protected ArrayList<Triangle> triangles;  // Triangles related to this element
@@ -187,11 +187,17 @@ public class Element implements Transformable, NormalGeneration {
 	 * used for quick development and test.
 	 * This method should be overridden by sub classes and implement calculation specific mechanism. 
 	 */
-	@Override
 	public void calculateNormals() {
 		
 		for (int i=0; i<triangles.size(); i++) {
 			this.triangles.get(i).calculateNormal();
+		}
+		
+		// Compute normals recursively
+		if (subelements != null) {
+			for (int i=0; i<subelements.size(); i++) {
+				subelements.get(i).calculateNormals();
+			}
 		}
 	}
 

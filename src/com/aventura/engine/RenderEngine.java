@@ -376,27 +376,34 @@ public class RenderEngine {
 			n2 = new Vertex(p2.getPosition().plus(p2.getNormal()));
 			n3 = new Vertex(p3.getPosition().plus(p3.getNormal()));
 			
+			// Create 3 segments corresponding to normal vectors
+			Line line1 = new Line(p1, n1);
+			Line line2 = new Line(p2, n2);
+			Line line3 = new Line(p3, n3);
+			// Transform the 3 normals
+			Line l1 = transformation.transform(line1);
+			Line l2 = transformation.transform(line2);
+			Line l3 = transformation.transform(line3);
+			
+			// Draw each normal vector starting from their corresponding vertex  
+			rasterizer.drawLine(l1, renderContext.normalsColor);
+			rasterizer.drawLine(l2, renderContext.normalsColor);
+			rasterizer.drawLine(l3, renderContext.normalsColor);
+
+			
 		} else { // Normals at Triangle level
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+to.getNormal());
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
 			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
-			n1 = new Vertex(p1.getPosition().plus(to.getNormal()));
-			n2 = new Vertex(p2.getPosition().plus(to.getNormal()));
-			n3 = new Vertex(p3.getPosition().plus(to.getNormal()));
+			Vertex c = to.getCenter();
+			Vertex n = new Vertex(c.getPosition().plus(to.getNormal()));
+			Line line = new Line(c, n);
+			Line l = transformation.transform(line);
+			rasterizer.drawLine(l, renderContext.normalsColor);
+//			n1 = new Vertex(p1.getPosition().plus(to.getNormal()));
+//			n2 = new Vertex(p2.getPosition().plus(to.getNormal()));
+//			n3 = new Vertex(p3.getPosition().plus(to.getNormal()));
 		}
 		
-		// Create 3 segments corresponding to normal vectors
-		Line line1 = new Line(p1, n1);
-		Line line2 = new Line(p2, n2);
-		Line line3 = new Line(p3, n3);
-		// Transform the 3 normals
-		Line l1 = transformation.transform(line1);
-		Line l2 = transformation.transform(line2);
-		Line l3 = transformation.transform(line3);
-		
-		// Draw each normal vector starting from their corresponding vertex  
-		rasterizer.drawLine(l1, renderContext.normalsColor);
-		rasterizer.drawLine(l2, renderContext.normalsColor);
-		rasterizer.drawLine(l3, renderContext.normalsColor);
 	}
 }

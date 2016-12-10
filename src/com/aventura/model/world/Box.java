@@ -133,13 +133,4 @@ public class Box extends Element {
 		this.addTriangle(t12);		
 	}
 
-	@Override
-	public void calculateNormals() {
-		
-		// Normals for a Box are at Triangle level hence we calculate normal for each triangle of the Element
-		for (int i=0; i<triangles.size(); i++) {
-			triangles.get(i).calculateNormal();
-		}
-	}
-
 }

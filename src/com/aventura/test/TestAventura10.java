@@ -125,6 +125,9 @@ public class TestAventura10 {
 
 		// Add Element to the world
 		world.addElement(e);
+		
+		// Calculate normals
+		world.calculateNormals();
 
 		// World is created
 		return world;
@@ -160,7 +163,7 @@ public class TestAventura10 {
 		View view = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 

@@ -74,6 +74,16 @@ public class Triangle {
 		return v3;
 	}
 	
+	/**
+	 * Create and return a new Vertex corresponding to the (bary)center of the triangle
+	 * @return
+	 */
+	public Vertex getCenter() {
+		Vector4 p = (v1.getPosition().plus(v2.getPosition()).plus(v3.getPosition())).times((double)1/3);
+		Vertex c = new Vertex(p);
+		return c;
+	}
+	
 	public void setV1(Vertex v) {
 		this.v1 = v;
 	}
