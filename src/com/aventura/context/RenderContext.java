@@ -60,9 +60,13 @@ public class RenderContext {
 	public static final int DISPLAY_NORMALS_DISABLED = 0;
 	public static final int DISPLAY_NORMALS_ENABLED = 1;
 	
+	public static final int DISPLAY_LIGHT_VECTORS_DISABLED = 0;
+	public static final int DISPLAY_LIGHT_VECTORS_ENABLED = 1;
+	
 
 	public int displayLandmark = DISPLAY_LANDMARK_DISABLED; // by default
 	public int displayNormals = DISPLAY_NORMALS_DISABLED;  // by default
+	public int displayLight = DISPLAY_LIGHT_VECTORS_DISABLED; // by default
 
 	public int rendering_type = 0;
 	
@@ -70,10 +74,12 @@ public class RenderContext {
 	public Color landmarkYColor = Color.GREEN;
 	public Color landmarkZColor = Color.BLUE;
 	public Color normalsColor = Color.WHITE;
+	public Color lightVectorsColor = Color.YELLOW;
 
 	
 	
 	public static RenderContext RENDER_DEFAULT = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED);
+	public static RenderContext RENDER_DEFAULT_ALL_ENABLED = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED, DISPLAY_NORMALS_ENABLED, DISPLAY_LIGHT_VECTORS_ENABLED);
 	
 	/**
 	 * Empty constructor
@@ -88,12 +94,20 @@ public class RenderContext {
 	public RenderContext(RenderContext r) {
 		this.displayLandmark = r.displayLandmark;
 		this.displayNormals = r.displayNormals;
+		this.displayLight = r.displayLight;
 		this.rendering_type = r.rendering_type;
 	}
 	
 	public RenderContext(int type, int display_landmark) {
 		this.rendering_type = type;
 		this.displayLandmark = display_landmark;
+	}
+		
+	public RenderContext(int type, int display_landmark, int display_normals, int display_light) {
+		this.rendering_type = type;
+		this.displayLandmark = display_landmark;
+		this.displayNormals = display_normals;
+		this.displayLight = display_light;
 	}
 		
 	public void setRendering(int type) {
@@ -118,6 +132,14 @@ public class RenderContext {
 	
 	public int getDisplayNormals() {
 		return displayNormals;
+	}
+
+	public void setDisplayLight(int display_light) {
+		this.displayLight = display_light;
+	}
+	
+	public int getDisplayLight() {
+		return displayLight;
 	}
 
 

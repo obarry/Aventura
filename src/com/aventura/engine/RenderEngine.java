@@ -89,7 +89,7 @@ public class RenderEngine {
 	private int nbe = 0; // Number of Elements processed
 	// Model
 	private World world;
-	private Lighting light;
+	private Lighting lighting;
 	//private Camera camera;
 	
 	// View
@@ -110,7 +110,7 @@ public class RenderEngine {
 	 * 
 	 * 
 	 * @param world the world to renderContext
-	 * @param light the lights lighting the world
+	 * @param lighting the lights lighting the world
 	 * @param camera the camera watching the world
 	 * @param renderContext the renderContext context containing parameters to renderContext the scene
 	 * @param graphicContext the graphicContext context to contain parameters to display the scene
@@ -119,7 +119,7 @@ public class RenderEngine {
 		this.renderContext = render;
 		this.graphicContext = graphic;
 		this.world = world;
-		this.light = light;
+		this.lighting = light;
 		//this.camera = camera;
 		
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
@@ -174,9 +174,14 @@ public class RenderEngine {
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out);
 
-		// Display the landmarks if enabled (GraphicContext)
+		// Display the landmarks if enabled (RenderContext)
 		if (renderContext.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
 			displayLandMarkLines();
+		}
+
+		// Display the Light vectors if enabled (RenderContext)
+		if (renderContext.getDisplayLight() == RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED) {
+			displayLight();
 		}
 
 		view.renderView();
@@ -404,6 +409,18 @@ public class RenderEngine {
 //			n2 = new Vertex(p2.getPosition().plus(to.getNormal()));
 //			n3 = new Vertex(p3.getPosition().plus(to.getNormal()));
 		}
-		
 	}
+		
+	public void displayLight() {
+		// Set the Model Matrix to IDENTITY (no translation)
+		transformation.setModel(Matrix4.IDENTITY);
+		transformation.computeTransformation();
+		Vertex v = new Vertex(lighting.getAverageDirectionalLightVector());
+		Vertex o = new Vertex(0,0,0);
+		Line line = new Line(o, v);
+		Line l = transformation.transform(line);
+		rasterizer.drawLine(l, renderContext.lightVectorsColor);
+	}
+
+
 }

@@ -60,6 +60,11 @@ public class Vertex {
 		normal = null;
 	}
 	
+	public Vertex(Vector3 p) {
+		position = new Vector4(p.getX(), p.getY(), p.getZ(), 1);
+		normal = null;
+	}
+	
 	public Vertex(Vector4 p, Vector3 n) {
 		position = p;
 		normal = n;
