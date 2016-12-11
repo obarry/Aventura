@@ -278,10 +278,10 @@ public class RenderEngine {
 				//TODO To be implemented
 				// Draw triangles with shading full face, no interpolation.
 				// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-				rasterizer.rasterizeTriangle(tf, color, false);
+				rasterizer.rasterizeTriangle(tf, to, color, false);
 				break;
 			case RenderContext.RENDERING_TYPE_INTERPOLATE:
-				rasterizer.rasterizeTriangle(tf, color, true);
+				rasterizer.rasterizeTriangle(tf, to, color, true);
 				break;
 			default:
 				// Invalid rendering type

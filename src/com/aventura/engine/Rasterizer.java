@@ -185,10 +185,11 @@ public class Rasterizer {
 	 * Extrapolated from:
 	 * https://www.davrous.com/2013/06/21/tutorial-part-4-learning-how-to-write-a-3d-software-engine-in-c-ts-or-js-rasterization-z-buffering/
 	 * 
-	 * @param t the (transformed) triangle to render
+	 * @param tf the (transformed) triangle to render
+	 * @param to the (original) triangle
 	 * @param col
 	 */
-	public void rasterizeTriangle(Triangle t, Color c, boolean interpolate) {
+	public void rasterizeTriangle(Triangle tf, Triangle to, Color c, boolean interpolate) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
 		
@@ -202,8 +203,8 @@ public class Rasterizer {
 		// If no interpolation requested -> plain faces, then calculate normal at Triangle level for shading
 		if (!interpolate) {
 			// Calculate normal if not calculated
-			if (t.getNormal()==null) t.calculateNormal();
-			Vector3 normal = t.getNormal();
+			if (to.getNormal()==null) to.calculateNormal();
+			Vector3 normal = to.getNormal();
 			Color shadedCol = computeShadedColor(col, normal);
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
@@ -216,36 +217,36 @@ public class Rasterizer {
 		
 		Vector4 p1, p2, p3;
 
-		p1 = t.getV1().getPosition();
-		p2 = t.getV2().getPosition();
-		p3 = t.getV3().getPosition();
+		p1 = tf.getV1().getPosition();
+		p2 = tf.getV2().getPosition();
+		p3 = tf.getV3().getPosition();
 		
 		if (p2.get3DY()<p1.get3DY()) { // p2 lower than p1
 			if (p3.get3DY()<p2.get3DY()) { // p3 lower than p2
-				p1 = t.getV3().getPosition();
-				p2 = t.getV2().getPosition();
-				p3 = t.getV1().getPosition();
+				p1 = tf.getV3().getPosition();
+				p2 = tf.getV2().getPosition();
+				p3 = tf.getV1().getPosition();
 			} else { // p2 lower than p3
 				if (p3.get3DY()<p1.get3DY()) { // p3 lower than p1
-					p1 = t.getV2().getPosition();
-					p2 = t.getV3().getPosition();
-					p3 = t.getV1().getPosition();
+					p1 = tf.getV2().getPosition();
+					p2 = tf.getV3().getPosition();
+					p3 = tf.getV1().getPosition();
 				} else { // p1 higher than p3
-					p1 = t.getV2().getPosition();
-					p2 = t.getV1().getPosition();
-					p3 = t.getV3().getPosition();
+					p1 = tf.getV2().getPosition();
+					p2 = tf.getV1().getPosition();
+					p3 = tf.getV3().getPosition();
 				}
 			}
 		} else { // p1 lower than p2
 			if (p3.get3DY()<p1.get3DY()) { // p3 lower than p1
-				p1 = t.getV3().getPosition();
-				p2 = t.getV1().getPosition();
-				p3 = t.getV2().getPosition();
+				p1 = tf.getV3().getPosition();
+				p2 = tf.getV1().getPosition();
+				p3 = tf.getV2().getPosition();
 			} else { // p1 lower than p3
 				if (p3.get3DY()<p2.get3DY()) { // p3 lower than p2
 					// No change for p1
-					p2 = t.getV3().getPosition();
-					p3 = t.getV2().getPosition();
+					p2 = tf.getV3().getPosition();
+					p3 = tf.getV2().getPosition();
 				}
 				// Else keep p1, p2 and p3 as defined
 			}

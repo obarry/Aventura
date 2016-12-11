@@ -12,6 +12,8 @@ import javax.swing.WindowConstants;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
+import com.aventura.math.transform.Rotation;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.DirectionalLight;
@@ -75,7 +77,7 @@ public class TestRasterizer6 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Box box = new Box(1,1.5,2);
+		Box box = new Box(1,1.2,1.5);
 		// Set colors to triangles
 		box.getTriangle(0).setColor(Color.CYAN);
 		box.getTriangle(1).setColor(Color.CYAN);
@@ -109,15 +111,25 @@ public class TestRasterizer6 {
 		renderer.setView(view);
 		renderer.render();
 
+//		System.out.println("********* Rendering...");
+//		int nb_images = 180;
+//		for (int i=0; i<=3*nb_images; i++) {
+//			double a = Math.PI*2*(double)i/(double)nb_images;
+//			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
+//			//System.out.println("Rotation "+i+"  - Eye: "+eye);
+//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+//			renderer.render();
+//		}
+
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
-			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+			box.setTransformation(r);
 			renderer.render();
 		}
+
+		
 
 		System.out.println("********* ENDING APPLICATION *********");
 
