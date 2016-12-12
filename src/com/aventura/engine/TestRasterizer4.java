@@ -96,7 +96,7 @@ public class TestRasterizer4 {
 		world.calculateNormals();
 		
 		Lighting light = new Lighting();
-		DirectionalLight dl = new DirectionalLight(new Vector4(1,1,1,0));
+		DirectionalLight dl = new DirectionalLight(new Vector4(1,1,1,0), 1);
 		light.addLight(dl);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);

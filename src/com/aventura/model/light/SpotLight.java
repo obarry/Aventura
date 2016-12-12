@@ -27,6 +27,10 @@ import com.aventura.math.vector.Vector4;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
+ * Spot Light is similar to Point Light but has a preferred direction of radiation.
+ * The intensity of a spot light is attenuated over distance in the same way that it is for a point light
+ * and is also attenuated by another factor called the spot light effect.
+ *
  * @author Bricolage Olivier
  * @since July 2016
  * 
@@ -38,6 +42,12 @@ public class SpotLight extends Light {
 	public Vector4 getLight(Vector4 point) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public double getIntensity(Vector4 point) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

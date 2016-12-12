@@ -27,6 +27,9 @@ import com.aventura.math.vector.Vector4;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
+ * Point Light source is one that radiates light equally in every direction from a single point in space.
+ * The intensity of light naturally decreases with distance according to the inverse square law.
+ *
  * @author Bricolage Olivier
  * @since July 2016
  * 
@@ -38,6 +41,12 @@ public class PointLight extends Light {
 	public Vector4 getLight(Vector4 point) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public double getIntensity(Vector4 point) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

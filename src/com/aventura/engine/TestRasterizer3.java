@@ -97,7 +97,7 @@ public class TestRasterizer3 {
 		world.calculateNormals();
 		
 		Lighting light = new Lighting();
-		DirectionalLight dl = new DirectionalLight(new Vector4(-1,-1,-1,0));
+		DirectionalLight dl = new DirectionalLight(new Vector4(-1,-1,-1,0), 1);
 		light.addLight(dl);
 		
 		

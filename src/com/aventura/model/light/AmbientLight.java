@@ -1,6 +1,5 @@
 package com.aventura.model.light;
 
-import java.awt.Color;
 import com.aventura.math.vector.Vector4;
 
 /**
@@ -28,26 +27,33 @@ import com.aventura.math.vector.Vector4;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
+ * Ambient Light appears to come from every direction with equal intensity in any point of space
+ *
+ *
  * @author Bricolage Olivier
- * @since July 2016
+ * @since December 2016
  * 
  */
 
-public abstract class Light {
+public class AmbientLight extends Light {
 	
-	protected static Color DEFAULT_LIGHT_COLOR = Color.WHITE;
+	protected double intensity;
 	
-	protected static Color lightColor = DEFAULT_LIGHT_COLOR;
-	
-	// Get light vector (or null vector for ambient light) at a given point of world space
-	public abstract Vector4 getLight(Vector4 point);
-	
-	// Get intensity of light at a given point of world space
-	public abstract double getIntensity(Vector4 point);
-	
-	// Get color of light
-	public Color getColor() {
-		return lightColor;
+	public AmbientLight(double intensity) {
+		super();
+		this.intensity = intensity;
+	}
+
+	@Override
+	public Vector4 getLight(Vector4 point) {
+		// No direction by definition of Ambient Light
+		return new Vector4(Vector4.ZERO_VECTOR);
+	}
+
+	@Override
+	public double getIntensity(Vector4 point) {
+		// Same intensity of light at any point of space by definition of ambient light
+		return intensity;
 	}
 
 }

@@ -26,6 +26,11 @@ import com.aventura.math.vector.Vector4;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
+ * 
+ * Directional Light also known as an infinite light source, radiates light in a single direction
+ * from infinitely far away e.g. sun, whose rays can be considered parallel.
+ * Since they have no position in space, directional lights have infinite range and the intensity
+ * of light they radiate does not diminish over distance.
  *
  * @author Bricolage Olivier
  * @since July 2016
@@ -35,16 +40,24 @@ import com.aventura.math.vector.Vector4;
 public class DirectionalLight extends Light {
 	
 	protected Vector4 direction;
+	protected double intensity;
 	
-	public DirectionalLight(Vector4 direction) {
+	public DirectionalLight(Vector4 direction, double intensity) {
 		super();
 		this.direction = direction;
+		this.intensity = intensity;
 	}
 
 	@Override
 	public Vector4 getLight(Vector4 point) {
 		// Same direction vector in all world space by definition of Directional Light
 		return direction;
+	}
+
+	@Override
+	public double getIntensity(Vector4 point) {
+		// Same intensity in any point of world space as Directional light have infinite range
+		return intensity;
 	}
 
 }
