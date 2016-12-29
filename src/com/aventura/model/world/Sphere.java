@@ -132,32 +132,32 @@ public class Sphere extends Element {
 		
 		// North pole to first meridian - "triangle" faces
 		for (int i=0; i<half_seg*2-1; i++) {
-			t = new Triangle(northPole, vertices[i+1][0], vertices[i][0]);
+			t = new Triangle(northPole, vertices[i][0], vertices[i+1][0]);
 			this.addTriangle(t);
 		}
-		t = new Triangle(northPole, vertices[0][0], vertices[half_seg*2-1][0]);
+		t = new Triangle(northPole, vertices[half_seg*2-1][0], vertices[0][0]);
 		this.addTriangle(t);
 		
 		// Meridian to meridian - "square" faces
 		for (int j=0; j<half_seg-2; j++) {
 			for (int i=0; i<half_seg*2-1; i++) {
-				t = new Triangle(vertices[i][j], vertices[i+1][j], vertices[i][j+1]);
+				t = new Triangle(vertices[i][j], vertices[i][j+1], vertices[i+1][j]);
 				this.addTriangle(t);			
-				t = new Triangle(vertices[i][j+1], vertices[i+1][j], vertices[i+1][j+1]);
+				t = new Triangle(vertices[i][j+1], vertices[i+1][j+1], vertices[i+1][j]);
 				this.addTriangle(t);			
 			}
-			t = new Triangle(vertices[half_seg*2-1][j], vertices[0][j], vertices[half_seg*2-1][j+1]);
+			t = new Triangle(vertices[half_seg*2-1][j], vertices[half_seg*2-1][j+1], vertices[0][j]);
 			this.addTriangle(t);			
-			t = new Triangle(vertices[half_seg*2-1][j+1], vertices[0][j], vertices[0][j+1]);
+			t = new Triangle(vertices[half_seg*2-1][j+1], vertices[0][j+1], vertices[0][j]);
 			this.addTriangle(t);			
 		}
 				
 		// South pole to last meridian - "triangle" faces
 		for (int i=0; i<half_seg*2-1; i++) {
-			t = new Triangle(southPole, vertices[i][half_seg-2], vertices[i+1][half_seg-2]);
+			t = new Triangle(southPole, vertices[i+1][half_seg-2], vertices[i][half_seg-2]);
 			this.addTriangle(t);			
 		}
-		t = new Triangle(southPole, vertices[half_seg*2-1][half_seg-2], vertices[0][half_seg-2]);
+		t = new Triangle(southPole, vertices[0][half_seg-2], vertices[half_seg*2-1][half_seg-2]);
 		this.addTriangle(t);		
 	}
 

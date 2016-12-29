@@ -63,8 +63,8 @@ public class TestRasterizer7 {
 		
 		System.out.println("********* STARTING APPLICATION *********");
 		
-		Tracer.info = true;
-		Tracer.function = true;
+//		Tracer.info = true;
+//		Tracer.function = true;
 
 		// Camera
 		Vector4 eye = new Vector4(8,3,2,1);
@@ -76,7 +76,7 @@ public class TestRasterizer7 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Sphere s = new Sphere(1.5, 6);
+		Sphere s = new Sphere(1.5, 12);
 		
 		// Set alternate colors to triangles
 		Color color0 = Color.MAGENTA;
@@ -96,7 +96,7 @@ public class TestRasterizer7 {
 		world.calculateNormals();
 		
 		Lighting light = new Lighting();
-		DirectionalLight dl = new DirectionalLight(new Vector4(-1,-1,-1,0), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector4(1,1,1,0), 1);
 		light.addLight(dl);
 		
 		
@@ -110,15 +110,15 @@ public class TestRasterizer7 {
 		renderer.setView(view);
 		renderer.render();
 
-//		System.out.println("********* Rendering...");
-//		int nb_images = 240;
-//		for (int i=0; i<=3*nb_images; i++) {
-//			double a = Math.PI*2*(double)i/(double)nb_images;
-//			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
-//			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
-//			renderer.render();
-//		}
+		System.out.println("********* Rendering...");
+		int nb_images = 240;
+		for (int i=0; i<=3*nb_images; i++) {
+			double a = Math.PI*2*(double)i/(double)nb_images;
+			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
+			//System.out.println("Rotation "+i+"  - Eye: "+eye);
+			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			renderer.render();
+		}
 
 		System.out.println("********* ENDING APPLICATION *********");
 

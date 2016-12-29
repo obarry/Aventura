@@ -286,9 +286,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                traceLine(y, p1, p3, p1, p2, col, interpolate);
+	                rasterizeScanLine(y, p1, p3, p1, p2, col, interpolate);
 	            } else {
-	                traceLine(y, p1, p3, p2, p3, col, interpolate);
+	                rasterizeScanLine(y, p1, p3, p2, p3, col, interpolate);
 	            }
 	        }
 
@@ -309,16 +309,16 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                traceLine(y, p1, p2, p1, p3, col, interpolate);
+	                rasterizeScanLine(y, p1, p2, p1, p3, col, interpolate);
 	            } else {
-	                traceLine(y, p2, p3, p1, p3, col, interpolate);
+	                rasterizeScanLine(y, p2, p3, p1, p3, col, interpolate);
 	            }
 	        }
 	    }
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels);
 	}
 	
-	protected void traceLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c, boolean interpolate) {
+	protected void rasterizeScanLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c, boolean interpolate) {
 		
 	    // Thanks to current Y, we can compute the gradient to compute others values like
 	    // the starting X (sx) and ending X (ex) to draw between
@@ -343,7 +343,7 @@ public class Rasterizer {
 	    }
 	}
 
-//	protected void traceLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c) {
+//	protected void rasterizeScanLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c) {
 //		
 //	    // Thanks to current Y, we can compute the gradient to compute others values like
 //	    // the starting X (sx) and ending X (ex) to draw between

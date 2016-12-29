@@ -184,6 +184,7 @@ public class RenderEngine {
 			displayLight();
 		}
 
+		// Switch back and front buffers and request GUI repaint
 		view.renderView();
 	}
 	
@@ -275,12 +276,12 @@ public class RenderEngine {
 				// Render faces with only face (or default) color + plain lines to show the faces
 				break;
 			case RenderContext.RENDERING_TYPE_PLAIN:
-				//TODO To be implemented
 				// Draw triangles with shading full face, no interpolation.
 				// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
 				rasterizer.rasterizeTriangle(tf, to, color, false);
 				break;
 			case RenderContext.RENDERING_TYPE_INTERPOLATE:
+				//TODO To be implemented
 				rasterizer.rasterizeTriangle(tf, to, color, true);
 				break;
 			default:
@@ -402,6 +403,8 @@ public class RenderEngine {
 			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = to.getCenter();
 			Vertex n = new Vertex(c.getPosition().plus(to.getNormal()));
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
 			Line line = new Line(c, n);
 			Line l = transformation.transform(line);
 			rasterizer.drawLine(l, renderContext.normalsColor);
