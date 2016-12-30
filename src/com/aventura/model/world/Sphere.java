@@ -51,7 +51,9 @@ import com.aventura.math.vector.Vector4;
  *    \ \ \ \ \ \|/ / / / / 
  *               +					South Pole
  * 
- *   
+ * Normals at Vertex levels are calculated in this class while triangle normal calculation is done by the super class Elements.
+ * For generic triangle normal calculation purpose based on cross product of the 2 segments P1P2 ^ P1P3  of the triangle
+ * <P1 P2 P3>, it is important to create triangles so that triangle normals target the outside of the Sphere. 
  * 
  * @author Bricolage Olivier
  * @since May 2016
@@ -129,6 +131,8 @@ public class Sphere extends Element {
 		// Create Triangles
 		// 2 triangles per "square" face, 1 triangle for each face on the north and south poles
 		Triangle t; // local variable
+
+		// Create triangles T = <P1 P2 P3> so that N = P1P2^P1P3 targets the outside of the Sphere for triangle normal calculation 
 		
 		// North pole to first meridian - "triangle" faces
 		for (int i=0; i<half_seg*2-1; i++) {

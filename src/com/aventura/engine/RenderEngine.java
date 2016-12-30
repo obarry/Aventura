@@ -313,7 +313,7 @@ public class RenderEngine {
 	protected boolean isInViewFrustum(Triangle t) {
 
 		// Need at least one vertice to be in the view frustum
-		if (isInViewFrustum(t.getV1()) || isInViewFrustum(t.getV1()) || isInViewFrustum(t.getV3()))
+		if (isInViewFrustum(t.getV1()) || isInViewFrustum(t.getV2()) || isInViewFrustum(t.getV3()))
 			return true;
 		else
 			return false;
