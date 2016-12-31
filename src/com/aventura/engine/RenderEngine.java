@@ -273,7 +273,9 @@ public class RenderEngine {
 				break;
 			case RenderContext.RENDERING_TYPE_MONOCHROME:
 				//TODO To be implemented
+				//TODO To be renamed into NO_SHADING ?
 				// Render faces with only face (or default) color + plain lines to show the faces
+				// No shading
 				break;
 			case RenderContext.RENDERING_TYPE_PLAIN:
 				// Draw triangles with shading full face, no interpolation.
@@ -408,9 +410,6 @@ public class RenderEngine {
 			Line line = new Line(c, n);
 			Line l = transformation.transform(line);
 			rasterizer.drawLine(l, renderContext.normalsColor);
-//			n1 = new Vertex(p1.getPosition().plus(to.getNormal()));
-//			n2 = new Vertex(p2.getPosition().plus(to.getNormal()));
-//			n3 = new Vertex(p3.getPosition().plus(to.getNormal()));
 		}
 	}
 		

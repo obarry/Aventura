@@ -2,6 +2,8 @@ package com.aventura.tools.color;
 
 import java.awt.Color;
 
+import com.aventura.math.vector.Tools;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -148,8 +150,30 @@ public class ColorTools {
 			g = g * c_array[1];
 			b = b * c_array[2];
 		}
-		return new Color(clip(r), clip(g), clip(b));
 		
+		return new Color(clip(r), clip(g), clip(b));
+	}
+	
+	/**
+	 * Interpolate 2 colors with a parameter t in [0, 1]
+	 * @param c1
+	 * @param c2
+	 * @param t
+	 * @return a new interpolated Color
+	 */
+	public static Color interpolateColors(Color c1, Color c2, float t) {
+		
+		// Get RGB components of c1 and c2
+		float[] c1_array = c1.getRGBColorComponents(null);
+		float[] c2_array = c2.getRGBColorComponents(null);
+		
+		// Interpolate each component
+		float r = Tools.interpolate(c1_array[0], c2_array[0], t);
+		float g = Tools.interpolate(c1_array[1], c2_array[1], t);
+		float b = Tools.interpolate(c1_array[2], c2_array[2], t);
+		
+		// Return a new color
+		return new Color(clip(r), clip(g), clip(b));
 	}
 	
 	/**

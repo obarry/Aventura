@@ -193,14 +193,17 @@ public class Rasterizer {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
 		
-		Color col = c;
+		Color col = c; // Let's initialize the base color with the one of the triangle
+		Color c1 = null, c2 = null, c3 = null; // Colors to store Vertex colors, if interpolation is requested, else will be kept null
 
 		// Init pixel stats
 		rendered_pixels = 0;
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
 		
-		// If no interpolation requested -> plain faces, then calculate normal at Triangle level for shading
+		// If no interpolation requested -> plain faces. Then:
+		// - calculate normal at Triangle level for shading
+		// - calculate shading color once for all triangle
 		if (!interpolate) {
 			// Calculate normal if not calculated
 			if (to.getNormal()==null) to.calculateNormal();
@@ -208,8 +211,12 @@ public class Rasterizer {
 			Color shadedCol = computeShadedColor(col, normal);
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
+		} else {
+			// Calculate the 3 colors of the 3 Vertex normals
+			c1 = computeShadedColor(col, to.getV1().getNormal());
+			c2 = computeShadedColor(col, to.getV2().getNormal());
+			c3 = computeShadedColor(col, to.getV3().getNormal());
 		}
-
 
 	    // Lets define p1, p2, p3 in order to always have this order on screen p1, p2 & p3
 	    // with p1 always down (thus having the highest possible Y)
@@ -286,9 +293,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                rasterizeScanLine(y, p1, p3, p1, p2, col, interpolate);
+	                rasterizeScanLine(y, p1, p3, p1, p2, c1, c3, c1, c2, col, interpolate);
 	            } else {
-	                rasterizeScanLine(y, p1, p3, p2, p3, col, interpolate);
+	                rasterizeScanLine(y, p1, p3, p2, p3, c1, c3, c2, c3, col, interpolate);
 	            }
 	        }
 
@@ -309,16 +316,16 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                rasterizeScanLine(y, p1, p2, p1, p3, col, interpolate);
+	                rasterizeScanLine(y, p1, p2, p1, p3, c1, c2, c1, c3, col, interpolate);
 	            } else {
-	                rasterizeScanLine(y, p2, p3, p1, p3, col, interpolate);
+	                rasterizeScanLine(y, p2, p3, p1, p3, c2, c3, c1, c3, col, interpolate);
 	            }
 	        }
 	    }
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels);
 	}
 	
-	protected void rasterizeScanLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c, boolean interpolate) {
+	protected void rasterizeScanLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color ca, Color cb, Color cc, Color cd, Color c, boolean interpolate) {
 		
 	    // Thanks to current Y, we can compute the gradient to compute others values like
 	    // the starting X (sx) and ending X (ex) to draw between
@@ -337,8 +344,15 @@ public class Rasterizer {
 	    // drawing a line from left (sx) to right (ex) 
 	    for (int x = sx; x < ex; x++) {
 	        float gradient = (x-sx)/(float)(ex-sx);
-
 	        float z = Tools.interpolate(z1, z2, gradient);
+	        
+	        // If color interpolation
+	        if (interpolate) {
+	        	Color c1, c2;
+	        	c1 = ColorTools.interpolateColors(ca, cb, gradient1);
+	        	c2 = ColorTools.interpolateColors(cc, cd, gradient2);
+	        	c = ColorTools.interpolateColors(c1, c2, gradient);
+	        }
 	        drawPoint(x, y, z, c);
 	    }
 	}
