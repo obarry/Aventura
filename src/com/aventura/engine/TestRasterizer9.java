@@ -67,7 +67,7 @@ public class TestRasterizer9 {
 //		Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(8,3,2,1);
+		Vector4 eye = new Vector4(6,-4,-2,1);
 		Vector4 poi = new Vector4(1,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
@@ -76,7 +76,7 @@ public class TestRasterizer9 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Cone s = new Cone(1.5, 1, 2);
+		Cone s = new Cone(1.5, 1, 12);
 		s.setColor(Color.CYAN);		
 		world.addElement(s);
 		
@@ -98,15 +98,15 @@ public class TestRasterizer9 {
 		renderer.setView(view);
 		renderer.render();
 
-		System.out.println("********* Rendering...");
-		int nb_images = 240;
-		for (int i=0; i<=3*nb_images; i++) {
-			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
-			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
-			renderer.render();
-		}
+//		System.out.println("********* Rendering...");
+//		int nb_images = 240;
+//		for (int i=0; i<=3*nb_images; i++) {
+//			double a = Math.PI*2*(double)i/(double)nb_images;
+//			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
+//			//System.out.println("Rotation "+i+"  - Eye: "+eye);
+//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+//			renderer.render();
+//		}
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}

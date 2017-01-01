@@ -155,12 +155,14 @@ public class Cone extends Element {
 			
 		// Create normals of vertices
 		for (int i=0; i<half_seg*2; i++) {
+
 			// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
 			u = (summits[i].getPosition().minus(bottom_center)).times(vertices[i].getPosition().minus(bottom_center));
 			n = (vertices[i].getPosition().minus(summits[i].getPosition())).times(u);
 			n.normalize();
 			vertices[i].setNormal(n.getVector3());
+			
 			// For each summit, use the ray vector from top center to the Vertex and normalize it
 			if (i<half_seg*2-1) {
 				//n = (vertices[i+1].getPosition().minus(vertices[i].getPosition())).times(summits[i].getPosition().minus(vertices[i].getPosition()));
