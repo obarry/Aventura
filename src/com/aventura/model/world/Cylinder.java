@@ -44,6 +44,10 @@ import com.aventura.math.vector.Vector4;
 public class Cylinder extends Element {
 	
 	protected Vertex[][] vertices;
+	double height;
+	double ray;
+	int half_seg;
+	protected Vector4 center, top_center, bottom_center;
 	
 	/**
 	 * Default creation of a Cylinder around Z axis 
@@ -54,39 +58,55 @@ public class Cylinder extends Element {
 	public Cylinder(double height, double ray, int half_seg) {
 		super();
 		subelements = null;
-		Vector4 position = new Vector4(0,0,0,0);
-		createCylinder(height, ray, half_seg, position);
+		this.ray = ray;
+		this.height = height;
+		this.half_seg = half_seg;
+		this.center = new Vector4(0,0,0,0);
+		this.top_center = new Vector4(0,0,height/2,0);
+		this.bottom_center = new Vector4(0,0,-height/2,0);
+		createCylinder();
 	}
 
 	/**
-	 * Creation of a Cylinder moved to a given position
+	 * Creation of a Cylinder moved to a given center
 	 * @param height of the Cylinder
 	 * @param ray of the top and bottom circles of the Cylinder
 	 * @param half_seg is half the number of segments for 360 degrees circles
-	 * @param position to which the Vertices are moved at creation (Vector3)
+	 * @param center to which the Vertices are moved at creation (Vector3)
 	 */
-	public Cylinder(double height, double ray, int half_seg, Vector3 position) {
+	public Cylinder(double height, double ray, int half_seg, Vector3 center) {
 		super();
 		subelements = null;
-		Vector4 v = new Vector4(position);
-		createCylinder(height, ray, half_seg, v);
+		this.ray = ray;
+		this.height = height;
+		this.half_seg = half_seg;
+		this.center = new Vector4(center);
+		this.top_center = new Vector4(0,0,height/2,0);
+		this.bottom_center = new Vector4(0,0,-height/2,0);
+		createCylinder();
 	}
 	
 	/**
-	 * Creation of a Cylinder moved to a given position
+	 * Creation of a Cylinder moved to a given center
 	 * @param height of the Cylinder
 	 * @param ray of the top and bottom circles of the Cylinder
 	 * @param half_seg is half the number of segments for 360 degrees circles
-	 * @param position to which the Vertices are moved at creation (Vector4)
+	 * @param center to which the Vertices are moved at creation (Vector4)
 	 */
-	public Cylinder(double height, double ray, int half_seg, Vector4 position) {
+	public Cylinder(double height, double ray, int half_seg, Vector4 center) {
 		super();
 		subelements = null;
-		createCylinder(height, ray, half_seg, position);
+		this.ray = ray;
+		this.height = height;
+		this.half_seg = half_seg;
+		this.center = center;
+		this.top_center = new Vector4(0,0,height/2,0);
+		this.bottom_center = new Vector4(0,0,-height/2,0);
+		createCylinder();
 	}
 
 	
-	protected void createCylinder(double height, double ray, int half_seg, Vector4 position) {
+	protected void createCylinder() {
 		
 		vertices = new Vertex[half_seg*2][2]; // (n) x 2 vertices on each circles
 		double alpha = Math.PI/half_seg;
@@ -98,10 +118,10 @@ public class Cylinder extends Element {
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			vertices[i][0] = new Vertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(position));
+			vertices[i][0] = new Vertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
 			
 			// Top circle of the cylinder
-			vertices[i][1] = new Vertex(new Vector4(ray*cosa, ray*sina, height/2, 1).plus(position));
+			vertices[i][1] = new Vertex(new Vector4(ray*cosa, ray*sina, height/2, 1).plus(center));
 		}
 		
 		// Create Triangles
@@ -123,6 +143,23 @@ public class Cylinder extends Element {
 		// Add last triangles
 		this.addTriangle(t1);			
 		this.addTriangle(t2);			
+	}
+
+	@Override
+	public void calculateNormals() {
+		Vector4 n;
+			
+		// Create normals of vertices
+		for (int i=0; i<half_seg*2; i++) {
+			// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it 
+			n = vertices[i][0].getPosition().minus(bottom_center);
+			n.normalize();
+			vertices[i][0].setNormal(n.getVector3());
+			// For each top Vertex, use the ray vector from top center to the Vertex and normalize it 
+			n = vertices[i][1].getPosition().minus(top_center);
+			n.normalize();
+			vertices[i][1].setNormal(n.getVector3());
+		}	
 	}
 
 }

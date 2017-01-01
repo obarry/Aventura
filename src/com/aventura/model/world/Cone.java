@@ -44,7 +44,11 @@ import com.aventura.math.vector.Vector4;
 public class Cone extends Element {
 
 	protected Vertex[] vertices;
-	protected Vertex summit;
+	protected Vertex[] summits; // In order to have different Vertex based normals, we need to have independent summit for each triangle
+	double height;
+	double ray;
+	int half_seg;
+	protected Vector4 center, bottom_center;
 	
 	/**
 	 * Default creation of a Cone around Z axis 
@@ -55,8 +59,13 @@ public class Cone extends Element {
 	public Cone(double height, double ray, int half_seg) {
 		super();
 		subelements = null;
-		Vector4 position = new Vector4(0,0,0,0);
-		createCone(height, ray, half_seg, position);
+		this.ray = ray;
+		this.height = height;
+		this.half_seg = half_seg;
+		this.center = new Vector4(0,0,0,0);
+		this.bottom_center = new Vector4(0,0,-height/2,0);
+		this.center = new Vector4(0,0,0,0);
+		createCone();
 	}
 
 	/**
@@ -64,13 +73,17 @@ public class Cone extends Element {
 	 * @param height of the Cone
 	 * @param ray of the base circle of the Cone
 	 * @param half_seg is half the number of segments for 360 degrees circle
-	 * @param position to which the Vertices are moved at creation (Vector3)
+	 * @param center to which the Cone is moved at creation (Vector3)
 	 */
-	public Cone(double height, double ray, int half_seg, Vector3 position) {
+	public Cone(double height, double ray, int half_seg, Vector3 center) {
 		super();
 		subelements = null;
-		Vector4 v = new Vector4(position);
-		createCone(height, ray, half_seg, v);
+		this.ray = ray;
+		this.height = height;
+		this.half_seg = half_seg;
+		this.bottom_center = new Vector4(0,0,-height/2,0);
+		this.center = new Vector4(center);
+		createCone();
 	}
 	
 	/**
@@ -78,30 +91,43 @@ public class Cone extends Element {
 	 * @param height of the Cone
 	 * @param ray of the base circle of the Cone
 	 * @param half_seg is half the number of segments for 360 degrees circle
-	 * @param position to which the Vertices are moved at creation (Vector4)
+	 * @param center to which the Cone is moved at creation (Vector4)
 	 */
-	public Cone(double height, double ray, int half_seg, Vector4 position) {
+	public Cone(double height, double ray, int half_seg, Vector4 center) {
 		super();
 		subelements = null;
-		createCone(height, ray, half_seg, position);
+		this.ray = ray;
+		this.height = height;
+		this.half_seg = half_seg;
+		this.bottom_center = new Vector4(0,0,-height/2,0);
+		this.center = center;
+		createCone();
 	}
 
 	
-	protected void createCone(double height, double ray, int half_seg, Vector4 position) {
+	protected void createCone() {
 		
 		vertices = new Vertex[half_seg*2]; // (n) vertices on each circles
+		summits = new Vertex[half_seg*2]; // (n) summits
 		double alpha = Math.PI/half_seg;
 		
 		// Create vertices
-		summit = new Vertex(new Vector4(0, 0, height/2,  1));
 		
+		// Create summits (same Vertex for all summits)
+		Vector4 summit = new Vector4(0, 0, height/2,  1);
+		for (int i=0; i<half_seg*2; i++) {
+			summits[i] = new Vertex(summit.plus(center));		
+		}
+		//summit = new Vertex(new Vector4(0, 0, height/2,  1));
+		
+		// Create bottom vertices
 		for (int i=0; i<half_seg*2; i++) {
 			
 			double sina = Math.sin(alpha*i);
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			vertices[i] = new Vertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(position));
+			vertices[i] = new Vertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
 			
 		}
 		
@@ -110,17 +136,42 @@ public class Cone extends Element {
 		for (int i=0; i<half_seg*2-1; i++) {
 			
 			// For each face of the cylinder, create 2 Triangles
-			t = new Triangle(summit, vertices[i], vertices[i+1]);
+			t = new Triangle(summits[i], vertices[i], vertices[i+1]);
 			
 			// Add triangle to the Element
 			this.addTriangle(t);			
 		}
 		// Create last triangle to close the Cone
-		t = new Triangle(summit, vertices[half_seg*2-1], vertices[0]);
+		t = new Triangle(summits[half_seg*2-1], vertices[half_seg*2-1], vertices[0]);
 		
-		// Add last triangles
+		// Add last triangle
 		this.addTriangle(t);			
 			
 	}
+	
+	@Override
+	public void calculateNormals() {
+		Vector4 n, u;
+			
+		// Create normals of vertices
+		for (int i=0; i<half_seg*2; i++) {
+			// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it
+			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
+			u = (summits[i].getPosition().minus(bottom_center)).times(vertices[i].getPosition().minus(bottom_center));
+			n = (vertices[i].getPosition().minus(summits[i].getPosition())).times(u);
+			n.normalize();
+			vertices[i].setNormal(n.getVector3());
+			// For each summit, use the ray vector from top center to the Vertex and normalize it
+			if (i<half_seg*2-1) {
+				//n = (vertices[i+1].getPosition().minus(vertices[i].getPosition())).times(summits[i].getPosition().minus(vertices[i].getPosition()));
+				n = (vertices[i].getPosition().minus(summits[i].getPosition())).times(vertices[i+1].getPosition().minus(summits[i].getPosition()));
+			} else { // last vertex -> i+1 = 0
+				n = (vertices[i].getPosition().minus(summits[i].getPosition())).times(vertices[0].getPosition().minus(summits[i].getPosition()));			
+			}
+			n.normalize();
+			summits[i].setNormal(n.getVector3());
+		}	
+	}
+
 
 }

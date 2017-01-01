@@ -213,9 +213,17 @@ public class Rasterizer {
 			col = shadedCol;
 		} else {
 			// Calculate the 3 colors of the 3 Vertex normals
-			c1 = computeShadedColor(col, to.getV1().getNormal());
-			c2 = computeShadedColor(col, to.getV2().getNormal());
-			c3 = computeShadedColor(col, to.getV3().getNormal());
+//			c1 = computeShadedColor(col, to.getV1().getNormal());
+//			c2 = computeShadedColor(col, to.getV2().getNormal());
+//			c3 = computeShadedColor(col, to.getV3().getNormal());
+			
+			// As p1, p2 and p3 may be reshuffled and sorted, this is meaningless to calculate the 3 colors at this stage so we postpone
+			// the calculation to later, which increases the complexity and readibility of the algorithm
+			
+			// TODO Further design improvements will allow to simplify this processing by designing direct link between tf and to
+			// (instead of carrying both triangles) e.g. by consolidating at Vertex level both the initial and projected position Vectors
+			// This will also help to reduce the memory usage by duplicating position Vectors only (and not the full Vertices)
+			
 		}
 
 	    // Lets define p1, p2, p3 in order to always have this order on screen p1, p2 & p3
@@ -233,15 +241,33 @@ public class Rasterizer {
 				p1 = tf.getV3().getPosition();
 				p2 = tf.getV2().getPosition();
 				p3 = tf.getV1().getPosition();
+				if (interpolate) {
+					// Calculate the 3 colors of the 3 Vertex normals
+					c1 = computeShadedColor(col, to.getV3().getNormal());
+					c2 = computeShadedColor(col, to.getV2().getNormal());
+					c3 = computeShadedColor(col, to.getV1().getNormal());					
+				}
 			} else { // p2 lower than p3
 				if (p3.get3DY()<p1.get3DY()) { // p3 lower than p1
 					p1 = tf.getV2().getPosition();
 					p2 = tf.getV3().getPosition();
 					p3 = tf.getV1().getPosition();
+					if (interpolate) {
+						// Calculate the 3 colors of the 3 Vertex normals
+						c1 = computeShadedColor(col, to.getV2().getNormal());
+						c2 = computeShadedColor(col, to.getV3().getNormal());
+						c3 = computeShadedColor(col, to.getV1().getNormal());					
+					}
 				} else { // p1 higher than p3
 					p1 = tf.getV2().getPosition();
 					p2 = tf.getV1().getPosition();
 					p3 = tf.getV3().getPosition();
+					if (interpolate) {
+						// Calculate the 3 colors of the 3 Vertex normals
+						c1 = computeShadedColor(col, to.getV2().getNormal());
+						c2 = computeShadedColor(col, to.getV1().getNormal());
+						c3 = computeShadedColor(col, to.getV3().getNormal());					
+					}
 				}
 			}
 		} else { // p1 lower than p2
@@ -249,13 +275,32 @@ public class Rasterizer {
 				p1 = tf.getV3().getPosition();
 				p2 = tf.getV1().getPosition();
 				p3 = tf.getV2().getPosition();
+				if (interpolate) {
+					// Calculate the 3 colors of the 3 Vertex normals
+					c1 = computeShadedColor(col, to.getV3().getNormal());
+					c2 = computeShadedColor(col, to.getV1().getNormal());
+					c3 = computeShadedColor(col, to.getV2().getNormal());					
+				}
 			} else { // p1 lower than p3
 				if (p3.get3DY()<p2.get3DY()) { // p3 lower than p2
 					// No change for p1
 					p2 = tf.getV3().getPosition();
 					p3 = tf.getV2().getPosition();
+					if (interpolate) {
+						// Calculate the 3 colors of the 3 Vertex normals
+						c1 = computeShadedColor(col, to.getV1().getNormal());
+						c2 = computeShadedColor(col, to.getV3().getNormal());
+						c3 = computeShadedColor(col, to.getV2().getNormal());					
+					}
+				} else {
+					// Else keep p1, p2 and p3 as defined
+					if (interpolate) {
+						// Calculate the 3 colors of the 3 Vertex normals
+						c1 = computeShadedColor(col, to.getV1().getNormal());
+						c2 = computeShadedColor(col, to.getV2().getNormal());
+						c3 = computeShadedColor(col, to.getV3().getNormal());					
+					}
 				}
-				// Else keep p1, p2 and p3 as defined
 			}
 		}
 		
