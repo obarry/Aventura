@@ -28,43 +28,46 @@ import com.aventura.math.vector.Vector4;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * Create a Cylinder made of 2 circles around Z axis
- * Top circle is at z = height / 2
- * Bottom circle is at z = -height / 2
- * The diameter of the cylinder is ray * 2
- * It is made of 2 * half_seg Vertices per circle and 2 * 2 * half_seg Triangles (each face of the cylinder is made of 2 triangles)
+ * Create a frustum of Cone made of 2 circles around Z axis
+ * Bottom circle is at z = -cone_height / 2
+ * Virtual summit is at z = cone_height / 2
+ * Top circle is at z = frustum_height - (cone_height / 2)
+ * The diameter of the cone is ray * 2
+ * It is made of 2 * half_seg Vertices per circle and 2 * 2 * half_seg Triangles (each face of the cone frustum is made of 2 triangles)
  * 
- * The Cylinder, as any Element, can then be moved, rotated and transformed thanks to the Transformation matrix
+ * The Cone Frustum, as any Element, can then be moved, rotated and transformed thanks to the Transformation matrix
  * 
  * @author Bricolage Olivier
- * @since October 2016
+ * @since January 2017
  */
 
-
-public class Cylinder extends Element {
+public class ConeFrustum extends Element {
 	
 	protected Vertex[][] vertices;
-	double height;
+	protected Vertex summit;
+	double cone_height;
+	double frustum_height;
 	double ray;
 	int half_seg;
 	protected Vector4 center, top_center, bottom_center;
 	
 	/**
-	 * Default creation of a Cylinder around Z axis 
+	 * Default creation of a Cone Frustum around Z axis 
 	 * @param height of the Cylinder
 	 * @param ray of the top and bottom circles of the Cylinder
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
-	public Cylinder(double height, double ray, int half_seg) {
+	public ConeFrustum(double cone_height, double frustum_height, double ray, int half_seg) {
 		super();
 		subelements = null;
 		this.ray = ray;
-		this.height = height;
+		this.cone_height = cone_height;
+		this.frustum_height = frustum_height;
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
-		this.top_center = new Vector4(0,0,height/2,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
-		createCylinder();
+		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
+		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
+		createConeFrustum();
 	}
 
 	/**
@@ -74,16 +77,17 @@ public class Cylinder extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 * @param center to which the Vertices are moved at creation (Vector3)
 	 */
-	public Cylinder(double height, double ray, int half_seg, Vector3 center) {
+	public ConeFrustum(double cone_height, double frustum_height, double ray, int half_seg, Vector3 center) {
 		super();
 		subelements = null;
 		this.ray = ray;
-		this.height = height;
+		this.cone_height = cone_height;
+		this.frustum_height = frustum_height;
 		this.half_seg = half_seg;
 		this.center = new Vector4(center);
-		this.top_center = new Vector4(0,0,height/2,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
-		createCylinder();
+		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
+		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
+		createConeFrustum();
 	}
 	
 	/**
@@ -93,35 +97,42 @@ public class Cylinder extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 * @param center to which the Vertices are moved at creation (Vector4)
 	 */
-	public Cylinder(double height, double ray, int half_seg, Vector4 center) {
+	public ConeFrustum(double cone_height, double frustum_height, double ray, int half_seg, Vector4 center) {
 		super();
 		subelements = null;
 		this.ray = ray;
-		this.height = height;
+		this.cone_height = cone_height;
+		this.frustum_height = frustum_height;
 		this.half_seg = half_seg;
 		this.center = center;
-		this.top_center = new Vector4(0,0,height/2,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
-		createCylinder();
+		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
+		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
+		createConeFrustum();
 	}
 
 	
-	protected void createCylinder() {
+	protected void createConeFrustum() {
 		
 		vertices = new Vertex[half_seg*2][2]; // (n) x 2 vertices on each circles
 		double alpha = Math.PI/half_seg;
 		
 		// Create vertices
+		
+		// Create summits (same Vertex for all summits)
+		summit = new Vertex(new Vector4(0, 0, cone_height/2,  1).plus(center));
+		
+		// Create circle vertices
 		for (int i=0; i<half_seg*2; i++) {
 			
 			double sina = Math.sin(alpha*i);
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			vertices[i][0] = new Vertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
+			vertices[i][0] = new Vertex(new Vector4(ray*cosa, ray*sina, -cone_height/2, 1).plus(center));
 			
 			// Top circle of the cylinder
-			vertices[i][1] = new Vertex(new Vector4(ray*cosa, ray*sina, height/2, 1).plus(center));
+			double ratio = (cone_height - frustum_height)/cone_height;
+			vertices[i][1] = new Vertex(new Vector4(ratio*ray*cosa, ratio*ray*sina, (frustum_height-(cone_height/2)), 1).plus(center));
 		}
 		
 		// Create Triangles
@@ -147,15 +158,17 @@ public class Cylinder extends Element {
 
 	@Override
 	public void calculateNormals() {
-		Vector4 n;
+		Vector4 u, n;
 			
 		// Create normals of vertices
 		for (int i=0; i<half_seg*2; i++) {
-			// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it 
-			n = vertices[i][0].getPosition().minus(bottom_center);
+			
+			// For each bottom Vertex, calculate a ray vector that is orthogonal to the slope of the cone
+			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
+			u = (summit.getPosition().minus(bottom_center)).times(vertices[i][0].getPosition().minus(bottom_center));
+			n = (vertices[i][0].getPosition().minus(summit.getPosition())).times(u);
 			n.normalize();
 			vertices[i][0].setNormal(n.getVector3());
-			// Same normal vector can be used for the corresponding top Vertex
 			vertices[i][1].setNormal(n.getVector3());
 		}	
 	}

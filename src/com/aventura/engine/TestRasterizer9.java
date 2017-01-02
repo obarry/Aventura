@@ -16,7 +16,8 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.world.Cone;
+import com.aventura.model.world.ConeFrustum;
+import com.aventura.model.world.ConeSummit;
 import com.aventura.model.world.Cylinder;
 import com.aventura.model.world.World;
 import com.aventura.view.SwingView;
@@ -76,9 +77,11 @@ public class TestRasterizer9 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Cone s = new Cone(1.5, 1, 12);
-		s.setColor(Color.CYAN);		
-		world.addElement(s);
+		//Cylinder c = new Cylinder(1.5, 1, 12);
+		//ConeSummit c = new ConeSummit(1.5, 1, 12);
+		ConeFrustum c = new ConeFrustum(2, 1.8, 1, 12);
+		c.setColor(Color.CYAN);		
+		world.addElement(c);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
@@ -93,20 +96,21 @@ public class TestRasterizer9 {
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+//		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
 
-//		System.out.println("********* Rendering...");
-//		int nb_images = 240;
-//		for (int i=0; i<=3*nb_images; i++) {
-//			double a = Math.PI*2*(double)i/(double)nb_images;
-//			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
-//			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
-//			renderer.render();
-//		}
+		System.out.println("********* Rendering...");
+		int nb_images = 240;
+		for (int i=0; i<=3*nb_images; i++) {
+			double a = Math.PI*2*(double)i/(double)nb_images;
+			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
+			//System.out.println("Rotation "+i+"  - Eye: "+eye);
+			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			renderer.render();
+		}
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}
