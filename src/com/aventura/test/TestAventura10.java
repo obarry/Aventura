@@ -134,7 +134,7 @@ public class TestAventura10 {
 	}
 
 	public Lighting createLight() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,2,3), 1);
 		Lighting lighting = new Lighting(dl);
 		return lighting;
 	}
@@ -163,7 +163,7 @@ public class TestAventura10 {
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);

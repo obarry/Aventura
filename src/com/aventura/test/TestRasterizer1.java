@@ -1,6 +1,7 @@
-package com.aventura.engine;
+package com.aventura.test;
 
 import com.aventura.context.GraphicContext;
+import com.aventura.engine.Rasterizer;
 import com.aventura.tools.tracing.Tracer;
 
 public class TestRasterizer1 {

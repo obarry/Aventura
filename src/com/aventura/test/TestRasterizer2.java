@@ -1,4 +1,4 @@
-package com.aventura.engine;
+package com.aventura.test;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -12,26 +12,27 @@ import javax.swing.WindowConstants;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
-import com.aventura.math.vector.Vector3;
+import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
-import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.world.Sphere;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Triangle;
+import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-public class TestRasterizer3 {
-	
+public class TestRasterizer2 {
+
 	// View to be displayed
 	private SwingView view;
 
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 3");
+		JFrame frame = new JFrame("Test Rasterizer 2");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -44,7 +45,7 @@ public class TestRasterizer3 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer3.this.view.draw(graph);
+		    	TestRasterizer2.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -69,55 +70,57 @@ public class TestRasterizer3 {
 
 		// Camera
 		Vector4 eye = new Vector4(8,3,2,1);
-		Vector4 poi = new Vector4(1,0,0,1);
+		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestRasterizer3 test = new TestRasterizer3();
+		TestRasterizer2 test = new TestRasterizer2();
 		
 		System.out.println("********* Creating World");
-		
 		World world = new World();
-		Sphere s = new Sphere(1, 12);
+		Element e = new Element();
+		Vertex v1 = new Vertex(new Vector4(1,0,0,1));
+		Vertex v2 = new Vertex(new Vector4(0,1,0,1));
+		Vertex v3 = new Vertex(new Vector4(0,0,1,1));
+		Triangle t1 = new Triangle(v1, v2, v3);
+		t1.setColor(Color.ORANGE);
+		e.addTriangle(t1);
 		
-		// Set alternate colors to triangles
-		Color color0 = Color.ORANGE;
-		Color color1 = Color.DARK_GRAY;
-		//Color color1 = Color.ORANGE;
-		Color color;
-		int ci =0;
-		for (int i=0; i<s.getNbOfTriangles(); i++) {
-			if (ci==0) color = color0; else color = color1;
-			s.getTriangle(i).setColor(color);
-			ci++;
-			if (ci>1) ci = 0;
-		}
+		Vertex v4 = new Vertex(new Vector4(0,0,0,1));
+		Vertex v5 = new Vertex(new Vector4(1,1,1,1));
+		Vertex v6 = new Vertex(new Vector4(1,1,0,1));
+		Triangle t2 = new Triangle(v4, v5, v6);
+		t2.setColor(Color.MAGENTA);
+		e.addTriangle(t2);
 		
-		world.addElement(s);
+		Vertex v7 = new Vertex(new Vector4(0,0,0,1));
+		Vertex v8 = new Vertex(new Vector4(0,2,0.5,1));
+		Vertex v9 = new Vertex(new Vector4(2,0,0.5,1));
+		Triangle t3 = new Triangle(v7, v8, v9);
+		t3.setColor(Color.GREEN);
+		e.addTriangle(t3);
+				
+		world.addElement(e);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-1,-1), 1);
-		Lighting light = new Lighting(dl);
+		Lighting light = new Lighting();
 		
-		
-		GraphicContext gContext = new GraphicContext(0.8, 0.4512, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
 
-		System.out.println("********* Rendering...");
-		int nb_images = 240;
-		for (int i=0; i<=3*nb_images; i++) {
+		int nb_images = 360;
+		for (int i=0; i<=1.9*nb_images; i++) {
 			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
+			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
 			//System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();

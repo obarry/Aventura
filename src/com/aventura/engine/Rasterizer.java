@@ -212,10 +212,6 @@ public class Rasterizer {
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
-			// Calculate the 3 colors of the 3 Vertex normals
-//			c1 = computeShadedColor(col, to.getV1().getNormal());
-//			c2 = computeShadedColor(col, to.getV2().getNormal());
-//			c3 = computeShadedColor(col, to.getV3().getNormal());
 			
 			// As p1, p2 and p3 may be reshuffled and sorted, this is meaningless to calculate the 3 colors at this stage so we postpone
 			// the calculation to later, which increases the complexity and readibility of the algorithm
@@ -223,7 +219,6 @@ public class Rasterizer {
 			// TODO Further design improvements will allow to simplify this processing by designing direct link between tf and to
 			// (instead of carrying both triangles) e.g. by consolidating at Vertex level both the initial and projected position Vectors
 			// This will also help to reduce the memory usage by duplicating position Vectors only (and not the full Vertices)
-			
 		}
 
 	    // Lets define p1, p2, p3 in order to always have this order on screen p1, p2 & p3
@@ -231,17 +226,21 @@ public class Rasterizer {
 	    // then p2 between p1 & p3 (or same level if p2 and p3 on same ordinate)
 		
 		Vector4 p1, p2, p3;
+		boolean vertexNormal = true; // Default
 
 		p1 = tf.getV1().getPosition();
 		p2 = tf.getV2().getPosition();
 		p3 = tf.getV3().getPosition();
+		
+		// If all vertices have normals, set vertexNormal to true else false
+		vertexNormal = (to.getV1().getNormal()!=null ? true : false) && (to.getV2().getNormal()!=null ? true : false) && (to.getV3().getNormal()!=null ? true : false);
 		
 		if (p2.get3DY()<p1.get3DY()) { // p2 lower than p1
 			if (p3.get3DY()<p2.get3DY()) { // p3 lower than p2
 				p1 = tf.getV3().getPosition();
 				p2 = tf.getV2().getPosition();
 				p3 = tf.getV1().getPosition();
-				if (interpolate) {
+				if (interpolate && vertexNormal) {
 					// Calculate the 3 colors of the 3 Vertex normals
 					c1 = computeShadedColor(col, to.getV3().getNormal());
 					c2 = computeShadedColor(col, to.getV2().getNormal());
@@ -252,7 +251,7 @@ public class Rasterizer {
 					p1 = tf.getV2().getPosition();
 					p2 = tf.getV3().getPosition();
 					p3 = tf.getV1().getPosition();
-					if (interpolate) {
+					if (interpolate && vertexNormal) {
 						// Calculate the 3 colors of the 3 Vertex normals
 						c1 = computeShadedColor(col, to.getV2().getNormal());
 						c2 = computeShadedColor(col, to.getV3().getNormal());
@@ -262,7 +261,7 @@ public class Rasterizer {
 					p1 = tf.getV2().getPosition();
 					p2 = tf.getV1().getPosition();
 					p3 = tf.getV3().getPosition();
-					if (interpolate) {
+					if (interpolate && vertexNormal) {
 						// Calculate the 3 colors of the 3 Vertex normals
 						c1 = computeShadedColor(col, to.getV2().getNormal());
 						c2 = computeShadedColor(col, to.getV1().getNormal());
@@ -275,7 +274,7 @@ public class Rasterizer {
 				p1 = tf.getV3().getPosition();
 				p2 = tf.getV1().getPosition();
 				p3 = tf.getV2().getPosition();
-				if (interpolate) {
+				if (interpolate && vertexNormal) {
 					// Calculate the 3 colors of the 3 Vertex normals
 					c1 = computeShadedColor(col, to.getV3().getNormal());
 					c2 = computeShadedColor(col, to.getV1().getNormal());
@@ -286,7 +285,7 @@ public class Rasterizer {
 					// No change for p1
 					p2 = tf.getV3().getPosition();
 					p3 = tf.getV2().getPosition();
-					if (interpolate) {
+					if (interpolate && vertexNormal) {
 						// Calculate the 3 colors of the 3 Vertex normals
 						c1 = computeShadedColor(col, to.getV1().getNormal());
 						c2 = computeShadedColor(col, to.getV3().getNormal());
@@ -294,7 +293,7 @@ public class Rasterizer {
 					}
 				} else {
 					// Else keep p1, p2 and p3 as defined
-					if (interpolate) {
+					if (interpolate && vertexNormal) {
 						// Calculate the 3 colors of the 3 Vertex normals
 						c1 = computeShadedColor(col, to.getV1().getNormal());
 						c2 = computeShadedColor(col, to.getV2().getNormal());
@@ -338,9 +337,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                rasterizeScanLine(y, p1, p3, p1, p2, c1, c3, c1, c2, col, interpolate);
+	                rasterizeScanLine(y, p1, p3, p1, p2, c1, c3, c1, c2, col, interpolate && vertexNormal);
 	            } else {
-	                rasterizeScanLine(y, p1, p3, p2, p3, c1, c3, c2, c3, col, interpolate);
+	                rasterizeScanLine(y, p1, p3, p2, p3, c1, c3, c2, c3, col, interpolate && vertexNormal);
 	            }
 	        }
 
@@ -361,9 +360,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                rasterizeScanLine(y, p1, p2, p1, p3, c1, c2, c1, c3, col, interpolate);
+	                rasterizeScanLine(y, p1, p2, p1, p3, c1, c2, c1, c3, col, interpolate && vertexNormal);
 	            } else {
-	                rasterizeScanLine(y, p2, p3, p1, p3, c2, c3, c1, c3, col, interpolate);
+	                rasterizeScanLine(y, p2, p3, p1, p3, c2, c3, c1, c3, col, interpolate && vertexNormal);
 	            }
 	        }
 	    }
@@ -401,31 +400,6 @@ public class Rasterizer {
 	        drawPoint(x, y, z, c);
 	    }
 	}
-
-//	protected void rasterizeScanLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color c) {
-//		
-//	    // Thanks to current Y, we can compute the gradient to compute others values like
-//	    // the starting X (sx) and ending X (ex) to draw between
-//	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
-//		
-//	    double gradient1 = yScreen(pa) != yScreen(pb) ? (y - yScreen(pa)) / (yScreen(pb) - yScreen(pa)) : 1;
-//	    double gradient2 = yScreen(pc) != yScreen(pd) ? (y - yScreen(pc)) / (yScreen(pd) - yScreen(pc)) : 1;
-//
-//	    int sx = (int)Tools.interpolate(xScreen(pa), xScreen(pb), gradient1);
-//	    int ex = (int)Tools.interpolate(xScreen(pc), xScreen(pd), gradient2);
-//
-//	    // starting Z & ending Z
-//	    double z1 = Tools.interpolate(pa.get3DZ(), pb.get3DZ(), gradient1);
-//	    double z2 = Tools.interpolate(pc.get3DZ(), pd.get3DZ(), gradient2);
-//	    
-//	    // drawing a line from left (sx) to right (ex) 
-//	    for (int x = sx; x < ex; x++) {
-//	        double gradient = (x-sx)/(double)(ex-sx);
-//
-//	        double z = Tools.interpolate(z1, z2, gradient);
-//	        drawPoint(x, y, z, c);
-//	    }
-//	}
 
 	/**
 	 * Draw point with zBuffer management
@@ -507,7 +481,7 @@ public class Rasterizer {
 			if (lighting.hasAmbient()) {
 				ca = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
 			} else {
-				ca = Color.BLACK;
+				ca = Color.BLACK; // No Ambient light
 			}
 			// Directional light
 			if (lighting.hasDirectional()) {
@@ -515,13 +489,14 @@ public class Rasterizer {
 				float dot = (float)(lighting.getDirectionalLight().getLightVector(null).normalize()).dot(normal.normalize());
 				cd = ColorTools.multColor(baseCol, dot);
 			} else {
-				cd = Color.BLACK;
+				cd = Color.BLACK; // No Directional light
 			}
 			
 		} else { // If no lighting, return base color
 			return baseCol;
 		}
 		
+		// returned color is an addition of Ambient and Directional lights
 		return ColorTools.addColors(ca, cd);
 	}
 

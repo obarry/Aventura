@@ -1,4 +1,4 @@
-package com.aventura.engine;
+package com.aventura.test;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -12,6 +12,7 @@ import javax.swing.WindowConstants;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
+import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
