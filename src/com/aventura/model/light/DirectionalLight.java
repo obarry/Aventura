@@ -1,5 +1,8 @@
 package com.aventura.model.light;
 
+import java.awt.Color;
+
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
 /**
@@ -29,7 +32,7 @@ import com.aventura.math.vector.Vector4;
  * 
  * Directional Light also known as an infinite light source, radiates light in a single direction
  * from infinitely far away e.g. sun, whose rays can be considered parallel.
- * Since they have no position in space, directional lights have infinite range and the intensity
+ * Since they have no position in space, directional directional have infinite range and the intensity
  * of light they radiate does not diminish over distance.
  *
  * @author Bricolage Olivier
@@ -39,25 +42,30 @@ import com.aventura.math.vector.Vector4;
 
 public class DirectionalLight extends Light {
 	
-	protected Vector4 direction;
-	protected double intensity;
+	protected Vector3 direction;
 	
-	public DirectionalLight(Vector4 direction, double intensity) {
+	public DirectionalLight(Vector3 direction, float intensity) {
 		super();
 		this.direction = direction;
 		this.intensity = intensity;
 	}
 
 	@Override
-	public Vector4 getLight(Vector4 point) {
+	public Vector3 getLightVector(Vector4 point) {
 		// Same direction vector in all world space by definition of Directional Light
 		return direction;
 	}
 
 	@Override
-	public double getIntensity(Vector4 point) {
+	public float getIntensity(Vector4 point) {
 		// Same intensity in any point of world space as Directional light have infinite range
 		return intensity;
+	}
+
+	@Override
+	public Color getLightColor(Vector4 point) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

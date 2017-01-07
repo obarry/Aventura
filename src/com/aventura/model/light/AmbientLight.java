@@ -1,6 +1,10 @@
 package com.aventura.model.light;
 
+import java.awt.Color;
+
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.tools.color.ColorTools;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -36,24 +40,28 @@ import com.aventura.math.vector.Vector4;
  */
 
 public class AmbientLight extends Light {
-	
-	protected double intensity;
-	
-	public AmbientLight(double intensity) {
+		
+	public AmbientLight(float intensity) {
 		super();
 		this.intensity = intensity;
 	}
 
 	@Override
-	public Vector4 getLight(Vector4 point) {
+	public Vector3 getLightVector(Vector4 point) {
 		// No direction by definition of Ambient Light
-		return new Vector4(Vector4.ZERO_VECTOR);
+		return new Vector3(Vector3.ZERO_VECTOR);
 	}
 
 	@Override
-	public double getIntensity(Vector4 point) {
+	public float getIntensity(Vector4 point) {
 		// Same intensity of light at any point of space by definition of ambient light
 		return intensity;
+	}
+
+	@Override
+	public Color getLightColor(Vector4 point) {
+		// TODO Auto-generated method stub
+		return ColorTools.multColor(lightColor, intensity);
 	}
 
 }

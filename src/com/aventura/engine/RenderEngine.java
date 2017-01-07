@@ -110,7 +110,7 @@ public class RenderEngine {
 	 * 
 	 * 
 	 * @param world the world to renderContext
-	 * @param lighting the lights lighting the world
+	 * @param lighting the directional lighting the world
 	 * @param camera the camera watching the world
 	 * @param renderContext the renderContext context containing parameters to renderContext the scene
 	 * @param graphicContext the graphicContext context to contain parameters to display the scene
@@ -417,7 +417,8 @@ public class RenderEngine {
 		// Set the Model Matrix to IDENTITY (no translation)
 		transformation.setModel(Matrix4.IDENTITY);
 		transformation.computeTransformation();
-		Vertex v = new Vertex(lighting.getAverageDirectionalLightVector());
+		//Vertex v = new Vertex(lighting.getDirectionalLight().getLightVector(null));
+		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVector(null));
 		Vertex o = new Vertex(0,0,0);
 		Line line = new Line(o, v);
 		Line l = transformation.transform(line);

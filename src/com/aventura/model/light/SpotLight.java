@@ -1,6 +1,10 @@
 package com.aventura.model.light;
 
+import java.awt.Color;
+
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -39,15 +43,21 @@ import com.aventura.math.vector.Vector4;
 public class SpotLight extends Light {
 
 	@Override
-	public Vector4 getLight(Vector4 point) {
+	public Vector3 getLightVector(Vector4 point) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public double getIntensity(Vector4 point) {
+	public float getIntensity(Vector4 point) {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public Color getLightColor(Vector4 point) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

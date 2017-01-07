@@ -12,8 +12,10 @@ import javax.swing.WindowConstants;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.ConeFrustum;
@@ -79,22 +81,23 @@ public class TestRasterizer9 {
 		World world = new World();
 		//Cylinder c = new Cylinder(1.5, 1, 12);
 		//ConeSummit c = new ConeSummit(1.5, 1, 2);
-		ConeFrustum c = new ConeFrustum(2, 1.5, 1, 24);
+		ConeFrustum c = new ConeFrustum(2, 1.5, 1, 48);
 		c.setColor(Color.CYAN);		
 		world.addElement(c);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		Lighting light = new Lighting();
-		DirectionalLight dl = new DirectionalLight(new Vector4(1,1,1,0), 1);
-		light.addLight(dl);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
+		AmbientLight al = new AmbientLight(0.2f);
+		Lighting light = new Lighting(dl, al);
 		
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.4512, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
+//		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 //		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 		

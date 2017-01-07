@@ -490,45 +490,44 @@ public class Rasterizer {
 		return true;
 	}
 	
-	protected Color computeShadedColor(Color baseCol, Vector3 normal) {
-		// Compute the dot product
-		float dot = (float)lighting.getAverageDirectionalLightVector().normalize().dot(normal.normalize());
-		return ColorTools.multColor(baseCol, dot);
+	/**
+	 * This method calculates the Color for a given normal and a base color of the surface of the Element
+	 * It interfaces with the Lighting object to get the ambient, directional and other types of colors
+	 * @param baseCol of the surface in this area
+	 * @param normal of the surface in this area
+	 * @return
+	 */
+	protected Color computeShadedColor(Color baseCol, Vector3 normal) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+		
+		Color ca = null, cd = null;
+		
+		if (lighting != null) { // If lighting exists
+			
+			// Ambient light
+			if (lighting.hasAmbient()) {
+				ca = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
+			} else {
+				ca = Color.BLACK;
+			}
+			// Directional light
+			if (lighting.hasDirectional()) {
+				// Compute the dot product
+				float dot = (float)(lighting.getDirectionalLight().getLightVector(null).normalize()).dot(normal.normalize());
+				cd = ColorTools.multColor(baseCol, dot);
+			} else {
+				cd = Color.BLACK;
+			}
+			
+		} else { // If no lighting, return base color
+			return baseCol;
+		}
+		
+		return ColorTools.addColors(ca, cd);
 	}
 
-	
-	//public void rasterizeTriangle(Triangle t, Color c) {
-	
-	// For each pixel(xpix, ypix) of the projected Triangle corresponding to a Position(xpos, ypos, zpos) on the triangle surface in 3D world space
-	// Use bressenham for this rasterization
-	// The below may need to be factored in a separate rasterizePixel method to be called from different parts of the bressenham algo
-	
-	// z = position.getZ()   // (zpos)
-	
-	// if z < zBuffer(xpix, ypix)
-	
-	// then 
-	
-	// Calculate Normal (by interpolation and based on Normal at Triangle level or at Vertex level
-	// Calculate Lighting
-	// Calculate Color from Normal
-	// Calculate Color from Distance
-	// Calculate etc.
-	// ...
-	
-	// draw pixel with calculated Color
-	
-	// zBuffer(xpix, ypix) = z    // Update zBuffer with new value
-	// Caution: if far plane is -1 (TBC), then the direction of the test z < zBuffer may need to be adapted
-	
-	// else
-	
-	// nothing to do
-	
-	// endif
-	
-	//}
-
+	//
+	// **** BRESSENHAM ***
+	//
 
 	protected void bressenham_int(int xi, int yi, int xf, int yf) {
 		int dx, dy, i, xinc, yinc, cumul, x, y;
@@ -609,4 +608,9 @@ public class Rasterizer {
 	protected void allume_pixel(int x, int y) {
 		view.drawPixel(x, y);
 	}
+	
+	//
+	// **** END BRESSENHAM ***
+	//
+
 }

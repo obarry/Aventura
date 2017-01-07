@@ -1,10 +1,5 @@
 package com.aventura.model.light;
 
-import java.util.ArrayList;
-
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -38,53 +33,81 @@ import com.aventura.math.vector.Vector4;
 
 public class Lighting {
 	
-	protected ArrayList<Light> lights; // There can be multiple sources of light
+	protected AmbientLight ambient;
+	protected DirectionalLight directional;
+	//protected ArrayList<Light> directional; // There can be multiple sources of light
 	// TODO To clarify if an average vector makes sense by addition of different Vectors which can neutralize each others instead of cumulating
-	protected Vector3 averageDirectionalLightVector = null;
+//	protected Vector3 averageDirectionalLightVector = null;
 	
 	public Lighting() {
-		lights = new ArrayList<Light>();
+//		directional = new ArrayList<Light>();
 	}
 	
-	public Lighting(Light light) {
-		lights.add(light);
-		if (light.getClass() == DirectionalLight.class) {
-			// No matter the point, this is the same Vector
-			averageDirectionalLightVector = light.getLight(null).getVector3();
-		}
+	public Lighting(DirectionalLight directional) {
+		this.directional = directional;
+//		this.directional.add(directional);
+//		if (directional.getClass() == DirectionalLight.class) {
+//			// No matter the point, this is the same Vector
+//			averageDirectionalLightVector = directional.getLightVector(null).getVector3();
+//		}
 	}
 	
-	public void addLight(Light light) {
-		lights.add(light);
-		int n=0;
-		Vector4 v = null;
-		for (int i=0; i<lights.size(); i++) {
-			if (lights.get(i).getClass() == DirectionalLight.class) {
-				// No matter the point, this is the same Vector
-				if (v==null) {
-					v = new Vector4(lights.get(i).getLight(null));
-				} else { 
-					v.plusEquals(lights.get(i).getLight(null));
-				}
-				n++;
-			}
-		}
-		// Average -> divide by number of vectors
-		// TODO Should we divide?
-		averageDirectionalLightVector = v.times(1/(double)n).getVector3();
+	public Lighting(DirectionalLight directional, AmbientLight ambient) {
+		this.ambient = ambient;
+		this.directional = directional;
+//		this.directional.add(directional);
+//		if (directional.getClass() == DirectionalLight.class) {
+//			// No matter the point, this is the same Vector
+//			averageDirectionalLightVector = directional.getLightVector(null).getVector3();
+//		}
 	}
 	
-	public Vector4[] getLightVectors(Vector4 point) {
-		// Create a table of vector that is the result of all lights at this point
-		Vector4[] lightVectors = new Vector4[lights.size()];
-		for (int i=0; i<lights.size(); i++) {
-				lightVectors[i]=lights.get(i).getLight(point);
-		}
-		return lightVectors;
+	public boolean hasAmbient() {
+		return ambient!=null ? true : false;
 	}
 	
-	public Vector3 getAverageDirectionalLightVector() {
-		return averageDirectionalLightVector;
+	public boolean hasDirectional() {
+		return directional!=null ? true : false;
+	}
+	
+//	public void addLight(Light light) {
+//		directional.add(light);
+//		int n=0;
+//		Vector4 v = null;
+//		for (int i=0; i<directional.size(); i++) {
+//			if (directional.get(i).getClass() == DirectionalLight.class) {
+//				// No matter the point, this is the same Vector
+//				if (v==null) {
+//					v = new Vector4(directional.get(i).getLightVector(null));
+//				} else { 
+//					v.plusEquals(directional.get(i).getLightVector(null));
+//				}
+//				n++;
+//			}
+//		}
+//		// Average -> divide by number of vectors
+//		// TODO Should we divide?
+//		averageDirectionalLightVector = v.times(1/(double)n).getVector3();
+//	}
+	
+//	public Vector4[] getLightVectors(Vector4 point) {
+//		// Create a table of vector that is the result of all directional at this point
+//		Vector4[] lightVectors = new Vector4[directional.size()];
+//		for (int i=0; i<directional.size(); i++) {
+//				lightVectors[i]=directional.get(i).getLightVector(point);
+//		}
+//		return lightVectors;
+//	}
+	
+//	public Vector3 getAverageDirectionalLightVector() {
+//		return averageDirectionalLightVector;
+//	}
+	
+	public AmbientLight getAmbientLight() {
+		return ambient;
 	}
 
+	public DirectionalLight getDirectionalLight() {
+		return directional;
+	}
 }

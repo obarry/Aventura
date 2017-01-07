@@ -134,9 +134,8 @@ public class TestAventura10 {
 	}
 
 	public Lighting createLight() {
-		Lighting lighting = new Lighting();
-		DirectionalLight dl = new DirectionalLight(new Vector4(1,1,1,0), 1);
-		lighting.addLight(dl);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
+		Lighting lighting = new Lighting(dl);
 		return lighting;
 	}
 

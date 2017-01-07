@@ -12,6 +12,7 @@ import javax.swing.WindowConstants;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.DirectionalLight;
@@ -83,9 +84,8 @@ public class TestRasterizer8 {
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		Lighting light = new Lighting();
-		DirectionalLight dl = new DirectionalLight(new Vector4(1,1,1,0), 1);
-		light.addLight(dl);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
+		Lighting light = new Lighting(dl);
 		
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.4512, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);

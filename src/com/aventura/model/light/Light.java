@@ -1,6 +1,7 @@
 package com.aventura.model.light;
 
 import java.awt.Color;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
 /**
@@ -35,18 +36,23 @@ import com.aventura.math.vector.Vector4;
 
 public abstract class Light {
 	
-	protected static Color DEFAULT_LIGHT_COLOR = Color.WHITE;
+	public static Color DEFAULT_LIGHT_COLOR = Color.WHITE;
 	
-	protected static Color lightColor = DEFAULT_LIGHT_COLOR;
+	protected Color lightColor = DEFAULT_LIGHT_COLOR;
+	protected float intensity;
+
 	
 	// Get light vector (or null vector for ambient light) at a given point of world space
-	public abstract Vector4 getLight(Vector4 point);
+	public abstract Vector3 getLightVector(Vector4 point);
 	
 	// Get intensity of light at a given point of world space
-	public abstract double getIntensity(Vector4 point);
-	
+	public abstract float getIntensity(Vector4 point);
+		
 	// Get color of light
-	public Color getColor() {
+	public abstract Color getLightColor(Vector4 point);
+
+	// Get color of light
+	public Color getBaseLightColor() {
 		return lightColor;
 	}
 
