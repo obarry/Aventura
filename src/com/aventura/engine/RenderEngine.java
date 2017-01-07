@@ -58,12 +58,12 @@ import com.aventura.view.View;
  *                					  |						  |				+---------------------+
  *                   				  |						  +------------>|      Rasterizer     |-----------------+
  *                					  |						  |				+---------------------+				    v
- *     +---------------------+		  |		+---------------------+										 +---------------------+
- *     |      Lighting       | <------+-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
- *     +---------------------+		  |		+---------------------+ 									 +---------------------+
- *                					  				   |	  |													    |
- *                   				  |				   |	  |				+---------------------+					|
- *                	 				  				   |	  +------------>|   GraphicContext    |<----------------+
+ *     +---------------------+		  |		+---------------------+						|				 +---------------------+
+ *     |      Lighting       | <------+-----|    RenderEngine     |- - - - - - - - - - -|- - - - - - - ->|        View         |
+ *     +---------------------+		  |		+---------------------+ 					|				 +---------------------+
+ *                					  				   |	  |							v						    |
+ *                   				  |				   |	  				+---------------------+					|
+ *                	 				  				   |	  + - - - - - ->|   GraphicContext    |<----------------+
  *     						          |        		   v					+---------------------+
  *     +---------------------+ 		        +---------------------+
  *     |       Camera        | <------+-----|      ModelView      |
@@ -115,18 +115,18 @@ public class RenderEngine {
 	 * @param renderContext the renderContext context containing parameters to renderContext the scene
 	 * @param graphicContext the graphicContext context to contain parameters to display the scene
 	 */
-	public RenderEngine(World world, Lighting light, Camera camera, RenderContext render, GraphicContext graphic) {
+	public RenderEngine(World world, Lighting lighting, Camera camera, RenderContext render, GraphicContext graphic) {
 		this.renderContext = render;
 		this.graphicContext = graphic;
 		this.world = world;
-		this.lighting = light;
+		this.lighting = lighting;
 		//this.camera = camera;
 		
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
 		this.transformation = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
 		
 		// Delegate rasterization tasks to a dedicated engine
-		this.rasterizer = new Rasterizer(graphic, light);
+		this.rasterizer = new Rasterizer(graphic, lighting);
 	}
 		
 	public void setView(View v) {
