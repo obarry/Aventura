@@ -68,7 +68,7 @@ public class TestRasterizer9 {
 //		Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(6,-4,-2,1);
+		Vector4 eye = new Vector4(6,-2,0,1);
 		Vector4 poi = new Vector4(1,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
@@ -78,8 +78,8 @@ public class TestRasterizer9 {
 		
 		World world = new World();
 		//Cylinder c = new Cylinder(1.5, 1, 12);
-		//ConeSummit c = new ConeSummit(1.5, 1, 12);
-		ConeFrustum c = new ConeFrustum(2, 1.8, 1, 12);
+		//ConeSummit c = new ConeSummit(1.5, 1, 2);
+		ConeFrustum c = new ConeFrustum(2, 1.5, 1, 24);
 		c.setColor(Color.CYAN);		
 		world.addElement(c);
 		

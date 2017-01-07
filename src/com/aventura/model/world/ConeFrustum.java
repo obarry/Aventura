@@ -45,8 +45,7 @@ public class ConeFrustum extends Element {
 	
 	protected Vertex[][] vertices;
 	protected Vertex summit;
-	double cone_height;
-	double frustum_height;
+	double cone_height, frustum_height, mid_height;
 	double ray;
 	int half_seg;
 	protected Vector4 center, top_center, bottom_center;
@@ -63,6 +62,7 @@ public class ConeFrustum extends Element {
 		this.ray = ray;
 		this.cone_height = cone_height;
 		this.frustum_height = frustum_height;
+		this.mid_height = frustum_height/2;
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
 		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
@@ -83,6 +83,7 @@ public class ConeFrustum extends Element {
 		this.ray = ray;
 		this.cone_height = cone_height;
 		this.frustum_height = frustum_height;
+		this.mid_height = frustum_height/2;
 		this.half_seg = half_seg;
 		this.center = new Vector4(center);
 		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
@@ -103,6 +104,7 @@ public class ConeFrustum extends Element {
 		this.ray = ray;
 		this.cone_height = cone_height;
 		this.frustum_height = frustum_height;
+		this.mid_height = frustum_height/2;
 		this.half_seg = half_seg;
 		this.center = center;
 		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
@@ -113,8 +115,9 @@ public class ConeFrustum extends Element {
 	
 	protected void createConeFrustum() {
 		
-		vertices = new Vertex[half_seg*2][2]; // (n) x 2 vertices on each circles
+		vertices = new Vertex[half_seg*2][3]; // (n) x 3 vertices on each circles
 		double alpha = Math.PI/half_seg;
+		double beta = alpha/2;
 		
 		// Create vertices
 		
@@ -127,33 +130,57 @@ public class ConeFrustum extends Element {
 			double sina = Math.sin(alpha*i);
 			double cosa = Math.cos(alpha*i);
 			
-			// Bottom circle of the cylinder
+			// Bottom circle of the cone
 			vertices[i][0] = new Vertex(new Vector4(ray*cosa, ray*sina, -cone_height/2, 1).plus(center));
 			
-			// Top circle of the cylinder
+			// Top circle of the cone
 			double ratio = (cone_height - frustum_height)/cone_height;
-			vertices[i][1] = new Vertex(new Vector4(ratio*ray*cosa, ratio*ray*sina, (frustum_height-(cone_height/2)), 1).plus(center));
+			vertices[i][2] = new Vertex(new Vector4(ratio*ray*cosa, ratio*ray*sina, (frustum_height-(cone_height/2)), 1).plus(center));
+			
+			// Middle circle of the cylinder
+			double sinb = Math.sin(alpha*i+beta);
+			double cosb = Math.cos(alpha*i+beta);
+			ratio = (cone_height - mid_height)/cone_height;
+			vertices[i][1] = new Vertex(new Vector4(ratio*ray*cosb, ratio*ray*sinb, (mid_height-(cone_height/2)), 1).plus(center));
 		}
 		
 		// Create Triangles
-		Triangle t1, t2; // local variable
+		
+		// V[i][2] +---+ V[i+1][2]
+		//        /| T3|\
+		//       /  | |  \
+		//      / T2 + T4 \ V[i][1]
+		//     /   /   \   \
+		//    / /   T1   \  \
+		//    +-------------+
+		// V[i][0]      V[i+1][0]
+		
+		Triangle t1, t2, t3, t4; // local variable
 		for (int i=0; i<half_seg*2-1; i++) {
 			
-			// For each face of the cylinder, create 2 Triangles
+			// For each face of the cone, create 4 triangles
 			t1 = new Triangle(vertices[i][0], vertices[i+1][0], vertices[i][1]);
-			t2 = new Triangle(vertices[i][1], vertices[i+1][0], vertices[i+1][1]);
-			
-			// Add triangle to the Element
+			t2 = new Triangle(vertices[i][0], vertices[i][1], vertices[i][2]);
+			t3 = new Triangle(vertices[i][2], vertices[i][1], vertices[i+1][2]);
+			t4 = new Triangle(vertices[i+1][0], vertices[i+1][2], vertices[i][1]);
+
+			// Add triangles to Element
 			this.addTriangle(t1);			
 			this.addTriangle(t2);			
+			this.addTriangle(t3);			
+			this.addTriangle(t4);			
 		}
-		// Create 2 last triangles
+		// Create 4 last triangles (i->half_seg*2-1, i+1->0)
 		t1 = new Triangle(vertices[half_seg*2-1][0], vertices[0][0], vertices[half_seg*2-1][1]);
-		t2 = new Triangle(vertices[half_seg*2-1][1], vertices[0][0], vertices[0][1]);
+		t2 = new Triangle(vertices[half_seg*2-1][0], vertices[half_seg*2-1][1], vertices[half_seg*2-1][2]);
+		t3 = new Triangle(vertices[half_seg*2-1][2], vertices[half_seg*2-1][1], vertices[0][2]);
+		t4 = new Triangle(vertices[0][0], vertices[0][2], vertices[half_seg*2-1][1]);
 		
 		// Add last triangles
 		this.addTriangle(t1);			
 		this.addTriangle(t2);			
+		this.addTriangle(t3);			
+		this.addTriangle(t4);			
 	}
 
 	@Override
@@ -163,12 +190,22 @@ public class ConeFrustum extends Element {
 		// Create normals of vertices
 		for (int i=0; i<half_seg*2; i++) {
 			
-			// For each bottom Vertex, calculate a ray vector that is orthogonal to the slope of the cone
+			// For each bottom and top Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
 			u = (summit.getPosition().minus(bottom_center)).times(vertices[i][0].getPosition().minus(bottom_center));
 			n = (vertices[i][0].getPosition().minus(summit.getPosition())).times(u);
 			n.normalize();
 			vertices[i][0].setNormal(n.getVector3());
+			vertices[i][2].setNormal(n.getVector3());
+			
+			// For each middle Vertex
+			if (i==half_seg*2-1) { // Last one
+				n = vertices[0][2].getPosition().minus(vertices[half_seg*2-1][0].getPosition()).times(vertices[half_seg*2-1][2].getPosition().minus(vertices[0][0].getPosition()));				
+				n.normalize();
+			} else {
+				n = vertices[i+1][2].getPosition().minus(vertices[i][0].getPosition()).times(vertices[i][2].getPosition().minus(vertices[i+1][0].getPosition()));
+			}
+			n.normalize();
 			vertices[i][1].setNormal(n.getVector3());
 		}	
 	}
