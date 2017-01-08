@@ -54,7 +54,7 @@ public class Vertex {
 	public Vertex(double x, double y, double z) {
 		position = new Vector4(x, y, z, 1);
 	}
-	
+		
 	public Vertex(Vector4 p) {
 		position = p;
 		normal = null;

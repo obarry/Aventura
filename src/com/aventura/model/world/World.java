@@ -93,6 +93,4 @@ public class World {
 		return backgroundColor;
 	}
 
-
-
 }
