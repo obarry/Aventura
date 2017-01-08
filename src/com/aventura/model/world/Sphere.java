@@ -7,7 +7,7 @@ import com.aventura.math.vector.Vector4;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ import com.aventura.math.vector.Vector4;
  * For generic triangle normal calculation purpose based on cross product of the 2 segments P1P2 ^ P1P3  of the triangle
  * <P1 P2 P3>, it is important to create triangles so that triangle normals target the outside of the Sphere. 
  * 
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since May 2016
  */
 public class Sphere extends Element {

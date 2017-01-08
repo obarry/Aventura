@@ -10,7 +10,7 @@ import com.aventura.math.vector.Matrix4;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -111,7 +111,7 @@ import com.aventura.math.vector.Matrix4;
  *      +-------------+
  *  
  *
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since March 2016
  *
  */

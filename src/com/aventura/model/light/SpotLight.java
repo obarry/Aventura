@@ -10,7 +10,7 @@ import com.aventura.math.vector.Vector4;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ import com.aventura.math.vector.Vector4;
  * The intensity of a spot light is attenuated over distance in the same way that it is for a point light
  * and is also attenuated by another factor called the spot light effect.
  *
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since July 2016
  * 
  */
