@@ -9,7 +9,7 @@ import com.aventura.tools.tracing.Tracer;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ import com.aventura.tools.tracing.Tracer;
  * 
  * A Vector 4 in 3D Graphics is a Vector 3 (x,y,z) + w, a fourth component that represent the point information: if null this is a Vector, else a Point
  * 
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since May 2016
  *
  */

@@ -18,7 +18,7 @@ import com.aventura.view.View;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ import com.aventura.view.View;
  * It also behaves according to the provided parameters e.g. in the GraphicContext
  * 
  * 
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since November 2016
  *
  */
@@ -226,21 +226,17 @@ public class Rasterizer {
 	    // then p2 between p1 & p3 (or same level if p2 and p3 on same ordinate)
 		
 		Vector4 p1, p2, p3;
-		boolean vertexNormal = true; // Default
 
 		p1 = tf.getV1().getPosition();
 		p2 = tf.getV2().getPosition();
 		p3 = tf.getV3().getPosition();
-		
-		// If all vertices have normals, set vertexNormal to true else false
-		vertexNormal = (to.getV1().getNormal()!=null ? true : false) && (to.getV2().getNormal()!=null ? true : false) && (to.getV3().getNormal()!=null ? true : false);
-		
+				
 		if (p2.get3DY()<p1.get3DY()) { // p2 lower than p1
 			if (p3.get3DY()<p2.get3DY()) { // p3 lower than p2
 				p1 = tf.getV3().getPosition();
 				p2 = tf.getV2().getPosition();
 				p3 = tf.getV1().getPosition();
-				if (interpolate && vertexNormal) {
+				if (interpolate && !to.isTriangleNormal()) {
 					// Calculate the 3 colors of the 3 Vertex normals
 					c1 = computeShadedColor(col, to.getV3().getNormal());
 					c2 = computeShadedColor(col, to.getV2().getNormal());
@@ -251,7 +247,7 @@ public class Rasterizer {
 					p1 = tf.getV2().getPosition();
 					p2 = tf.getV3().getPosition();
 					p3 = tf.getV1().getPosition();
-					if (interpolate && vertexNormal) {
+					if (interpolate && !to.isTriangleNormal()) {
 						// Calculate the 3 colors of the 3 Vertex normals
 						c1 = computeShadedColor(col, to.getV2().getNormal());
 						c2 = computeShadedColor(col, to.getV3().getNormal());
@@ -261,7 +257,7 @@ public class Rasterizer {
 					p1 = tf.getV2().getPosition();
 					p2 = tf.getV1().getPosition();
 					p3 = tf.getV3().getPosition();
-					if (interpolate && vertexNormal) {
+					if (interpolate && !to.isTriangleNormal()) {
 						// Calculate the 3 colors of the 3 Vertex normals
 						c1 = computeShadedColor(col, to.getV2().getNormal());
 						c2 = computeShadedColor(col, to.getV1().getNormal());
@@ -274,7 +270,7 @@ public class Rasterizer {
 				p1 = tf.getV3().getPosition();
 				p2 = tf.getV1().getPosition();
 				p3 = tf.getV2().getPosition();
-				if (interpolate && vertexNormal) {
+				if (interpolate && !to.isTriangleNormal()) {
 					// Calculate the 3 colors of the 3 Vertex normals
 					c1 = computeShadedColor(col, to.getV3().getNormal());
 					c2 = computeShadedColor(col, to.getV1().getNormal());
@@ -285,7 +281,7 @@ public class Rasterizer {
 					// No change for p1
 					p2 = tf.getV3().getPosition();
 					p3 = tf.getV2().getPosition();
-					if (interpolate && vertexNormal) {
+					if (interpolate && !to.isTriangleNormal()) {
 						// Calculate the 3 colors of the 3 Vertex normals
 						c1 = computeShadedColor(col, to.getV1().getNormal());
 						c2 = computeShadedColor(col, to.getV3().getNormal());
@@ -293,7 +289,7 @@ public class Rasterizer {
 					}
 				} else {
 					// Else keep p1, p2 and p3 as defined
-					if (interpolate && vertexNormal) {
+					if (interpolate && !to.isTriangleNormal()) {
 						// Calculate the 3 colors of the 3 Vertex normals
 						c1 = computeShadedColor(col, to.getV1().getNormal());
 						c2 = computeShadedColor(col, to.getV2().getNormal());
@@ -337,9 +333,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                rasterizeScanLine(y, p1, p3, p1, p2, c1, c3, c1, c2, col, interpolate && vertexNormal);
+	                rasterizeScanLine(y, p1, p3, p1, p2, c1, c3, c1, c2, col, interpolate && !to.isTriangleNormal());
 	            } else {
-	                rasterizeScanLine(y, p1, p3, p2, p3, c1, c3, c2, c3, col, interpolate && vertexNormal);
+	                rasterizeScanLine(y, p1, p3, p2, p3, c1, c3, c2, c3, col, interpolate && !to.isTriangleNormal());
 	            }
 	        }
 
@@ -360,9 +356,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
 	            if (y < yScreen(p2)) {
-	                rasterizeScanLine(y, p1, p2, p1, p3, c1, c2, c1, c3, col, interpolate && vertexNormal);
+	                rasterizeScanLine(y, p1, p2, p1, p3, c1, c2, c1, c3, col, interpolate && !to.isTriangleNormal());
 	            } else {
-	                rasterizeScanLine(y, p2, p3, p1, p3, c2, c3, c1, c3, col, interpolate && vertexNormal);
+	                rasterizeScanLine(y, p2, p3, p1, p3, c2, c3, c1, c3, col, interpolate && !to.isTriangleNormal());
 	            }
 	        }
 	    }

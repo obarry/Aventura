@@ -12,7 +12,7 @@ import com.aventura.tools.tracing.Tracer;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -76,7 +76,7 @@ import com.aventura.tools.tracing.Tracer;
  *  In Aventura model, it is at Element level and it may require to be multiplied recursively if the model contains sub-elements.
  *  See Element class description.
  *  
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since May 2016
  * 
  */

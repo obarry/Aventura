@@ -10,7 +10,7 @@ import com.aventura.math.vector.Matrix4;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -93,8 +93,25 @@ import com.aventura.math.vector.Matrix4;
  *  
  *  Note that although the Transformation matrix is owned by the Element, the transformation of the vectors (Vertices) is performed
  *  by the Render Engine when necessary and the way it is configured for.
+ *  
+ *     +---------------+
+ *     |    Element    |    Color attribute
+ *     +---------------+
+ *             ^ 0
+ *             |     1 Element contains [0..n] Triangles
+ *             | n
+ *     +---------------+    Color attribute -> overrides Element's color if set
+ *     |    Triangle   |    Normal attribute -> to be used if specifically indicated (flag triangleNormal set to true) or if PLAIN rendering
+ *     +---------------+
+ *             ^ 1
+ *             |     1 Triangle contains exactly 3 Vertices
+ *             | 3
+ *      +-------------+     Color attribute -> overrides Triangle and Element's color if set
+ *      |   Vertex    |     Normal attribute -> this is default behavior
+ *      +-------------+
+ *  
  *
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since March 2016
  *
  */
@@ -105,7 +122,7 @@ public class Element implements Transformable {
 	//protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
 	
 	protected Matrix4 transform;  // Element to World Transformation Matrix (Model Matrix)
-	protected Color color; // Color of the element unless specified at Vertex level (lowest level priority)
+	protected Color color; // Color of the element unless specified at Triangle or Vertex level (lowest level priority)
 	
 	public Element() {
 		super();
@@ -189,11 +206,13 @@ public class Element implements Transformable {
 	 */
 	public void calculateNormals() {
 		
+		// Compute normals of this Element
 		for (int i=0; i<triangles.size(); i++) {
-			this.triangles.get(i).calculateNormal();
+			triangles.get(i).setTriangleNormal(true);
+			triangles.get(i).calculateNormal();
 		}
 		
-		// Compute normals recursively
+		// Compute normals recursively for Sub Elements
 		if (subelements != null) {
 			for (int i=0; i<subelements.size(); i++) {
 				subelements.get(i).calculateNormals();

@@ -9,7 +9,7 @@ import com.aventura.math.vector.Vector4;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ import com.aventura.math.vector.Vector4;
  * Since they have no position in space, directional directional have infinite range and the intensity
  * of light they radiate does not diminish over distance.
  *
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since July 2016
  * 
  */

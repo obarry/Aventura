@@ -7,7 +7,7 @@ import com.aventura.math.vector.*;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ import com.aventura.math.vector.*;
  * 
  * A generic Vertex
  * 
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since May 2016
  */
 public class Vertex {
@@ -54,7 +54,7 @@ public class Vertex {
 	public Vertex(double x, double y, double z) {
 		position = new Vector4(x, y, z, 1);
 	}
-	
+		
 	public Vertex(Vector4 p) {
 		position = p;
 		normal = null;

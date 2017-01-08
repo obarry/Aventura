@@ -9,7 +9,7 @@ import com.aventura.math.vector.Vector4;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ import com.aventura.math.vector.Vector4;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since May 2016
  */
 public class Triangle {
@@ -40,7 +40,8 @@ public class Triangle {
 	protected Vertex v2;
 	protected Vertex v3;
 	
-	// And an optional Normal to the triangle (else Vertices normal  is used)
+	// And an optional Normal to the triangle (default is normal at vertices level)
+	protected boolean triangleNormal = false;
 	protected Vector3 normal = null;
 	
 	// Color if at triangle level
@@ -64,6 +65,14 @@ public class Triangle {
 
 	public Vertex getV1() {
 		return v1;
+	}
+	
+	public boolean isTriangleNormal() {
+		return triangleNormal;
+	}
+	
+	public void setTriangleNormal(boolean b) {
+		this.triangleNormal = b;
 	}
 
 	public Vertex getV2() {
@@ -123,17 +132,15 @@ public class Triangle {
 	public void calculateNormal() {
 		//P = V1V2 as a Vector3
 		Vector3 p = (v2.position.minus(v1.position)).getVector3();
-		//Vector4 p = v2.position.minus(v1.position);
+
 		//P = V1V3 as a Vector3
 		Vector3 q = (v3.position.minus(v1.position)).getVector3();
-		//Vector4 q = v3.position.minus(v1.position);
+
 		// Calculate the cross product
 		normal = p.times(q);
-		//Vector4 n = p.times(q);
+
 		// Normalize the resulting Vector3
 		normal.normalize();
-		//n.normalize();
-		//normal = n.getVector3();
 	}
 	
 }

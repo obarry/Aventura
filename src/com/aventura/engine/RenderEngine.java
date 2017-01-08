@@ -19,7 +19,7 @@ import com.aventura.view.View;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016 Olivier BARRY
+ * Copyright (c) 2017 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -72,7 +72,7 @@ import com.aventura.view.View;
  *          	 Model								 Engine						Context(s)							 View
  *			com.aventura.model					com.aventura.engine			com.aventura.context				com.aventura.view
  * 
- * @author Bricolage Olivier
+ * @author Olivier BARRY
  * @since May 2016
  */
 
@@ -283,7 +283,7 @@ public class RenderEngine {
 				rasterizer.rasterizeTriangle(tf, to, color, false);
 				break;
 			case RenderContext.RENDERING_TYPE_INTERPOLATE:
-				//TODO To be implemented
+				// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
 				rasterizer.rasterizeTriangle(tf, to, color, true);
 				break;
 			default:
@@ -377,7 +377,19 @@ public class RenderEngine {
 		Vertex p3 = to.getV3();
 		Vertex n1, n2, n3;
 		
-		if (to.getNormal() == null) { // Normal at Vertex level
+		if (to.isTriangleNormal()) { // Normal at Triangle level
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+to.getNormal());
+			// Create 3 vertices corresponding to the end point of the 3 normal vectors
+			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
+			Vertex c = to.getCenter();
+			Vertex n = new Vertex(c.getPosition().plus(to.getNormal()));
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
+			Line line = new Line(c, n);
+			Line l = transformation.transform(line);
+			rasterizer.drawLine(l, renderContext.normalsColor);
+			
+		} else { // Normals at Vertex level
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level");
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
 			n1 = new Vertex(p1.getPosition().plus(p1.getNormal()));
@@ -397,19 +409,6 @@ public class RenderEngine {
 			rasterizer.drawLine(l1, renderContext.normalsColor);
 			rasterizer.drawLine(l2, renderContext.normalsColor);
 			rasterizer.drawLine(l3, renderContext.normalsColor);
-
-			
-		} else { // Normals at Triangle level
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+to.getNormal());
-			// Create 3 vertices corresponding to the end point of the 3 normal vectors
-			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
-			Vertex c = to.getCenter();
-			Vertex n = new Vertex(c.getPosition().plus(to.getNormal()));
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
-			Line line = new Line(c, n);
-			Line l = transformation.transform(line);
-			rasterizer.drawLine(l, renderContext.normalsColor);
 		}
 	}
 		
