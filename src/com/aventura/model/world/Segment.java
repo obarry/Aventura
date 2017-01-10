@@ -1,5 +1,7 @@
 package com.aventura.model.world;
 
+import com.aventura.math.vector.Vector4;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -29,24 +31,29 @@ package com.aventura.model.world;
  * @since October 2016
  */
 
-public class Line {
+public class Segment {
 	
 	// Made of 2 vertices
 	Vertex v1;
 	Vertex v2;
 	
-	public Line() {
+	public Segment() {
 		this.v1 = null;
 		this.v2 = null;
 	}
 	
-	public Line(Vertex v1, Vertex v2) {
+	public Segment(Vertex v1, Vertex v2) {
 		this.v1 = v1;
 		this.v2 = v2;
 	}
 	
+	public Segment(Vector4 u1, Vector4 u2) {
+		this.v1 = new Vertex(u1);
+		this.v2 = new Vertex(u2);
+	}
+	
 	public String toString() {
-		return ("Line vertices:\n"+" v1: "+v1+"\n v2: "+v2);
+		return ("Segment vertices:\n"+" v1: "+v1+"\n v2: "+v2);
 	}
 
 	public Vertex getV1() {

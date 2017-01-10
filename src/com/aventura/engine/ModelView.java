@@ -3,7 +3,7 @@ package com.aventura.engine;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Line;
+import com.aventura.model.world.Segment;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.tools.tracing.Tracer;
@@ -150,16 +150,16 @@ public class ModelView {
 	}
 	
 	/**
-	 * Return a new Line containing (new) projected vertices
+	 * Return a new Segment containing (new) projected vertices
 	 * Relies on the transform method transforming vertices
 	 * 
-	 * @param l the Line to transform
-	 * @return the new Line
+	 * @param l the Segment to transform
+	 * @return the new Segment
 	 */
-	public Line transform(Line l) {
+	public Segment transform(Segment l) {
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform line: "+l);
 		
-		Line transformed = new Line();
+		Segment transformed = new Segment();
 		
 		transformed.setV1(transform(l.getV1()));
 		transformed.setV2(transform(l.getV2()));

@@ -7,7 +7,7 @@ import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.world.Line;
+import com.aventura.model.world.Segment;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.tools.color.ColorTools;
@@ -117,7 +117,7 @@ public class Rasterizer {
 		return v.get3DY()*graphic.getPixelHalfHeight();
 	}
 	
-	// Method for Line only Rendering
+	// Method for Segment only Rendering
 	//
 	
 	public void drawTriangleLines(Triangle t, Color c) {
@@ -128,11 +128,11 @@ public class Rasterizer {
 		drawLine(t.getV3(), t.getV1());
 	}
 	
-	public void drawLine(Line l) {
+	public void drawLine(Segment l) {
 		drawLine(l.getV1(), l.getV2());
 	}
 	
-	public void drawLine(Line l, Color c) {
+	public void drawLine(Segment l, Color c) {
 		drawLine(l.getV1(), l.getV2(), c);
 	}
 	
@@ -178,7 +178,7 @@ public class Rasterizer {
 	}
 	
 	//
-	// End methods for Line only Rendering
+	// End methods for Segment only Rendering
 	
 	/**
 	 * Triangle rasterizetion and zBuffering
