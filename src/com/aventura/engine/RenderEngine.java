@@ -260,20 +260,20 @@ public class RenderEngine {
 		// ==========================================================
 		//
 		// Create temporarily a new triangle that will be the original triangle transformed in World coordinates
-		// Triangle ti;
+		Triangle ti;
+		
 		// This triangle should however be a complete copy of the original triangle for all attributes of Triangle and Vertices
 		// because this will then (temporarily) replace the original triangle to for all triangle rendering steps
-		// ti = transformation.worldTransform(to);
+		ti = transformation.modelToWorld(to);
 		//
 		// Doing so will fix the problem of Element <-> World transformation for shading calculation etc. (as of now, shading
 		// is calculated using to normals but these vectors can be transformed by Element <-> World transformation
-		
 		
 		Triangle tf; // The projected model view triangle in homogeneous coordinates 
 		
 		// Project this Triangle in the View in homogeneous coordinates
 		// This new triangle contains vertices that are transformed
-		tf = transformation.transform(to);
+		tf = transformation.modelToClip(to);
 		
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
@@ -293,11 +293,11 @@ public class RenderEngine {
 			case RenderContext.RENDERING_TYPE_PLAIN:
 				// Draw triangles with shading full face, no interpolation.
 				// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-				rasterizer.rasterizeTriangle(tf, to, color, false);
+				rasterizer.rasterizeTriangle(tf, ti, color, false);
 				break;
 			case RenderContext.RENDERING_TYPE_INTERPOLATE:
 				// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-				rasterizer.rasterizeTriangle(tf, to, color, true);
+				rasterizer.rasterizeTriangle(tf, ti, color, true);
 				break;
 			default:
 				// Invalid rendering type
@@ -369,9 +369,9 @@ public class RenderEngine {
 		Segment line_x = new Segment(o, x);
 		Segment line_y = new Segment(o, y);
 		Segment line_z = new Segment(o, z);
-		Segment lx = transformation.transform(line_x);
-		Segment ly = transformation.transform(line_y);
-		Segment lz = transformation.transform(line_z);
+		Segment lx = transformation.modelToClip(line_x);
+		Segment ly = transformation.modelToClip(line_y);
+		Segment lz = transformation.modelToClip(line_z);
 		// Draw segments with different colors (x=RED, y=GREEN, z=BLUE) for mnemotechnic
 		rasterizer.drawLine(lx, renderContext.landmarkXColor);
 		rasterizer.drawLine(ly, renderContext.landmarkYColor);
@@ -399,7 +399,7 @@ public class RenderEngine {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
 			Segment segment = new Segment(c, n);
-			Segment l = transformation.transform(segment);
+			Segment l = transformation.modelToClip(segment);
 			rasterizer.drawLine(l, renderContext.normalsColor);
 			
 		} else { // Normals at Vertex level
@@ -414,9 +414,9 @@ public class RenderEngine {
 			Segment line2 = new Segment(p2, n2);
 			Segment line3 = new Segment(p3, n3);
 			// Transform the 3 normals
-			Segment l1 = transformation.transform(line1);
-			Segment l2 = transformation.transform(line2);
-			Segment l3 = transformation.transform(line3);
+			Segment l1 = transformation.modelToClip(line1);
+			Segment l2 = transformation.modelToClip(line2);
+			Segment l3 = transformation.modelToClip(line3);
 			
 			// Draw each normal vector starting from their corresponding vertex  
 			rasterizer.drawLine(l1, renderContext.normalsColor);
@@ -432,7 +432,7 @@ public class RenderEngine {
 		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVector(null));
 		Vertex o = new Vertex(0,0,0);
 		Segment segment = new Segment(o, v);
-		Segment l = transformation.transform(segment);
+		Segment l = transformation.modelToClip(segment);
 		rasterizer.drawLine(l, renderContext.lightVectorsColor);
 	}
 

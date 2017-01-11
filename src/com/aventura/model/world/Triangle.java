@@ -53,6 +53,20 @@ public class Triangle {
 		this.v3 = null;		
 	}
 	
+	/**
+	 * Duplicate triangle by creating new Vertices and normal by duplication of original vertices and normal
+	 * @param t the triangle to duplicate
+	 */
+	public Triangle(Triangle t) {
+		this.v1 = new Vertex(t.getV1());
+		this.v2 = new Vertex(t.getV2());
+		this.v3 = new Vertex(t.getV3());
+		
+		this.triangleNormal = t.triangleNormal;
+		this.normal = new Vector3(t.normal);
+		
+	}
+	
 	public Triangle(Vertex v1, Vertex v2, Vertex v3) {
 		this.v1 = v1;
 		this.v2 = v2;

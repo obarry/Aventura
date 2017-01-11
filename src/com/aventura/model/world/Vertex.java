@@ -46,10 +46,19 @@ public class Vertex {
 	
 	// Reflectivity
 	// TODO
-	
-	public Vertex() {
 		
+	/**
+	 * Duplicate a Vertex, creating new Vectors for position and normal but keeping references for texture and color
+	 * @param v the Vertex to duplicate
+	 */
+	public Vertex(Vertex v) {
+		this.position = (v.position != null) ? new Vector4(v.position) : null;
+		this.normal = (v.normal != null) ? new Vector3(v.normal) : null;
+		this.texture = v.texture;
+		this.color = v.getColor();
+		this.material = v.material;
 	}
+	
 	
 	public Vertex(double x, double y, double z) {
 		position = new Vector4(x, y, z, 1);
@@ -59,7 +68,7 @@ public class Vertex {
 		position = p;
 		normal = null;
 	}
-	
+		
 	public Vertex(Vector3 p) {
 		position = new Vector4(p.getX(), p.getY(), p.getZ(), 1);
 		normal = null;
@@ -69,7 +78,12 @@ public class Vertex {
 		position = p;
 		normal = n;
 	}
-	
+
+	public Vertex(Vector4 p, Vector4 n) {
+		position = p;
+		normal = n.getVector3();
+	}
+
 	public String toString() {
 		return "Position: "+position;
 	}
@@ -84,6 +98,10 @@ public class Vertex {
 	
 	public Vector3 getNormal() {
 		return normal;
+	}
+	
+	public Vector4 getNormalV4() {
+		return new Vector4(normal);
 	}
 	
 	public void setColor(Color c) {

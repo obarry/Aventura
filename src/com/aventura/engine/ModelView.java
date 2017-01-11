@@ -57,7 +57,7 @@ import com.aventura.tools.tracing.Tracer;
  *                |   [Projection Matrix] 4x4 Transformation Matrix -> to transform any point or vector into homogeneous coordinates
  *                v
  *   +--------------------------+
- *   | Homogeneous Coordinates  |
+ *   | Homogeneous Coordinates  | or Clip Coordinates, each coordinate being in range [-1, 1]
  *   +--------------------------+
  * 
  *  It provides all needed services to the RenderEngine to compute these transformations for each Vertex of the model.
@@ -156,13 +156,13 @@ public class ModelView {
 	 * @param l the Segment to transform
 	 * @return the new Segment
 	 */
-	public Segment transform(Segment l) {
+	public Segment modelToClip(Segment l) {
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform line: "+l);
 		
 		Segment transformed = new Segment();
 		
-		transformed.setV1(transform(l.getV1()));
-		transformed.setV2(transform(l.getV2()));
+		transformed.setV1(modelToClip(l.getV1()));
+		transformed.setV2(modelToClip(l.getV2()));
 		
 		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed line: "+ transformed);
 		
@@ -176,14 +176,16 @@ public class ModelView {
 	 * @param t the triangle to transform
 	 * @return the new triangle
 	 */
-	public Triangle transform(Triangle t) {
+	public Triangle modelToClip(Triangle t) {
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform triangle: "+t);
 		
 		Triangle transformed = new Triangle();
 		
-		transformed.setV1(transform(t.getV1()));
-		transformed.setV2(transform(t.getV2()));
-		transformed.setV3(transform(t.getV3()));
+		transformed.setV1(modelToClip(t.getV1()));
+		transformed.setV2(modelToClip(t.getV2()));
+		transformed.setV3(modelToClip(t.getV3()));
+		//if (t.getNormal()!=null) transformed.setNormal(transform(t.getNormal()));
+
 		
 		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed triangle: "+ transformed);
 		
@@ -194,15 +196,13 @@ public class ModelView {
 	 * Return a new Vertex resulting from the ModelView transformation ("projection") of the provided Vertex
 	 * Do not modify the provided Vertex.
 	 * 
-	 * @param vert the provided Vertex (left unchanged)
+	 * @param v the provided Vertex (left unchanged)
 	 * @return the new projected Vertex
 	 */
-	public Vertex transform(Vertex vert) {
-		
+	public Vertex modelToClip(Vertex v) {
 		// Create a new Vertex having its Vector4 position set to the resulting of the transformation of the provided Vertex's 
 		// Vector4 position by the transformation Matrix
-		Vertex transformed = new Vertex(transformation.times(vert.getPosition()));
-		
+		Vertex transformed = new Vertex(transformation.times(v.getPosition()));
 		// Return the newly created Vertex (hence preserve the original Vertex of the Element)
 		return transformed;
 	}
@@ -214,7 +214,7 @@ public class ModelView {
 	 * @param v the Vector4 to be transformed 
 	 * @return a newly created Vector4 resulting from the transformation
 	 */
-	public Vector4 transform(Vector4 v) {
+	public Vector4 modelToClip(Vector4 v) {
 		return transformation.times(v);
 	}
 	
@@ -228,9 +228,32 @@ public class ModelView {
 	 * @param v the Vector3 to be transformed 
 	 * @return a newly created Vector3 resulting from the transformation
 	 */
-	public Vector3 transform(Vector3 v) {
+	public Vector3 modelToClip(Vector3 v) {
 		Vector4 v4 = v.getVector4();
-		return transform(v4).getVector3();
+		return modelToClip(v4).getVector3();
 	}
+	
+	
+	public Triangle modelToWorld(Triangle t){
+		Triangle transformed = new Triangle(t);
+		
+		transformed.setV1(modelToWorld(t.getV1()));
+		transformed.setV2(modelToWorld(t.getV2()));
+		transformed.setV3(modelToWorld(t.getV3()));
+		return transformed;
+	}
+	
+	public Vertex modelToWorld(Vertex v) {
+		Vertex transformed;
+		if (v.getNormal() != null) {
+			transformed = new Vertex(model.times(v.getPosition()), model.times(v.getNormalV4()));
+		} else {
+			transformed = new Vertex(model.times(v.getPosition()));
+		}
+		// Return the newly created Vertex (hence preserve the original Vertex of the Element)
+		return transformed;
+	}
+	
+
 
 }
