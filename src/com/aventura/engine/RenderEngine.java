@@ -166,6 +166,11 @@ public class RenderEngine {
 		view.setBackgroundColor(world.getBackgroundColor());
 		view.initView();
 		
+		// zBuffer initialization (if applicable)
+		if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_LINE) {
+			rasterizer.initZBuffer();
+		}
+		
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
@@ -203,11 +208,6 @@ public class RenderEngine {
 		Color col = c;
 		if (e.getColor() != null) col = e.getColor();
 		
-		// zBuffer initialization (if applicable)
-		if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_LINE) {
-			rasterizer.initZBuffer();
-		}
-
 		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
 		Matrix4 model = matrix.times(e.getTransformation());

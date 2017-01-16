@@ -240,6 +240,9 @@ public class ModelView {
 		transformed.setV1(modelToWorld(t.getV1()));
 		transformed.setV2(modelToWorld(t.getV2()));
 		transformed.setV3(modelToWorld(t.getV3()));
+		if (t.getNormal() != null) {
+			transformed.setNormal(model.times(t.getNormal().getVector4()));
+		}
 		return transformed;
 	}
 	

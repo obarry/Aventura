@@ -63,8 +63,8 @@ public class Triangle {
 		this.v3 = new Vertex(t.getV3());
 		
 		this.triangleNormal = t.triangleNormal;
-		this.normal = new Vector3(t.normal);
-		
+		this.normal = (t.normal != null) ? new Vector3(t.normal) : null;
+		this.color =  t.color;
 	}
 	
 	public Triangle(Vertex v1, Vertex v2, Vertex v3) {

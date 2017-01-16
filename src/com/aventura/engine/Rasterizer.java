@@ -204,7 +204,7 @@ public class Rasterizer {
 		// If no interpolation requested -> plain faces. Then:
 		// - calculate normal at Triangle level for shading
 		// - calculate shading color once for all triangle
-		if (!interpolate) {
+		if (!interpolate || to.isTriangleNormal()) {
 			// Calculate normal if not calculated
 			if (to.getNormal()==null) to.calculateNormal();
 			Vector3 normal = to.getNormal();

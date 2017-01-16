@@ -18,6 +18,7 @@ import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
@@ -152,8 +153,9 @@ public class TestAventura9 {
 	}
 
 	public Lighting createLight() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
-		Lighting lighting = new Lighting(dl);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,0.8,0.5), 1);
+		AmbientLight al = new AmbientLight(0.2f);
+		Lighting lighting = new Lighting(dl, al);
 		return lighting;
 	}
 
@@ -179,6 +181,7 @@ public class TestAventura9 {
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
+		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
 		renderer.setView(view);
