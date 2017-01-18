@@ -147,7 +147,7 @@ public class LookAt extends Matrix4 {
 
 	
 	/**
-	 * Construction of a LookAt Matrix fro, another Matrix4
+	 * Construction of a LookAt Matrix from another Matrix4
 	 * 
 	 * @param m the Matrix4
 	 */

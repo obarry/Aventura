@@ -1,5 +1,7 @@
 package com.aventura.math.vector;
 
+import com.aventura.math.Constants;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -43,6 +45,12 @@ public class Vector2 {
 		this.x = x;
 		this.y = y;
 	}
+	
+	public Vector2(Vector2 v) {
+		this.x = v.x;
+		this.y = v.y;
+	}
+
 	
 	public double getX() {
 		return this.x;

@@ -122,6 +122,5 @@ public class TestRasterizer4 {
 		}
 
 		System.out.println("********* ENDING APPLICATION *********");
-
 	}
 }

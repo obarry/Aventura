@@ -17,6 +17,7 @@ import com.aventura.math.transform.Rotation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Box;
@@ -99,13 +100,15 @@ public class TestRasterizer6 {
 		world.calculateNormals();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
-		Lighting light = new Lighting(dl);
+		AmbientLight al = new AmbientLight(0.2f);
+		Lighting light = new Lighting(dl, al);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
-		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
@@ -129,9 +132,6 @@ public class TestRasterizer6 {
 			renderer.render();
 		}
 
-		
-
 		System.out.println("********* ENDING APPLICATION *********");
-
 	}
 }

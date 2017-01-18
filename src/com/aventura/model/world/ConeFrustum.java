@@ -207,6 +207,7 @@ public class ConeFrustum extends Element {
 			}
 			n.normalize();
 			vertices[i][1].setNormal(n.getVector3());
-		}	
+		}
+		calculateSubNormals();
 	}
 }

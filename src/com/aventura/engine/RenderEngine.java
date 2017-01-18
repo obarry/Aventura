@@ -8,7 +8,7 @@ import com.aventura.math.vector.Matrix4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Element;
-import com.aventura.model.world.Line;
+import com.aventura.model.world.Segment;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
@@ -166,6 +166,11 @@ public class RenderEngine {
 		view.setBackgroundColor(world.getBackgroundColor());
 		view.initView();
 		
+		// zBuffer initialization (if applicable)
+		if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_LINE) {
+			rasterizer.initZBuffer();
+		}
+		
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
@@ -203,11 +208,6 @@ public class RenderEngine {
 		Color col = c;
 		if (e.getColor() != null) col = e.getColor();
 		
-		// zBuffer initialization (if applicable)
-		if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_LINE) {
-			rasterizer.initZBuffer();
-		}
-
 		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
 		Matrix4 model = matrix.times(e.getTransformation());
@@ -256,11 +256,24 @@ public class RenderEngine {
 		Color color = to.getColor();
 		if (color == null) color = c;
 		
+		// Evolution to fully cope with Model -> World transformation
+		// ==========================================================
+		//
+		// Create temporarily a new triangle that will be the original triangle transformed in World coordinates
+		Triangle ti;
+		
+		// This triangle should however be a complete copy of the original triangle for all attributes of Triangle and Vertices
+		// because this will then (temporarily) replace the original triangle to for all triangle rendering steps
+		ti = transformation.modelToWorld(to);
+		//
+		// Doing so will fix the problem of Element <-> World transformation for shading calculation etc. (as of now, shading
+		// is calculated using to normals but these vectors can be transformed by Element <-> World transformation
+		
 		Triangle tf; // The projected model view triangle in homogeneous coordinates 
 		
 		// Project this Triangle in the View in homogeneous coordinates
 		// This new triangle contains vertices that are transformed
-		tf = transformation.transform(to);
+		tf = transformation.modelToClip(to);
 		
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
@@ -280,11 +293,11 @@ public class RenderEngine {
 			case RenderContext.RENDERING_TYPE_PLAIN:
 				// Draw triangles with shading full face, no interpolation.
 				// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-				rasterizer.rasterizeTriangle(tf, to, color, false);
+				rasterizer.rasterizeTriangle(tf, ti, color, false);
 				break;
 			case RenderContext.RENDERING_TYPE_INTERPOLATE:
 				// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-				rasterizer.rasterizeTriangle(tf, to, color, true);
+				rasterizer.rasterizeTriangle(tf, ti, color, true);
 				break;
 			default:
 				// Invalid rendering type
@@ -353,12 +366,12 @@ public class RenderEngine {
 		Vertex y = new Vertex(0,1,0);
 		Vertex z = new Vertex(0,0,1);
 		// Create 3 unit segments
-		Line line_x = new Line(o, x);
-		Line line_y = new Line(o, y);
-		Line line_z = new Line(o, z);
-		Line lx = transformation.transform(line_x);
-		Line ly = transformation.transform(line_y);
-		Line lz = transformation.transform(line_z);
+		Segment line_x = new Segment(o, x);
+		Segment line_y = new Segment(o, y);
+		Segment line_z = new Segment(o, z);
+		Segment lx = transformation.modelToClip(line_x);
+		Segment ly = transformation.modelToClip(line_y);
+		Segment lz = transformation.modelToClip(line_z);
 		// Draw segments with different colors (x=RED, y=GREEN, z=BLUE) for mnemotechnic
 		rasterizer.drawLine(lx, renderContext.landmarkXColor);
 		rasterizer.drawLine(ly, renderContext.landmarkYColor);
@@ -385,8 +398,8 @@ public class RenderEngine {
 			Vertex n = new Vertex(c.getPosition().plus(to.getNormal()));
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
-			Line line = new Line(c, n);
-			Line l = transformation.transform(line);
+			Segment segment = new Segment(c, n);
+			Segment l = transformation.modelToClip(segment);
 			rasterizer.drawLine(l, renderContext.normalsColor);
 			
 		} else { // Normals at Vertex level
@@ -397,13 +410,13 @@ public class RenderEngine {
 			n3 = new Vertex(p3.getPosition().plus(p3.getNormal()));
 			
 			// Create 3 segments corresponding to normal vectors
-			Line line1 = new Line(p1, n1);
-			Line line2 = new Line(p2, n2);
-			Line line3 = new Line(p3, n3);
+			Segment line1 = new Segment(p1, n1);
+			Segment line2 = new Segment(p2, n2);
+			Segment line3 = new Segment(p3, n3);
 			// Transform the 3 normals
-			Line l1 = transformation.transform(line1);
-			Line l2 = transformation.transform(line2);
-			Line l3 = transformation.transform(line3);
+			Segment l1 = transformation.modelToClip(line1);
+			Segment l2 = transformation.modelToClip(line2);
+			Segment l3 = transformation.modelToClip(line3);
 			
 			// Draw each normal vector starting from their corresponding vertex  
 			rasterizer.drawLine(l1, renderContext.normalsColor);
@@ -416,11 +429,10 @@ public class RenderEngine {
 		// Set the Model Matrix to IDENTITY (no translation)
 		transformation.setModel(Matrix4.IDENTITY);
 		transformation.computeTransformation();
-		//Vertex v = new Vertex(lighting.getDirectionalLight().getLightVector(null));
 		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVector(null));
 		Vertex o = new Vertex(0,0,0);
-		Line line = new Line(o, v);
-		Line l = transformation.transform(line);
+		Segment segment = new Segment(o, v);
+		Segment l = transformation.modelToClip(segment);
 		rasterizer.drawLine(l, renderContext.lightVectorsColor);
 	}
 

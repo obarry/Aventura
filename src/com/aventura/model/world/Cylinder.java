@@ -157,6 +157,8 @@ public class Cylinder extends Element {
 			vertices[i][0].setNormal(n.getVector3());
 			// Same normal vector can be used for the corresponding top Vertex
 			vertices[i][1].setNormal(n.getVector3());
-		}	
+		}
+		
+		calculateSubNormals();
 	}
 }
