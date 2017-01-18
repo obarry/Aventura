@@ -297,6 +297,7 @@ public class Trellis extends Element {
 				vertices[i][j].setNormal(normal.normalize().getVector3());
 			}
 		}
+		calculateSubNormals();
 	}
 	
 }

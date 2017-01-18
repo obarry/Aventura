@@ -161,6 +161,7 @@ public class ConeSummit extends Element {
 			n = (vertices[i].getPosition().minus(summit.getPosition())).times(u);
 			n.normalize();
 			vertices[i].setNormal(n.getVector3());
-		}	
+		}
+		calculateSubNormals();
 	}
 }

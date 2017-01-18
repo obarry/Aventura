@@ -180,7 +180,8 @@ public class Sphere extends Element {
 				n.normalize();
 				vertices[i][j].setNormal(n.getVector3());
 			}
-		}	
+		}
+		calculateSubNormals();
 	}
 
 }

@@ -213,11 +213,15 @@ public class Element implements Transformable {
 		}
 		
 		// Compute normals recursively for Sub Elements
+		calculateSubNormals();
+	}
+	
+	public void calculateSubNormals() {
 		if (subelements != null) {
 			for (int i=0; i<subelements.size(); i++) {
 				subelements.get(i).calculateNormals();
 			}
-		}
+		}		
 	}
 
 }

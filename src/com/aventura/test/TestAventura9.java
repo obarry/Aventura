@@ -147,6 +147,8 @@ public class TestAventura9 {
 				}
 			}
 		}
+		// Calculate normals
+		world.calculateNormals();
 		
 		// World is created
 		return world;
@@ -180,8 +182,8 @@ public class TestAventura9 {
 		View view = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
+		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
 		renderer.setView(view);

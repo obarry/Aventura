@@ -171,6 +171,7 @@ public class Cone extends Element {
 			}
 			n.normalize();
 			summits[i].setNormal(n.getVector3());
-		}	
+		}
+		calculateSubNormals();
 	}
 }
