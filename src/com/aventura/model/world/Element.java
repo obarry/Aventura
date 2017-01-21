@@ -181,7 +181,13 @@ public class Element implements Transformable {
 	@Override
 	public void setTransformation(Matrix4 transformation) {
 		this.transform = transformation;
-		
+	}
+
+	@Override
+	public void expandTransformation(Matrix4 transformation) {
+		// TODO Auto-generated method stub
+		//this.transform.timesEquals(transformation);
+		this.transform = transformation.times(this.transform);
 	}
 
 	@Override
