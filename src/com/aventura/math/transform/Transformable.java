@@ -31,8 +31,24 @@ import com.aventura.math.vector.Matrix4;
 
 public interface Transformable {
 	
+	/**
+	 * Set the transformation Matrix for this transformable object
+	 * @param transformation
+	 */
 	public void setTransformation(Matrix4 transformation);
 	
+	/**
+	 * Expand the existing transformation Matrix of the transformable object by a supplementary transformation.
+	 * This is done by multiplying the 2 matrices and replacing the transformation Matrix of the transformable
+	 * object by the resulting Matrix.
+	 * @param transformation, the Matrix representing the supplementary transformation
+	 */
+	public void expandTransformation(Matrix4 transformation);
+	
+	/**
+	 * Provide the transformation Matrix of the transformable object
+	 * @return
+	 */
 	public Matrix4 getTransformation();
 	
 	// TBD add methods for translation, rotation and scaling

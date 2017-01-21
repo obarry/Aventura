@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.math.transform.Repere;
+import com.aventura.math.vector.Matrix4;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -91,6 +92,18 @@ public class World {
 	
 	public Color getBackgroundColor() {
 		return backgroundColor;
+	}
+	
+	public void setTransformation(Matrix4 t) {
+		for (int i=0; i<elements.size(); i++) {
+			elements.get(i).setTransformation(t);
+		}
+	}
+
+	public void expandTransformation(Matrix4 t) {
+		for (int i=0; i<elements.size(); i++) {
+			elements.get(i).expandTransformation(t);
+		}
 	}
 
 }
