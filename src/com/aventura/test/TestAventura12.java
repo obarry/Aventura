@@ -71,7 +71,7 @@ public class TestAventura12 {
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Aventura 12");
 		// Set the size of the frame
-		frame.setSize(1500,900);
+		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
 		// Create the view to be displayed
 		view = new SwingView(context, frame);
@@ -171,14 +171,10 @@ public class TestAventura12 {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al);
 
-
-//		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		GraphicContext context = new GraphicContext(1.5, 0.9, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		View view = test.createView(context);
 
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
-		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
 		renderer.setView(view);

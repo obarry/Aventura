@@ -1,7 +1,5 @@
 package com.aventura.math.vector;
 
-import java.util.Arrays;
-
 import com.aventura.math.Constants;
 import com.aventura.tools.tracing.Tracer;
 
@@ -48,62 +46,64 @@ public class Vector4 {
 	public static final Vector4 ZERO_POINT = new Vector4(0,0,0,1);
 
     // Components of the Vector
-	protected double[] c;
+	protected double x;
+	protected double y;
+	protected double z;
+	protected double w;
 	
 	public Vector4() {
-		// Create the array
-		c = new double[Constants.SIZE_4];
+		this.x = 0;
+		this.y = 0;
+		this.z = 0;
+		this.w = 0;
 	}
 
 	public Vector4(double v) {
 		initialize(v);
 	}
 	
-	public Vector4(double x, double y, double z, double t) {
-		c = new double[Constants.SIZE_4];
-		this.c[0] = x;
-		this.c[1] = y;
-		this.c[2] = z;		
-		this.c[3] = t;		
+	public Vector4(double x, double y, double z, double w) {
+		this.x = x;
+		this.y = y;
+		this.z = z;		
+		this.w = w;		
 	}
 		
 	public Vector4(double[] array) throws VectorArrayWrongSizeException {
-		// TBD Add size control for the array
-		if (array.length != Constants.SIZE_4) throw new VectorArrayWrongSizeException("Array passed in parameter of Vector4 constructor is out of bound: "+array.length); 
-		this.c = array;
+		if (array.length < Constants.SIZE_4) throw new VectorArrayWrongSizeException("Array passed in parameter of Vector4 constructor is out of bound: "+array.length); 
+		this.x = array[0];
+		this.y = array[1];
+		this.z = array[2];
+		this.w = array[3];
 
 	}
 	
 	public Vector4(Vector4 v) {
-		// Create the array
-		c = new double[Constants.SIZE_4];
-		this.c[0] = v.c[0];
-		this.c[1] = v.c[1];
-		this.c[2] = v.c[2];
-		this.c[3] = v.c[3];
+		this.x = v.x;
+		this.y = v.y;
+		this.z = v.z;
+		this.w = v.w;
 	}
 
 	public Vector4(Vector3 v) {
-		// Create the array
-		c = new double[Constants.SIZE_4];
-		this.c[0] = v.c[0];
-		this.c[1] = v.c[1];
-		this.c[2] = v.c[2];
-		this.c[3] = 0;
+		this.x = v.x;
+		this.y = v.y;
+		this.z = v.z;
+		this.w = 0;
 	}
 
 	public Vector4(int r, Matrix4 A) {
-		this.c[0] = A.get(r, 0);
-		this.c[1] = A.get(r, 1);
-		this.c[2] = A.get(r, 2);
-		this.c[3] = A.get(r, 3);
+		this.x = A.get(r, 0);
+		this.y = A.get(r, 1);
+		this.z = A.get(r, 2);
+		this.w = A.get(r, 3);
 	}
 	
 	public Vector4(Matrix4 A, int c) {
-		this.c[0] = A.get(0, c);
-		this.c[1] = A.get(1, c);
-		this.c[2] = A.get(2, c);
-		this.c[3] = A.get(3, c);
+		this.x = A.get(0, c);
+		this.y = A.get(1, c);
+		this.z = A.get(2, c);
+		this.w = A.get(3, c);
 	}
 	
 	/**
@@ -111,21 +111,17 @@ public class Vector4 {
 	 * @param val the initialization value
 	 */
 	private void initialize(double val) {
-		// Create the array
-		c = new double[Constants.SIZE_4];
-		
 		// Initialize values
-		this.c[0] = val;
-		this.c[1] = val;
-		this.c[2] = val;
-		this.c[3] = val;
+		this.x = val;
+		this.y = val;
+		this.z = val;
+		this.w = val;
 	}
 
 	
 	@Override
 	public String toString() {
-		String s = Arrays.toString(c);
-		return s;
+		return "Vector4 ["+x+", "+y+", "+z+", "+w+"]";
 	}
 	
 	/**
@@ -135,8 +131,22 @@ public class Vector4 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public void set(int i, double v) throws IndiceOutOfBoundException {
-		if (i<0 || i>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while setting coordinate ("+i+") of Vector4"); 
-		c[i]= v;
+		switch (i) {
+		case 0:
+			this.x = v;
+			break;
+		case 1:
+			this.y = v;
+			break;
+		case 2:
+			this.z = v;
+			break;
+		case 3:
+			this.w = v;
+			break;
+		default :
+			throw new IndiceOutOfBoundException("Indice out of bound while setting coordinate ("+i+") of Vector4");
+		}
 	}
 	
 	/**
@@ -144,7 +154,7 @@ public class Vector4 {
 	 * @param v, the value to set
 	 */
 	public void setX(double v) {
-		c[0]= v;		
+		x = v;		
 	}
 	
 	/**
@@ -152,7 +162,7 @@ public class Vector4 {
 	 * @param v, the value to set
 	 */
 	public void setY(double v) {
-		c[1]= v;		
+		y = v;		
 	}
 	
 	/**
@@ -160,7 +170,7 @@ public class Vector4 {
 	 * @param v, the value to set
 	 */
 	public void setZ(double v) {
-		c[2]= v;		
+		z = v;		
 	}
 	
 	/**
@@ -168,7 +178,7 @@ public class Vector4 {
 	 * @param v, the value to set
 	 */
 	public void setW(double v) {
-		c[3]= v;		
+		w = v;		
 	}
 	
 	/**
@@ -178,8 +188,18 @@ public class Vector4 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public double get(int i) throws IndiceOutOfBoundException {
-		if (i<0 || i>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting coordinate ("+i+") of Vector4"); 
-		return c[i];
+		switch (i) {
+		case 0:
+			return this.x;
+		case 1:
+			return this.y;
+		case 2:
+			return this.z;
+		case 3:
+			return this.w;
+		default :
+			throw new IndiceOutOfBoundException("Indice out of bound while getting coordinate ("+i+") of Vector4");
+		}
 	}
 	
 	/**
@@ -187,7 +207,7 @@ public class Vector4 {
 	 * @return x
 	 */
 	public double getX() {
-		return c[0];
+		return this.x;
 	}
 	
 	/**
@@ -195,7 +215,7 @@ public class Vector4 {
 	 * @return y
 	 */
 	public double getY() {
-		return c[1];
+		return this.y;
 	}
 	
 	/**
@@ -203,7 +223,7 @@ public class Vector4 {
 	 * @return z
 	 */
 	public double getZ() {
-		return c[2];
+		return this.z;
 	}
 	
 	/**
@@ -211,7 +231,7 @@ public class Vector4 {
 	 * @return z
 	 */
 	public double getW() {
-		return c[3];
+		return this.w;
 	}
 	
 	/**
@@ -219,7 +239,7 @@ public class Vector4 {
 	 * @return x
 	 */
 	public double get3DX() {
-		return c[0]/c[3];
+		return this.x/this.w;
 	}
 	
 	/**
@@ -227,7 +247,7 @@ public class Vector4 {
 	 * @return y
 	 */
 	public double get3DY() {
-		return c[1]/c[3];
+		return this.y/this.w;
 	}
 	
 	/**
@@ -235,7 +255,7 @@ public class Vector4 {
 	 * @return z
 	 */
 	public double get3DZ() {
-		return c[2]/c[3];
+		return this.z/this.w;
 	}
 	
 	/**
@@ -243,7 +263,7 @@ public class Vector4 {
 	 * @return z
 	 */
 	public Vector3 getVector3() {
-		return new Vector3(this.c[0], this.c[1], this.c[2]);
+		return new Vector3(this.x, this.y, this.z);
 	}
 
 	/**
@@ -251,8 +271,8 @@ public class Vector4 {
 	 * @return z
 	 */
 	public Vector3 get3DPoint() {
-		if (this.c[3] != 0) {
-			return new Vector3(this.c[0]/this.c[3], this.c[1]/this.c[3], this.c[2]/this.c[3]);
+		if (this.w != 0) {
+			return new Vector3(this.x/this.w, this.y/this.w, this.z/this.w);
 		} else {
 			return null;
 		}
@@ -263,7 +283,7 @@ public class Vector4 {
 	 * @return the length or 'norm' of the Vector4
 	 */
 	public double length() {
-		return Math.sqrt(c[0]*c[0]+c[1]*c[1]+c[2]*c[2]+c[3]*c[3]);
+		return Math.sqrt(x*x+y*y+z*z+w*w);
 	}
 	
 	/**
@@ -276,10 +296,10 @@ public class Vector4 {
 	public Vector4 normalize() {
 		double length = this.length();
 		// Normalize values
-		this.c[0]/=length;
-		this.c[1]/=length;
-		this.c[2]/=length;
-		this.c[3]/=length;
+		this.x/=length;
+		this.y/=length;
+		this.z/=length;
+		this.w/=length;
 		
 		return this;
 	}
@@ -290,7 +310,7 @@ public class Vector4 {
 	 * @return true if all the elements of this Vector4 are equals to the elements of V
 	 */
 	public boolean equals(Vector4 w) {
-		return this.c[0]==w.c[0] && this.c[1]==w.c[1] && this.c[2]==w.c[2] && this.c[3]==w.c[3];
+		return this.x==w.x && this.y==w.y && this.z==w.z && this.w==w.w;
 	}
 
 	/**
@@ -301,10 +321,10 @@ public class Vector4 {
 	public Vector4 plus(Vector4 w) {
 		Vector4 r = new Vector4();
 		
-		r.setX(this.c[0]+w.c[0]);
-		r.setY(this.c[1]+w.c[1]);
-		r.setZ(this.c[2]+w.c[2]);
-		r.setW(this.c[3]+w.c[3]);
+		r.setX(this.x+w.x);
+		r.setY(this.y+w.y);
+		r.setZ(this.z+w.z);
+		r.setW(this.w+w.w);
 		
 		return r;
 	}
@@ -319,10 +339,10 @@ public class Vector4 {
 	public Vector4 plus(Vector3 v) {
 		Vector4 r = new Vector4();
 		
-		r.setX(this.c[0]+v.c[0]);
-		r.setY(this.c[1]+v.c[1]);
-		r.setZ(this.c[2]+v.c[2]);
-		r.setW(this.c[3]);
+		r.setX(this.x+v.x);
+		r.setY(this.y+v.y);
+		r.setZ(this.z+v.z);
+		r.setW(this.w);
 		
 		return r;
 	}
@@ -332,10 +352,10 @@ public class Vector4 {
 	 * @param w the Vector4 to be added to this Vector4
 	 */
 	public void plusEquals(Vector4 w) {
-		this.c[0]+=w.c[0];
-		this.c[1]+=w.c[1];
-		this.c[2]+=w.c[2];
-		this.c[3]+=w.c[3];
+		this.x+=w.x;
+		this.y+=w.y;
+		this.z+=w.z;
+		this.w+=w.w;
 	}
 	
 	/**
@@ -346,10 +366,10 @@ public class Vector4 {
 	public Vector4 minus(Vector4 w) {
 		Vector4 r = new Vector4();
 		
-		r.setX(this.c[0]-w.c[0]);
-		r.setY(this.c[1]-w.c[1]);
-		r.setZ(this.c[2]-w.c[2]);
-		r.setW(this.c[3]-w.c[3]);
+		r.setX(this.x-w.x);
+		r.setY(this.y-w.y);
+		r.setZ(this.z-w.z);
+		r.setW(this.w-w.w);
 		
 		return r;
 	}
@@ -364,10 +384,10 @@ public class Vector4 {
 	public Vector4 minus(Vector3 v) {
 		Vector4 r = new Vector4();
 		
-		r.setX(this.c[0]-v.c[0]);
-		r.setY(this.c[1]-v.c[1]);
-		r.setZ(this.c[2]-v.c[2]);
-		r.setW(this.c[3]);
+		r.setX(this.x-v.x);
+		r.setY(this.y-v.y);
+		r.setZ(this.z-v.z);
+		r.setW(this.w);
 		
 		return r;
 	}
@@ -377,10 +397,10 @@ public class Vector4 {
 	 * @param w the Vector4 to be subtracted to this Vector4
 	 */
 	public void minusEquals(Vector4 w) {
-		this.c[0]-=w.c[0];
-		this.c[1]-=w.c[1];
-		this.c[2]-=w.c[2];
-		this.c[3]-=w.c[3];
+		this.x-=w.x;
+		this.y-=w.y;
+		this.z-=w.z;
+		this.w-=w.w;
 	}
 	
 	/**
@@ -389,15 +409,15 @@ public class Vector4 {
 	 * @return s, the dot product (double)
 	 */
 	public double dot(Vector4 w) {
-		return c[0]*w.c[0]+c[1]*w.c[1]+c[2]*w.c[2]+c[3]*w.c[3];
+		return this.x*w.x+this.y*w.y+this.z*w.z+this.w*w.w;
 	}
 	
 	public Vector4 times(double val) {
 		Vector4 r = new Vector4();
-		r.setX(this.c[0]*val);
-		r.setY(this.c[1]*val);
-		r.setZ(this.c[2]*val);
-		r.setW(this.c[3]*val);
+		r.setX(this.x*val);
+		r.setY(this.y*val);
+		r.setZ(this.z*val);
+		r.setW(this.w*val);
 
 		return r;
 	}
@@ -406,10 +426,10 @@ public class Vector4 {
 	 * @param val
 	 */
 	public void timesEquals(double val) {
-		this.c[0]*=val;
-		this.c[1]*=val;
-		this.c[2]*=val;
-		this.c[3]*=val;
+		this.x*=val;
+		this.y*=val;
+		this.z*=val;
+		this.w*=val;
 	}
 		
 	/**
@@ -423,9 +443,9 @@ public class Vector4 {
 		 * a=(a1,a2,a3) and b=(b1,b2,b3) then a^b=(a2b3-a3b2, a3b1-a1b3, a1b2-a2b1)
 		 */
 		Vector4 r = new Vector4();
-		r.setX(this.c[1]*w.c[2]-this.c[2]*w.c[1]);
-		r.setY(this.c[2]*w.c[0]-this.c[0]*w.c[2]);
-		r.setZ(this.c[0]*w.c[1]-this.c[1]*w.c[0]);
+		r.setX(this.y*w.z-this.z*w.y);
+		r.setY(this.z*w.x-this.x*w.z);
+		r.setZ(this.x*w.y-this.y*w.x);
 		r.setW(0); // Assuming Vector, not Point
 		
 		return r;
@@ -438,15 +458,17 @@ public class Vector4 {
 	 * @param w
 	 */
 	public void timesEquals(Vector4 w) {
-		double[] array = new double[Constants.SIZE_4];
-		array[0] = this.c[1]*w.c[2]-this.c[2]*w.c[1];
-		array[1] = this.c[2]*w.c[0]-this.c[0]*w.c[2];
-		array[2] = this.c[0]*w.c[1]-this.c[1]*w.c[0];
+		double xp, yp, zp;
+
+		xp = this.y*w.z-this.z*w.y;
+		yp = this.z*w.x-this.x*w.z;
+		zp = this.x*w.y-this.y*w.x;
 		
-		this.c[0] = array[0];
-		this.c[1] = array[1];
-		this.c[2] = array[2];
-		this.c[3] = 0; // Assuming Vector, not Point
+		this.x = xp;
+		this.y = yp;
+		this.z = zp;
+
+		this.w = 0; // Assuming Vector, not Point
 	}
 	
 	/**
@@ -460,7 +482,7 @@ public class Vector4 {
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
 				try {
-					r.set(i, r.get(i)+A.get(i,j)*this.c[j]);
+					r.set(i, r.get(i)+A.get(i,j)*this.get(j));
 				} catch (IndiceOutOfBoundException e) {
 					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
 					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
@@ -478,17 +500,23 @@ public class Vector4 {
 	 */
 	public void timesEquals(Matrix4 A) {
 		double[] array = new double[Constants.SIZE_4];
-		
+
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			array[i] = 0;
 			for (int j=0; j<Constants.SIZE_4; j++) {
-				array[i]+=A.get(i,j)*this.c[j];
+				try {
+					array[i]+=A.get(i,j)*this.get(j);
+				} catch (IndiceOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();
+				}
 			}
 		}		
-		this.c[0] = array[0];
-		this.c[1] = array[1];
-		this.c[2] = array[2];
-		this.c[3] = array[3];
+		this.x = array[0];
+		this.y = array[1];
+		this.z = array[2];
+		this.w = array[3];
 	}	
 
 }
