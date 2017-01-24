@@ -126,15 +126,15 @@ public class TestAventura12 {
 					// Create an Element of a random type
 					switch(Math.round((float)Math.random()*5)) {
 					case 0:
-						e = new Cone(1,0.5,16);
+						e = new Cone(1,0.5,32);
 						e.setColor(Color.YELLOW);
 						break;
 					case 1:
-						e = new Cylinder(1,0.5,16);
+						e = new Cylinder(1,0.5,32);
 						e.setColor(Color.CYAN);
 						break;
 					case 2:
-						e = new Sphere(0.8,16);
+						e = new Sphere(0.8,32);
 						e.setColor(Color.MAGENTA);
 						break;
 					case 3:
@@ -167,7 +167,7 @@ public class TestAventura12 {
 
 		// Create lighting
 		System.out.println("********* Creating Lighting");
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-0.5,0.5), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,-0.5,0.5), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al);
 

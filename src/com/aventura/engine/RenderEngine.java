@@ -4,9 +4,15 @@ import java.awt.Color;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
+import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.world.Cone;
+import com.aventura.model.world.Cylinder;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Segment;
 import com.aventura.model.world.Triangle;
@@ -181,7 +187,12 @@ public class RenderEngine {
 
 		// Display the landmarks if enabled (RenderContext)
 		if (renderContext.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
-			displayLandMarkLines();
+			if (renderContext.getRendering() == RenderContext.RENDERING_TYPE_INTERPOLATE) {
+				displayLandMarkLinesInterpolate();							
+			} else { // Default
+				displayLandMarkLines();			
+			}
+
 		}
 
 		// Display the Light vectors if enabled (RenderContext)
@@ -377,6 +388,50 @@ public class RenderEngine {
 		rasterizer.drawLine(ly, renderContext.landmarkYColor);
 		rasterizer.drawLine(lz, renderContext.landmarkZColor);
 
+	}
+	
+	public void displayLandMarkLinesInterpolate() {
+		
+		// X axis
+		Rotation r1 = new Rotation(Math.PI/2, Vector4.Y_AXIS);
+		Element e1 = new Element();
+		Element l1 = new Cylinder(1, 0.05, 16);
+		Translation tl1 = new Translation(new Vector3(0.5, 0, 0));
+		l1.setTransformation(tl1.times(r1));
+		Element c1 = new Cone(0.2,0.1,16);
+		Translation tc1 = new Translation(new Vector3(1, 0, 0));
+		c1.setTransformation(tc1.times(r1));
+		e1.addElement(l1);
+		e1.addElement(c1);
+		e1.calculateNormals();		
+		render(e1, Matrix4.IDENTITY, renderContext.landmarkXColor);
+		
+		// Y axis
+		Rotation r2 = new Rotation(-Math.PI/2, Vector4.X_AXIS);
+		Element e2 = new Element();
+		Element l2 = new Cylinder(1, 0.05, 16);
+		Translation tl2 = new Translation(new Vector3(0, 0.5, 0));
+		l2.setTransformation(tl2.times(r2));
+		Element c2 = new Cone(0.2,0.1,16);
+		Translation tc2 = new Translation(new Vector3(0, 1, 0));
+		c2.setTransformation(tc2.times(r2));
+		e2.addElement(l2);
+		e2.addElement(c2);
+		e2.calculateNormals();		
+		render(e2, Matrix4.IDENTITY, renderContext.landmarkYColor);
+		
+		// Z axis
+		Element e3 = new Element();
+		Element l3 = new Cylinder(1, 0.05, 16);
+		Translation tl3 = new Translation(new Vector3(0, 0, 0.5));
+		l3.setTransformation(tl3);
+		Element c3 = new Cone(0.2,0.1,16);
+		Translation tc3 = new Translation(new Vector3(0, 0, 1));
+		c3.setTransformation(tc3);
+		e3.addElement(l3);
+		e3.addElement(c3);
+		e3.calculateNormals();		
+		render(e3, Matrix4.IDENTITY, renderContext.landmarkZColor);
 	}
 	
 	public void displayNormalVectors(Triangle to) {

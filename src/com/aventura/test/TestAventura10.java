@@ -95,45 +95,6 @@ public class TestAventura10 {
 		return view;
 	}
 	
-	public World createWorld() {
-		
-		// Create a new World
-		World world = new World();
-		Element e, e1, e2;
-		
-		// e is the main Element
-		e = new Cylinder(2,0.5,8);
-		e.setColor(Color.CYAN);
-		// e1 and e2 will be sub elements
-		e1 = new Cone(2,1,8);
-		e1.setColor(Color.MAGENTA);
-		e2 = new Cube(2);
-		e2.setColor(Color.ORANGE);
-
-		// Translate Elements e1 and e2 respectively above and below main Element e:
-		Translation t1 = new Translation(new Vector3(0, 0, 2));
-		Translation t2 = new Translation(new Vector3(0, 0, -2));
-		e1.setTransformation(t1);
-		e2.setTransformation(t2);
-		
-		// Rotate Element e (and all its sub elements)
-		Rotation r = new Rotation(Math.PI/4, Vector4.X_AXIS);
-		e.setTransformation(r);
-		
-		// Add subelements to Element
-		e.addElement(e1);
-		e.addElement(e2);
-
-		// Add Element to the world
-		world.addElement(e);
-		
-		// Calculate normals
-		world.calculateNormals();
-
-		// World is created
-		return world;
-	}
-
 	public Lighting createLight() {
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,2,3), 1);
 		AmbientLight al = new AmbientLight(0.1f);
@@ -163,10 +124,10 @@ public class TestAventura10 {
 		Element e, e1, e2;
 		
 		// e is the main Element
-		e = new Cylinder(2,0.5,8);
+		e = new Cylinder(2,0.5,32);
 		e.setColor(Color.CYAN);
 		// e1 and e2 will be sub elements
-		e1 = new Cone(2,1,8);
+		e1 = new Cone(2,1,32);
 		e1.setColor(Color.MAGENTA);
 		e2 = new Cube(2);
 		e2.setColor(Color.ORANGE);
