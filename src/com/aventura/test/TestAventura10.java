@@ -139,8 +139,8 @@ public class TestAventura10 {
 		e2.setTransformation(t2);
 		
 		// Rotate Element e (and all its sub elements)
-		Rotation r = new Rotation(Math.PI/4, Vector4.X_AXIS);
-		e.setTransformation(r);
+		//Rotation r = new Rotation(Math.PI/4, Vector4.X_AXIS);
+		//e.setTransformation(r);
 		
 		// Add subelements to Element
 		e.addElement(e1);
@@ -165,11 +165,15 @@ public class TestAventura10 {
 		renderer.setView(view);
 		renderer.render();
 		
+		Rotation r;
+		//Translation t;
 		
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
 			r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.X_AXIS);
+			//t = new Translation(new Vector3(0,0,(double)(i-nb_images)*0.01));
+			//e.setTransformation(t.times(r));
 			e.setTransformation(r);
 			renderer.render();
 		}

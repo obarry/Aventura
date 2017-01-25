@@ -392,41 +392,47 @@ public class RenderEngine {
 	
 	public void displayLandMarkLinesInterpolate() {
 		
-		// X axis
+		final double arrow_length = 1;
+		final double arrow_ray = 0.04;
+		final double spear_ray = 0.08;
+		final double spear_length = 0.2;
+		final int nb_seg =16; 
+		
+		// X axis arrow
 		Rotation r1 = new Rotation(Math.PI/2, Vector4.Y_AXIS);
 		Element e1 = new Element();
-		Element l1 = new Cylinder(1, 0.05, 16);
-		Translation tl1 = new Translation(new Vector3(0.5, 0, 0));
+		Element l1 = new Cylinder(arrow_length, arrow_ray, nb_seg);
+		Translation tl1 = new Translation(new Vector3(arrow_length/2, 0, 0));
 		l1.setTransformation(tl1.times(r1));
-		Element c1 = new Cone(0.2,0.1,16);
-		Translation tc1 = new Translation(new Vector3(1, 0, 0));
+		Element c1 = new Cone(spear_length,spear_ray,nb_seg);
+		Translation tc1 = new Translation(new Vector3(arrow_length, 0, 0));
 		c1.setTransformation(tc1.times(r1));
 		e1.addElement(l1);
 		e1.addElement(c1);
 		e1.calculateNormals();		
 		render(e1, Matrix4.IDENTITY, renderContext.landmarkXColor);
 		
-		// Y axis
+		// Y axis arrow
 		Rotation r2 = new Rotation(-Math.PI/2, Vector4.X_AXIS);
 		Element e2 = new Element();
-		Element l2 = new Cylinder(1, 0.05, 16);
-		Translation tl2 = new Translation(new Vector3(0, 0.5, 0));
+		Element l2 = new Cylinder(arrow_length, arrow_ray, nb_seg);
+		Translation tl2 = new Translation(new Vector3(0, arrow_length/2, 0));
 		l2.setTransformation(tl2.times(r2));
-		Element c2 = new Cone(0.2,0.1,16);
-		Translation tc2 = new Translation(new Vector3(0, 1, 0));
+		Element c2 = new Cone(spear_length,spear_ray,nb_seg);
+		Translation tc2 = new Translation(new Vector3(0, arrow_length, 0));
 		c2.setTransformation(tc2.times(r2));
 		e2.addElement(l2);
 		e2.addElement(c2);
 		e2.calculateNormals();		
 		render(e2, Matrix4.IDENTITY, renderContext.landmarkYColor);
 		
-		// Z axis
+		// Z axis arrow
 		Element e3 = new Element();
-		Element l3 = new Cylinder(1, 0.05, 16);
-		Translation tl3 = new Translation(new Vector3(0, 0, 0.5));
+		Element l3 = new Cylinder(arrow_length, arrow_ray, nb_seg);
+		Translation tl3 = new Translation(new Vector3(0, 0, arrow_length/2));
 		l3.setTransformation(tl3);
-		Element c3 = new Cone(0.2,0.1,16);
-		Translation tc3 = new Translation(new Vector3(0, 0, 1));
+		Element c3 = new Cone(spear_length,spear_ray,nb_seg);
+		Translation tc3 = new Translation(new Vector3(0, 0, arrow_length));
 		c3.setTransformation(tc3);
 		e3.addElement(l3);
 		e3.addElement(c3);
