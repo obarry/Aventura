@@ -35,9 +35,13 @@ import com.aventura.math.vector.*;
  */
 public class Vertex {
 	
-	// Geometry
+	// Original Geometry
 	protected Vector4 position = null; // Coordinates of the Vertex. Vector4 as this is a Point (not vector only) in space.
 	protected Vector3 normal = null; // Normal of this Vertex, this is context specific and can be kept null if normal at Triangle level
+	
+	// Projected Geometry
+	protected Vector4 wld_position = null;
+	protected Vector4 prj_position = null;
 	
 	// Physical characteristic
 	protected Vector2 texture = null; // Relative position of this Vertex in the texture plane
@@ -94,6 +98,14 @@ public class Vertex {
 	
 	public Vector4 getPosition() {
 		return position;
+	}
+	
+	public Vector4 getWorldPosition() {
+		return wld_position;
+	}
+	
+	public Vector4 getProjectedPosition() {
+		return prj_position;
 	}
 	
 	public Vector3 getNormal() {
