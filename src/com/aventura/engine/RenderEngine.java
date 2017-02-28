@@ -224,6 +224,13 @@ public class RenderEngine {
 		Matrix4 model = matrix.times(e.getTransformation());
 		transformation.setModel(model);
 		transformation.computeTransformation(); // Compute the whole ModelView transformation matrix including Camera (view)
+		
+		// TODO NEW TO BE ADDED AND COMPUTED
+		// TRANSFORMATION OF ALL VERTICES OF THE ELEMENT
+		// PRIOR TO TRIANGLE RENDERING
+		// NOW THE TRANSFORMATION IS AT VERTEX LEVEL AND NEEDS TO BE PROCESSED BEFORE RENDERING
+		// THIS IS MORE OPTIMAL AS VERTICES BELONGING TO SEVERAL TRIANGLES ARE ONLY PROJECTED ONCE
+		// THIS REQUIRES TO IMPLEMENT LIST OF VERTICES AT ELEMENT LEVEL
 				
 		// Process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
@@ -256,44 +263,25 @@ public class RenderEngine {
 	 * Pre-requisite: This assumes that the initialization of ModelView transformation is already done
 	 * 
 	 * @param to the triangle to render
-	 * @param c the color of the Element, can be overiden if color defined (not null) at Triangle level
+	 * @param c the color of the Element, can be overridden if color defined (not null) at Triangle level
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
-	public void render(Triangle to, Color c) {
+	public void render(Triangle t, Color c) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
 		// Priority to lowest level -> if color defined at triangle level, then this overrides the color of above (Element) level 
-		Color color = to.getColor();
+		Color color = t.getColor();
 		if (color == null) color = c;
-		
-		// Evolution to fully cope with Model -> World transformation
-		// ==========================================================
-		//
-		// Create temporarily a new triangle that will be the original triangle transformed in World coordinates
-		Triangle ti;
-		
-		// This triangle should however be a complete copy of the original triangle for all attributes of Triangle and Vertices
-		// because this will then (temporarily) replace the original triangle to for all triangle rendering steps
-		ti = transformation.modelToWorld(to);
-		//
-		// Doing so will fix the problem of Element <-> World transformation for shading calculation etc. (as of now, shading
-		// is calculated using to normals but these vectors can be transformed by Element <-> World transformation
-		
-		Triangle tf; // The projected model view triangle in homogeneous coordinates 
-		
-		// Project this Triangle in the View in homogeneous coordinates
-		// This new triangle contains vertices that are transformed
-		tf = transformation.modelToClip(to);
 		
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
 		// Then renderContext its fragments in the View
-		if (isInViewFrustum(tf)) { // Render triangle
+		if (isInViewFrustum(t)) { // Render triangle
 
 			switch (renderContext.rendering_type) {
 			case RenderContext.RENDERING_TYPE_LINE:
-				rasterizer.drawTriangleLines(tf, color);
+				rasterizer.drawTriangleLines(t, color);
 				break;
 			case RenderContext.RENDERING_TYPE_MONOCHROME:
 				//TODO To be implemented
@@ -304,11 +292,11 @@ public class RenderEngine {
 			case RenderContext.RENDERING_TYPE_PLAIN:
 				// Draw triangles with shading full face, no interpolation.
 				// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-				rasterizer.rasterizeTriangle(tf, ti, color, false);
+				rasterizer.rasterizeTriangle(t, color, false);
 				break;
 			case RenderContext.RENDERING_TYPE_INTERPOLATE:
 				// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-				rasterizer.rasterizeTriangle(tf, ti, color, true);
+				rasterizer.rasterizeTriangle(t, color, true);
 				break;
 			default:
 				// Invalid rendering type
@@ -317,7 +305,7 @@ public class RenderEngine {
 
 			// If DISPLAY_NORMALS is activated then renderContext normals
 			if (renderContext.displayNormals == RenderContext.DISPLAY_NORMALS_ENABLED) {
-				displayNormalVectors(to);
+				displayNormalVectors(t);
 			}
 			// Count Triangles stats (in view)
 			nbt_in++;
@@ -354,9 +342,9 @@ public class RenderEngine {
 	protected boolean isInViewFrustum(Vertex v) {
 		
 		// Get homogeneous coordinates of the Vertex
-		double x = v.getPosition().get3DX();
-		double y = v.getPosition().get3DY();
-		double z = v.getPosition().get3DZ();
+		double x = v.getPos().get3DX();
+		double y = v.getPos().get3DY();
+		double z = v.getPos().get3DZ();
 		
 		// Need all (homogeneous) coordinates to be within range [-1, 1]
 		if ((x<=1 && x>=-1) && (y<=1 && y>=-1) && (z<=1 && z>=-1))
@@ -376,13 +364,14 @@ public class RenderEngine {
 		Vertex x = new Vertex(1,0,0);
 		Vertex y = new Vertex(0,1,0);
 		Vertex z = new Vertex(0,0,1);
+		transformation.transform(o);
+		transformation.transform(x);
+		transformation.transform(y);
+		transformation.transform(z);
 		// Create 3 unit segments
-		Segment line_x = new Segment(o, x);
-		Segment line_y = new Segment(o, y);
-		Segment line_z = new Segment(o, z);
-		Segment lx = transformation.modelToClip(line_x);
-		Segment ly = transformation.modelToClip(line_y);
-		Segment lz = transformation.modelToClip(line_z);
+		Segment lx = new Segment(o, x);
+		Segment ly = new Segment(o, y);
+		Segment lz = new Segment(o, z);
 		// Draw segments with different colors (x=RED, y=GREEN, z=BLUE) for mnemotechnic
 		rasterizer.drawLine(lx, renderContext.landmarkXColor);
 		rasterizer.drawLine(ly, renderContext.landmarkYColor);
@@ -440,44 +429,43 @@ public class RenderEngine {
 		render(e3, Matrix4.IDENTITY, renderContext.landmarkZColor);
 	}
 	
-	public void displayNormalVectors(Triangle to) {
+	public void displayNormalVectors(Triangle t) {
 		// Caution: in this section, we need to take the original triangle containing the normal and other attributes !!!
 		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Display normals for triangle. Normal of triangle "+to.getNormal());
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Display normals for triangle. Normal of triangle "+t.getNormal());
 		
 		// Get the 3 vertices from Triangle
-		Vertex p1 = to.getV1();
-		Vertex p2 = to.getV2();
-		Vertex p3 = to.getV3();
-		Vertex n1, n2, n3;
+		Vertex p1 = t.getV1();
+		Vertex p2 = t.getV2();
+		Vertex p3 = t.getV3();
 		
-		if (to.isTriangleNormal()) { // Normal at Triangle level
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+to.getNormal());
+		if (t.isTriangleNormal()) { // Normal at Triangle level
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+t.getNormal());
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
 			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
-			Vertex c = to.getCenter();
-			Vertex n = new Vertex(c.getPosition().plus(to.getNormal()));
+			Vertex c = t.getCenter();
+			Vertex n = new Vertex(c.getPos().plus(t.getNormal()));
+			transformation.transform(n);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
-			Segment segment = new Segment(c, n);
-			Segment l = transformation.modelToClip(segment);
-			rasterizer.drawLine(l, renderContext.normalsColor);
+			Segment s = new Segment(c, n);
+			rasterizer.drawLine(s, renderContext.normalsColor);
 			
 		} else { // Normals at Vertex level
+			Vertex n1, n2, n3;
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level");
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
-			n1 = new Vertex(p1.getPosition().plus(p1.getNormal()));
-			n2 = new Vertex(p2.getPosition().plus(p2.getNormal()));
-			n3 = new Vertex(p3.getPosition().plus(p3.getNormal()));
+			n1 = new Vertex(p1.getPos().plus(p1.getNormal()));
+			n2 = new Vertex(p2.getPos().plus(p2.getNormal()));
+			n3 = new Vertex(p3.getPos().plus(p3.getNormal()));
+			transformation.transform(n1);
+			transformation.transform(n2);
+			transformation.transform(n3);
 			
 			// Create 3 segments corresponding to normal vectors
-			Segment line1 = new Segment(p1, n1);
-			Segment line2 = new Segment(p2, n2);
-			Segment line3 = new Segment(p3, n3);
-			// Transform the 3 normals
-			Segment l1 = transformation.modelToClip(line1);
-			Segment l2 = transformation.modelToClip(line2);
-			Segment l3 = transformation.modelToClip(line3);
+			Segment l1 = new Segment(p1, n1);
+			Segment l2 = new Segment(p2, n2);
+			Segment l3 = new Segment(p3, n3);
 			
 			// Draw each normal vector starting from their corresponding vertex  
 			rasterizer.drawLine(l1, renderContext.normalsColor);
@@ -492,9 +480,10 @@ public class RenderEngine {
 		transformation.computeTransformation();
 		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVector(null));
 		Vertex o = new Vertex(0,0,0);
-		Segment segment = new Segment(o, v);
-		Segment l = transformation.modelToClip(segment);
-		rasterizer.drawLine(l, renderContext.lightVectorsColor);
+		transformation.transform(v);
+		transformation.transform(o);
+		Segment s = new Segment(o, v);
+		rasterizer.drawLine(s, renderContext.lightVectorsColor);
 	}
 
 

@@ -259,14 +259,6 @@ public class Vector4 {
 	}
 	
 	/**
-	 * Get a new Vector3 representing the 3 first coordinates of this Vector
-	 * @return z
-	 */
-	public Vector3 getVector3() {
-		return new Vector3(this.x, this.y, this.z);
-	}
-
-	/**
 	 * Get a new Vector3 representing the 3 first coordinates of this Vector divided by the 4th coordinate (3D Point)
 	 * @return z
 	 */
@@ -517,6 +509,14 @@ public class Vector4 {
 		this.y = array[1];
 		this.z = array[2];
 		this.w = array[3];
-	}	
+	}
+	
+	/**
+	 * Get a new Vector3 representing the 3 first coordinates of this Vector
+	 * @return z
+	 */
+	public Vector3 V3() {
+		return new Vector3(this);
+	}
 
 }

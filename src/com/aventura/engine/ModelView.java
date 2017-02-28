@@ -149,63 +149,6 @@ public class ModelView {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ transformation);
 	}
 	
-	/**
-	 * Return a new Segment containing (new) projected vertices
-	 * Relies on the transform method transforming vertices
-	 * 
-	 * @param l the Segment to transform
-	 * @return the new Segment
-	 */
-	public Segment modelToClip(Segment l) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform line: "+l);
-		
-		Segment transformed = new Segment();
-		
-		transformed.setV1(modelToClip(l.getV1()));
-		transformed.setV2(modelToClip(l.getV2()));
-		
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed line: "+ transformed);
-		
-		return transformed;
-	}
-	
-	/**
-	 * Return a new triangle containing (new) projected vertices
-	 * Relies on the transform method transforming vertices
-	 * 
-	 * @param t the triangle to transform
-	 * @return the new triangle
-	 */
-	public Triangle modelToClip(Triangle t) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform triangle: "+t);
-		
-		Triangle transformed = new Triangle();
-		
-		transformed.setV1(modelToClip(t.getV1()));
-		transformed.setV2(modelToClip(t.getV2()));
-		transformed.setV3(modelToClip(t.getV3()));
-		//if (t.getNormal()!=null) transformed.setNormal(transform(t.getNormal()));
-
-		
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed triangle: "+ transformed);
-		
-		return transformed;
-	}
-	
-	/**
-	 * Return a new Vertex resulting from the ModelView transformation ("projection") of the provided Vertex
-	 * Do not modify the provided Vertex.
-	 * 
-	 * @param v the provided Vertex (left unchanged)
-	 * @return the new projected Vertex
-	 */
-	public Vertex modelToClip(Vertex v) {
-		// Create a new Vertex having its Vector4 position set to the resulting of the transformation of the provided Vertex's 
-		// Vector4 position by the transformation Matrix
-		Vertex transformed = new Vertex(transformation.times(v.getPosition()));
-		// Return the newly created Vertex (hence preserve the original Vertex of the Element)
-		return transformed;
-	}
 	
 	/**
 	 * Return a new Vector4 resulting from the ModelView transformation ("projection") of the provided Vector4
@@ -229,34 +172,24 @@ public class ModelView {
 	 * @return a newly created Vector3 resulting from the transformation
 	 */
 	public Vector3 modelToClip(Vector3 v) {
-		Vector4 v4 = v.getVector4();
-		return modelToClip(v4).getVector3();
+		Vector4 v4 = v.V4();
+		return modelToClip(v4).V3();
 	}
-	
-	
-	public Triangle modelToWorld(Triangle t){
-		Triangle transformed = new Triangle(t);
-		
-		transformed.setV1(modelToWorld(t.getV1()));
-		transformed.setV2(modelToWorld(t.getV2()));
-		transformed.setV3(modelToWorld(t.getV3()));
-		if (t.getNormal() != null) {
-			transformed.setNormal(model.times(t.getNormal().getVector4()));
-		}
-		return transformed;
-	}
-	
-	public Vertex modelToWorld(Vertex v) {
-		Vertex transformed;
+				
+	/**
+	 * Fully compute Vertex projections resulting from the ModelView transformation for both ModelToWorld and ModelToClip projections
+	 * Complete the provided Vertex with projection data but do not modify original position data
+	 * 
+	 * @param v the provided Vertex
+	 */
+	public void transform(Vertex v) {
+		v.setProjPos(transformation.times(v.getPos()));
+		v.setWorldPos(model.times(v.getPos()));
 		if (v.getNormal() != null) {
-			transformed = new Vertex(model.times(v.getPosition()), model.times(v.getNormalV4()));
-		} else {
-			transformed = new Vertex(model.times(v.getPosition()));
+			v.setProjNormal(transformation.times(v.getNormal().V4()).V3());
+			v.setWorldNormal(model.times(v.getNormal().V4()).V3());
 		}
-		// Return the newly created Vertex (hence preserve the original Vertex of the Element)
-		return transformed;
 	}
-	
 
 
 }

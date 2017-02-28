@@ -152,11 +152,11 @@ public class Cylinder extends Element {
 		// Create normals of vertices
 		for (int i=0; i<half_seg*2; i++) {
 			// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it 
-			n = vertices[i][0].getPosition().minus(bottom_center);
+			n = vertices[i][0].getPos().minus(bottom_center);
 			n.normalize();
-			vertices[i][0].setNormal(n.getVector3());
+			vertices[i][0].setNormal(n.V3());
 			// Same normal vector can be used for the corresponding top Vertex
-			vertices[i][1].setNormal(n.getVector3());
+			vertices[i][1].setNormal(n.V3());
 		}
 		
 		calculateSubNormals();

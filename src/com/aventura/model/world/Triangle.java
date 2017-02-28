@@ -102,7 +102,7 @@ public class Triangle {
 	 * @return
 	 */
 	public Vertex getCenter() {
-		Vector4 p = (v1.getPosition().plus(v2.getPosition()).plus(v3.getPosition())).times((double)1/3);
+		Vector4 p = (v1.getPos().plus(v2.getPos()).plus(v3.getPos())).times((double)1/3);
 		Vertex c = new Vertex(p);
 		return c;
 	}
@@ -128,7 +128,7 @@ public class Triangle {
 	}
 	
 	public void setNormal(Vector4 n) {
-		this.normal = n.getVector3();
+		this.normal = n.V3();
 	}
 	
 	public void setColor(Color c) {
@@ -145,10 +145,10 @@ public class Triangle {
 	 */
 	public void calculateNormal() {
 		//P = V1V2 as a Vector3
-		Vector3 p = (v2.position.minus(v1.position)).getVector3();
+		Vector3 p = (v2.position.minus(v1.position)).V3();
 
 		//P = V1V3 as a Vector3
-		Vector3 q = (v3.position.minus(v1.position)).getVector3();
+		Vector3 q = (v3.position.minus(v1.position)).V3();
 
 		// Calculate the cross product
 		normal = p.times(q);

@@ -386,7 +386,7 @@ public class Vector3 {
 	 * Create a new Vector4 from this Vector3 containing 0 as w coordinate
 	 * @return a newly created Vector 4
 	 */
-	public Vector4 getVector4() {
+	public Vector4 V4() {
 		return new Vector4(this);
 	}
 }

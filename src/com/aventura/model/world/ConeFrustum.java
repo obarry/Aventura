@@ -192,21 +192,21 @@ public class ConeFrustum extends Element {
 			
 			// For each bottom and top Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
-			u = (summit.getPosition().minus(bottom_center)).times(vertices[i][0].getPosition().minus(bottom_center));
-			n = (vertices[i][0].getPosition().minus(summit.getPosition())).times(u);
+			u = (summit.getPos().minus(bottom_center)).times(vertices[i][0].getPos().minus(bottom_center));
+			n = (vertices[i][0].getPos().minus(summit.getPos())).times(u);
 			n.normalize();
-			vertices[i][0].setNormal(n.getVector3());
-			vertices[i][2].setNormal(n.getVector3());
+			vertices[i][0].setNormal(n.V3());
+			vertices[i][2].setNormal(n.V3());
 			
 			// For each middle Vertex
 			if (i==half_seg*2-1) { // Last one
-				n = vertices[0][2].getPosition().minus(vertices[half_seg*2-1][0].getPosition()).times(vertices[half_seg*2-1][2].getPosition().minus(vertices[0][0].getPosition()));				
+				n = vertices[0][2].getPos().minus(vertices[half_seg*2-1][0].getPos()).times(vertices[half_seg*2-1][2].getPos().minus(vertices[0][0].getPos()));				
 				n.normalize();
 			} else {
-				n = vertices[i+1][2].getPosition().minus(vertices[i][0].getPosition()).times(vertices[i][2].getPosition().minus(vertices[i+1][0].getPosition()));
+				n = vertices[i+1][2].getPos().minus(vertices[i][0].getPos()).times(vertices[i][2].getPos().minus(vertices[i+1][0].getPos()));
 			}
 			n.normalize();
-			vertices[i][1].setNormal(n.getVector3());
+			vertices[i][1].setNormal(n.V3());
 		}
 		calculateSubNormals();
 	}
