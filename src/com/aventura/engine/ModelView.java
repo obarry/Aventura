@@ -110,7 +110,6 @@ public class ModelView {
 		this.projection = projection;
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "View matrix:\n"+ view);
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Projection matrix:\n"+ projection);
-		
 	}
 	
 	/**
@@ -149,33 +148,6 @@ public class ModelView {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ transformation);
 	}
 	
-	
-	/**
-	 * Return a new Vector4 resulting from the ModelView transformation ("projection") of the provided Vector4
-	 * TransformedVector = [4x4 Transformation Matrix] * OriginalVector
-	 * 
-	 * @param v the Vector4 to be transformed 
-	 * @return a newly created Vector4 resulting from the transformation
-	 */
-	public Vector4 modelToClip(Vector4 v) {
-		return transformation.times(v);
-	}
-	
-	/**
-	 * Return a new Vector3 resulting from the ModelView transformation ("projection") of the provided Vector3
-	 * This methods calls the Vector4 transform(Vector4 v) methods
-	 * 
-	 * Caution: this method relies on Matrix4 / Vector4 computation hence creates new intermediate objects.
-	 * It is less effective in terms of performance and memory usage than the Vector4 transform method.
-	 * 
-	 * @param v the Vector3 to be transformed 
-	 * @return a newly created Vector3 resulting from the transformation
-	 */
-	public Vector3 modelToClip(Vector3 v) {
-		Vector4 v4 = v.V4();
-		return modelToClip(v4).V3();
-	}
-				
 	/**
 	 * Fully compute Vertex projections resulting from the ModelView transformation for both ModelToWorld and ModelToClip projections
 	 * Complete the provided Vertex with projection data but do not modify original position data

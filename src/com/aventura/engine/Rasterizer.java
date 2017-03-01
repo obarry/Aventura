@@ -216,27 +216,22 @@ public class Rasterizer {
 			Color shadedCol = computeShadedColor(col, normal);
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
-			
 		} else {
 			// Calculate the 3 colors of the 3 Vertex based on their respective normals
 			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getNormal()));
 			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getNormal()));
 			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getNormal()));					
-
 		}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
 	    // with v1 always down (thus having the highest possible Y)
-	    // then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)
-		
-		//Vector4 p1, p2, p3;
+	    // then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
 		Vertex v1, v2, v3;
 
 		v1 = t.getV1();
 		v2 = t.getV2();
 		v3 = t.getV3();
 
-				
 		if (v2.getPos().get3DY()<v1.getPos().get3DY()) { // p2 lower than p1
 			if (v3.getPos().get3DY()<v2.getPos().get3DY()) { // p3 lower than p2
 				v1 = t.getV3();
@@ -383,11 +378,13 @@ public class Rasterizer {
 			
 			if (zBuf_x<0 || zBuf_x>=zBuf_width) {
 				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value while drawing points: "+zBuf_x);
+				discarded_pixels++;
 				return;
 			}
 			
 			if (zBuf_y<0 || zBuf_y>=zBuf_height) {
 				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_y value while drawing points: "+zBuf_y);
+				discarded_pixels++;
 				return;
 			}
 			
