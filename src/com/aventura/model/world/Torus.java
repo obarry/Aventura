@@ -128,7 +128,7 @@ public class Torus extends Element {
 
 
 				// Each vertice
-				vertices[i][j] = new Vertex(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1).plus(center));
+				vertices[i][j] = createVertex(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1).plus(center));
 			}
 		}
 		

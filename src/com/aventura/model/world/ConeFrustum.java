@@ -122,7 +122,7 @@ public class ConeFrustum extends Element {
 		// Create vertices
 		
 		// Create summits (same Vertex for all summits)
-		summit = new Vertex(new Vector4(0, 0, cone_height/2,  1).plus(center));
+		summit = createVertex(new Vector4(0, 0, cone_height/2,  1).plus(center));
 		
 		// Create circle vertices
 		for (int i=0; i<half_seg*2; i++) {
@@ -131,17 +131,17 @@ public class ConeFrustum extends Element {
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cone
-			vertices[i][0] = new Vertex(new Vector4(ray*cosa, ray*sina, -cone_height/2, 1).plus(center));
+			vertices[i][0] = createVertex(new Vector4(ray*cosa, ray*sina, -cone_height/2, 1).plus(center));
 			
 			// Top circle of the cone
 			double ratio = (cone_height - frustum_height)/cone_height;
-			vertices[i][2] = new Vertex(new Vector4(ratio*ray*cosa, ratio*ray*sina, (frustum_height-(cone_height/2)), 1).plus(center));
+			vertices[i][2] = createVertex(new Vector4(ratio*ray*cosa, ratio*ray*sina, (frustum_height-(cone_height/2)), 1).plus(center));
 			
 			// Middle circle of the cylinder
 			double sinb = Math.sin(alpha*i+beta);
 			double cosb = Math.cos(alpha*i+beta);
 			ratio = (cone_height - mid_height)/cone_height;
-			vertices[i][1] = new Vertex(new Vector4(ratio*ray*cosb, ratio*ray*sinb, (mid_height-(cone_height/2)), 1).plus(center));
+			vertices[i][1] = createVertex(new Vector4(ratio*ray*cosb, ratio*ray*sinb, (mid_height-(cone_height/2)), 1).plus(center));
 		}
 		
 		// Create Triangles

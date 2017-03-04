@@ -194,7 +194,7 @@ public class Trellis extends Element {
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {
 			for (int j=0; j<=ny; j++) {
-				vertices[i][j] = new Vertex(new Vector4(i*width/nx, j*length/ny, 0, 1).plus(position));
+				vertices[i][j] = createVertex(new Vector4(i*width/nx, j*length/ny, 0, 1).plus(position));
 			}
 		}
 	}
@@ -210,7 +210,7 @@ public class Trellis extends Element {
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {
 			for (int j=0; j<=ny; j++) {
-				vertices[i][j] = new Vertex(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
+				vertices[i][j] = createVertex(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
 			}
 		}
 	}

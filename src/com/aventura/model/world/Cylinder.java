@@ -118,10 +118,10 @@ public class Cylinder extends Element {
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			vertices[i][0] = new Vertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
+			vertices[i][0] = createVertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
 			
 			// Top circle of the cylinder
-			vertices[i][1] = new Vertex(new Vector4(ray*cosa, ray*sina, height/2, 1).plus(center));
+			vertices[i][1] = createVertex(new Vector4(ray*cosa, ray*sina, height/2, 1).plus(center));
 		}
 		
 		// Create Triangles

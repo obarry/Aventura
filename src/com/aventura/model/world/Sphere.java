@@ -115,8 +115,8 @@ public class Sphere extends Element {
 		double alpha = Math.PI/half_seg;
 		
 		// Create Vertices
-		northPole = new Vertex(new Vector4(0, 0, ray,  1));
-		southPole = new Vertex(new Vector4(0, 0, -ray,  1));
+		northPole = createVertex(new Vector4(0, 0, ray,  1));
+		southPole = createVertex(new Vector4(0, 0, -ray,  1));
 		
 		for (int i=0; i<half_seg*2; i++) {
 			for (int j=0; j<(half_seg-1); j++) {
@@ -124,7 +124,7 @@ public class Sphere extends Element {
 				double cosa = Math.cos(alpha*i);
 				double sinb = Math.sin(alpha*(j+1));
 				double cosb = Math.cos(alpha*(j+1));
-				vertices[i][j] = new Vertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1).plus(center));
+				vertices[i][j] = createVertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1).plus(center));
 			}
 		}
 

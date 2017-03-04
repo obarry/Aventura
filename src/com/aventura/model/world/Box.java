@@ -90,14 +90,14 @@ public class Box extends Element {
 		double zh = z_dim/2;
 		
 		// Build the Element: Create Vertices of the Cube: 8 vertices
-		vertices[0][0][0] = new Vertex(new Vector4(-xh, -yh, -zh,  1).plus(position));
-		vertices[0][1][0] = new Vertex(new Vector4(-xh,  yh, -zh,  1).plus(position));
-		vertices[1][1][0] = new Vertex(new Vector4(xh, yh, -zh,  1).plus(position));
-		vertices[1][0][0] = new Vertex(new Vector4(xh, -yh, -zh,  1).plus(position));
-		vertices[0][0][1] = new Vertex(new Vector4(-xh, -yh, zh,  1).plus(position));
-		vertices[0][1][1] = new Vertex(new Vector4(-xh,  yh, zh,  1).plus(position));
-		vertices[1][1][1] = new Vertex(new Vector4(xh, yh, zh,  1).plus(position));
-		vertices[1][0][1] = new Vertex(new Vector4(xh,  -yh, zh,  1).plus(position));
+		vertices[0][0][0] = createVertex(new Vector4(-xh, -yh, -zh,  1).plus(position));
+		vertices[0][1][0] = createVertex(new Vector4(-xh,  yh, -zh,  1).plus(position));
+		vertices[1][1][0] = createVertex(new Vector4(xh, yh, -zh,  1).plus(position));
+		vertices[1][0][0] = createVertex(new Vector4(xh, -yh, -zh,  1).plus(position));
+		vertices[0][0][1] = createVertex(new Vector4(-xh, -yh, zh,  1).plus(position));
+		vertices[0][1][1] = createVertex(new Vector4(-xh,  yh, zh,  1).plus(position));
+		vertices[1][1][1] = createVertex(new Vector4(xh, yh, zh,  1).plus(position));
+		vertices[1][0][1] = createVertex(new Vector4(xh,  -yh, zh,  1).plus(position));
 		
 		// Creates Triangles from Vertices: 6 faces, 2 triangles each
 		Triangle t1 = new Triangle(vertices[0][0][0], vertices[0][1][0], vertices[1][1][0]);

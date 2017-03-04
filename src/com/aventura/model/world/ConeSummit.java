@@ -113,7 +113,7 @@ public class ConeSummit extends Element {
 		// Create vertices
 		
 		// Create summits (same Vertex for all summits)
-		summit = new Vertex(new Vector4(0, 0, height/2,  1).plus(center));
+		summit = createVertex(new Vector4(0, 0, height/2,  1).plus(center));
 		
 		// Create bottom vertices
 		for (int i=0; i<half_seg*2; i++) {
@@ -122,7 +122,7 @@ public class ConeSummit extends Element {
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			vertices[i] = new Vertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
+			vertices[i] = createVertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
 			
 		}
 		

@@ -1,10 +1,7 @@
 package com.aventura.engine;
 
 import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Segment;
-import com.aventura.model.world.Triangle;
+import com.aventura.model.world.Element;
 import com.aventura.model.world.Vertex;
 import com.aventura.tools.tracing.Tracer;
 
@@ -160,6 +157,17 @@ public class ModelView {
 		if (v.getNormal() != null) {
 			v.setProjNormal(transformation.times(v.getNormal().V4()).V3());
 			v.setWorldNormal(model.times(v.getNormal().V4()).V3());
+		}
+	}
+	
+	/**
+	 * Transform all vertices of an Element
+	 * 
+	 * @param e the Element
+	 */
+	public void transformVertices(Element e) {
+		for (int i=0; i<e.getNbOfVertices(); i++) {
+			transform(e.getVertex(i));
 		}
 	}
 

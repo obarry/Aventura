@@ -101,8 +101,8 @@ public class RenderEngine {
 	// View
 	private View view;
 	
-	// ModelView transformation
-	private ModelView transformation;
+	// ModelView modelView
+	private ModelView modelView;
 	
 	// Rasterizer
 	private Rasterizer rasterizer;
@@ -129,7 +129,7 @@ public class RenderEngine {
 		//this.camera = camera;
 		
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
-		this.transformation = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
+		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
 		
 		// Delegate rasterization tasks to a dedicated engine
 		this.rasterizer = new Rasterizer(graphic, lighting);
@@ -145,7 +145,7 @@ public class RenderEngine {
 	 * 
 	 * It processes all triangles of the World, Element by Element.
 	 * For each Element it takes all Triangles one by one and renderContext them.
-	 * - Full ModelView transformation into homogeneous coordinates
+	 * - Full ModelView modelView into homogeneous coordinates
 	 * - Rasterization
 	 * It uses the parameters of GraphicContext and RenderContext:
 	 * - View information contained into GraphicContext
@@ -156,7 +156,7 @@ public class RenderEngine {
 	 * - Screen and display area
 	 * - etc.
 	 * 
-	 * But this method will also recalculate each time the full ModelView transformation Matrix including the Camera so any change
+	 * But this method will also recalculate each time the full ModelView modelView Matrix including the Camera so any change
 	 * will be taken into account.
 	 * 
 	 */
@@ -222,8 +222,8 @@ public class RenderEngine {
 		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
 		Matrix4 model = matrix.times(e.getTransformation());
-		transformation.setModel(model);
-		transformation.computeTransformation(); // Compute the whole ModelView transformation matrix including Camera (view)
+		modelView.setModel(model);
+		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (view)
 		
 		// TODO NEW TO BE ADDED AND COMPUTED
 		// TRANSFORMATION OF ALL VERTICES OF THE ELEMENT
@@ -231,6 +231,7 @@ public class RenderEngine {
 		// NOW THE TRANSFORMATION IS AT VERTEX LEVEL AND NEEDS TO BE PROCESSED BEFORE RENDERING
 		// THIS IS MORE OPTIMAL AS VERTICES BELONGING TO SEVERAL TRIANGLES ARE ONLY PROJECTED ONCE
 		// THIS REQUIRES TO IMPLEMENT LIST OF VERTICES AT ELEMENT LEVEL
+		modelView.transformVertices(e);
 				
 		// Process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
@@ -260,7 +261,7 @@ public class RenderEngine {
 	 * This method will calculate transformed triangle (which consists in transforming each vertex) then it delegates
 	 * the low level rasterization of the triangle to the Rasterizer, using appropriate methods based on the type of
 	 * rendering that is expected (lines, plain faces, interpolation, etc.). 
-	 * Pre-requisite: This assumes that the initialization of ModelView transformation is already done
+	 * Pre-requisite: This assumes that the initialization of ModelView modelView is already done
 	 * 
 	 * @param to the triangle to render
 	 * @param c the color of the Element, can be overridden if color defined (not null) at Triangle level
@@ -356,18 +357,18 @@ public class RenderEngine {
 
 	public void displayLandMarkLines() {
 		// Set the Model Matrix to IDENTITY (no translation)
-		transformation.setModel(Matrix4.IDENTITY);
-		transformation.computeTransformation();
+		modelView.setModel(Matrix4.IDENTITY);
+		modelView.computeTransformation();
 
 		// Create Vertices to draw unit segments
 		Vertex o = new Vertex(0,0,0);
 		Vertex x = new Vertex(1,0,0);
 		Vertex y = new Vertex(0,1,0);
 		Vertex z = new Vertex(0,0,1);
-		transformation.transform(o);
-		transformation.transform(x);
-		transformation.transform(y);
-		transformation.transform(z);
+		modelView.transform(o);
+		modelView.transform(x);
+		modelView.transform(y);
+		modelView.transform(z);
 		// Create 3 unit segments
 		Segment lx = new Segment(o, x);
 		Segment ly = new Segment(o, y);
@@ -445,7 +446,7 @@ public class RenderEngine {
 			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = t.getCenter();
 			Vertex n = new Vertex(c.getPos().plus(t.getNormal()));
-			transformation.transform(n);
+			modelView.transform(n);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
 			Segment s = new Segment(c, n);
@@ -458,9 +459,9 @@ public class RenderEngine {
 			n1 = new Vertex(p1.getPos().plus(p1.getNormal()));
 			n2 = new Vertex(p2.getPos().plus(p2.getNormal()));
 			n3 = new Vertex(p3.getPos().plus(p3.getNormal()));
-			transformation.transform(n1);
-			transformation.transform(n2);
-			transformation.transform(n3);
+			modelView.transform(n1);
+			modelView.transform(n2);
+			modelView.transform(n3);
 			
 			// Create 3 segments corresponding to normal vectors
 			Segment l1 = new Segment(p1, n1);
@@ -476,12 +477,12 @@ public class RenderEngine {
 		
 	public void displayLight() {
 		// Set the Model Matrix to IDENTITY (no translation)
-		transformation.setModel(Matrix4.IDENTITY);
-		transformation.computeTransformation();
+		modelView.setModel(Matrix4.IDENTITY);
+		modelView.computeTransformation();
 		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVector(null));
 		Vertex o = new Vertex(0,0,0);
-		transformation.transform(v);
-		transformation.transform(o);
+		modelView.transform(v);
+		modelView.transform(o);
 		Segment s = new Segment(o, v);
 		rasterizer.drawLine(s, renderContext.lightVectorsColor);
 	}

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import com.aventura.math.transform.Transformable;
 import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector4;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -119,7 +120,7 @@ public class Element implements Transformable {
 	
 	protected ArrayList<Element> subelements; // To create a hierarchy of elements - not necessarily used
 	protected ArrayList<Triangle> triangles;  // Triangles related to this element
-	//protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
+	protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
 	
 	protected Matrix4 transform;  // Element to World Transformation Matrix (Model Matrix)
 	protected Color color; // Color of the element unless specified at Triangle or Vertex level (lowest level priority)
@@ -127,6 +128,7 @@ public class Element implements Transformable {
 	public Element() {
 		super();
 		triangles = new ArrayList<Triangle>();
+		vertices = new ArrayList<Vertex>();
 		transform = Matrix4.IDENTITY; // By default
 	}
 	
@@ -138,9 +140,15 @@ public class Element implements Transformable {
 		}
 	}
 	
-//	public void addVertex(Vertex v) {
-//		//TODO To be implemented
-//	}
+	public void addVertex(Vertex v) {
+		this.vertices.add(v);
+	}
+	
+	public Vertex createVertex(Vector4 v4) {
+		Vertex v = new Vertex(v4);
+		addVertex(v);
+		return v;
+	}
 	
 	public ArrayList<Element> getSubElements() {
 		return subelements;
@@ -176,6 +184,18 @@ public class Element implements Transformable {
 	
 	public int getNbOfTriangles() {
 		return triangles.size();
+	}
+
+	public ArrayList<Vertex> getVertices() {
+		return vertices;
+	}
+	
+	public Vertex getVertex(int i) {
+		return vertices.get(i);
+	}
+	
+	public int getNbOfVertices() {
+		return vertices.size();
 	}
 
 	@Override
