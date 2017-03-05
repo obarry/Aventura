@@ -84,7 +84,7 @@ public class ModelView {
 	Matrix4 model;
 	
 	// This matrix is the result of the multiplication of all Matrices
-	Matrix4 transformation;
+	Matrix4 full;
 	
 	/**
 	 * Default constructor.
@@ -141,8 +141,8 @@ public class ModelView {
 	 */
 	public void computeTransformation() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
-		transformation = projection.times(view.times(model));
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ transformation);
+		full = projection.times(view.times(model));
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
 	}
 	
 	/**
@@ -152,10 +152,10 @@ public class ModelView {
 	 * @param v the provided Vertex
 	 */
 	public void transform(Vertex v) {
-		v.setProjPos(transformation.times(v.getPos()));
+		v.setProjPos(full.times(v.getPos()));
 		v.setWorldPos(model.times(v.getPos()));
 		if (v.getNormal() != null) {
-			v.setProjNormal(transformation.times(v.getNormal().V4()).V3());
+			v.setProjNormal(full.times(v.getNormal().V4()).V3());
 			v.setWorldNormal(model.times(v.getNormal().V4()).V3());
 		}
 	}
@@ -170,6 +170,5 @@ public class ModelView {
 			transform(e.getVertex(i));
 		}
 	}
-
 
 }

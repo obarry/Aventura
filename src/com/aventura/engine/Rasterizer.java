@@ -164,24 +164,24 @@ public class Rasterizer {
 	}
 
 	
-	public void drawVectorFromPosition(Vertex position, Vector3 vector, Color c) {
-		
-		view.setColor(c);
-		drawVectorFromPosition(position, vector);
-	}
+//	public void drawVectorFromPosition(Vertex position, Vector3 vector, Color c) {
+//		
+//		view.setColor(c);
+//		drawVectorFromPosition(position, vector);
+//	}
 
-	public void drawVectorFromPosition(Vertex position, Vector3 vector) {
-		
-		int x1, y1, x2, y2;
-		x1 = (int)(xScreen(position));
-		y1 = (int)(yScreen(position));
-		
-		Vector4 p = position.getPos().plus(vector); 
-		x2 = (int)(xScreen(p));
-		y2 = (int)(yScreen(p));
-
-		view.drawLine(x1, y1, x2, y2);
-	}
+//	public void drawVectorFromPosition(Vertex position, Vector3 vector) {
+//		
+//		int x1, y1, x2, y2;
+//		x1 = (int)(xScreen(position));
+//		y1 = (int)(yScreen(position));
+//		
+//		Vector4 p = position.getPos().plus(vector); 
+//		x2 = (int)(xScreen(p));
+//		y2 = (int)(yScreen(p));
+//
+//		view.drawLine(x1, y1, x2, y2);
+//	}
 	
 	//
 	// End methods for Segment only Rendering

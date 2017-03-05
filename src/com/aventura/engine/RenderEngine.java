@@ -231,6 +231,8 @@ public class RenderEngine {
 		// NOW THE TRANSFORMATION IS AT VERTEX LEVEL AND NEEDS TO BE PROCESSED BEFORE RENDERING
 		// THIS IS MORE OPTIMAL AS VERTICES BELONGING TO SEVERAL TRIANGLES ARE ONLY PROJECTED ONCE
 		// THIS REQUIRES TO IMPLEMENT LIST OF VERTICES AT ELEMENT LEVEL
+		
+		// Calculate projection for all vertices of this Element
 		modelView.transformVertices(e);
 				
 		// Process each Triangle
@@ -343,9 +345,9 @@ public class RenderEngine {
 	protected boolean isInViewFrustum(Vertex v) {
 		
 		// Get homogeneous coordinates of the Vertex
-		double x = v.getPos().get3DX();
-		double y = v.getPos().get3DY();
-		double z = v.getPos().get3DZ();
+		double x = v.getProjPos().get3DX();
+		double y = v.getProjPos().get3DY();
+		double z = v.getProjPos().get3DZ();
 		
 		// Need all (homogeneous) coordinates to be within range [-1, 1]
 		if ((x<=1 && x>=-1) && (y<=1 && y>=-1) && (z<=1 && z>=-1))
@@ -445,6 +447,7 @@ public class RenderEngine {
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
 			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = t.getCenter();
+			modelView.transform(c);
 			Vertex n = new Vertex(c.getPos().plus(t.getNormal()));
 			modelView.transform(n);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
