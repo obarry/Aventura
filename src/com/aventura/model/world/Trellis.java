@@ -194,7 +194,7 @@ public class Trellis extends Element {
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {
 			for (int j=0; j<=ny; j++) {
-				vertices[i][j] = new Vertex(new Vector4(i*width/nx, j*length/ny, 0, 1).plus(position));
+				vertices[i][j] = createVertex(new Vector4(i*width/nx, j*length/ny, 0, 1).plus(position));
 			}
 		}
 	}
@@ -210,7 +210,7 @@ public class Trellis extends Element {
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {
 			for (int j=0; j<=ny; j++) {
-				vertices[i][j] = new Vertex(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
+				vertices[i][j] = createVertex(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
 			}
 		}
 	}
@@ -267,34 +267,34 @@ public class Trellis extends Element {
 				Vector4 xa, xb, ya, yb, xavg, yavg;
 				
 				if (i>0) {
-					xa = vertices[i-1][j].getPosition();
+					xa = vertices[i-1][j].getPos();
 				} else {
-					xa = vertices[i][j].getPosition(); // When on the side: take the vertex itself to calculate the average
+					xa = vertices[i][j].getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				if (i<nx) {
-					xb = vertices[i+1][j].getPosition();
+					xb = vertices[i+1][j].getPos();
 				} else {
-					xb = vertices[i][j].getPosition(); // When on the side: take the vertex itself to calculate the average
+					xb = vertices[i][j].getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				xavg = xb.minus(xa);
 				
 				// The second one is aligned on the Y axis
 				if (j>0) {
-					ya = vertices[i][j-1].getPosition();
+					ya = vertices[i][j-1].getPos();
 				} else {
-					ya = vertices[i][j].getPosition(); // When on the side: take the vertex itself to calculate the average
+					ya = vertices[i][j].getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				if (j<ny) {
-					yb = vertices[i][j+1].getPosition();
+					yb = vertices[i][j+1].getPos();
 				} else {
-					yb = vertices[i][j].getPosition(); // When on the side: take the vertex itself to calculate the average
+					yb = vertices[i][j].getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				yavg = yb.minus(ya);
 								
 				// The normal vector is the cross product of both vectors.
 				Vector4 normal = xavg.times(yavg);
 				// Need to be normalized
-				vertices[i][j].setNormal(normal.normalize().getVector3());
+				vertices[i][j].setNormal(normal.normalize().V3());
 			}
 		}
 		calculateSubNormals();

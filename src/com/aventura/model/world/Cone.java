@@ -115,7 +115,7 @@ public class Cone extends Element {
 		// Create summits (same Vertex for all summits)
 		Vector4 summit = new Vector4(0, 0, height/2,  1);
 		for (int i=0; i<half_seg*2; i++) {
-			summits[i] = new Vertex(summit.plus(center));		
+			summits[i] = createVertex(summit.plus(center));		
 		}
 		//summit = new Vertex(new Vector4(0, 0, height/2,  1));
 		
@@ -126,7 +126,7 @@ public class Cone extends Element {
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			vertices[i] = new Vertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
+			vertices[i] = createVertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
 			
 		}
 		
@@ -157,20 +157,20 @@ public class Cone extends Element {
 
 			// For each bottom Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
-			u = (summits[i].getPosition().minus(bottom_center)).times(vertices[i].getPosition().minus(bottom_center));
-			n = (vertices[i].getPosition().minus(summits[i].getPosition())).times(u);
+			u = (summits[i].getPos().minus(bottom_center)).times(vertices[i].getPos().minus(bottom_center));
+			n = (vertices[i].getPos().minus(summits[i].getPos())).times(u);
 			n.normalize();
-			vertices[i].setNormal(n.getVector3());
+			vertices[i].setNormal(n.V3());
 			
 			// For each summit, use the ray vector from top center to the Vertex and normalize it
 			if (i<half_seg*2-1) {
 				//n = (vertices[i+1].getPosition().minus(vertices[i].getPosition())).times(summits[i].getPosition().minus(vertices[i].getPosition()));
-				n = (vertices[i].getPosition().minus(summits[i].getPosition())).times(vertices[i+1].getPosition().minus(summits[i].getPosition()));
+				n = (vertices[i].getPos().minus(summits[i].getPos())).times(vertices[i+1].getPos().minus(summits[i].getPos()));
 			} else { // last vertex -> i+1 = 0
-				n = (vertices[i].getPosition().minus(summits[i].getPosition())).times(vertices[0].getPosition().minus(summits[i].getPosition()));			
+				n = (vertices[i].getPos().minus(summits[i].getPos())).times(vertices[0].getPos().minus(summits[i].getPos()));			
 			}
 			n.normalize();
-			summits[i].setNormal(n.getVector3());
+			summits[i].setNormal(n.V3());
 		}
 		calculateSubNormals();
 	}

@@ -35,14 +35,23 @@ import com.aventura.math.vector.*;
  */
 public class Vertex {
 	
-	// Geometry
+	// Original Geometry
 	protected Vector4 position = null; // Coordinates of the Vertex. Vector4 as this is a Point (not vector only) in space.
 	protected Vector3 normal = null; // Normal of this Vertex, this is context specific and can be kept null if normal at Triangle level
+	
+	// Projected Geometry
+	protected Vector4 wld_position = null; // Position of this Vertex in World reference (Model to World projection)
+	protected Vector4 prj_position = null; // Position of this Vertex in Homogeneous (clip) coordinates (Model to Clip projection)
+	protected Vector3 wld_normal = null; // Normal in World coordinates
+	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates
 	
 	// Physical characteristic
 	protected Vector2 texture = null; // Relative position of this Vertex in the texture plane
 	protected Color color = null; // color of this Vertex, if null the Element's color (or World's color) is used. Lowest level priority.
 	protected int material; // To be defined, a specific class may be needed for a complex material representation
+	
+	// Shading
+	protected Color shadedCol = null; // Gouraud's shading at this Vertex
 	
 	// Reflectivity
 	// TODO
@@ -81,35 +90,76 @@ public class Vertex {
 
 	public Vertex(Vector4 p, Vector4 n) {
 		position = p;
-		normal = n.getVector3();
+		normal = n.V3();
 	}
 
 	public String toString() {
 		return "Position: "+position;
 	}
 	
-	public void setPosition(Vector4 p) {
+	public void setPos(Vector4 p) {
 		position = p;
 	}
 	
-	public Vector4 getPosition() {
+	public Vector4 getPos() {
 		return position;
+	}
+	
+	public void setWorldPos(Vector4 p) {
+		wld_position = p;
+	}
+	
+	public Vector4 getWorldPos() {
+		return wld_position;
+	}
+	
+	public void setProjPos(Vector4 p) {
+		prj_position = p;
+	}
+	
+	public Vector4 getProjPos() {
+		return prj_position;
+	}
+	
+	public void setNormal(Vector3 n) {
+		normal = n;
 	}
 	
 	public Vector3 getNormal() {
 		return normal;
 	}
-	
-	public Vector4 getNormalV4() {
-		return new Vector4(normal);
+		
+	public void setWorldNormal(Vector3 n) {
+		wld_normal = n;
 	}
 	
+	public Vector3 getWorldNormal() {
+		return wld_normal;
+	}
+	
+	public void setProjNormal(Vector3 n) {
+		prj_normal = n;
+	}
+	public Vector3 getProjNormal() {
+		return prj_normal;
+	}
+		
+
+		
 	public void setColor(Color c) {
 		this.color = c;
 	}
 	
 	public Color getColor() {
 		return color;
+	}
+	
+	public void setShadedCol(Color c) {
+		this.shadedCol = c;
+	}
+	
+	public Color getShadedCol() {
+		return shadedCol;
 	}
 	
 	/**
@@ -122,10 +172,6 @@ public class Vertex {
 		for (int i=0; i<setOfVertices.length; i++) {
 			// TODO
 		}
-	}
-
-	public void setNormal(Vector3 n) {
-		normal = n;
 	}
 
 }

@@ -128,7 +128,7 @@ public class Torus extends Element {
 
 
 				// Each vertice
-				vertices[i][j] = new Vertex(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1).plus(center));
+				vertices[i][j] = createVertex(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1).plus(center));
 			}
 		}
 		
@@ -180,9 +180,9 @@ public class Torus extends Element {
 		for (int i=0; i<half_circ*2; i++) {
 			for (int j=0; j<half_seg*2; j++) {
 				// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it 
-				n = vertices[i][j].getPosition().minus(centers[i]);
+				n = vertices[i][j].getPos().minus(centers[i]);
 				n.normalize();
-				vertices[i][j].setNormal(n.getVector3());
+				vertices[i][j].setNormal(n.V3());
 			}
 		}
 		

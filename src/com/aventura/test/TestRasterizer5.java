@@ -83,6 +83,9 @@ public class TestRasterizer5 {
 		Vertex v1 = new Vertex(new Vector4(1,0,0,1));
 		Vertex v2 = new Vertex(new Vector4(0,1,0,1));
 		Vertex v3 = new Vertex(new Vector4(0,0,1,1));
+		e.addVertex(v1);
+		e.addVertex(v2);
+		e.addVertex(v3);		
 		Triangle t1 = new Triangle(v1, v2, v3);
 		t1.setColor(Color.ORANGE);
 		e.addTriangle(t1);
@@ -90,6 +93,9 @@ public class TestRasterizer5 {
 		Vertex v4 = new Vertex(new Vector4(0,0,0,1));
 		Vertex v5 = new Vertex(new Vector4(1,1,1,1));
 		Vertex v6 = new Vertex(new Vector4(1,1,0,1));
+		e.addVertex(v4);
+		e.addVertex(v5);
+		e.addVertex(v6);		
 		Triangle t2 = new Triangle(v4, v5, v6);
 		t2.setColor(Color.MAGENTA);
 		e.addTriangle(t2);
@@ -97,6 +103,9 @@ public class TestRasterizer5 {
 		Vertex v7 = new Vertex(new Vector4(0,0,0,1));
 		Vertex v8 = new Vertex(new Vector4(0,2,0.5,1));
 		Vertex v9 = new Vertex(new Vector4(2,0,0.5,1));
+		e.addVertex(v7);
+		e.addVertex(v8);
+		e.addVertex(v9);		
 		Triangle t3 = new Triangle(v7, v8, v9);
 		t3.setColor(Color.GREEN);
 		e.addTriangle(t3);

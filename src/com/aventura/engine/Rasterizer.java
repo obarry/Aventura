@@ -109,6 +109,14 @@ public class Rasterizer {
 		}
 	}
 	
+	protected double xScreen(Vertex v) {
+		return xScreen(v.getProjPos());
+	}
+	
+	protected double yScreen(Vertex v) {
+		return yScreen(v.getProjPos());
+	}
+	
 	protected double xScreen(Vector4 v) {
 		return v.get3DX()*graphic.getPixelHalfWidth();
 	}
@@ -116,6 +124,8 @@ public class Rasterizer {
 	protected double yScreen(Vector4 v) {
 		return v.get3DY()*graphic.getPixelHalfHeight();
 	}
+	
+
 	
 	// Method for Segment only Rendering
 	//
@@ -139,14 +149,12 @@ public class Rasterizer {
 	public void drawLine(Vertex v1, Vertex v2) {
 
 		int x1, y1, x2, y2;	
-		x1 = (int)(xScreen(v1.getPosition()));
-		y1 = (int)(yScreen(v1.getPosition()));
-		x2 = (int)(xScreen(v2.getPosition()));
-		y2 = (int)(yScreen(v2.getPosition()));
+		x1 = (int)(xScreen(v1));
+		y1 = (int)(yScreen(v1));
+		x2 = (int)(xScreen(v2));
+		y2 = (int)(yScreen(v2));
 
 		view.drawLine(x1, y1, x2, y2);
-		//bressenham_short((short)x1, (short)y1, (short)x2, (short)y2);
-		//bressenham_int(x1, y1, x2, y2);
 	}
 
 	public void drawLine(Vertex v1, Vertex v2, Color c) {
@@ -156,26 +164,24 @@ public class Rasterizer {
 	}
 
 	
-	public void drawVectorFromPosition(Vertex position, Vector3 vector, Color c) {
-		
-		view.setColor(c);
-		drawVectorFromPosition(position, vector);
-	}
+//	public void drawVectorFromPosition(Vertex position, Vector3 vector, Color c) {
+//		
+//		view.setColor(c);
+//		drawVectorFromPosition(position, vector);
+//	}
 
-	public void drawVectorFromPosition(Vertex position, Vector3 vector) {
-		
-		int x1, y1, x2, y2;
-		x1 = (int)(xScreen(position.getPosition()));
-		y1 = (int)(yScreen(position.getPosition()));
-		
-		Vector4 p = position.getPosition().plus(vector); 
-		x2 = (int)(xScreen(p));
-		y2 = (int)(yScreen(p));
-
-		view.drawLine(x1, y1, x2, y2);
-		//bressenham_short((short)x1, (short)y1, (short)x2, (short)y2);
-		//bressenham_int(x1, y1, x2, y2);
-	}
+//	public void drawVectorFromPosition(Vertex position, Vector3 vector) {
+//		
+//		int x1, y1, x2, y2;
+//		x1 = (int)(xScreen(position));
+//		y1 = (int)(yScreen(position));
+//		
+//		Vector4 p = position.getPos().plus(vector); 
+//		x2 = (int)(xScreen(p));
+//		y2 = (int)(yScreen(p));
+//
+//		view.drawLine(x1, y1, x2, y2);
+//	}
 	
 	//
 	// End methods for Segment only Rendering
@@ -185,15 +191,14 @@ public class Rasterizer {
 	 * Extrapolated from:
 	 * https://www.davrous.com/2013/06/21/tutorial-part-4-learning-how-to-write-a-3d-software-engine-in-c-ts-or-js-rasterization-z-buffering/
 	 * 
-	 * @param tf the (transformed) triangle to render
-	 * @param to the (original) triangle
+	 * @param t the triangle to render
 	 * @param col
 	 */
-	public void rasterizeTriangle(Triangle tf, Triangle to, Color c, boolean interpolate) {
+	public void rasterizeTriangle(Triangle t, Color c, boolean interpolate) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
 		
-		Color col = c; // Let's initialize the base color with the one of the triangle
+		Color col = c; // Let's initialize the base color with the provided one (from triangle or default color)
 		Color c1 = null, c2 = null, c3 = null; // Colors to store Vertex colors, if interpolation is requested, else will be kept null
 
 		// Init pixel stats
@@ -204,97 +209,57 @@ public class Rasterizer {
 		// If no interpolation requested -> plain faces. Then:
 		// - calculate normal at Triangle level for shading
 		// - calculate shading color once for all triangle
-		if (!interpolate || to.isTriangleNormal()) {
+		if (!interpolate || t.isTriangleNormal()) {
 			// Calculate normal if not calculated
-			if (to.getNormal()==null) to.calculateNormal();
-			Vector3 normal = to.getNormal();
+			if (t.getNormal()==null) t.calculateNormal();
+			Vector3 normal = t.getNormal();
 			Color shadedCol = computeShadedColor(col, normal);
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
-			
-			// As p1, p2 and p3 may be reshuffled and sorted, this is meaningless to calculate the 3 colors at this stage so we postpone
-			// the calculation to later, which increases the complexity and readibility of the algorithm
-			
-			// TODO Further design improvements will allow to simplify this processing by designing direct link between tf and to
-			// (instead of carrying both triangles) e.g. by consolidating at Vertex level both the initial and projected position Vectors
-			// This will also help to reduce the memory usage by duplicating position Vectors only (and not the full Vertices)
+			// Calculate the 3 colors of the 3 Vertex based on their respective normals
+			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getNormal()));
+			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getNormal()));
+			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getNormal()));					
 		}
 
-	    // Lets define p1, p2, p3 in order to always have this order on screen p1, p2 & p3
-	    // with p1 always down (thus having the highest possible Y)
-	    // then p2 between p1 & p3 (or same level if p2 and p3 on same ordinate)
-		
-		Vector4 p1, p2, p3;
+	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
+	    // with v1 always down (thus having the highest possible Y)
+	    // then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
+		Vertex v1, v2, v3;
 
-		p1 = tf.getV1().getPosition();
-		p2 = tf.getV2().getPosition();
-		p3 = tf.getV3().getPosition();
-				
-		if (p2.get3DY()<p1.get3DY()) { // p2 lower than p1
-			if (p3.get3DY()<p2.get3DY()) { // p3 lower than p2
-				p1 = tf.getV3().getPosition();
-				p2 = tf.getV2().getPosition();
-				p3 = tf.getV1().getPosition();
-				if (interpolate && !to.isTriangleNormal()) {
-					// Calculate the 3 colors of the 3 Vertex normals
-					c1 = computeShadedColor(col, to.getV3().getNormal());
-					c2 = computeShadedColor(col, to.getV2().getNormal());
-					c3 = computeShadedColor(col, to.getV1().getNormal());					
-				}
+		v1 = t.getV1();
+		v2 = t.getV2();
+		v3 = t.getV3();
+
+		if (v2.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p2 lower than p1
+			if (v3.getProjPos().get3DY()<v2.getProjPos().get3DY()) { // p3 lower than p2
+				v1 = t.getV3();
+				v2 = t.getV2();
+				v3 = t.getV1();
 			} else { // p2 lower than p3
-				if (p3.get3DY()<p1.get3DY()) { // p3 lower than p1
-					p1 = tf.getV2().getPosition();
-					p2 = tf.getV3().getPosition();
-					p3 = tf.getV1().getPosition();
-					if (interpolate && !to.isTriangleNormal()) {
-						// Calculate the 3 colors of the 3 Vertex normals
-						c1 = computeShadedColor(col, to.getV2().getNormal());
-						c2 = computeShadedColor(col, to.getV3().getNormal());
-						c3 = computeShadedColor(col, to.getV1().getNormal());					
-					}
+				if (v3.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p3 lower than p1
+					v1 = t.getV2();
+					v2 = t.getV3();
+					v3 = t.getV1();
 				} else { // p1 higher than p3
-					p1 = tf.getV2().getPosition();
-					p2 = tf.getV1().getPosition();
-					p3 = tf.getV3().getPosition();
-					if (interpolate && !to.isTriangleNormal()) {
-						// Calculate the 3 colors of the 3 Vertex normals
-						c1 = computeShadedColor(col, to.getV2().getNormal());
-						c2 = computeShadedColor(col, to.getV1().getNormal());
-						c3 = computeShadedColor(col, to.getV3().getNormal());					
-					}
+					v1 = t.getV2();
+					v2 = t.getV1();
+					v3 = t.getV3();
 				}
 			}
 		} else { // p1 lower than p2
-			if (p3.get3DY()<p1.get3DY()) { // p3 lower than p1
-				p1 = tf.getV3().getPosition();
-				p2 = tf.getV1().getPosition();
-				p3 = tf.getV2().getPosition();
-				if (interpolate && !to.isTriangleNormal()) {
-					// Calculate the 3 colors of the 3 Vertex normals
-					c1 = computeShadedColor(col, to.getV3().getNormal());
-					c2 = computeShadedColor(col, to.getV1().getNormal());
-					c3 = computeShadedColor(col, to.getV2().getNormal());					
-				}
+			if (v3.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p3 lower than p1
+				v1 = t.getV3();
+				v2 = t.getV1();
+				v3 = t.getV2();
 			} else { // p1 lower than p3
-				if (p3.get3DY()<p2.get3DY()) { // p3 lower than p2
+				if (v3.getProjPos().get3DY()<v2.getProjPos().get3DY()) { // p3 lower than p2
 					// No change for p1
-					p2 = tf.getV3().getPosition();
-					p3 = tf.getV2().getPosition();
-					if (interpolate && !to.isTriangleNormal()) {
-						// Calculate the 3 colors of the 3 Vertex normals
-						c1 = computeShadedColor(col, to.getV1().getNormal());
-						c2 = computeShadedColor(col, to.getV3().getNormal());
-						c3 = computeShadedColor(col, to.getV2().getNormal());					
-					}
+					v2 = t.getV3();
+					v3 = t.getV2();
 				} else {
 					// Else keep p1, p2 and p3 as defined
-					if (interpolate && !to.isTriangleNormal()) {
-						// Calculate the 3 colors of the 3 Vertex normals
-						c1 = computeShadedColor(col, to.getV1().getNormal());
-						c2 = computeShadedColor(col, to.getV2().getNormal());
-						c3 = computeShadedColor(col, to.getV3().getNormal());					
-					}
 				}
 			}
 		}
@@ -304,14 +269,14 @@ public class Rasterizer {
 
 	    // http://en.wikipedia.org/wiki/Slope
 	    // Computing slopes
-	    if (yScreen(p2) - yScreen(p1) > 0) {
-	        dP1P2 = (xScreen(p2)-xScreen(p1))/(yScreen(p2)-yScreen(p1));
+	    if (yScreen(v2) - yScreen(v1) > 0) {
+	        dP1P2 = (xScreen(v2)-xScreen(v1))/(yScreen(v2)-yScreen(v1));
 	    } else { // vertical segment, no slope
 	        dP1P2 = 0;
 	    }
 	    
-	    if (yScreen(p3) - yScreen(p1) > 0) {
-	        dP1P3 = (xScreen(p3) - xScreen(p1)) / (yScreen(p3) - yScreen(p1));
+	    if (yScreen(v3) - yScreen(v1) > 0) {
+	        dP1P3 = (xScreen(v3) - xScreen(v1)) / (yScreen(v3) - yScreen(v1));
 	    } else { // vertical segment, no slope
 	        dP1P3 = 0;
 	    }
@@ -331,11 +296,11 @@ public class Rasterizer {
 			// +
 		    // P1
 	    	
-	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
-	            if (y < yScreen(p2)) {
-	                rasterizeScanLine(y, p1, p3, p1, p2, c1, c3, c1, c2, col, interpolate && !to.isTriangleNormal());
+	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
+	            if (y < yScreen(v2)) {
+	                rasterizeScanLine(y, v1, v3, v1, v2, col, interpolate && !t.isTriangleNormal());
 	            } else {
-	                rasterizeScanLine(y, p1, p3, p2, p3, c1, c3, c2, c3, col, interpolate && !to.isTriangleNormal());
+	                rasterizeScanLine(y, v1, v3, v2, v3, col, interpolate && !t.isTriangleNormal());
 	            }
 	        }
 
@@ -354,32 +319,32 @@ public class Rasterizer {
 			//        +
 		    //       P1
 	    	
-	        for (int y = (int)yScreen(p1); y <= (int)yScreen(p3); y++) {
-	            if (y < yScreen(p2)) {
-	                rasterizeScanLine(y, p1, p2, p1, p3, c1, c2, c1, c3, col, interpolate && !to.isTriangleNormal());
+	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
+	            if (y < yScreen(v2)) {
+	                rasterizeScanLine(y, v1, v2, v1, v3, col, interpolate && !t.isTriangleNormal());
 	            } else {
-	                rasterizeScanLine(y, p2, p3, p1, p3, c2, c3, c1, c3, col, interpolate && !to.isTriangleNormal());
+	                rasterizeScanLine(y, v2, v3, v1, v3, col, interpolate && !t.isTriangleNormal());
 	            }
 	        }
 	    }
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels);
 	}
 	
-	protected void rasterizeScanLine(int y, Vector4 pa, Vector4 pb, Vector4 pc, Vector4 pd, Color ca, Color cb, Color cc, Color cd, Color c, boolean interpolate) {
+	protected void rasterizeScanLine(int y, Vertex va, Vertex vb, Vertex vc, Vertex vd, Color c, boolean interpolate) {
 		
 	    // Thanks to current Y, we can compute the gradient to compute others values like
 	    // the starting X (sx) and ending X (ex) to draw between
 	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
 		
-	    float gradient1 = (float)(yScreen(pa) != yScreen(pb) ? (y - yScreen(pa)) / (yScreen(pb) - yScreen(pa)) : 1);
-	    float gradient2 = (float)(yScreen(pc) != yScreen(pd) ? (y - yScreen(pc)) / (yScreen(pd) - yScreen(pc)) : 1);
+	    float gradient1 = (float)(yScreen(va) != yScreen(vb) ? (y - yScreen(va)) / (yScreen(vb) - yScreen(va)) : 1);
+	    float gradient2 = (float)(yScreen(vc) != yScreen(vd) ? (y - yScreen(vc)) / (yScreen(vd) - yScreen(vc)) : 1);
 
-	    int sx = (int)Tools.interpolate(xScreen(pa), xScreen(pb), gradient1);
-	    int ex = (int)Tools.interpolate(xScreen(pc), xScreen(pd), gradient2);
+	    int sx = (int)Tools.interpolate(xScreen(va), xScreen(vb), gradient1);
+	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
 
 	    // starting Z & ending Z
-	    float z1 = Tools.interpolate((float)pa.get3DZ(), (float)pb.get3DZ(), gradient1);
-	    float z2 = Tools.interpolate((float)pc.get3DZ(), (float)pd.get3DZ(), gradient2);
+	    float z1 = Tools.interpolate((float)va.getProjPos().get3DZ(), (float)vb.getProjPos().get3DZ(), gradient1);
+	    float z2 = Tools.interpolate((float)vc.getProjPos().get3DZ(), (float)vd.getProjPos().get3DZ(), gradient2);
 	    
 	    // drawing a line from left (sx) to right (ex) 
 	    for (int x = sx; x < ex; x++) {
@@ -389,8 +354,8 @@ public class Rasterizer {
 	        // If color interpolation
 	        if (interpolate) {
 	        	Color c1, c2;
-	        	c1 = ColorTools.interpolateColors(ca, cb, gradient1);
-	        	c2 = ColorTools.interpolateColors(cc, cd, gradient2);
+	        	c1 = ColorTools.interpolateColors(va.getShadedCol(), vb.getShadedCol(), gradient1);
+	        	c2 = ColorTools.interpolateColors(vc.getShadedCol(), vd.getShadedCol(), gradient2);
 	        	c = ColorTools.interpolateColors(c1, c2, gradient);
 	        }
 	        drawPoint(x, y, z, c);
@@ -413,11 +378,13 @@ public class Rasterizer {
 			
 			if (zBuf_x<0 || zBuf_x>=zBuf_width) {
 				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value while drawing points: "+zBuf_x);
+				discarded_pixels++;
 				return;
 			}
 			
 			if (zBuf_y<0 || zBuf_y>=zBuf_height) {
 				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_y value while drawing points: "+zBuf_y);
+				discarded_pixels++;
 				return;
 			}
 			

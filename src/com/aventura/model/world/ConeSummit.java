@@ -113,7 +113,7 @@ public class ConeSummit extends Element {
 		// Create vertices
 		
 		// Create summits (same Vertex for all summits)
-		summit = new Vertex(new Vector4(0, 0, height/2,  1).plus(center));
+		summit = createVertex(new Vector4(0, 0, height/2,  1).plus(center));
 		
 		// Create bottom vertices
 		for (int i=0; i<half_seg*2; i++) {
@@ -122,7 +122,7 @@ public class ConeSummit extends Element {
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			vertices[i] = new Vertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
+			vertices[i] = createVertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
 			
 		}
 		
@@ -150,17 +150,17 @@ public class ConeSummit extends Element {
 		
 		// Create normal of summit
 		n = new Vector4(Vector4.Z_AXIS);
-		summit.setNormal(n.getVector3());
+		summit.setNormal(n.V3());
 			
 		// Create normals of vertices
 		for (int i=0; i<half_seg*2; i++) {
 
 			// For each bottom Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
-			u = (summit.getPosition().minus(bottom_center)).times(vertices[i].getPosition().minus(bottom_center));
-			n = (vertices[i].getPosition().minus(summit.getPosition())).times(u);
+			u = (summit.getPos().minus(bottom_center)).times(vertices[i].getPos().minus(bottom_center));
+			n = (vertices[i].getPos().minus(summit.getPos())).times(u);
 			n.normalize();
-			vertices[i].setNormal(n.getVector3());
+			vertices[i].setNormal(n.V3());
 		}
 		calculateSubNormals();
 	}

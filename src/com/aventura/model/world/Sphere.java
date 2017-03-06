@@ -85,7 +85,7 @@ public class Sphere extends Element {
 		subelements = null;
 		this.ray = ray;
 		this.half_seg = half_seg;
-		this.center = center.getVector4();
+		this.center = center.V4();
 		createSphere();
 	}
 	
@@ -115,8 +115,8 @@ public class Sphere extends Element {
 		double alpha = Math.PI/half_seg;
 		
 		// Create Vertices
-		northPole = new Vertex(new Vector4(0, 0, ray,  1));
-		southPole = new Vertex(new Vector4(0, 0, -ray,  1));
+		northPole = createVertex(new Vector4(0, 0, ray,  1));
+		southPole = createVertex(new Vector4(0, 0, -ray,  1));
 		
 		for (int i=0; i<half_seg*2; i++) {
 			for (int j=0; j<(half_seg-1); j++) {
@@ -124,7 +124,7 @@ public class Sphere extends Element {
 				double cosa = Math.cos(alpha*i);
 				double sinb = Math.sin(alpha*(j+1));
 				double cosb = Math.cos(alpha*(j+1));
-				vertices[i][j] = new Vertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1).plus(center));
+				vertices[i][j] = createVertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1).plus(center));
 			}
 		}
 
@@ -176,9 +176,9 @@ public class Sphere extends Element {
 		for (int i=0; i<half_seg*2; i++) {
 			for (int j=0; j<(half_seg-1); j++) {
 				// For each Vertex, use the ray vector passing through the Vertex and normalize it 
-				Vector4 n = vertices[i][j].getPosition().minus(center);
+				Vector4 n = vertices[i][j].getPos().minus(center);
 				n.normalize();
-				vertices[i][j].setNormal(n.getVector3());
+				vertices[i][j].setNormal(n.V3());
 			}
 		}
 		calculateSubNormals();

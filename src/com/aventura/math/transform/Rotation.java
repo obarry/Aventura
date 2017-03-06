@@ -61,7 +61,7 @@ public class Rotation extends Matrix4 {
 	
 	public Rotation(double a, Vector4 v) {
 		super(Matrix4.IDENTITY);
-		initRotation(a, v.getVector3());
+		initRotation(a, v.V3());
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix:\n");
 	}
 	

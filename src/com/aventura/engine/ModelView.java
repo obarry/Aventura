@@ -1,10 +1,7 @@
 package com.aventura.engine;
 
 import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Segment;
-import com.aventura.model.world.Triangle;
+import com.aventura.model.world.Element;
 import com.aventura.model.world.Vertex;
 import com.aventura.tools.tracing.Tracer;
 
@@ -87,7 +84,7 @@ public class ModelView {
 	Matrix4 model;
 	
 	// This matrix is the result of the multiplication of all Matrices
-	Matrix4 transformation;
+	Matrix4 full;
 	
 	/**
 	 * Default constructor.
@@ -110,7 +107,6 @@ public class ModelView {
 		this.projection = projection;
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "View matrix:\n"+ view);
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Projection matrix:\n"+ projection);
-		
 	}
 	
 	/**
@@ -145,118 +141,34 @@ public class ModelView {
 	 */
 	public void computeTransformation() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
-		transformation = projection.times(view.times(model));
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ transformation);
+		full = projection.times(view.times(model));
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
 	}
 	
 	/**
-	 * Return a new Segment containing (new) projected vertices
-	 * Relies on the transform method transforming vertices
+	 * Fully compute Vertex projections resulting from the ModelView transformation for both ModelToWorld and ModelToClip projections
+	 * Complete the provided Vertex with projection data but do not modify original position data
 	 * 
-	 * @param l the Segment to transform
-	 * @return the new Segment
+	 * @param v the provided Vertex
 	 */
-	public Segment modelToClip(Segment l) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform line: "+l);
-		
-		Segment transformed = new Segment();
-		
-		transformed.setV1(modelToClip(l.getV1()));
-		transformed.setV2(modelToClip(l.getV2()));
-		
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed line: "+ transformed);
-		
-		return transformed;
-	}
-	
-	/**
-	 * Return a new triangle containing (new) projected vertices
-	 * Relies on the transform method transforming vertices
-	 * 
-	 * @param t the triangle to transform
-	 * @return the new triangle
-	 */
-	public Triangle modelToClip(Triangle t) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform triangle: "+t);
-		
-		Triangle transformed = new Triangle();
-		
-		transformed.setV1(modelToClip(t.getV1()));
-		transformed.setV2(modelToClip(t.getV2()));
-		transformed.setV3(modelToClip(t.getV3()));
-		//if (t.getNormal()!=null) transformed.setNormal(transform(t.getNormal()));
-
-		
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed triangle: "+ transformed);
-		
-		return transformed;
-	}
-	
-	/**
-	 * Return a new Vertex resulting from the ModelView transformation ("projection") of the provided Vertex
-	 * Do not modify the provided Vertex.
-	 * 
-	 * @param v the provided Vertex (left unchanged)
-	 * @return the new projected Vertex
-	 */
-	public Vertex modelToClip(Vertex v) {
-		// Create a new Vertex having its Vector4 position set to the resulting of the transformation of the provided Vertex's 
-		// Vector4 position by the transformation Matrix
-		Vertex transformed = new Vertex(transformation.times(v.getPosition()));
-		// Return the newly created Vertex (hence preserve the original Vertex of the Element)
-		return transformed;
-	}
-	
-	/**
-	 * Return a new Vector4 resulting from the ModelView transformation ("projection") of the provided Vector4
-	 * TransformedVector = [4x4 Transformation Matrix] * OriginalVector
-	 * 
-	 * @param v the Vector4 to be transformed 
-	 * @return a newly created Vector4 resulting from the transformation
-	 */
-	public Vector4 modelToClip(Vector4 v) {
-		return transformation.times(v);
-	}
-	
-	/**
-	 * Return a new Vector3 resulting from the ModelView transformation ("projection") of the provided Vector3
-	 * This methods calls the Vector4 transform(Vector4 v) methods
-	 * 
-	 * Caution: this method relies on Matrix4 / Vector4 computation hence creates new intermediate objects.
-	 * It is less effective in terms of performance and memory usage than the Vector4 transform method.
-	 * 
-	 * @param v the Vector3 to be transformed 
-	 * @return a newly created Vector3 resulting from the transformation
-	 */
-	public Vector3 modelToClip(Vector3 v) {
-		Vector4 v4 = v.getVector4();
-		return modelToClip(v4).getVector3();
-	}
-	
-	
-	public Triangle modelToWorld(Triangle t){
-		Triangle transformed = new Triangle(t);
-		
-		transformed.setV1(modelToWorld(t.getV1()));
-		transformed.setV2(modelToWorld(t.getV2()));
-		transformed.setV3(modelToWorld(t.getV3()));
-		if (t.getNormal() != null) {
-			transformed.setNormal(model.times(t.getNormal().getVector4()));
-		}
-		return transformed;
-	}
-	
-	public Vertex modelToWorld(Vertex v) {
-		Vertex transformed;
+	public void transform(Vertex v) {
+		v.setProjPos(full.times(v.getPos()));
+		v.setWorldPos(model.times(v.getPos()));
 		if (v.getNormal() != null) {
-			transformed = new Vertex(model.times(v.getPosition()), model.times(v.getNormalV4()));
-		} else {
-			transformed = new Vertex(model.times(v.getPosition()));
+			v.setProjNormal(full.times(v.getNormal().V4()).V3());
+			v.setWorldNormal(model.times(v.getNormal().V4()).V3());
 		}
-		// Return the newly created Vertex (hence preserve the original Vertex of the Element)
-		return transformed;
 	}
 	
-
+	/**
+	 * Transform all vertices of an Element
+	 * 
+	 * @param e the Element
+	 */
+	public void transformVertices(Element e) {
+		for (int i=0; i<e.getNbOfVertices(); i++) {
+			transform(e.getVertex(i));
+		}
+	}
 
 }
