@@ -77,8 +77,11 @@ public class RenderContext {
 	public Color lightVectorsColor = Color.YELLOW;
 
 	
-	
+	// Default RenderContext to be used for easy display
+	public static RenderContext RENDER_STANDARD_PLAIN = new RenderContext(RenderContext.RENDERING_TYPE_PLAIN, RenderContext.DISPLAY_LANDMARK_DISABLED);
+	public static RenderContext RENDER_STANDARD_PLAIN_WITH_LANDMARKS = new RenderContext(RenderContext.RENDERING_TYPE_PLAIN, RenderContext.DISPLAY_LANDMARK_ENABLED);
 	public static RenderContext RENDER_STANDARD_INTERPOLATE = new RenderContext(RENDERING_TYPE_INTERPOLATE, DISPLAY_LANDMARK_DISABLED);
+	public static RenderContext RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS = new RenderContext(RENDERING_TYPE_INTERPOLATE, DISPLAY_LANDMARK_ENABLED);
 	public static RenderContext RENDER_DEFAULT = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED);
 	public static RenderContext RENDER_DEFAULT_ALL_ENABLED = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED, DISPLAY_NORMALS_ENABLED, DISPLAY_LIGHT_VECTORS_ENABLED);
 	

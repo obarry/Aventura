@@ -232,13 +232,13 @@ public class Rasterizer {
 		v2 = t.getV2();
 		v3 = t.getV3();
 
-		if (v2.getPos().get3DY()<v1.getPos().get3DY()) { // p2 lower than p1
-			if (v3.getPos().get3DY()<v2.getPos().get3DY()) { // p3 lower than p2
+		if (v2.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p2 lower than p1
+			if (v3.getProjPos().get3DY()<v2.getProjPos().get3DY()) { // p3 lower than p2
 				v1 = t.getV3();
 				v2 = t.getV2();
 				v3 = t.getV1();
 			} else { // p2 lower than p3
-				if (v3.getPos().get3DY()<v1.getPos().get3DY()) { // p3 lower than p1
+				if (v3.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p3 lower than p1
 					v1 = t.getV2();
 					v2 = t.getV3();
 					v3 = t.getV1();
@@ -249,12 +249,12 @@ public class Rasterizer {
 				}
 			}
 		} else { // p1 lower than p2
-			if (v3.getPos().get3DY()<v1.getPos().get3DY()) { // p3 lower than p1
+			if (v3.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p3 lower than p1
 				v1 = t.getV3();
 				v2 = t.getV1();
 				v3 = t.getV2();
 			} else { // p1 lower than p3
-				if (v3.getPos().get3DY()<v2.getPos().get3DY()) { // p3 lower than p2
+				if (v3.getProjPos().get3DY()<v2.getProjPos().get3DY()) { // p3 lower than p2
 					// No change for p1
 					v2 = t.getV3();
 					v3 = t.getV2();
