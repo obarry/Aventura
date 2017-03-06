@@ -210,17 +210,15 @@ public class Rasterizer {
 		// - calculate normal at Triangle level for shading
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
-			// Calculate normal if not calculated
-			if (t.getNormal()==null) t.calculateNormal();
-			Vector3 normal = t.getNormal();
+			Vector3 normal = t.getWorldNormal();
 			Color shadedCol = computeShadedColor(col, normal);
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
 			// Calculate the 3 colors of the 3 Vertex based on their respective normals
-			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getNormal()));
-			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getNormal()));
-			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getNormal()));					
+			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal()));
+			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal()));
+			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal()));					
 		}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates

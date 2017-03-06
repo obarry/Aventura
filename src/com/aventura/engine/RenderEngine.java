@@ -281,6 +281,13 @@ public class RenderEngine {
 		// If triangle is totally or partially in the View Frustum
 		// Then renderContext its fragments in the View
 		if (isInViewFrustum(t)) { // Render triangle
+			
+			// If triangle normal then transform triangle normal
+			if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal()) {
+				// Calculate normal if not calculated
+				if (t.getNormal()==null) t.calculateNormal();
+				modelView.transformNormal(t);
+			}
 
 			switch (renderContext.rendering_type) {
 			case RenderContext.RENDERING_TYPE_LINE:

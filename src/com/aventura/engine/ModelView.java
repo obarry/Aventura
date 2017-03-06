@@ -2,6 +2,7 @@ package com.aventura.engine;
 
 import com.aventura.math.vector.Matrix4;
 import com.aventura.model.world.Element;
+import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.tools.tracing.Tracer;
 
@@ -168,6 +169,13 @@ public class ModelView {
 	public void transformVertices(Element e) {
 		for (int i=0; i<e.getNbOfVertices(); i++) {
 			transform(e.getVertex(i));
+		}
+	}
+	
+	public void transformNormal(Triangle t) {
+		if (t.getNormal() != null) {
+			t.setProjNormal(full.times(t.getNormal().V4()).V3());
+			t.setWorldNormal(model.times(t.getNormal().V4()).V3());
 		}
 	}
 
