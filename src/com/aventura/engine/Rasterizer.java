@@ -57,6 +57,8 @@ public class Rasterizer {
 	protected View view;
 	protected Lighting lighting;
 	private static double ZBUFFER_INIT_VALUE = 1.0;
+	private static Color DARK_SHADING_COLOR = Color.BLACK;
+	private static Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
 	
 	// Z buffer
 	private double[][] zBuffer;
@@ -162,39 +164,27 @@ public class Rasterizer {
 		view.setColor(c);
 		drawLine(v1, v2);
 	}
-
-	
-//	public void drawVectorFromPosition(Vertex position, Vector3 vector, Color c) {
-//		
-//		view.setColor(c);
-//		drawVectorFromPosition(position, vector);
-//	}
-
-//	public void drawVectorFromPosition(Vertex position, Vector3 vector) {
-//		
-//		int x1, y1, x2, y2;
-//		x1 = (int)(xScreen(position));
-//		y1 = (int)(yScreen(position));
-//		
-//		Vector4 p = position.getPos().plus(vector); 
-//		x2 = (int)(xScreen(p));
-//		y2 = (int)(yScreen(p));
-//
-//		view.drawLine(x1, y1, x2, y2);
-//	}
 	
 	//
 	// End methods for Segment only Rendering
 	
+	public void rasterizePlainTriangle(Triangle t, Color c) {
+		rasterizeTriangle(t, c, 0, null, false);
+	}
+	
+	public void rasterizeInterpolatedTriangle(Triangle t, Color c, double e, Color sc) {
+		rasterizeTriangle(t, c, e, sc, true);		
+	}
+	
 	/**
-	 * Triangle rasterizetion and zBuffering
+	 * Triangle rasterization and zBuffering
 	 * Extrapolated from:
 	 * https://www.davrous.com/2013/06/21/tutorial-part-4-learning-how-to-write-a-3d-software-engine-in-c-ts-or-js-rasterization-z-buffering/
 	 * 
 	 * @param t the triangle to render
 	 * @param col
 	 */
-	public void rasterizeTriangle(Triangle t, Color c, boolean interpolate) {
+	protected void rasterizeTriangle(Triangle t, Color c, double e, Color sc, boolean interpolate) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
 		
@@ -211,14 +201,14 @@ public class Rasterizer {
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 normal = t.getWorldNormal();
-			Color shadedCol = computeShadedColor(col, normal);
+			Color shadedCol = computeShadedColor(col, normal, null, e, sc);
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
 			// Calculate the 3 colors of the 3 Vertex based on their respective normals
-			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal()));
-			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal()));
-			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal()));					
+			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), null, e, sc));
+			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), null, e, sc));
+			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), null, e, sc));					
 		}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
@@ -432,17 +422,20 @@ public class Rasterizer {
 	 * @param normal of the surface in this area
 	 * @return
 	 */
-	protected Color computeShadedColor(Color baseCol, Vector3 normal) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+	protected Color computeShadedColor(Color baseCol, Vector3 normal, Vector3 viewer, double e, Color sc) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 		
-		Color ca = null, cd = null;
+		Color ca = null, cd = null, cs = null;
+		
 		
 		if (lighting != null) { // If lighting exists
+			
+			// Primary shading: Diffuse Reflection
 			
 			// Ambient light
 			if (lighting.hasAmbient()) {
 				ca = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
 			} else {
-				ca = Color.BLACK; // No Ambient light
+				ca = DARK_SHADING_COLOR; // No Ambient light
 			}
 			// Directional light
 			if (lighting.hasDirectional()) {
@@ -450,8 +443,20 @@ public class Rasterizer {
 				float dot = (float)(lighting.getDirectionalLight().getLightVector(null).normalize()).dot(normal.normalize());
 				cd = ColorTools.multColor(baseCol, dot);
 			} else {
-				cd = Color.BLACK; // No Directional light
+				cd = DARK_SHADING_COLOR; // No Directional light
 			}
+			
+			// Secondary shading: Specular Reflection
+			
+			// Calculate specular reflection from
+			// Vector V viewer
+			// Vector N normal
+			// Vector L and Reflection Light vector from Directional light
+			// Specular Color sc
+			// Specular Exponent e
+			
+			// Specular Reflection color = sc * max{R.V,0}^e * (N.L > 0)
+			
 			
 		} else { // If no lighting, return base color
 			return baseCol;

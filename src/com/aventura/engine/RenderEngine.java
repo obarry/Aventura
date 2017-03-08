@@ -239,7 +239,7 @@ public class RenderEngine {
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			
 			// Render triangle 
-			render(e.getTriangle(j), col);
+			render(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor());
 			
 			// Count Triangles stats (total, all triangles whatever in or out view frustum)
 			nbt++;
@@ -267,9 +267,11 @@ public class RenderEngine {
 	 * 
 	 * @param to the triangle to render
 	 * @param c the color of the Element, can be overridden if color defined (not null) at Triangle level
+	 * @param e the specular exponent of the Element
+	 * @param sc the specular color of the Element 
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
-	public void render(Triangle t, Color c) {
+	public void render(Triangle t, Color c, double e, Color sc) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
@@ -302,11 +304,11 @@ public class RenderEngine {
 			case RenderContext.RENDERING_TYPE_PLAIN:
 				// Draw triangles with shading full face, no interpolation.
 				// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-				rasterizer.rasterizeTriangle(t, color, false);
+				rasterizer.rasterizePlainTriangle(t, color);
 				break;
 			case RenderContext.RENDERING_TYPE_INTERPOLATE:
 				// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-				rasterizer.rasterizeTriangle(t, color, true);
+				rasterizer.rasterizeInterpolatedTriangle(t, color, e, sc);
 				break;
 			default:
 				// Invalid rendering type
