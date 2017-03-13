@@ -56,21 +56,27 @@ import com.aventura.view.View;
  * - some display and graphics (called View)
  * - a render context to provide information on how to renderContext the world
  * - a graphic context to provide information on how to display the view 
- *
- *																		    +---------------------+
- *     +---------------------+								  +------------>|    RenderContext    |		
- *     |        World        | <------+						  |				+---------------------+
- *     +---------------------+        |						  |						   |			
- *                					  |						  |				+---------------------+
- *                   				  |						  +------------>|      Rasterizer     |-----------------+
- *                					  |						  |				+---------------------+				    v
- *     +---------------------+		  |		+---------------------+						|				 +---------------------+
- *     |      Lighting       | <------+-----|    RenderEngine     |- - - - - - - - - - -|- - - - - - - ->|        View         |
- *     +---------------------+		  |		+---------------------+ 					|				 +---------------------+
- *                					  				   |	  |							v						    |
- *                   				  |				   |	  				+---------------------+					|
- *                	 				  				   |	  + - - - - - ->|   GraphicContext    |<----------------+
- *     						          |        		   v					+---------------------+
+ * 
+ * 
+ *                   				   				    	  				          +---------------------+					
+ *                	 				  				    	  + - - - - - - - - - - ->|   GraphicContext    |<------+
+ *     						                   		    	  | 			          +---------------------+		|
+ *															  |										^				|
+ *															  |			+---------------------+		|				|
+ *     +---------------------+								  +-------->|    RenderContext    |		|				|
+ *     |        World        | <------+						  |			+---------------------+		|				|
+ *     +---------------------+        |						  |			 		     |				|				|
+ *                					  |						  |			+---------------------+		|				|
+ *                   				  |						  +-------->|      Rasterizer     |-----+--------+		|
+ *                					  |						  |			+---------------------+		         |		|
+ *                					  |						  |											     v		|
+ *     +---------------------+		  |		+---------------------+										 +---------------------+
+ *     |      Lighting       | <------+-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
+ *     +---------------------+		  |		+---------------------+ 									 +---------------------+
+ *                					  				   |	  													    
+ *                   				  |				   |	  								
+ *                	 				  				   |	  
+ *     						          |        		   v		
  *     +---------------------+ 		        +---------------------+
  *     |       Camera        | <------+-----|      ModelView      |
  *	   +---------------------+		    	+---------------------+
@@ -86,7 +92,7 @@ public class RenderEngine {
 	
 	// Context's parameters
 	private RenderContext renderContext;
-	private GraphicContext graphicContext;
+	//private GraphicContext graphicContext;
 
 	// Statistics
 	private int nbt = 0; // Number of triangles processed
@@ -123,7 +129,7 @@ public class RenderEngine {
 	 */
 	public RenderEngine(World world, Lighting lighting, Camera camera, RenderContext render, GraphicContext graphic) {
 		this.renderContext = render;
-		this.graphicContext = graphic;
+		//this.graphicContext = graphic;
 		this.world = world;
 		this.lighting = lighting;
 		//this.camera = camera;
@@ -132,7 +138,7 @@ public class RenderEngine {
 		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
 		
 		// Delegate rasterization tasks to a dedicated engine
-		this.rasterizer = new Rasterizer(graphic, lighting);
+		this.rasterizer = new Rasterizer(camera, graphic, lighting);
 	}
 		
 	public void setView(View v) {
@@ -192,7 +198,6 @@ public class RenderEngine {
 			} else { // Default
 				displayLandMarkLines();			
 			}
-
 		}
 
 		// Display the Light vectors if enabled (RenderContext)

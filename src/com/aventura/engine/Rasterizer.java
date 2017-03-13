@@ -6,6 +6,7 @@ import com.aventura.context.GraphicContext;
 import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Segment;
 import com.aventura.model.world.Triangle;
@@ -53,9 +54,13 @@ import com.aventura.view.View;
 
 public class Rasterizer {
 	
+	// References
 	protected GraphicContext graphic;
 	protected View view;
 	protected Lighting lighting;
+	protected Camera camera;
+	
+	// Static data
 	private static double ZBUFFER_INIT_VALUE = 1.0;
 	private static Color DARK_SHADING_COLOR = Color.BLACK;
 	private static Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
@@ -82,7 +87,8 @@ public class Rasterizer {
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param graphic
 	 */
-	public Rasterizer(GraphicContext graphic, Lighting lighting) {
+	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting) {
+		this.camera = camera;
 		this.graphic = graphic;
 		this.lighting = lighting;
 	}
@@ -205,10 +211,16 @@ public class Rasterizer {
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
+			// Calculate viewer vectors
+			Vector4 viewer1, viewer2, viewer3;
+			viewer1 = t.getV1().getPos().minus(camera.getEye());
+			viewer2 = t.getV2().getPos().minus(camera.getEye());
+			viewer3 = t.getV3().getPos().minus(camera.getEye());
+			
 			// Calculate the 3 colors of the 3 Vertex based on their respective normals
-			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), null, e, sc));
-			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), null, e, sc));
-			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), null, e, sc));					
+			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), viewer1.V3(), e, sc));
+			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), viewer2.V3(), e, sc));
+			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), viewer3.V3(), e, sc));					
 		}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates

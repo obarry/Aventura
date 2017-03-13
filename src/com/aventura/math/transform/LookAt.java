@@ -93,7 +93,7 @@ public class LookAt extends Matrix4 {
 	public LookAt(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector4");
 	
-		createLookAt(e, p, u);												
+		generateLookAt(e, p, u);												
 	}
 
 	/**
@@ -110,10 +110,10 @@ public class LookAt extends Matrix4 {
 		Vector4 p4 = new Vector4(p);
 		Vector4 u4 = new Vector4(u);
 		
-		createLookAt(e4, p4, u4);												
+		generateLookAt(e4, p4, u4);												
 	}
 	
-	public void createLookAt(Vector4 e, Vector4 p, Vector4 u) {
+	public void generateLookAt(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "createLookAt(e, p, u)");
 
 		// Build forward, up and side Vectors
