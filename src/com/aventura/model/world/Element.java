@@ -128,7 +128,7 @@ public class Element implements Transformable {
 	// Colors and specular reflection characteristics
 	protected Color elementColor = null; // Color of the element unless specified at Triangle or Vertex level (lowest level priority)
 	protected Color specularColor = null; // Specular reflection color for this Element
-	protected double specularExponent = 0; // Specular exponent
+	protected float specularExponent = 0; // Specular exponent
 		
 	public Element() {
 		super();
@@ -236,11 +236,11 @@ public class Element implements Transformable {
 		return specularColor;
 	}
 	
-	public void setSpecularExp(double e) {
+	public void setSpecularExp(float e) {
 		this.specularExponent = e;
 	}
 	
-	public double getSpecularExp() {
+	public float getSpecularExp() {
 		return specularExponent;
 	}
 

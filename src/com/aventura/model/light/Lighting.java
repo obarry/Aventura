@@ -34,6 +34,7 @@ public class Lighting {
 	
 	protected AmbientLight ambient;
 	protected DirectionalLight directional;
+	protected boolean specularLight = false; // Default is no specular reflection
 	
 	public Lighting() {
 	}
@@ -47,12 +48,22 @@ public class Lighting {
 		this.directional = directional;
 	}
 	
+	public Lighting(DirectionalLight directional, AmbientLight ambient, boolean specularLight) {
+		this.ambient = ambient;
+		this.directional = directional;
+		this.specularLight = specularLight;
+	}
+	
 	public boolean hasAmbient() {
 		return ambient!=null ? true : false;
 	}
 	
 	public boolean hasDirectional() {
 		return directional!=null ? true : false;
+	}
+	
+	public boolean hasSpecular() {
+		return specularLight;
 	}
 		
 	public AmbientLight getAmbientLight() {

@@ -178,7 +178,7 @@ public class Rasterizer {
 		rasterizeTriangle(t, c, 0, null, false);
 	}
 	
-	public void rasterizeInterpolatedTriangle(Triangle t, Color c, double e, Color sc) {
+	public void rasterizeInterpolatedTriangle(Triangle t, Color c, float e, Color sc) {
 		rasterizeTriangle(t, c, e, sc, true);		
 	}
 	
@@ -190,7 +190,7 @@ public class Rasterizer {
 	 * @param t the triangle to render
 	 * @param col
 	 */
-	protected void rasterizeTriangle(Triangle t, Color c, double e, Color sc, boolean interpolate) {
+	protected void rasterizeTriangle(Triangle t, Color c, float e, Color sc, boolean interpolate) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
 		
@@ -213,9 +213,12 @@ public class Rasterizer {
 		} else {
 			// Calculate viewer vectors
 			Vector4 viewer1, viewer2, viewer3;
-			viewer1 = t.getV1().getPos().minus(camera.getEye());
-			viewer2 = t.getV2().getPos().minus(camera.getEye());
-			viewer3 = t.getV3().getPos().minus(camera.getEye());
+//			viewer1 = t.getV1().getPos().minus(camera.getEye()).normalize();
+//			viewer2 = t.getV2().getPos().minus(camera.getEye()).normalize();
+//			viewer3 = t.getV3().getPos().minus(camera.getEye()).normalize();
+			viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).normalize();
+			viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).normalize();
+			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).normalize();
 			
 			// Calculate the 3 colors of the 3 Vertex based on their respective normals
 			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), viewer1.V3(), e, sc));
@@ -434,28 +437,30 @@ public class Rasterizer {
 	 * @param normal of the surface in this area
 	 * @return
 	 */
-	protected Color computeShadedColor(Color baseCol, Vector3 normal, Vector3 viewer, double e, Color sc) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+	protected Color computeShadedColor(Color baseCol, Vector3 normal, Vector3 viewer, float e, Color sc) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 		
-		Color ca = null, cd = null, cs = null;
-		
+		//Color ca = null, cd = null, cs = null;
+		Color [] c = new Color[3];
+		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
 		
 		if (lighting != null) { // If lighting exists
 			
 			// Primary shading: Diffuse Reflection
-			
+			float dotNL = 0;
 			// Ambient light
 			if (lighting.hasAmbient()) {
-				ca = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
+				c[0] = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
 			} else {
-				ca = DARK_SHADING_COLOR; // No Ambient light
+				c[0] = DARK_SHADING_COLOR; // No Ambient light
 			}
 			// Directional light
 			if (lighting.hasDirectional()) {
 				// Compute the dot product
-				float dot = (float)(lighting.getDirectionalLight().getLightVector(null).normalize()).dot(normal.normalize());
-				cd = ColorTools.multColor(baseCol, dot);
+				dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
+				c[1] = ColorTools.multColor(baseCol, dotNL);
+				
 			} else {
-				cd = DARK_SHADING_COLOR; // No Directional light
+				c[1] = DARK_SHADING_COLOR; // No Directional light
 			}
 			
 			// Secondary shading: Specular Reflection
@@ -467,15 +472,36 @@ public class Rasterizer {
 			// Specular Color sc
 			// Specular Exponent e
 			
-			// Specular Reflection color = sc * max{R.V,0}^e * (N.L > 0)
-			
-			
+			// Specular Reflection color = sc * max{R.V,0}^e * (boolean N.L > 0)
+			if (lighting.hasSpecular()) {
+				
+				if (lighting.hasDirectional()) {
+					// dotNL already calculated, nothing to do					
+				} else {
+					dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
+				}
+				
+				if (dotNL > 0 && e>0) { // If e=0 this is considered as no specular reflection
+					float specular = 0;
+					// Calculate reflection vector R = 2N-L
+					Vector3 r = normal.times(2.0).minus(lighting.getDirectionalLight().getLightVector(null)); 
+					float dotRV = (float)(r.dot(viewer));
+					if (dotRV<0) dotRV = 0;
+					specular = (float) Math.pow(dotRV, e);
+					c[2] = ColorTools.multColor(spc, specular);
+				} else {
+					c[2] = DARK_SHADING_COLOR;					
+				}
+			} else {
+				c[2] = DARK_SHADING_COLOR;
+			}
+		
 		} else { // If no lighting, return base color
 			return baseCol;
 		}
 		
 		// returned color is an addition of Ambient and Directional lights
-		return ColorTools.addColors(ca, cd);
+		return ColorTools.addColors(c);
 	}
 
 	//

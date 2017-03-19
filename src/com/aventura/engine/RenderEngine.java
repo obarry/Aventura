@@ -276,7 +276,7 @@ public class RenderEngine {
 	 * @param sc the specular color of the Element 
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
-	public void render(Triangle t, Color c, double e, Color sc) {
+	public void render(Triangle t, Color c, float e, Color sc) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		

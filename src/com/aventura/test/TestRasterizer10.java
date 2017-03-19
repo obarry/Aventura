@@ -79,11 +79,13 @@ public class TestRasterizer10 {
 		
 		World world = new World();
 		Torus torus1 = new Torus(2,0.5,32,16);
+		torus1.setSpecularExp(2);
 		torus1.setTransformation(new Translation(new Vector4(0,2,0,0)));
 		Torus torus2 = new Torus(2,0.5,32,16);
+		torus2.setSpecularExp(2);
 		torus2.setTransformation(new Rotation(Math.PI/2, Vector4.Y_AXIS));
-		torus1.setColor(Color.BLUE);
-		torus2.setColor(Color.RED);
+		torus1.setColor(new Color(20,0,200));
+		torus2.setColor(new Color(180,100,20));
 		world.addElement(torus1);
 		world.addElement(torus2);
 		
@@ -92,13 +94,15 @@ public class TestRasterizer10 {
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
 		AmbientLight al = new AmbientLight(0.2f);
-		Lighting light = new Lighting(dl, al);
+		Lighting light = new Lighting(dl, al, true);
 		
 		GraphicContext gContext = new GraphicContext(1.2, 0.8, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		//rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
