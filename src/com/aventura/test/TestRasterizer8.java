@@ -21,7 +21,6 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Sphere;
 import com.aventura.model.world.World;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -79,16 +78,17 @@ public class TestRasterizer8 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Sphere s = new Sphere(1, 48);
+		Sphere s = new Sphere(0.75f, 48);
+		s.setSpecularExp(100);
 		s.setColor(Color.PINK);		
 		world.addElement(s);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0), 1);
 		AmbientLight al = new AmbientLight(0.1f);
-		Lighting light = new Lighting(dl, al);
+		Lighting light = new Lighting(dl, al, true);
 		
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.4512, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
@@ -96,6 +96,7 @@ public class TestRasterizer8 {
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);

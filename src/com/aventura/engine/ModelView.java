@@ -1,7 +1,10 @@
 package com.aventura.engine;
 
 import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
 import com.aventura.model.world.Element;
+import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.tools.tracing.Tracer;
 
@@ -79,6 +82,7 @@ import com.aventura.tools.tracing.Tracer;
  */
 public class ModelView {
 	
+	// Transformation matrices
 	Matrix4 projection;
 	Matrix4 view;
 	Matrix4 model;
@@ -118,11 +122,19 @@ public class ModelView {
 	}
 	
 	/**
-	 * Set the Camera transformation aka View Matrix to transform from World to Camera coordinates 
-	 * @param view the Camera Matrix4
+	 * Set the Camera transformation Matrix aka View Matrix to transform from World to Camera coordinates 
+	 * @param view the Camera
 	 */
 	public void setView(Matrix4 view) {
 		this.view = view;
+	}
+	
+	/**
+	 * Get the "View" transformation Matrix and Eye related information 
+	 * @return the Camera
+	 */
+	public Matrix4 getView() {
+		return this.view;
 	}
 	
 	/**
@@ -170,5 +182,11 @@ public class ModelView {
 			transform(e.getVertex(i));
 		}
 	}
-
+	
+	public void transformNormal(Triangle t) {
+		if (t.getNormal() != null) {
+			t.setProjNormal(full.times(t.getNormal().V4()).V3());
+			t.setWorldNormal(model.times(t.getNormal().V4()).V3());
+		}
+	}
 }

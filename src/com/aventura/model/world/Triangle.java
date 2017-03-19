@@ -44,6 +44,10 @@ public class Triangle {
 	protected boolean triangleNormal = false;
 	protected Vector3 normal = null;
 	
+	// Projected normals
+	protected Vector3 wld_normal = null; // Normal in World coordinates
+	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates
+	
 	// Color if at triangle level
 	protected Color color = null;
 	
@@ -131,6 +135,21 @@ public class Triangle {
 		this.normal = n.V3();
 	}
 	
+	public void setWorldNormal(Vector3 n) {
+		wld_normal = n;
+	}
+	
+	public Vector3 getWorldNormal() {
+		return wld_normal;
+	}
+	
+	public void setProjNormal(Vector3 n) {
+		prj_normal = n;
+	}
+	public Vector3 getProjNormal() {
+		return prj_normal;
+	}
+
 	public void setColor(Color c) {
 		this.color = c;
 	}

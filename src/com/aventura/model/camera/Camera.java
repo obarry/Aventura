@@ -37,20 +37,23 @@ import com.aventura.tools.tracing.Tracer;
 
 public class Camera {
 
-	protected LookAt camera;
+	protected LookAt matrix;
+	protected Vector4 eye;
 
 	public Camera() {
 		super();
 	}
 
-	public Camera(LookAt la) {
+	public Camera(LookAt la, Vector4 e) {
 		super();
-		camera = la;
+		eye =e;
+		matrix = la;
 	}
 
-	public Camera(Matrix4 m) {
+	public Camera(Matrix4 m, Vector4 e) {
 		super();
-		camera = new LookAt(m);
+		eye = e;
+		matrix = new LookAt(m);
 	}
 
 	/**
@@ -64,16 +67,22 @@ public class Camera {
 	public Camera(Vector4 e, Vector4 p, Vector4 u) {
 		super();
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating Camera");
-		camera = new LookAt(e,p,u);
+		eye = e;
+		matrix = new LookAt(e,p,u);
 	}
 	
 	public void updateCamera(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Updating Camera");
-		camera.createLookAt(e, p, u);
+		eye = e;
+		matrix.generateLookAt(e, p, u);
 	}
 
 	public Matrix4 getMatrix() {
-		return (Matrix4) camera;
+		return (Matrix4) matrix;
+	}
+	
+	public Vector4 getEye() {
+		return eye;
 	}
 
 }

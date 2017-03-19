@@ -6,6 +6,7 @@ import com.aventura.context.GraphicContext;
 import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Segment;
 import com.aventura.model.world.Triangle;
@@ -53,10 +54,16 @@ import com.aventura.view.View;
 
 public class Rasterizer {
 	
+	// References
 	protected GraphicContext graphic;
 	protected View view;
 	protected Lighting lighting;
+	protected Camera camera;
+	
+	// Static data
 	private static double ZBUFFER_INIT_VALUE = 1.0;
+	private static Color DARK_SHADING_COLOR = Color.BLACK;
+	private static Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
 	
 	// Z buffer
 	private double[][] zBuffer;
@@ -80,7 +87,8 @@ public class Rasterizer {
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param graphic
 	 */
-	public Rasterizer(GraphicContext graphic, Lighting lighting) {
+	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting) {
+		this.camera = camera;
 		this.graphic = graphic;
 		this.lighting = lighting;
 	}
@@ -162,39 +170,27 @@ public class Rasterizer {
 		view.setColor(c);
 		drawLine(v1, v2);
 	}
-
-	
-//	public void drawVectorFromPosition(Vertex position, Vector3 vector, Color c) {
-//		
-//		view.setColor(c);
-//		drawVectorFromPosition(position, vector);
-//	}
-
-//	public void drawVectorFromPosition(Vertex position, Vector3 vector) {
-//		
-//		int x1, y1, x2, y2;
-//		x1 = (int)(xScreen(position));
-//		y1 = (int)(yScreen(position));
-//		
-//		Vector4 p = position.getPos().plus(vector); 
-//		x2 = (int)(xScreen(p));
-//		y2 = (int)(yScreen(p));
-//
-//		view.drawLine(x1, y1, x2, y2);
-//	}
 	
 	//
 	// End methods for Segment only Rendering
 	
+	public void rasterizePlainTriangle(Triangle t, Color c) {
+		rasterizeTriangle(t, c, 0, null, false);
+	}
+	
+	public void rasterizeInterpolatedTriangle(Triangle t, Color c, float e, Color sc) {
+		rasterizeTriangle(t, c, e, sc, true);		
+	}
+	
 	/**
-	 * Triangle rasterizetion and zBuffering
+	 * Triangle rasterization and zBuffering
 	 * Extrapolated from:
 	 * https://www.davrous.com/2013/06/21/tutorial-part-4-learning-how-to-write-a-3d-software-engine-in-c-ts-or-js-rasterization-z-buffering/
 	 * 
 	 * @param t the triangle to render
 	 * @param col
 	 */
-	public void rasterizeTriangle(Triangle t, Color c, boolean interpolate) {
+	protected void rasterizeTriangle(Triangle t, Color c, float e, Color sc, boolean interpolate) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
 		
@@ -210,17 +206,24 @@ public class Rasterizer {
 		// - calculate normal at Triangle level for shading
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
-			// Calculate normal if not calculated
-			if (t.getNormal()==null) t.calculateNormal();
-			Vector3 normal = t.getNormal();
-			Color shadedCol = computeShadedColor(col, normal);
+			Vector3 normal = t.getWorldNormal();
+			Color shadedCol = computeShadedColor(col, normal, null, e, sc);
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
+			// Calculate viewer vectors
+			Vector4 viewer1, viewer2, viewer3;
+//			viewer1 = t.getV1().getPos().minus(camera.getEye()).normalize();
+//			viewer2 = t.getV2().getPos().minus(camera.getEye()).normalize();
+//			viewer3 = t.getV3().getPos().minus(camera.getEye()).normalize();
+			viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).normalize();
+			viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).normalize();
+			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).normalize();
+			
 			// Calculate the 3 colors of the 3 Vertex based on their respective normals
-			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getNormal()));
-			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getNormal()));
-			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getNormal()));					
+			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), viewer1.V3(), e, sc));
+			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), viewer2.V3(), e, sc));
+			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), viewer3.V3(), e, sc));					
 		}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
@@ -434,33 +437,71 @@ public class Rasterizer {
 	 * @param normal of the surface in this area
 	 * @return
 	 */
-	protected Color computeShadedColor(Color baseCol, Vector3 normal) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+	protected Color computeShadedColor(Color baseCol, Vector3 normal, Vector3 viewer, float e, Color sc) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 		
-		Color ca = null, cd = null;
+		//Color ca = null, cd = null, cs = null;
+		Color [] c = new Color[3];
+		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
 		
 		if (lighting != null) { // If lighting exists
 			
+			// Primary shading: Diffuse Reflection
+			float dotNL = 0;
 			// Ambient light
 			if (lighting.hasAmbient()) {
-				ca = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
+				c[0] = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
 			} else {
-				ca = Color.BLACK; // No Ambient light
+				c[0] = DARK_SHADING_COLOR; // No Ambient light
 			}
 			// Directional light
 			if (lighting.hasDirectional()) {
 				// Compute the dot product
-				float dot = (float)(lighting.getDirectionalLight().getLightVector(null).normalize()).dot(normal.normalize());
-				cd = ColorTools.multColor(baseCol, dot);
+				dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
+				c[1] = ColorTools.multColor(baseCol, dotNL);
+				
 			} else {
-				cd = Color.BLACK; // No Directional light
+				c[1] = DARK_SHADING_COLOR; // No Directional light
 			}
 			
+			// Secondary shading: Specular Reflection
+			
+			// Calculate specular reflection from
+			// Vector V viewer
+			// Vector N normal
+			// Vector L and Reflection Light vector from Directional light
+			// Specular Color sc
+			// Specular Exponent e
+			
+			// Specular Reflection color = sc * max{R.V,0}^e * (boolean N.L > 0)
+			if (lighting.hasSpecular()) {
+				
+				if (lighting.hasDirectional()) {
+					// dotNL already calculated, nothing to do					
+				} else {
+					dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
+				}
+				
+				if (dotNL > 0 && e>0) { // If e=0 this is considered as no specular reflection
+					float specular = 0;
+					// Calculate reflection vector R = 2N-L
+					Vector3 r = normal.times(2.0).minus(lighting.getDirectionalLight().getLightVector(null)); 
+					float dotRV = (float)(r.dot(viewer));
+					if (dotRV<0) dotRV = 0;
+					specular = (float) Math.pow(dotRV, e);
+					c[2] = ColorTools.multColor(spc, specular);
+				} else {
+					c[2] = DARK_SHADING_COLOR;					
+				}
+			} else {
+				c[2] = DARK_SHADING_COLOR;
+			}
+		
 		} else { // If no lighting, return base color
 			return baseCol;
 		}
 		
 		// returned color is an addition of Ambient and Directional lights
-		return ColorTools.addColors(ca, cd);
+		return ColorTools.addColors(c);
 	}
 
 	//

@@ -56,21 +56,27 @@ import com.aventura.view.View;
  * - some display and graphics (called View)
  * - a render context to provide information on how to renderContext the world
  * - a graphic context to provide information on how to display the view 
- *
- *																		    +---------------------+
- *     +---------------------+								  +------------>|    RenderContext    |		
- *     |        World        | <------+						  |				+---------------------+
- *     +---------------------+        |						  |						   |			
- *                					  |						  |				+---------------------+
- *                   				  |						  +------------>|      Rasterizer     |-----------------+
- *                					  |						  |				+---------------------+				    v
- *     +---------------------+		  |		+---------------------+						|				 +---------------------+
- *     |      Lighting       | <------+-----|    RenderEngine     |- - - - - - - - - - -|- - - - - - - ->|        View         |
- *     +---------------------+		  |		+---------------------+ 					|				 +---------------------+
- *                					  				   |	  |							v						    |
- *                   				  |				   |	  				+---------------------+					|
- *                	 				  				   |	  + - - - - - ->|   GraphicContext    |<----------------+
- *     						          |        		   v					+---------------------+
+ * 
+ * 
+ *                   				   				    	  				          +---------------------+					
+ *                	 				  				    	  + - - - - - - - - - - ->|   GraphicContext    |<------+
+ *     						                   		    	  | 			          +---------------------+		|
+ *															  |										^				|
+ *															  |			+---------------------+		|				|
+ *     +---------------------+								  +-------->|    RenderContext    |		|				|
+ *     |        World        | <------+						  |			+---------------------+		|				|
+ *     +---------------------+        |						  |			 		     |				|				|
+ *                					  |						  |			+---------------------+		|				|
+ *                   				  |						  +-------->|      Rasterizer     |-----+--------+		|
+ *                					  |						  |			+---------------------+		         |		|
+ *                					  |						  |											     v		|
+ *     +---------------------+		  |		+---------------------+										 +---------------------+
+ *     |      Lighting       | <------+-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
+ *     +---------------------+		  |		+---------------------+ 									 +---------------------+
+ *                					  				   |	  													    
+ *                   				  |				   |	  								
+ *                	 				  				   |	  
+ *     						          |        		   v		
  *     +---------------------+ 		        +---------------------+
  *     |       Camera        | <------+-----|      ModelView      |
  *	   +---------------------+		    	+---------------------+
@@ -86,7 +92,7 @@ public class RenderEngine {
 	
 	// Context's parameters
 	private RenderContext renderContext;
-	private GraphicContext graphicContext;
+	//private GraphicContext graphicContext;
 
 	// Statistics
 	private int nbt = 0; // Number of triangles processed
@@ -123,7 +129,7 @@ public class RenderEngine {
 	 */
 	public RenderEngine(World world, Lighting lighting, Camera camera, RenderContext render, GraphicContext graphic) {
 		this.renderContext = render;
-		this.graphicContext = graphic;
+		//this.graphicContext = graphic;
 		this.world = world;
 		this.lighting = lighting;
 		//this.camera = camera;
@@ -132,7 +138,7 @@ public class RenderEngine {
 		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
 		
 		// Delegate rasterization tasks to a dedicated engine
-		this.rasterizer = new Rasterizer(graphic, lighting);
+		this.rasterizer = new Rasterizer(camera, graphic, lighting);
 	}
 		
 	public void setView(View v) {
@@ -192,7 +198,6 @@ public class RenderEngine {
 			} else { // Default
 				displayLandMarkLines();			
 			}
-
 		}
 
 		// Display the Light vectors if enabled (RenderContext)
@@ -239,7 +244,7 @@ public class RenderEngine {
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			
 			// Render triangle 
-			render(e.getTriangle(j), col);
+			render(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor());
 			
 			// Count Triangles stats (total, all triangles whatever in or out view frustum)
 			nbt++;
@@ -267,9 +272,11 @@ public class RenderEngine {
 	 * 
 	 * @param to the triangle to render
 	 * @param c the color of the Element, can be overridden if color defined (not null) at Triangle level
+	 * @param e the specular exponent of the Element
+	 * @param sc the specular color of the Element 
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
-	public void render(Triangle t, Color c) {
+	public void render(Triangle t, Color c, float e, Color sc) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
@@ -281,6 +288,13 @@ public class RenderEngine {
 		// If triangle is totally or partially in the View Frustum
 		// Then renderContext its fragments in the View
 		if (isInViewFrustum(t)) { // Render triangle
+			
+			// If triangle normal then transform triangle normal
+			if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal()) {
+				// Calculate normal if not calculated
+				if (t.getNormal()==null) t.calculateNormal();
+				modelView.transformNormal(t);
+			}
 
 			switch (renderContext.rendering_type) {
 			case RenderContext.RENDERING_TYPE_LINE:
@@ -295,11 +309,11 @@ public class RenderEngine {
 			case RenderContext.RENDERING_TYPE_PLAIN:
 				// Draw triangles with shading full face, no interpolation.
 				// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-				rasterizer.rasterizeTriangle(t, color, false);
+				rasterizer.rasterizePlainTriangle(t, color);
 				break;
 			case RenderContext.RENDERING_TYPE_INTERPOLATE:
 				// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-				rasterizer.rasterizeTriangle(t, color, true);
+				rasterizer.rasterizeInterpolatedTriangle(t, color, e, sc);
 				break;
 			default:
 				// Invalid rendering type

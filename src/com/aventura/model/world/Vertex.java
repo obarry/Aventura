@@ -143,9 +143,7 @@ public class Vertex {
 	public Vector3 getProjNormal() {
 		return prj_normal;
 	}
-		
-
-		
+			
 	public void setColor(Color c) {
 		this.color = c;
 	}

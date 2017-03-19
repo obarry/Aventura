@@ -118,13 +118,18 @@ import com.aventura.math.vector.Vector4;
  */
 public class Element implements Transformable {
 	
+	
 	protected ArrayList<Element> subelements; // To create a hierarchy of elements - not necessarily used
 	protected ArrayList<Triangle> triangles;  // Triangles related to this element
 	protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
 	
 	protected Matrix4 transform;  // Element to World Transformation Matrix (Model Matrix)
-	protected Color color; // Color of the element unless specified at Triangle or Vertex level (lowest level priority)
 	
+	// Colors and specular reflection characteristics
+	protected Color elementColor = null; // Color of the element unless specified at Triangle or Vertex level (lowest level priority)
+	protected Color specularColor = null; // Specular reflection color for this Element
+	protected float specularExponent = 0; // Specular exponent
+		
 	public Element() {
 		super();
 		triangles = new ArrayList<Triangle>();
@@ -216,11 +221,27 @@ public class Element implements Transformable {
 	}
 	
 	public void setColor(Color c) {
-		this.color = c;
+		this.elementColor = c;
 	}
 	
 	public Color getColor() {
-		return color;
+		return elementColor;
+	}
+
+	public void setSpecularColor(Color c) {
+		this.specularColor = c;
+	}
+	
+	public Color getSpecularColor() {
+		return specularColor;
+	}
+	
+	public void setSpecularExp(float e) {
+		this.specularExponent = e;
+	}
+	
+	public float getSpecularExp() {
+		return specularExponent;
 	}
 
 	/* (non-Javadoc)
