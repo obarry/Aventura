@@ -58,4 +58,22 @@ public class PointLight extends Light {
 		return null;
 	}
 
+	@Override
+	public void setLightVector(Vector3 light) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setIntensity(float intensity) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setLightColor(Color c) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

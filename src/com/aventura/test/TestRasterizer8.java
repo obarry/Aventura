@@ -79,14 +79,15 @@ public class TestRasterizer8 {
 		
 		World world = new World();
 		Sphere s = new Sphere(0.75f, 48);
-		s.setSpecularExp(100);
+		s.setSpecularExp(1);
 		s.setColor(Color.PINK);		
 		world.addElement(s);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0), 1);
+		Vector3 lightVector = new Vector3(1,1,0);
+		DirectionalLight dl = new DirectionalLight(lightVector, 1);
 		AmbientLight al = new AmbientLight(0.1f);
 		Lighting light = new Lighting(dl, al, true);
 		
@@ -102,13 +103,22 @@ public class TestRasterizer8 {
 		renderer.setView(view);
 		renderer.render();
 
+//		System.out.println("********* Rendering...");
+//		int nb_images = 240;
+//		for (int i=0; i<=3*nb_images; i++) {
+//			double a = Math.PI*2*(double)i/(double)nb_images;
+//			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
+//			//System.out.println("Rotation "+i+"  - Eye: "+eye);
+//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+//			renderer.render();
+//		}
+
 		System.out.println("********* Rendering...");
 		int nb_images = 240;
 		for (int i=0; i<=3*nb_images; i++) {
 			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
-			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			lightVector = new Vector3(Math.cos(a),Math.sin(a),0);
+			dl.setLightVector(lightVector);
 			renderer.render();
 		}
 
