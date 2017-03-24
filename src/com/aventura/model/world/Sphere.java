@@ -169,8 +169,8 @@ public class Sphere extends Element {
 	public void calculateNormals() {
 		
 		// Create normals of poles
-		northPole.setNormal(Vector3.Z_AXIS);
-		southPole.setNormal(Vector3.Z_OPP_AXIS);
+		northPole.setNormal(new Vector3(Vector3.Z_AXIS));
+		southPole.setNormal(new Vector3(Vector3.Z_OPP_AXIS));
 		
 		// Create normals of vertices
 		for (int i=0; i<half_seg*2; i++) {

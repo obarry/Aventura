@@ -457,7 +457,11 @@ public class Rasterizer {
 			if (lighting.hasDirectional()) {
 				// Compute the dot product
 				dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
-				c[1] = ColorTools.multColor(baseCol, dotNL);
+				if (dotNL > 0) {
+					c[1] = ColorTools.multColor(baseCol, dotNL);
+				} else {
+					c[1] = DARK_SHADING_COLOR; // Directional light in the opposite face					
+				}
 				
 			} else {
 				c[1] = DARK_SHADING_COLOR; // No Directional light
@@ -485,6 +489,7 @@ public class Rasterizer {
 					float specular = 0;
 					// Calculate reflection vector R = 2N-L
 					Vector3 r = normal.times(2.0).minus(lighting.getDirectionalLight().getLightVector(null)); 
+					r.normalize();
 					float dotRV = (float)(r.dot(viewer));
 					if (dotRV<0) dotRV = 0;
 					specular = (float) Math.pow(dotRV, e);

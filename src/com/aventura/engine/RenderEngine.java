@@ -462,7 +462,8 @@ public class RenderEngine {
 			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = t.getCenter();
 			modelView.transform(c);
-			Vertex n = new Vertex(c.getPos().plus(t.getNormal()));
+//			Vertex n = new Vertex(c.getPos().plus(t.getNormal()));
+			Vertex n = new Vertex(c.getPos().plus(t.getWorldNormal()));
 			modelView.transform(n);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
@@ -473,9 +474,12 @@ public class RenderEngine {
 			Vertex n1, n2, n3;
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level");
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
-			n1 = new Vertex(p1.getPos().plus(p1.getNormal()));
-			n2 = new Vertex(p2.getPos().plus(p2.getNormal()));
-			n3 = new Vertex(p3.getPos().plus(p3.getNormal()));
+//			n1 = new Vertex(p1.getPos().plus(p1.getNormal()));
+//			n2 = new Vertex(p2.getPos().plus(p2.getNormal()));
+//			n3 = new Vertex(p3.getPos().plus(p3.getNormal()));
+			n1 = new Vertex(p1.getPos().plus(p1.getWorldNormal()));
+			n2 = new Vertex(p2.getPos().plus(p2.getWorldNormal()));
+			n3 = new Vertex(p3.getPos().plus(p3.getWorldNormal()));
 			modelView.transform(n1);
 			modelView.transform(n2);
 			modelView.transform(n3);

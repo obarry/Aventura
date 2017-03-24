@@ -78,8 +78,8 @@ public class TestRasterizer8 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Sphere s = new Sphere(0.75f, 48);
-		s.setSpecularExp(1);
+		Sphere s = new Sphere(1.5f, 48);
+		s.setSpecularExp(10);
 		s.setColor(Color.PINK);		
 		world.addElement(s);
 		
@@ -98,6 +98,8 @@ public class TestRasterizer8 {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
+		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
+		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
