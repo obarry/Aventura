@@ -64,4 +64,21 @@ public class AmbientLight extends Light {
 		return ColorTools.multColor(lightColor, intensity);
 	}
 
+	@Override
+	public void setLightVector(Vector3 light) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setIntensity(float intensity) {
+		this.intensity = intensity;
+	}
+
+	@Override
+	public void setLightColor(Color c) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

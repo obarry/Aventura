@@ -116,7 +116,7 @@ public class ColorTools {
 	 * Addition of several Colors.
 	 * 
 	 * @param ctab an array containing a set of Colors to be added
-	 * @return a newly created Color that is the results of the addition of all Colors passed in array
+	 * @return a newly created Color that is the result of the addition of all Colors passed in array
 	 */
 	public static Color addColors(Color[] ctab) {
 
@@ -137,7 +137,7 @@ public class ColorTools {
 	 * Multiplication of several Colors.
 	 * 
 	 * @param ctab n array containing a set of Colors to be multiplied
-	 * @return a newly created Color that is the results of the multiplication of all Colors passed in array
+	 * @return a newly created Color that is the result of the multiplication of all Colors passed in array
 	 */
 	public static Color multColors(Color[] ctab) {
 		float r = 0;

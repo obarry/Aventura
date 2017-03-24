@@ -68,4 +68,20 @@ public class DirectionalLight extends Light {
 		return null;
 	}
 
+	@Override
+	public void setLightVector(Vector3 light) {
+		this.direction = light;		
+	}
+
+	@Override
+	public void setIntensity(float intensity) {
+		this.intensity = intensity;		
+	}
+
+	@Override
+	public void setLightColor(Color c) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
