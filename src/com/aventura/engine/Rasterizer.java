@@ -213,9 +213,6 @@ public class Rasterizer {
 		} else {
 			// Calculate viewer vectors
 			Vector4 viewer1, viewer2, viewer3;
-//			viewer1 = t.getV1().getPos().minus(camera.getEye()).normalize();
-//			viewer2 = t.getV2().getPos().minus(camera.getEye()).normalize();
-//			viewer3 = t.getV3().getPos().minus(camera.getEye()).normalize();
 			viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).normalize();
 			viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).normalize();
 			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).normalize();
@@ -439,68 +436,48 @@ public class Rasterizer {
 	 */
 	protected Color computeShadedColor(Color baseCol, Vector3 normal, Vector3 viewer, float e, Color sc) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 		
-		//Color ca = null, cd = null, cs = null;
+		// Table of colors to be mixed
 		Color [] c = new Color[3];
+		// Default colors
+		c[0] = DARK_SHADING_COLOR; // Ambient light
+		c[1] = DARK_SHADING_COLOR; // Directional light
+		c[2] = DARK_SHADING_COLOR; // Specular reflection from Directional light
+		
 		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
 		
 		if (lighting != null) { // If lighting exists
 			
 			// Primary shading: Diffuse Reflection
+			
 			float dotNL = 0;
 			// Ambient light
 			if (lighting.hasAmbient()) {
 				c[0] = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
-			} else {
-				c[0] = DARK_SHADING_COLOR; // No Ambient light
 			}
+			
 			// Directional light
 			if (lighting.hasDirectional()) {
 				// Compute the dot product
 				dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
 				if (dotNL > 0) {
+					
+					// Directional Light
 					c[1] = ColorTools.multColor(baseCol, dotNL);
-				} else {
-					c[1] = DARK_SHADING_COLOR; // Directional light in the opposite face					
+	
+					
+					// Secondary Shading: Specular reflection (from Directional light)
+					if (e>0) { // If e=0 this is considered as no specular reflection
+						float specular = 0;
+						// Calculate reflection vector R = 2N-L and normalize it
+						Vector3 r = normal.times(2.0).minus(lighting.getDirectionalLight().getLightVector(null)).normalize(); 
+						float dotRV = (float)(r.dot(viewer));
+						if (dotRV<0) dotRV = 0;
+						specular = (float) Math.pow(dotRV, e);
+						c[2] = ColorTools.multColor(spc, specular);
+					}
 				}
-				
-			} else {
-				c[1] = DARK_SHADING_COLOR; // No Directional light
 			}
 			
-			// Secondary shading: Specular Reflection
-			
-			// Calculate specular reflection from
-			// Vector V viewer
-			// Vector N normal
-			// Vector L and Reflection Light vector from Directional light
-			// Specular Color sc
-			// Specular Exponent e
-			
-			// Specular Reflection color = sc * max{R.V,0}^e * (boolean N.L > 0)
-			if (lighting.hasSpecular()) {
-				
-				if (lighting.hasDirectional()) {
-					// dotNL already calculated, nothing to do					
-				} else {
-					dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
-				}
-				
-				if (dotNL > 0 && e>0) { // If e=0 this is considered as no specular reflection
-					float specular = 0;
-					// Calculate reflection vector R = 2N-L
-					Vector3 r = normal.times(2.0).minus(lighting.getDirectionalLight().getLightVector(null)); 
-					r.normalize();
-					float dotRV = (float)(r.dot(viewer));
-					if (dotRV<0) dotRV = 0;
-					specular = (float) Math.pow(dotRV, e);
-					c[2] = ColorTools.multColor(spc, specular);
-				} else {
-					c[2] = DARK_SHADING_COLOR;					
-				}
-			} else {
-				c[2] = DARK_SHADING_COLOR;
-			}
-		
 		} else { // If no lighting, return base color
 			return baseCol;
 		}
