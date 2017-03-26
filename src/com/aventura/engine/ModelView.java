@@ -1,8 +1,6 @@
 package com.aventura.engine;
 
 import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;

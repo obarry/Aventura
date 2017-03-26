@@ -84,7 +84,7 @@ public class TestRasterizer10 {
 		Torus torus2 = new Torus(2,0.5,32,16);
 		torus2.setSpecularExp(2);
 		torus2.setTransformation(new Rotation(Math.PI/2, Vector4.Y_AXIS));
-		torus1.setColor(new Color(20,0,200));
+		torus1.setColor(new Color(20,100,100));
 		torus2.setColor(new Color(180,100,20));
 		world.addElement(torus1);
 		world.addElement(torus2);
