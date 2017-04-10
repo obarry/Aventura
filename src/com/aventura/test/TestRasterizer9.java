@@ -20,8 +20,6 @@ import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.ConeFrustum;
-import com.aventura.model.world.ConeSummit;
-import com.aventura.model.world.Cylinder;
 import com.aventura.model.world.World;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;

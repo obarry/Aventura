@@ -209,7 +209,7 @@ public class Element implements Transformable {
 	}
 
 	@Override
-	public void expandTransformation(Matrix4 transformation) {
+	public void combineTransformation(Matrix4 transformation) {
 		// TODO Auto-generated method stub
 		//this.transform.timesEquals(transformation);
 		this.transform = transformation.times(this.transform);
@@ -220,6 +220,18 @@ public class Element implements Transformable {
 		return transform;
 	}
 	
+	// Transform the World position of the Vertices only
+	// Do NOT transform the projected position NOR the normals of the Vertex
+	// It is supposed to be used before calculating normals and projecting Elements through RenderEngine
+	@Override
+	public void transform(Matrix4 transformation) {
+
+		for (int i=0; i<this.getNbOfVertices(); i++) {
+			Vertex v = this.getVertex(i);
+			v.setWorldPos(transformation.times(v.getPos()));
+		}
+	}
+
 	public void setColor(Color c) {
 		this.elementColor = c;
 	}

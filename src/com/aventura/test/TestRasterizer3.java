@@ -21,7 +21,6 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Sphere;
 import com.aventura.model.world.World;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -79,12 +78,12 @@ public class TestRasterizer3 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Sphere s = new Sphere(1, 12);
+		Sphere s = new Sphere(0.8, 12);
+		s.setSpecularExp(10);
 		
 		// Set alternate colors to triangles
 		Color color0 = Color.ORANGE;
 		Color color1 = Color.DARK_GRAY;
-		//Color color1 = Color.ORANGE;
 		Color color;
 		int ci =0;
 		for (int i=0; i<s.getNbOfTriangles(); i++) {
@@ -125,10 +124,7 @@ public class TestRasterizer3 {
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();
 		}
-
 		System.out.println("********* ENDING APPLICATION *********");
-
-
 	}
 
 }

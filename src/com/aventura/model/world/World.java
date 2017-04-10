@@ -102,7 +102,7 @@ public class World {
 
 	public void expandTransformation(Matrix4 t) {
 		for (int i=0; i<elements.size(); i++) {
-			elements.get(i).expandTransformation(t);
+			elements.get(i).combineTransformation(t);
 		}
 	}
 

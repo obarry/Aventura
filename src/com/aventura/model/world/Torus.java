@@ -64,47 +64,9 @@ public class Torus extends Element {
 		this.pipe_ray = pipe_ray;
 		this. half_circ = half_circ;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
 		createTorus();
 	}
 
-	/**
-	 * Creation of a Cylinder moved to a given center
-	 * @param height of the Cylinder
-	 * @param ray of the top and bottom circles of the Cylinder
-	 * @param half_seg is half the number of segments for 360 degrees circles
-	 * @param center to which the Vertices are moved at creation (Vector3)
-	 */
-	public Torus(double torus_ray, double pipe_ray, int half_circ, int half_seg, Vector3 center) {
-		super();
-		subelements = null;
-		this.torus_ray = torus_ray;
-		this.pipe_ray = pipe_ray;
-		this. half_circ = half_circ;
-		this.half_seg = half_seg;
-		this.center = new Vector4(center);
-		createTorus();
-	}
-	
-	/**
-	 * Creation of a Cylinder moved to a given center
-	 * @param height of the Cylinder
-	 * @param ray of the top and bottom circles of the Cylinder
-	 * @param half_seg is half the number of segments for 360 degrees circles
-	 * @param center to which the Vertices are moved at creation (Vector4)
-	 */
-	public Torus(double torus_ray, double pipe_ray, int half_circ, int half_seg, Vector4 center) {
-		super();
-		subelements = null;
-		this.torus_ray = torus_ray;
-		this.pipe_ray = pipe_ray;
-		this. half_circ = half_circ;
-		this.half_seg = half_seg;
-		this.center = center;
-		createTorus();
-	}
-
-	
 	protected void createTorus() {
 		
 		vertices = new Vertex[half_circ*2][half_seg*2]; // half_circ*2 circles made of half_seg*2 vertices on each circle
@@ -118,7 +80,7 @@ public class Torus extends Element {
 			double sina = Math.sin(alpha_circ*i);
 			double cosa = Math.cos(alpha_circ*i);
 			// Calculate center of the circle
-			centers[i] = new Vector4(torus_ray*cosa, torus_ray*sina,0,1).plus(center);
+			centers[i] = new Vector4(torus_ray*cosa, torus_ray*sina,0,1);
 			
 			for (int j=0; j<half_seg*2; j++) { // each circle is made of 2*half_seg vertices 
 
@@ -128,7 +90,7 @@ public class Torus extends Element {
 
 
 				// Each vertice
-				vertices[i][j] = createVertex(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1).plus(center));
+				vertices[i][j] = createVertex(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1));
 			}
 		}
 		

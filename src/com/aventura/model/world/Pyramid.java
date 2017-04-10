@@ -36,36 +36,6 @@ public class Pyramid extends Element {
 	protected Vertex[][] vertices;
 	protected Vertex summit;
 	
-	/**
-	 * Create a Pyramid aligned on axis. Need to be rotated for a different orientation.
-	 * Pyramid is translated by the provided Vector3
-	 * 
-	 * @param x_dim dimension of the pyramid on x axis
-	 * @param y_dim dimension of the pyramid on y axis
-	 * @param z_dim dimension of the pyramid on z axis
-	 * @param position the translation vector
-	 */
-	public Pyramid(double x_dim, double y_dim, double z_dim, Vector3 position) {
-		super();
-		subelements = null;
-		Vector4 v = new Vector4(position);
-		createPyramid(x_dim, y_dim, z_dim, v);
-	}
-	
-	/**
-	 * Create a Pyramid aligned on axis. Need to be rotated for a different orientation.
-	 * Pyramid is translated by the provided Vector3
-	 * 
-	 * @param x_dim dimension of the pyramid on x axis
-	 * @param y_dim dimension of the pyramid on y axis
-	 * @param z_dim dimension of the pyramid on z axis
-	 * @param position the translation vector
-	 */
-	public Pyramid(double x_dim, double y_dim, double z_dim, Vector4 position) {
-		super();
-		subelements = null;
-		createPyramid(x_dim, y_dim, z_dim, position);
-	}
 	
 	/**
 	 * Create a Pyramid aligned on axis. Need to be rotated for a different orientation.
@@ -77,11 +47,10 @@ public class Pyramid extends Element {
 	public Pyramid(double x_dim, double y_dim, double z_dim) {
 		super();
 		subelements = null;
-		Vector4 position = new Vector4(0,0,0,0);
-		createPyramid(x_dim, y_dim, z_dim, position);
+		createPyramid(x_dim, y_dim, z_dim);
 	}
 	
-	protected void createPyramid(double x_dim, double y_dim, double z_dim, Vector4 position) {
+	protected void createPyramid(double x_dim, double y_dim, double z_dim) {
 
 		vertices = new Vertex[2][2];
 
@@ -91,13 +60,13 @@ public class Pyramid extends Element {
 		double zh = z_dim/2;
 		
 		// Build the Element: Create Vertices of the base of the Pyramid: 4 vertices
-		vertices[0][0] = createVertex(new Vector4(-xh, -yh, -zh,  1).plus(position));
-		vertices[0][1] = createVertex(new Vector4(-xh,  yh, -zh,  1).plus(position));
-		vertices[1][1] = createVertex(new Vector4(xh, yh, -zh,  1).plus(position));
-		vertices[1][0] = createVertex(new Vector4(xh, -yh, -zh,  1).plus(position));
+		vertices[0][0] = createVertex(new Vector4(-xh, -yh, -zh,  1));
+		vertices[0][1] = createVertex(new Vector4(-xh,  yh, -zh,  1));
+		vertices[1][1] = createVertex(new Vector4(xh, yh, -zh,  1));
+		vertices[1][0] = createVertex(new Vector4(xh, -yh, -zh,  1));
 		
 		// Create summit
-		summit = createVertex(new Vector4(0, 0, zh, 1).plus(position));
+		summit = createVertex(new Vector4(0, 0, zh, 1));
 		
 		// Creates Triangles from Vertices: 6 faces, 2 triangles each
 		Triangle t1 = new Triangle(vertices[0][0], vertices[1][0], summit);

@@ -34,38 +34,7 @@ import com.aventura.math.vector.Vector4;
 public class Box extends Element {
 	
 	protected Vertex[][][] vertices;
-	
-	/**
-	 * Create a box aligned on axis. Need to be rotated for a different orientation.
-	 * Box is translated by the provided Vector3
-	 * 
-	 * @param x_dim dimension of the box on x axis
-	 * @param y_dim dimension of the box on y axis
-	 * @param z_dim dimension of the box on z axis
-	 * @param position the translation vector
-	 */
-	public Box(double x_dim, double y_dim, double z_dim, Vector3 position) {
-		super();
-		subelements = null;
-		Vector4 v = new Vector4(position);
-		createBox(x_dim, y_dim, z_dim, v);
-	}
-	
-	/**
-	 * Create a box aligned on axis. Need to be rotated for a different orientation.
-	 * Box is translated by the provided Vector3
-	 * 
-	 * @param x_dim dimension of the box on x axis
-	 * @param y_dim dimension of the box on y axis
-	 * @param z_dim dimension of the box on z axis
-	 * @param position the translation vector
-	 */
-	public Box(double x_dim, double y_dim, double z_dim, Vector4 position) {
-		super();
-		subelements = null;
-		createBox(x_dim, y_dim, z_dim, position);
-	}
-	
+		
 	/**
 	 * Create a box aligned on axis. Need to be rotated for a different orientation.
 	 * 
@@ -76,11 +45,10 @@ public class Box extends Element {
 	public Box(double x_dim, double y_dim, double z_dim) {
 		super();
 		subelements = null;
-		Vector4 position = new Vector4(0,0,0,0);
-		createBox(x_dim, y_dim, z_dim, position);
+		createBox(x_dim, y_dim, z_dim);
 	}
 	
-	protected void createBox(double x_dim, double y_dim, double z_dim, Vector4 position) {
+	protected void createBox(double x_dim, double y_dim, double z_dim) {
 
 		vertices = new Vertex[2][2][2];
 
@@ -90,14 +58,14 @@ public class Box extends Element {
 		double zh = z_dim/2;
 		
 		// Build the Element: Create Vertices of the Cube: 8 vertices
-		vertices[0][0][0] = createVertex(new Vector4(-xh, -yh, -zh,  1).plus(position));
-		vertices[0][1][0] = createVertex(new Vector4(-xh,  yh, -zh,  1).plus(position));
-		vertices[1][1][0] = createVertex(new Vector4(xh, yh, -zh,  1).plus(position));
-		vertices[1][0][0] = createVertex(new Vector4(xh, -yh, -zh,  1).plus(position));
-		vertices[0][0][1] = createVertex(new Vector4(-xh, -yh, zh,  1).plus(position));
-		vertices[0][1][1] = createVertex(new Vector4(-xh,  yh, zh,  1).plus(position));
-		vertices[1][1][1] = createVertex(new Vector4(xh, yh, zh,  1).plus(position));
-		vertices[1][0][1] = createVertex(new Vector4(xh,  -yh, zh,  1).plus(position));
+		vertices[0][0][0] = createVertex(new Vector4(-xh, -yh, -zh,  1));
+		vertices[0][1][0] = createVertex(new Vector4(-xh,  yh, -zh,  1));
+		vertices[1][1][0] = createVertex(new Vector4(xh, yh, -zh,  1));
+		vertices[1][0][0] = createVertex(new Vector4(xh, -yh, -zh,  1));
+		vertices[0][0][1] = createVertex(new Vector4(-xh, -yh, zh,  1));
+		vertices[0][1][1] = createVertex(new Vector4(-xh,  yh, zh,  1));
+		vertices[1][1][1] = createVertex(new Vector4(xh, yh, zh,  1));
+		vertices[1][0][1] = createVertex(new Vector4(xh,  -yh, zh,  1));
 		
 		// Creates Triangles from Vertices: 6 faces, 2 triangles each
 		Triangle t1 = new Triangle(vertices[0][0][0], vertices[0][1][0], vertices[1][1][0]);

@@ -75,51 +75,6 @@ public class Trellis extends Element {
 
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
-	 * z axis altitudes are set to 0.
-	 * All vertices of the Trellis are translated by the Vector3 position
-	 * If position vector is 0 then the first vertex starts on origin
-	 * @param width
-	 * @param length
-	 * @param nx
-	 * @param ny
-	 * @param position
-	 */
-	public Trellis(double width, double length, int nx, int ny, Vector3 position) {
-		super();
-		subelements = null;
-		this.width = width;
-		this.length = length;
-		this.nx = nx;
-		this.ny = ny;
-		Vector4 v = new Vector4(position);
-		createTrellis(v);
-		createTriangles();
-	}
-
-	/**
-	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
-	 * z axis altitudes are set to 0.
-	 * All vertices of the Trellis are translated by the Vector3 position
-	 * If position vector is 0 then the first vertex starts on origin
-	 * @param width
-	 * @param length
-	 * @param nx
-	 * @param ny
-	 * @param position
-	 */
-	public Trellis(double width, double length, int nx, int ny, Vector4 position) {
-		super();
-		subelements = null;
-		this.width = width;
-		this.length = length;
-		this.nx = nx;
-		this.ny = ny;
-		createTrellis(position);
-		createTriangles();
-	}
-
-	/**
-	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
 	 * Use the z axis altitudes from the provided array.
 	 * This Trellis is centered on origin
 	 * @param width
@@ -136,53 +91,6 @@ public class Trellis extends Element {
 		this.nx = nx;
 		this.ny = ny;
 		Vector4 position = new Vector4(-width/2,-length/2,0,0);
-		createTrellis(position, array);
-		createTriangles();
-	}
-
-	/**
-	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
-	 * Use the z axis altitudes from the provided array.
-	 * All vertices of the Trellis are translated by the Vector3 position
-	 * If position vector is 0 then the first vertex starts on origin
-	 * @param width
-	 * @param length
-	 * @param nx
-	 * @param ny
-	 * @param position
-	 * @param array
-	 */
-	public Trellis(double width, double length, int nx, int ny, Vector3 position, double [][] array) throws WrongArraySizeException {
-		super();
-		subelements = null;
-		this.width = width;
-		this.length = length;
-		this.nx = nx;
-		this.ny = ny;
-		Vector4 v = new Vector4(position);
-		createTrellis(v, array);
-		createTriangles();
-	}
-
-	/**
-	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
-	 * Use the z axis altitudes from the provided array.
-	 * All vertices of the Trellis are translated by the Vector3 position
-	 * If position vector is 0 then the first vertex starts on origin
-	 * @param width
-	 * @param length
-	 * @param nx
-	 * @param ny
-	 * @param position
-	 * @param array
-	 */
-	public Trellis(double width, double length, int nx, int ny, Vector4 position, double [][] array) throws WrongArraySizeException {
-		super();
-		subelements = null;
-		this.width = width;
-		this.length = length;
-		this.nx = nx;
-		this.ny = ny;
 		createTrellis(position, array);
 		createTriangles();
 	}

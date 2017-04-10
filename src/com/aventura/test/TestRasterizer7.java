@@ -20,7 +20,6 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Sphere;
 import com.aventura.model.world.World;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -64,9 +63,6 @@ public class TestRasterizer7 {
 	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
-		
-//		Tracer.info = true;
-//		Tracer.function = true;
 
 		// Camera
 		Vector4 eye = new Vector4(8,3,2,1);

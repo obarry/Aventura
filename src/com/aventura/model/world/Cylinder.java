@@ -61,51 +61,11 @@ public class Cylinder extends Element {
 		this.ray = ray;
 		this.height = height;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
 		this.top_center = new Vector4(0,0,height/2,0);
 		this.bottom_center = new Vector4(0,0,-height/2,0);
 		createCylinder();
 	}
 
-	/**
-	 * Creation of a Cylinder moved to a given center
-	 * @param height of the Cylinder
-	 * @param ray of the top and bottom circles of the Cylinder
-	 * @param half_seg is half the number of segments for 360 degrees circles
-	 * @param center to which the Vertices are moved at creation (Vector3)
-	 */
-	public Cylinder(double height, double ray, int half_seg, Vector3 center) {
-		super();
-		subelements = null;
-		this.ray = ray;
-		this.height = height;
-		this.half_seg = half_seg;
-		this.center = new Vector4(center);
-		this.top_center = new Vector4(0,0,height/2,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
-		createCylinder();
-	}
-	
-	/**
-	 * Creation of a Cylinder moved to a given center
-	 * @param height of the Cylinder
-	 * @param ray of the top and bottom circles of the Cylinder
-	 * @param half_seg is half the number of segments for 360 degrees circles
-	 * @param center to which the Vertices are moved at creation (Vector4)
-	 */
-	public Cylinder(double height, double ray, int half_seg, Vector4 center) {
-		super();
-		subelements = null;
-		this.ray = ray;
-		this.height = height;
-		this.half_seg = half_seg;
-		this.center = center;
-		this.top_center = new Vector4(0,0,height/2,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
-		createCylinder();
-	}
-
-	
 	protected void createCylinder() {
 		
 		vertices = new Vertex[half_seg*2][2]; // (n) x 2 vertices on each circles
@@ -118,10 +78,10 @@ public class Cylinder extends Element {
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			vertices[i][0] = createVertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
+			vertices[i][0] = createVertex(new Vector4(ray*cosa, ray*sina, -height/2, 1));
 			
 			// Top circle of the cylinder
-			vertices[i][1] = createVertex(new Vector4(ray*cosa, ray*sina, height/2, 1).plus(center));
+			vertices[i][1] = createVertex(new Vector4(ray*cosa, ray*sina, height/2, 1));
 		}
 		
 		// Create Triangles

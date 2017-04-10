@@ -15,12 +15,12 @@ import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -114,6 +114,8 @@ public class TestRasterizer2 {
 		world.calculateNormals();
 		
 		Lighting light = new Lighting();
+		AmbientLight al = new AmbientLight(0.5f);
+		light.setAmbientLight(al);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);

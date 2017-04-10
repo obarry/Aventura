@@ -71,38 +71,10 @@ public class Sphere extends Element {
 		subelements = null;
 		this.ray = ray;
 		this.half_seg = half_seg;
-		center = new Vector4(0,0,0,0);
+		this.center = new Vector4(0,0,0,0);
 		createSphere();
 	}
 
-	/**
-	 * @param ray
-	 * @param half_seg is half the number of segments for 360 degrees
-	 * @param center
-	 */
-	public Sphere(double ray, int half_seg, Vector3 center) {
-		super();
-		subelements = null;
-		this.ray = ray;
-		this.half_seg = half_seg;
-		this.center = center.V4();
-		createSphere();
-	}
-	
-	/**
-	 * @param ray
-	 * @param half_seg is half the number of segments for 360 degrees
-	 * @param center
-	 */
-	public Sphere(double ray, int half_seg, Vector4 center) {
-		super();
-		subelements = null;
-		this.ray = ray;
-		this.half_seg = half_seg;
-		this.center = center;
-		createSphere();
-	}
-	
 	/**
 	 * Create vertices and triangles of a Sphere based on provided parameters
 	 * @param ray the ray of the Sphere
@@ -124,7 +96,7 @@ public class Sphere extends Element {
 				double cosa = Math.cos(alpha*i);
 				double sinb = Math.sin(alpha*(j+1));
 				double cosb = Math.cos(alpha*(j+1));
-				vertices[i][j] = createVertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1).plus(center));
+				vertices[i][j] = createVertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
 			}
 		}
 

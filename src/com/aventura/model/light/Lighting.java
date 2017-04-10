@@ -43,6 +43,10 @@ public class Lighting {
 		this.directional = directional;
 	}
 	
+	public Lighting(AmbientLight ambient) {
+		this.ambient = ambient;
+	}
+	
 	public Lighting(DirectionalLight directional, AmbientLight ambient) {
 		this.ambient = ambient;
 		this.directional = directional;
@@ -69,8 +73,17 @@ public class Lighting {
 	public AmbientLight getAmbientLight() {
 		return ambient;
 	}
+	
+	public void setAmbientLight(AmbientLight ambient) {
+		this.ambient = ambient;
+	}
 
 	public DirectionalLight getDirectionalLight() {
 		return directional;
 	}
+	
+	public void setDirectionalLight(DirectionalLight directional) {
+		this.directional = directional;
+	}
+	
 }

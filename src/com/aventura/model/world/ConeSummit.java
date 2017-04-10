@@ -112,8 +112,8 @@ public class ConeSummit extends Element {
 		
 		// Create vertices
 		
-		// Create summits (same Vertex for all summits)
-		summit = createVertex(new Vector4(0, 0, height/2,  1).plus(center));
+		// Create summit (1 single Vertex for all)
+		summit = createVertex(new Vector4(0, 0, height/2, 1).plus(center));
 		
 		// Create bottom vertices
 		for (int i=0; i<half_seg*2; i++) {
