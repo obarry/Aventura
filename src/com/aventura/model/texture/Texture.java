@@ -1,5 +1,9 @@
 package com.aventura.model.texture;
 
+import java.awt.Color;
+
+import com.aventura.tools.color.ColorTools;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -26,8 +30,43 @@ package com.aventura.model.texture;
  * ------------------------------------------------------------------------------ 
  * 
  * @author Olivier BARRY
- * @since May 2016
+ * @since April 2017
  */
 public class Texture {
+	
+	// array containing data e.g. rgb values
+	protected Color[][] tex;
+	protected int width, height;
+	
+	public Texture(int width, int height) {
+		this.width = width;
+		this.height = height;
+		tex = new Color[width][height];
+	}
+	
+	/**
+	 * Calculate the bilinear interpolated Color of this Texture at coordinates <s,t> with 0 <= s <= 1 and 0 <= t <= 1
+	 * @param s
+	 * @param t
+	 * @return
+	 */
+	public Color getInterpolatedColor(double s, double t) {
 
+		// Calculate the coordinates within the texture (-0.5 as per bressenham to 
+		double u = s * this.width - 0.5;
+		double v = t * this.height - 0.5;
+
+		// Calculate the integer value of u and v
+		int x = (int) Math.floor(u);
+		int y = (int) Math.floor(v);
+
+		// Calculate the frac value of u and v and their respective complement to 1
+		double u_ratio = u - x;
+		double v_ratio = v - y;
+		
+		// Calculate the interpolated value as per Bilinear Filtered algorithm
+		Color result = ColorTools.getBilinearFilteredComponentColor(tex[x][y], tex[x][y+1], tex[x+1][y], tex[x+1][y+1], u_ratio, v_ratio);
+		return result;
+	}
+		
 }

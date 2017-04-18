@@ -192,5 +192,38 @@ public class ColorTools {
 			return c;
 		}
 	}
+	
+	public static Color getBilinearFilteredComponentColor(Color z11, Color z12, Color z21, Color z22, double u_ratio, double v_ratio) {
+		
+		// Components of the interpolated Color to calculate
+		float r, g, b;
+		
+		// Get components of each provided Colors
+		float[] z11_array = z11.getRGBColorComponents(null); 
+		float[] z12_array = z12.getRGBColorComponents(null); 
+		float[] z21_array = z21.getRGBColorComponents(null); 
+		float[] z22_array = z22.getRGBColorComponents(null);
+		
+		// Calculate interpolation of each component
+		r = getBilinearFilteredComponent(z11_array[0], z12_array[0], z21_array[0], z22_array[0], (float)u_ratio, (float)v_ratio);
+		g = getBilinearFilteredComponent(z11_array[1], z12_array[1], z21_array[1], z22_array[1], (float)u_ratio, (float)v_ratio);
+		b = getBilinearFilteredComponent(z11_array[2], z12_array[2], z21_array[2], z22_array[2], (float)u_ratio, (float)v_ratio);
+
+		// Combine components to create the new Color
+		return new Color(r, g, b);
+	}
+	
+	protected static float getBilinearFilteredComponent(float z11, float z12, float z21, float z22, float u_ratio, float v_ratio) {
+		
+		float u_opposite = 1 - u_ratio;
+		float v_opposite = 1 - v_ratio;
+
+		// Calculate the interpolated value as per algorithm: f(x,y) = (1 - {x})((1 - {y})z11 + {y}z12) + {x}((1 - {y})z21 + {y}z22)
+		// https://en.wikipedia.org/wiki/Bilinear_filtering
+		float result = (z11*u_opposite+z21*u_ratio)*v_opposite+(z12*u_opposite+z22*u_ratio)*v_ratio;
+		return result;
+
+	}
+
 
 }
