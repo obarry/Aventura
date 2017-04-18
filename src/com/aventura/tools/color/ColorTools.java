@@ -193,7 +193,7 @@ public class ColorTools {
 		}
 	}
 	
-	public static Color getBilinearFilteredComponentColor(Color z11, Color z12, Color z21, Color z22, double u_ratio, double v_ratio) {
+	public static Color getBilinearFilteredColor(Color z11, Color z12, Color z21, Color z22, float u_ratio, float v_ratio) {
 		
 		// Components of the interpolated Color to calculate
 		float r, g, b;
@@ -205,9 +205,9 @@ public class ColorTools {
 		float[] z22_array = z22.getRGBColorComponents(null);
 		
 		// Calculate interpolation of each component
-		r = getBilinearFilteredComponent(z11_array[0], z12_array[0], z21_array[0], z22_array[0], (float)u_ratio, (float)v_ratio);
-		g = getBilinearFilteredComponent(z11_array[1], z12_array[1], z21_array[1], z22_array[1], (float)u_ratio, (float)v_ratio);
-		b = getBilinearFilteredComponent(z11_array[2], z12_array[2], z21_array[2], z22_array[2], (float)u_ratio, (float)v_ratio);
+		r = getBilinearFilteredComponent(z11_array[0], z12_array[0], z21_array[0], z22_array[0], u_ratio, v_ratio);
+		g = getBilinearFilteredComponent(z11_array[1], z12_array[1], z21_array[1], z22_array[1], u_ratio, v_ratio);
+		b = getBilinearFilteredComponent(z11_array[2], z12_array[2], z21_array[2], z22_array[2], u_ratio, v_ratio);
 
 		// Combine components to create the new Color
 		return new Color(r, g, b);

@@ -61,11 +61,11 @@ public class Texture {
 		int y = (int) Math.floor(v);
 
 		// Calculate the frac value of u and v and their respective complement to 1
-		double u_ratio = u - x;
-		double v_ratio = v - y;
+		float u_ratio = (float)u - x;
+		float v_ratio = (float)v - y;
 		
 		// Calculate the interpolated value as per Bilinear Filtered algorithm
-		Color result = ColorTools.getBilinearFilteredComponentColor(tex[x][y], tex[x][y+1], tex[x+1][y], tex[x+1][y+1], u_ratio, v_ratio);
+		Color result = ColorTools.getBilinearFilteredColor(tex[x][y], tex[x][y+1], tex[x+1][y], tex[x+1][y+1], u_ratio, v_ratio);
 		return result;
 	}
 		
