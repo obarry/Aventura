@@ -1,6 +1,11 @@
 package com.aventura.model.texture;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 import com.aventura.tools.color.ColorTools;
 
@@ -38,10 +43,40 @@ public class Texture {
 	protected Color[][] tex;
 	protected int width, height;
 	
+	/**
+	 * Create an empty Texture of a given width and height
+	 * @param width
+	 * @param height
+	 */
 	public Texture(int width, int height) {
 		this.width = width;
 		this.height = height;
 		tex = new Color[width][height];
+	}
+	
+	/**
+	 * Create a Texture from a bitmap file
+	 * @param fileName
+	 */
+	public Texture(String fileName) {
+        BufferedImage img = null;
+        try {
+            img = ImageIO.read(new File(fileName));
+        } catch (IOException e) {
+        	// TODO To be implemented, manage exception and safely return with an Error
+        }
+        this.height = img.getHeight();
+        this.width = img.getWidth();
+        
+        tex = new Color[width][height];
+        
+        for (int h = 1; h<height; h++) {
+            for (int w = 1; w<width; w++) {
+            	tex[w][h] = new Color(img.getRGB(w, h));
+            }
+        }
+        // Flush BufferedImage data, they are no longer needed
+        img.flush();
 	}
 	
 	/**
@@ -68,5 +103,23 @@ public class Texture {
 		Color result = ColorTools.getBilinearFilteredColor(tex[x][y], tex[x][y+1], tex[x+1][y], tex[x+1][y+1], u_ratio, v_ratio);
 		return result;
 	}
+	
+	public Color getColor(int x, int y) {
+		// TODO Implement x y validation and return exception if outside width and height
+		return tex[x][y];
+	}
 		
+	public void setColor(int x, int y, Color c) {
+		// TODO Implement x y validation and return exception if outside width and height
+		tex[x][y] = c;
+	}
+	
+	public int getWidth() {
+		return this.width;
+	}
+	
+	public int getHeight() {
+		return this.height;
+	}
+
 }
