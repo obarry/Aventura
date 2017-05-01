@@ -98,6 +98,7 @@ public class RenderEngine {
 	private int nbt = 0; // Number of triangles processed
 	private int nbt_in = 0; // Number of triangles finally displayed
 	private int nbt_out = 0; // Number of triangles not displayed
+	private int nbt_bf = 0; // Nb of triangles back facing (counted if backface culling is activated)
 	private int nbe = 0; // Number of Elements processed
 	// Model
 	private World world;
@@ -189,7 +190,7 @@ public class RenderEngine {
 			render(e, Matrix4.IDENTITY, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
 
 		// Display the landmarks if enabled (RenderContext)
 		if (renderContext.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
@@ -290,42 +291,52 @@ public class RenderEngine {
 		if (isInViewFrustum(t)) { // Render triangle
 			
 			// If triangle normal then transform triangle normal
-			if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal()) {
+			if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal() || renderContext.backfaceCulling == RenderContext.BACKFACE_CULLING_ENABLED) {
 				// Calculate normal if not calculated
 				if (t.getNormal()==null) t.calculateNormal();
 				modelView.transformNormal(t);
 			}
+			
+			if (renderContext.backfaceCulling == RenderContext.BACKFACE_CULLING_ENABLED && isBackFace(t)) {
 
-			switch (renderContext.rendering_type) {
-			case RenderContext.RENDERING_TYPE_LINE:
-				rasterizer.drawTriangleLines(t, color);
-				break;
-			case RenderContext.RENDERING_TYPE_MONOCHROME:
-				//TODO To be implemented
-				//TODO To be renamed into NO_SHADING ?
-				// Render faces with only face (or default) color + plain lines to show the faces
-				// No shading
-				break;
-			case RenderContext.RENDERING_TYPE_PLAIN:
-				// Draw triangles with shading full face, no interpolation.
-				// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-				rasterizer.rasterizePlainTriangle(t, color);
-				break;
-			case RenderContext.RENDERING_TYPE_INTERPOLATE:
-				// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-				rasterizer.rasterizeInterpolatedTriangle(t, color, e, sc);
-				break;
-			default:
-				// Invalid rendering type
-				break;
-			}
+				// Do not renderContext this triangle
+				// Count Triangles stats (out view frustum)
+				nbt_bf++;
+				nbt_out++;
+			
+			} else { // Default case
 
-			// If DISPLAY_NORMALS is activated then renderContext normals
-			if (renderContext.displayNormals == RenderContext.DISPLAY_NORMALS_ENABLED) {
-				displayNormalVectors(t);
+				switch (renderContext.rendering_type) {
+				case RenderContext.RENDERING_TYPE_LINE:
+					rasterizer.drawTriangleLines(t, color);
+					break;
+				case RenderContext.RENDERING_TYPE_MONOCHROME:
+					//TODO To be implemented
+					//TODO To be renamed into NO_SHADING ?
+					// Render faces with only face (or default) color + plain lines to show the faces
+					// No shading
+					break;
+				case RenderContext.RENDERING_TYPE_PLAIN:
+					// Draw triangles with shading full face, no interpolation.
+					// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
+					rasterizer.rasterizePlainTriangle(t, color);
+					break;
+				case RenderContext.RENDERING_TYPE_INTERPOLATE:
+					// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
+					rasterizer.rasterizeInterpolatedTriangle(t, color, e, sc);
+					break;
+				default:
+					// Invalid rendering type
+					break;
+				}
+
+				// If DISPLAY_NORMALS is activated then renderContext normals
+				if (renderContext.displayNormals == RenderContext.DISPLAY_NORMALS_ENABLED) {
+					displayNormalVectors(t);
+				}
+				// Count Triangles stats (in view)
+				nbt_in++;
 			}
-			// Count Triangles stats (in view)
-			nbt_in++;
 
 		} else {
 			// Do not renderContext this triangle
@@ -368,6 +379,21 @@ public class RenderEngine {
 			return true;
 		else
 			return false;
+	}
+	
+	/**
+	 * Is true if triangle is "back face" with regards to its normal, else false
+	 * 
+	 * @param t the triangle
+	 * @return true if triangle normal is in opposite direction of viewer
+	 */
+	protected boolean isBackFace(Triangle t) {
+		// In homogeneous coordinates, the camera direction is Z axis
+		if (t.getProjNormal().dot(Vector3.Z_AXIS)>0) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 

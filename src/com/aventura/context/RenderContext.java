@@ -63,12 +63,27 @@ public class RenderContext {
 	public static final int DISPLAY_LIGHT_VECTORS_DISABLED = 0;
 	public static final int DISPLAY_LIGHT_VECTORS_ENABLED = 1;
 	
-
+	public static final int BACKFACE_CULLING_DISABLED = 0;
+	public static final int BACKFACE_CULLING_ENABLED = 1;
+	
+	// ------------------------
+	// RenderContext Attributes
+	// ------------------------
+	
+	// Display elements in the scene
 	public int displayLandmark = DISPLAY_LANDMARK_DISABLED; // by default
 	public int displayNormals = DISPLAY_NORMALS_DISABLED;  // by default
 	public int displayLight = DISPLAY_LIGHT_VECTORS_DISABLED; // by default
 
+	// Rendering
 	public int rendering_type = 0;
+	
+	// Backface Culling
+	public int backfaceCulling = BACKFACE_CULLING_ENABLED; // Default
+	
+	// --------------
+	// Default colors
+	// --------------
 	
 	public Color landmarkXColor = Color.RED;
 	public Color landmarkYColor = Color.GREEN;
@@ -100,6 +115,7 @@ public class RenderContext {
 		this.displayNormals = r.displayNormals;
 		this.displayLight = r.displayLight;
 		this.rendering_type = r.rendering_type;
+		this.backfaceCulling = r.backfaceCulling;
 	}
 	
 	public RenderContext(int type, int display_landmark) {
@@ -114,12 +130,20 @@ public class RenderContext {
 		this.displayLight = display_light;
 	}
 		
+	public RenderContext(int type, int display_landmark, int display_normals, int display_light, int backfaceCulling) {
+		this.rendering_type = type;
+		this.displayLandmark = display_landmark;
+		this.displayNormals = display_normals;
+		this.displayLight = display_light;
+		this.backfaceCulling = backfaceCulling;
+	}
+		
 	public void setRendering(int type) {
 		this.rendering_type = type;
 	}
 	
 	public int getRendering() {
-		return rendering_type;
+		return this.rendering_type;
 	}
 
 	public void setDisplayLandmark(int landmark) {
@@ -127,7 +151,7 @@ public class RenderContext {
 	}
 	
 	public int getDisplayLandmark() {
-		return displayLandmark;
+		return this.displayLandmark;
 	}
 
 	public void setDisplayNormals(int display_normals) {
@@ -135,7 +159,7 @@ public class RenderContext {
 	}
 	
 	public int getDisplayNormals() {
-		return displayNormals;
+		return this.displayNormals;
 	}
 
 	public void setDisplayLight(int display_light) {
@@ -143,8 +167,15 @@ public class RenderContext {
 	}
 	
 	public int getDisplayLight() {
-		return displayLight;
+		return this.displayLight;
 	}
-
+	
+	public void setBackFaceCulling(int bfc) {
+		this.backfaceCulling = bfc;
+	}
+	
+	public int getBackFaceCulling() {
+		return this.backfaceCulling;
+	}
 
 }
