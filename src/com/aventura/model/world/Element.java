@@ -129,12 +129,33 @@ public class Element implements Transformable {
 	protected Color elementColor = null; // Color of the element unless specified at Triangle or Vertex level (lowest level priority)
 	protected Color specularColor = null; // Specular reflection color for this Element
 	protected float specularExponent = 0; // Specular exponent
+	
+	// Topology
+	protected boolean isClosed = false; // Defines if the Element is a closed element or not in order to eliminate or not its back faces (internal to the closed element thus not visible)
 		
+	/**
+	 * Create an open Element (not closed)
+	 * 
+	 * @param isClosed a boolean indicated if Element is closed (true) or not (false)
+	 */
 	public Element() {
 		super();
 		triangles = new ArrayList<Triangle>();
 		vertices = new ArrayList<Vertex>();
 		transform = Matrix4.IDENTITY; // By default
+	}
+	
+	/**
+	 * Create an Element defining its "closeness" that is wether it is closed or open
+	 * 
+	 * @param isClosed a boolean indicated if Element is closed (true) or not (false)
+	 */
+	public Element(boolean isClosed) {
+		super();
+		triangles = new ArrayList<Triangle>();
+		vertices = new ArrayList<Vertex>();
+		transform = Matrix4.IDENTITY; // By default
+		this.isClosed = isClosed;
 	}
 	
 	public boolean isLeaf() {
@@ -256,6 +277,14 @@ public class Element implements Transformable {
 		return specularExponent;
 	}
 
+	public boolean isClosed() {
+		return isClosed;
+	}
+	
+	public void setClosing(boolean isClosed) {
+		this.isClosed = isClosed;
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.aventura.model.world.NormalGeneration#calculateNormals()
 	 * This method calculate normals of each Triangle.

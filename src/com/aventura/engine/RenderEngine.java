@@ -245,7 +245,7 @@ public class RenderEngine {
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			
 			// Render triangle 
-			render(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor());
+			render(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor(), e.isClosed());
 			
 			// Count Triangles stats (total, all triangles whatever in or out view frustum)
 			nbt++;
@@ -274,10 +274,11 @@ public class RenderEngine {
 	 * @param to the triangle to render
 	 * @param c the color of the Element, can be overridden if color defined (not null) at Triangle level
 	 * @param e the specular exponent of the Element
-	 * @param sc the specular color of the Element 
+	 * @param sc the specular color of the Element
+	 * @param isClosedElement a boolean to indicate if the Element to which triangle belongs is closed or not (to activate backface culling or not) 
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
-	public void render(Triangle t, Color c, float e, Color sc) {
+	public void render(Triangle t, Color c, float e, Color sc, boolean isClosedElement) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
@@ -285,19 +286,22 @@ public class RenderEngine {
 		Color color = t.getColor();
 		if (color == null) color = c;
 		
+		// Back Face Culling if defined in RenderContext AND the Element is Closed
+		Boolean backfaceCulling = (renderContext.backfaceCulling == RenderContext.BACKFACE_CULLING_ENABLED) && isClosedElement;
+		
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
 		// Then renderContext its fragments in the View
 		if (isInViewFrustum(t)) { // Render triangle
 			
 			// If triangle normal then transform triangle normal
-			if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal() || renderContext.backfaceCulling == RenderContext.BACKFACE_CULLING_ENABLED) {
+			if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal() || backfaceCulling) {
 				// Calculate normal if not calculated
 				if (t.getNormal()==null) t.calculateNormal();
 				modelView.transformNormal(t);
 			}
 			
-			if (renderContext.backfaceCulling == RenderContext.BACKFACE_CULLING_ENABLED && isBackFace(t)) {
+			if (backfaceCulling && isBackFace(t)) {
 
 				// Do not renderContext this triangle
 				// Count Triangles stats (out view frustum)

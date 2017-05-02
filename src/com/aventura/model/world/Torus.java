@@ -58,7 +58,7 @@ public class Torus extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
 	public Torus(double torus_ray, double pipe_ray, int half_circ, int half_seg) {
-		super();
+		super(true); // A Torus is a closed Element
 		subelements = null;
 		this.torus_ray = torus_ray;
 		this.pipe_ray = pipe_ray;

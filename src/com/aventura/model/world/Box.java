@@ -43,7 +43,7 @@ public class Box extends Element {
 	 * @param z_dim dimension of the box on z axis
 	 */
 	public Box(double x_dim, double y_dim, double z_dim) {
-		super();
+		super(true); // A Box is a closed Element
 		subelements = null;
 		createBox(x_dim, y_dim, z_dim);
 	}

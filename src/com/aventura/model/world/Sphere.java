@@ -67,7 +67,7 @@ public class Sphere extends Element {
 	protected Vector4 center;
 	
 	public Sphere(double ray, int half_seg) {
-		super();
+		super(true); // A Sphere is a closed Element
 		subelements = null;
 		this.ray = ray;
 		this.half_seg = half_seg;
