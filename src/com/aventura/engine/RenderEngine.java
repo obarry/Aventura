@@ -393,12 +393,8 @@ public class RenderEngine {
 	 */
 	protected boolean isBackFace(Triangle t) {
 		// In homogeneous coordinates, the camera direction is Z axis
-		//if (t.getProjNormal().dot(Vector3.Z_AXIS)>0) {
-		if (t.getProjNormal().getZ()>0) {
-			return true;
-		} else {
-			return false;
-		}
+		// return true if the Z coord of the triangle normal is > 0 that means the vector has a component in Z axis direction
+		return t.getProjNormal().getZ()>0;
 	}
 	
 

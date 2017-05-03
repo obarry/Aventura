@@ -1,6 +1,5 @@
 package com.aventura.model.world;
 
-import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
 /**
