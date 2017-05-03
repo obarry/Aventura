@@ -287,7 +287,7 @@ public class RenderEngine {
 		if (color == null) color = c;
 		
 		// Back Face Culling if defined in RenderContext AND the Element is Closed
-		Boolean backfaceCulling = (renderContext.backfaceCulling == RenderContext.BACKFACE_CULLING_ENABLED) && isClosedElement;
+		boolean backfaceCulling = (renderContext.backfaceCulling == RenderContext.BACKFACE_CULLING_ENABLED) && isClosedElement;
 		
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
@@ -393,7 +393,8 @@ public class RenderEngine {
 	 */
 	protected boolean isBackFace(Triangle t) {
 		// In homogeneous coordinates, the camera direction is Z axis
-		if (t.getProjNormal().dot(Vector3.Z_AXIS)>0) {
+		//if (t.getProjNormal().dot(Vector3.Z_AXIS)>0) {
+		if (t.getProjNormal().getZ()>0) {
 			return true;
 		} else {
 			return false;
