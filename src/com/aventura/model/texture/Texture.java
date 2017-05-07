@@ -70,8 +70,8 @@ public class Texture {
         
         tex = new Color[width][height];
         
-        for (int h = 1; h<height; h++) {
-            for (int w = 1; w<width; w++) {
+        for (int h=0; h<height; h++) {
+            for (int w=0; w<width; w++) {
             	tex[w][h] = new Color(img.getRGB(w, h));
             }
         }
@@ -85,22 +85,29 @@ public class Texture {
 	 * @param t
 	 * @return
 	 */
-	public Color getInterpolatedColor(double s, double t) {
+	public Color getInterpolatedColor(double s, double t) throws Exception {
 
-		// Calculate the coordinates within the texture (-0.5 as per bressenham to 
+		// Calculate the coordinates within the texture (-0.5 as per bressenham)
 		double u = s * this.width - 0.5;
 		double v = t * this.height - 0.5;
 
 		// Calculate the integer value of u and v
-		int x = (int) Math.floor(u);
-		int y = (int) Math.floor(v);
-
-		// Calculate the frac value of u and v and their respective complement to 1
-		float u_ratio = (float)u - x;
-		float v_ratio = (float)v - y;
+		int x0 = (int) Math.floor(u);
+		int y0 = (int) Math.floor(v);
+		int x1 = x0+1;
+		int y1 = y0+1;
 		
+		// Calculate the frac value of u and v (their respective complement to 1 will be computed in the getBilinearFilteredColor method directly)
+		float u_ratio = (float)u - x0;
+		float v_ratio = (float)v - y0;
+		
+		if (x0<0) x0=0;
+		if (y0<0) y0=0;
+		if (x1>=this.width) x1=this.width-1;
+		if (y1>=this.height) y1=this.height-1;
+
 		// Calculate the interpolated value as per Bilinear Filtered algorithm
-		Color result = ColorTools.getBilinearFilteredColor(tex[x][y], tex[x][y+1], tex[x+1][y], tex[x+1][y+1], u_ratio, v_ratio);
+		Color result = ColorTools.getBilinearFilteredColor(tex[x0][y0], tex[x0][y1], tex[x1][y0], tex[x1][y1], u_ratio, v_ratio);
 		return result;
 	}
 	
