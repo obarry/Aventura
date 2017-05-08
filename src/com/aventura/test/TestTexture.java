@@ -33,7 +33,8 @@ public class TestTexture {
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		frame.setLocation(dim.width/2 - frame.getWidth()/2, dim.height/2 - frame.getHeight()/2);
 		
-
+		// Loading image in order to display the original source
+		//image1 = new ImageIcon("resources/test/texture_damier_600x591.gif").getImage();
 		//image1 = new ImageIcon("resources/test/texture_blueground_204x204.jpg").getImage();
 		image1 = new ImageIcon("resources/test/texture_bricks_204x204.jpg").getImage();
 		int width1 = image1.getWidth(null);
@@ -41,12 +42,13 @@ public class TestTexture {
         System.out.println("Height image1: "+image1.getHeight(null));
         System.out.println("Width image1: "+image1.getWidth(null));
 		
-		
+		// Let's now create the Texture object itself, from the same image file (to be selected) 
+		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
 		Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		
-		
-		double ratio = 1.75;
+		// This ratio can be adjusted to show the effect of redimensioning the initial image by the Texture object (bilinear filtering algorithm)
+		double ratio = 1.3;
 		
 		int width2 = (int) (width1*ratio);
 		int height2 = (int) (height1*ratio);
@@ -69,8 +71,6 @@ public class TestTexture {
 
 		// Create a panel and add it to the frame
 		JPanel panel = new JPanel() {
-
-
 			public void paint(Graphics g) { 
 				g.drawImage(image1, 0, 0, image1.getHeight(null), image1.getWidth(null), null);
 				g.drawImage(image2, 256, 0, image2.getHeight(null), image2.getWidth(null), null);
