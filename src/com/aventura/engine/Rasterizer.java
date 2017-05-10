@@ -175,27 +175,30 @@ public class Rasterizer {
 	// End methods for Segment only Rendering
 	
 	public void rasterizePlainTriangle(Triangle t, Color c) {
-		rasterizeTriangle(t, c, 0, null, false);
+		rasterizeTriangle(t, c, 0, null, false, false); // No texture processing
 	}
 	
-	public void rasterizeInterpolatedTriangle(Triangle t, Color c, float e, Color sc) {
-		rasterizeTriangle(t, c, e, sc, true);		
+	public void rasterizeInterpolatedTriangle(Triangle t, Color c, float e, Color sc, boolean texture) {
+		rasterizeTriangle(t, c, e, sc, true, texture);		
 	}
 	
 	/**
 	 * Triangle rasterization and zBuffering
-	 * Extrapolated from:
+	 * Inspired from:
 	 * https://www.davrous.com/2013/06/21/tutorial-part-4-learning-how-to-write-a-3d-software-engine-in-c-ts-or-js-rasterization-z-buffering/
 	 * 
 	 * @param t the triangle to render
-	 * @param col
-	 */
-	protected void rasterizeTriangle(Triangle t, Color c, float e, Color sc, boolean interpolate) {
+	 * @param c the base color of the triangle, may be inherited from the element or default
+	 * @param e the specular exponent of the Element
+	 * @param sc the specular color of the Element
+	 * @param interpolate a boolean to indicate if interpolation of colors is activated (true) or not (false)
+	 * @param texture a boolean to indicate if texture processing is activated (true) or not (false) 
+	 **/
+	protected void rasterizeTriangle(Triangle t, Color c, float e, Color sc, boolean interpolate, boolean texture) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
 		
 		Color col = c; // Let's initialize the base color with the provided one (from triangle or default color)
-		Color c1 = null, c2 = null, c3 = null; // Colors to store Vertex colors, if interpolation is requested, else will be kept null
 
 		// Init pixel stats
 		rendered_pixels = 0;

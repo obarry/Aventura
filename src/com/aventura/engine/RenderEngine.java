@@ -327,7 +327,11 @@ public class RenderEngine {
 					break;
 				case RenderContext.RENDERING_TYPE_INTERPOLATE:
 					// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-					rasterizer.rasterizeInterpolatedTriangle(t, color, e, sc);
+					if (renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED) {
+						rasterizer.rasterizeInterpolatedTriangle(t, color, e, sc, true);						
+					} else { // No Texture
+						rasterizer.rasterizeInterpolatedTriangle(t, color, e, sc, false);						
+					}
 					break;
 				default:
 					// Invalid rendering type
@@ -392,9 +396,9 @@ public class RenderEngine {
 	 * @return true if triangle normal is in opposite direction of viewer
 	 */
 	protected boolean isBackFace(Triangle t) {
-		// In homogeneous coordinates, the camera direction is Z axis
-		// return true if the Z coord of the triangle normal is > 0 that means the vector has a component in Z axis direction
-		return t.getProjNormal().getZ()>0;
+		// In homogeneous coordinates, the camera direction is Z axis		
+		// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
+		return (t.getV1().getProjNormal().getZ()>0) && (t.getV2().getProjNormal().getZ()>0) && (t.getV3().getProjNormal().getZ()>0);
 	}
 	
 
