@@ -4,10 +4,12 @@ import java.awt.Color;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.math.vector.Tools;
+import com.aventura.math.vector.Vector2;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Segment;
 import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
@@ -214,13 +216,17 @@ public class Rasterizer {
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
+			
+			// TODO Optimization: pre-calculate the viewer vectors and shaded colors to each Vertex before in 1 row
+			// This will avoid to do the same calculation for a Vertex shared by several triangles (which is the general case)
+			
 			// Calculate viewer vectors
 			Vector4 viewer1, viewer2, viewer3;
 			viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).normalize();
 			viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).normalize();
 			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).normalize();
 			
-			// Calculate the 3 colors of the 3 Vertex based on their respective normals
+			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
 			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), viewer1.V3(), e, sc));
 			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), viewer2.V3(), e, sc));
 			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), viewer3.V3(), e, sc));					
@@ -230,25 +236,37 @@ public class Rasterizer {
 	    // with v1 always down (thus having the highest possible Y)
 	    // then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
 		Vertex v1, v2, v3;
+		Vector2 vt1, vt2, vt3; // Same for Texture Vectors
 
 		v1 = t.getV1();
 		v2 = t.getV2();
 		v3 = t.getV3();
+		
+		vt1 = t.getTexVec1();
+		vt2 = t.getTexVec2();
+		vt3 = t.getTexVec3();
 
 		if (v2.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p2 lower than p1
 			if (v3.getProjPos().get3DY()<v2.getProjPos().get3DY()) { // p3 lower than p2
 				v1 = t.getV3();
-				v2 = t.getV2();
+				// No change for p2
 				v3 = t.getV1();
+				vt1 = t.getTexVec3();
+				vt3 = t.getTexVec1();
 			} else { // p2 lower than p3
 				if (v3.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p3 lower than p1
 					v1 = t.getV2();
 					v2 = t.getV3();
 					v3 = t.getV1();
+					vt1 = t.getTexVec2();
+					vt2 = t.getTexVec3();
+					vt3 = t.getTexVec1();
 				} else { // p1 higher than p3
 					v1 = t.getV2();
 					v2 = t.getV1();
-					v3 = t.getV3();
+					// No change for p3
+					vt1 = t.getTexVec2();
+					vt2 = t.getTexVec1();
 				}
 			}
 		} else { // p1 lower than p2
@@ -256,11 +274,16 @@ public class Rasterizer {
 				v1 = t.getV3();
 				v2 = t.getV1();
 				v3 = t.getV2();
+				vt1 = t.getTexVec3();
+				vt2 = t.getTexVec1();
+				vt3 = t.getTexVec2();
 			} else { // p1 lower than p3
 				if (v3.getProjPos().get3DY()<v2.getProjPos().get3DY()) { // p3 lower than p2
 					// No change for p1
 					v2 = t.getV3();
 					v3 = t.getV2();
+					vt2 = t.getTexVec3();
+					vt3 = t.getTexVec2();
 				} else {
 					// Else keep p1, p2 and p3 as defined
 				}
@@ -301,9 +324,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v3, v1, v2, col, interpolate && !t.isTriangleNormal());
+	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt2, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
 	            } else {
-	                rasterizeScanLine(y, v1, v3, v2, v3, col, interpolate && !t.isTriangleNormal());
+	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt2, vt3, vt1, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
 	            }
 	        }
 
@@ -324,16 +347,30 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v2, v1, v3, col, interpolate && !t.isTriangleNormal());
+	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
 	            } else {
-	                rasterizeScanLine(y, v2, v3, v1, v3, col, interpolate && !t.isTriangleNormal());
+	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
 	            }
 	        }
 	    }
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels);
 	}
 	
-	protected void rasterizeScanLine(int y, Vertex va, Vertex vb, Vertex vc, Vertex vd, Color c, boolean interpolate) {
+	//protected void rasterizeScanLine(int y, Vertex va, Vertex vb, Vertex vc, Vertex vd, Color c, boolean interpolate) {
+	protected void rasterizeScanLine(
+			int y,					// ordinate of the scan line
+			Vertex va,				// Vertex A of first segment: AB
+			Vertex vb,				// Vertex B of first segment: AB
+			Vertex vc,				// Vertex C of second segment: CD
+			Vertex vd,				// Vertex D of second segment: CD
+			Vector2 vta,			// Texture Vector of Vertex A
+			Vector2 vtb,			// Texture Vector of Vertex B
+			Vector2 vtc,			// Texture Vector of Vertex C
+			Vector2 vtd,			// Texture Vector of Vertex D
+			Texture t,				// Texture object for this triangle
+			Color c,				// Base color
+			boolean interpolate,	// Flag for interpolation (true) or not (false)
+			boolean texture) { 		// Flag for texture calculation (true) or not (false)
 		
 	    // Thanks to current Y, we can compute the gradient to compute others values like
 	    // the starting X (sx) and ending X (ex) to draw between
@@ -345,24 +382,54 @@ public class Rasterizer {
 	    int sx = (int)Tools.interpolate(xScreen(va), xScreen(vb), gradient1);
 	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
 
-	    // starting Z & ending Z
+	    // Starting Z & ending Z
 	    float z1 = Tools.interpolate((float)va.getProjPos().get3DZ(), (float)vb.getProjPos().get3DZ(), gradient1);
 	    float z2 = Tools.interpolate((float)vc.getProjPos().get3DZ(), (float)vd.getProjPos().get3DZ(), gradient2);
 	    
-	    // drawing a line from left (sx) to right (ex) 
-	    for (int x = sx; x < ex; x++) {
-	        float gradient = (x-sx)/(float)(ex-sx);
-	        float z = Tools.interpolate(z1, z2, gradient);
-	        
-	        // If color interpolation
-	        if (interpolate) {
-	        	Color c1, c2;
-	        	c1 = ColorTools.interpolateColors(va.getShadedCol(), vb.getShadedCol(), gradient1);
-	        	c2 = ColorTools.interpolateColors(vc.getShadedCol(), vd.getShadedCol(), gradient2);
-	        	c = ColorTools.interpolateColors(c1, c2, gradient);
-	        }
-	        drawPoint(x, y, z, c);
+	    // Starting Color & ending Color
+    	Color c1 = null;
+    	Color c2 = null;
+    	if (interpolate) {
+        	c1 = ColorTools.interpolateColors(va.getShadedCol(), vb.getShadedCol(), gradient1);
+        	c2 = ColorTools.interpolateColors(vc.getShadedCol(), vd.getShadedCol(), gradient2);	
 	    }
+
+	    // Starting Texture & ending Texture coordinates
+    	Vector2 vt1 = null;
+    	Vector2 vt2 = null;
+    	Vector2 vt = null;
+    	if (texture) {
+    		vt1 = Tools.interpolate(vta, vtb, gradient1);
+    		vt2 = Tools.interpolate(vtc, vtd, gradient2);
+    	}
+
+    	
+	    // drawing a line from left (sx) to right (ex) 
+    	for (int x = sx; x < ex; x++) {
+    		float gradient = (x-sx)/(float)(ex-sx);
+    		float z = Tools.interpolate(z1, z2, gradient);
+
+    		// If interpolation
+    		if (interpolate) {
+    			// Color interpolation
+    			c = ColorTools.interpolateColors(c1, c2, gradient);
+    			// Texture interpolation
+    			if (texture) {
+    				Color ct = null;
+    				vt = Tools.interpolate(vt1, vt2, gradient);
+    				try {
+    					ct = t.getInterpolatedColor(vt.getX(), vt.getY());
+    				} catch (Exception e) {
+    					// TODO Auto-generated catch block
+    					e.printStackTrace();
+    				}
+    				// Combine the shaded color and the Texture color
+    				c = ColorTools.multColors(c, ct);
+    			}
+    		}
+    		// Draw the point on the screen with calculated color
+    		drawPoint(x, y, z, c);
+    	}
 	}
 
 	/**

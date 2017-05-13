@@ -85,7 +85,7 @@ public class RenderContext {
 	public int backfaceCulling = BACKFACE_CULLING_ENABLED; // Default
 	
 	// Texture processing
-	public int textureProcessing = TEXTURE_PROCESSING_ENABLED; // Default
+	public int textureProcessing = TEXTURE_PROCESSING_DISABLED; // Default
 	
 	// --------------
 	// Default colors
