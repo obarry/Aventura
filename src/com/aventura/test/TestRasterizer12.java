@@ -82,22 +82,29 @@ public class TestRasterizer12 {
 		
 		System.out.println("********* Creating World");
 		
-		Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
+		Texture tex1 = new Texture("resources/test/texture_bricks_204x204.jpg");
+		Texture tex2 = new Texture("resources/test/texture_blueground_204x204.jpg");
 		
 		World world = new World();
 		Box box = new Box(1.2,1.5,1);
-		box.getTriangle(0).setTexture(tex, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(1).setTexture(tex, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-		box.getTriangle(2).setTexture(tex, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(3).setTexture(tex, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-		box.getTriangle(4).setTexture(tex, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(5).setTexture(tex, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-		box.getTriangle(6).setTexture(tex, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(7).setTexture(tex, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-		box.getTriangle(8).setTexture(tex, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(9).setTexture(tex, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-		box.getTriangle(10).setTexture(tex, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(11).setTexture(tex, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		// Bottom
+		box.getTriangle(0).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
+		box.getTriangle(1).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		// Back
+		box.getTriangle(2).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
+		box.getTriangle(3).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		// Left Side
+		box.getTriangle(4).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
+		box.getTriangle(5).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		// Top
+		box.getTriangle(6).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
+		box.getTriangle(7).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		// Front
+		box.getTriangle(8).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
+		box.getTriangle(9).setTexture(tex2, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		// Right Side
+		box.getTriangle(10).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
+		box.getTriangle(11).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
 
 		world.addElement(box);
 		
