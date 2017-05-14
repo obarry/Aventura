@@ -397,8 +397,12 @@ public class RenderEngine {
 	 */
 	protected boolean isBackFace(Triangle t) {
 		// In homogeneous coordinates, the camera direction is Z axis		
-		// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
-		return (t.getV1().getProjNormal().getZ()>0) && (t.getV2().getProjNormal().getZ()>0) && (t.getV3().getProjNormal().getZ()>0);
+		try {
+			// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
+			return (t.getV1().getProjNormal().getZ()>0) && (t.getV2().getProjNormal().getZ()>0) && (t.getV3().getProjNormal().getZ()>0);
+		} catch (Exception e) { // If no Vertex normals, then use Triangle normal with same test
+			return t.getProjNormal().getZ()>0;
+		}
 	}
 	
 

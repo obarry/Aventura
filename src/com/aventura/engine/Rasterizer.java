@@ -398,37 +398,40 @@ public class Rasterizer {
     	Vector2 vt1 = null;
     	Vector2 vt2 = null;
     	Vector2 vt = null;
-    	if (texture) {
+    	if (texture && t!=null) {
     		vt1 = Tools.interpolate(vta, vtb, gradient1);
     		vt2 = Tools.interpolate(vtc, vtd, gradient2);
     	}
 
-    	
 	    // drawing a line from left (sx) to right (ex) 
     	for (int x = sx; x < ex; x++) {
-    		float gradient = (x-sx)/(float)(ex-sx);
+    		
+    		float gradient = (float)(x-sx)/(float)(ex-sx);
     		float z = Tools.interpolate(z1, z2, gradient);
 
     		// If interpolation
     		if (interpolate) {
     			// Color interpolation
     			c = ColorTools.interpolateColors(c1, c2, gradient);
-    			// Texture interpolation
-    			if (texture) {
-    				Color ct = null;
-    				vt = Tools.interpolate(vt1, vt2, gradient);
-    				try {
-    					ct = t.getInterpolatedColor(vt.getX(), vt.getY());
-    				} catch (Exception e) {
-    					// TODO Auto-generated catch block
-    					e.printStackTrace();
-    				}
-    				// Combine the shaded color and the Texture color
-    				c = ColorTools.multColors(c, ct);
-    			}
     		}
-    		// Draw the point on the screen with calculated color
-    		drawPoint(x, y, z, c);
+
+    		// Texture interpolation
+    		if (texture && t!=null) {
+    			Color ct = null;
+    			vt = Tools.interpolate(vt1, vt2, gradient);
+    			try {
+    				ct = t.getInterpolatedColor(vt.getX(), vt.getY());
+    			} catch (Exception e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
+    			// Combine the shaded color and the Texture color
+    			Color cc = ColorTools.multColors(c, ct);
+    			drawPoint(x, y, z, cc);
+    		} else {
+    			// Draw the point on the screen with calculated color
+    			drawPoint(x, y, z, c);
+    		}
     	}
 	}
 
