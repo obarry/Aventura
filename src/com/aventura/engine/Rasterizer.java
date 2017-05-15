@@ -324,9 +324,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt2, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
+	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
 	            } else {
-	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt2, vt3, vt1, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
+	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
 	            }
 	        }
 

@@ -71,8 +71,8 @@ public class Box extends Element {
 		Triangle t1 = new Triangle(vertices[0][0][0], vertices[0][1][0], vertices[1][1][0]);
 		Triangle t2 = new Triangle(vertices[1][1][0], vertices[1][0][0], vertices[0][0][0]);
 		
-		Triangle t3 = new Triangle(vertices[0][1][0], vertices[0][0][0], vertices[0][1][1]);
-		Triangle t4 = new Triangle(vertices[0][1][1], vertices[0][0][0], vertices[0][0][1]);
+		Triangle t3 = new Triangle(vertices[0][0][0], vertices[0][0][1], vertices[0][1][1]);
+		Triangle t4 = new Triangle(vertices[0][1][1], vertices[0][1][0], vertices[0][0][0]);
 
 		Triangle t5 = new Triangle(vertices[0][0][0], vertices[1][0][0], vertices[1][0][1]);
 		Triangle t6 = new Triangle(vertices[1][0][1], vertices[0][0][1], vertices[0][0][0]);
