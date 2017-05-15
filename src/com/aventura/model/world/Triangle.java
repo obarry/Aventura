@@ -196,15 +196,15 @@ public class Triangle {
 	}
 
 	public Vector2 getTexVec1() {
-		return t1;
+		return this.t1;
 	}
 
 	public Vector2 getTexVec2() {
-		return t2;
+		return this.t2;
 	}
 
 	public Vector2 getTexVec3() {
-		return t3;
+		return this.t3;
 	}
 
 	/**
