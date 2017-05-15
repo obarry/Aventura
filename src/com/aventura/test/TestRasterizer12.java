@@ -87,6 +87,8 @@ public class TestRasterizer12 {
 		
 		World world = new World();
 		Box box = new Box(1.2,1.5,1);
+		
+		// Set Texture to all Triangles of the Box
 		// Bottom
 		box.getTriangle(0).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
 		box.getTriangle(1).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
