@@ -46,7 +46,6 @@ public class Vertex {
 	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates
 	
 	// Physical characteristic
-	protected Vector2 texture = null; // Relative position of this Vertex in the texture plane
 	protected Color color = null; // color of this Vertex, if null the Element's color (or World's color) is used. Lowest level priority.
 	protected int material; // To be defined, a specific class may be needed for a complex material representation
 	
@@ -63,7 +62,6 @@ public class Vertex {
 	public Vertex(Vertex v) {
 		this.position = (v.position != null) ? new Vector4(v.position) : null;
 		this.normal = (v.normal != null) ? new Vector3(v.normal) : null;
-		this.texture = v.texture;
 		this.color = v.getColor();
 		this.material = v.material;
 	}
@@ -159,7 +157,7 @@ public class Vertex {
 	public Color getShadedCol() {
 		return shadedCol;
 	}
-	
+		
 	/**
 	 * Calculate the normal from a set of vertices surrounding this Vertex
 	 * @param setOfVertices

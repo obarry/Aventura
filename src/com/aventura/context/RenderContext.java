@@ -66,6 +66,9 @@ public class RenderContext {
 	public static final int BACKFACE_CULLING_DISABLED = 0;
 	public static final int BACKFACE_CULLING_ENABLED = 1;
 	
+	public static final int TEXTURE_PROCESSING_DISABLED = 0;
+	public static final int TEXTURE_PROCESSING_ENABLED = 1;
+	
 	// ------------------------
 	// RenderContext Attributes
 	// ------------------------
@@ -80,6 +83,9 @@ public class RenderContext {
 	
 	// Backface Culling
 	public int backfaceCulling = BACKFACE_CULLING_ENABLED; // Default
+	
+	// Texture processing
+	public int textureProcessing = TEXTURE_PROCESSING_DISABLED; // Default
 	
 	// --------------
 	// Default colors
@@ -116,6 +122,7 @@ public class RenderContext {
 		this.displayLight = r.displayLight;
 		this.rendering_type = r.rendering_type;
 		this.backfaceCulling = r.backfaceCulling;
+		this.textureProcessing = r.textureProcessing;
 	}
 	
 	public RenderContext(int type, int display_landmark) {
@@ -136,6 +143,15 @@ public class RenderContext {
 		this.displayNormals = display_normals;
 		this.displayLight = display_light;
 		this.backfaceCulling = backfaceCulling;
+	}
+		
+	public RenderContext(int type, int display_landmark, int display_normals, int display_light, int backfaceCulling, int textureProcessing) {
+		this.rendering_type = type;
+		this.displayLandmark = display_landmark;
+		this.displayNormals = display_normals;
+		this.displayLight = display_light;
+		this.backfaceCulling = backfaceCulling;
+		this.textureProcessing = textureProcessing;
 	}
 		
 	public void setRendering(int type) {
@@ -176,6 +192,14 @@ public class RenderContext {
 	
 	public int getBackFaceCulling() {
 		return this.backfaceCulling;
+	}
+
+	public void setTextureProcessing(int tp) {
+		this.textureProcessing = tp;
+	}
+	
+	public int getTextureProcessing() {
+		return this.textureProcessing;
 	}
 
 }

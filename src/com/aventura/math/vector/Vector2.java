@@ -1,7 +1,5 @@
 package com.aventura.math.vector;
 
-import com.aventura.math.Constants;
-
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -76,9 +74,17 @@ public class Vector2 {
 		return x*w.x+y*w.y;
 	}
 	
-	public void times(double d) {
+	public void timesEquals(double d) {
 		this.x = x*d;
 		this.y = y*d;
+	}
+	
+	public Vector2 times(double d) {
+		Vector2 r = new Vector2();
+		r.x = this.x*d;
+		r.y = this.y*d;
+
+		return r;
 	}
 	
 	public Vector2 equals() {
@@ -91,6 +97,15 @@ public class Vector2 {
 	}
 	
 	/**
+	 * Vector2 addition V=V+W. This Vector2 (V) is modified and contains the result of the operation.
+	 * @param w the Vector2 to be added to this Vector2
+	 */
+	public void plusEquals(Vector2 w) {
+		this.x+=w.x;
+		this.y+=w.y;
+	}
+	
+	/**
 	 * return sum of V = this vector + W the provided vector
 	 * 
 	 * @param w provided vector
@@ -100,7 +115,16 @@ public class Vector2 {
 		Vector2 s = new Vector2(x+w.x, y+w.y);
 		return s;
 	}
-	
+
+	/**
+	 * Vector2 subtraction V=V-W. This Vector2 (V) is modified and contains the result of the operation.
+	 * @param w the Vector2 to be subtracted to this Vector3
+	 */
+	public void minusEquals(Vector2 w) {
+		this.x-=w.x;
+		this.y-=w.y;
+	}
+
 	/**
 	 * return difference of V = this vector - W the provided vector
 	 * 
