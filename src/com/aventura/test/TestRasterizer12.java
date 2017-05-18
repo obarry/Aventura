@@ -70,9 +70,6 @@ public class TestRasterizer12 {
 		
 		System.out.println("********* STARTING APPLICATION *********");
 		
-		//Tracer.info = true;
-		//Tracer.function = true;
-
 		// Camera
 		Vector4 eye = new Vector4(8,3,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
@@ -131,16 +128,6 @@ public class TestRasterizer12 {
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
-
-//		System.out.println("********* Rendering...");
-//		int nb_images = 180;
-//		for (int i=0; i<=3*nb_images; i++) {
-//			double a = Math.PI*2*(double)i/(double)nb_images;
-//			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
-//			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
-//			renderer.render();
-//		}
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;

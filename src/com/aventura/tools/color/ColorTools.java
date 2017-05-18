@@ -193,6 +193,19 @@ public class ColorTools {
 		}
 	}
 	
+	/**
+	 * Calculate one Color by filtering linearly in 2 directions/axis with respective ratios
+	 * This requires 4 Color samples (2 on each directions/axis).
+	 * This is generally used for interpolating Color in a Texture plane
+	 * 
+	 * @param z11 First color sample on axis 1 (generally X)
+	 * @param z12 Second color sample on axis 1 (generally X)
+	 * @param z21 First color sample on axis 2 (generally Y)
+	 * @param z22 Second color sample on axis 2 (generally Y)
+	 * @param u_ratio Ratio of the first position on first axis (second position ratio is 1-u_ratio)
+	 * @param v_ratio Ratio of the first position on second axis (second position ratio is 1-v_ratio)
+	 * @return the interpolated Bi-linear filtered Color
+	 */
 	public static Color getBilinearFilteredColor(Color z11, Color z12, Color z21, Color z22, float u_ratio, float v_ratio) {
 		
 		// Components of the interpolated Color to calculate
@@ -213,6 +226,17 @@ public class ColorTools {
 		return new Color(r, g, b);
 	}
 	
+	/**
+	 * Calculate one Bilinear filtered Color component
+	 * 
+	 * @param z11 First color sample on axis 1 (generally X)
+	 * @param z12 Second color sample on axis 1 (generally X)
+	 * @param z21 First color sample on axis 2 (generally Y)
+	 * @param z22 Second color sample on axis 2 (generally Y)
+	 * @param u_ratio Ratio of the first position on first axis (second position ratio is 1-u_ratio)
+	 * @param v_ratio Ratio of the first position on second axis (second position ratio is 1-v_ratio)
+	 * @return the interpolated Bi-linear filtered component
+	 */
 	protected static float getBilinearFilteredComponent(float z11, float z12, float z21, float z22, float u_ratio, float v_ratio) {
 		
 		float u_opposite = 1 - u_ratio;
@@ -222,8 +246,6 @@ public class ColorTools {
 		// https://en.wikipedia.org/wiki/Bilinear_filtering
 		float result = (z11*u_opposite+z21*u_ratio)*v_opposite+(z12*u_opposite+z22*u_ratio)*v_ratio;
 		return result;
-
 	}
-
 
 }

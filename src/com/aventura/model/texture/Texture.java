@@ -106,7 +106,7 @@ public class Texture {
 		if (x1>=this.width) x1=this.width-1;
 		if (y1>=this.height) y1=this.height-1;
 
-		// Calculate the interpolated value as per Bilinear Filtered algorithm
+		// Calculate the interpolated value as per Bilinear Filtering algorithm
 		Color result = ColorTools.getBilinearFilteredColor(tex[x0][y0], tex[x0][y1], tex[x1][y0], tex[x1][y1], u_ratio, v_ratio);
 		return result;
 	}
