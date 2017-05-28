@@ -84,7 +84,8 @@ public class TestRasterizer12 {
 		Texture tex3 = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
-		Box box = new Box(1.6,2,1.3);
+		//Box box = new Box(1.6,2,1.3);
+		Box box = new Box(3.2,4,2.6);
 		
 		// Set Texture to all Triangles of the Box
 		// Bottom

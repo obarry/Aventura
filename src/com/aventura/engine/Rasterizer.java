@@ -381,17 +381,29 @@ public class Rasterizer {
 
 	    int sx = (int)Tools.interpolate(xScreen(va), xScreen(vb), gradient1);
 	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
+	    
+	    // Vertices z
+	    float za = -(float)va.getProjPos().getW();
+	    float zb = -(float)vb.getProjPos().getW();
+	    float zc = -(float)vc.getProjPos().getW();
+	    float zd = -(float)vd.getProjPos().getW();
+//	    float za = (float)va.getProjPos().get3DZ();
+//	    float zb = (float)vb.getProjPos().get3DZ();
+//	    float zc = (float)vc.getProjPos().get3DZ();
+//	    float zd = (float)vd.getProjPos().get3DZ();
 
 	    // Starting Z & ending Z
-	    float z1 = Tools.interpolate((float)va.getProjPos().get3DZ(), (float)vb.getProjPos().get3DZ(), gradient1);
-	    float z2 = Tools.interpolate((float)vc.getProjPos().get3DZ(), (float)vd.getProjPos().get3DZ(), gradient2);
+	    float z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
+	    float z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
+//	    float z1 =Tools.interpolate(za, zb, gradient1);
+//	    float z2 = Tools.interpolate(zc, zd, gradient2);
 	    
 	    // Starting Color & ending Color
-    	Color c1 = null;
-    	Color c2 = null;
+    	Color ic1 = null;
+    	Color ic2 = null;
     	if (interpolate) {
-        	c1 = ColorTools.interpolateColors(va.getShadedCol(), vb.getShadedCol(), gradient1);
-        	c2 = ColorTools.interpolateColors(vc.getShadedCol(), vd.getShadedCol(), gradient2);	
+        	ic1 = ColorTools.interpolateColors(ColorTools.multColor(va.getShadedCol(),1/za), ColorTools.multColor(vb.getShadedCol(),1/zb), gradient1);
+        	ic2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);	
 	    }
 
 	    // Starting Texture & ending Texture coordinates
@@ -399,26 +411,29 @@ public class Rasterizer {
     	Vector2 vt2 = null;
     	Vector2 vt = null;
     	if (texture && t!=null) {
-    		vt1 = Tools.interpolate(vta, vtb, gradient1);
-    		vt2 = Tools.interpolate(vtc, vtd, gradient2);
+    		vt1 = Tools.interpolate(vta.times((double)1/za), vtb.times((double)1/zb), gradient1);
+    		vt2 = Tools.interpolate(vtc.times((double)1/zc), vtd.times((double)1/zd), gradient2);
+//    		vt1 = Tools.interpolate(vta, vtb, gradient1);
+//    		vt2 = Tools.interpolate(vtc, vtd, gradient2);
     	}
 
 	    // drawing a line from left (sx) to right (ex) 
     	for (int x = sx; x < ex; x++) {
     		
     		float gradient = (float)(x-sx)/(float)(ex-sx);
-    		float z = Tools.interpolate(z1, z2, gradient);
+    		float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
 
     		// If interpolation
     		if (interpolate) {
     			// Color interpolation
-    			c = ColorTools.interpolateColors(c1, c2, gradient);
+    			c = ColorTools.multColor(ColorTools.interpolateColors(ic1, ic2, gradient),z);
     		}
 
     		// Texture interpolation
     		if (texture && t!=null) {
     			Color ct = null;
-    			vt = Tools.interpolate(vt1, vt2, gradient);
+    			vt = Tools.interpolate(vt1, vt2, gradient).times((double)z);
+//    			vt = Tools.interpolate(vt1, vt2, gradient);
     			try {
     				ct = t.getInterpolatedColor(vt.getX(), vt.getY());
     			} catch (Exception e) {
