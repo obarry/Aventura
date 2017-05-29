@@ -96,6 +96,14 @@ public class GraphicContext {
 	double depth = 0;
 	double dist = 0;
 	
+	// Other characteristics
+	double left = 0;
+	double right = 0;
+	double bottom = 0;
+	double top = 0;
+	double near = 0;
+	double far = 0;
+
 	// Pixel Per Unit
 	int ppu = 0;
 	int pixelWidth = 0; // Number of pixels on the X axis
@@ -135,12 +143,12 @@ public class GraphicContext {
 		this.pixelHalfHeight = c.pixelHalfHeight;
 	
 		
-		double left = -width/2;
-		double right = width/2;
-		double bottom = -height/2;
-		double top = height/2;
-		double near = dist;
-		double far = dist + depth;
+		this.left = -width/2;
+		this.right = width/2;
+		this.bottom = -height/2;
+		this.top = height/2;
+		this.near = dist;
+		this.far = dist + depth;
 
 		
 		createPerspective(perspective_type, left , right, bottom, top, near, far);
@@ -159,17 +167,25 @@ public class GraphicContext {
 		this.pixelHalfWidth = pixelWidth/2;
 		this.pixelHalfHeight = pixelHeight/2;
 
-		double left = -width/2;
-		double right = width/2;
-		double bottom = -height/2;
-		double top = height/2;
-		double near = dist;
-		double far = dist + depth;
+		this.left = -width/2;
+		this.right = width/2;
+		this.bottom = -height/2;
+		this.top = height/2;
+		this.near = dist;
+		this.far = dist + depth;
 		
 		createPerspective(perspective, left , right, bottom, top, near, far);
 	}
 	
 	public GraphicContext(double top, double bottom, double right, double left, double far, double near, int perspective, int ppu) {
+		
+		this.left = left;
+		this.right = right;
+		this.bottom = bottom;
+		this.top = top;
+		this.near = near;
+		this.far = far;
+
 		this.width = right - left;
 		this.height = top - bottom;
 		this.dist = near;
@@ -311,5 +327,52 @@ public class GraphicContext {
 	}
 	
 	
+	public double getLeft() {
+		return left;
+	}
+
+	public void setLeft(double left) {
+		this.left = left;
+	}
+
+	public double getRight() {
+		return right;
+	}
+
+	public void setRight(double right) {
+		this.right = right;
+	}
+
+	public double getBottom() {
+		return bottom;
+	}
+
+	public void setBottom(double bottom) {
+		this.bottom = bottom;
+	}
+
+	public double getTop() {
+		return top;
+	}
+
+	public void setTop(double top) {
+		this.top = top;
+	}
+
+	public double getNear() {
+		return near;
+	}
+
+	public void setNear(double near) {
+		this.near = near;
+	}
+
+	public double getFar() {
+		return far;
+	}
+
+	public void setFar(double far) {
+		this.far = far;
+	}
 
 }

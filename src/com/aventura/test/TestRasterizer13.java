@@ -1,5 +1,6 @@
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -21,12 +22,15 @@ import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Box;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Triangle;
+import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-public class TestRasterizer12 {
+public class TestRasterizer13 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -34,7 +38,7 @@ public class TestRasterizer12 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 12");
+		JFrame frame = new JFrame("Test Rasterizer 13");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -47,7 +51,7 @@ public class TestRasterizer12 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer12.this.view.draw(graph);
+		    	TestRasterizer13.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -69,51 +73,43 @@ public class TestRasterizer12 {
 	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
-		
+
+		Tracer.info = true;
+		Tracer.function = true;
+
 		// Camera
 		Vector4 eye = new Vector4(8,3,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestRasterizer12 test = new TestRasterizer12();
+		TestRasterizer13 test = new TestRasterizer13();
 		
 		System.out.println("********* Creating World");
 		
 		Texture tex1 = new Texture("resources/test/texture_bricks_204x204.jpg");
-		Texture tex2 = new Texture("resources/test/texture_blueground_204x204.jpg");
-		Texture tex3 = new Texture("resources/test/texture_woodfloor_160x160.jpg");
+		//Texture tex2 = new Texture("resources/test/texture_blueground_204x204.jpg");
+		//Texture tex3 = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 		
+		// Create World
 		World world = new World();
-		Box box = new Box(1.6,2,1.3);
-		//Box box = new Box(3.2,4,2.6);
-		
-		// Set Texture to all Triangles of the Box
-		// Bottom
-		box.getTriangle(0).setTexture(tex3, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(1).setTexture(tex3, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-		// Back
-		box.getTriangle(2).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(3).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-		// Left Side
-		box.getTriangle(4).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(5).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-		// Top
-		box.getTriangle(6).setTexture(tex3, new Vector2(0,0), new Vector2(1,0), new Vector2(0,1));
-		box.getTriangle(7).setTexture(tex3, new Vector2(0,1), new Vector2(1,0), new Vector2(1,1));
-		// Front
-		box.getTriangle(8).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(9).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-		// Right Side
-		box.getTriangle(10).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(11).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
-
-		world.addElement(box);
+		Element e = new Element();
+		Vertex v1 = new Vertex(new Vector4(2,0,1,1));
+		Vertex v2 = new Vertex(new Vector4(0,2,1,1));
+		Vertex v3 = new Vertex(new Vector4(2,2,-1,1));
+		e.addVertex(v1);
+		e.addVertex(v2);
+		e.addVertex(v3);
+		Triangle t = new Triangle(v1, v2, v3);
+		t.setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
+		t.setColor(Color.ORANGE);
+		e.addTriangle(t);
+		world.addElement(e);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(0.5,0.5,1), 1);
-		AmbientLight al = new AmbientLight(0.2f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-1,0), 0.5f);
+		AmbientLight al = new AmbientLight(0.5f);
 		Lighting light = new Lighting(dl, al);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
@@ -121,8 +117,9 @@ public class TestRasterizer12 {
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		//rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
@@ -134,7 +131,7 @@ public class TestRasterizer12 {
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
 			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
-			box.setTransformation(r);
+			e.setTransformation(r);
 			renderer.render();
 		}
 

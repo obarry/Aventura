@@ -63,13 +63,13 @@ public class Rasterizer {
 	protected Camera camera;
 	
 	// Static data
-	private static double ZBUFFER_INIT_VALUE = 1.0;
 	private static Color DARK_SHADING_COLOR = Color.BLACK;
 	private static Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
 	
 	// Z buffer
 	private double[][] zBuffer;
 	int zBuf_width, zBuf_height;
+	private double zBuffer_init = 0;
 	
 	
 	// Pixel statistics
@@ -105,6 +105,9 @@ public class Rasterizer {
 	 */
 	public void initZBuffer() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());
+		zBuffer_init = graphic.getFar();
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "zBuffer init value: "+zBuffer_init);
+		
 		zBuf_width = 2*graphic.getPixelHalfWidth()+1;
 		zBuf_height = 2*graphic.getPixelHalfHeight()+1;
 		zBuffer = new double[zBuf_width][zBuf_height];
@@ -114,7 +117,7 @@ public class Rasterizer {
 
 		for (int i=0; i<zBuf_width; i++)  {
 			for (int j=0; j<zBuf_height; j++) {
-				zBuffer[i][j] = ZBUFFER_INIT_VALUE;
+				zBuffer[i][j] = zBuffer_init;
 			}
 		}
 	}
@@ -383,10 +386,10 @@ public class Rasterizer {
 	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
 	    
 	    // Vertices z
-	    float za = -(float)va.getProjPos().getW();
-	    float zb = -(float)vb.getProjPos().getW();
-	    float zc = -(float)vc.getProjPos().getW();
-	    float zd = -(float)vd.getProjPos().getW();
+	    float za = (float)va.getProjPos().getW();
+	    float zb = (float)vb.getProjPos().getW();
+	    float zc = (float)vc.getProjPos().getW();
+	    float zd = (float)vd.getProjPos().getW();
 //	    float za = (float)va.getProjPos().get3DZ();
 //	    float zb = (float)vb.getProjPos().get3DZ();
 //	    float zc = (float)vc.getProjPos().get3DZ();
