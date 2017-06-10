@@ -1,7 +1,7 @@
 package com.aventura.model.world;
 
-import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -48,7 +48,7 @@ import com.aventura.math.vector.Vector4;
  */
 public class Trellis extends Element {
 	
-	protected Vertex[][] vertices;
+	protected Mesh mesh;
 	protected int nx, ny;
 	protected double width, length;
 
@@ -69,8 +69,9 @@ public class Trellis extends Element {
 		this.nx = nx;
 		this.ny = ny;
 		Vector4 position = new Vector4(-width/2,-length/2,0,0);
-		createTrellis(position);
-		createTriangles();
+		mesh = new Mesh(this, nx+1, ny+1);
+		initTrellis(position);
+		mesh.createTriangles(Mesh.MESH_ALTERNATE_TRIANGLES);
 	}
 
 	/**
@@ -91,55 +92,58 @@ public class Trellis extends Element {
 		this.nx = nx;
 		this.ny = ny;
 		Vector4 position = new Vector4(-width/2,-length/2,0,0);
-		createTrellis(position, array);
-		createTriangles();
-	}
-
-	protected void createTrellis(Vector4 position) {
-		
-		vertices = new Vertex[nx+1][ny+1]; // for a Trellis: number of vertices = number of segments + 1
-		
-		// Create Vertices
-		for (int i=0; i<=nx; i++) {
-			for (int j=0; j<=ny; j++) {
-				vertices[i][j] = createVertex(new Vector4(i*width/nx, j*length/ny, 0, 1).plus(position));
-			}
-		}
-	}
-
-	protected void createTrellis(Vector4 position, double [][] array) throws WrongArraySizeException {
-		
 		if ((array.length != nx+1) || (array[0].length != ny+1)) {
 			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
 		}
+		mesh = new Mesh(this, nx+1, ny+1);
+		initTrellis(position, array);
+		mesh.createTriangles(Mesh.MESH_ALTERNATE_TRIANGLES);
+	}
+	
+	/**
+	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
+	 * Use the z axis altitudes from the provided array.
+	 * This Trellis is centered on origin
+	 * @param width
+	 * @param length
+	 * @param nx
+	 * @param ny
+	 * @param array
+	 */
+	public Trellis(double width, double length, int nx, int ny, double [][] array, Texture t) throws WrongArraySizeException {
+		super();
+		subelements = null;
+		this.width = width;
+		this.length = length;
+		this.nx = nx;
+		this.ny = ny;
+		Vector4 position = new Vector4(-width/2,-length/2,0,0);
+		if ((array.length != nx+1) || (array[0].length != ny+1)) {
+			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
+		}
+		mesh = new Mesh(this, nx+1, ny+1, t);
+		initTrellis(position, array);
+		mesh.createTriangles(Mesh.MESH_ALTERNATE_TRIANGLES);
+	}
+
+	protected void initTrellis(Vector4 position) {
 		
-		vertices = new Vertex[nx+1][ny+1]; // for a Trellis: number of vertices = number of segments + 1
+		mesh = new Mesh(this, nx+1, ny+1);
 		
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {
 			for (int j=0; j<=ny; j++) {
-				vertices[i][j] = createVertex(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
+				mesh.getVertex(i, j).setPos(new Vector4(i*width/nx, j*length/ny, 0, 1).plus(position));
 			}
 		}
 	}
 
-	protected void createTriangles() {
-		Triangle t1, t2;
+	protected void initTrellis(Vector4 position, double [][] array) throws WrongArraySizeException {
 		
-		for (int i=0; i<nx; i++) {
-			for (int j=0; j<ny; j++) {
-				// Create triangles with alternate diagonal (bottom left to up right then up left to bottom right alternately)
-				if ((i%2 == 0 && j%2 == 0) || (i%2 != 0 && j%2 != 0)) { // (i even and j even) or (i odd and j odd)
-					t1 = new Triangle(vertices[i][j], vertices[i+1][j], vertices[i+1][j+1]);
-					t2 = new Triangle(vertices[i+1][j+1], vertices[i][j+1], vertices[i][j]);
-					this.addTriangle(t1);			
-					this.addTriangle(t2);			
-				} else {
-					t1 = new Triangle(vertices[i][j+1], vertices[i][j], vertices[i+1][j]);
-					t2 = new Triangle(vertices[i+1][j], vertices[i+1][j+1], vertices[i][j+1]);
-					this.addTriangle(t1);			
-					this.addTriangle(t2);			
-				}
+		// Create Vertices
+		for (int i=0; i<=nx; i++) {
+			for (int j=0; j<=ny; j++) {
+				mesh.getVertex(i, j).setPos(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
 			}
 		}
 	}
@@ -161,7 +165,7 @@ public class Trellis extends Element {
 	}
 	
 	public String toString() {
-		return "Trellis (width: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+")\nV[0,0]="+vertices[0][0]+"\nV[nx,0]="+vertices[nx][0]+"\nV[0,ny]="+vertices[0][ny]+"\nV[nx,ny]="+vertices[nx][ny];
+		return "Trellis (width: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+")\nV[0,0]="+mesh.getVertex(0,0)+"\nV[nx,0]="+mesh.getVertex(nx,0)+"\nV[0,ny]="+mesh.getVertex(0,ny)+"\nV[nx,ny]="+mesh.getVertex(nx,ny);
 	}
 
 	@Override
@@ -175,37 +179,36 @@ public class Trellis extends Element {
 				Vector4 xa, xb, ya, yb, xavg, yavg;
 				
 				if (i>0) {
-					xa = vertices[i-1][j].getPos();
+					xa = mesh.getVertex(i-1, j).getPos();
 				} else {
-					xa = vertices[i][j].getPos(); // When on the side: take the vertex itself to calculate the average
+					xa = mesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				if (i<nx) {
-					xb = vertices[i+1][j].getPos();
+					xb = mesh.getVertex(i+1,j).getPos();
 				} else {
-					xb = vertices[i][j].getPos(); // When on the side: take the vertex itself to calculate the average
+					xb = mesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				xavg = xb.minus(xa);
 				
 				// The second one is aligned on the Y axis
 				if (j>0) {
-					ya = vertices[i][j-1].getPos();
+					ya = mesh.getVertex(i,j-1).getPos();
 				} else {
-					ya = vertices[i][j].getPos(); // When on the side: take the vertex itself to calculate the average
+					ya = mesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				if (j<ny) {
-					yb = vertices[i][j+1].getPos();
+					yb = mesh.getVertex(i,j+1).getPos();
 				} else {
-					yb = vertices[i][j].getPos(); // When on the side: take the vertex itself to calculate the average
+					yb = mesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				yavg = yb.minus(ya);
 								
 				// The normal vector is the cross product of both vectors.
 				Vector4 normal = xavg.times(yavg);
 				// Need to be normalized
-				vertices[i][j].setNormal(normal.normalize().V3());
+				mesh.getVertex(i,j).setNormal(normal.normalize().V3());
 			}
 		}
 		calculateSubNormals();
 	}
-	
 }

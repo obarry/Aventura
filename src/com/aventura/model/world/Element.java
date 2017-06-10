@@ -170,10 +170,38 @@ public class Element implements Transformable {
 		this.vertices.add(v);
 	}
 	
+	/**
+	 * Create and return Vertex
+	 * This method should necessary be used to create any Vertex' Element since it does the needful to put it in the list of vertices of this Element
+	 * 
+	 * @param v4 the position of the Vertex
+	 * @return the newly created Vertex
+	 */
 	public Vertex createVertex(Vector4 v4) {
 		Vertex v = new Vertex(v4);
 		addVertex(v);
 		return v;
+	}
+	
+	/**
+	 * Create and return a mesh of vertices
+	 * This method should necessary be used to create a mesh of vertices since it does the needful to put it in the list of vertices of this Element
+	 * 
+	 * @param n nb of vertices on width of the mesh
+	 * @param p nb of vertices on height of the mesh
+	 * @return an array of vertices
+	 */
+	public Vertex[][] createVertexMesh(int n, int p) {
+		Vertex[][] mesh = new Vertex[n][p];
+		
+		for (int i=0; i<n; i++) {
+			for (int j=0; j<p; j++) {
+				Vertex v = new Vertex();
+				addVertex(v);
+				mesh[i][j] = v;
+			}
+		}
+		return mesh;
 	}
 	
 	public ArrayList<Element> getSubElements() {

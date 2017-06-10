@@ -66,6 +66,9 @@ public class Vertex {
 		this.material = v.material;
 	}
 	
+	public Vertex() {
+		// Empty Vertex to be used for generation of mesh of vertices
+	}
 	
 	public Vertex(double x, double y, double z) {
 		position = new Vector4(x, y, z, 1);
