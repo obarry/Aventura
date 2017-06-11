@@ -21,6 +21,7 @@ import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Cylinder;
 import com.aventura.model.world.Trellis;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
@@ -28,7 +29,7 @@ import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-public class TestAventura13 {
+public class TestAventura14 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -49,7 +50,7 @@ public class TestAventura13 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura13.this.view.draw(graph);
+		    	TestAventura14.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -77,47 +78,31 @@ public class TestAventura13 {
 
 		// Camera
 		//Vector4 eye = new Vector4(8,3,5,1);
-		Vector4 eye = new Vector4(16,6,12,1);
-		//Vector4 eye = new Vector4(3,2,2,1);
-		Vector4 poi = new Vector4(0,0,-0.5,1);
+		//Vector4 eye = new Vector4(16,6,12,1);
+		Vector4 eye = new Vector4(4,2,3,1);
+		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestAventura13 test = new TestAventura13();
+		TestAventura14 test = new TestAventura14();
 		
 		System.out.println("********* Creating World");
 		
-		Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
-		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
+		Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
 		
 		// Create World
 		World world = new World();
-		double size = 4;
-		int n = 40;
-		int nb_sin = 4;
-		double array[][] = new double[n+1][n+1];
-		for (int i=0; i<=n; i++) {
-			for (int j=0; j<=n; j++) {
-				double a = Math.PI*(double)nb_sin*(double)i/(double)n;
-				double b = Math.PI*(double)nb_sin*(double)j/(double)n;
-				array[i][j] = size*Math.sin(a)*Math.sin(b)/((double)nb_sin*4);
-
-			}
-		}
-		Trellis tre = null;
-		try {
-			tre = new Trellis(size, size, n, n, array, tex);
-		} catch (WrongArraySizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		tre.setColor(new Color(200,200,255));
-		tre.setSpecularExp(8);
-		world.addElement(tre);
+		Cylinder cyl = null;
+		cyl = new Cylinder(2, 0.8, 20, tex);
+		cyl.setTransformation(new Rotation(Math.PI/4, Vector3.X_AXIS));
+		//cyl.setColor(new Color(200,200,255));
+		cyl.setSpecularExp(8);
+		world.addElement(cyl);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
@@ -143,9 +128,11 @@ public class TestAventura13 {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
+		Rotation r = new Rotation(Math.PI*2/(double)nb_images, Vector3.Z_AXIS);
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
-			tre.setTransformation(r);
+			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+			cyl.combineTransformation(r);
+			//cyl.setTransformation(r);
 			renderer.render();
 		}
 
