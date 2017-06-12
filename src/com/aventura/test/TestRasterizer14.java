@@ -30,7 +30,7 @@ import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-public class TestRasterizer13 {
+public class TestRasterizer14 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -38,7 +38,7 @@ public class TestRasterizer13 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 13");
+		JFrame frame = new JFrame("Test Rasterizer 14");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -51,7 +51,7 @@ public class TestRasterizer13 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer13.this.view.draw(graph);
+		    	TestRasterizer14.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -74,41 +74,57 @@ public class TestRasterizer13 {
 		
 		System.out.println("********* STARTING APPLICATION *********");
 
-		Tracer.info = true;
-		Tracer.function = true;
+//		Tracer.info = true;
+//		Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(8,3,5,1);
+		Vector4 eye = new Vector4(4,2,3,1);
+		//Vector4 eye = new Vector4(0,0,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		//Camera camera = new Camera(eye, poi, Vector4.X_AXIS);		
 				
-		TestRasterizer13 test = new TestRasterizer13();
+		TestRasterizer14 test = new TestRasterizer14();
 		
 		System.out.println("********* Creating World");
 		
-		Texture tex1 = new Texture("resources/test/texture_bricks_204x204.jpg");
-		//Texture tex2 = new Texture("resources/test/texture_blueground_204x204.jpg");
-		//Texture tex3 = new Texture("resources/test/texture_woodfloor_160x160.jpg");
+		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
+		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
+		Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
+		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
+		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
 		
 		// Create World
 		World world = new World();
 		Element e = new Element();
-		Vertex v1 = new Vertex(new Vector4(2,0,1,1));
-		Vertex v2 = new Vertex(new Vector4(0,2,1,1));
-		Vertex v3 = new Vertex(new Vector4(2,2,-1,1));
+		Vertex v1 = new Vertex(new Vector4(-1,-1,0,1));
+		Vertex v2 = new Vertex(new Vector4(1,-1,0,1));
+		Vertex v3 = new Vertex(new Vector4(1,1,0,1));
+		Vertex v4 = new Vertex(new Vector4(-1,1,0,1));
+//		Vertex v3 = new Vertex(new Vector4(0.5,1,0,1));
+//		Vertex v4 = new Vertex(new Vector4(-0.5,1,0,1));
 		e.addVertex(v1);
 		e.addVertex(v2);
 		e.addVertex(v3);
-		Triangle t = new Triangle(v1, v2, v3);
-		t.setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		t.setColor(new Color(255,200,200));
-		e.addTriangle(t);
+		e.addVertex(v4);
+		Triangle t1 = new Triangle(v1, v2, v3);
+		Triangle t2 = new Triangle(v3, v4, v1);
+		
+		t1.setTexture(tex, new Vector2(0,0), new Vector2(1,0), new Vector2(1,1));
+		t2.setTexture(tex, new Vector2(1,1), new Vector2(0,1), new Vector2(0,0));
+		t1.setColor(Color.RED);
+		t2.setColor(Color.GREEN);
+		e.addTriangle(t1);
+		e.addTriangle(t2);
 		world.addElement(e);
+		world.setBackgroundColor(new Color(0,0,50));
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-1,0), 0.5f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 0.5f);
 		AmbientLight al = new AmbientLight(0.5f);
 		Lighting light = new Lighting(dl, al);
 		
@@ -119,7 +135,7 @@ public class TestRasterizer13 {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		

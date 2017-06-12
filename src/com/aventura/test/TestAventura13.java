@@ -76,8 +76,8 @@ public class TestAventura13 {
 //		Tracer.function = true;
 
 		// Camera
-		//Vector4 eye = new Vector4(8,3,5,1);
-		Vector4 eye = new Vector4(16,6,12,1);
+		Vector4 eye = new Vector4(8,3,5,1);
+		//Vector4 eye = new Vector4(16,6,12,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
 		Vector4 poi = new Vector4(0,0,-0.5,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -86,12 +86,12 @@ public class TestAventura13 {
 		
 		System.out.println("********* Creating World");
 		
-		Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
-		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
+		Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
 		
 		// Create World
