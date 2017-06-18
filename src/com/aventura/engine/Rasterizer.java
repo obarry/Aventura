@@ -4,7 +4,6 @@ import java.awt.Color;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.math.vector.Tools;
-import com.aventura.math.vector.Vector2;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -239,7 +238,7 @@ public class Rasterizer {
 	    // with v1 always down (thus having the highest possible Y)
 	    // then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
 		Vertex v1, v2, v3;
-		Vector2 vt1, vt2, vt3; // Same for Texture Vectors
+		Vector4 vt1, vt2, vt3; // Same for Texture Vectors
 
 		v1 = t.getV1();
 		v2 = t.getV2();
@@ -366,10 +365,10 @@ public class Rasterizer {
 			Vertex vb,				// Vertex B of first segment: AB
 			Vertex vc,				// Vertex C of second segment: CD
 			Vertex vd,				// Vertex D of second segment: CD
-			Vector2 vta,			// Texture Vector of Vertex A
-			Vector2 vtb,			// Texture Vector of Vertex B
-			Vector2 vtc,			// Texture Vector of Vertex C
-			Vector2 vtd,			// Texture Vector of Vertex D
+			Vector4 vta,			// Texture Vector of Vertex A
+			Vector4 vtb,			// Texture Vector of Vertex B
+			Vector4 vtc,			// Texture Vector of Vertex C
+			Vector4 vtd,			// Texture Vector of Vertex D
 			Texture t,				// Texture object for this triangle
 			Color c,				// Base color
 			boolean interpolate,	// Flag for interpolation (true) or not (false)
@@ -390,16 +389,12 @@ public class Rasterizer {
 	    float zb = (float)vb.getProjPos().getW();
 	    float zc = (float)vc.getProjPos().getW();
 	    float zd = (float)vd.getProjPos().getW();
-//	    float za = (float)va.getProjPos().get3DZ();
-//	    float zb = (float)vb.getProjPos().get3DZ();
-//	    float zc = (float)vc.getProjPos().get3DZ();
-//	    float zd = (float)vd.getProjPos().get3DZ();
+
 
 	    // Starting Z & ending Z
 	    float z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
 	    float z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
-//	    float z1 =Tools.interpolate(za, zb, gradient1);
-//	    float z2 = Tools.interpolate(zc, zd, gradient2);
+
 	    
 	    // Starting Color & ending Color
     	Color ic1 = null;
@@ -410,14 +405,13 @@ public class Rasterizer {
 	    }
 
 	    // Starting Texture & ending Texture coordinates
-    	Vector2 vt1 = null;
-    	Vector2 vt2 = null;
-    	Vector2 vt = null;
+    	Vector4 vt1 = null;
+    	Vector4 vt2 = null;
+    	Vector4 vt = null;
     	if (texture && t!=null) {
     		vt1 = Tools.interpolate(vta.times((double)1/za), vtb.times((double)1/zb), gradient1);
     		vt2 = Tools.interpolate(vtc.times((double)1/zc), vtd.times((double)1/zd), gradient2);
-//    		vt1 = Tools.interpolate(vta, vtb, gradient1);
-//    		vt2 = Tools.interpolate(vtc, vtd, gradient2);
+
     	}
 
 	    // drawing a line from left (sx) to right (ex) 
@@ -436,9 +430,10 @@ public class Rasterizer {
     		if (texture && t!=null) {
     			Color ct = null;
     			vt = Tools.interpolate(vt1, vt2, gradient).times((double)z);
-//    			vt = Tools.interpolate(vt1, vt2, gradient);
     			try {
-    				ct = t.getInterpolatedColor(vt.getX(), vt.getY());
+    				// Projective Texture mapping using the fourth coordinate
+    				// By default W of the texture vector is 1 but if not this will help to take account of the potential geometrical distortion of the texture
+    				ct = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
     			} catch (Exception e) {
     				// TODO Auto-generated catch block
     				e.printStackTrace();

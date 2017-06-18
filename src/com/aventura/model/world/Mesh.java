@@ -1,8 +1,6 @@
 package com.aventura.model.world;
 
-import java.util.ArrayList;
-
-import com.aventura.math.vector.Vector2;
+import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 
 /**
@@ -102,7 +100,7 @@ public class Mesh {
 					// Texture application on the Mesh, regular stitches
 					if (tex!=null) {
 						
-						Vector2 tv1, tv2, tv3, tv4;
+						Vector4 tv1, tv2, tv3, tv4;
 					
 						// Define position for Texture vectors based on stitch in homogeneous coordinates [0,1] within the Mesh
 						double ti = (double)i/(double)(nbv_x-1);
@@ -111,10 +109,10 @@ public class Mesh {
 						double tjp1 = (double)(j+1)/(double)(nbv_y-1);
 						
 						// Create texture vectors
-						tv1 = new Vector2(ti,tj);
-						tv2 = new Vector2(tip1,tj);
-						tv3 = new Vector2(tip1,tjp1);
-						tv4 = new Vector2(ti,tjp1);
+						tv1 = new Vector4(ti,tj,0,1);
+						tv2 = new Vector4(tip1,tj,0,1);
+						tv3 = new Vector4(tip1,tjp1,0,1);
+						tv4 = new Vector4(ti,tjp1,0,1);
 						
 						// Set texture vectors to newly created triangles
 						t1.setTexture(tex, tv1, tv2, tv3);
@@ -147,7 +145,7 @@ public class Mesh {
 						// Texture application on the Mesh, regular stitches
 						if (tex!=null) {
 							
-							Vector2 tv1, tv2, tv3, tv4;
+							Vector4 tv1, tv2, tv3, tv4;
 						
 							// Define position for Texture vectors based on stitch in homogeneous coordinates [0,1] within the Mesh
 							double ti = (double)i/(double)(nbv_x-1);
@@ -156,10 +154,10 @@ public class Mesh {
 							double tjp1 = (double)(j+1)/(double)(nbv_y-1);
 							
 							// Create texture vectors
-							tv1 = new Vector2(ti,tj);
-							tv2 = new Vector2(tip1,tj);
-							tv3 = new Vector2(tip1,tjp1);
-							tv4 = new Vector2(ti,tjp1);
+							tv1 = new Vector4(ti,tj,0,1);
+							tv2 = new Vector4(tip1,tj,0,1);
+							tv3 = new Vector4(tip1,tjp1,0,1);
+							tv4 = new Vector4(ti,tjp1,0,1);
 							
 							// Set texture vectors to newly created triangles
 							t1.setTexture(tex, tv1, tv2, tv3);
@@ -181,7 +179,7 @@ public class Mesh {
 						// Texture application on the Mesh, regular stitches
 						if (tex!=null) {
 							
-							Vector2 tv1, tv2, tv3, tv4;
+							Vector4 tv1, tv2, tv3, tv4;
 						
 							// Define position for Texture vectors based on stitch in homogeneous coordinates [0,1] within the Mesh
 							double ti = (double)i/(double)(nbv_x-1);
@@ -190,10 +188,10 @@ public class Mesh {
 							double tjp1 = (double)(j+1)/(double)(nbv_y-1);
 							
 							// Create texture vectors
-							tv1 = new Vector2(ti,tj);
-							tv2 = new Vector2(tip1,tj);
-							tv3 = new Vector2(tip1,tjp1);
-							tv4 = new Vector2(ti,tjp1);
+							tv1 = new Vector4(ti,tj,0,1);
+							tv2 = new Vector4(tip1,tj,0,1);
+							tv3 = new Vector4(tip1,tjp1,0,1);
+							tv4 = new Vector4(ti,tjp1,0,1);
 							
 							// Set texture vectors to newly created triangles
 							t1.setTexture(tex, tv4, tv1, tv2);

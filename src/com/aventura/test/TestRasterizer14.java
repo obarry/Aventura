@@ -14,7 +14,6 @@ import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
-import com.aventura.math.vector.Vector2;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -78,11 +77,11 @@ public class TestRasterizer14 {
 //		Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(4,2,3,1);
-		//Vector4 eye = new Vector4(0,0,5,1);
+		//Vector4 eye = new Vector4(4,2,3,1);
+		Vector4 eye = new Vector4(0,0,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
-		//Camera camera = new Camera(eye, poi, Vector4.X_AXIS);		
+		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.X_AXIS);		
 				
 		TestRasterizer14 test = new TestRasterizer14();
 		
@@ -99,25 +98,63 @@ public class TestRasterizer14 {
 		// Create World
 		World world = new World();
 		Element e = new Element();
-		Vertex v1 = new Vertex(new Vector4(-1,-1,0,1));
-		Vertex v2 = new Vertex(new Vector4(1,-1,0,1));
-		Vertex v3 = new Vertex(new Vector4(1,1,0,1));
-		Vertex v4 = new Vertex(new Vector4(-1,1,0,1));
-//		Vertex v3 = new Vertex(new Vector4(0.5,1,0,1));
-//		Vertex v4 = new Vertex(new Vector4(-0.5,1,0,1));
+		
+		//
+		// Create a shape
+		//
+		//      V4  V3
+		//       ----
+		//      /    \
+		//     /      \
+		//    /        \
+		//   /          \
+		//  --------------
+		//  V1           V2
+		//
+		
+		Vector4 vec1 = new Vector4(-1,-1,0,1);
+		Vector4 vec2 = new Vector4(1,-1,0,1);
+		Vector4 vec3 = new Vector4(0.3,1,0,1);
+		Vector4 vec4 = new Vector4(-0.3,1,0,1);
+		
+		Vertex v1 = new Vertex(vec1);
+		Vertex v2 = new Vertex(vec2);
+		Vertex v3 = new Vertex(vec3);
+		Vertex v4 = new Vertex(vec4);
+
 		e.addVertex(v1);
 		e.addVertex(v2);
 		e.addVertex(v3);
 		e.addVertex(v4);
+
+		//
+		// Create triangles T1 and T2
+		//
+		//      V4  V3
+		//       ----
+		//      /   /\
+		//     /T2/   \
+		//    / /  T1  \
+		//   //         \
+		//  --------------
+		//  V1           V2
+		//
+
 		Triangle t1 = new Triangle(v1, v2, v3);
 		Triangle t2 = new Triangle(v3, v4, v1);
 		
-		t1.setTexture(tex, new Vector2(0,0), new Vector2(1,0), new Vector2(1,1));
-		t2.setTexture(tex, new Vector2(1,1), new Vector2(0,1), new Vector2(0,0));
+		// Create Texture vectors with distortion effect to take account of the proportion of the shape made of 2 triangles
+		// V3 is on the small segment (ratio 0.3:1)
+		t1.setTexture(tex, new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(0.3,0.3,0,0.3));
+		// V3 and V4 are on the small segment (ratio 0.3:1)
+		t2.setTexture(tex, new Vector4(0.3,0.3,0,0.3), new Vector4(0,0.3,0,0.3), new Vector4(0,0,0,1));
+		
 		t1.setColor(Color.RED);
-		t2.setColor(Color.GREEN);
+		t2.setColor(Color.BLUE);
+		
 		e.addTriangle(t1);
 		e.addTriangle(t2);
+		
 		world.addElement(e);
 		world.setBackgroundColor(new Color(0,0,50));
 		

@@ -13,7 +13,6 @@ import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
-import com.aventura.math.vector.Vector2;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -89,23 +88,23 @@ public class TestRasterizer12 {
 		
 		// Set Texture to all Triangles of the Box
 		// Bottom
-		box.getTriangle(0).setTexture(tex3, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(1).setTexture(tex3, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		box.getTriangle(0).setTexture(tex3, new Vector4(0,0,0,1), new Vector4(0,1,0,1), new Vector4(1,1,0,1));
+		box.getTriangle(1).setTexture(tex3, new Vector4(1,1,0,1), new Vector4(1,0,0,1), new Vector4(0,0,0,1));
 		// Back
-		box.getTriangle(2).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(3).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		box.getTriangle(2).setTexture(tex1, new Vector4(0,0,0,1), new Vector4(0,1,0,1), new Vector4(1,1,0,1));
+		box.getTriangle(3).setTexture(tex1, new Vector4(1,1,0,1), new Vector4(1,0,0,1), new Vector4(0,0,0,1));
 		// Left Side
-		box.getTriangle(4).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(5).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		box.getTriangle(4).setTexture(tex1, new Vector4(0,0,0,1), new Vector4(0,1,0,1), new Vector4(1,1,0,1));
+		box.getTriangle(5).setTexture(tex1, new Vector4(1,1,0,1), new Vector4(1,0,0,1), new Vector4(0,0,0,1));
 		// Top
-		box.getTriangle(6).setTexture(tex3, new Vector2(0,0), new Vector2(1,0), new Vector2(0,1));
-		box.getTriangle(7).setTexture(tex3, new Vector2(0,1), new Vector2(1,0), new Vector2(1,1));
+		box.getTriangle(6).setTexture(tex3, new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(0,1,0,1));
+		box.getTriangle(7).setTexture(tex3, new Vector4(0,1,0,1), new Vector4(1,0,0,1), new Vector4(1,1,0,1));
 		// Front
-		box.getTriangle(8).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(9).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		box.getTriangle(8).setTexture(tex1, new Vector4(0,0,0,1), new Vector4(0,1,0,1), new Vector4(1,1,0,1));
+		box.getTriangle(9).setTexture(tex1, new Vector4(1,1,0,1), new Vector4(1,0,0,1), new Vector4(0,0,0,1));
 		// Right Side
-		box.getTriangle(10).setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
-		box.getTriangle(11).setTexture(tex1, new Vector2(1,1), new Vector2(1,0), new Vector2(0,0));
+		box.getTriangle(10).setTexture(tex1, new Vector4(0,0,0,1), new Vector4(0,1,0,1), new Vector4(1,1,0,1));
+		box.getTriangle(11).setTexture(tex1, new Vector4(1,1,0,1), new Vector4(1,0,0,1), new Vector4(0,0,0,1));
 
 		world.addElement(box);
 		

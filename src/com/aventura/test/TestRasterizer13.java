@@ -14,7 +14,6 @@ import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
-import com.aventura.math.vector.Vector2;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -100,7 +99,7 @@ public class TestRasterizer13 {
 		e.addVertex(v2);
 		e.addVertex(v3);
 		Triangle t = new Triangle(v1, v2, v3);
-		t.setTexture(tex1, new Vector2(0,0), new Vector2(0,1), new Vector2(1,1));
+		t.setTexture(tex1, new Vector4(0,0,0,1), new Vector4(0,1,0,1), new Vector4(1,1,0,1));
 		t.setColor(new Color(255,200,200));
 		e.addTriangle(t);
 		world.addElement(e);

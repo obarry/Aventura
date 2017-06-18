@@ -2,7 +2,6 @@ package com.aventura.model.world;
 
 import java.awt.Color;
 
-import com.aventura.math.vector.Vector2;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
@@ -47,9 +46,9 @@ public class Triangle {
 	protected Vertex v3;
 	
 	// The relative position of each Vertex in an optional Texture (in homogeneous coordinates [0,1])protected Vector2 t1;
-	protected Vector2 t1;
-	protected Vector2 t2;
-	protected Vector2 t3;
+	protected Vector4 t1;
+	protected Vector4 t2;
+	protected Vector4 t3;
 	
 	// And an optional Normal to the triangle (default is normal at vertices level)
 	protected boolean triangleNormal = false;
@@ -184,7 +183,7 @@ public class Triangle {
 		return color;
 	}
 
-	public void setTexture(Texture t, Vector2 t1, Vector2 t2 , Vector2 t3) {
+	public void setTexture(Texture t, Vector4 t1, Vector4 t2 , Vector4 t3) {
 		this.tex = t;
 		this.t1 = t1;
 		this.t2 = t2;
@@ -195,15 +194,15 @@ public class Triangle {
 		return tex;
 	}
 
-	public Vector2 getTexVec1() {
+	public Vector4 getTexVec1() {
 		return this.t1;
 	}
 
-	public Vector2 getTexVec2() {
+	public Vector4 getTexVec2() {
 		return this.t2;
 	}
 
-	public Vector2 getTexVec3() {
+	public Vector4 getTexVec3() {
 		return this.t3;
 	}
 
