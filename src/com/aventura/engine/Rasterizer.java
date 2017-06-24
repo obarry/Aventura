@@ -326,9 +326,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
+	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
 	            } else {
-	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
+	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
 	            }
 	        }
 
@@ -349,9 +349,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
+	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
 	            } else {
-	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture);
+	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
 	            }
 	        }
 	    }
@@ -372,8 +372,9 @@ public class Rasterizer {
 			Texture t,				// Texture object for this triangle
 			Color c,				// Base color
 			boolean interpolate,	// Flag for interpolation (true) or not (false)
-			boolean texture) { 		// Flag for texture calculation (true) or not (false)
-		
+			boolean texture, 		// Flag for texture calculation (true) or not (false)
+			int tex_orientation) {	// Flag for isotropic, vertical or horizontal texture interpolation
+
 	    // Thanks to current Y, we can compute the gradient to compute others values like
 	    // the starting X (sx) and ending X (ex) to draw between
 	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
@@ -433,7 +434,20 @@ public class Rasterizer {
     			try {
     				// Projective Texture mapping using the fourth coordinate
     				// By default W of the texture vector is 1 but if not this will help to take account of the potential geometrical distortion of the texture
-    				ct = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
+    				switch (tex_orientation) {
+    				case Triangle.TEXTURE_ISOTROPIC:
+    					ct = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
+    					break;
+    				case Triangle.TEXTURE_VERTICAL:
+    					ct = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
+    					break;
+    				case Triangle.TEXTURE_HORIZONTAL:
+    					ct = t.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
+    					break;
+    				default:
+    					// Should never happen
+    					if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid Texture orientation for this triangle: "+tex_orientation);
+    				}
     			} catch (Exception e) {
     				// TODO Auto-generated catch block
     				e.printStackTrace();

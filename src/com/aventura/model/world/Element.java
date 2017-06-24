@@ -184,11 +184,11 @@ public class Element implements Transformable {
 	}
 	
 	/**
-	 * Create and return a mesh of vertices
-	 * This method should necessary be used to create a mesh of vertices since it does the needful to put it in the list of vertices of this Element
+	 * Create and return a rectangleMesh of vertices
+	 * This method should necessary be used to create a rectangleMesh of vertices since it does the needful to put it in the list of vertices of this Element
 	 * 
-	 * @param n nb of vertices on width of the mesh
-	 * @param p nb of vertices on height of the mesh
+	 * @param n nb of vertices on width of the rectangleMesh
+	 * @param p nb of vertices on height of the rectangleMesh
 	 * @return an array of vertices
 	 */
 	public Vertex[][] createVertexMesh(int n, int p) {

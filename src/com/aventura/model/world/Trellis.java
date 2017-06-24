@@ -48,7 +48,7 @@ import com.aventura.model.texture.Texture;
  */
 public class Trellis extends Element {
 	
-	protected Mesh mesh;
+	protected RectangleMesh rectangleMesh;
 	protected int nx, ny;
 	protected double width, length;
 
@@ -69,9 +69,9 @@ public class Trellis extends Element {
 		this.nx = nx;
 		this.ny = ny;
 		Vector4 position = new Vector4(-width/2,-length/2,0,0);
-		mesh = new Mesh(this, nx+1, ny+1);
+		rectangleMesh = new RectangleMesh(this, nx+1, ny+1);
 		initTrellis(position);
-		mesh.createTriangles(Mesh.MESH_ALTERNATE_TRIANGLES);
+		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
 	}
 
 	/**
@@ -95,9 +95,9 @@ public class Trellis extends Element {
 		if ((array.length != nx+1) || (array[0].length != ny+1)) {
 			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
 		}
-		mesh = new Mesh(this, nx+1, ny+1);
+		rectangleMesh = new RectangleMesh(this, nx+1, ny+1);
 		initTrellis(position, array);
-		mesh.createTriangles(Mesh.MESH_ALTERNATE_TRIANGLES);
+		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
 	}
 	
 	/**
@@ -121,19 +121,19 @@ public class Trellis extends Element {
 		if ((array.length != nx+1) || (array[0].length != ny+1)) {
 			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
 		}
-		mesh = new Mesh(this, nx+1, ny+1, t);
+		rectangleMesh = new RectangleMesh(this, nx+1, ny+1, t);
 		initTrellis(position, array);
-		mesh.createTriangles(Mesh.MESH_ALTERNATE_TRIANGLES);
+		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
 	}
 
 	protected void initTrellis(Vector4 position) {
 		
-		mesh = new Mesh(this, nx+1, ny+1);
+		rectangleMesh = new RectangleMesh(this, nx+1, ny+1);
 		
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {
 			for (int j=0; j<=ny; j++) {
-				mesh.getVertex(i, j).setPos(new Vector4(i*width/nx, j*length/ny, 0, 1).plus(position));
+				rectangleMesh.getVertex(i, j).setPos(new Vector4(i*width/nx, j*length/ny, 0, 1).plus(position));
 			}
 		}
 	}
@@ -143,7 +143,7 @@ public class Trellis extends Element {
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {
 			for (int j=0; j<=ny; j++) {
-				mesh.getVertex(i, j).setPos(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
+				rectangleMesh.getVertex(i, j).setPos(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
 			}
 		}
 	}
@@ -165,7 +165,7 @@ public class Trellis extends Element {
 	}
 	
 	public String toString() {
-		return "Trellis (width: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+")\nV[0,0]="+mesh.getVertex(0,0)+"\nV[nx,0]="+mesh.getVertex(nx,0)+"\nV[0,ny]="+mesh.getVertex(0,ny)+"\nV[nx,ny]="+mesh.getVertex(nx,ny);
+		return "Trellis (width: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+")\nV[0,0]="+rectangleMesh.getVertex(0,0)+"\nV[nx,0]="+rectangleMesh.getVertex(nx,0)+"\nV[0,ny]="+rectangleMesh.getVertex(0,ny)+"\nV[nx,ny]="+rectangleMesh.getVertex(nx,ny);
 	}
 
 	@Override
@@ -179,34 +179,34 @@ public class Trellis extends Element {
 				Vector4 xa, xb, ya, yb, xavg, yavg;
 				
 				if (i>0) {
-					xa = mesh.getVertex(i-1, j).getPos();
+					xa = rectangleMesh.getVertex(i-1, j).getPos();
 				} else {
-					xa = mesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
+					xa = rectangleMesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				if (i<nx) {
-					xb = mesh.getVertex(i+1,j).getPos();
+					xb = rectangleMesh.getVertex(i+1,j).getPos();
 				} else {
-					xb = mesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
+					xb = rectangleMesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				xavg = xb.minus(xa);
 				
 				// The second one is aligned on the Y axis
 				if (j>0) {
-					ya = mesh.getVertex(i,j-1).getPos();
+					ya = rectangleMesh.getVertex(i,j-1).getPos();
 				} else {
-					ya = mesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
+					ya = rectangleMesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				if (j<ny) {
-					yb = mesh.getVertex(i,j+1).getPos();
+					yb = rectangleMesh.getVertex(i,j+1).getPos();
 				} else {
-					yb = mesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
+					yb = rectangleMesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
 				yavg = yb.minus(ya);
 								
 				// The normal vector is the cross product of both vectors.
 				Vector4 normal = xavg.times(yavg);
 				// Need to be normalized
-				mesh.getVertex(i,j).setNormal(normal.normalize().V3());
+				rectangleMesh.getVertex(i,j).setNormal(normal.normalize().V3());
 			}
 		}
 		calculateSubNormals();

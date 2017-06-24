@@ -67,7 +67,7 @@ public class Vertex {
 	}
 	
 	public Vertex() {
-		// Empty Vertex to be used for generation of mesh of vertices
+		// Empty Vertex to be used for generation of rectangleMesh of vertices
 	}
 	
 	public Vertex(double x, double y, double z) {

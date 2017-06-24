@@ -1,7 +1,5 @@
 package com.aventura.model.world;
 
-import com.aventura.model.texture.Texture;
-
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -27,18 +25,13 @@ import com.aventura.model.texture.Texture;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * Superclass for a Mesh of vertices with same Texture to create a surface part of an Element
- * A Mesh does not generate the geometry of the surface, this is the user of this class who needs to set the position of each Vertex in the space.
+ * A Fan Mesh of vertices with same Texture to create a surface part of an Element
+ * This class creates properly the array of Vertices and proposes services to create the list of Triangle for the fan of triangles.
+ * This class does not generate the geometry of the surface, this is the user of this class who needs to set the position of each Vertex in the space.
  * 
  * @author Olivier BARRY
  * @since June 2017
  */
-public class Mesh {
-	
-	// Referred Element
-	Element elm;
-	
-	protected Texture tex = null;
-
+public class FanMesh extends Mesh {
 
 }

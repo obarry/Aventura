@@ -43,7 +43,7 @@ import com.aventura.model.texture.Texture;
 
 public class Cylinder extends Element {
 	
-	protected Mesh mesh;
+	protected RectangleMesh rectangleMesh;
 	double height;
 	double ray;
 	int half_seg;
@@ -84,7 +84,7 @@ public class Cylinder extends Element {
 	}
 	protected void createCylinder(Texture t) {
 		
-		mesh = new Mesh(this, half_seg*2+1, 2, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for Mesh / Texture
+		rectangleMesh = new RectangleMesh(this, half_seg*2+1, 2, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
 		double alpha = Math.PI/half_seg;
 		
 		// Create vertices
@@ -94,14 +94,14 @@ public class Cylinder extends Element {
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			mesh.getVertex(i, 0).setPos(new Vector4(ray*cosa, ray*sina, -height/2, 1));
+			rectangleMesh.getVertex(i, 0).setPos(new Vector4(ray*cosa, ray*sina, -height/2, 1));
 			
 			// Top circle of the cylinder
-			mesh.getVertex(i,1).setPos(new Vector4(ray*cosa, ray*sina, height/2, 1));
+			rectangleMesh.getVertex(i,1).setPos(new Vector4(ray*cosa, ray*sina, height/2, 1));
 		}
 		
 		// Create Triangles
-		mesh.createTriangles(Mesh.MESH_ORIENTED_TRIANGLES);
+		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 	}
 
 	@Override
@@ -111,11 +111,11 @@ public class Cylinder extends Element {
 		// Create normals of vertices
 		for (int i=0; i<=half_seg*2; i++) {
 			// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it 
-			n = mesh.getVertex(i,0).getPos().minus(bottom_center);
+			n = rectangleMesh.getVertex(i,0).getPos().minus(bottom_center);
 			n.normalize();
-			mesh.getVertex(i,0).setNormal(n.V3());
+			rectangleMesh.getVertex(i,0).setNormal(n.V3());
 			// Same normal vector can be used for the corresponding top Vertex
-			mesh.getVertex(i,1).setNormal(n.V3());
+			rectangleMesh.getVertex(i,1).setNormal(n.V3());
 		}
 		
 		calculateSubNormals();

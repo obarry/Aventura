@@ -31,10 +31,20 @@ import com.aventura.model.texture.Texture;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
+ * Most basic surface element, the Triangle can be rendered autonomously without any other information
+ * than those contained in its attributes.
+ * 
  * @author Olivier BARRY
  * @since May 2016
  */
 public class Triangle {
+	
+	// ---------
+	// Constants
+	// ---------
+	public static final int TEXTURE_ISOTROPIC = 0;
+	public static final int TEXTURE_VERTICAL = 1;
+	public static final int TEXTURE_HORIZONTAL = 2;
 	
 	// --------
 	// Geometry
@@ -49,6 +59,9 @@ public class Triangle {
 	protected Vector4 t1;
 	protected Vector4 t2;
 	protected Vector4 t3;
+	
+	// Flag for isotropic, vertical or horizontal texture interpolation of this triangle, default is ISOTROPIC
+	protected int tex_orientation = TEXTURE_ISOTROPIC;
 	
 	// And an optional Normal to the triangle (default is normal at vertices level)
 	protected boolean triangleNormal = false;
@@ -89,12 +102,25 @@ public class Triangle {
 		this.tex = t.tex;
 	}
 	
+	/**
+	 * Create a Triangle from 3 Vertices
+	 * @param v1 first Vertex
+	 * @param v2 second Vertex
+	 * @param v3 third Vertex
+	 */
 	public Triangle(Vertex v1, Vertex v2, Vertex v3) {
 		this.v1 = v1;
 		this.v2 = v2;
 		this.v3 = v3;
 	}
 	
+	/**
+	 * Create a Triangle from 3 Vertices and a Texture
+	 * Default orientation for the Texture is TEXTURE_ISOTROPIC
+	 * @param v1 first Vertex
+	 * @param v2 second Vertex
+	 * @param v3 third Vertex
+	 */
 	public Triangle(Vertex v1, Vertex v2, Vertex v3, Texture t) {
 		this.v1 = v1;
 		this.v2 = v2;
@@ -102,14 +128,25 @@ public class Triangle {
 		this.tex = t;
 	}
 	
+	/**
+	 * Create a Triangle from 3 Vertices and a Texture
+	 * Specify orientation for the Texture as one of TEXTURE_ISOTROPIC, TEXTURE_VERTICAL or TEXTURE_HORIZONTAL
+	 * @param v1 first Vertex
+	 * @param v2 second Vertex
+	 * @param v3 third Vertex
+	 */
+	public Triangle(Vertex v1, Vertex v2, Vertex v3, Texture t, int to) {
+		this.v1 = v1;
+		this.v2 = v2;
+		this.v3 = v3;
+		this.tex = t;
+		this.tex_orientation = to;
+	}
+	
 	public String toString() {
 		return ("Triangle vertices:\n"+" v1: "+v1+"\n v2: "+v2+"\n v3: "+v3);
 	}
 
-	public Vertex getV1() {
-		return v1;
-	}
-	
 	public boolean isTriangleNormal() {
 		return triangleNormal;
 	}
@@ -118,10 +155,26 @@ public class Triangle {
 		this.triangleNormal = b;
 	}
 
+	/**
+	 * Get the first Vertex of this Triangle
+	 * @return the first Triangle
+	 */
+	public Vertex getV1() {
+		return v1;
+	}
+	
+	/**
+	 * Get the second Vertex of this Triangle
+	 * @return the second Triangle
+	 */
 	public Vertex getV2() {
 		return v2;
 	}
 
+	/**
+	 * Get the third Vertex of this Triangle
+	 * @return the third Triangle
+	 */
 	public Vertex getV3() {
 		return v3;
 	}
@@ -136,14 +189,23 @@ public class Triangle {
 		return c;
 	}
 	
+	/**
+	 * Set the first Vertex of this Triangle
+	 */
 	public void setV1(Vertex v) {
 		this.v1 = v;
 	}
 
+	/**
+	 * Set the second Vertex of this Triangle
+	 */
 	public void setV2(Vertex v) {
 		this.v2 = v;
 	}
 	
+	/**
+	 * Set the third Vertex of this Triangle
+	 */
 	public void setV3(Vertex v) {
 		this.v3 = v;
 	}
@@ -190,6 +252,12 @@ public class Triangle {
 		this.t3 = t3;
 	}
 	
+	public void setTexture(Vector4 t1, Vector4 t2 , Vector4 t3) {
+		this.t1 = t1;
+		this.t2 = t2;
+		this.t3 = t3;
+	}
+	
 	public Texture getTexture() {
 		return tex;
 	}
@@ -204,6 +272,14 @@ public class Triangle {
 
 	public Vector4 getTexVec3() {
 		return this.t3;
+	}
+	
+	public int getTextureOrientation() {
+		return this.tex_orientation;
+	}
+	
+	public void setTextureOrientation(int t) {
+		this.tex_orientation = t;
 	}
 
 	/**
