@@ -1,7 +1,9 @@
-package com.aventura.model.world;
+package com.aventura.model.world.triangle;
 
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Vertex;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -58,18 +60,18 @@ public class RectangleMesh extends Mesh {
 	Vertex[][] vertices = null; // Table of vertices
 
 	public RectangleMesh(Element e, int n, int p) {
-		this.elm = e;
+		super(e);
 		this.nbv_x = n;
 		this.nbv_y = p;
-		vertices = e.createVertexMesh(n, p);
+		vertices = elm.createVertexMesh(n, p);
 	}
 	
 	public RectangleMesh(Element e, int n, int p, Texture t) {
-		this.elm = e;
+		super(e);
 		this.nbv_x = n;
 		this.nbv_y = p;
 		this.tex = t;
-		vertices = e.createVertexMesh(n, p);
+		vertices = elm.createVertexMesh(n, p);
 	}
 	
 	public void createTriangles(int type) {
@@ -79,7 +81,8 @@ public class RectangleMesh extends Mesh {
 		switch (type) {
 		
 		case MESH_ORIENTED_TRIANGLES:
-			// (n,p) vertices -> (n-1, p-1) segments.
+			// (n,p) vertices -> (n-1, p-1) segments
+			
 			for (int i=0; i<nbv_x-1; i++) {
 				for (int j=0; j<nbv_y-1; j++) {
 
@@ -123,7 +126,6 @@ public class RectangleMesh extends Mesh {
 		case MESH_ALTERNATE_TRIANGLES:
 			// (n,p) vertices -> (n-1, p-1) segments
 			// Furthermore in this case, let's alternate every 2 stitches -> 2 loops for respectively odd and even segments
-			
 			
 			for (int i=0; i<nbv_x-1; i++) {
 				for (int j=0; j<nbv_y-1; j++) {

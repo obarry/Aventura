@@ -1,4 +1,4 @@
-package com.aventura.model.world;
+package com.aventura.model.world.shape;
 
 import com.aventura.math.vector.Vector3;
 

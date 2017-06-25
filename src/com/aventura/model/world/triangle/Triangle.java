@@ -1,10 +1,11 @@
-package com.aventura.model.world;
+package com.aventura.model.world.triangle;
 
 import java.awt.Color;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Vertex;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -288,10 +289,10 @@ public class Triangle {
 	 */
 	public void calculateNormal() {
 		//P = V1V2 as a Vector3
-		Vector3 p = (v2.position.minus(v1.position)).V3();
+		Vector3 p = (v2.getPos().minus(v1.getPos())).V3();
 
 		//P = V1V3 as a Vector3
-		Vector3 q = (v3.position.minus(v1.position)).V3();
+		Vector3 q = (v3.getPos().minus(v1.getPos())).V3();
 
 		// Calculate the cross product
 		normal = p.times(q);

@@ -22,9 +22,9 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Element;
-import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
+import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
@@ -139,7 +139,6 @@ public class TestRasterizer15 {
 		
 		// Test for an HORIZONTAL texure
 		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0.0001,0,0.0002), new Vector4(0,1,0,1));
-//		t1.setTexture(new Vector4(1,0,0,1), new Vector4(0.0001,1,0,0.0002), new Vector4(0,0,0,1));
 		
 		
 		e.addTriangle(t1);

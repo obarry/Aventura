@@ -20,8 +20,8 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.world.Box;
 import com.aventura.model.world.World;
+import com.aventura.model.world.shape.Box;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 

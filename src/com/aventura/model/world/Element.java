@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import com.aventura.math.transform.Transformable;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.world.triangle.Triangle;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -184,11 +185,11 @@ public class Element implements Transformable {
 	}
 	
 	/**
-	 * Create and return a rectangleMesh of vertices
-	 * This method should necessary be used to create a rectangleMesh of vertices since it does the needful to put it in the list of vertices of this Element
+	 * Create and return a Mesh of vertices
+	 * This method should necessary be used to create a Mesh of vertices since it does the needful to put it in the list of vertices of this Element
 	 * 
-	 * @param n nb of vertices on width of the rectangleMesh
-	 * @param p nb of vertices on height of the rectangleMesh
+	 * @param n nb of vertices on width of the Mesh
+	 * @param p nb of vertices on height of the Mesh
 	 * @return an array of vertices
 	 */
 	public Vertex[][] createVertexMesh(int n, int p) {
@@ -204,6 +205,24 @@ public class Element implements Transformable {
 		return mesh;
 	}
 	
+	/**
+	 * Create and return a line of vertices
+	 * This method should necessary be used to create a Mesh of a single line of vertices since it does the needful to put it in the list of vertices of this Element
+	 * 
+	 * @param n nb of vertices on width of the Mesh
+	 * @return an array of vertices
+	 */
+	public Vertex[] createVertexMesh(int n) {
+		Vertex[] mesh = new Vertex[n];
+
+		for (int i=0; i<n; i++) {
+			Vertex v = new Vertex();
+			addVertex(v);
+			mesh[i] = v;
+		}
+		return mesh;
+	}
+
 	public ArrayList<Element> getSubElements() {
 		return subelements;
 	}

@@ -19,8 +19,8 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.world.ConeFrustum;
 import com.aventura.model.world.World;
+import com.aventura.model.world.shape.ConeFrustum;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 

@@ -1,6 +1,7 @@
-package com.aventura.model.world;
+package com.aventura.model.world.triangle;
 
-import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -27,48 +28,21 @@ import com.aventura.math.vector.Vector4;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
+ * Superclass for a Mesh of vertices with same Texture to create a surface part of an Element
+ * A Mesh does not generate the geometry of the surface, this is the user of this class who needs to set the position of each Vertex in the space.
+ * 
  * @author Olivier BARRY
- * @since October 2016
+ * @since June 2017
  */
-
-public class Segment {
+public class Mesh {
 	
-	// Made of 2 vertices
-	Vertex v1;
-	Vertex v2;
+	// Referred Element
+	Element elm;
 	
-	public Segment() {
-		this.v1 = null;
-		this.v2 = null;
-	}
+	protected Texture tex = null;
 	
-	public Segment(Vertex v1, Vertex v2) {
-		this.v1 = v1;
-		this.v2 = v2;
+	public Mesh(Element e) {
+		this.elm = e;
 	}
 	
-	public Segment(Vector4 u1, Vector4 u2) {
-		this.v1 = new Vertex(u1);
-		this.v2 = new Vertex(u2);
-	}
-	
-	public String toString() {
-		return ("Segment vertices:\n"+" v1: "+v1+"\n v2: "+v2);
-	}
-
-	public Vertex getV1() {
-		return v1;
-	}
-
-	public Vertex getV2() {
-		return v2;
-	}
-
-	public void setV1(Vertex v) {
-		this.v1 = v;
-	}
-
-	public void setV2(Vertex v) {
-		this.v2 = v;
-	}
 }

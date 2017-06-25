@@ -1,4 +1,7 @@
-package com.aventura.model.world;
+package com.aventura.model.world.triangle;
+
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Vertex;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -33,5 +36,28 @@ package com.aventura.model.world;
  * @since June 2017
  */
 public class FanMesh extends Mesh {
+	
+	// Regular Fan of Triangles
+	
+	//          +
+	//        //|\\
+	//      / / | \ \
+	//    /  /  |  \  \ 
+	//  / T1/   |   \T4 \
+	// +   / T2 | T3 \   +
+	//  \ /     |     \ /
+	//   +------+------+
+	
+	public static final int MESH_ORIENTED_TRIANGLES = 1;
+
+	int nbv;
+	Vertex summit;
+	Vertex[] vertices;
+
+	public FanMesh(Element e, int n) {
+		super(e);
+		this.nbv = n;
+		vertices = elm.createVertexMesh(n);
+	}
 
 }

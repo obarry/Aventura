@@ -16,7 +16,7 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
-import com.aventura.model.world.Trellis;
+import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 

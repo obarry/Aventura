@@ -1,7 +1,10 @@
-package com.aventura.model.world;
+package com.aventura.model.world.shape;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Vertex;
+import com.aventura.model.world.triangle.Triangle;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -37,13 +40,14 @@ import com.aventura.math.vector.Vector4;
  * The Cone, as any Element, can then be moved, rotated and transformed thanks to the Transformation matrix
 
  * @author Olivier BARRY
- * @since October 2016
+ * @since January 2017
  */
 
-public class Cone extends Element {
+
+public class ConeSummit extends Element {
 
 	protected Vertex[] vertices;
-	protected Vertex[] summits; // In order to have different Vertex based normals, we need to have independent summit for each triangle
+	protected Vertex summit; // In order to have different Vertex based normals, we need to have independent summit for each triangle
 	double height;
 	double ray;
 	int half_seg;
@@ -55,7 +59,7 @@ public class Cone extends Element {
 	 * @param ray of the base circle of the Cone
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 */
-	public Cone(double height, double ray, int half_seg) {
+	public ConeSummit(double height, double ray, int half_seg) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -74,7 +78,7 @@ public class Cone extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 * @param center to which the Cone is moved at creation (Vector3)
 	 */
-	public Cone(double height, double ray, int half_seg, Vector3 center) {
+	public ConeSummit(double height, double ray, int half_seg, Vector3 center) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -92,7 +96,7 @@ public class Cone extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 * @param center to which the Cone is moved at creation (Vector4)
 	 */
-	public Cone(double height, double ray, int half_seg, Vector4 center) {
+	public ConeSummit(double height, double ray, int half_seg, Vector4 center) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -107,17 +111,12 @@ public class Cone extends Element {
 	protected void createCone() {
 		
 		vertices = new Vertex[half_seg*2]; // (n) vertices on each circles
-		summits = new Vertex[half_seg*2]; // (n) summits
 		double alpha = Math.PI/half_seg;
 		
 		// Create vertices
 		
-		// Create summits (same Vertex for all summits)
-		Vector4 summit = new Vector4(0, 0, height/2,  1);
-		for (int i=0; i<half_seg*2; i++) {
-			summits[i] = createVertex(summit.plus(center));		
-		}
-		//summit = new Vertex(new Vector4(0, 0, height/2,  1));
+		// Create summit (1 single Vertex for all)
+		summit = createVertex(new Vector4(0, 0, height/2, 1).plus(center));
 		
 		// Create bottom vertices
 		for (int i=0; i<half_seg*2; i++) {
@@ -135,13 +134,13 @@ public class Cone extends Element {
 		for (int i=0; i<half_seg*2-1; i++) {
 			
 			// For each face of the cylinder, create 2 Triangles
-			t = new Triangle(summits[i], vertices[i], vertices[i+1]);
+			t = new Triangle(summit, vertices[i], vertices[i+1]);
 			
 			// Add triangle to the Element
 			this.addTriangle(t);			
 		}
 		// Create last triangle to close the Cone
-		t = new Triangle(summits[half_seg*2-1], vertices[half_seg*2-1], vertices[0]);
+		t = new Triangle(summit, vertices[half_seg*2-1], vertices[0]);
 		
 		// Add last triangle
 		this.addTriangle(t);			
@@ -151,26 +150,20 @@ public class Cone extends Element {
 	@Override
 	public void calculateNormals() {
 		Vector4 n, u;
+		
+		// Create normal of summit
+		n = new Vector4(Vector4.Z_AXIS);
+		summit.setNormal(n.V3());
 			
 		// Create normals of vertices
 		for (int i=0; i<half_seg*2; i++) {
 
 			// For each bottom Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
-			u = (summits[i].getPos().minus(bottom_center)).times(vertices[i].getPos().minus(bottom_center));
-			n = (vertices[i].getPos().minus(summits[i].getPos())).times(u);
+			u = (summit.getPos().minus(bottom_center)).times(vertices[i].getPos().minus(bottom_center));
+			n = (vertices[i].getPos().minus(summit.getPos())).times(u);
 			n.normalize();
 			vertices[i].setNormal(n.V3());
-			
-			// For each summit, use the ray vector from top center to the Vertex and normalize it
-			if (i<half_seg*2-1) {
-				//n = (vertices[i+1].getPosition().minus(vertices[i].getPosition())).times(summits[i].getPosition().minus(vertices[i].getPosition()));
-				n = (vertices[i].getPos().minus(summits[i].getPos())).times(vertices[i+1].getPos().minus(summits[i].getPos()));
-			} else { // last vertex -> i+1 = 0
-				n = (vertices[i].getPos().minus(summits[i].getPos())).times(vertices[0].getPos().minus(summits[i].getPos()));			
-			}
-			n.normalize();
-			summits[i].setNormal(n.V3());
 		}
 		calculateSubNormals();
 	}
