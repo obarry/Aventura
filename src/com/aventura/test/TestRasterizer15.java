@@ -100,25 +100,27 @@ public class TestRasterizer15 {
 		Element e = new Element();
 		
 		//
-		// Create a shape
+		// Create a Triangle
 		//
-		//      V4  V3
-		//       ----
-		//      /    \
-		//     /      \
-		//    /        \
-		//   /          \
-		//  --------------
-		//  V1           V2
-		//
+		//         ^ Y
+		//  V2  |\ |
+		//      |  |
+		//      |  | \
+		//      |  |   \ V1
+		//  ----+--+----+------> X
+		//      |  |   /
+		//      |    /
+		//      |  /
+		//  V3  |/
+		//      
 		
-		double c = Math.cos(2*(Math.PI)/3);
-		double s = Math.sin(2*(Math.PI)/3);
+		double c = Math.cos(2*(Math.PI)/3); // -0.5
+		double s = Math.sin(2*(Math.PI)/3); // 0.866
 		
 		Vector4 vec1 = new Vector4(1,0,0,1);
 		Vector4 vec2 = new Vector4(c,s,0,1);
 		Vector4 vec3 = new Vector4(c,-s,0,1);
-		
+				
 		Vertex v1 = new Vertex(vec1);
 		Vertex v2 = new Vertex(vec2);
 		Vertex v3 = new Vertex(vec3);
@@ -127,26 +129,17 @@ public class TestRasterizer15 {
 		e.addVertex(v2);
 		e.addVertex(v3);
 
-		//
-		// Create triangles T1 and T2
-		//
-		//      V4  V3
-		//       ----
-		//      /   /\
-		//     /T2/   \
-		//    / /  T1  \
-		//   //         \
-		//  --------------
-		//  V1           V2
-		//
-
-		Triangle t1 = new Triangle(v1, v2, v3, tex, Triangle.TEXTURE_VERTICAL);
+//		Triangle t1 = new Triangle(v1, v2, v3, tex, Triangle.TEXTURE_VERTICAL);
+		Triangle t1 = new Triangle(v1, v2, v3, tex, Triangle.TEXTURE_HORIZONTAL);
 		
-		// Create Texture vectors with distortion effect to take account of the proportion of the shape made of 2 triangles
-		// V3 is on the small segment (ratio 0.3:1)
-//		t1.setTexture(tex, new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(0.3,0.3,0,0.3));
-		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(0.0001,1,0,0.0002));
-		// V3 and V4 are on the small segment (ratio 0.3:1)
+		// Create Texture vectors with distortion effect to bring the rectangular texture into the triangle
+		
+		// Test for a VERTICAL texture (means the vertical distribution is kept and it is horizontally distorted when it comes to the tip)
+//		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(0.0001,1,0,0.0002));
+		
+		// Test for an HORIZONTAL texure
+		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0.0001,0,0.0002), new Vector4(0,1,0,1));
+//		t1.setTexture(new Vector4(1,0,0,1), new Vector4(0.0001,1,0,0.0002), new Vector4(0,0,0,1));
 		
 		
 		e.addTriangle(t1);
