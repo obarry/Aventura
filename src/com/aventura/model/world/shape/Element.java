@@ -1,4 +1,4 @@
-package com.aventura.model.world;
+package com.aventura.model.world.shape;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import com.aventura.math.transform.Transformable;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.world.Vertex;
 import com.aventura.model.world.triangle.Triangle;
 
 /**

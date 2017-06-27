@@ -27,9 +27,9 @@ import com.aventura.model.world.shape.Box;
 import com.aventura.model.world.shape.Cone;
 import com.aventura.model.world.shape.Cube;
 import com.aventura.model.world.shape.Cylinder;
+import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
-import com.aventura.model.world.Element;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 

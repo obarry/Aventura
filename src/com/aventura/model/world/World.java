@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import com.aventura.math.transform.Repere;
 import com.aventura.math.vector.Matrix4;
+import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.Triangle;
 
 /**

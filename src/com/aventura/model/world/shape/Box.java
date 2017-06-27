@@ -1,8 +1,6 @@
 package com.aventura.model.world.shape;
 
-import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Element;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.triangle.Triangle;
 
