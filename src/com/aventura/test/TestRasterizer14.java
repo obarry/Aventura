@@ -111,11 +111,13 @@ public class TestRasterizer14 {
 		//  --------------
 		//  V1           V2
 		//
-		
+
+		double small = 0.6; 
+
 		Vector4 vec1 = new Vector4(-1,-1,0,1);
 		Vector4 vec2 = new Vector4(1,-1,0,1);
-		Vector4 vec3 = new Vector4(0.3,1,0,1);
-		Vector4 vec4 = new Vector4(-0.3,1,0,1);
+		Vector4 vec3 = new Vector4(small,1,0,1);
+		Vector4 vec4 = new Vector4(-small,1,0,1);
 		
 		Vertex v1 = new Vertex(vec1);
 		Vertex v2 = new Vertex(vec2);
@@ -143,11 +145,12 @@ public class TestRasterizer14 {
 		Triangle t1 = new Triangle(v1, v2, v3);
 		Triangle t2 = new Triangle(v3, v4, v1);
 		
+		
 		// Create Texture vectors with distortion effect to take account of the proportion of the shape made of 2 triangles
 		// V3 is on the small segment (ratio 0.3:1)
-		t1.setTexture(tex, new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(0.3,0.3,0,0.3));
+		t1.setTexture(tex, new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(small,small,0,small));
 		// V3 and V4 are on the small segment (ratio 0.3:1)
-		t2.setTexture(tex, new Vector4(0.3,0.3,0,0.3), new Vector4(0,0.3,0,0.3), new Vector4(0,0,0,1));
+		t2.setTexture(tex, new Vector4(small,small,0,small), new Vector4(0,small,0,small), new Vector4(0,0,0,1));
 		
 		t1.setColor(Color.RED);
 		t2.setColor(Color.BLUE);
