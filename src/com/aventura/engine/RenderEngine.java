@@ -11,13 +11,13 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.world.Cone;
-import com.aventura.model.world.Cylinder;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.Segment;
-import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
+import com.aventura.model.world.shape.Cone;
+import com.aventura.model.world.shape.Cylinder;
+import com.aventura.model.world.shape.Element;
+import com.aventura.model.world.shape.Segment;
+import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.View;
 

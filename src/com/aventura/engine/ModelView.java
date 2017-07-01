@@ -1,9 +1,9 @@
 package com.aventura.engine;
 
 import com.aventura.math.vector.Matrix4;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
+import com.aventura.model.world.shape.Element;
+import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 
 /**

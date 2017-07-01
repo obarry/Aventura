@@ -17,8 +17,8 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
+import com.aventura.model.world.shape.Cone;
 import com.aventura.tools.tracing.Tracer;
-import com.aventura.model.world.Cone;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 

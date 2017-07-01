@@ -8,6 +8,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import com.aventura.tools.color.ColorTools;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -107,7 +108,13 @@ public class Texture {
 		if (y1>=this.height) y1=this.height-1;
 
 		// Calculate the interpolated value as per Bilinear Filtering algorithm
-		Color result = ColorTools.getBilinearFilteredColor(tex[x0][y0], tex[x0][y1], tex[x1][y0], tex[x1][y1], u_ratio, v_ratio);
+		Color result = null;
+		try {
+		 result = ColorTools.getBilinearFilteredColor(tex[x0][y0], tex[x0][y1], tex[x1][y0], tex[x1][y1], u_ratio, v_ratio);
+		} catch (java.lang.ArrayIndexOutOfBoundsException e) {
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Exception getting bilinear filtered color for: x0="+x0+" y0="+y0+" x1="+x1+" y1="+y1+". Texture width: "+this.width+" height:"+this.height);
+			e.printStackTrace();
+		}
 		return result;
 	}
 	

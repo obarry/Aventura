@@ -20,12 +20,16 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Box;
+import com.aventura.model.world.shape.Element;
+import com.aventura.model.world.triangle.Triangle;
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-public class TestRasterizer6 {
+public class TestRasterizer15 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -33,7 +37,7 @@ public class TestRasterizer6 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 6");
+		JFrame frame = new JFrame("Test Rasterizer 15");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -46,7 +50,7 @@ public class TestRasterizer6 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer6.this.view.draw(graph);
+		    	TestRasterizer15.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -62,45 +66,91 @@ public class TestRasterizer6 {
 		return view;
 	}
 
+	/**
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
-		
-		//Tracer.info = true;
-		//Tracer.function = true;
+
+//		Tracer.info = true;
+//		Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(8,3,2,1);
+		//Vector4 eye = new Vector4(4,2,3,1);
+		Vector4 eye = new Vector4(0,0,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.X_AXIS);		
 				
-		TestRasterizer6 test = new TestRasterizer6();
+		TestRasterizer15 test = new TestRasterizer15();
 		
 		System.out.println("********* Creating World");
 		
-		World world = new World();
-		Box box = new Box(1,1.2,1.5);
-		// Set colors to triangles
-		box.getTriangle(0).setColor(Color.CYAN);
-		box.getTriangle(1).setColor(Color.CYAN);
-		box.getTriangle(2).setColor(Color.ORANGE);
-		box.getTriangle(3).setColor(Color.ORANGE);
-		box.getTriangle(4).setColor(Color.DARK_GRAY);
-		box.getTriangle(5).setColor(Color.DARK_GRAY);
-		box.getTriangle(6).setColor(Color.MAGENTA);
-		box.getTriangle(7).setColor(Color.MAGENTA);
-		box.getTriangle(8).setColor(Color.PINK);
-		box.getTriangle(9).setColor(Color.PINK);
-		box.getTriangle(10).setColor(Color.LIGHT_GRAY);
-		box.getTriangle(11).setColor(Color.LIGHT_GRAY);
+		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
+		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
+		Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
+		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
+		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
 		
-		world.addElement(box);
+		// Create World
+		World world = new World();
+		Element e = new Element();
+		
+		//
+		// Create a Triangle
+		//
+		//         ^ Y
+		//  V2  |\ |
+		//      |  |
+		//      |  | \
+		//      |  |   \ V1
+		//  ----+--+----+------> X
+		//      |  |   /
+		//      |    /
+		//      |  /
+		//  V3  |/
+		//      
+		
+		double c = Math.cos(2*(Math.PI)/3); // -0.5
+		double s = Math.sin(2*(Math.PI)/3); // 0.866
+		
+		Vector4 vec1 = new Vector4(1,0,0,1);
+		Vector4 vec2 = new Vector4(c,s,0,1);
+		Vector4 vec3 = new Vector4(c,-s,0,1);
+				
+		Vertex v1 = new Vertex(vec1);
+		Vertex v2 = new Vertex(vec2);
+		Vertex v3 = new Vertex(vec3);
+
+		e.addVertex(v1);
+		e.addVertex(v2);
+		e.addVertex(v3);
+
+//		Triangle t1 = new Triangle(v1, v2, v3, tex, Triangle.TEXTURE_VERTICAL);
+		Triangle t1 = new Triangle(v1, v2, v3, tex, Triangle.TEXTURE_HORIZONTAL);
+		
+		// Create Texture vectors with distortion effect to bring the rectangular texture into the triangle
+		
+		// Test for a VERTICAL texture (means the vertical distribution is kept and it is horizontally distorted when it comes to the tip)
+//		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(0.0001,1,0,0.0002));
+		
+		// Test for an HORIZONTAL texure
+		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0.0001,0,0.0002), new Vector4(0,1,0,1));
+		
+		
+		e.addTriangle(t1);
+		
+		world.addElement(e);
+		world.setBackgroundColor(new Color(22,0,220));
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
-		AmbientLight al = new AmbientLight(0.2f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 0.5f);
+		AmbientLight al = new AmbientLight(0.5f);
 		Lighting light = new Lighting(dl, al);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
@@ -108,27 +158,21 @@ public class TestRasterizer6 {
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
 
-//		System.out.println("********* Rendering...");
-//		int nb_images = 180;
-//		for (int i=0; i<=3*nb_images; i++) {
-//			double a = Math.PI*2*(double)i/(double)nb_images;
-//			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
-//			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
-//			renderer.render();
-//		}
-
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
 			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
-			box.setTransformation(r);
+			e.setTransformation(r);
 			renderer.render();
 		}
 
