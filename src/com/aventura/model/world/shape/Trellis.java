@@ -129,9 +129,7 @@ public class Trellis extends Element {
 	}
 
 	protected void initTrellis(Vector4 position) {
-		
-		rectangleMesh = new RectangleMesh(this, nx+1, ny+1);
-		
+				
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {
 			for (int j=0; j<=ny; j++) {
