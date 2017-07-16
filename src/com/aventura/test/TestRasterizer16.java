@@ -24,12 +24,13 @@ import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Element;
+import com.aventura.model.world.triangle.FanMesh;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-public class TestRasterizer15 {
+public class TestRasterizer16 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -37,7 +38,7 @@ public class TestRasterizer15 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 15");
+		JFrame frame = new JFrame("Test Rasterizer 16");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -50,7 +51,7 @@ public class TestRasterizer15 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer15.this.view.draw(graph);
+		    	TestRasterizer16.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -83,7 +84,7 @@ public class TestRasterizer15 {
 		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 		Camera camera = new Camera(eye, poi, Vector4.Y_AXIS);		
 				
-		TestRasterizer15 test = new TestRasterizer15();
+		TestRasterizer16 test = new TestRasterizer16();
 		
 		System.out.println("********* Creating World");
 		
@@ -121,30 +122,13 @@ public class TestRasterizer15 {
 		Vector4 vec2 = new Vector4(c,s,0,1);
 		Vector4 vec3 = new Vector4(c,-s,0,1);
 				
-		Vertex v1 = new Vertex(vec1);
-		Vertex v2 = new Vertex(vec2);
-		Vertex v3 = new Vertex(vec3);
-
-		e.addVertex(v1);
-		e.addVertex(v2);
-		e.addVertex(v3);
-
-//		Triangle t1 = new Triangle(v1, v2, v3, tex, Triangle.TEXTURE_VERTICAL);
-		Triangle t1 = new Triangle(v1, v2, v3, tex, Triangle.TEXTURE_HORIZONTAL);
-		
-		// Create Texture vectors with distortion effect to bring the rectangular texture into the triangle
-		
-		// Test for a VERTICAL texture (means the vertical distribution is kept and it is horizontally distorted when it comes to the tip)
-//		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(0.0001,1,0,0.0002));
-		
-		// Test for an HORIZONTAL texture
-		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0.0001,0,0.0002), new Vector4(0,1,0,1));
-		
-		
-		e.addTriangle(t1);
-		
+		FanMesh fan = new FanMesh(e,2, tex); // 2 vertices -> 1 triangle
+		fan.getSummit().setPos(vec1);
+		fan.getVertex(0).setPos(vec2);
+		fan.getVertex(1).setPos(vec3);
+				
 		world.addElement(e);
-		world.setBackgroundColor(new Color(22,0,220));
+		world.setBackgroundColor(new Color(110,0,220));
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();

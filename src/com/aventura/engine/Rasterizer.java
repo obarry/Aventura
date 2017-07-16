@@ -435,7 +435,7 @@ public class Rasterizer {
     				// Projective Texture mapping using the fourth coordinate
     				// By default W of the texture vector is 1 but if not this will help to take account of the potential geometrical distortion of the texture
     				switch (tex_orientation) {
-    				case Triangle.TEXTURE_ISOTROPIC:
+    				case Triangle.TEXTURE_ISOTROPIC: // Default for a triangle
     					ct = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
     					break;
     				case Triangle.TEXTURE_VERTICAL:

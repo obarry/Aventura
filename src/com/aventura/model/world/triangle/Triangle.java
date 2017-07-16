@@ -43,7 +43,7 @@ public class Triangle {
 	// ---------
 	// Constants
 	// ---------
-	public static final int TEXTURE_ISOTROPIC = 0;
+	public static final int TEXTURE_ISOTROPIC = 0; // Default
 	public static final int TEXTURE_VERTICAL = 1;
 	public static final int TEXTURE_HORIZONTAL = 2;
 	
