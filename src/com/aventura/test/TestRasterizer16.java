@@ -21,11 +21,9 @@ import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.FanMesh;
-import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
@@ -126,6 +124,7 @@ public class TestRasterizer16 {
 		fan.getSummit().setPos(vec1);
 		fan.getVertex(0).setPos(vec2);
 		fan.getVertex(1).setPos(vec3);
+		fan.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
 				
 		world.addElement(e);
 		world.setBackgroundColor(new Color(110,0,220));

@@ -52,6 +52,8 @@ public class FanMesh extends Mesh {
 	//   +------+------+
 	
 	public static final int MESH_ORIENTED_TRIANGLES = 1;
+	public static final double TEXTURE_SUMMIT_SMALL_VALUE = 0.0001;
+	public static final double TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE = 0.0002;
 
 	int nbv;
 	Vertex summit;
@@ -61,6 +63,7 @@ public class FanMesh extends Mesh {
 		super(e);
 		this.nbv = n;
 		summit = new Vertex();
+		e.addVertex(summit);
 		vertices = elm.createVertexMesh(n);
 	}
 	
@@ -69,6 +72,7 @@ public class FanMesh extends Mesh {
 		this.nbv = n;
 		this.tex = t;
 		summit = new Vertex();
+		e.addVertex(summit);
 		vertices = elm.createVertexMesh(n);
 	}
 
@@ -101,8 +105,8 @@ public class FanMesh extends Mesh {
 					// Define position for Texture vectors in homogeneous coordinates [0,1]
 					double ti = (double)i/(double)(nbv-1);
 					double tip1 = (double)(i+1)/(double)(nbv-1);
-					double tsx = 0.0001;
-					double tsz = 0.0002;
+					double tsx = TEXTURE_SUMMIT_SMALL_VALUE;
+					double tsz = TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE;
 
 
 					// Create texture vectors with an horizontal 'stretching' texture effect (on the tip of the fan) 
