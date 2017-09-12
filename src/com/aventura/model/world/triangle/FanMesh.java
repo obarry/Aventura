@@ -32,7 +32,8 @@ import com.aventura.model.world.shape.Element;
  * ------------------------------------------------------------------------------ 
  * 
  * A Fan Mesh of vertices with same Texture to create a surface part of an Element
- * This class creates properly the array of Vertices and proposes services to create the list of Triangle for the fan of triangles.
+ * A Fan of triangles is made of a set of triangles all sharing 1 vertice hence creating a Fan.
+ * This class creates properly the array of Vertices and proposes services to create the list of Triangle for the fan of triangles and wrap a texture to it.
  * This class does not generate the geometry of the surface, this is the user of this class who needs to set the position of each Vertex in the space.
  * 
  * @author Olivier BARRY
@@ -42,15 +43,16 @@ public class FanMesh extends Mesh {
 	
 	// Regular Fan of Triangles
 	
-	//          +
+	//          +  1 summit vertex
 	//        //|\\
 	//      / / | \ \
 	//    /  /  |  \  \ 
 	//  / T1/   |   \T4 \
 	// +   / T2 | T3 \   +
-	//  \ /     |     \ /
+	//  \ /     |     \ /  n base vertices
 	//   +------+------+
 	
+	// Texture Wrapping constants for parameters
 	public static final int MESH_ORIENTED_TRIANGLES = 1;
 	public static final double TEXTURE_SUMMIT_SMALL_VALUE = 0.0001;
 	public static final double TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE = 0.0002;
@@ -59,6 +61,11 @@ public class FanMesh extends Mesh {
 	Vertex summit;
 	Vertex[] vertices;
 
+	/**
+	 * Create a FanMesh without Texture
+	 * @param e the Element to which all created vertices of the FanMesh should belong
+	 * @param n the number of base vertices of the FanMesh
+	 */
 	public FanMesh(Element e, int n) {
 		super(e);
 		this.nbv = n;
@@ -67,6 +74,12 @@ public class FanMesh extends Mesh {
 		vertices = elm.createVertexMesh(n);
 	}
 	
+	/**
+	 * Create a FanMesh with Texture
+	 * @param e the Element to which all created vertices of the FanMesh should belong
+	 * @param n the number of base vertices of the FanMesh
+	 * @param t the Texture to be wrapped on the FanMesh
+	 */
 	public FanMesh(Element e, int n, Texture t) {
 		super(e);
 		this.nbv = n;

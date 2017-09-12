@@ -24,11 +24,21 @@ import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.FanMesh;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-public class TestRasterizer16 {
+/**
+ * Test FanMesh class
+ * 
+ * Create FanMesh with 1 single triangle and apply texture
+ * Check that texture is correctly wrapped:
+ * - evenly distributed from summit to base
+ * - concentrated on the tip and full width at the bottom
+ * 
+ * @author Olivier Barry
+ *
+ */
+public class TestFanMesh1 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -36,7 +46,7 @@ public class TestRasterizer16 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 16");
+		JFrame frame = new JFrame("Test FanMesh 1");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -49,7 +59,7 @@ public class TestRasterizer16 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer16.this.view.draw(graph);
+		    	TestFanMesh1.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -82,7 +92,7 @@ public class TestRasterizer16 {
 		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 		Camera camera = new Camera(eye, poi, Vector4.Y_AXIS);		
 				
-		TestRasterizer16 test = new TestRasterizer16();
+		TestFanMesh1 test = new TestFanMesh1();
 		
 		System.out.println("********* Creating World");
 		
