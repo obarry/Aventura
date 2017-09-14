@@ -89,6 +89,9 @@ public class FanMesh extends Mesh {
 		vertices = elm.createVertexMesh(n);
 	}
 
+	/**
+	 * @param type
+	 */
 	public void createTriangles(int type) {
 
 		Triangle t;
@@ -98,6 +101,11 @@ public class FanMesh extends Mesh {
 		case MESH_ORIENTED_TRIANGLES:
 			// (n) vertices -> (n-1) triangles
 
+			double tsx = TEXTURE_SUMMIT_SMALL_VALUE;
+			double tsz = TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE;
+			double ti = 0;
+			double tip1 = 0;
+			
 			for (int i=0; i<nbv-1; i++) {
 
 				// Creation of triangles
@@ -116,26 +124,30 @@ public class FanMesh extends Mesh {
 					Vector4 tv1, tv2, tv3;
 
 					// Define position for Texture vectors in homogeneous coordinates [0,1]
-					double ti = (double)i/(double)(nbv-1);
-					double tip1 = (double)(i+1)/(double)(nbv-1);
-					double tsx = TEXTURE_SUMMIT_SMALL_VALUE;
-					double tsz = TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE;
-
+					tip1 = (double)(i+1)/(double)(nbv-1);
 
 					// Create texture vectors with an horizontal 'stretching' texture effect (on the tip of the fan) 
-					tv1 = new Vector4(ti,0,0,1);
-					tv2 = new Vector4(0,tsx,0,tsz);
-					tv3 = new Vector4(tip1,0,0,1);
+//					tv1 = new Vector4(ti,0,0,1);
+//					tv2 = new Vector4(0,tsx,0,tsz);
+//					tv3 = new Vector4(tip1,0,0,1);
+					tv1 = new Vector4(ti,1,0,1);
+					tv2 = new Vector4(tip1,1,0,1);
+					tv3 = new Vector4(0,tsx,0,tsz);
+//					tv1 = new Vector4(0,tsx,0,tsz);
+//					tv2 = new Vector4(ti,0,0,1);
+//					tv3 = new Vector4(tip1,0,0,1);
 
 					// Set texture vectors to newly created triangles
 					//t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0.0001,0,0.0002), new Vector4(0,1,0,1));
 
-					t.setTextureOrientation(Triangle.TEXTURE_HORIZONTAL);
+//					t.setTextureOrientation(Triangle.TEXTURE_HORIZONTAL);
+					t.setTextureOrientation(Triangle.TEXTURE_VERTICAL);
 					t.setTexture(tex, tv1, tv2, tv3);
 
 				}
 
 				elm.addTriangle(t);
+				ti = tip1;
 			}
 			break;
 

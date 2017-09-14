@@ -99,8 +99,8 @@ public class TestFanMesh2 {
 		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
-		Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
-		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
+		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
+		Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
 		

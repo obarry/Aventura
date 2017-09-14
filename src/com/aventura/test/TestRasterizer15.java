@@ -138,7 +138,8 @@ public class TestRasterizer15 {
 //		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0,0,1), new Vector4(0.0001,1,0,0.0002));
 		
 		// Test for an HORIZONTAL texture
-		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0.0001,0,0.0002), new Vector4(0,1,0,1));
+//		t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0.0001,0,0.0002), new Vector4(0,1,0,1));
+		t1.setTexture(new Vector4(1,0.0001,0,0.0002), new Vector4(0,1,0,1), new Vector4(0,0,0,1));
 		
 		
 		e.addTriangle(t1);
