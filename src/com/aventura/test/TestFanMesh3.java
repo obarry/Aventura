@@ -30,7 +30,7 @@ import com.aventura.view.View;
 /**
  * Test FanMesh class
  * 
- * Create FanMesh with 2 triangles and apply texture
+ * Create FanMesh with 3 triangles and apply texture
  * Check that texture is correctly wrapped:
  * - evenly distributed from summit to base
  * - concentrated on the tip and full width at the bottom
@@ -38,7 +38,7 @@ import com.aventura.view.View;
  * @author Olivier Barry
  *
  */
-public class TestFanMesh2 {
+public class TestFanMesh3 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -46,7 +46,7 @@ public class TestFanMesh2 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test FanMesh 2");
+		JFrame frame = new JFrame("Test FanMesh 3");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -59,7 +59,7 @@ public class TestFanMesh2 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestFanMesh2.this.view.draw(graph);
+		    	TestFanMesh3.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -92,15 +92,15 @@ public class TestFanMesh2 {
 		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 		Camera camera = new Camera(eye, poi, Vector4.Y_AXIS);		
 				
-		TestFanMesh2 test = new TestFanMesh2();
+		TestFanMesh3 test = new TestFanMesh3();
 		
 		System.out.println("********* Creating World");
 		
-		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
+		Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
-		Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
+		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
 		
@@ -126,16 +126,19 @@ public class TestFanMesh2 {
 		double c = Math.cos(2*(Math.PI)/3); // -0.5
 		double s = Math.sin(2*(Math.PI)/3); // 0.866
 		
-		Vector4 vec1 = new Vector4(1,0,0,1);
-		Vector4 vec2 = new Vector4(c,s,0,1);
-		Vector4 vec3 = new Vector4(-1,0,0,1);
+		Vector4 summit = new Vector4(1,0,0,1); // summit
+		Vector4 vec1 = new Vector4(c,s,0,1);
+		Vector4 vec2 = new Vector4(-1,s/2,0,1);
+		Vector4 vec3 = new Vector4(-1,-s/2,0,1);
 		Vector4 vec4 = new Vector4(c,-s,0,1);
+		
 				
-		FanMesh fan = new FanMesh(e,3, tex); // 3 vertices -> 2 triangles
-		fan.getSummit().setPos(vec1);
-		fan.getVertex(0).setPos(vec2);
-		fan.getVertex(1).setPos(vec3);
-		fan.getVertex(2).setPos(vec4);
+		FanMesh fan = new FanMesh(e,4, tex); // 3 vertices -> 2 triangles
+		fan.getSummit().setPos(summit);
+		fan.getVertex(0).setPos(vec1);
+		fan.getVertex(1).setPos(vec2);
+		fan.getVertex(2).setPos(vec3);
+		fan.getVertex(3).setPos(vec4);
 		fan.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
 				
 		world.addElement(e);
