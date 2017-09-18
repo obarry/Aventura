@@ -1,9 +1,10 @@
 package com.aventura.model.world.shape;
 
-import com.aventura.math.vector.Vector3;
+
 import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Vertex;
-import com.aventura.model.world.triangle.Triangle;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.triangle.FanMesh;
+
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -44,8 +45,7 @@ import com.aventura.model.world.triangle.Triangle;
 
 public class Cone extends Element {
 
-	protected Vertex[] vertices;
-	protected Vertex[] summits; // In order to have different Vertex based normals, we need to have independent summit for each triangle
+	protected FanMesh mesh;
 	double height;
 	double ray;
 	int half_seg;
@@ -66,9 +66,27 @@ public class Cone extends Element {
 		this.center = new Vector4(0,0,0,0);
 		this.bottom_center = new Vector4(0,0,-height/2,0);
 		this.center = new Vector4(0,0,0,0);
-		createCone();
+		createCone(null);
 	}
 
+	/**
+	 * Default creation of a Cone around Z axis 
+	 * @param height of the Cone
+	 * @param ray of the base circle of the Cone
+	 * @param half_seg is half the number of segments for 360 degrees circle
+	 * @param tex the texture to wrap this Cone
+	 */
+	public Cone(double height, double ray, int half_seg, Texture tex) {
+		super();
+		subelements = null;
+		this.ray = ray;
+		this.height = height;
+		this.half_seg = half_seg;
+		this.center = new Vector4(0,0,0,0);
+		this.bottom_center = new Vector4(0,0,-height/2,0);
+		this.center = new Vector4(0,0,0,0);
+		createCone(tex);
+	}
 	/**
 	 * Creation of a Cone moved to a given position
 	 * @param height of the Cone
@@ -76,103 +94,54 @@ public class Cone extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 * @param center to which the Cone is moved at creation (Vector3)
 	 */
-	public Cone(double height, double ray, int half_seg, Vector3 center) {
-		super();
-		subelements = null;
-		this.ray = ray;
-		this.height = height;
-		this.half_seg = half_seg;
-		this.bottom_center = new Vector4(0,0,-height/2,0);
-		this.center = new Vector4(center);
-		createCone();
-	}
-	
-	/**
-	 * Creation of a Cone moved to a given position
-	 * @param height of the Cone
-	 * @param ray of the base circle of the Cone
-	 * @param half_seg is half the number of segments for 360 degrees circle
-	 * @param center to which the Cone is moved at creation (Vector4)
-	 */
-	public Cone(double height, double ray, int half_seg, Vector4 center) {
-		super();
-		subelements = null;
-		this.ray = ray;
-		this.height = height;
-		this.half_seg = half_seg;
-		this.bottom_center = new Vector4(0,0,-height/2,0);
-		this.center = center;
-		createCone();
-	}
 
 	
-	protected void createCone() {
+	protected void createCone(Texture t) {
 		
-		vertices = new Vertex[half_seg*2]; // (n) vertices on each circles
-		summits = new Vertex[half_seg*2]; // (n) summits
+		mesh = new FanMesh(this,half_seg*2+1, t); // (n) x 2 vertices on each circles + 1 duplicqte Vertex for RectangleMesh / Texture
+		
 		double alpha = Math.PI/half_seg;
 		
 		// Create vertices
 		
 		// Create summits (same Vertex for all summits)
 		Vector4 summit = new Vector4(0, 0, height/2,  1);
-		for (int i=0; i<half_seg*2; i++) {
-			summits[i] = createVertex(summit.plus(center));		
-		}
-		//summit = new Vertex(new Vector4(0, 0, height/2,  1));
+		mesh.setSummit(summit);
 		
 		// Create bottom vertices
-		for (int i=0; i<half_seg*2; i++) {
+		for (int i=0; i<=half_seg*2; i++) {
 			
 			double sina = Math.sin(alpha*i);
 			double cosa = Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
-			vertices[i] = createVertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
-			
+			mesh.getVertex(i).setPos(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
 		}
 		
 		// Create Triangles
-		Triangle t; // local variable
-		for (int i=0; i<half_seg*2-1; i++) {
-			
-			// For each face of the cylinder, create 2 Triangles
-			t = new Triangle(summits[i], vertices[i], vertices[i+1]);
-			
-			// Add triangle to the Element
-			this.addTriangle(t);			
-		}
-		// Create last triangle to close the Cone
-		t = new Triangle(summits[half_seg*2-1], vertices[half_seg*2-1], vertices[0]);
-		
-		// Add last triangle
-		this.addTriangle(t);			
-			
+		mesh.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);	
 	}
 	
 	@Override
 	public void calculateNormals() {
 		Vector4 n, u;
-			
+		Vector4 summit = mesh.getSummit(0).getPos();
 		// Create normals of vertices
-		for (int i=0; i<half_seg*2; i++) {
+		for (int i=0; i<=half_seg*2; i++) {
 
 			// For each bottom Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
-			u = (summits[i].getPos().minus(bottom_center)).times(vertices[i].getPos().minus(bottom_center));
-			n = (vertices[i].getPos().minus(summits[i].getPos())).times(u);
+			u = (summit.minus(bottom_center)).times(mesh.getVertex(i).getPos().minus(bottom_center));
+			n = (mesh.getVertex(i).getPos().minus(summit)).times(u);
 			n.normalize();
-			vertices[i].setNormal(n.V3());
+			mesh.getVertex(i).setNormal(n.V3());
 			
 			// For each summit, use the ray vector from top center to the Vertex and normalize it
-			if (i<half_seg*2-1) {
-				//n = (vertices[i+1].getPosition().minus(vertices[i].getPosition())).times(summits[i].getPosition().minus(vertices[i].getPosition()));
-				n = (vertices[i].getPos().minus(summits[i].getPos())).times(vertices[i+1].getPos().minus(summits[i].getPos()));
-			} else { // last vertex -> i+1 = 0
-				n = (vertices[i].getPos().minus(summits[i].getPos())).times(vertices[0].getPos().minus(summits[i].getPos()));			
+			if (i<half_seg*2) {
+				n = (mesh.getVertex(i).getPos().minus(summit)).times(mesh.getVertex(i+1).getPos().minus(summit));
+				n.normalize();
+				mesh.getSummit(i).setNormal(n.V3());
 			}
-			n.normalize();
-			summits[i].setNormal(n.V3());
 		}
 		calculateSubNormals();
 	}

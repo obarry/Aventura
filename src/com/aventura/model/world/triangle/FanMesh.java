@@ -58,19 +58,20 @@ public class FanMesh extends Mesh {
 	public static final double TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE = 0.0002;
 
 	int nbv;
-	Vertex summit;
+	Vertex[] summits;
 	Vertex[] vertices;
 
 	/**
 	 * Create a FanMesh without Texture
 	 * @param e the Element to which all created vertices of the FanMesh should belong
-	 * @param n the number of base vertices of the FanMesh
+	 * @param n the number of base vertices of the FanMesh >= 1
 	 */
 	public FanMesh(Element e, int n) {
 		super(e);
 		this.nbv = n;
-		summit = new Vertex();
-		e.addVertex(summit);
+		
+		// Need to have 1 summit for each triangle to distinguish normals at Vertex level for each (summit) of triangle even if they are all same Vertex
+		summits = elm.createVertexMesh(n-1);
 		vertices = elm.createVertexMesh(n);
 	}
 	
@@ -84,8 +85,8 @@ public class FanMesh extends Mesh {
 		super(e);
 		this.nbv = n;
 		this.tex = t;
-		summit = new Vertex();
-		e.addVertex(summit);
+		// Need to have 1 summit for each triangle to distinguish normals at Vertex level for each (summit) of triangle even if they are all same Vertex
+		summits = elm.createVertexMesh(n-1);
 		vertices = elm.createVertexMesh(n);
 	}
 
@@ -116,7 +117,7 @@ public class FanMesh extends Mesh {
 				//       i  i+1
 
 			
-				t = new Triangle(vertices[i], vertices[i+1], summit);
+				t = new Triangle(vertices[i], vertices[i+1], summits[i]);
 
 				// Texture application on the FanMesh, assuming regular stitches
 				if (tex!=null) {
@@ -165,8 +166,18 @@ public class FanMesh extends Mesh {
 		return vertices[i];
 	}
 	
-	public Vertex getSummit() {
-		return summit;
+	public void setSummit(Vector4 v) {
+		for (int i=0; i<summits.length; i++) {
+			summits[i].setPos(v);
+		}
+	}
+	
+	public Vertex[] getSummits() {
+		return summits;
+	}
+
+	public Vertex getSummit(int i) {
+		return summits[i];
 	}
 
 }
