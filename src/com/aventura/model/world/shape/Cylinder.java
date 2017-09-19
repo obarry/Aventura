@@ -72,8 +72,9 @@ public class Cylinder extends Element {
 	 * @param height of the Cylinder
 	 * @param ray of the top and bottom circles of the Cylinder
 	 * @param half_seg is half the number of segments for 360 degrees circles
+	 * @param tex the Texture to wrap this Cylinder
 	 */
-	public Cylinder(double height, double ray, int half_seg, Texture t) {
+	public Cylinder(double height, double ray, int half_seg, Texture tex) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -81,7 +82,7 @@ public class Cylinder extends Element {
 		this.half_seg = half_seg;
 		this.top_center = new Vector4(0,0,height/2,0);
 		this.bottom_center = new Vector4(0,0,-height/2,0);
-		createCylinder(t);
+		createCylinder(tex);
 	}
 	protected void createCylinder(Texture t) {
 		
