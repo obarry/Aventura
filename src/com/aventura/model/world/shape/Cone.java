@@ -44,6 +44,8 @@ import com.aventura.model.world.triangle.FanMesh;
  */
 
 public class Cone extends Element {
+	
+	protected static final String CONE_DEFAULT_NAME = "cone";
 
 	protected FanMesh mesh;
 	double height;
@@ -58,7 +60,7 @@ public class Cone extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 */
 	public Cone(double height, double ray, int half_seg) {
-		super();
+		super(CONE_DEFAULT_NAME);
 		subelements = null;
 		this.ray = ray;
 		this.height = height;
@@ -77,7 +79,7 @@ public class Cone extends Element {
 	 * @param tex the texture to wrap this Cone
 	 */
 	public Cone(double height, double ray, int half_seg, Texture tex) {
-		super();
+		super(CONE_DEFAULT_NAME);
 		subelements = null;
 		this.ray = ray;
 		this.height = height;

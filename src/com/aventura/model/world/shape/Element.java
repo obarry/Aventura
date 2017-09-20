@@ -120,6 +120,8 @@ import com.aventura.model.world.triangle.Triangle;
  */
 public class Element implements Transformable {
 	
+	protected static final String ELEMENT_DEFAULT_NAME = "element";
+	protected String name;
 	
 	protected ArrayList<Element> subelements; // To create a hierarchy of elements - not necessarily used
 	protected ArrayList<Triangle> triangles;  // Triangles related to this element
@@ -142,11 +144,25 @@ public class Element implements Transformable {
 	 */
 	public Element() {
 		super();
+		this.name = ELEMENT_DEFAULT_NAME;
 		triangles = new ArrayList<Triangle>();
 		vertices = new ArrayList<Vertex>();
 		transform = Matrix4.IDENTITY; // By default
 	}
-	
+
+	/**
+	 * Create an open Element (not closed)
+	 * 
+	 * @param isClosed a boolean indicated if Element is closed (true) or not (false)
+	 */
+	public Element(String name) {
+		super();
+		this.name = name;
+		triangles = new ArrayList<Triangle>();
+		vertices = new ArrayList<Vertex>();
+		transform = Matrix4.IDENTITY; // By default
+	}
+
 	/**
 	 * Create an Element defining its "closeness" that is wether it is closed or open
 	 * 
@@ -154,12 +170,27 @@ public class Element implements Transformable {
 	 */
 	public Element(boolean isClosed) {
 		super();
-		triangles = new ArrayList<Triangle>();
-		vertices = new ArrayList<Vertex>();
-		transform = Matrix4.IDENTITY; // By default
+		this.name = ELEMENT_DEFAULT_NAME;
+		this.triangles = new ArrayList<Triangle>();
+		this.vertices = new ArrayList<Vertex>();
+		this.transform = Matrix4.IDENTITY; // By default
 		this.isClosed = isClosed;
 	}
 	
+	/**
+	 * Create an Element defining its "closeness" that is wether it is closed or open
+	 * 
+	 * @param isClosed a boolean indicated if Element is closed (true) or not (false)
+	 */
+	public Element(String name, boolean isClosed) {
+		super();
+		this.name = name;
+		this.triangles = new ArrayList<Triangle>();
+		this.vertices = new ArrayList<Vertex>();
+		this.transform = Matrix4.IDENTITY; // By default
+		this.isClosed = isClosed;
+	}
+
 	public boolean isLeaf() {
 		if (subelements == null) {
 			return true;
@@ -256,7 +287,7 @@ public class Element implements Transformable {
 		return triangles.get(i);
 	}
 	
-	public int getNbOfTriangles() {
+	public int getNbTriangles() {
 		return triangles.size();
 	}
 
@@ -268,7 +299,7 @@ public class Element implements Transformable {
 		return vertices.get(i);
 	}
 	
-	public int getNbOfVertices() {
+	public int getNbVertices() {
 		return vertices.size();
 	}
 
@@ -295,7 +326,7 @@ public class Element implements Transformable {
 	@Override
 	public void transform(Matrix4 transformation) {
 
-		for (int i=0; i<this.getNbOfVertices(); i++) {
+		for (int i=0; i<this.getNbVertices(); i++) {
 			Vertex v = this.getVertex(i);
 			v.setWorldPos(transformation.times(v.getPos()));
 		}
@@ -332,7 +363,19 @@ public class Element implements Transformable {
 	public void setClosing(boolean isClosed) {
 		this.isClosed = isClosed;
 	}
-	
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String toString() {
+		return "Element name: "+name+"\nTriangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nElement color: "+elementColor+"\nSpecular color: "+specularColor+" Specular exponent: "+specularExponent;		
+	}
+
 	/* (non-Javadoc)
 	 * @see com.aventura.model.world.NormalGeneration#calculateNormals()
 	 * This method calculate normals of each Triangle.

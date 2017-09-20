@@ -176,7 +176,7 @@ public class ModelView {
 	 * @param e the Element
 	 */
 	public void transformVertices(Element e) {
-		for (int i=0; i<e.getNbOfVertices(); i++) {
+		for (int i=0; i<e.getNbVertices(); i++) {
 			transform(e.getVertex(i));
 		}
 	}
