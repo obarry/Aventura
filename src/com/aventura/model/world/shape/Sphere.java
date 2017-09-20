@@ -62,6 +62,8 @@ import com.aventura.model.world.triangle.Triangle;
  */
 public class Sphere extends Element {
 	
+	protected static final String SPHERE_DEFAULT_NAME = "sphere";
+
 	protected Vertex[][] vertices;
 	protected Vertex northPole, southPole;
 	double ray;
@@ -69,7 +71,7 @@ public class Sphere extends Element {
 	protected Vector4 center;
 	
 	public Sphere(double ray, int half_seg) {
-		super(true); // A Sphere is a closed Element
+		super(SPHERE_DEFAULT_NAME, true); // A Sphere is a closed Element
 		subelements = null;
 		this.ray = ray;
 		this.half_seg = half_seg;

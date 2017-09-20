@@ -47,6 +47,8 @@ import com.aventura.model.world.triangle.Triangle;
 
 public class Torus extends Element {
 
+	protected static final String TORUS_DEFAULT_NAME = "torus";
+
 	protected Vertex[][] vertices;
 	protected Vector4[] centers;
 	double torus_ray, pipe_ray;
@@ -60,7 +62,7 @@ public class Torus extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
 	public Torus(double torus_ray, double pipe_ray, int half_circ, int half_seg) {
-		super(true); // A Torus is a closed Element
+		super(TORUS_DEFAULT_NAME, true); // A Torus is a closed Element
 		subelements = null;
 		this.torus_ray = torus_ray;
 		this.pipe_ray = pipe_ray;

@@ -86,7 +86,7 @@ public class TestRasterizer3 {
 		Color color1 = Color.DARK_GRAY;
 		Color color;
 		int ci =0;
-		for (int i=0; i<s.getNbOfTriangles(); i++) {
+		for (int i=0; i<s.getNbTriangles(); i++) {
 			if (ci==0) color = color0; else color = color1;
 			s.getTriangle(i).setColor(color);
 			ci++;

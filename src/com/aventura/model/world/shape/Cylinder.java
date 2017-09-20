@@ -44,6 +44,8 @@ import com.aventura.model.world.triangle.RectangleMesh;
 
 public class Cylinder extends Element {
 	
+	protected static final String CYLINDER_DEFAULT_NAME = "cylinder";
+	
 	protected RectangleMesh rectangleMesh;
 	double height;
 	double ray;
@@ -57,7 +59,7 @@ public class Cylinder extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
 	public Cylinder(double height, double ray, int half_seg) {
-		super();
+		super(CYLINDER_DEFAULT_NAME);
 		subelements = null;
 		this.ray = ray;
 		this.height = height;
@@ -75,7 +77,7 @@ public class Cylinder extends Element {
 	 * @param tex the Texture to wrap this Cylinder
 	 */
 	public Cylinder(double height, double ray, int half_seg, Texture tex) {
-		super();
+		super(CYLINDER_DEFAULT_NAME);
 		subelements = null;
 		this.ray = ray;
 		this.height = height;

@@ -22,7 +22,6 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
-import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Cone;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
@@ -102,6 +101,8 @@ public class TestConeTexture {
 		world.addElement(cone);
 		world.setBackgroundColor(new Color(10,10,50));
 		
+		System.out.println(world);
+		System.out.println(cone);
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		

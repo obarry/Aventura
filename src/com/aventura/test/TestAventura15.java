@@ -63,7 +63,7 @@ import com.aventura.view.View;
 * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
 */
 
-public class TestAventura12 {
+public class TestAventura15 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -71,7 +71,7 @@ public class TestAventura12 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 12");
+		JFrame frame = new JFrame("Test Aventura 15");
 		// Set the size of the frame
 		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
@@ -84,7 +84,7 @@ public class TestAventura12 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura12.this.view.draw(graph);
+		    	TestAventura15.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -107,13 +107,22 @@ public class TestAventura12 {
 	public static void main(String[] args) {
 
 		System.out.println("********* STARTING APPLICATION *********");
-		
+
+		Texture texbricks = new Texture("resources/test/texture_bricks_204x204.jpg");
+		//Texture texblue = new Texture("resources/test/texture_blueground_204x204.jpg");
+		//Texture texwood = new Texture("resources/test/texture_woodfloor_160x160.jpg");
+		Texture texdamier = new Texture("resources/test/texture_damier_600x591.gif");
+		//Texture texgrass = new Texture("resources/test/texture_grass_900x600.jpg");
+		Texture texstone = new Texture("resources/test/texture_ground_stone_600x600.jpg");
+		//Texture texsnow = new Texture("resources/test/texture_snow_590x590.jpg");
+
+
 		// Camera
 		Vector4 eye = new Vector4(10,6,3,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestAventura12 test = new TestAventura12();
+		TestAventura15 test = new TestAventura15();
 				
 		// Create a new World
 		System.out.println("********* Creating World");
@@ -128,12 +137,12 @@ public class TestAventura12 {
 					// Create an Element of a random type
 					switch(Math.round((float)Math.random()*5)) {
 					case 0:
-						e = new Cone(1,0.5,32);
-						e.setColor(Color.YELLOW);
+						e = new Cone(1,0.5,32, texdamier);
+						//e.setColor(Color.YELLOW);
 						break;
 					case 1:
-						e = new Cylinder(1,0.5,32);
-						e.setColor(Color.CYAN);
+						e = new Cylinder(1,0.5,32, texbricks);
+						//e.setColor(Color.CYAN);
 						break;
 					case 2:
 						e = new Sphere(0.8,32);
@@ -148,8 +157,8 @@ public class TestAventura12 {
 						e.setColor(Color.ORANGE);
 						break;
 					case 5:
-						e = new Trellis(1,1,8,8);
-						e.setColor(Color.GREEN);
+						e = new Trellis(1,1,8,8, texstone);
+						//e.setColor(Color.GREEN);
 						break;
 					default:
 						e = null;
@@ -182,6 +191,7 @@ public class TestAventura12 {
 		View view = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
+		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
 		renderer.setView(view);

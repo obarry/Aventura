@@ -34,6 +34,8 @@ import com.aventura.model.world.triangle.Triangle;
  */
 public class Pyramid extends Element {
 
+	protected static final String PYRAMID_DEFAULT_NAME = "pyramid";
+
 	protected Vertex[][] vertices;
 	protected Vertex summit;
 	
@@ -46,7 +48,7 @@ public class Pyramid extends Element {
 	 * @param z_dim dimension of the pyramid on z axis
 	 */
 	public Pyramid(double x_dim, double y_dim, double z_dim) {
-		super();
+		super(PYRAMID_DEFAULT_NAME);
 		subelements = null;
 		createPyramid(x_dim, y_dim, z_dim);
 	}

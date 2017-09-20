@@ -34,6 +34,8 @@ import com.aventura.model.world.triangle.Triangle;
  */
 public class Box extends Element {
 	
+	protected static final String CONE_DEFAULT_NAME = "box";
+
 	protected Vertex[][][] vertices;
 		
 	/**
@@ -44,7 +46,7 @@ public class Box extends Element {
 	 * @param z_dim dimension of the box on z axis
 	 */
 	public Box(double x_dim, double y_dim, double z_dim) {
-		super(true); // A Box is a closed Element
+		super(CONE_DEFAULT_NAME, true); // A Box is a closed Element
 		subelements = null;
 		createBox(x_dim, y_dim, z_dim);
 	}

@@ -75,7 +75,7 @@ public class TestRasterizer15 {
 
 //		Tracer.info = true;
 //		Tracer.function = true;
-
+		
 		// Camera
 		//Vector4 eye = new Vector4(4,2,3,1);
 		Vector4 eye = new Vector4(0,0,5,1);

@@ -50,6 +50,8 @@ import com.aventura.model.world.triangle.RectangleMesh;
  */
 public class Trellis extends Element {
 	
+	protected static final String TRELLIS_DEFAULT_NAME = "trellis";
+
 	protected RectangleMesh rectangleMesh;
 	protected int nx, ny;
 	protected double width, length;
@@ -64,7 +66,7 @@ public class Trellis extends Element {
 	 * @param ny
 	 */
 	public Trellis(double width, double length, int nx, int ny) {
-		super();
+		super(TRELLIS_DEFAULT_NAME);
 		subelements = null;
 		this.width = width;
 		this.length = length;
@@ -72,6 +74,28 @@ public class Trellis extends Element {
 		this.ny = ny;
 		Vector4 position = new Vector4(-width/2,-length/2,0,0);
 		rectangleMesh = new RectangleMesh(this, nx+1, ny+1);
+		initTrellis(position);
+		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
+	}
+
+	/**
+	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
+	 * z axis altitudes are set to 0.
+	 * This Trellis is centered on origin
+	 * @param width
+	 * @param length
+	 * @param nx
+	 * @param ny
+	 */
+	public Trellis(double width, double length, int nx, int ny, Texture tex) {
+		super(TRELLIS_DEFAULT_NAME);
+		subelements = null;
+		this.width = width;
+		this.length = length;
+		this.nx = nx;
+		this.ny = ny;
+		Vector4 position = new Vector4(-width/2,-length/2,0,0);
+		rectangleMesh = new RectangleMesh(this, nx+1, ny+1, tex);
 		initTrellis(position);
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
 	}
@@ -87,7 +111,7 @@ public class Trellis extends Element {
 	 * @param array
 	 */
 	public Trellis(double width, double length, int nx, int ny, double [][] array) throws WrongArraySizeException {
-		super();
+		super(TRELLIS_DEFAULT_NAME);
 		subelements = null;
 		this.width = width;
 		this.length = length;
@@ -112,8 +136,8 @@ public class Trellis extends Element {
 	 * @param ny
 	 * @param array
 	 */
-	public Trellis(double width, double length, int nx, int ny, double [][] array, Texture t) throws WrongArraySizeException {
-		super();
+	public Trellis(double width, double length, int nx, int ny, double [][] array, Texture tex) throws WrongArraySizeException {
+		super(TRELLIS_DEFAULT_NAME);
 		subelements = null;
 		this.width = width;
 		this.length = length;
@@ -123,7 +147,7 @@ public class Trellis extends Element {
 		if ((array.length != nx+1) || (array[0].length != ny+1)) {
 			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
 		}
-		rectangleMesh = new RectangleMesh(this, nx+1, ny+1, t);
+		rectangleMesh = new RectangleMesh(this, nx+1, ny+1, tex);
 		initTrellis(position, array);
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
 	}
@@ -165,7 +189,7 @@ public class Trellis extends Element {
 	}
 	
 	public String toString() {
-		return "Trellis (width: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+")\nV[0,0]="+rectangleMesh.getVertex(0,0)+"\nV[nx,0]="+rectangleMesh.getVertex(nx,0)+"\nV[0,ny]="+rectangleMesh.getVertex(0,ny)+"\nV[nx,ny]="+rectangleMesh.getVertex(nx,ny);
+		return super.toString()+"\nwidth: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+"\nV[0,0]="+rectangleMesh.getVertex(0,0)+"\nV[nx,0]="+rectangleMesh.getVertex(nx,0)+"\nV[0,ny]="+rectangleMesh.getVertex(0,ny)+"\nV[nx,ny]="+rectangleMesh.getVertex(nx,ny);
 	}
 
 	@Override

@@ -32,7 +32,10 @@ import com.aventura.math.vector.Vector3;
  */
 public class Cube extends Box {
 	
+	protected static final String CUBE_DEFAULT_NAME = "cube";
+	
 	public Cube(double length) {
 		super(length, length, length);
+		this.setName(CUBE_DEFAULT_NAME);
 	}
 }

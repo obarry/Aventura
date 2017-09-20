@@ -3,10 +3,8 @@ package com.aventura.model.world;
 import java.awt.Color;
 import java.util.ArrayList;
 
-import com.aventura.math.transform.Repere;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.model.world.shape.Element;
-import com.aventura.model.world.triangle.Triangle;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -33,36 +31,44 @@ import com.aventura.model.world.triangle.Triangle;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
+ * World is the root class for all the hierarchy of Elements containing world geometry
+ * World can only contain Elements that contain Vertices and Triangles
+ * Elments can contain other Elements recursively, creating a tree where World is the root
+ * 
+ * Other attributes of World are related to shared characteristics of this world.
+ * Nothing should prevent creating several different worlds.
+ * 
  * @author Olivier BARRY
  * @since May 2016
  */
 public class World {
 	
-	protected Repere rep;
+	protected String name;
 	
 	protected ArrayList<Element> elements; // Elements connected to the world (not all Elements as some elements may also have subelements)
-	
-	//protected ArrayList<Vertex> vertices;    // All vertices of the World
-	protected ArrayList<Triangle> triangles; // All triangles of the World
-	
+		
 	// Color Management
 	protected Color backgroundColor = Color.BLACK; // Color of the background ("sky")
 	protected Color worldColor = Color.WHITE; // Color of the world's elements unless specified at Element or Vertex level (lowest level priority)
 
 	public World() {
-		elements  = new ArrayList<Element>();
-		//vertices  = new ArrayList<Vertex>();
-		triangles = new ArrayList<Triangle>();
+		this.name = "world";
+		this.elements  = new ArrayList<Element>();
+	}
+	
+	public World(String name) {
+		this.name = name;
+		this.elements  = new ArrayList<Element>();
 	}
 	
 	public Element createElement() {
 		Element e = new Element();
-		elements.add(e);
+		this.elements.add(e);
 		return e;
 	}
 	
 	public void addElement(Element e) {
-		elements.add(e);
+		this.elements.add(e);
 	}
 	
 	public ArrayList<Element> getElements() {
@@ -106,6 +112,38 @@ public class World {
 		for (int i=0; i<elements.size(); i++) {
 			elements.get(i).combineTransformation(t);
 		}
+	}
+	
+	public int getNbElements() {
+		return elements.size();
+	}
+	
+	public int getNbTriangles() {
+		int n = 0;
+		for (int i=0; i<elements.size(); i++) {
+			n = n + elements.get(i).getNbTriangles();
+		}
+		return n;
+	}
+	
+	public int getNbVertices() {
+		int n = 0;
+		for (int i=0; i<elements.size(); i++) {
+			n = n + elements.get(i).getNbVertices();
+		}
+		return n;
+	}
+	
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String toString() {
+		return "World name: "+name+"\nElements: "+getNbElements()+", Triangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nBackground color: "+backgroundColor+"\nWorld color: "+worldColor;		
 	}
 
 }
