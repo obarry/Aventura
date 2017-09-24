@@ -59,6 +59,18 @@ public class RectangleMesh extends Mesh {
 	int nbv_x, nbv_y = 0;
 	Vertex[][] vertices = null; // Table of vertices
 
+	public RectangleMesh(Element e) {
+		super(e);
+	}
+	
+	public RectangleMesh(Element e, Vertex[][] vertices, Texture t) {
+		super(e);
+		this.vertices = vertices;
+		this.nbv_x = vertices.length;
+		this.nbv_y = vertices[0].length;
+		this.tex = t;
+	}
+	
 	public RectangleMesh(Element e, int n, int p) {
 		super(e);
 		this.nbv_x = n;
@@ -74,6 +86,34 @@ public class RectangleMesh extends Mesh {
 		vertices = elm.createVertexMesh(n, p);
 	}
 	
+	public void initVertices(int n, int p) {
+		vertices = new Vertex[n][p];
+	}
+	
+	public void setVertex(int i, int j, Vertex v) {
+		vertices[i][j] = v;
+	}
+	
+	/**
+	 * Create triangles of the RectangleMesh with 2 triangles in each stitch of the mesh.
+	 * Note that normal of triangles are naturally all oriented the same for a mesh, whatever the beloz orientation of triangles.
+	 * 
+	 * The orientation of triangles in the mesh can be one of MESH_ORIENTED_TRIANGLES or MESH_ALTERNATE_TRIANGLES:
+	 * 
+	 * MESH_ORIENTED_TRIANGLES: in each stitch, create 2 triangles as follows (ORIENTED same in each stitch)
+	 *   j+1 +---+
+	 *       | / |
+	 *    j  +---+
+	 *       i  i+1
+	 * 
+	 * MESH_ALTERNATE_TRIANGLES: in every 2 stitches, create 2 triangles as follows (ORIENTED same in each stitch)
+	 *   j+1 +---+
+	 *       | / |
+	 *    j  +---+
+	 *       i  i+1
+	 * 
+	 * @param type is one of MESH_ORIENTED_TRIANGLES or MESH_ALTERNATE_TRIANGLES
+	 */
 	public void createTriangles(int type) {
 		
 		Triangle t1, t2;
