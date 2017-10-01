@@ -38,7 +38,7 @@ import com.aventura.model.world.shape.Element;
 public class Mesh {
 	
 	// Referred Element
-	Element elm;
+	Element elm = null;
 	
 	protected Texture tex = null;
 	
