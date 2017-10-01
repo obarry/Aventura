@@ -486,18 +486,14 @@ public class RenderEngine {
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Display normals for triangle. Normal of triangle "+t.getNormal());
 		
-		// Get the 3 vertices from Triangle
-		Vertex p1 = t.getV1();
-		Vertex p2 = t.getV2();
-		Vertex p3 = t.getV3();
-		
 		if (t.isTriangleNormal()) { // Normal at Triangle level
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+t.getNormal());
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
 			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = t.getCenter();
+			//Vertex n = new Vertex(c.getPos().plus(t.getWorldNormal()));
+			Vertex n = new Vertex(c.getPos().plus(t.getNormal()));
 			modelView.transform(c);
-			Vertex n = new Vertex(c.getPos().plus(t.getWorldNormal()));
 			modelView.transform(n);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
@@ -505,9 +501,15 @@ public class RenderEngine {
 			rasterizer.drawLine(s, renderContext.normalsColor);
 			
 		} else { // Normals at Vertex level
-			Vertex n1, n2, n3;
+			
+			// Get the 3 vertices from Triangle
+			Vertex p1 = t.getV1();
+			Vertex p2 = t.getV2();
+			Vertex p3 = t.getV3();
+			
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level");
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
+			Vertex n1, n2, n3;
 			n1 = new Vertex(p1.getPos().plus(p1.getWorldNormal()));
 			n2 = new Vertex(p2.getPos().plus(p2.getWorldNormal()));
 			n3 = new Vertex(p3.getPos().plus(p3.getWorldNormal()));
