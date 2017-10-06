@@ -87,18 +87,22 @@ public class TestBoxTexture {
 		
 		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
-		Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
+		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
+		//Texture tex = new Texture("resources/test/texture_metal_mesh_463x463.jpg");
+		//Texture tex = new Texture("resources/test/texture_old_leather_box_800x610.jpg");
+		Texture tex = new Texture("resources/test/texture_metal_plate_626x626.jpg");
+		
 		
 		// Create World
 		World world = new World();
 		
 		Box elm = new Box(3,2,1, tex);
 		//elm.setColor(new Color(100,200,255));
-		//box.setSpecularExp(8);
+		//elm.setSpecularExp(8);
 		world.addElement(elm);
 		world.setBackgroundColor(new Color(20,10,5));
 		
@@ -108,8 +112,8 @@ public class TestBoxTexture {
 		
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-1,1), 0.7f);
-		AmbientLight al = new AmbientLight(0.3f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5,0,1), 0.8f);
+		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, false);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
