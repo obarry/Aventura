@@ -37,7 +37,7 @@ public class TestBoxTexture {
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Box with Texture");
 		// Set the size of the frame
-		frame.setSize(1000,600);
+		frame.setSize(1500,900);
 		
 		// Create the view to be displayed
 		view = new SwingView(context, frame);
@@ -95,12 +95,14 @@ public class TestBoxTexture {
 		//Texture tex = new Texture("resources/test/texture_metal_mesh_463x463.jpg");
 		//Texture tex = new Texture("resources/test/texture_old_leather_box_800x610.jpg");
 		Texture tex = new Texture("resources/test/texture_metal_plate_626x626.jpg");
-		
+		//Texture tex = new Texture("resources/test/texture_stone1_1700x1133.jpg");
+		//Texture tex = new Texture("resources/test/texture_rock_stone_400x450.jpg");
+
 		
 		// Create World
 		World world = new World();
 		
-		Box elm = new Box(3,2,1, tex);
+		Box elm = new Box(3,2,1.5, tex);
 		//elm.setColor(new Color(100,200,255));
 		//elm.setSpecularExp(8);
 		world.addElement(elm);
@@ -116,7 +118,7 @@ public class TestBoxTexture {
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);

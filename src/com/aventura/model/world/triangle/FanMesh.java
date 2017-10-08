@@ -144,7 +144,7 @@ public class FanMesh extends Mesh {
 //					t.setTextureOrientation(Triangle.TEXTURE_HORIZONTAL);
 					t.setTextureOrientation(Triangle.TEXTURE_VERTICAL);
 					t.setTexture(tex, tv1, tv2, tv3);
-
+					t.setRectoVerso(!elm.isClosed());
 				}
 
 				elm.addTriangle(t);

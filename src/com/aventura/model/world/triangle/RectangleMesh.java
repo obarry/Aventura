@@ -155,6 +155,8 @@ public class RectangleMesh extends Mesh {
 						// Set texture vectors to newly created triangles
 						t1.setTexture(tex, tv1, tv2, tv3);
 						t2.setTexture(tex, tv3, tv4, tv1);
+						t1.setRectoVerso(!elm.isClosed());
+						t2.setRectoVerso(!elm.isClosed());
 					}
 					
 					elm.addTriangle(t1);

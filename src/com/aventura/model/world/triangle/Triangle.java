@@ -61,9 +61,6 @@ public class Triangle {
 	protected Vector4 t2;
 	protected Vector4 t3;
 	
-	// Flag for isotropic, vertical or horizontal texture interpolation of this triangle, default is ISOTROPIC
-	protected int tex_orientation = TEXTURE_ISOTROPIC;
-	
 	// And an optional Normal to the triangle (default is normal at vertices level)
 	protected boolean triangleNormal = false;
 	protected Vector3 normal = null;
@@ -72,16 +69,21 @@ public class Triangle {
 	protected Vector3 wld_normal = null; // Normal in World coordinates
 	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates
 	
+	// Recto Verso characteristics (should the face of this Triangle opposite to normal(s) be displayed?)
+	protected boolean rectoVerso = false; // Default is false (closed Elements) but can be set to true for open Elements
+	
 	// ------------------------
 	// Physical characteristics
 	// ------------------------
 	
-	// Color if at triangle level
-	protected Color color = null;
-	
 	// Texture
 	Texture tex = null;
+	// Flag for isotropic, vertical or horizontal texture interpolation of this triangle, default is ISOTROPIC
+	protected int tex_orientation = TEXTURE_ISOTROPIC;
 	
+	// Color if at triangle level
+	protected Color color = null;
+		
 	public Triangle() {
 		this.v1 = null;
 		this.v2 = null;
@@ -101,6 +103,8 @@ public class Triangle {
 		this.normal = (t.normal != null) ? new Vector3(t.normal) : null;
 		this.color =  t.color;
 		this.tex = t.tex;
+		this.tex_orientation = t.tex_orientation;
+		this.rectoVerso = t.rectoVerso;
 	}
 	
 	/**
@@ -282,6 +286,15 @@ public class Triangle {
 	public void setTextureOrientation(int t) {
 		this.tex_orientation = t;
 	}
+
+	public boolean isRectoVerso() {
+		return rectoVerso;
+	}
+
+	public void setRectoVerso(boolean rectoVerso) {
+		this.rectoVerso = rectoVerso;
+	}
+
 
 	/**
 	 * Calculate the Normal as V1V2 ^ V1V3 (normalized)

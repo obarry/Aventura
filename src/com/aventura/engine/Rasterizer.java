@@ -214,7 +214,7 @@ public class Rasterizer {
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 normal = t.getWorldNormal();
-			Color shadedCol = computeShadedColor(col, normal, null, e, sc);
+			Color shadedCol = computeShadedColor(col, normal, null, e, sc, t.isRectoVerso());
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
@@ -229,9 +229,9 @@ public class Rasterizer {
 			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).normalize();
 			
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), viewer1.V3(), e, sc));
-			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), viewer2.V3(), e, sc));
-			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), viewer3.V3(), e, sc));					
+			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), viewer1.V3(), e, sc, t.isRectoVerso()));
+			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), viewer2.V3(), e, sc, t.isRectoVerso()));
+			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), viewer3.V3(), e, sc, t.isRectoVerso()));					
 		}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
@@ -534,7 +534,7 @@ public class Rasterizer {
 	 * @param normal of the surface in this area
 	 * @return
 	 */
-	protected Color computeShadedColor(Color baseCol, Vector3 normal, Vector3 viewer, float e, Color sc) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+	protected Color computeShadedColor(Color baseCol, Vector3 normal, Vector3 viewer, float e, Color sc, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 		
 		// Table of colors to be mixed
 		Color [] c = new Color[3];
@@ -559,12 +559,12 @@ public class Rasterizer {
 			if (lighting.hasDirectional()) {
 				// Compute the dot product
 				dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
+				if (rectoVerso) dotNL = Math.abs(dotNL);
 				if (dotNL > 0) {
 					
 					// Directional Light
 					c[1] = ColorTools.multColor(baseCol, dotNL);
 	
-					
 					// Secondary Shading: Specular reflection (from Directional light)
 					if (e>0) { // If e=0 this is considered as no specular reflection
 						float specular = 0;
