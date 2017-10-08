@@ -92,6 +92,11 @@ public class TestConeTexture {
 		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
+		//Texture tex = new Texture("resources/test/texture_metal_mesh_463x463.jpg");
+		//Texture tex = new Texture("resources/test/texture_old_leather_box_800x610.jpg");
+		//Texture tex = new Texture("resources/test/texture_metal_plate_626x626.jpg");
+		//Texture tex = new Texture("resources/test/texture_stone1_1700x1133.jpg");
+		//Texture tex = new Texture("resources/test/texture_rock_stone_400x450.jpg");
 		
 		// Create World
 		World world = new World();
