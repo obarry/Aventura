@@ -40,6 +40,11 @@ import com.aventura.tools.tracing.Tracer;
  */
 public class Texture {
 	
+	public static final int TEXTURE_DIRECTION_HORIZONTAL = 1;
+	public static final int TEXTURE_DIRECTION_VERTICAL = 2;
+	public static final int TEXTURE_ORIENTATION_NORMAL = 1;
+	public static final int TEXTURE_ORIENTATION_OPPOSITE = 2;
+	
 	// array containing data e.g. rgb values
 	protected Color[][] tex;
 	protected int width, height;
@@ -78,6 +83,86 @@ public class Texture {
         }
         // Flush BufferedImage data, they are no longer needed
         img.flush();
+	}
+
+	/**
+	 * Create a Texture from a bitmap file
+	 * @param fileName
+	 */
+	public Texture(String fileName, int direction, int horizontal_orientation, int vertical_orientation) {
+		BufferedImage img = null;
+		try {
+			img = ImageIO.read(new File(fileName));
+		} catch (IOException e) {
+			// TODO To be implemented, manage exception and safely return with an Error
+		}
+
+		if (direction == TEXTURE_DIRECTION_VERTICAL) {
+			this.height = img.getHeight();
+			this.width = img.getWidth();
+		} else if (direction == TEXTURE_DIRECTION_HORIZONTAL) {
+			// Reverse height and width
+			this.height = img.getWidth();
+			this.width = img.getHeight();
+		} else {
+			// Should never happen
+		}
+
+		tex = new Color[width][height];
+
+		for (int h=0; h<height; h++) {
+			for (int w=0; w<width; w++) {
+				if (direction == TEXTURE_DIRECTION_VERTICAL) {
+					
+					if (horizontal_orientation == TEXTURE_ORIENTATION_NORMAL) {
+						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
+							tex[w][h] = new Color(img.getRGB(w, h));
+						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
+							tex[w][h] = new Color(img.getRGB(w, height-h-1));
+						} else {
+							// Should never happen
+						}
+
+					} else if (horizontal_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
+						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
+							tex[w][h] = new Color(img.getRGB(width-w-1, h));
+						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
+							tex[w][h] = new Color(img.getRGB(width-w-1, height-h-1));
+						} else {
+							// Should never happen
+						}
+
+					} else {
+						// Should never happen
+					}
+					
+				} else if (direction == TEXTURE_DIRECTION_HORIZONTAL) {
+					if (horizontal_orientation == TEXTURE_ORIENTATION_NORMAL) {
+						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
+							tex[w][h] = new Color(img.getRGB(h, w)); // Inverse h and w reading
+						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
+							tex[w][h] = new Color(img.getRGB(height-h-1,w));
+						} else {
+							// Should never happen
+						}
+
+					} else if (horizontal_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
+						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
+							tex[w][h] = new Color(img.getRGB(h, width-w-1));
+						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
+							tex[w][h] = new Color(img.getRGB(height-h-1, width-w-1));
+						} else {
+							// Should never happen
+						}
+
+					} else {
+						// Should never happen
+					}
+				} 
+			}
+		}
+		// Flush BufferedImage data, they are no longer needed
+		img.flush();
 	}
 	
 	/**
