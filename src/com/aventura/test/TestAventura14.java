@@ -94,7 +94,7 @@ public class TestAventura14 {
 		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
-		Texture tex = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg");
+		Texture tex = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
 		//Texture tex = new Texture("resources/test/texture_stone1_1700x1133.jpg");
 		
 		// Create World

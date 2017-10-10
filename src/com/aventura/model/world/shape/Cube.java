@@ -1,6 +1,7 @@
 package com.aventura.model.world.shape;
 
 import com.aventura.math.vector.Vector3;
+import com.aventura.model.texture.Texture;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -38,4 +39,10 @@ public class Cube extends Box {
 		super(length, length, length);
 		this.setName(CUBE_DEFAULT_NAME);
 	}
+	
+	public Cube(double length, Texture t) {
+		super(length, length, length, t);
+		this.setName(CUBE_DEFAULT_NAME);
+	}
+
 }

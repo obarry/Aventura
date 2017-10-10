@@ -112,9 +112,15 @@ public class TestAventura15 {
 		//Texture texblue = new Texture("resources/test/texture_blueground_204x204.jpg");
 		//Texture texwood = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 		Texture texdamier = new Texture("resources/test/texture_damier_600x591.gif");
-		//Texture texgrass = new Texture("resources/test/texture_grass_900x600.jpg");
-		Texture texstone = new Texture("resources/test/texture_ground_stone_600x600.jpg");
+		Texture texgrass = new Texture("resources/test/texture_grass_900x600.jpg");
+		//Texture texstone = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture texsnow = new Texture("resources/test/texture_snow_590x590.jpg");
+		//Texture texmetal = new Texture("resources/test/texture_metal_mesh_463x463.jpg");
+		//Texture texleather = new Texture("resources/test/texture_old_leather_box_800x610.jpg");
+		Texture texmetalplate = new Texture("resources/test/texture_metal_plate_626x626.jpg");
+		//Texture texstone1 = new Texture("resources/test/texture_stone1_1700x1133.jpg");
+		//Texture texrock = new Texture("resources/test/texture_rock_stone_400x450.jpg");
+		Texture texcremedemarron = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
 
 
 		// Camera
@@ -141,7 +147,7 @@ public class TestAventura15 {
 						//e.setColor(Color.YELLOW);
 						break;
 					case 1:
-						e = new Cylinder(1,0.5,32, texbricks);
+						e = new Cylinder(1,0.5,32, texcremedemarron);
 						//e.setColor(Color.CYAN);
 						break;
 					case 2:
@@ -149,15 +155,36 @@ public class TestAventura15 {
 						e.setColor(Color.MAGENTA);
 						break;
 					case 3:
-						e = new Cube(1);
-						e.setColor(Color.PINK);
+						e = new Cube(1, texmetalplate);
+						//e.setColor(Color.PINK);
 						break;
 					case 4:
-						e = new Box(1,0.5,0.3);
-						e.setColor(Color.ORANGE);
+						e = new Box(1.5,1,0.5, texbricks);
+						//e.setColor(Color.ORANGE);
 						break;
 					case 5:
-						e = new Trellis(1,1,8,8, texstone);
+						
+						double size = 1.5;
+						int n = 10;
+						int nb_sin = 2;
+						double array[][] = new double[n+1][n+1];
+						for (int p=0; p<=n; p++) {
+							for (int q=0; q<=n; q++) {
+								double a = Math.PI*(double)nb_sin*(double)p/(double)n;
+								double b = Math.PI*(double)nb_sin*(double)q/(double)n;
+								array[p][q] = size*Math.sin(a)*Math.sin(b)/((double)nb_sin*2);
+
+							}
+						}
+						e = null;
+						try {
+							e = new Trellis(size, size, n, n, array, texgrass);
+						} catch (WrongArraySizeException ex) {
+							// TODO Auto-generated catch block
+							ex.printStackTrace();
+						}
+
+						//e = new Trellis(1.5,1.5,8,8, texgrass);
 						//e.setColor(Color.GREEN);
 						break;
 					default:
