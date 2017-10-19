@@ -178,14 +178,6 @@ public class Rasterizer {
 	//
 	// End methods for Segment only Rendering
 	
-	public void rasterizePlainTriangle(Triangle t, Color c) {
-		rasterizeTriangle(t, c, 0, null, false, false); // No texture processing
-	}
-	
-	public void rasterizeInterpolatedTriangle(Triangle t, Color c, float e, Color sc, boolean texture) {
-		rasterizeTriangle(t, c, e, sc, true, texture);		
-	}
-	
 	/**
 	 * Triangle rasterization and zBuffering
 	 * Inspired from:
@@ -193,12 +185,12 @@ public class Rasterizer {
 	 * 
 	 * @param t the triangle to render
 	 * @param c the base color of the triangle, may be inherited from the element or default
-	 * @param e the specular exponent of the Element
+	 * @param se the specular exponent of the Element
 	 * @param sc the specular color of the Element
 	 * @param interpolate a boolean to indicate if interpolation of colors is activated (true) or not (false)
 	 * @param texture a boolean to indicate if texture processing is activated (true) or not (false) 
 	 **/
-	protected void rasterizeTriangle(Triangle t, Color c, float e, Color sc, boolean interpolate, boolean texture) {
+	public void rasterizeTriangle(Triangle t, Color c, float se, Color sc, boolean interpolate, boolean texture) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
 		
@@ -214,7 +206,7 @@ public class Rasterizer {
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 normal = t.getWorldNormal();
-			Color shadedCol = computeShadedColor(col, normal, null, e, sc, t.isRectoVerso());
+			Color shadedCol = computeShadedColor(col, normal, null, se, sc, t.isRectoVerso());
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
@@ -229,9 +221,9 @@ public class Rasterizer {
 			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).normalize();
 			
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), viewer1.V3(), e, sc, t.isRectoVerso()));
-			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), viewer2.V3(), e, sc, t.isRectoVerso()));
-			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), viewer3.V3(), e, sc, t.isRectoVerso()));					
+			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), viewer1.V3(), se, sc, t.isRectoVerso()));
+			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), viewer2.V3(), se, sc, t.isRectoVerso()));
+			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), viewer3.V3(), se, sc, t.isRectoVerso()));					
 		}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
