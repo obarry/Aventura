@@ -64,8 +64,6 @@ public class Cylinder extends Element {
 		this.ray = ray;
 		this.height = height;
 		this.half_seg = half_seg;
-		this.top_center = new Vector4(0,0,height/2,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
 		createCylinder(null);
 	}
 
@@ -82,16 +80,19 @@ public class Cylinder extends Element {
 		this.ray = ray;
 		this.height = height;
 		this.half_seg = half_seg;
-		this.top_center = new Vector4(0,0,height/2,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
 		createCylinder(tex);
 	}
 	protected void createCylinder(Texture t) {
 		
+		// Create centers
+		this.top_center = new Vector4(0,0,height/2,0);
+		this.bottom_center = new Vector4(0,0,-height/2,0);
+
+		// Create mesh to wrap Cylinder
 		rectangleMesh = new RectangleMesh(this, half_seg*2+1, 2, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
 		double alpha = Math.PI/half_seg;
 		
-		// Create vertices
+		// Create vertices of the mesh
 		for (int i=0; i<=half_seg*2; i++) { // (n) * 2 + 1 steps -> [0, 2*PI]
 			
 			double sina = Math.sin(alpha*i);
