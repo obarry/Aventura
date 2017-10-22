@@ -1,9 +1,8 @@
 package com.aventura.model.world.shape;
 
-import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Vertex;
-import com.aventura.model.world.triangle.Triangle;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.triangle.RectangleMesh;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -49,8 +48,9 @@ public class Torus extends Element {
 
 	protected static final String TORUS_DEFAULT_NAME = "torus";
 
-	protected Vertex[][] vertices;
-	protected Vector4[] centers;
+	//protected Vertex[][] vertices;
+	protected RectangleMesh rectangleMesh;
+	protected Vector4[] centers; // Centers of each "ring" is used to calculate normals
 	double torus_ray, pipe_ray;
 	int half_circ, half_seg;
 	protected Vector4 center;
@@ -62,31 +62,54 @@ public class Torus extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
 	public Torus(double torus_ray, double pipe_ray, int half_circ, int half_seg) {
-		super(TORUS_DEFAULT_NAME, true); // A Torus is a closed Element
+		super(TORUS_DEFAULT_NAME, true); // A Torus is a closed Element by default
 		subelements = null;
 		this.torus_ray = torus_ray;
 		this.pipe_ray = pipe_ray;
 		this. half_circ = half_circ;
 		this.half_seg = half_seg;
-		createTorus();
+		createTorus(null);
 	}
 
-	protected void createTorus() {
+	/**
+	 * Default creation of a Cylinder around Z axis 
+	 * @param height of the Cylinder
+	 * @param ray of the top and bottom circles of the Cylinder
+	 * @param half_seg is half the number of segments for 360 degrees circles
+	 * @param t the Texture to wrap this Torus 
+	 */
+	public Torus(double torus_ray, double pipe_ray, int half_circ, int half_seg, Texture tex) {
+		super(TORUS_DEFAULT_NAME, true); // A Torus is a closed Element by default
+		subelements = null;
+		this.torus_ray = torus_ray;
+		this.pipe_ray = pipe_ray;
+		this. half_circ = half_circ;
+		this.half_seg = half_seg;
+		createTorus(tex);
+	}
+
+	protected void createTorus(Texture t) {
 		
-		vertices = new Vertex[half_circ*2][half_seg*2]; // half_circ*2 circles made of half_seg*2 vertices on each circle
-		centers = new Vector4[half_circ*2];
+		// Create Mesh
+		// (half_seg x 2 + 1) vertices on each circles
+		// and (half_circ x 2 + 1) circles
+		// + 1 (duplicate Vertices) is needed for RectangleMesh / Texture overlay
+		rectangleMesh = new RectangleMesh(this, half_circ*2+1, half_seg*2+1, t);
+		
+		//vertices = new Vertex[half_circ*2][half_seg*2]; // half_circ*2 circles made of half_seg*2 vertices on each circle
+		centers = new Vector4[half_circ*2+1];
 		double alpha_circ = Math.PI/half_circ;
 		double alpha_seg = Math.PI/half_seg;
 		
 		// Create vertices
-		for (int i=0; i<half_circ*2; i++) { // for all circles around the Z axis (2*half_circ)
+		for (int i=0; i<=half_circ*2; i++) { // for all circles around the Z axis (2*half_circ + 1)
 			
 			double sina = Math.sin(alpha_circ*i);
 			double cosa = Math.cos(alpha_circ*i);
 			// Calculate center of the circle
 			centers[i] = new Vector4(torus_ray*cosa, torus_ray*sina,0,1);
 			
-			for (int j=0; j<half_seg*2; j++) { // each circle is made of 2*half_seg vertices 
+			for (int j=0; j<=half_seg*2; j++) { // each circle is made of 2*half_seg + 1 vertices 
 
 				
 				double sinb = Math.sin(alpha_seg*j);
@@ -94,48 +117,52 @@ public class Torus extends Element {
 
 
 				// Each vertice
-				vertices[i][j] = createVertex(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1));
+				rectangleMesh.getVertex(i, j).setPos(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1));
+				//vertices[i][j] = createVertex(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1));
 			}
 		}
 		
 		// Create Triangles
-		Triangle t1, t2; // local variable
-		for (int i=0; i<half_circ*2-1; i++) {
-			for (int j=0; j<half_seg*2-1; j++) {
-
-				// For each face of the cylinder, create 2 Triangles
-				t1 = new Triangle(vertices[i][j], vertices[i+1][j], vertices[i][j+1]);
-				t2 = new Triangle(vertices[i][j+1], vertices[i+1][j], vertices[i+1][j+1]);
-
-				// Add triangle to the Element
-				this.addTriangle(t1);			
-				this.addTriangle(t2);
-			}
-			// Create 2 last triangles
-			t1 = new Triangle(vertices[i][half_seg*2-1], vertices[i+1][half_seg*2-1], vertices[i][0]);
-			t2 = new Triangle(vertices[i][0], vertices[i+1][half_seg*2-1], vertices[i+1][0]);
-			// Add triangle to the Element
-			this.addTriangle(t1);			
-			this.addTriangle(t2);
-		}
-		// Create last belt
-		for (int j=0; j<half_seg*2-1; j++) {
-
-			// For each face of the cylinder, create 2 Triangles
-			t1 = new Triangle(vertices[half_circ*2-1][j], vertices[0][j], vertices[half_circ*2-1][j+1]);
-			t2 = new Triangle(vertices[half_circ*2-1][j+1], vertices[0][j], vertices[0][j+1]);
-
-			// Add triangle to the Element
-			this.addTriangle(t1);			
-			this.addTriangle(t2);
-		}
-		// Create 2 last triangles of the last belt
-		t1 = new Triangle(vertices[half_circ*2-1][half_seg*2-1], vertices[0][half_seg*2-1], vertices[half_circ*2-1][0]);
-		t2 = new Triangle(vertices[half_circ*2-1][0], vertices[0][half_seg*2-1], vertices[0][0]);
+		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 		
-		// Add last triangles
-		this.addTriangle(t1);			
-		this.addTriangle(t2);			
+//		// Create Triangles
+//		Triangle t1, t2; // local variable
+//		for (int i=0; i<half_circ*2-1; i++) {
+//			for (int j=0; j<half_seg*2-1; j++) {
+//
+//				// For each face of the cylinder, create 2 Triangles
+//				t1 = new Triangle(vertices[i][j], vertices[i+1][j], vertices[i][j+1]);
+//				t2 = new Triangle(vertices[i][j+1], vertices[i+1][j], vertices[i+1][j+1]);
+//
+//				// Add triangle to the Element
+//				this.addTriangle(t1);			
+//				this.addTriangle(t2);
+//			}
+//			// Create 2 last triangles
+//			t1 = new Triangle(vertices[i][half_seg*2-1], vertices[i+1][half_seg*2-1], vertices[i][0]);
+//			t2 = new Triangle(vertices[i][0], vertices[i+1][half_seg*2-1], vertices[i+1][0]);
+//			// Add triangle to the Element
+//			this.addTriangle(t1);			
+//			this.addTriangle(t2);
+//		}
+//		// Create last belt
+//		for (int j=0; j<half_seg*2-1; j++) {
+//
+//			// For each face of the cylinder, create 2 Triangles
+//			t1 = new Triangle(vertices[half_circ*2-1][j], vertices[0][j], vertices[half_circ*2-1][j+1]);
+//			t2 = new Triangle(vertices[half_circ*2-1][j+1], vertices[0][j], vertices[0][j+1]);
+//
+//			// Add triangle to the Element
+//			this.addTriangle(t1);			
+//			this.addTriangle(t2);
+//		}
+//		// Create 2 last triangles of the last belt
+//		t1 = new Triangle(vertices[half_circ*2-1][half_seg*2-1], vertices[0][half_seg*2-1], vertices[half_circ*2-1][0]);
+//		t2 = new Triangle(vertices[half_circ*2-1][0], vertices[0][half_seg*2-1], vertices[0][0]);
+//		
+//		// Add last triangles
+//		this.addTriangle(t1);			
+//		this.addTriangle(t2);			
 	}
 
 	@Override
@@ -143,12 +170,14 @@ public class Torus extends Element {
 		Vector4 n;
 			
 		// Create normals of vertices
-		for (int i=0; i<half_circ*2; i++) {
-			for (int j=0; j<half_seg*2; j++) {
+		for (int i=0; i<=half_circ*2; i++) {
+			for (int j=0; j<=half_seg*2; j++) {
 				// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it 
-				n = vertices[i][j].getPos().minus(centers[i]);
+				//n = vertices[i][j].getPos().minus(centers[i]);
+				n = rectangleMesh.getVertex(i,j).getPos().minus(centers[i]);
 				n.normalize();
-				vertices[i][j].setNormal(n.V3());
+				//vertices[i][j].setNormal(n.V3());
+				rectangleMesh.getVertex(i,j).setNormal(n.V3());
 			}
 		}
 		

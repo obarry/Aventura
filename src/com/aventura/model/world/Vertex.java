@@ -35,9 +35,24 @@ import com.aventura.math.vector.*;
  */
 public class Vertex {
 	
+	//
+	// Static characteristics: Geometry and Physical characteristic
+	//
+	
 	// Original Geometry
 	protected Vector4 position = null; // Coordinates of the Vertex. Vector4 as this is a Point (not vector only) in space.
 	protected Vector3 normal = null; // Normal of this Vertex, this is context specific and can be kept null if normal at Triangle level
+	
+	// Physical characteristic
+	protected Color color = null; // color of this Vertex, if null the Element's color (or World's color) is used. Lowest level priority.
+	protected int material; // To be defined, a specific class may be needed for a complex material representation
+
+	// Reflectivity
+	// TODO
+		
+	//
+	// Dynamic characteristics: Projection and Shading
+	//
 	
 	// Projected Geometry
 	protected Vector4 wld_position = null; // Position of this Vertex in World reference (Model to World projection)
@@ -45,16 +60,9 @@ public class Vertex {
 	protected Vector3 wld_normal = null; // Normal in World coordinates
 	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates
 	
-	// Physical characteristic
-	protected Color color = null; // color of this Vertex, if null the Element's color (or World's color) is used. Lowest level priority.
-	protected int material; // To be defined, a specific class may be needed for a complex material representation
-	
 	// Shading
-	protected Color shadedCol = null; // Gouraud's shading at this Vertex
+	protected Color shadedCol = null; // Gouraud's shading at this Vertex, calculated at Rasterization time
 	
-	// Reflectivity
-	// TODO
-		
 	/**
 	 * Duplicate a Vertex, creating new Vectors for position and normal but keeping references for texture and color
 	 * @param v the Vertex to duplicate
