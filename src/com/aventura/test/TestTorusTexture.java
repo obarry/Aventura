@@ -1,5 +1,6 @@
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -70,7 +71,7 @@ public class TestTorusTexture {
 		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
-		Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
@@ -81,9 +82,12 @@ public class TestTorusTexture {
 		//Texture tex = new Texture("resources/test/texture_rock_stone_400x450.jpg");
 		//Texture tex = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
 		//Texture tex = new Texture("resources/test/texture_rust_960x539.jpg");
+		//Texture tex = new Texture("resources/test/texture_carpet_600x600.jpg");
+		//Texture tex = new Texture("resources/test/texture_blue_checkboard_1300x1300.jpg");
+		Texture tex = new Texture("resources/test/texture_geometry_1024x1024.jpg");
 
 		// Camera
-		Vector4 eye = new Vector4(10,3,8,1);
+		Vector4 eye = new Vector4(15,5,10,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
@@ -92,9 +96,12 @@ public class TestTorusTexture {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Torus torus1 = new Torus(3,0.75,32,16, tex);
+		Torus torus1 = new Torus(3,1.5,32,16, tex);
+		//torus1.setColor(new Color(255, 200, 125));
+		torus1.setColor(new Color(123, 100, 63));
 		torus1.setSpecularExp(2);
 		world.addElement(torus1);
+		world.setBackgroundColor(new Color(0,0,55));
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
