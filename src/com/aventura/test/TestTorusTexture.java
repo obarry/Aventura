@@ -97,7 +97,8 @@ public class TestTorusTexture {
 		
 		World world = new World();
 		Torus torus1 = new Torus(3,1.5,32,16, tex);
-		torus1.setColor(new Color(255, 200, 125));
+		//torus1.setColor(new Color(255, 200, 125));
+		torus1.setColor(new Color(123, 100, 63));
 		torus1.setSpecularExp(2);
 		world.addElement(torus1);
 		world.setBackgroundColor(new Color(0,0,55));
