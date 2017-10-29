@@ -446,6 +446,13 @@ public class Rasterizer {
     			}
     			// Combine the shaded color and the Texture color
     			Color cc = ColorTools.multColors(c, ct);
+    			
+    			//TODO In current implementation the shaded color incorporates the specular reflection hence texture color is also multiplied
+				// with specular color however the right formula should be:
+    			// Color K = DTA + CDT + S = DT(A+C) + S
+    			// D: diffuse color, T: texture, A: Ambient color, C: color of the light source, S: Specular color
+				// So the implementation should be modified to reflect the right formula
+  			
     			drawPoint(x, y, z, cc);
     		} else {
     			// Draw the point on the screen with calculated color
@@ -566,6 +573,13 @@ public class Rasterizer {
 						if (dotRV<0) dotRV = 0;
 						specular = (float) Math.pow(dotRV, e);
 						c[2] = ColorTools.multColor(spc, specular);
+
+		    			//TODO In current implementation the shaded color incorporates the specular reflection hence texture color is also multiplied
+						// with specular color however the right formula should be:
+		    			// Color K = DTA + CDT + S = DT(A+C) + S
+		    			// D: diffuse color, T: texture, A: Ambient color, C: color of the light source, S: Specular color
+						// So the implementation should be modified to reflect the right formula
+					
 					}
 				}
 			}
