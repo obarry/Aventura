@@ -206,7 +206,7 @@ public class Rasterizer {
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 normal = t.getWorldNormal();
-			Color shadedCol = computeShadedColor(col, normal, null, se, sc, t.isRectoVerso());
+			Color shadedCol = computeShadedColor(col, normal, se, sc, t.isRectoVerso());
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 		} else {
@@ -221,10 +221,15 @@ public class Rasterizer {
 			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).normalize();
 			
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), viewer1.V3(), se, sc, t.isRectoVerso()));
-			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), viewer2.V3(), se, sc, t.isRectoVerso()));
-			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), viewer3.V3(), se, sc, t.isRectoVerso()));					
-		}
+			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), se, sc, t.isRectoVerso()));
+			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), se, sc, t.isRectoVerso()));
+			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), se, sc, t.isRectoVerso()));					
+
+			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
+			t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1.V3(), se, sc));
+			t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2.V3(), se, sc));
+			t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3.V3(), se, sc));					
+}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
 	    // with v1 always down (thus having the highest possible Y)
@@ -389,12 +394,15 @@ public class Rasterizer {
 	    float z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
 
 	    
-	    // Starting Color & ending Color
-    	Color ic1 = null;
-    	Color ic2 = null;
+	    // Gouraud's shading (Vertex calculation and interpolation across triangle)
+	    // Starting Colors & ending Colors for Shaded color and Specular color
+    	Color ishc1 = null, ishc2 = null; // Shaded
+    	Color ispc1 = null, ispc2 = null; // Specular
     	if (interpolate) {
-        	ic1 = ColorTools.interpolateColors(ColorTools.multColor(va.getShadedCol(),1/za), ColorTools.multColor(vb.getShadedCol(),1/zb), gradient1);
-        	ic2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);	
+        	ishc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getShadedCol(),1/za), ColorTools.multColor(vb.getShadedCol(),1/zb), gradient1);
+        	ishc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);	
+        	ispc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getSpecularCol(),1/za), ColorTools.multColor(vb.getSpecularCol(),1/zb), gradient1);
+        	ispc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getSpecularCol(),1/zc), ColorTools.multColor(vd.getSpecularCol(),1/zd), gradient2);	
 	    }
 
 	    // Starting Texture & ending Texture coordinates
@@ -407,8 +415,14 @@ public class Rasterizer {
 
     	}
 
+    	Color csh = null; // Shaded color
+    	Color csp = null; // Specular color
+		Color ctx = null; // Texture color
+		
 	    // drawing a line from left (sx) to right (ex) 
     	for (int x = sx; x < ex; x++) {
+    		
+    		Color cc = null; // Combined color to be drawn, result of the lighting and shading calculation
     		
     		float gradient = (float)(x-sx)/(float)(ex-sx);
     		float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
@@ -416,25 +430,26 @@ public class Rasterizer {
     		// If interpolation
     		if (interpolate) {
     			// Color interpolation
-    			c = ColorTools.multColor(ColorTools.interpolateColors(ic1, ic2, gradient),z);
-    		}
+    			csh = ColorTools.multColor(ColorTools.interpolateColors(ishc1, ishc2, gradient),z); // Shaded color
+    			csp = ColorTools.multColor(ColorTools.interpolateColors(ispc1, ispc2, gradient),z); // Specular color
+    		} // Else c is the base color passed in arguments and csp won't be used
 
     		// Texture interpolation
     		if (texture && t!=null) {
-    			Color ct = null;
+
     			vt = Tools.interpolate(vt1, vt2, gradient).times((double)z);
     			try {
     				// Projective Texture mapping using the fourth coordinate
     				// By default W of the texture vector is 1 but if not this will help to take account of the potential geometrical distortion of the texture
     				switch (tex_orientation) {
     				case Triangle.TEXTURE_ISOTROPIC: // Default for a triangle
-    					ct = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
+    					ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
     					break;
     				case Triangle.TEXTURE_VERTICAL:
-    					ct = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
+    					ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
     					break;
     				case Triangle.TEXTURE_HORIZONTAL:
-    					ct = t.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
+    					ctx = t.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
     					break;
     				default:
     					// Should never happen
@@ -445,19 +460,33 @@ public class Rasterizer {
     				e.printStackTrace();
     			}
     			// Combine the shaded color and the Texture color
-    			Color cc = ColorTools.multColors(c, ct);
     			
-    			//TODO In current implementation the shaded color incorporates the specular reflection hence texture color is also multiplied
-				// with specular color however the right formula should be:
-    			// Color K = DTA + CDT + S = DT(A+C) + S
-    			// D: diffuse color, T: texture, A: Ambient color, C: color of the light source, S: Specular color
-				// So the implementation should be modified to reflect the right formula
-  			
-    			drawPoint(x, y, z, cc);
-    		} else {
-    			// Draw the point on the screen with calculated color
-    			drawPoint(x, y, z, c);
+    			cc = ColorTools.multColors(c, ctx);
+    			
     		}
+    		
+    		// Combine colors with the following formula
+			// Color K = DTA + CDT + S = DT(A+C) + S
+			// D: diffuse color, T: texture, A: Ambient color, C: color of the light source, S: Specular color
+    		if (interpolate) {
+    			
+        		if (texture && t!=null) {
+           			cc = ColorTools.addColors(ColorTools.multColors(csh, ctx), csp);       			
+        		} else {
+           			cc = ColorTools.addColors(csh, csp);	        			
+        		}
+    			
+    		} else {
+    			
+        		if (texture && t!=null) {
+        			cc = ColorTools.multColors(c, ctx);
+        		} else {
+        			cc = c;     			
+        		}
+    		}
+    		
+    		// Draw the point with calculated Combined Color
+    		drawPoint(x, y, z, cc);
     	}
 	}
 
@@ -533,14 +562,13 @@ public class Rasterizer {
 	 * @param normal of the surface in this area
 	 * @return
 	 */
-	protected Color computeShadedColor(Color baseCol, Vector3 normal, Vector3 viewer, float e, Color sc, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+	protected Color computeShadedColor(Color baseCol, Vector3 normal, float e, Color sc, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 		
 		// Table of colors to be mixed
-		Color [] c = new Color[3];
+		Color [] c = new Color[2];
 		// Default colors
 		c[0] = DARK_SHADING_COLOR; // Ambient light
 		c[1] = DARK_SHADING_COLOR; // Directional light
-		c[2] = DARK_SHADING_COLOR; // Specular reflection from Directional light
 		
 		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
 		
@@ -556,41 +584,47 @@ public class Rasterizer {
 			
 			// Directional light
 			if (lighting.hasDirectional()) {
+				
+				//TODO Multiple directional colors -> loop
+				
 				// Compute the dot product
 				dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
 				if (rectoVerso) dotNL = Math.abs(dotNL);
+				
 				if (dotNL > 0) {
 					
 					// Directional Light
 					c[1] = ColorTools.multColor(baseCol, dotNL);
 	
-					// Secondary Shading: Specular reflection (from Directional light)
-					if (e>0) { // If e=0 this is considered as no specular reflection
-						float specular = 0;
-						// Calculate reflection vector R = 2N-L and normalize it
-						Vector3 r = normal.times(2.0).minus(lighting.getDirectionalLight().getLightVector(null)).normalize(); 
-						float dotRV = (float)(r.dot(viewer));
-						if (dotRV<0) dotRV = 0;
-						specular = (float) Math.pow(dotRV, e);
-						c[2] = ColorTools.multColor(spc, specular);
-
-		    			//TODO In current implementation the shaded color incorporates the specular reflection hence texture color is also multiplied
-						// with specular color however the right formula should be:
-		    			// Color K = DTA + CDT + S = DT(A+C) + S
-		    			// D: diffuse color, T: texture, A: Ambient color, C: color of the light source, S: Specular color
-						// So the implementation should be modified to reflect the right formula
-					
-					}
 				}
 			}
 			
 		} else { // If no lighting, return base color
 			return baseCol;
 		}
-		
+
 		// returned color is an addition of Ambient and Directional lights
 		return ColorTools.addColors(c);
 	}
+
+	public Color computeSpecularColor(Vector3 normal, Vector3 viewer, float e, Color sc) {
+		
+		Color c = DARK_SHADING_COLOR; // Specular reflection from Directional light
+		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
+
+		// Secondary Shading: Specular reflection (from Directional light)
+		if (e>0) { // If e=0 this is considered as no specular reflection
+			float specular = 0;
+			// Calculate reflection vector R = 2N-L and normalize it
+			Vector3 r = normal.times(2.0).minus(lighting.getDirectionalLight().getLightVector(null)).normalize(); 
+			float dotRV = (float)(r.dot(viewer));
+			if (dotRV<0) dotRV = 0;
+			specular = (float) Math.pow(dotRV, e);
+			c = ColorTools.multColor(spc, specular);
+		}
+		return c;
+	}
+	
 
 	//
 	// **** BRESSENHAM ***
