@@ -1,6 +1,5 @@
 package com.aventura.test;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -22,14 +21,11 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
-import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Cylinder;
-import com.aventura.model.world.shape.Trellis;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-public class TestAventura14 {
+public class TestCylinderTexture {
 	
 	// View to be displayed
 	private SwingView view;
@@ -37,7 +33,7 @@ public class TestAventura14 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 13");
+		JFrame frame = new JFrame("Test Cylinder Texture");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -50,7 +46,7 @@ public class TestAventura14 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura14.this.view.draw(graph);
+		    	TestCylinderTexture.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -83,7 +79,7 @@ public class TestAventura14 {
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestAventura14 test = new TestAventura14();
+		TestCylinderTexture test = new TestCylinderTexture();
 		
 		System.out.println("********* Creating World");
 		
