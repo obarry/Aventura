@@ -226,9 +226,9 @@ public class Rasterizer {
 			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), se, sc, t.isRectoVerso()));					
 
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1.V3(), se, sc));
-			t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2.V3(), se, sc));
-			t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3.V3(), se, sc));					
+			t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1.V3(), se, sc, t.isRectoVerso()));
+			t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2.V3(), se, sc, t.isRectoVerso()));
+			t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3.V3(), se, sc, t.isRectoVerso()));					
 }
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
@@ -399,8 +399,10 @@ public class Rasterizer {
     	Color ishc1 = null, ishc2 = null; // Shaded
     	Color ispc1 = null, ispc2 = null; // Specular
     	if (interpolate) {
+    		// Shaded color
         	ishc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getShadedCol(),1/za), ColorTools.multColor(vb.getShadedCol(),1/zb), gradient1);
-        	ishc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);	
+        	ishc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);
+        	// Specular color
         	ispc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getSpecularCol(),1/za), ColorTools.multColor(vb.getSpecularCol(),1/zb), gradient1);
         	ispc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getSpecularCol(),1/zc), ColorTools.multColor(vd.getSpecularCol(),1/zd), gradient2);	
 	    }
@@ -570,8 +572,6 @@ public class Rasterizer {
 		c[0] = DARK_SHADING_COLOR; // Ambient light
 		c[1] = DARK_SHADING_COLOR; // Directional light
 		
-		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
-		
 		if (lighting != null) { // If lighting exists
 			
 			// Primary shading: Diffuse Reflection
@@ -592,10 +592,8 @@ public class Rasterizer {
 				if (rectoVerso) dotNL = Math.abs(dotNL);
 				
 				if (dotNL > 0) {
-					
 					// Directional Light
 					c[1] = ColorTools.multColor(baseCol, dotNL);
-	
 				}
 			}
 			
@@ -607,7 +605,7 @@ public class Rasterizer {
 		return ColorTools.addColors(c);
 	}
 
-	public Color computeSpecularColor(Vector3 normal, Vector3 viewer, float e, Color sc) {
+	protected Color computeSpecularColor(Vector3 normal, Vector3 viewer, float e, Color sc, boolean rectoVerso) {
 		
 		Color c = DARK_SHADING_COLOR; // Specular reflection from Directional light
 		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
@@ -618,6 +616,7 @@ public class Rasterizer {
 			// Calculate reflection vector R = 2N-L and normalize it
 			Vector3 r = normal.times(2.0).minus(lighting.getDirectionalLight().getLightVector(null)).normalize(); 
 			float dotRV = (float)(r.dot(viewer));
+			if (rectoVerso) dotRV = Math.abs(dotRV);
 			if (dotRV<0) dotRV = 0;
 			specular = (float) Math.pow(dotRV, e);
 			c = ColorTools.multColor(spc, specular);
