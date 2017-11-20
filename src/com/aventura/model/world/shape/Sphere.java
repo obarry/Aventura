@@ -2,7 +2,9 @@ package com.aventura.model.world.shape;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
+import com.aventura.model.world.triangle.RectangleMesh;
 import com.aventura.model.world.triangle.Triangle;
 
 /**
@@ -64,8 +66,10 @@ public class Sphere extends Element {
 	
 	protected static final String SPHERE_DEFAULT_NAME = "sphere";
 
-	protected Vertex[][] vertices;
-	protected Vertex northPole, southPole;
+	//protected Vertex[][] vertices;
+	protected RectangleMesh rectangleMesh;
+	//protected Vertex northPole, southPole;
+	protected Vector4 northPole, southPole;
 	double ray;
 	int half_seg;
 	protected Vector4 center;
@@ -76,7 +80,20 @@ public class Sphere extends Element {
 		this.ray = ray;
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
-		createSphere();
+		this.northPole = new Vector4(0, 0, ray,  1);
+		this.southPole = new Vector4(0, 0, -ray,  1);
+		createSphere(null);
+	}
+
+	public Sphere(double ray, int half_seg, Texture t) {
+		super(SPHERE_DEFAULT_NAME, true); // A Sphere is a closed Element
+		subelements = null;
+		this.ray = ray;
+		this.half_seg = half_seg;
+		this.center = new Vector4(0,0,0,0);
+		this.northPole = new Vector4(0, 0, ray,  1);
+		this.southPole = new Vector4(0, 0, -ray,  1);
+		createSphere(t);
 	}
 
 	/**
@@ -85,77 +102,90 @@ public class Sphere extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees
 	 * @param center to translate the Sphere vertices by the Vector4 center
 	 */
-	protected void createSphere() {
+	protected void createSphere(Texture t) {
 		
-		vertices = new Vertex[half_seg*2][half_seg-1]; // (n) x (n/2-1) vertices (n being the number of segments)	
+		// Create mesh to wrap Cylinder
+		rectangleMesh = new RectangleMesh(this, half_seg*2+1, half_seg, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
+//		vertices = new Vertex[half_seg*2][half_seg-1]; // (n) x (n/2-1) vertices (n being the number of segments)	
 		double alpha = Math.PI/half_seg;
 		
 		// Create Vertices
-		northPole = createVertex(new Vector4(0, 0, ray,  1));
-		southPole = createVertex(new Vector4(0, 0, -ray,  1));
+//		northPole = createVertex(new Vector4(0, 0, ray,  1));
+//		southPole = createVertex(new Vector4(0, 0, -ray,  1));
 		
-		for (int i=0; i<half_seg*2; i++) {
-			for (int j=0; j<(half_seg-1); j++) {
+		for (int i=0; i<=half_seg*2; i++) {
+			// South pole(s)-> there is as many south poles as meridians
+			rectangleMesh.getVertex(i, 0).setPos(southPole);
+			// Intermediate points between south and north
+			for (int j=1; j<(half_seg-1); j++) {
 				double sina = Math.sin(alpha*i);
 				double cosa = Math.cos(alpha*i);
 				double sinb = Math.sin(alpha*(j+1));
 				double cosb = Math.cos(alpha*(j+1));
-				vertices[i][j] = createVertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
+				rectangleMesh.getVertex(i, 0).setPos(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
+//				vertices[i][j] = createVertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
 			}
+			// North pole-> there is as many north poles as meridians
+			rectangleMesh.getVertex(i, half_seg).setPos(northPole);
 		}
 
 		// Create Triangles
+		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 		// 2 triangles per "square" face, 1 triangle for each face on the north and south poles
-		Triangle t; // local variable
-
-		// Create triangles T = <P1 P2 P3> so that N = P1P2^P1P3 targets the outside of the Sphere for triangle normal calculation 
-		
-		// North pole to first meridian - "triangle" faces
-		for (int i=0; i<half_seg*2-1; i++) {
-			t = new Triangle(northPole, vertices[i][0], vertices[i+1][0]);
-			this.addTriangle(t);
-		}
-		t = new Triangle(northPole, vertices[half_seg*2-1][0], vertices[0][0]);
-		this.addTriangle(t);
-		
-		// Meridian to meridian - "square" faces
-		for (int j=0; j<half_seg-2; j++) {
-			for (int i=0; i<half_seg*2-1; i++) {
-				t = new Triangle(vertices[i][j], vertices[i][j+1], vertices[i+1][j]);
-				this.addTriangle(t);			
-				t = new Triangle(vertices[i][j+1], vertices[i+1][j+1], vertices[i+1][j]);
-				this.addTriangle(t);			
-			}
-			t = new Triangle(vertices[half_seg*2-1][j], vertices[half_seg*2-1][j+1], vertices[0][j]);
-			this.addTriangle(t);			
-			t = new Triangle(vertices[half_seg*2-1][j+1], vertices[0][j+1], vertices[0][j]);
-			this.addTriangle(t);			
-		}
-				
-		// South pole to last meridian - "triangle" faces
-		for (int i=0; i<half_seg*2-1; i++) {
-			t = new Triangle(southPole, vertices[i+1][half_seg-2], vertices[i][half_seg-2]);
-			this.addTriangle(t);			
-		}
-		t = new Triangle(southPole, vertices[0][half_seg-2], vertices[half_seg*2-1][half_seg-2]);
-		this.addTriangle(t);		
+//		Triangle t; // local variable
+//
+//		// Create triangles T = <P1 P2 P3> so that N = P1P2^P1P3 targets the outside of the Sphere for triangle normal calculation 
+//		
+//		// North pole to first meridian - "triangle" faces
+//		for (int i=0; i<half_seg*2-1; i++) {
+//			t = new Triangle(northPole, vertices[i][0], vertices[i+1][0]);
+//			this.addTriangle(t);
+//		}
+//		t = new Triangle(northPole, vertices[half_seg*2-1][0], vertices[0][0]);
+//		this.addTriangle(t);
+//		
+//		// Meridian to meridian - "square" faces
+//		for (int j=0; j<half_seg-2; j++) {
+//			for (int i=0; i<half_seg*2-1; i++) {
+//				t = new Triangle(vertices[i][j], vertices[i][j+1], vertices[i+1][j]);
+//				this.addTriangle(t);			
+//				t = new Triangle(vertices[i][j+1], vertices[i+1][j+1], vertices[i+1][j]);
+//				this.addTriangle(t);			
+//			}
+//			t = new Triangle(vertices[half_seg*2-1][j], vertices[half_seg*2-1][j+1], vertices[0][j]);
+//			this.addTriangle(t);			
+//			t = new Triangle(vertices[half_seg*2-1][j+1], vertices[0][j+1], vertices[0][j]);
+//			this.addTriangle(t);			
+//		}
+//				
+//		// South pole to last meridian - "triangle" faces
+//		for (int i=0; i<half_seg*2-1; i++) {
+//			t = new Triangle(southPole, vertices[i+1][half_seg-2], vertices[i][half_seg-2]);
+//			this.addTriangle(t);			
+//		}
+//		t = new Triangle(southPole, vertices[0][half_seg-2], vertices[half_seg*2-1][half_seg-2]);
+//		this.addTriangle(t);		
 	}
 
 	@Override
 	public void calculateNormals() {
 		
 		// Create normals of poles
-		northPole.setNormal(new Vector3(Vector3.Z_AXIS));
-		southPole.setNormal(new Vector3(Vector3.Z_OPP_AXIS));
+//		northPole.setNormal(new Vector3(Vector3.Z_AXIS));
+//		southPole.setNormal(new Vector3(Vector3.Z_OPP_AXIS));
 		
 		// Create normals of vertices
 		for (int i=0; i<half_seg*2; i++) {
+			// South pole
+			rectangleMesh.getVertex(i,0).setNormal(new Vector3(Vector3.Z_OPP_AXIS));
 			for (int j=0; j<(half_seg-1); j++) {
 				// For each Vertex, use the ray vector passing through the Vertex and normalize it 
-				Vector4 n = vertices[i][j].getPos().minus(center);
+				Vector4 n = rectangleMesh.getVertex(i,j).getPos().minus(center);
 				n.normalize();
-				vertices[i][j].setNormal(n.V3());
+				rectangleMesh.getVertex(i,j).setNormal(n.V3());
 			}
+			// North pole
+			rectangleMesh.getVertex(i,0).setNormal(new Vector3(Vector3.Z_AXIS));
 		}
 		calculateSubNormals();
 	}
