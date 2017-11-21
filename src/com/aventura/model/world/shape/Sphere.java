@@ -126,7 +126,7 @@ public class Sphere extends Element {
 //				vertices[i][j] = createVertex(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
 			}
 			// North pole-> there is as many north poles as meridians
-			rectangleMesh.getVertex(i, half_seg).setPos(northPole);
+			rectangleMesh.getVertex(i, half_seg-1).setPos(northPole);
 		}
 
 		// Create Triangles
@@ -185,7 +185,7 @@ public class Sphere extends Element {
 				rectangleMesh.getVertex(i,j).setNormal(n.V3());
 			}
 			// North pole
-			rectangleMesh.getVertex(i,0).setNormal(new Vector3(Vector3.Z_AXIS));
+			rectangleMesh.getVertex(i,half_seg-1).setNormal(new Vector3(Vector3.Z_AXIS));
 		}
 		calculateSubNormals();
 	}
