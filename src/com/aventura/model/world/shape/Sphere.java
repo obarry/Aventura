@@ -109,7 +109,7 @@ public class Sphere extends Element {
 		// Create Vertices
 		for (int i=0; i<=half_seg*2; i++) {
 			// South pole(s)-> there is as many south poles as meridians
-			rectangleMesh.getVertex(i, 0).setPos(southPole);
+			rectangleMesh.getVertex(i, 0).setPos(northPole);
 			// Intermediate points between south and north
 			for (int j=1; j<(half_seg-1); j++) {
 				double sina = Math.sin(alpha*i);
@@ -119,7 +119,7 @@ public class Sphere extends Element {
 				rectangleMesh.getVertex(i, j).setPos(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
 			}
 			// North pole-> there is as many north poles as meridians
-			rectangleMesh.getVertex(i, half_seg-1).setPos(northPole);
+			rectangleMesh.getVertex(i, half_seg-1).setPos(southPole);
 		}
 
 		// Create Triangles
@@ -132,7 +132,7 @@ public class Sphere extends Element {
 		// Create normals of vertices
 		for (int i=0; i<=half_seg*2; i++) {
 			// South pole
-			rectangleMesh.getVertex(i,0).setNormal(new Vector3(Vector3.Z_OPP_AXIS));
+			rectangleMesh.getVertex(i,0).setNormal(new Vector3(Vector3.Z_AXIS));
 			for (int j=1; j<(half_seg-1); j++) {
 				// For each Vertex, use the ray vector passing through the Vertex and normalize it 
 				Vector4 n = rectangleMesh.getVertex(i,j).getPos().minus(center);
@@ -140,7 +140,7 @@ public class Sphere extends Element {
 				rectangleMesh.getVertex(i,j).setNormal(n.V3());
 			}
 			// North pole
-			rectangleMesh.getVertex(i,half_seg-1).setNormal(new Vector3(Vector3.Z_AXIS));
+			rectangleMesh.getVertex(i,half_seg-1).setNormal(new Vector3(Vector3.Z_OPP_AXIS));
 		}
 		calculateSubNormals();
 	}

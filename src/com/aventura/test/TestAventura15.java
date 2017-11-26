@@ -121,6 +121,7 @@ public class TestAventura15 {
 		//Texture texstone1 = new Texture("resources/test/texture_stone1_1700x1133.jpg");
 		//Texture texrock = new Texture("resources/test/texture_rock_stone_400x450.jpg");
 		Texture texcremedemarron = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
+		//Texture texearth = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
 
 
 		// Camera
