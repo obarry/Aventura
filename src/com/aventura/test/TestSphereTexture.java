@@ -106,15 +106,15 @@ public class TestSphereTexture {
 		// Create World
 		World world = new World();
 		Sphere sph = null;
-		sph = new Sphere(1, 24, tex);
-		sph.setSpecularExp(8);
+		sph = new Sphere(1, 32, tex);
+		//sph.setSpecularExp(8);
 		world.addElement(sph);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
-		AmbientLight al = new AmbientLight(0.3f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,0,1), 2.0f);
+		AmbientLight al = new AmbientLight(0.1f);
 		Lighting light = new Lighting(dl, al, false);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
