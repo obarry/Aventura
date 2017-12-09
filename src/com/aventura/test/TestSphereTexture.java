@@ -1,5 +1,6 @@
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -76,7 +77,9 @@ public class TestSphereTexture {
 		// Camera
 		//Vector4 eye = new Vector4(8,3,5,1);
 		//Vector4 eye = new Vector4(16,6,12,1);
-		Vector4 eye = new Vector4(5,4,2,1);
+		Vector4 eye = new Vector4(5,4,4,1);
+		//Vector4 eye = new Vector4(5,4,0,1);
+		//Vector4 eye = new Vector4(4,4,4,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
@@ -101,20 +104,25 @@ public class TestSphereTexture {
 		//Texture tex = new Texture("resources/test/texture_carpet_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_blue_checkboard_1300x1300.jpg");
 		//Texture tex = new Texture("resources/test/texture_geometry_1024x1024.jpg");
-		Texture tex = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_moon_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_jupiter_2048x1024.jpg");
+		Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_neptune_2048x1024.jpg");
 		
 		// Create World
 		World world = new World();
 		Sphere sph = null;
-		sph = new Sphere(1, 24, tex);
-		sph.setSpecularExp(8);
+		sph = new Sphere(1.2, 48, tex);
+		sph.setSpecularExp(3);
+		sph.setSpecularColor(new Color(100,100,100));
 		world.addElement(sph);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
-		AmbientLight al = new AmbientLight(0.3f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.9f);
+		AmbientLight al = new AmbientLight(0.05f);
 		Lighting light = new Lighting(dl, al, false);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);

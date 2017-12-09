@@ -355,7 +355,7 @@ public class Rasterizer {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels);
 	}
 	
-	//protected void rasterizeScanLine(int y, Vertex va, Vertex vb, Vertex vc, Vertex vd, Color c, boolean interpolate) {
+
 	protected void rasterizeScanLine(
 			int y,					// ordinate of the scan line
 			Vertex va,				// Vertex A of first segment: AB
@@ -378,9 +378,18 @@ public class Rasterizer {
 		
 	    float gradient1 = (float)(yScreen(va) != yScreen(vb) ? (y - yScreen(va)) / (yScreen(vb) - yScreen(va)) : 1);
 	    float gradient2 = (float)(yScreen(vc) != yScreen(vd) ? (y - yScreen(vc)) / (yScreen(vd) - yScreen(vc)) : 1);
-
+//	    if (Math.abs(gradient1)<0.00001) {
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid gradient1: "+gradient1);
+//	    }
+//	    if (Math.abs(gradient2)<0.00001) {
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid gradient2: "+gradient2);
+//	    }
+ 
 	    int sx = (int)Tools.interpolate(xScreen(va), xScreen(vb), gradient1);
 	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
+//	    if (ex>ex) {
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex and sx. ex:"+ex+" sx:+sx");	    	
+//	    }
 	    
 	    // Vertices z
 	    float za = (float)va.getProjPos().getW();
