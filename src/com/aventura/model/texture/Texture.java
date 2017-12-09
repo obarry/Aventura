@@ -189,6 +189,10 @@ public class Texture {
 		
 		if (x0<0) x0=0;
 		if (y0<0) y0=0;
+		if (x0>=this.width) x0=this.width-1;
+		if (y0>=this.height) y0=this.height-1;
+		if (x1<0) x1=0;
+		if (y1<0) y1=0;
 		if (x1>=this.width) x1=this.width-1;
 		if (y1>=this.height) y1=this.height-1;
 

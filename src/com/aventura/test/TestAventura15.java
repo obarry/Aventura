@@ -121,8 +121,8 @@ public class TestAventura15 {
 		//Texture texstone1 = new Texture("resources/test/texture_stone1_1700x1133.jpg");
 		//Texture texrock = new Texture("resources/test/texture_rock_stone_400x450.jpg");
 		Texture texcremedemarron = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
-		//Texture texearth = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
-
+		Texture texearth = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
+		//Texture texmoon = new Texture("resources/test/texture_moon_2048x1024.jpg");
 
 		// Camera
 		Vector4 eye = new Vector4(10,6,3,1);
@@ -152,8 +152,8 @@ public class TestAventura15 {
 						//e.setColor(Color.CYAN);
 						break;
 					case 2:
-						e = new Sphere(0.8,32);
-						e.setColor(Color.MAGENTA);
+						e = new Sphere(0.8,32, texearth);
+						//e.setColor(Color.MAGENTA);
 						break;
 					case 3:
 						e = new Cube(1, texmetalplate);
