@@ -51,7 +51,10 @@ public class RenderContext {
 	public static final int RENDERING_TYPE_MONOCHROME = 2;  // Draw lines and fill with monochrome color each triangle
 	public static final int RENDERING_TYPE_PLAIN = 3;		// Fill each triangle with one color depending on Lighting and orientation
 	public static final int RENDERING_TYPE_INTERPOLATE = 4; // Fill each triangle by interpolating each pixel's color
-	
+
+	public static final int RENDERING_LINES_DISABLED = 0;
+	public static final int RENDERING_LINES_ENABLED = 1;
+
 	public static final int DISPLAY_LANDMARK_DISABLED = 0;
 	public static final int DISPLAY_LANDMARK_ENABLED = 1;
 	public static final int DISPLAY_LANDMARK_ENABLED_ARROW = 2;
@@ -79,7 +82,8 @@ public class RenderContext {
 	public int displayLight = DISPLAY_LIGHT_VECTORS_DISABLED; // by default
 
 	// Rendering
-	public int rendering_type = 0;
+	public int renderingType = 0;
+	public int renderingLines = RENDERING_LINES_DISABLED; // To show lines even with other types of Rendering. Disabled by default
 	
 	// Backface Culling
 	public int backfaceCulling = BACKFACE_CULLING_ENABLED; // Default
@@ -120,25 +124,25 @@ public class RenderContext {
 		this.displayLandmark = r.displayLandmark;
 		this.displayNormals = r.displayNormals;
 		this.displayLight = r.displayLight;
-		this.rendering_type = r.rendering_type;
+		this.renderingType = r.renderingType;
 		this.backfaceCulling = r.backfaceCulling;
 		this.textureProcessing = r.textureProcessing;
 	}
 	
 	public RenderContext(int type, int display_landmark) {
-		this.rendering_type = type;
+		this.renderingType = type;
 		this.displayLandmark = display_landmark;
 	}
 		
 	public RenderContext(int type, int display_landmark, int display_normals, int display_light) {
-		this.rendering_type = type;
+		this.renderingType = type;
 		this.displayLandmark = display_landmark;
 		this.displayNormals = display_normals;
 		this.displayLight = display_light;
 	}
 		
 	public RenderContext(int type, int display_landmark, int display_normals, int display_light, int backfaceCulling) {
-		this.rendering_type = type;
+		this.renderingType = type;
 		this.displayLandmark = display_landmark;
 		this.displayNormals = display_normals;
 		this.displayLight = display_light;
@@ -146,7 +150,7 @@ public class RenderContext {
 	}
 		
 	public RenderContext(int type, int display_landmark, int display_normals, int display_light, int backfaceCulling, int textureProcessing) {
-		this.rendering_type = type;
+		this.renderingType = type;
 		this.displayLandmark = display_landmark;
 		this.displayNormals = display_normals;
 		this.displayLight = display_light;
@@ -155,11 +159,19 @@ public class RenderContext {
 	}
 		
 	public void setRendering(int type) {
-		this.rendering_type = type;
+		this.renderingType = type;
 	}
 	
 	public int getRendering() {
-		return this.rendering_type;
+		return this.renderingType;
+	}
+	
+	public int getRenderingLines() {
+		return renderingLines;
+	}
+
+	public void setRenderingLines(int renderingLines) {
+		this.renderingLines = renderingLines;
 	}
 
 	public void setDisplayLandmark(int landmark) {
