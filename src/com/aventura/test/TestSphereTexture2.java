@@ -72,8 +72,8 @@ public class TestSphereTexture2 {
 		System.out.println("********* STARTING APPLICATION *********");
 
 		// Camera
-		Vector4 eye = new Vector4(430,4,5,1);
-		Vector4 poi = new Vector4(0,0,0,1);
+		Vector4 eye = new Vector4(400,3,3,1);
+		Vector4 poi = new Vector4(0,0,-4,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
 		TestSphereTexture2 test = new TestSphereTexture2();
@@ -108,27 +108,25 @@ public class TestSphereTexture2 {
 		AmbientLight al = new AmbientLight(0.05f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 500, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
+		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
-		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		
 		System.out.println("********* Rendering");
 		renderer.render();
 
-//		System.out.println("********* Rendering...");
-//		int nb_images = 180;
+//		System.out.println("********* Rotating...");
+//		int nb_images = 450;
 //		Rotation r = new Rotation(Math.PI*2/(double)nb_images, Vector3.Z_AXIS);
 //		for (int i=0; i<=3*nb_images; i++) {
 //			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
-//			sph.combineTransformation(r);
+//			moon.combineTransformation(r);
 //			//cyl.setTransformation(r);
 //			renderer.render();
 //		}
