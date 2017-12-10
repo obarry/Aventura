@@ -180,7 +180,7 @@ public class RenderEngine {
 		view.initView();
 		
 		// zBuffer initialization (if applicable)
-		if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_LINE) {
+		if (renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
 			rasterizer.initZBuffer();
 		}
 		
@@ -295,7 +295,7 @@ public class RenderEngine {
 		if (isInViewFrustum(t)) { // Render triangle
 			
 			// If triangle normal then transform triangle normal
-			if (renderContext.rendering_type != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal() || backfaceCulling) {
+			if (renderContext.renderingType != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal() || backfaceCulling) {
 				// Calculate normal if not calculated
 				if (t.getNormal()==null) t.calculateNormal();
 				modelView.transformNormal(t);
@@ -310,7 +310,7 @@ public class RenderEngine {
 			
 			} else { // Default case
 
-				switch (renderContext.rendering_type) {
+				switch (renderContext.renderingType) {
 				case RenderContext.RENDERING_TYPE_LINE:
 					rasterizer.drawTriangleLines(t, color);
 					break;
@@ -336,6 +336,10 @@ public class RenderEngine {
 				default:
 					// Invalid rendering type
 					break;
+				}
+				
+				if (renderContext.renderingLines == RenderContext.RENDERING_LINES_ENABLED && renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
+					rasterizer.drawTriangleLines(t, color);				
 				}
 
 				// If DISPLAY_NORMALS is activated then renderContext normals

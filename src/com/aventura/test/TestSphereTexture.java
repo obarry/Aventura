@@ -22,7 +22,6 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Cylinder;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
@@ -105,9 +104,9 @@ public class TestSphereTexture {
 		//Texture tex = new Texture("resources/test/texture_blue_checkboard_1300x1300.jpg");
 		//Texture tex = new Texture("resources/test/texture_geometry_1024x1024.jpg");
 		//Texture tex = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_moon_2048x1024.jpg");
+		Texture tex = new Texture("resources/test/texture_moon_2048x1024.jpg");
 		//Texture tex = new Texture("resources/test/texture_jupiter_2048x1024.jpg");
-		Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
 		//Texture tex = new Texture("resources/test/texture_neptune_2048x1024.jpg");
 		
 		// Create World
@@ -128,11 +127,10 @@ public class TestSphereTexture {
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
-		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
