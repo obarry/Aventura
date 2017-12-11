@@ -387,9 +387,9 @@ public class Rasterizer {
  
 	    int sx = (int)Tools.interpolate(xScreen(va), xScreen(vb), gradient1);
 	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
-//	    if (ex>ex) {
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex and sx. ex:"+ex+" sx:+sx");	    	
-//	    }
+	    if (ex > Math.max(xScreen(vc), xScreen(vd))+100) {
+	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xScreen(vc):"+xScreen(vc)+", xScreen(vd):"+xScreen(vd)+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
+	    }
 	    
 	    // Vertices z
 	    float za = (float)va.getProjPos().getW();
