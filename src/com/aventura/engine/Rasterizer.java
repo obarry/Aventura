@@ -301,7 +301,7 @@ public class Rasterizer {
 	    }
 	    
 	    if (yScreen(v3) - yScreen(v1) > 0) {
-	        dP1P3 = (xScreen(v3) - xScreen(v1)) / (yScreen(v3) - yScreen(v1));
+	        dP1P3 = (xScreen(v3)-xScreen(v1))/(yScreen(v3)-yScreen(v1));
 	    } else { // vertical segment, no slope
 	        dP1P3 = 0;
 	    }
@@ -376,20 +376,18 @@ public class Rasterizer {
 	    // the starting X (sx) and ending X (ex) to draw between
 	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
 		
-	    float gradient1 = (float)(yScreen(va) != yScreen(vb) ? (y - yScreen(va)) / (yScreen(vb) - yScreen(va)) : 1);
-	    float gradient2 = (float)(yScreen(vc) != yScreen(vd) ? (y - yScreen(vc)) / (yScreen(vd) - yScreen(vc)) : 1);
-//	    if (Math.abs(gradient1)<0.00001) {
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid gradient1: "+gradient1);
-//	    }
-//	    if (Math.abs(gradient2)<0.00001) {
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid gradient2: "+gradient2);
-//	    }
+	    float gradient1 = (float)(Math.round(yScreen(va)) != Math.round(yScreen(vb)) ? (y - yScreen(va)) / (yScreen(vb) - yScreen(va)) : 1);
+	    float gradient2 = (float)(Math.round(yScreen(vc)) != Math.round(yScreen(vd)) ? (y - yScreen(vc)) / (yScreen(vd) - yScreen(vc)) : 1);
  
 	    int sx = (int)Tools.interpolate(xScreen(va), xScreen(vb), gradient1);
 	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
-	    if (ex > Math.max(xScreen(vc), xScreen(vd))+100) {
-	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xScreen(vc):"+xScreen(vc)+", xScreen(vd):"+xScreen(vd)+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
-	    }
+	    
+	    // Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
+	    // TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
+//	    if (ex > Math.max(xScreen(vc), xScreen(vd))+100) {
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xScreen(vc):"+xScreen(vc)+", xScreen(vd):"+xScreen(vd)+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", yScreen(va):"+yScreen(va)+", yScreen(vb):"+yScreen(vb)+", yScreen(vc):"+yScreen(vc)+", yScreen(vd):"+yScreen(vd));	    	
+//	    }
 	    
 	    // Vertices z
 	    float za = (float)va.getProjPos().getW();

@@ -104,9 +104,9 @@ public class TestSphereTexture {
 		//Texture tex = new Texture("resources/test/texture_blue_checkboard_1300x1300.jpg");
 		//Texture tex = new Texture("resources/test/texture_geometry_1024x1024.jpg");
 		//Texture tex = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
-		Texture tex = new Texture("resources/test/texture_moon_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_moon_2048x1024.jpg");
 		//Texture tex = new Texture("resources/test/texture_jupiter_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
+		Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
 		//Texture tex = new Texture("resources/test/texture_neptune_2048x1024.jpg");
 		
 		// Create World

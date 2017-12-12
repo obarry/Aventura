@@ -94,12 +94,12 @@ public class TestSphereTexture2 {
 		earth.setSpecularColor(new Color(100,100,100));
 		world.addElement(earth);
 		
-//		Sphere moon = new Sphere(3.474, 48, texmoon);
-//		moon.setSpecularExp(3);
-//		moon.setSpecularColor(new Color(100,100,100));
-//		Translation t = new Translation(new Vector4(384.4,0,0,0));
-//		moon.setTransformation(t);
-//		world.addElement(moon);
+		Sphere moon = new Sphere(3.474, 48, texmoon);
+		moon.setSpecularExp(3);
+		moon.setSpecularColor(new Color(100,100,100));
+		Translation t = new Translation(new Vector4(384.4,0,0,0));
+		moon.setTransformation(t);
+		world.addElement(moon);
 		
 		world.calculateNormals();
 		
