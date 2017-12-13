@@ -375,9 +375,13 @@ public class Rasterizer {
 	    // Thanks to current Y, we can compute the gradient to compute others values like
 	    // the starting X (sx) and ending X (ex) to draw between
 	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
+		float ya = (float)yScreen(va);
+		float yb = (float)yScreen(vb);
+		float yc = (float)yScreen(vc);
+		float yd = (float)yScreen(vd);
 		
-	    float gradient1 = (float)(Math.round(yScreen(va)) != Math.round(yScreen(vb)) ? (y - yScreen(va)) / (yScreen(vb) - yScreen(va)) : 1);
-	    float gradient2 = (float)(Math.round(yScreen(vc)) != Math.round(yScreen(vd)) ? (y - yScreen(vc)) / (yScreen(vd) - yScreen(vc)) : 1);
+	    float gradient1 = (float)(Math.round(ya) != Math.round(yb) ? (y - ya) / (yb - ya) : 1);
+	    float gradient2 = (float)(Math.round(yc) != Math.round(yd) ? (y - yc) / (yd - yc) : 1);
  
 	    int sx = (int)Tools.interpolate(xScreen(va), xScreen(vb), gradient1);
 	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
@@ -386,7 +390,7 @@ public class Rasterizer {
 	    // TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
 //	    if (ex > Math.max(xScreen(vc), xScreen(vd))+100) {
 //	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xScreen(vc):"+xScreen(vc)+", xScreen(vd):"+xScreen(vd)+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", yScreen(va):"+yScreen(va)+", yScreen(vb):"+yScreen(vb)+", yScreen(vc):"+yScreen(vc)+", yScreen(vd):"+yScreen(vd));	    	
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", ya:"+yScreen(va)+", yScreen(vb):"+yb+", yScreen(vc):"+yc+", yScreen(vd):"+yd);	    	
 //	    }
 	    
 	    // Vertices z
