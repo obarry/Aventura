@@ -379,18 +379,35 @@ public class Rasterizer {
 		float yb = (float)yScreen(vb);
 		float yc = (float)yScreen(vc);
 		float yd = (float)yScreen(vd);
-		
-	    float gradient1 = (float)(Math.round(ya) != Math.round(yb) ? (y - ya) / (yb - ya) : 1);
-	    float gradient2 = (float)(Math.round(yc) != Math.round(yd) ? (y - yc) / (yd - yc) : 1);
+
+		float xa = (float)xScreen(va);
+		float xb = (float)xScreen(vb);
+		float xc = (float)xScreen(vc);
+		float xd = (float)xScreen(vd);
+
+//	    float gradient1 = (float)(yScreen(va) != yScreen(vb) ? (y - yScreen(va)) / (yScreen(vb) - yScreen(va)) : 1);
+//	    float gradient2 = (float)(yScreen(vc) != yScreen(vd) ? (y - yScreen(vc)) / (yScreen(vd) - yScreen(vc)) : 1);
+	    float gradient1 = (float)(ya != yb ? (y - ya) / (yb - ya) : 1);
+	    float gradient2 = (float)(yc != yd ? (y - yc) / (yd - yc) : 1);
+//	    float gradient1 = (float)(Math.round(ya) != Math.round(yb) ? (y - ya) / (yb - ya) : 1);
+//	    float gradient2 = (float)(Math.round(yc) != Math.round(yd) ? (y - yc) / (yd - yc) : 1);
+//	    float gradient1 = (float)(Math.abs(ya-yb)>0.5 ? (y - ya) / (yb - ya) : 1);
+//	    float gradient2 = (float)(Math.abs(yc-yd)>0.5 ? (y - yc) / (yd - yc) : 1);
  
-	    int sx = (int)Tools.interpolate(xScreen(va), xScreen(vb), gradient1);
-	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
+	    int sx = (int)Tools.interpolate(xa, xb, gradient1);
+	    int ex = (int)Tools.interpolate(xc, xd, gradient2);
+	    
+	    // To avoid gradient effect on x axis for small y variations (flat slopes) -> "cap" the sx and ex to x min and max of the triangle 
+	    int smin = (int)Math.min(xa,xb);
+	    int emax = (int)Math.max(xc, xd);
+	    if (sx<smin) sx=(int)smin;
+	    if (ex>emax) ex=(int)emax;
 	    
 	    // Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
 	    // TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
 //	    if (ex > Math.max(xScreen(vc), xScreen(vd))+100) {
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xScreen(vc):"+xScreen(vc)+", xScreen(vd):"+xScreen(vd)+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", ya:"+yScreen(va)+", yScreen(vb):"+yb+", yScreen(vc):"+yc+", yScreen(vd):"+yd);	    	
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xc:"+xc+", xd:"+xd+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", ya:"+ya+", yb:"+yb+", yc:"+yc+", yd:"+yd);	    	
 //	    }
 	    
 	    // Vertices z
