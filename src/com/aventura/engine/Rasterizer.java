@@ -226,9 +226,11 @@ public class Rasterizer {
 			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), se, sc, t.isRectoVerso()));					
 
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1.V3(), se, sc, t.isRectoVerso()));
-			t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2.V3(), se, sc, t.isRectoVerso()));
-			t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3.V3(), se, sc, t.isRectoVerso()));					
+			if (lighting.hasSpecular()) {
+				t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1.V3(), se, sc, t.isRectoVerso()));
+				t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2.V3(), se, sc, t.isRectoVerso()));
+				t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3.V3(), se, sc, t.isRectoVerso()));
+			}
 }
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
@@ -375,18 +377,33 @@ public class Rasterizer {
 	    // Thanks to current Y, we can compute the gradient to compute others values like
 	    // the starting X (sx) and ending X (ex) to draw between
 	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
-		
-	    float gradient1 = (float)(Math.round(yScreen(va)) != Math.round(yScreen(vb)) ? (y - yScreen(va)) / (yScreen(vb) - yScreen(va)) : 1);
-	    float gradient2 = (float)(Math.round(yScreen(vc)) != Math.round(yScreen(vd)) ? (y - yScreen(vc)) / (yScreen(vd) - yScreen(vc)) : 1);
+		float ya = (float)yScreen(va);
+		float yb = (float)yScreen(vb);
+		float yc = (float)yScreen(vc);
+		float yd = (float)yScreen(vd);
+
+		float xa = (float)xScreen(va);
+		float xb = (float)xScreen(vb);
+		float xc = (float)xScreen(vc);
+		float xd = (float)xScreen(vd);
+
+	    float gradient1 = (float)(ya != yb ? (y - ya) / (yb - ya) : 1);
+	    float gradient2 = (float)(yc != yd ? (y - yc) / (yd - yc) : 1);
  
-	    int sx = (int)Tools.interpolate(xScreen(va), xScreen(vb), gradient1);
-	    int ex = (int)Tools.interpolate(xScreen(vc), xScreen(vd), gradient2);
+	    int sx = (int)Tools.interpolate(xa, xb, gradient1);
+	    int ex = (int)Tools.interpolate(xc, xd, gradient2);
+	    
+	    // To avoid gradient effect on x axis for small y variations (flat slopes) -> "cap" the sx and ex to x min and max of the triangle 
+	    int smin = (int)Math.min(xa,xb);
+	    int emax = (int)Math.max(xc, xd);
+	    if (sx<smin) sx=(int)smin;
+	    if (ex>emax) ex=(int)emax;
 	    
 	    // Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
 	    // TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
 //	    if (ex > Math.max(xScreen(vc), xScreen(vd))+100) {
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xScreen(vc):"+xScreen(vc)+", xScreen(vd):"+xScreen(vd)+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", yScreen(va):"+yScreen(va)+", yScreen(vb):"+yScreen(vb)+", yScreen(vc):"+yScreen(vc)+", yScreen(vd):"+yScreen(vd));	    	
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xc:"+xc+", xd:"+xd+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
+//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", ya:"+ya+", yb:"+yb+", yc:"+yc+", yd:"+yd);	    	
 //	    }
 	    
 	    // Vertices z
@@ -410,8 +427,10 @@ public class Rasterizer {
         	ishc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getShadedCol(),1/za), ColorTools.multColor(vb.getShadedCol(),1/zb), gradient1);
         	ishc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);
         	// Specular color
-        	ispc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getSpecularCol(),1/za), ColorTools.multColor(vb.getSpecularCol(),1/zb), gradient1);
-        	ispc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getSpecularCol(),1/zc), ColorTools.multColor(vd.getSpecularCol(),1/zd), gradient2);	
+        	if (lighting.hasSpecular()) {
+        		ispc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getSpecularCol(),1/za), ColorTools.multColor(vb.getSpecularCol(),1/zb), gradient1);
+        		ispc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getSpecularCol(),1/zc), ColorTools.multColor(vd.getSpecularCol(),1/zd), gradient2);
+        	}
 	    }
 
 	    // Starting Texture & ending Texture coordinates
@@ -440,7 +459,11 @@ public class Rasterizer {
     		if (interpolate) {
     			// Color interpolation
     			csh = ColorTools.multColor(ColorTools.interpolateColors(ishc1, ishc2, gradient),z); // Shaded color
+    			if (lighting.hasSpecular()) {
     			csp = ColorTools.multColor(ColorTools.interpolateColors(ispc1, ispc2, gradient),z); // Specular color
+    			} else {
+    				csp = DARK_SHADING_COLOR; // No specular
+    			}
     		} // Else c is the base color passed in arguments and csp won't be used
 
     		// Texture interpolation

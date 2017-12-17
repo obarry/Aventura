@@ -106,7 +106,7 @@ public class TestSphereTexture2 {
 		System.out.println("********* Creating light");
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,0), 0.9f);
 		AmbientLight al = new AmbientLight(0.05f);
-		Lighting light = new Lighting(dl, al, false);
+		Lighting light = new Lighting(dl, al, true);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
