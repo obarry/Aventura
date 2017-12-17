@@ -121,9 +121,10 @@ public class TestAventura15 {
 		//Texture texstone1 = new Texture("resources/test/texture_stone1_1700x1133.jpg");
 		//Texture texrock = new Texture("resources/test/texture_rock_stone_400x450.jpg");
 		Texture texcremedemarron = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
-		Texture texearth = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
+		//Texture texearth = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
 		//Texture texmoon = new Texture("resources/test/texture_moon_2048x1024.jpg");
-
+		Texture texfoot = new Texture("resources/test/texture_football_320x160.jpg");
+		
 		// Camera
 		Vector4 eye = new Vector4(10,6,3,1);
 		Vector4 poi = new Vector4(0,0,0,1);
@@ -152,8 +153,10 @@ public class TestAventura15 {
 						//e.setColor(Color.CYAN);
 						break;
 					case 2:
-						e = new Sphere(0.8,32, texearth);
-						//e.setColor(Color.MAGENTA);
+						e = new Sphere(0.667,32, texfoot);
+						e.setSpecularExp(3);
+						e.setSpecularColor(new Color(100,100,100));
+						e.setColor(new Color(200,150,255));
 						break;
 					case 3:
 						e = new Cube(1, texmetalplate);
@@ -213,7 +216,7 @@ public class TestAventura15 {
 		System.out.println("********* Creating Lighting");
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-0.5,0.5), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
-		Lighting lighting = new Lighting(dl, al);
+		Lighting lighting = new Lighting(dl, al, true);
 
 		GraphicContext context = new GraphicContext(1.5, 0.9, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		View view = test.createView(context);

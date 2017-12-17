@@ -108,6 +108,7 @@ public class TestSphereTexture {
 		//Texture tex = new Texture("resources/test/texture_jupiter_2048x1024.jpg");
 		Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
 		//Texture tex = new Texture("resources/test/texture_neptune_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_football_320x160.jpg");
 		
 		// Create World
 		World world = new World();
@@ -122,7 +123,7 @@ public class TestSphereTexture {
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.9f);
 		AmbientLight al = new AmbientLight(0.05f);
-		Lighting light = new Lighting(dl, al, false);
+		Lighting light = new Lighting(dl, al, true);
 		
 		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);

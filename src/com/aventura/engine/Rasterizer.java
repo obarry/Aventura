@@ -226,9 +226,11 @@ public class Rasterizer {
 			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), se, sc, t.isRectoVerso()));					
 
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1.V3(), se, sc, t.isRectoVerso()));
-			t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2.V3(), se, sc, t.isRectoVerso()));
-			t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3.V3(), se, sc, t.isRectoVerso()));					
+			if (lighting.hasSpecular()) {
+				t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1.V3(), se, sc, t.isRectoVerso()));
+				t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2.V3(), se, sc, t.isRectoVerso()));
+				t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3.V3(), se, sc, t.isRectoVerso()));
+			}
 }
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
@@ -385,14 +387,8 @@ public class Rasterizer {
 		float xc = (float)xScreen(vc);
 		float xd = (float)xScreen(vd);
 
-//	    float gradient1 = (float)(yScreen(va) != yScreen(vb) ? (y - yScreen(va)) / (yScreen(vb) - yScreen(va)) : 1);
-//	    float gradient2 = (float)(yScreen(vc) != yScreen(vd) ? (y - yScreen(vc)) / (yScreen(vd) - yScreen(vc)) : 1);
 	    float gradient1 = (float)(ya != yb ? (y - ya) / (yb - ya) : 1);
 	    float gradient2 = (float)(yc != yd ? (y - yc) / (yd - yc) : 1);
-//	    float gradient1 = (float)(Math.round(ya) != Math.round(yb) ? (y - ya) / (yb - ya) : 1);
-//	    float gradient2 = (float)(Math.round(yc) != Math.round(yd) ? (y - yc) / (yd - yc) : 1);
-//	    float gradient1 = (float)(Math.abs(ya-yb)>0.5 ? (y - ya) / (yb - ya) : 1);
-//	    float gradient2 = (float)(Math.abs(yc-yd)>0.5 ? (y - yc) / (yd - yc) : 1);
  
 	    int sx = (int)Tools.interpolate(xa, xb, gradient1);
 	    int ex = (int)Tools.interpolate(xc, xd, gradient2);
@@ -431,8 +427,10 @@ public class Rasterizer {
         	ishc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getShadedCol(),1/za), ColorTools.multColor(vb.getShadedCol(),1/zb), gradient1);
         	ishc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);
         	// Specular color
-        	ispc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getSpecularCol(),1/za), ColorTools.multColor(vb.getSpecularCol(),1/zb), gradient1);
-        	ispc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getSpecularCol(),1/zc), ColorTools.multColor(vd.getSpecularCol(),1/zd), gradient2);	
+        	if (lighting.hasSpecular()) {
+        		ispc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getSpecularCol(),1/za), ColorTools.multColor(vb.getSpecularCol(),1/zb), gradient1);
+        		ispc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getSpecularCol(),1/zc), ColorTools.multColor(vd.getSpecularCol(),1/zd), gradient2);
+        	}
 	    }
 
 	    // Starting Texture & ending Texture coordinates
@@ -461,7 +459,11 @@ public class Rasterizer {
     		if (interpolate) {
     			// Color interpolation
     			csh = ColorTools.multColor(ColorTools.interpolateColors(ishc1, ishc2, gradient),z); // Shaded color
+    			if (lighting.hasSpecular()) {
     			csp = ColorTools.multColor(ColorTools.interpolateColors(ispc1, ispc2, gradient),z); // Specular color
+    			} else {
+    				csp = DARK_SHADING_COLOR; // No specular
+    			}
     		} // Else c is the base color passed in arguments and csp won't be used
 
     		// Texture interpolation
