@@ -185,6 +185,10 @@ public class ModelView {
 		if (t.getNormal() != null) {
 			t.setProjNormal(full.times(t.getNormal().V4()).V3());
 			t.setWorldNormal(model.times(t.getNormal().V4()).V3());
+		} else {
+			t.setProjNormal(null);
+			t.setWorldNormal(null);
+			
 		}
 	}
 }

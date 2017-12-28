@@ -403,9 +403,9 @@ public class RenderEngine {
 		// In homogeneous coordinates, the camera direction is Z axis		
 		try {
 			// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
-			return (t.getV1().getProjNormal().getZ()>0) && (t.getV2().getProjNormal().getZ()>0) && (t.getV3().getProjNormal().getZ()>0);
+			return (t.getV1().getProjNormal().getZ()>=0) && (t.getV2().getProjNormal().getZ()>=0) && (t.getV3().getProjNormal().getZ()>=0);
 		} catch (Exception e) { // If no Vertex normals, then use Triangle normal with same test
-			return t.getProjNormal().getZ()>0;
+			return t.getProjNormal().getZ()>=0;
 		}
 	}
 	
@@ -492,11 +492,11 @@ public class RenderEngine {
 		
 		if (t.isTriangleNormal()) { // Normal at Triangle level
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+t.getNormal());
-			// Create 3 vertices corresponding to the end point of the 3 normal vectors
-			// In this case these vertices are calculated from a single normal vector, the one at Triangle level
+			
+			// Create a vertex corresponding to the barycenter of the triangle
+			// In this case the vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = t.getCenter();
-			//Vertex n = new Vertex(c.getPos().plus(t.getWorldNormal()));
-			Vertex n = new Vertex(c.getPos().plus(t.getNormal()));
+			Vertex n = new Vertex(c.getPos().plus(t.getNormal())); // Before transformation -> using position and normals not yet transformed
 			modelView.transform(c);
 			modelView.transform(n);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
@@ -505,18 +505,18 @@ public class RenderEngine {
 			rasterizer.drawLine(s, renderContext.normalsColor);
 			
 		} else { // Normals at Vertex level
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level");
 			
 			// Get the 3 vertices from Triangle
 			Vertex p1 = t.getV1();
 			Vertex p2 = t.getV2();
 			Vertex p3 = t.getV3();
 			
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level");
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
 			Vertex n1, n2, n3;
-			n1 = new Vertex(p1.getPos().plus(p1.getWorldNormal()));
-			n2 = new Vertex(p2.getPos().plus(p2.getWorldNormal()));
-			n3 = new Vertex(p3.getPos().plus(p3.getWorldNormal()));
+			n1 = new Vertex(p1.getPos().plus(p1.getNormal())); // Before transformation -> using position and normals not yet transformed
+			n2 = new Vertex(p2.getPos().plus(p2.getNormal())); // Before transformation -> using position and normals not yet transformed
+			n3 = new Vertex(p3.getPos().plus(p3.getNormal())); // Before transformation -> using position and normals not yet transformed
 			modelView.transform(n1);
 			modelView.transform(n2);
 			modelView.transform(n3);
