@@ -103,7 +103,7 @@ public class RenderEngine {
 	// Model
 	private World world;
 	private Lighting lighting;
-	//private Camera camera;
+	private Camera camera;
 	
 	// View
 	private View view;
@@ -133,7 +133,7 @@ public class RenderEngine {
 		//this.graphicContext = graphic;
 		this.world = world;
 		this.lighting = lighting;
-		//this.camera = camera;
+		this.camera = camera;
 		
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
 		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
@@ -402,10 +402,22 @@ public class RenderEngine {
 	protected boolean isBackFace(Triangle t) {
 		// In homogeneous coordinates, the camera direction is Z axis		
 		try {
-			// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
-			return (t.getV1().getProjNormal().getZ()>=0) && (t.getV2().getProjNormal().getZ()>=0) && (t.getV3().getProjNormal().getZ()>=0);
+			
+			if (t.isTriangleNormal()) {
+//				return t.getProjNormal().getZ()>0;
+				// Take any vertex of the triangle -> same result as a triangle is a plan
+				Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
+				return t.getWorldNormal().dot(ey)>0;
+			} else {
+				// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
+//				return (t.getV1().getProjNormal().getZ()>0) && (t.getV2().getProjNormal().getZ()>0) && (t.getV3().getProjNormal().getZ()>0);				
+				return t.getV1().getWorldNormal().dot(t.getV1().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV2().getWorldNormal().dot(t.getV2().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV3().getWorldNormal().dot(t.getV3().getWorldPos().minus(camera.getEye()).V3())>0;				
+			}
+			
 		} catch (Exception e) { // If no Vertex normals, then use Triangle normal with same test
-			return t.getProjNormal().getZ()>=0;
+//			return t.getProjNormal().getZ()>0;
+			Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
+			return t.getWorldNormal().dot(ey)>0;
 		}
 	}
 	
