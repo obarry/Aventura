@@ -13,11 +13,11 @@ public class TestRotation {
 	@Test
 	public void testRotationDoubleVector3() {
 		System.out.println("***** Test Rotation : testRotationDoubleVector3 *****");
-		Rotation r11 = new Rotation(Math.PI/3, Vector3.X_AXIS); 
+		Rotation r11 = new Rotation((float)Math.PI/3, Vector3.X_AXIS); 
 		System.out.println("r11 : "+r11);
-		Rotation r12 = new Rotation(Math.PI/4, Vector3.Y_AXIS); 
+		Rotation r12 = new Rotation((float)Math.PI/4, Vector3.Y_AXIS); 
 		System.out.println("r12 : "+r12);
-		Rotation r13 = new Rotation(Math.PI/5, Vector3.Z_AXIS);
+		Rotation r13 = new Rotation((float)Math.PI/5, Vector3.Z_AXIS);
 		System.out.println("r13 : "+r13);
 		Rotation r21 = new Rotation();
 		Rotation r22 = new Rotation();
@@ -43,7 +43,7 @@ public class TestRotation {
 	@Test
 	public void testRotationMatrix() {
 		System.out.println("***** Test Rotation : testRotationMatrix *****");
-		Rotation r1 = new Rotation(Math.PI/4, Vector3.Y_AXIS); 
+		Rotation r1 = new Rotation((float)Math.PI/4, Vector3.Y_AXIS); 
 		System.out.println("r1 : "+r1);
 		
 		Rotation r2 = null;
@@ -60,7 +60,7 @@ public class TestRotation {
 	public void testRotationMatrixFail() {
 		System.out.println("***** Test Rotation : testRotationMatrixFail *****");
 		
-		double array[][] = {{3.0, -4.0, 1.0, 0.0}, {5.0, 3.0, -7.0, 0.0}, {-9.0, 2.0, 6.0, 0.0}, {0.0, 0.0, 0.0, 1.0}};
+		float array[][] = {{3.0f, -4.0f, 1.0f, 0.0f}, {5.0f, 3.0f, -7.0f, 0.0f}, {-9.0f, 2.0f, 6.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f}};
 		
 		Rotation r = null;
 		try {

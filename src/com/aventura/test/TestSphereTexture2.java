@@ -89,15 +89,15 @@ public class TestSphereTexture2 {
 		// Create World
 		World world = new World();
 		
-		Sphere earth = new Sphere(12.742, 48, texearth);
+		Sphere earth = new Sphere(12.742f, 48, texearth);
 		earth.setSpecularExp(3);
 		earth.setSpecularColor(new Color(100,100,100));
 		world.addElement(earth);
 		
-		Sphere moon = new Sphere(3.474, 48, texmoon);
+		Sphere moon = new Sphere(3.474f, 48, texmoon);
 		moon.setSpecularExp(3);
 		moon.setSpecularColor(new Color(100,100,100));
-		Translation t = new Translation(new Vector4(384.4,0,0,0));
+		Translation t = new Translation(new Vector4(384.4f,0,0,0));
 		moon.setTransformation(t);
 		world.addElement(moon);
 		
@@ -108,7 +108,7 @@ public class TestSphereTexture2 {
 		AmbientLight al = new AmbientLight(0.05f);
 		Lighting light = new Lighting(dl, al, true);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);

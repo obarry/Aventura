@@ -10,8 +10,8 @@ public class TestVector3Matrix3 {
 	public void testVectorMatrix_MatrixTimesVector() {
 		System.out.println("***** Test Vector3Matrix3 : testMatrixTimesVector *****");
 		
-		double[] array1 = new double[3];
-		double[][] array2 = new double[3][3];
+		float[] array1 = new float[3];
+		float[][] array2 = new float[3][3];
 		
 		for (int i=0; i<3; i++) {
 			array1[i] = i+1;
@@ -56,7 +56,7 @@ public class TestVector3Matrix3 {
 	public void testVectorMatrix_MatrixGetVector() {
 		System.out.println("***** Test Vector3Matrix3 : testMatrixGetVector *****");
 		
-		double[][] array = new double[3][3];
+		float[][] array = new float[3][3];
 		
 		for (int i=0; i<3; i++) {
 			for (int j=0; j<3; j++) {

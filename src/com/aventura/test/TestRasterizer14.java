@@ -112,7 +112,7 @@ public class TestRasterizer14 {
 		//  V1           V2
 		//
 
-		double small = 0.6; 
+		float small = 0.6f; 
 
 		Vector4 vec1 = new Vector4(-1,-1,0,1);
 		Vector4 vec2 = new Vector4(1,-1,0,1);
@@ -168,7 +168,7 @@ public class TestRasterizer14 {
 		AmbientLight al = new AmbientLight(0.5f);
 		Lighting light = new Lighting(dl, al);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
@@ -186,7 +186,7 @@ public class TestRasterizer14 {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
 			e.setTransformation(r);
 			renderer.render();
 		}

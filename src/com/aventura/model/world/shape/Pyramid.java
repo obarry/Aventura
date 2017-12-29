@@ -47,20 +47,20 @@ public class Pyramid extends Element {
 	 * @param y_dim dimension of the pyramid on y axis
 	 * @param z_dim dimension of the pyramid on z axis
 	 */
-	public Pyramid(double x_dim, double y_dim, double z_dim) {
+	public Pyramid(float x_dim, float y_dim, float z_dim) {
 		super(PYRAMID_DEFAULT_NAME);
 		subelements = null;
 		createPyramid(x_dim, y_dim, z_dim);
 	}
 	
-	protected void createPyramid(double x_dim, double y_dim, double z_dim) {
+	protected void createPyramid(float x_dim, float y_dim, float z_dim) {
 
 		vertices = new Vertex[2][2];
 
 		// Calculate dimensions
-		double xh = x_dim/2;
-		double yh = y_dim/2;
-		double zh = z_dim/2;
+		float xh = x_dim/2;
+		float yh = y_dim/2;
+		float zh = z_dim/2;
 		
 		// Build the Element: Create Vertices of the base of the Pyramid: 4 vertices
 		vertices[0][0] = createVertex(new Vector4(-xh, -yh, -zh,  1));

@@ -101,8 +101,8 @@ public class TestRasterizer5 {
 		e.addTriangle(t2);
 		
 		Vertex v7 = new Vertex(new Vector4(0,0,0,1));
-		Vertex v8 = new Vertex(new Vector4(0,2,0.5,1));
-		Vertex v9 = new Vertex(new Vector4(2,0,0.5,1));
+		Vertex v8 = new Vertex(new Vector4(0,2,0.5f,1));
+		Vertex v9 = new Vertex(new Vector4(2,0,0.5f,1));
 		e.addVertex(v7);
 		e.addVertex(v8);
 		e.addVertex(v9);		
@@ -118,7 +118,7 @@ public class TestRasterizer5 {
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,3,0), 1);
 		Lighting light = new Lighting(dl);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -131,8 +131,8 @@ public class TestRasterizer5 {
 
 		int nb_images = 360;
 		for (int i=0; i<=7*nb_images; i++) {
-			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
+			float a = (float)Math.PI*2*(float)i/(float)nb_images;
+			eye = new Vector4(8*(float)Math.cos(a),8*(float)Math.sin(a),2,1);
 			//System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();

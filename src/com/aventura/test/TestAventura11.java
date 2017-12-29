@@ -100,7 +100,7 @@ public class TestAventura11 {
 		Element e1, e2, e3;
 		
 		// e1 and e2  elements
-		e1 = new Sphere(1.5,12);
+		e1 = new Sphere(1.5f,12);
 		e1.setColor(Color.MAGENTA);
 		e2 = new Cube(2);
 		e2.setColor(Color.ORANGE);
@@ -154,7 +154,7 @@ public class TestAventura11 {
 		world.calculateNormals();
 		
 		Lighting light = test.createLight();
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -167,7 +167,7 @@ public class TestAventura11 {
 		int nb_images = 360;
 		for (int i=0; i<=4.9*nb_images; i++) {
 			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(15*Math.cos(a),15*Math.sin(a),4,1);
+			eye = new Vector4(15*(float)Math.cos(a),15*(float)Math.sin(a),4,1);
 			System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();

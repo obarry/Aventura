@@ -12,8 +12,8 @@ public class TestVector3 {
 		System.out.println("***** Test Vector3 : testVector *****");
 		
 		Vector3 V1 = new Vector3();
-		Vector3 V2 = new Vector3(0.0);
-		Vector3 V3 = new Vector3(7.0);
+		Vector3 V2 = new Vector3(0.0f);
+		Vector3 V3 = new Vector3(7.0f);
 		System.out.println("V1="+V1);
 		System.out.println("V2="+V2);
 		System.out.println("V3="+V3);
@@ -25,9 +25,9 @@ public class TestVector3 {
 	public void testVector2() {
 		System.out.println("***** Test Vector3 : testVector2 *****");
 		
-		double[] x_axis = {1.0, 0.0, 0.0};
-		double[] y_axis = {0.0, 1.0, 0.0};
-		double[] z_axis = {0.0, 0.0, 1.0};
+		float[] x_axis = {1.0f, 0.0f, 0.0f};
+		float[] y_axis = {0.0f, 1.0f, 0.0f};
+		float[] z_axis = {0.0f, 0.0f, 1.0f};
 		
 		Vector3 V1 = Vector3.X_AXIS;
 		Vector3 V2 = Vector3.Y_AXIS;
@@ -51,7 +51,7 @@ public class TestVector3 {
 		System.out.println("***** Test Vector3 : testVectorLengthAndNormalization *****");
 		// Test init Vector(double, double, double) + Normalization
 		
-		Vector3 V1 = new Vector3(12.0, -12.0, 24.0);
+		Vector3 V1 = new Vector3(12.0f, -12.0f, 24.0f);
 		System.out.println("V1="+V1);
 	if (V1.getX() != 12.0 || V1.getY() != -12.0 || V1.getZ() != 24.0 ) fail("V1 wrongly initialized with Vector(double, double, double)");
 		
@@ -67,7 +67,7 @@ public class TestVector3 {
 	public void testVector_array_0() {
 		System.out.println("***** Test Vector3 : testVector_array_0 *****");
 		
-		double[] array = new double[3];
+		float[] array = new float[3];
 		
 		for (int i=0; i<3; i++) {
 			array[i] = 0;
@@ -91,19 +91,19 @@ public class TestVector3 {
 	public void testVector_array_value() {
 		System.out.println("***** Test Vector3 : testVector_array_value() *****");
 		
-		double[] array = new double[3];
+		float[] array = new float[3];
 		
 		for (int i=0; i<3; i++) {
 			array[i] = 5;
 		}
-		array[1]=22.3;
+		array[1]=22.3f;
 
 		Vector3 V1;
 		Vector3 V2;
 		try {
 			V1 = new Vector3(array);
-			V2 = new Vector3(5.0);
-			V2.set(1,22.3);
+			V2 = new Vector3(5.0f);
+			V2.set(1,22.3f);
 			System.out.println("V1="+V1);
 			System.out.println("V2="+V2);
 	
@@ -119,7 +119,7 @@ public class TestVector3 {
 	public void testVector_plus() {
 		System.out.println("***** Test Vector3 : testVector_plus() *****");
 		
-		double[] array = new double[3];
+		float[] array = new float[3];
 		
 		for (int i=0; i<3; i++) {
 				array[i] = i;
@@ -130,7 +130,7 @@ public class TestVector3 {
 		int i=0;
 		try {
 			V1 = new Vector3(array);
-			V2 = new Vector3(5.0);
+			V2 = new Vector3(5.0f);
 			Vector3 V3 = V1.plus(V2);
 			System.out.println("V1="+V1);
 			System.out.println("V2="+V2);
@@ -150,8 +150,8 @@ public class TestVector3 {
 	public void testVector_plusEquals() {
 		System.out.println("***** Test Vector3 : testVector_plusEquals() *****");
 		
-		double[] array1 = new double[3];
-		double[] array2 = new double[3];
+		float[] array1 = new float[3];
+		float[] array2 = new float[3];
 		
 		for (int i=0; i<3; i++) {
 				array1[i] = 7-i; // (7, 6, 5)
@@ -186,7 +186,7 @@ public class TestVector3 {
 	public void testVector_minus() {
 		System.out.println("***** Test Vector3 : testVector_minus() *****");
 		
-		double[] array = new double[3];
+		float[] array = new float[3];
 		
 		for (int i=0; i<3; i++) {
 			array[i] = i;
@@ -197,7 +197,7 @@ public class TestVector3 {
 		int i=0;
 		try {
 			V1 = new Vector3(array);
-			V2 = new Vector3(2.0);
+			V2 = new Vector3(2.0f);
 			Vector3 V3 = V1.minus(V2);
 			System.out.println("V1="+V1);
 			System.out.println("V2="+V2);
@@ -217,8 +217,8 @@ public class TestVector3 {
 	public void testVector_minusEquals() {
 		System.out.println("***** Test Vector3 : testVector_minusEquals() *****");
 		
-		double[] array1 = new double[3];
-		double[] array2 = new double[3];
+		float[] array1 = new float[3];
+		float[] array2 = new float[3];
 		
 		for (int i=0; i<3; i++) {
 				array1[i] = 7-i; // (7, 6, 5)
@@ -255,7 +255,7 @@ public class TestVector3 {
 	public void testVector_times() {
 		System.out.println("***** Test Vector3 : testVector_times() *****");
 		
-		double[] array = new double[3];
+		float[] array = new float[3];
 		
 		for (int i=0; i<3; i++) {
 			array[i] = i+1; // (1, 2, 3)
@@ -264,7 +264,7 @@ public class TestVector3 {
 		Vector3 V1;
 		try {
 			V1 = new Vector3(array);
-			Vector3 V2 = V1.times(7.0);
+			Vector3 V2 = V1.times(7.0f);
 			System.out.println("V1="+V1);
 			System.out.println("V2="+V2);
 	
@@ -280,7 +280,7 @@ public class TestVector3 {
 	public void testVector_timesEquals() {
 		System.out.println("***** Test Vector3 : testVector_timesEquals() *****");
 		
-		double[] array = new double[3];
+		float[] array = new float[3];
 		
 		for (int i=0; i<3; i++) {
 			array[i] = i-1; // (-1, 0, 1)
@@ -290,7 +290,7 @@ public class TestVector3 {
 		try {
 			V1 = new Vector3(array);
 			System.out.println("V1="+V1);
-			V1.timesEquals(3.0);
+			V1.timesEquals(3.0f);
 			System.out.println("V1="+V1);
 	
 			if (!(V1.get(0) == -3.0 && V1.get(1) == 0.0 && V1.get(2) == 3.0)) fail("V1 does not equals V1*3.0");
@@ -305,7 +305,7 @@ public class TestVector3 {
 	public void testVector_scalar() {
 		System.out.println("***** Test Vector3 : testVector_scalar() *****");
 		
-		double[] array = new double[3];
+		float[] array = new float[3];
 		
 		for (int i=0; i<3; i++) {
 			array[i] = i;
@@ -315,7 +315,7 @@ public class TestVector3 {
 		Vector3 V2;
 		try {
 			V1 = new Vector3(array);
-			V2 = new Vector3(2.0);
+			V2 = new Vector3(2.0f);
 			double scal = V1.dot(V2);
 			System.out.println("V1="+V1);
 			System.out.println("V2="+V2);
@@ -336,8 +336,8 @@ public class TestVector3 {
 	 * a=(a1,a2,a3) and b=(b1,b2,b3) then a^b=(a2b3−a3b2, a3b1−a1b3, a1b2−a2b1)
 	 */
 		
-		double[] array1 = new double[3];
-		double[] array2 = new double[3];
+		float[] array1 = new float[3];
+		float[] array2 = new float[3];
 		
 		for (int i=0; i<3; i++) {
 			array1[i] = i;
@@ -370,8 +370,8 @@ public class TestVector3 {
 	 * a=(a1,a2,a3) and b=(b1,b2,b3) then a^b=(a2b3−a3b2, a3b1−a1b3, a1b2−a2b1)
 	 */
 		
-		double[] array1 = new double[3];
-		double[] array2 = new double[3];
+		float[] array1 = new float[3];
+		float[] array2 = new float[3];
 		
 		for (int i=0; i<3; i++) {
 			array1[i] = i+1;

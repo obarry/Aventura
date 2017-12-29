@@ -35,14 +35,14 @@ import com.aventura.tools.tracing.Tracer;
  */
 public class Orthographic extends Perspective {
 	
-	public Orthographic(double left, double right, double bottom, double top, double near, double far) {
+	public Orthographic(float left, float right, float bottom, float top, float near, float far) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Orthographic perspective");
 		
-		double[][] array = { { 1/(right-left)       , 0.0            ,  0.0          , (right+left)/(right-left) },
-				 			 { 0.0                  , 2/(top-bottom) ,  0.0          , (bottom+top)/(bottom-top) },
-				 			 { 0.0                  , 0.0            ,  2/(near-far) , near+far/(far-near)       },
-				 			 { 0.0                  , 0.0            ,  0.0          , 1.0                       } };
+		float[][] array = { { 1/(right-left)       , 0.0f            ,  0.0f          , (right+left)/(right-left) },
+				 			{ 0.0f                 , 2/(top-bottom)  ,  0.0f          , (bottom+top)/(bottom-top) },
+				 			{ 0.0f                 , 0.0f            ,  2/(near-far)  , near+far/(far-near)       },
+				 			{ 0.0f                 , 0.0f            ,  0.0f          , 1.0f                      } };
 		
 		try {
 			this.setArray(array);

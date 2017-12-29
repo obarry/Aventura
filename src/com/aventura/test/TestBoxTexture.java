@@ -102,7 +102,7 @@ public class TestBoxTexture {
 		// Create World
 		World world = new World();
 		
-		Box elm = new Box(3,2,1.5, tex);
+		Box elm = new Box(3,2,1.5f, tex);
 		//elm.setColor(new Color(100,200,255));
 		//elm.setSpecularExp(8);
 		world.addElement(elm);
@@ -114,11 +114,11 @@ public class TestBoxTexture {
 		
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5,0,1), 0.8f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,0,1f), 0.8f);
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -136,7 +136,7 @@ public class TestBoxTexture {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.X_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
 			elm.setTransformation(r);
 			renderer.render();
 		}

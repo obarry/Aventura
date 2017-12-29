@@ -66,9 +66,9 @@ public class Rasterizer {
 	private static Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
 	
 	// Z buffer
-	private double[][] zBuffer;
+	private float[][] zBuffer;
 	int zBuf_width, zBuf_height;
-	private double zBuffer_init = 0;
+	private float zBuffer_init = 0;
 	
 	
 	// Pixel statistics
@@ -109,7 +109,7 @@ public class Rasterizer {
 		
 		zBuf_width = 2*graphic.getPixelHalfWidth()+1;
 		zBuf_height = 2*graphic.getPixelHalfHeight()+1;
-		zBuffer = new double[zBuf_width][zBuf_height];
+		zBuffer = new float[zBuf_width][zBuf_height];
 		
 		// Initialization loop with initialization value ( 1 or -1 in homogeneous coordinates ?) that is the farest value for the view Frustum
 		// Any value closer will be drawn and the zBuffer in this place will be updated by new value
@@ -121,19 +121,19 @@ public class Rasterizer {
 		}
 	}
 	
-	protected double xScreen(Vertex v) {
+	protected float xScreen(Vertex v) {
 		return xScreen(v.getProjPos());
 	}
 	
-	protected double yScreen(Vertex v) {
+	protected float yScreen(Vertex v) {
 		return yScreen(v.getProjPos());
 	}
 	
-	protected double xScreen(Vector4 v) {
+	protected float xScreen(Vector4 v) {
 		return v.get3DX()*graphic.getPixelHalfWidth();
 	}
 	
-	protected double yScreen(Vector4 v) {
+	protected float yScreen(Vector4 v) {
 		return v.get3DY()*graphic.getPixelHalfHeight();
 	}
 	
@@ -377,18 +377,18 @@ public class Rasterizer {
 	    // Thanks to current Y, we can compute the gradient to compute others values like
 	    // the starting X (sx) and ending X (ex) to draw between
 	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
-		float ya = (float)yScreen(va);
-		float yb = (float)yScreen(vb);
-		float yc = (float)yScreen(vc);
-		float yd = (float)yScreen(vd);
+		float ya = yScreen(va);
+		float yb = yScreen(vb);
+		float yc = yScreen(vc);
+		float yd = yScreen(vd);
 
-		float xa = (float)xScreen(va);
-		float xb = (float)xScreen(vb);
-		float xc = (float)xScreen(vc);
-		float xd = (float)xScreen(vd);
+		float xa = xScreen(va);
+		float xb = xScreen(vb);
+		float xc = xScreen(vc);
+		float xd = xScreen(vd);
 
-	    float gradient1 = (float)(ya != yb ? (y - ya) / (yb - ya) : 1);
-	    float gradient2 = (float)(yc != yd ? (y - yc) / (yd - yc) : 1);
+	    float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
+	    float gradient2 = yc != yd ? (y - yc) / (yd - yc) : 1;
  
 	    int sx = (int)Tools.interpolate(xa, xb, gradient1);
 	    int ex = (int)Tools.interpolate(xc, xd, gradient2);
@@ -407,10 +407,10 @@ public class Rasterizer {
 //	    }
 	    
 	    // Vertices z
-	    float za = (float)va.getProjPos().getW();
-	    float zb = (float)vb.getProjPos().getW();
-	    float zc = (float)vc.getProjPos().getW();
-	    float zd = (float)vd.getProjPos().getW();
+	    float za = va.getProjPos().getW();
+	    float zb = vb.getProjPos().getW();
+	    float zc = vc.getProjPos().getW();
+	    float zd = vd.getProjPos().getW();
 
 
 	    // Starting Z & ending Z
@@ -438,8 +438,8 @@ public class Rasterizer {
     	Vector4 vt2 = null;
     	Vector4 vt = null;
     	if (texture && t!=null) {
-    		vt1 = Tools.interpolate(vta.times((double)1/za), vtb.times((double)1/zb), gradient1);
-    		vt2 = Tools.interpolate(vtc.times((double)1/zc), vtd.times((double)1/zd), gradient2);
+    		vt1 = Tools.interpolate(vta.times((float)1/za), vtb.times((float)1/zb), gradient1);
+    		vt2 = Tools.interpolate(vtc.times((float)1/zc), vtd.times((float)1/zd), gradient2);
 
     	}
 
@@ -469,7 +469,7 @@ public class Rasterizer {
     		// Texture interpolation
     		if (texture && t!=null) {
 
-    			vt = Tools.interpolate(vt1, vt2, gradient).times((double)z);
+    			vt = Tools.interpolate(vt1, vt2, gradient).times(z);
     			try {
     				// Projective Texture mapping using the fourth coordinate
     				// By default W of the texture vector is 1 but if not this will help to take account of the potential geometrical distortion of the texture
@@ -529,7 +529,7 @@ public class Rasterizer {
 	 * @param z Z homogeneous coordinate for Z buffering
 	 * @param c Color of the pixel
 	 */
-	protected void drawPoint(int x, int y, double z, Color c) {
+	protected void drawPoint(int x, int y, float z, Color c) {
 		// Eliminate pixels outside the view screen
 		if (isInScreenX(x) && isInScreenY(y)) {
 			// Z buffer is [0, width][0, height]
@@ -644,8 +644,8 @@ public class Rasterizer {
 		if (e>0) { // If e=0 this is considered as no specular reflection
 			float specular = 0;
 			// Calculate reflection vector R = 2N-L and normalize it
-			Vector3 r = normal.times(2.0).minus(lighting.getDirectionalLight().getLightVector(null)).normalize(); 
-			float dotRV = (float)(r.dot(viewer));
+			Vector3 r = normal.times(2.0f).minus(lighting.getDirectionalLight().getLightVector(null)).normalize(); 
+			float dotRV = r.dot(viewer);
 			if (rectoVerso) dotRV = Math.abs(dotRV);
 			if (dotRV<0) dotRV = 0;
 			specular = (float) Math.pow(dotRV, e);

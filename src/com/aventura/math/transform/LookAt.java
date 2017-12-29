@@ -122,10 +122,10 @@ public class LookAt extends Matrix4 {
 		Vector4 up = (s.times(f)).normalize();
 
 		// Construct array of Reorientation Matrix
-		double[][] array = { {  s.getX(),  s.getY(),  s.getZ(), 0.0 },
-				{ up.getX(), up.getY(), up.getZ(), 0.0 },
-				{ -f.getX(), -f.getY(), -f.getZ(), 0.0 },
-				{  0.0     ,  0.0     ,  0.0     , 1.0 } };
+		float[][] array = { {  s.getX(),  s.getY(),  s.getZ(), 0.0f },
+							{ up.getX(), up.getY(), up.getZ(), 0.0f },
+							{ -f.getX(), -f.getY(), -f.getZ(), 0.0f },
+							{  0.0f    ,  0.0f    ,  0.0f    , 1.0f } };
 
 		// Build reorientation Matrix
 		Matrix4 orientation = new Matrix4(array);

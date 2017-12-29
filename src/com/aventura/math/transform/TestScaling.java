@@ -15,10 +15,10 @@ public class TestScaling {
 		Scaling h = new Scaling(12);
 		System.out.println("Scaling h: "+ h);
 		
-		double[][] a = {
-				{12.0, 0.0, 0.0}, 
-	            {0.0, 12.0, 0.0},
-				{0.0, 0.0, 12.0}};
+		float[][] a = {
+				{12.0f, 0.0f, 0.0f}, 
+	            {0.0f, 12.0f, 0.0f},
+				{0.0f, 0.0f, 12.0f}};
 		
 		try {
 			Matrix3 m = new Matrix3(a);
@@ -40,10 +40,10 @@ public class TestScaling {
 		
 		Scaling h = new Scaling(7);
 		
-		double[][] a = {
-				{7.0, 0.0, 0.0}, 
-	            {0.0, 7.0, 0.0},
-				{0.0, 0.0, 7.0}};
+		float[][] a = {
+				{7.0f, 0.0f, 0.0f}, 
+	            {0.0f, 7.0f, 0.0f},
+				{0.0f, 0.0f, 7.0f}};
 		
 		try {
 			Matrix3 m = new Matrix3(a);

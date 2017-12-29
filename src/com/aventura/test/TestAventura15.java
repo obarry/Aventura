@@ -145,15 +145,15 @@ public class TestAventura15 {
 					// Create an Element of a random type
 					switch(Math.round((float)Math.random()*5)) {
 					case 0:
-						e = new Cone(1,0.5,32, texdamier);
+						e = new Cone(1,0.5f,32, texdamier);
 						//e.setColor(Color.YELLOW);
 						break;
 					case 1:
-						e = new Cylinder(1,0.5,32, texcremedemarron);
+						e = new Cylinder(1,0.5f,32, texcremedemarron);
 						//e.setColor(Color.CYAN);
 						break;
 					case 2:
-						e = new Sphere(0.667,32, texfoot);
+						e = new Sphere(0.667f,32, texfoot);
 						e.setSpecularExp(3);
 						e.setSpecularColor(new Color(100,100,100));
 						e.setColor(new Color(200,150,255));
@@ -163,20 +163,20 @@ public class TestAventura15 {
 						//e.setColor(Color.PINK);
 						break;
 					case 4:
-						e = new Box(1.5,1,0.5, texbricks);
+						e = new Box(1.5f,1,0.5f, texbricks);
 						//e.setColor(Color.ORANGE);
 						break;
 					case 5:
 						
-						double size = 1.5;
+						float size = 1.5f;
 						int n = 10;
 						int nb_sin = 2;
-						double array[][] = new double[n+1][n+1];
+						float array[][] = new float[n+1][n+1];
 						for (int p=0; p<=n; p++) {
 							for (int q=0; q<=n; q++) {
-								double a = Math.PI*(double)nb_sin*(double)p/(double)n;
-								double b = Math.PI*(double)nb_sin*(double)q/(double)n;
-								array[p][q] = size*Math.sin(a)*Math.sin(b)/((double)nb_sin*2);
+								float a = (float)Math.PI*(float)nb_sin*(float)p/(float)n;
+								float b = (float)Math.PI*(float)nb_sin*(float)q/(float)n;
+								array[p][q] = size*(float)Math.sin(a)*(float)Math.sin(b)/((float)nb_sin*2);
 
 							}
 						}
@@ -214,11 +214,11 @@ public class TestAventura15 {
 
 		// Create lighting
 		System.out.println("********* Creating Lighting");
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-0.5,0.5), 0.7f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,-0.5f,0.5f), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		GraphicContext context = new GraphicContext(1.5, 0.9, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		View view = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
@@ -232,9 +232,9 @@ public class TestAventura15 {
 		
 		System.out.println("********* Rendering...");
 		int nb_images = 360;
-		Rotation r1 = new Rotation(Math.PI*2/(double)nb_images, Vector3.X_AXIS);
-		Rotation r2 = new Rotation(Math.PI*2*1.5/(double)nb_images, Vector3.Y_AXIS);
-		Rotation r3 = new Rotation(Math.PI*2*2.5/(double)nb_images, Vector3.Z_AXIS);
+		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
+		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
+		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
 		Matrix4 r = r1.times(r2).times(r3);
 		for (int i=0; i<=nb_images; i++) {
 			world.expandTransformation(r);

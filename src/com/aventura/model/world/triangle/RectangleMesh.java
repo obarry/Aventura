@@ -141,10 +141,10 @@ public class RectangleMesh extends Mesh {
 						Vector4 tv1, tv2, tv3, tv4;
 					
 						// Define position for Texture vectors based on stitch in homogeneous coordinates [0,1] within the RectangleMesh
-						double ti = (double)i/(double)(nbv_x-1);
-						double tip1 = (double)(i+1)/(double)(nbv_x-1);
-						double tj = (double)j/(double)(nbv_y-1);
-						double tjp1 = (double)(j+1)/(double)(nbv_y-1);
+						float ti = (float)i/(float)(nbv_x-1);
+						float tip1 = (float)(i+1)/(float)(nbv_x-1);
+						float tj = (float)j/(float)(nbv_y-1);
+						float tjp1 = (float)(j+1)/(float)(nbv_y-1);
 						
 						// Create texture vectors
 						tv1 = new Vector4(ti,tj,0,1);
@@ -187,10 +187,10 @@ public class RectangleMesh extends Mesh {
 							Vector4 tv1, tv2, tv3, tv4;
 						
 							// Define position for Texture vectors based on stitch in homogeneous coordinates [0,1] within the RectangleMesh
-							double ti = (double)i/(double)(nbv_x-1);
-							double tip1 = (double)(i+1)/(double)(nbv_x-1);
-							double tj = (double)j/(double)(nbv_y-1);
-							double tjp1 = (double)(j+1)/(double)(nbv_y-1);
+							float ti = (float)i/(float)(nbv_x-1);
+							float tip1 = (float)(i+1)/(float)(nbv_x-1);
+							float tj = (float)j/(float)(nbv_y-1);
+							float tjp1 = (float)(j+1)/(float)(nbv_y-1);
 							
 							// Create texture vectors
 							tv1 = new Vector4(ti,tj,0,1);
@@ -221,10 +221,10 @@ public class RectangleMesh extends Mesh {
 							Vector4 tv1, tv2, tv3, tv4;
 						
 							// Define position for Texture vectors based on stitch in homogeneous coordinates [0,1] within the RectangleMesh
-							double ti = (double)i/(double)(nbv_x-1);
-							double tip1 = (double)(i+1)/(double)(nbv_x-1);
-							double tj = (double)j/(double)(nbv_y-1);
-							double tjp1 = (double)(j+1)/(double)(nbv_y-1);
+							float ti = (float)i/(float)(nbv_x-1);
+							float tip1 = (float)(i+1)/(float)(nbv_x-1);
+							float tj = (float)j/(float)(nbv_y-1);
+							float tjp1 = (float)(j+1)/(float)(nbv_y-1);
 							
 							// Create texture vectors
 							tv1 = new Vector4(ti,tj,0,1);

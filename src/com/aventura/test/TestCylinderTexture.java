@@ -96,8 +96,8 @@ public class TestCylinderTexture {
 		// Create World
 		World world = new World();
 		Cylinder cyl = null;
-		cyl = new Cylinder(2, 0.8, 20, tex);
-		cyl.setTransformation(new Rotation(Math.PI/4, Vector3.X_AXIS));
+		cyl = new Cylinder(2, 0.8f, 20, tex);
+		cyl.setTransformation(new Rotation((float)Math.PI/4, Vector3.X_AXIS));
 		//cyl.setColor(new Color(200,200,255));
 		cyl.setSpecularExp(8);
 		world.addElement(cyl);
@@ -109,7 +109,7 @@ public class TestCylinderTexture {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -126,7 +126,7 @@ public class TestCylinderTexture {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
-		Rotation r = new Rotation(Math.PI*2/(double)nb_images, Vector3.Z_AXIS);
+		Rotation r = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.Z_AXIS);
 		for (int i=0; i<=3*nb_images; i++) {
 			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
 			cyl.combineTransformation(r);

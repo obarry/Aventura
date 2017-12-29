@@ -54,8 +54,8 @@ public class FanMesh extends Mesh {
 	
 	// Texture Wrapping constants for parameters
 	public static final int MESH_ORIENTED_TRIANGLES = 1;
-	public static final double TEXTURE_SUMMIT_SMALL_VALUE = 0.0001;
-	public static final double TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE = 0.0002;
+	public static final float TEXTURE_SUMMIT_SMALL_VALUE = 0.0001f;
+	public static final float TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE = 0.0002f;
 
 	int nbv;
 	Vertex[] summits;
@@ -102,10 +102,10 @@ public class FanMesh extends Mesh {
 		case MESH_ORIENTED_TRIANGLES:
 			// (n) vertices -> (n-1) triangles
 
-			double tsx = TEXTURE_SUMMIT_SMALL_VALUE;
-			double tsz = TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE;
-			double ti = 0;
-			double tip1 = 0;
+			float tsx = TEXTURE_SUMMIT_SMALL_VALUE;
+			float tsz = TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE;
+			float ti = 0;
+			float tip1 = 0;
 			
 			for (int i=0; i<nbv-1; i++) {
 
@@ -125,7 +125,7 @@ public class FanMesh extends Mesh {
 					Vector4 tv1, tv2, tv3;
 
 					// Define position for Texture vectors in homogeneous coordinates [0,1]
-					tip1 = (double)(i+1)/(double)(nbv-1);
+					tip1 = (float)(i+1)/(float)(nbv-1);
 
 					// Create texture vectors with an horizontal 'stretching' texture effect (on the tip of the fan) 
 //					tv1 = new Vector4(ti,0,0,1);

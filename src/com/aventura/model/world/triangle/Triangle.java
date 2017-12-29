@@ -189,7 +189,7 @@ public class Triangle {
 	 * @return
 	 */
 	public Vertex getCenter() {
-		Vector4 p = (v1.getPos().plus(v2.getPos()).plus(v3.getPos())).times((double)1/3);
+		Vector4 p = (v1.getPos().plus(v2.getPos()).plus(v3.getPos())).times((float)1/3);
 		Vertex c = new Vertex(p);
 		return c;
 	}

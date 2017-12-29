@@ -96,7 +96,7 @@ public class TestTorusTexture {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Torus torus1 = new Torus(3,1.5,32,16, tex);
+		Torus torus1 = new Torus(3,1.5f,32,16, tex);
 		//torus1.setColor(new Color(255, 200, 125));
 		torus1.setColor(new Color(123, 100, 63));
 		torus1.setSpecularExp(2);
@@ -110,7 +110,7 @@ public class TestTorusTexture {
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, true);
 		
-		GraphicContext gContext = new GraphicContext(1.2, 0.8, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		GraphicContext gContext = new GraphicContext(1.2f, 0.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -126,9 +126,9 @@ public class TestTorusTexture {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 360;
-		Rotation r1 = new Rotation(Math.PI*1.1/(double)nb_images, Vector3.X_AXIS);
-		Rotation r2 = new Rotation(Math.PI*2*4.1/(double)nb_images, Vector3.Y_AXIS);
-		Rotation r3 = new Rotation(Math.PI*2*3.3/(double)nb_images, Vector3.Z_AXIS);
+		Rotation r1 = new Rotation((float)Math.PI*1.1f/(float)nb_images, Vector3.X_AXIS);
+		Rotation r2 = new Rotation((float)Math.PI*2*4.1f/(float)nb_images, Vector3.Y_AXIS);
+		Rotation r3 = new Rotation((float)Math.PI*2*3.3f/(float)nb_images, Vector3.Z_AXIS);
 		Matrix4 r = r1.times(r2).times(r3);
 		for (int i=0; i<=nb_images; i++) {
 			world.expandTransformation(r);

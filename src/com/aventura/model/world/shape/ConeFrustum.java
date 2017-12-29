@@ -47,8 +47,8 @@ public class ConeFrustum extends Element {
 	
 	protected Vertex[][] vertices;
 	protected Vertex summit;
-	double cone_height, frustum_height, mid_height;
-	double ray;
+	float cone_height, frustum_height, mid_height;
+	float ray;
 	int half_seg;
 	protected Vector4 center, top_center, bottom_center;
 	
@@ -58,7 +58,7 @@ public class ConeFrustum extends Element {
 	 * @param ray of the top and bottom circles of the Cylinder
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
-	public ConeFrustum(double cone_height, double frustum_height, double ray, int half_seg) {
+	public ConeFrustum(float cone_height, float frustum_height, float ray, int half_seg) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -79,7 +79,7 @@ public class ConeFrustum extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 * @param center to which the Vertices are moved at creation (Vector3)
 	 */
-	public ConeFrustum(double cone_height, double frustum_height, double ray, int half_seg, Vector3 center) {
+	public ConeFrustum(float cone_height, float frustum_height, float ray, int half_seg, Vector3 center) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -100,7 +100,7 @@ public class ConeFrustum extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 * @param center to which the Vertices are moved at creation (Vector4)
 	 */
-	public ConeFrustum(double cone_height, double frustum_height, double ray, int half_seg, Vector4 center) {
+	public ConeFrustum(float cone_height, float frustum_height, float ray, int half_seg, Vector4 center) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -118,8 +118,8 @@ public class ConeFrustum extends Element {
 	protected void createConeFrustum() {
 		
 		vertices = new Vertex[half_seg*2][3]; // (n) x 3 vertices on each circles
-		double alpha = Math.PI/half_seg;
-		double beta = alpha/2;
+		float alpha = (float)Math.PI/half_seg;
+		float beta = alpha/2;
 		
 		// Create vertices
 		
@@ -129,19 +129,19 @@ public class ConeFrustum extends Element {
 		// Create circle vertices
 		for (int i=0; i<half_seg*2; i++) {
 			
-			double sina = Math.sin(alpha*i);
-			double cosa = Math.cos(alpha*i);
+			float sina = (float)Math.sin(alpha*i);
+			float cosa = (float)Math.cos(alpha*i);
 			
 			// Bottom circle of the cone
 			vertices[i][0] = createVertex(new Vector4(ray*cosa, ray*sina, -cone_height/2, 1).plus(center));
 			
 			// Top circle of the cone
-			double ratio = (cone_height - frustum_height)/cone_height;
+			float ratio = (cone_height - frustum_height)/cone_height;
 			vertices[i][2] = createVertex(new Vector4(ratio*ray*cosa, ratio*ray*sina, (frustum_height-(cone_height/2)), 1).plus(center));
 			
 			// Middle circle of the cylinder
-			double sinb = Math.sin(alpha*i+beta);
-			double cosb = Math.cos(alpha*i+beta);
+			float sinb = (float)Math.sin(alpha*i+beta);
+			float cosb = (float)Math.cos(alpha*i+beta);
 			ratio = (cone_height - mid_height)/cone_height;
 			vertices[i][1] = createVertex(new Vector4(ratio*ray*cosb, ratio*ray*sinb, (mid_height-(cone_height/2)), 1).plus(center));
 		}

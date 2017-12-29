@@ -47,8 +47,8 @@ public class Cylinder extends Element {
 	protected static final String CYLINDER_DEFAULT_NAME = "cylinder";
 	
 	protected RectangleMesh rectangleMesh;
-	double height;
-	double ray;
+	float height;
+	float ray;
 	int half_seg;
 	protected Vector4 center, top_center, bottom_center;
 	
@@ -58,7 +58,7 @@ public class Cylinder extends Element {
 	 * @param ray of the top and bottom circles of the Cylinder
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
-	public Cylinder(double height, double ray, int half_seg) {
+	public Cylinder(float height, float ray, int half_seg) {
 		super(CYLINDER_DEFAULT_NAME);
 		subelements = null;
 		this.ray = ray;
@@ -74,7 +74,7 @@ public class Cylinder extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 * @param tex the Texture to wrap this Cylinder
 	 */
-	public Cylinder(double height, double ray, int half_seg, Texture tex) {
+	public Cylinder(float height, float ray, int half_seg, Texture tex) {
 		super(CYLINDER_DEFAULT_NAME);
 		subelements = null;
 		this.ray = ray;
@@ -90,13 +90,13 @@ public class Cylinder extends Element {
 
 		// Create mesh to wrap Cylinder
 		rectangleMesh = new RectangleMesh(this, half_seg*2+1, 2, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
-		double alpha = Math.PI/half_seg;
+		float alpha = (float)Math.PI/half_seg;
 		
 		// Create vertices of the mesh
 		for (int i=0; i<=half_seg*2; i++) { // (n) * 2 + 1 steps -> [0, 2*PI]
 			
-			double sina = Math.sin(alpha*i);
-			double cosa = Math.cos(alpha*i);
+			float sina = (float)Math.sin(alpha*i);
+			float cosa = (float)Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
 			rectangleMesh.getVertex(i, 0).setPos(new Vector4(ray*cosa, ray*sina, -height/2, 1));
