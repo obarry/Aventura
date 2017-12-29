@@ -48,7 +48,7 @@ public class Box extends Element {
 	 * @param y_dim dimension of the box on y axis
 	 * @param z_dim dimension of the box on z axis
 	 */
-	public Box(double x_dim, double y_dim, double z_dim) {
+	public Box(float x_dim, float y_dim, float z_dim) {
 		super(BOX_DEFAULT_NAME, true); // A Box is a closed Element
 		subelements = null;
 		createBox(x_dim, y_dim, z_dim);
@@ -61,7 +61,7 @@ public class Box extends Element {
 	 * @param y_dim dimension of the box on y axis
 	 * @param z_dim dimension of the box on z axis
 	 */
-	public Box(double x_dim, double y_dim, double z_dim, Texture tex) {
+	public Box(float x_dim, float y_dim, float z_dim, Texture tex) {
 		super(BOX_DEFAULT_NAME, true); // A Box is a closed Element
 		subelements = null;
 		this.bottom_tex = tex;
@@ -80,7 +80,7 @@ public class Box extends Element {
 	 * @param y_dim dimension of the box on y axis
 	 * @param z_dim dimension of the box on z axis
 	 */
-	public Box(double x_dim, double y_dim, double z_dim, Texture bottom_tex, Texture top_tex, Texture left_tex, Texture right_tex, Texture front_tex, Texture back_tex) {
+	public Box(float x_dim, float y_dim, float z_dim, Texture bottom_tex, Texture top_tex, Texture left_tex, Texture right_tex, Texture front_tex, Texture back_tex) {
 		super(BOX_DEFAULT_NAME, true); // A Box is a closed Element
 		subelements = null;
 		this.bottom_tex = bottom_tex;
@@ -92,15 +92,15 @@ public class Box extends Element {
 		createBox(x_dim, y_dim, z_dim);
 	}
 	
-	protected void createBox(double x_dim, double y_dim, double z_dim) {
+	protected void createBox(float x_dim, float y_dim, float z_dim) {
 
 		// Box vertices, 3 dimensions array
 		vertices = new Vertex[2][2][2];
 
 		// Calculate dimensions of the box
-		double xh = x_dim/2;
-		double yh = y_dim/2;
-		double zh = z_dim/2;
+		float xh = x_dim/2;
+		float yh = y_dim/2;
+		float zh = z_dim/2;
 		
 		// Build the Element: Create Vertices of the Cube: 8 vertices
 		vertices[0][0][0] = createVertex(new Vector4(-xh, -yh, -zh,  1));

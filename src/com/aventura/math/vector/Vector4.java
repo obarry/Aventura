@@ -46,10 +46,10 @@ public class Vector4 {
 	public static final Vector4 ZERO_POINT = new Vector4(0,0,0,1);
 
     // Components of the Vector
-	protected double x;
-	protected double y;
-	protected double z;
-	protected double w;
+	protected float x;
+	protected float y;
+	protected float z;
+	protected float w;
 	
 	public Vector4() {
 		this.x = 0;
@@ -58,18 +58,18 @@ public class Vector4 {
 		this.w = 0;
 	}
 
-	public Vector4(double v) {
+	public Vector4(float v) {
 		initialize(v);
 	}
 	
-	public Vector4(double x, double y, double z, double w) {
+	public Vector4(float x, float y, float z, float w) {
 		this.x = x;
 		this.y = y;
 		this.z = z;		
 		this.w = w;		
 	}
 		
-	public Vector4(double[] array) throws VectorArrayWrongSizeException {
+	public Vector4(float[] array) throws VectorArrayWrongSizeException {
 		if (array.length < Constants.SIZE_4) throw new VectorArrayWrongSizeException("Array passed in parameter of Vector4 constructor is out of bound: "+array.length); 
 		this.x = array[0];
 		this.y = array[1];
@@ -110,7 +110,7 @@ public class Vector4 {
 	 * Initialize a Vector4 with a constant value for all elements of the Vector4
 	 * @param val the initialization value
 	 */
-	private void initialize(double val) {
+	private void initialize(float val) {
 		// Initialize values
 		this.x = val;
 		this.y = val;
@@ -130,7 +130,7 @@ public class Vector4 {
 	 * @param v, the value to set
 	 * @throws IndiceOutOfBoundException
 	 */
-	public void set(int i, double v) throws IndiceOutOfBoundException {
+	public void set(int i, float v) throws IndiceOutOfBoundException {
 		switch (i) {
 		case 0:
 			this.x = v;
@@ -153,7 +153,7 @@ public class Vector4 {
 	 * Set x, the first coordinate of the Vector4, with value v
 	 * @param v, the value to set
 	 */
-	public void setX(double v) {
+	public void setX(float v) {
 		x = v;		
 	}
 	
@@ -161,7 +161,7 @@ public class Vector4 {
 	 * Set y, the second coordinate of the Vector4, with value v
 	 * @param v, the value to set
 	 */
-	public void setY(double v) {
+	public void setY(float v) {
 		y = v;		
 	}
 	
@@ -169,7 +169,7 @@ public class Vector4 {
 	 * Set z, the third coordinate of the Vector4, with value v
 	 * @param v, the value to set
 	 */
-	public void setZ(double v) {
+	public void setZ(float v) {
 		z = v;		
 	}
 	
@@ -177,7 +177,7 @@ public class Vector4 {
 	 * Set t, the fourth coordinate of the Vector4, with value v
 	 * @param v, the value to set
 	 */
-	public void setW(double v) {
+	public void setW(float v) {
 		w = v;		
 	}
 	
@@ -187,7 +187,7 @@ public class Vector4 {
 	 * @return
 	 * @throws IndiceOutOfBoundException
 	 */
-	public double get(int i) throws IndiceOutOfBoundException {
+	public float get(int i) throws IndiceOutOfBoundException {
 		switch (i) {
 		case 0:
 			return this.x;
@@ -206,7 +206,7 @@ public class Vector4 {
 	 * Get x, the first coordinate of the Vector4
 	 * @return x
 	 */
-	public double getX() {
+	public float getX() {
 		return this.x;
 	}
 	
@@ -214,7 +214,7 @@ public class Vector4 {
 	 * Get y, the second coordinate of the Vector4
 	 * @return y
 	 */
-	public double getY() {
+	public float getY() {
 		return this.y;
 	}
 	
@@ -222,7 +222,7 @@ public class Vector4 {
 	 * Get z, the third coordinate of the Vector4
 	 * @return z
 	 */
-	public double getZ() {
+	public float getZ() {
 		return this.z;
 	}
 	
@@ -230,7 +230,7 @@ public class Vector4 {
 	 * Get t, the fourth coordinate of the Vector4
 	 * @return z
 	 */
-	public double getW() {
+	public float getW() {
 		return this.w;
 	}
 	
@@ -238,7 +238,7 @@ public class Vector4 {
 	 * Get x in 3D coordinates
 	 * @return x
 	 */
-	public double get3DX() {
+	public float get3DX() {
 		return this.x/this.w;
 	}
 	
@@ -246,7 +246,7 @@ public class Vector4 {
 	 * Get y in 3D coordinates
 	 * @return y
 	 */
-	public double get3DY() {
+	public float get3DY() {
 		return this.y/this.w;
 	}
 	
@@ -254,7 +254,7 @@ public class Vector4 {
 	 * Get z in 3D coordinates
 	 * @return z
 	 */
-	public double get3DZ() {
+	public float get3DZ() {
 		return this.z/this.w;
 	}
 	
@@ -274,8 +274,8 @@ public class Vector4 {
 	 * Get length of the vector4 including 4th coordinate
 	 * @return the length or 'norm' of the Vector4
 	 */
-	public double length() {
-		return Math.sqrt(x*x+y*y+z*z+w*w);
+	public float length() {
+		return (float)Math.sqrt(x*x+y*y+z*z+w*w);
 	}
 	
 	/**
@@ -286,7 +286,7 @@ public class Vector4 {
 	 * @return
 	 */
 	public Vector4 normalize() {
-		double length = this.length();
+		float length = this.length();
 		// Normalize values
 		this.x/=length;
 		this.y/=length;
@@ -400,11 +400,11 @@ public class Vector4 {
 	 * @param w, the other Vector4
 	 * @return s, the dot product (double)
 	 */
-	public double dot(Vector4 w) {
+	public float dot(Vector4 w) {
 		return this.x*w.x+this.y*w.y+this.z*w.z+this.w*w.w;
 	}
 	
-	public Vector4 times(double val) {
+	public Vector4 times(float val) {
 		Vector4 r = new Vector4();
 		r.setX(this.x*val);
 		r.setY(this.y*val);
@@ -450,7 +450,7 @@ public class Vector4 {
 	 * @param w
 	 */
 	public void timesEquals(Vector4 w) {
-		double xp, yp, zp;
+		float xp, yp, zp;
 
 		xp = this.y*w.z-this.z*w.y;
 		yp = this.z*w.x-this.x*w.z;
@@ -491,7 +491,7 @@ public class Vector4 {
 	 * @param A the Matrix4
 	 */
 	public void timesEquals(Matrix4 A) {
-		double[] array = new double[Constants.SIZE_4];
+		float[] array = new float[Constants.SIZE_4];
 
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			array[i] = 0;

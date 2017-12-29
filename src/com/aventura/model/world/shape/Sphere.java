@@ -66,11 +66,11 @@ public class Sphere extends Element {
 
 	protected RectangleMesh rectangleMesh;
 	protected Vector4 northPole, southPole;
-	double ray;
+	float ray;
 	int half_seg;
 	protected Vector4 center;
 	
-	public Sphere(double ray, int half_seg) {
+	public Sphere(float ray, int half_seg) {
 		super(SPHERE_DEFAULT_NAME, true); // A Sphere is a closed Element
 		subelements = null;
 		this.ray = ray;
@@ -81,7 +81,7 @@ public class Sphere extends Element {
 		createSphere(null);
 	}
 
-	public Sphere(double ray, int half_seg, Texture t) {
+	public Sphere(float ray, int half_seg, Texture t) {
 		super(SPHERE_DEFAULT_NAME, true); // A Sphere is a closed Element
 		subelements = null;
 		this.ray = ray;
@@ -110,10 +110,10 @@ public class Sphere extends Element {
 			rectangleMesh.getVertex(i, 0).setPos(northPole);
 			// Intermediate points between south and north
 			for (int j=1; j<(half_seg-1); j++) {
-				double sina = Math.sin(alpha*i);
-				double cosa = Math.cos(alpha*i);
-				double sinb = Math.sin(alpha*(j+1));
-				double cosb = Math.cos(alpha*(j+1));
+				float sina = (float)Math.sin(alpha*i);
+				float cosa = (float)Math.cos(alpha*i);
+				float sinb = (float)Math.sin(alpha*(j+1));
+				float cosb = (float)Math.cos(alpha*(j+1));
 				rectangleMesh.getVertex(i, j).setPos(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
 			}
 			// North pole-> there is as many north poles as meridians

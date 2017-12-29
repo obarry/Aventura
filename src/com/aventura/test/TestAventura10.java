@@ -124,7 +124,7 @@ public class TestAventura10 {
 		Element e, e1, e2;
 		
 		// e is the main Element
-		e = new Cylinder(2,0.5,32);
+		e = new Cylinder(2,0.5f,32);
 		e.setColor(Color.CYAN);
 		// e1 and e2 will be sub elements
 		e1 = new Cone(2,1,32);
@@ -153,7 +153,7 @@ public class TestAventura10 {
 		world.calculateNormals();
 
 		Lighting light = test.createLight();
-		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -171,7 +171,7 @@ public class TestAventura10 {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.X_AXIS);
+			r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
 			//t = new Translation(new Vector3(0,0,(double)(i-nb_images)*0.01));
 			//e.setTransformation(t.times(r));
 			e.setTransformation(r);

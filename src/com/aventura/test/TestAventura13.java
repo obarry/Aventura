@@ -79,7 +79,7 @@ public class TestAventura13 {
 		Vector4 eye = new Vector4(8,3,5,1);
 		//Vector4 eye = new Vector4(16,6,12,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
-		Vector4 poi = new Vector4(0,0,-0.5,1);
+		Vector4 poi = new Vector4(0,0,-0.5f,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
 		TestAventura13 test = new TestAventura13();
@@ -96,15 +96,15 @@ public class TestAventura13 {
 		
 		// Create World
 		World world = new World();
-		double size = 4;
+		float size = 4;
 		int n = 40;
 		int nb_sin = 4;
-		double array[][] = new double[n+1][n+1];
+		float array[][] = new float[n+1][n+1];
 		for (int i=0; i<=n; i++) {
 			for (int j=0; j<=n; j++) {
-				double a = Math.PI*(double)nb_sin*(double)i/(double)n;
-				double b = Math.PI*(double)nb_sin*(double)j/(double)n;
-				array[i][j] = size*Math.sin(a)*Math.sin(b)/((double)nb_sin*4);
+				float a = (float)Math.PI*(float)nb_sin*(float)i/(float)n;
+				float b = (float)Math.PI*(float)nb_sin*(float)j/(float)n;
+				array[i][j] = size*(float)Math.sin(a)*(float)Math.sin(b)/((float)nb_sin*4);
 
 			}
 		}
@@ -126,7 +126,7 @@ public class TestAventura13 {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -144,7 +144,7 @@ public class TestAventura13 {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
 			tre.setTransformation(r);
 			renderer.render();
 		}

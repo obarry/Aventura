@@ -97,7 +97,7 @@ public class TestAventura3 {
 		for (int j=-2; j<=2; j++) {
 			for (int i=-4; i<=4; i++) {
 				Translation t = new Translation(new Vector3(i*4, j*5, 0));
-				Sphere sph = new Sphere(1.5,12);
+				Sphere sph = new Sphere(1.5f,12);
 				world.addElement(sph);
 				sph.setTransformation(t);
 			}

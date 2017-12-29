@@ -128,15 +128,15 @@ public class TestAventura12 {
 					// Create an Element of a random type
 					switch(Math.round((float)Math.random()*5)) {
 					case 0:
-						e = new Cone(1,0.5,32);
+						e = new Cone(1,0.5f,32);
 						e.setColor(Color.YELLOW);
 						break;
 					case 1:
-						e = new Cylinder(1,0.5,32);
+						e = new Cylinder(1,0.5f,32);
 						e.setColor(Color.CYAN);
 						break;
 					case 2:
-						e = new Sphere(0.8,32);
+						e = new Sphere(0.8f,32);
 						e.setColor(Color.MAGENTA);
 						break;
 					case 3:
@@ -144,7 +144,7 @@ public class TestAventura12 {
 						e.setColor(Color.PINK);
 						break;
 					case 4:
-						e = new Box(1,0.5,0.3);
+						e = new Box(1,0.5f,0.3f);
 						e.setColor(Color.ORANGE);
 						break;
 					case 5:
@@ -174,11 +174,11 @@ public class TestAventura12 {
 
 		// Create lighting
 		System.out.println("********* Creating Lighting");
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-0.5,0.5), 0.7f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,-0.5f,0.5f), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al);
 
-		GraphicContext context = new GraphicContext(1.5, 0.9, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		View view = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
@@ -189,9 +189,9 @@ public class TestAventura12 {
 		
 		System.out.println("********* Rendering...");
 		int nb_images = 360;
-		Rotation r1 = new Rotation(Math.PI*2/(double)nb_images, Vector3.X_AXIS);
-		Rotation r2 = new Rotation(Math.PI*2*1.5/(double)nb_images, Vector3.Y_AXIS);
-		Rotation r3 = new Rotation(Math.PI*2*2.5/(double)nb_images, Vector3.Z_AXIS);
+		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
+		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
+		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
 		Matrix4 r = r1.times(r2).times(r3);
 		for (int i=0; i<=nb_images; i++) {
 			world.expandTransformation(r);

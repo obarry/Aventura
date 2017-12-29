@@ -91,18 +91,18 @@ public class GraphicContext {
 	int perspective_type = 0; // uninitialized
 
 	// Window & frustum
-	double width = 0;
-	double height = 0;
-	double depth = 0;
-	double dist = 0;
+	float width = 0;
+	float height = 0;
+	float depth = 0;
+	float dist = 0;
 	
 	// Other characteristics
-	double left = 0;
-	double right = 0;
-	double bottom = 0;
-	double top = 0;
-	double near = 0;
-	double far = 0;
+	float left = 0;
+	float right = 0;
+	float bottom = 0;
+	float top = 0;
+	float near = 0;
+	float far = 0;
 
 	// Pixel Per Unit
 	int ppu = 0;
@@ -115,7 +115,7 @@ public class GraphicContext {
 	Matrix4 projection;
 
 	// Width/Height ratio = 16/9
-	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100);
+	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5f,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100);
 
 	
 	/**
@@ -154,7 +154,7 @@ public class GraphicContext {
 		createPerspective(perspective_type, left , right, bottom, top, near, far);
 	}
 	
-	public GraphicContext(double width, double height, double dist, double depth, int perspective, int ppu) {
+	public GraphicContext(float width, float height, float dist, float depth, int perspective, int ppu) {
 		this.width = width;
 		this.height = height;
 		this.dist = dist;
@@ -177,7 +177,7 @@ public class GraphicContext {
 		createPerspective(perspective, left , right, bottom, top, near, far);
 	}
 	
-	public GraphicContext(double top, double bottom, double right, double left, double far, double near, int perspective, int ppu) {
+	public GraphicContext(float top, float bottom, float right, float left, float far, float near, int perspective, int ppu) {
 		
 		this.left = left;
 		this.right = right;
@@ -207,7 +207,7 @@ public class GraphicContext {
 		}
 	}
 	
-	protected void createPerspective(int perspective, double left, double right, double bottom, double top, double near, double far) {
+	protected void createPerspective(int perspective, float left, float right, float bottom, float top, float near, float far) {
 		
 		switch (perspective) {
 		case PERSPECTIVE_TYPE_FRUSTUM:
@@ -230,19 +230,19 @@ public class GraphicContext {
 		return "GraphicContext:\n* Perpective type: "+perspectiveString(perspective_type)+"\n* Width: "+width+"\n* Height: "+height+"\n* Dist: "+dist+"\n* Depth: "+depth+"\n* PPU: "+ppu+"\n* Pixel width: "+this.getPixelWidth()+"\n* Pixel height: "+this.getPixelHeight();
 	}
 	
-	public void setWidth(double width) {
+	public void setWidth(float width) {
 		this.width = width;
 	}
 	
-	public double getWidth() {
+	public float getWidth() {
 		return width;
 	}
 	
-	public void setHeight(double height) {
+	public void setHeight(float height) {
 		this.height = height;
 	}
 
-	public double getHeight() {
+	public float getHeight() {
 		return height;
 	}
 
@@ -267,7 +267,7 @@ public class GraphicContext {
 		return pixelHalfHeight;
 	}
 
-	public void setDepth(double depth) {
+	public void setDepth(float depth) {
 		this.depth = depth;
 	}
 	
@@ -275,23 +275,23 @@ public class GraphicContext {
 		return depth;
 	}
 
-	public void setDist(double dist) {
+	public void setDist(float dist) {
 		this.dist = dist;
 	}
 	
-	public double getDist() {
+	public float getDist() {
 		return dist;
 	}
 	
 	public void setPerspective(int perspective) {
 		this.perspective_type = perspective;
 		
-		double left = -width/2;
-		double right = width/2;
-		double bottom = -height/2;
-		double top = height/2;
-		double near = dist;
-		double far = dist + depth;
+		float left = -width/2;
+		float right = width/2;
+		float bottom = -height/2;
+		float top = height/2;
+		float near = dist;
+		float far = dist + depth;
 		
 		createPerspective(perspective, left , right, bottom, top, near, far);
 
@@ -299,12 +299,12 @@ public class GraphicContext {
 	
 	public void computePerspective() {
 		
-		double left = -width/2;
-		double right = width/2;
-		double bottom = -height/2;
-		double top = height/2;
-		double near = dist;
-		double far = dist + depth;
+		float left = -width/2;
+		float right = width/2;
+		float bottom = -height/2;
+		float top = height/2;
+		float near = dist;
+		float far = dist + depth;
 		
 		createPerspective(perspective_type, left , right, bottom, top, near, far);
 		
@@ -327,51 +327,51 @@ public class GraphicContext {
 	}
 	
 	
-	public double getLeft() {
+	public float getLeft() {
 		return left;
 	}
 
-	public void setLeft(double left) {
+	public void setLeft(float left) {
 		this.left = left;
 	}
 
-	public double getRight() {
+	public float getRight() {
 		return right;
 	}
 
-	public void setRight(double right) {
+	public void setRight(float right) {
 		this.right = right;
 	}
 
-	public double getBottom() {
+	public float getBottom() {
 		return bottom;
 	}
 
-	public void setBottom(double bottom) {
+	public void setBottom(float bottom) {
 		this.bottom = bottom;
 	}
 
-	public double getTop() {
+	public float getTop() {
 		return top;
 	}
 
-	public void setTop(double top) {
+	public void setTop(float top) {
 		this.top = top;
 	}
 
-	public double getNear() {
+	public float getNear() {
 		return near;
 	}
 
-	public void setNear(double near) {
+	public void setNear(float near) {
 		this.near = near;
 	}
 
-	public double getFar() {
+	public float getFar() {
 		return far;
 	}
 
-	public void setFar(double far) {
+	public void setFar(float far) {
 		this.far = far;
 	}
 

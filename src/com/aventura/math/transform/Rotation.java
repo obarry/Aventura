@@ -53,23 +53,23 @@ public class Rotation extends Matrix4 {
 	 * @param a the rotation angle
 	 * @param v the vector representing the axis of rotation
 	 */
-	public Rotation(double a, Vector3 v) {
+	public Rotation(float a, Vector3 v) {
 		super(Matrix4.IDENTITY);
 		initRotation(a, v);
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix:\n");
 	}
 	
-	public Rotation(double a, Vector4 v) {
+	public Rotation(float a, Vector4 v) {
 		super(Matrix4.IDENTITY);
 		initRotation(a, v.V3());
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix:\n");
 	}
 	
-	protected void initRotation(double a, Vector3 v) {
+	protected void initRotation(float a, Vector3 v) {
 		Vector3 v1 = new Vector3(v);
 		v1.normalize();
-		double cos = Math.cos(a);
-		double sin = Math.sin(a);
+		float cos = (float)Math.cos(a);
+		float sin = (float)Math.sin(a);
 		
 		// First row
 		this.array[0][0] = v1.getX()*v1.getX()+ (1-v1.getX()*v1.getX())*cos;
@@ -98,45 +98,45 @@ public class Rotation extends Matrix4 {
 		// Initialize the array, depending on axis
 		if (axis == Constants.X_axis) {
 			// First row
-			this.array[0][0] = 1.0;
-			this.array[0][1] = 0.0;
-			this.array[0][2] = 0.0;
+			this.array[0][0] = 1.0f;
+			this.array[0][1] = 0.0f;
+			this.array[0][2] = 0.0f;
 			// Second row
-			this.array[1][0] = 0.0;
-			this.array[1][1] = cosa;
-			this.array[1][2] = -sina;
+			this.array[1][0] = 0.0f;
+			this.array[1][1] = (float)cosa;
+			this.array[1][2] = (float)-sina;
 			// Third row
-			this.array[2][0] = 0.0;
-			this.array[2][1] = sina;
-			this.array[2][2] = cosa;			
+			this.array[2][0] = 0.0f;
+			this.array[2][1] = (float)sina;
+			this.array[2][2] = (float)cosa;			
 
 		} else if (axis == Constants.Y_axis) {
 			// First row
-			this.array[0][0] = cosa;
-			this.array[0][1] = 0.0;
-			this.array[0][2] = sina;
+			this.array[0][0] = (float)cosa;
+			this.array[0][1] = 0.0f;
+			this.array[0][2] = (float)sina;
 			// Second row
-			this.array[1][0] = 0.0;
-			this.array[1][1] = 1.0;
-			this.array[1][2] = 0.0;
+			this.array[1][0] = 0.0f;
+			this.array[1][1] = 1.0f;
+			this.array[1][2] = 0.0f;
 			// Third row
-			this.array[2][0] = -sina;
-			this.array[2][1] = 0.0;
-			this.array[2][2] = cosa;			
+			this.array[2][0] = (float)-sina;
+			this.array[2][1] = 0.0f;
+			this.array[2][2] = (float)cosa;			
 			
 		} else if (axis == Constants.Z_axis) {
 			// First row
-			this.array[0][0] = cosa;
-			this.array[0][1] = -sina;
-			this.array[0][2] = 0.0;
+			this.array[0][0] = (float)cosa;
+			this.array[0][1] = (float)-sina;
+			this.array[0][2] = 0.0f;
 			// Second row
-			this.array[1][0] = sina;
-			this.array[1][1] = cosa;
-			this.array[1][2] = 0.0;
+			this.array[1][0] = (float)sina;
+			this.array[1][1] = (float)cosa;
+			this.array[1][2] = 0.0f;
 			// Third row
-			this.array[2][0] = 0.0;
-			this.array[2][1] = 0.0;
-			this.array[2][2] = 1.0;			
+			this.array[2][0] = 0.0f;
+			this.array[2][1] = 0.0f;
+			this.array[2][2] = 1.0f;			
 			
 		} else {
 			throw new WrongAxisException("axis value not in expected range: "+axis);
@@ -148,7 +148,7 @@ public class Rotation extends Matrix4 {
 		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+this); 
 	}
 	
-	public Rotation(double[][] array) throws NotARotationException, MatrixArrayWrongSizeException {
+	public Rotation(float[][] array) throws NotARotationException, MatrixArrayWrongSizeException {
 		super(array);
 		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+this); 
 	}

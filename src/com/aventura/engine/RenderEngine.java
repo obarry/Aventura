@@ -449,14 +449,14 @@ public class RenderEngine {
 	
 	public void displayLandMarkLinesInterpolate() {
 		
-		final double arrow_length = 1;
-		final double arrow_ray = 0.04;
-		final double spear_ray = 0.08;
-		final double spear_length = 0.2;
+		final float arrow_length = 1;
+		final float arrow_ray = 0.04f;
+		final float spear_ray = 0.08f;
+		final float spear_length = 0.2f;
 		final int nb_seg =16; 
 		
 		// X axis arrow
-		Rotation r1 = new Rotation(Math.PI/2, Vector4.Y_AXIS);
+		Rotation r1 = new Rotation((float)Math.PI/2, Vector4.Y_AXIS);
 		Element e1 = new Element();
 		Element l1 = new Cylinder(arrow_length, arrow_ray, nb_seg);
 		Translation tl1 = new Translation(new Vector3(arrow_length/2, 0, 0));
@@ -470,7 +470,7 @@ public class RenderEngine {
 		render(e1, Matrix4.IDENTITY, renderContext.landmarkXColor);
 		
 		// Y axis arrow
-		Rotation r2 = new Rotation(-Math.PI/2, Vector4.X_AXIS);
+		Rotation r2 = new Rotation((float)-Math.PI/2, Vector4.X_AXIS);
 		Element e2 = new Element();
 		Element l2 = new Cylinder(arrow_length, arrow_ray, nb_seg);
 		Translation tl2 = new Translation(new Vector3(0, arrow_length/2, 0));

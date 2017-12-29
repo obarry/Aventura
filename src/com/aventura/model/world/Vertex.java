@@ -79,7 +79,7 @@ public class Vertex {
 		// Empty Vertex to be used for generation of rectangleMesh of vertices
 	}
 	
-	public Vertex(double x, double y, double z) {
+	public Vertex(float x, float y, float z) {
 		position = new Vector4(x, y, z, 1);
 	}
 		

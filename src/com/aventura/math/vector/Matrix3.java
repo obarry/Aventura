@@ -38,7 +38,7 @@ public class Matrix3 {
 	//public static final Matrix  MATRIX_NULL = new Matrix(double[][] {{0.0, 0.0, 0.0},{0.0, 0.0, 0.0},{0.0, 0.0, 0.0}});
 	//public static final Matrix  MATRIX_ONE = new Matrix ({{1, 0, 0},{0, 1, 0},{0, 0, 1}});
 	
-	protected double[][] array;
+	protected float[][] array;
 	
 	/**
 	 * Initialize a square Matrix of size s with 0 for all elements of the matrix
@@ -53,7 +53,7 @@ public class Matrix3 {
 	 * Initialize Matrix with a constant value for all elements of the matrix
 	 * @param val the initialization value
 	 */
-	public Matrix3(double val) {
+	public Matrix3(float val) {
 		initialize(val);
 	}
 	
@@ -61,7 +61,7 @@ public class Matrix3 {
 	 * Initialize Matrix with a 2D array of double
 	 * @param a the 2D array of double
 	 */
-	public Matrix3(double[][] a) throws MatrixArrayWrongSizeException {
+	public Matrix3(float[][] a) throws MatrixArrayWrongSizeException {
 		if (a.length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix3 from array"); 
 		if (a[0].length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array"); 
 
@@ -74,7 +74,7 @@ public class Matrix3 {
 	 */
 	public Matrix3(Matrix3 a) {
 		// Create the array
-		array = new double[Constants.SIZE_3][Constants.SIZE_3];
+		array = new float[Constants.SIZE_3][Constants.SIZE_3];
 		
 		for (int i=0; i<Constants.SIZE_3; i++) {
 			for (int j=0; j<Constants.SIZE_3; j++) {
@@ -87,9 +87,9 @@ public class Matrix3 {
 	 * Initialize a Matrix with a constant value for all elements of the matrix
 	 * @param val the initialization value
 	 */
-	protected void initialize(double val) {
+	protected void initialize(float val) {
 		// Create the array
-		array = new double[Constants.SIZE_3][Constants.SIZE_3];
+		array = new float[Constants.SIZE_3][Constants.SIZE_3];
 		// Initialize values
 		for (int i=0; i<Constants.SIZE_3; i++) {
 			for (int j=0; j<Constants.SIZE_3; j++) {
@@ -98,7 +98,7 @@ public class Matrix3 {
 		}
 	}
 	
-	public void setArray(double[][] a) throws MatrixArrayWrongSizeException {
+	public void setArray(float[][] a) throws MatrixArrayWrongSizeException {
 		if (a.length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix3 from array"); 
 		if (a[0].length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array"); 
 		this.array = a;
@@ -121,7 +121,7 @@ public class Matrix3 {
 	 * @param j column indice
 	 * @param val value to set
 	 */
-	public void set(int i, int j, double val) throws IndiceOutOfBoundException {
+	public void set(int i, int j, float val) throws IndiceOutOfBoundException {
 		if (i<0 || i>Constants.SIZE_3) throw new IndiceOutOfBoundException("Row indice ("+i+") out of bound while setting element ("+i+","+j+") of Matrix3"); 
 		if (j<0 || j>Constants.SIZE_3) throw new IndiceOutOfBoundException("Column indice ("+j+") out of bound while setting element ("+i+","+j+") of Matrix3"); 
 		array[i][j] = val;
@@ -133,7 +133,7 @@ public class Matrix3 {
 	 * @param j column indice
 	 * @return the value of the element
 	 */
-	public double get(int i, int j) {
+	public float get(int i, int j) {
 		return array[i][j];
 	}
 	
@@ -141,7 +141,7 @@ public class Matrix3 {
 	 * Set all elements of the diagonal of this Matrix to a given value
 	 * @param v the value to set
 	 */
-	public void setDiagonal(double v) {
+	public void setDiagonal(float v) {
 		array[0][0] = v; 
 		array[1][1] = v; 
 		array[2][2] = v; 
@@ -156,7 +156,7 @@ public class Matrix3 {
 	 */
 	public Vector3 getRow(int r) throws IndiceOutOfBoundException {
 		if (r<0 || r>Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix3"); 
-		double[] array = new double[Constants.SIZE_3];
+		float[] array = new float[Constants.SIZE_3];
 		Vector3 v = null;
 		// No loop for optimization
 		array[0] = this.array[r][0];
@@ -181,7 +181,7 @@ public class Matrix3 {
 	 */
 	public Vector3 getColumn(int c) throws IndiceOutOfBoundException {
 		if (c<0 || c>Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix3"); 
-		double[] array = new double[Constants.SIZE_3];
+		float[] array = new float[Constants.SIZE_3];
 		Vector3 v = null;
 		// No loop for optimization
 		array[0] = this.array[0][c];
@@ -242,7 +242,7 @@ public class Matrix3 {
 	 * @param B
 	 */
 	public void timesEquals(Matrix3 b) {
-		double[][] array = new double[Constants.SIZE_3][Constants.SIZE_3];
+		float[][] array = new float[Constants.SIZE_3][Constants.SIZE_3];
 		for (int i=0; i<Constants.SIZE_3; i++) {
 			for (int j=0; j<Constants.SIZE_3; j++) {
 				array[i][j] = this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j);
@@ -256,7 +256,7 @@ public class Matrix3 {
 	 * @param s the scalar value
 	 * @return a new Matrix B=A*s
 	 */
-	public Matrix3 times(double s) {
+	public Matrix3 times(float s) {
 		Matrix3 r = new Matrix3();
 		for (int i=0; i<Constants.SIZE_3; i++) {
 			for (int j=0; j<Constants.SIZE_3; j++) {
@@ -276,7 +276,7 @@ public class Matrix3 {
 	 * Multiply this Matrix by a scalar A = A*s
 	 * @param s the scalar value
 	 */
-	public void timesEquals(double s) {
+	public void timesEquals(float s) {
 		for (int i=0; i<Constants.SIZE_3; i++) {
 			for (int j=0; j<Constants.SIZE_3; j++) {
 				this.array[i][j] = this.array[i][j]*s;

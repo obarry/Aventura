@@ -79,7 +79,7 @@ public class TestRasterizer11 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Pyramid pyr = new Pyramid(1.2,1.5,1);
+		Pyramid pyr = new Pyramid(1.2f,1.5f,1);
 		// Set colors to triangles
 		pyr.getTriangle(0).setColor(Color.CYAN);
 		pyr.getTriangle(1).setColor(Color.ORANGE);
@@ -91,11 +91,11 @@ public class TestRasterizer11 {
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(0.5,0.5,1), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0.5f,1), 1);
 		AmbientLight al = new AmbientLight(0.1f);
 		Lighting light = new Lighting(dl, al);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
@@ -119,7 +119,7 @@ public class TestRasterizer11 {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
 			pyr.setTransformation(r);
 			renderer.render();
 		}

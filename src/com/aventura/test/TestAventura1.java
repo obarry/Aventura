@@ -100,10 +100,10 @@ public class TestAventura1 {
 		e.setTransformation(t);
 		
 		// Build the Element: Create Vertices
-		Vertex v1 = new Vertex(new Vector4(-1.4,   0,    0,  1));
-		Vertex v2 = new Vertex(new Vector4(0.6,  1.4,  1.4,  1));
-		Vertex v3 = new Vertex(new Vector4(0.6, -1.4,  1.4,  1));
-		Vertex v4 = new Vertex(new Vector4(0.6,    0, -1.4,  1));
+		Vertex v1 = new Vertex(new Vector4(-1.4f,    0,     0,  1));
+		Vertex v2 = new Vertex(new Vector4(0.6f,  1.4f,  1.4f,  1));
+		Vertex v3 = new Vertex(new Vector4(0.6f, -1.4f,  1.4f,  1));
+		Vertex v4 = new Vertex(new Vector4(0.6f,    0,  -1.4f,  1));
 		
 		// Creates Triangles from Vertices
 		Triangle t1 = new Triangle(v1, v2, v3);

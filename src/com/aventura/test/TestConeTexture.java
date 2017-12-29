@@ -78,7 +78,7 @@ public class TestConeTexture {
 		Vector4 eye = new Vector4(8,3,8,1);
 		//Vector4 eye = new Vector4(16,6,12,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
-		Vector4 poi = new Vector4(0,0,-0.5,1);
+		Vector4 poi = new Vector4(0,0,-0.5f,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
 		TestConeTexture test = new TestConeTexture();
@@ -115,7 +115,7 @@ public class TestConeTexture {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -133,7 +133,7 @@ public class TestConeTexture {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.X_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
 			cone.setTransformation(r);
 			renderer.render();
 		}

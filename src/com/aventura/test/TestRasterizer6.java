@@ -79,7 +79,7 @@ public class TestRasterizer6 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Box box = new Box(1,1.2,1.5);
+		Box box = new Box(1,1.2f,1.5f);
 		// Set colors to triangles
 		box.getTriangle(0).setColor(Color.CYAN);
 		box.getTriangle(1).setColor(Color.CYAN);
@@ -103,7 +103,7 @@ public class TestRasterizer6 {
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
@@ -127,7 +127,7 @@ public class TestRasterizer6 {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
 			box.setTransformation(r);
 			renderer.render();
 		}

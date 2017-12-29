@@ -78,7 +78,7 @@ public class TestRasterizer3 {
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Sphere s = new Sphere(0.8, 12);
+		Sphere s = new Sphere(0.8f, 12);
 		s.setSpecularExp(10);
 		
 		// Set alternate colors to triangles
@@ -103,7 +103,7 @@ public class TestRasterizer3 {
 		Lighting light = new Lighting(dl, al);
 		
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.4512, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.4512f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -117,9 +117,10 @@ public class TestRasterizer3 {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 240;
+		float a;
 		for (int i=0; i<=3*nb_images; i++) {
-			double a = Math.PI*2*(double)i/(double)nb_images;
-			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
+			a = (float)Math.PI*2*(float)i/(float)nb_images;
+			eye = new Vector4(8*(float)Math.cos(a),4*(float)Math.sin(a),-2,1);
 			//System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();

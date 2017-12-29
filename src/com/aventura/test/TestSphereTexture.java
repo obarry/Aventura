@@ -113,7 +113,7 @@ public class TestSphereTexture {
 		// Create World
 		World world = new World();
 		Sphere sph = null;
-		sph = new Sphere(1.2, 48, tex);
+		sph = new Sphere(1.2f, 48, tex);
 		sph.setSpecularExp(3);
 		sph.setSpecularColor(new Color(100,100,100));
 		world.addElement(sph);
@@ -125,7 +125,7 @@ public class TestSphereTexture {
 		AmbientLight al = new AmbientLight(0.05f);
 		Lighting light = new Lighting(dl, al, true);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
@@ -141,7 +141,7 @@ public class TestSphereTexture {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
-		Rotation r = new Rotation(Math.PI*2/(double)nb_images, Vector3.Z_AXIS);
+		Rotation r = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.Z_AXIS);
 		for (int i=0; i<=3*nb_images; i++) {
 			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
 			sph.combineTransformation(r);

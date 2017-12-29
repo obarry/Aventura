@@ -49,7 +49,7 @@ public class Tools {
 	 * @param t the interpolation parameter (gradient)
 	 * @return a Vector4 interpolated on the (AB) line
 	 */
-	public static Vector4 interpolate(Vector4 A, Vector4 B, double t) {
+	public static Vector4 interpolate(Vector4 A, Vector4 B, float t) {
 		
 		Vector4 P = new Vector4();
 		
@@ -69,7 +69,7 @@ public class Tools {
 	 * @param t the interpolation parameter (gradient)
 	 * @return a Vector3 interpolated on the (AB) line
 	 */
-	public static Vector3 interpolate(Vector3 A, Vector3 B, double t) {
+	public static Vector3 interpolate(Vector3 A, Vector3 B, float t) {
 		
 		Vector3 P = new Vector3();
 		

@@ -50,7 +50,7 @@ public class Torus extends Element {
 
 	protected RectangleMesh rectangleMesh;
 	protected Vector4[] centers; // Centers of each "ring" is used to calculate normals
-	double torus_ray, pipe_ray;
+	float torus_ray, pipe_ray;
 	int half_circ, half_seg;
 	protected Vector4 center;
 	
@@ -60,7 +60,7 @@ public class Torus extends Element {
 	 * @param ray of the top and bottom circles of the Cylinder
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
-	public Torus(double torus_ray, double pipe_ray, int half_circ, int half_seg) {
+	public Torus(float torus_ray, float pipe_ray, int half_circ, int half_seg) {
 		super(TORUS_DEFAULT_NAME, true); // A Torus is a closed Element by default
 		subelements = null;
 		this.torus_ray = torus_ray;
@@ -77,7 +77,7 @@ public class Torus extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 * @param t the Texture to wrap this Torus 
 	 */
-	public Torus(double torus_ray, double pipe_ray, int half_circ, int half_seg, Texture tex) {
+	public Torus(float torus_ray, float pipe_ray, int half_circ, int half_seg, Texture tex) {
 		super(TORUS_DEFAULT_NAME, true); // A Torus is a closed Element by default
 		subelements = null;
 		this.torus_ray = torus_ray;
@@ -96,21 +96,21 @@ public class Torus extends Element {
 		rectangleMesh = new RectangleMesh(this, half_circ*2+1, half_seg*2+1, t);
 		
 		centers = new Vector4[half_circ*2+1];
-		double alpha_circ = Math.PI/half_circ;
-		double alpha_seg = Math.PI/half_seg;
+		float alpha_circ = (float)Math.PI/half_circ;
+		float alpha_seg = (float)Math.PI/half_seg;
 		
 		// Create vertices
 		for (int i=0; i<=half_circ*2; i++) { // for all circles around the Z axis (2*half_circ + 1)
 			
-			double sina = Math.sin(alpha_circ*i);
-			double cosa = Math.cos(alpha_circ*i);
+			float sina = (float)Math.sin(alpha_circ*i);
+			float cosa = (float)Math.cos(alpha_circ*i);
 			// Calculate center of the circle
 			centers[i] = new Vector4(torus_ray*cosa, torus_ray*sina,0,1);
 			
 			for (int j=0; j<=half_seg*2; j++) { // each circle is made of 2*half_seg + 1 vertices 
 				
-				double sinb = Math.sin(alpha_seg*j);
-				double cosb = Math.cos(alpha_seg*j);
+				float sinb = (float)Math.sin(alpha_seg*j);
+				float cosb = (float)Math.cos(alpha_seg*j);
 
 				// Each vertice
 				rectangleMesh.getVertex(i, j).setPos(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1));

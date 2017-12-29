@@ -92,7 +92,7 @@ public class TestRasterizer8 {
 		Lighting light = new Lighting(dl, al, true);
 		
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.4512, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.4512f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -117,9 +117,10 @@ public class TestRasterizer8 {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 240;
+		float a;
 		for (int i=0; i<=3*nb_images; i++) {
-			double a = Math.PI*2*(double)i/(double)nb_images;
-			lightVector = new Vector3(Math.cos(a),Math.sin(a),0);
+			a = (float)Math.PI*2*(float)i/(float)nb_images;
+			lightVector = new Vector3((float)Math.cos(a),(float)Math.sin(a),0);
 			dl.setLightVector(lightVector);
 			renderer.render();
 		}

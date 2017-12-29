@@ -48,8 +48,8 @@ public class Cone extends Element {
 	protected static final String CONE_DEFAULT_NAME = "cone";
 
 	protected FanMesh mesh;
-	double height;
-	double ray;
+	float height;
+	float ray;
 	int half_seg;
 	protected Vector4 center, bottom_center;
 	
@@ -59,7 +59,7 @@ public class Cone extends Element {
 	 * @param ray of the base circle of the Cone
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 */
-	public Cone(double height, double ray, int half_seg) {
+	public Cone(float height, float ray, int half_seg) {
 		super(CONE_DEFAULT_NAME);
 		subelements = null;
 		this.ray = ray;
@@ -78,14 +78,14 @@ public class Cone extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 * @param tex the texture to wrap this Cone
 	 */
-	public Cone(double height, double ray, int half_seg, Texture tex) {
+	public Cone(float height, float ray, int half_seg, Texture tex) {
 		super(CONE_DEFAULT_NAME);
 		subelements = null;
 		this.ray = ray;
 		this.height = height;
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
+		this.bottom_center = new Vector4(0,0f,-height/2,0);
 		this.center = new Vector4(0,0,0,0);
 		createCone(tex);
 	}
@@ -102,7 +102,7 @@ public class Cone extends Element {
 		
 		mesh = new FanMesh(this,half_seg*2+1, t); // (n) x 2 vertices on each circles + 1 duplicqte Vertex for RectangleMesh / Texture
 		
-		double alpha = Math.PI/half_seg;
+		float alpha = (float)Math.PI/half_seg;
 		
 		// Create vertices
 		
@@ -113,8 +113,8 @@ public class Cone extends Element {
 		// Create bottom vertices
 		for (int i=0; i<=half_seg*2; i++) {
 			
-			double sina = Math.sin(alpha*i);
-			double cosa = Math.cos(alpha*i);
+			float sina = (float)Math.sin(alpha*i);
+			float cosa = (float)Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
 			mesh.getVertex(i).setPos(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));

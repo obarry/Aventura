@@ -111,11 +111,11 @@ public class TestAventura9 {
 					// Create an Element of a random type
 					switch(Math.round((float)Math.random()*5)) {
 					case 0:
-						e = new Cone(1,0.5,8);
+						e = new Cone(1,0.5f,8);
 						e.setColor(Color.YELLOW);
 						break;
 					case 1:
-						e = new Cylinder(1,0.5,8);
+						e = new Cylinder(1,0.5f,8);
 						e.setColor(Color.CYAN);
 						break;
 					case 2:
@@ -127,7 +127,7 @@ public class TestAventura9 {
 						e.setColor(Color.PINK);
 						break;
 					case 4:
-						e = new Box(1,0.5,0.3);
+						e = new Box(1,0.5f,0.3f);
 						e.setColor(Color.ORANGE);
 						break;
 					case 5:
@@ -155,7 +155,7 @@ public class TestAventura9 {
 	}
 
 	public Lighting createLight() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,0.8,0.5), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,0.8f,0.5f), 1);
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting lighting = new Lighting(dl, al);
 		return lighting;
@@ -178,7 +178,7 @@ public class TestAventura9 {
 				
 		World world = test.createWorld();
 		Lighting light = test.createLight();
-		GraphicContext context = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -189,15 +189,15 @@ public class TestAventura9 {
 		renderer.setView(view);
 		int nb_images = 180;
 		for (int i=0; i<=nb_images; i++) {
-			Vector4 eye = Tools.interpolate(eyeA, eyeB, (double)i/nb_images);
+			Vector4 eye = Tools.interpolate(eyeA, eyeB, (float)i/nb_images);
 			System.out.println("Interpolation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();
 		}
 		
 		for (int i=0; i<=5*nb_images; i++) {
-			double a = Math.PI*2*(double)i/(double)nb_images;
-			Vector4 eye = new Vector4(30*Math.cos(a),15*Math.sin(a),5,1);
+			double a = Math.PI*2*(float)i/(float)nb_images;
+			Vector4 eye = new Vector4(30*(float)Math.cos(a),15*(float)Math.sin(a),5,1);
 			System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();

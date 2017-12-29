@@ -35,34 +35,34 @@ import com.aventura.math.vector.Matrix4;
  */
 public abstract class Perspective extends Matrix4 {
 	
-	double left = 0;
-	double right = 0;
-	double top = 0;
-	double bottom = 0;
-	double near = 0;
-	double far = 0;
+	float left = 0;
+	float right = 0;
+	float top = 0;
+	float bottom = 0;
+	float near = 0;
+	float far = 0;
 	
-	public double getLeft() {
+	public float getLeft() {
 		return left;
 	}
 	
-	public double getRight() {
+	public float getRight() {
 		return right;
 	}
 	
-	public double getTop() {
+	public float getTop() {
 		return top;
 	}
 	
-	public double getBottom() {
+	public float getBottom() {
 		return bottom;
 	}
 	
-	public double getNear() {
+	public float getNear() {
 		return near;
 	}
 	
-	public double getFar() {
+	public float getFar() {
 		return far;
 	}
 

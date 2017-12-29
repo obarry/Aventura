@@ -83,7 +83,7 @@ public class TestRasterizer12 {
 		Texture tex3 = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
-		Box box = new Box(1.6,2,1.3);
+		Box box = new Box(1.6f,2,1.3f);
 		//Box box = new Box(3.2,4,2.6);
 		
 		// Set Texture to all Triangles of the Box
@@ -111,11 +111,11 @@ public class TestRasterizer12 {
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(0.5,0.5,1), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0.5f,1), 1);
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al);
 		
-		GraphicContext gContext = new GraphicContext(0.8, 0.45, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
@@ -132,7 +132,7 @@ public class TestRasterizer12 {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
 			box.setTransformation(r);
 			renderer.render();
 		}

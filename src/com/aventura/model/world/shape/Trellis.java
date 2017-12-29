@@ -54,7 +54,7 @@ public class Trellis extends Element {
 
 	protected RectangleMesh rectangleMesh;
 	protected int nx, ny;
-	protected double width, length;
+	protected float width, length;
 
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
@@ -65,7 +65,7 @@ public class Trellis extends Element {
 	 * @param nx
 	 * @param ny
 	 */
-	public Trellis(double width, double length, int nx, int ny) {
+	public Trellis(float width, float length, int nx, int ny) {
 		super(TRELLIS_DEFAULT_NAME);
 		subelements = null;
 		this.width = width;
@@ -87,7 +87,7 @@ public class Trellis extends Element {
 	 * @param nx
 	 * @param ny
 	 */
-	public Trellis(double width, double length, int nx, int ny, Texture tex) {
+	public Trellis(float width, float length, int nx, int ny, Texture tex) {
 		super(TRELLIS_DEFAULT_NAME);
 		subelements = null;
 		this.width = width;
@@ -110,7 +110,7 @@ public class Trellis extends Element {
 	 * @param ny
 	 * @param array
 	 */
-	public Trellis(double width, double length, int nx, int ny, double [][] array) throws WrongArraySizeException {
+	public Trellis(float width, float length, int nx, int ny, float [][] array) throws WrongArraySizeException {
 		super(TRELLIS_DEFAULT_NAME);
 		subelements = null;
 		this.width = width;
@@ -136,7 +136,7 @@ public class Trellis extends Element {
 	 * @param ny
 	 * @param array
 	 */
-	public Trellis(double width, double length, int nx, int ny, double [][] array, Texture tex) throws WrongArraySizeException {
+	public Trellis(float width, float length, int nx, int ny, float [][] array, Texture tex) throws WrongArraySizeException {
 		super(TRELLIS_DEFAULT_NAME);
 		subelements = null;
 		this.width = width;
@@ -162,7 +162,7 @@ public class Trellis extends Element {
 		}
 	}
 
-	protected void initTrellis(Vector4 position, double [][] array) throws WrongArraySizeException {
+	protected void initTrellis(Vector4 position, float [][] array) throws WrongArraySizeException {
 		
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {

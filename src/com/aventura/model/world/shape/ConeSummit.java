@@ -47,8 +47,8 @@ public class ConeSummit extends Element {
 
 	protected Vertex[] vertices;
 	protected Vertex summit; // In order to have different Vertex based normals, we need to have independent summit for each triangle
-	double height;
-	double ray;
+	float height;
+	float ray;
 	int half_seg;
 	protected Vector4 center, bottom_center;
 	
@@ -58,7 +58,7 @@ public class ConeSummit extends Element {
 	 * @param ray of the base circle of the Cone
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 */
-	public ConeSummit(double height, double ray, int half_seg) {
+	public ConeSummit(float height, float ray, int half_seg) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -77,7 +77,7 @@ public class ConeSummit extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 * @param center to which the Cone is moved at creation (Vector3)
 	 */
-	public ConeSummit(double height, double ray, int half_seg, Vector3 center) {
+	public ConeSummit(float height, float ray, int half_seg, Vector3 center) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -95,7 +95,7 @@ public class ConeSummit extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circle
 	 * @param center to which the Cone is moved at creation (Vector4)
 	 */
-	public ConeSummit(double height, double ray, int half_seg, Vector4 center) {
+	public ConeSummit(float height, float ray, int half_seg, Vector4 center) {
 		super();
 		subelements = null;
 		this.ray = ray;
@@ -110,7 +110,7 @@ public class ConeSummit extends Element {
 	protected void createCone() {
 		
 		vertices = new Vertex[half_seg*2]; // (n) vertices on each circles
-		double alpha = Math.PI/half_seg;
+		float alpha = (float)Math.PI/half_seg;
 		
 		// Create vertices
 		
@@ -120,8 +120,8 @@ public class ConeSummit extends Element {
 		// Create bottom vertices
 		for (int i=0; i<half_seg*2; i++) {
 			
-			double sina = Math.sin(alpha*i);
-			double cosa = Math.cos(alpha*i);
+			float sina = (float)Math.sin(alpha*i);
+			float cosa = (float)Math.cos(alpha*i);
 			
 			// Bottom circle of the cylinder
 			vertices[i] = createVertex(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));

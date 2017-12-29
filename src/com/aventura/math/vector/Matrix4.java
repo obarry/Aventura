@@ -32,15 +32,15 @@ import com.aventura.tools.tracing.Tracer;
 **/
 public class Matrix4 {
 
-    protected static final double[][] IDENTITY_ARRAY =
-    		{{1.0, 0.0, 0.0, 0.0},
-    		 {0.0, 1.0 ,0.0, 0.0},
-    		 {0.0, 0.0, 1.0, 0.0},
-    		 {0.0, 0.0, 0.0, 1.0}};
+    protected static final float[][] IDENTITY_ARRAY =
+    		{{1.0f, 0.0f, 0.0f, 0.0f},
+    		 {0.0f, 1.0f ,0.0f, 0.0f},
+    		 {0.0f, 0.0f, 1.0f, 0.0f},
+    		 {0.0f, 0.0f, 0.0f, 1.0f}};
 
     public static final Matrix4 IDENTITY = new Matrix4(IDENTITY_ARRAY);
 
-	protected double[][] array;
+	protected float[][] array;
 
 	/**
 	 * Initialize a square Matrix of size s with 0 for all elements of the matrix
@@ -48,7 +48,7 @@ public class Matrix4 {
 	 */
 	public Matrix4() {
 		// Only create the array
-		array = new double[Constants.SIZE_4][Constants.SIZE_4];
+		array = new float[Constants.SIZE_4][Constants.SIZE_4];
 		//initialize(0); // optimize -> no init or use Matrix4(0) instead
 	}
 
@@ -57,7 +57,7 @@ public class Matrix4 {
 	 * Initialize Matrix with a constant value for all elements of the matrix
 	 * @param val the initialization value
 	 */
-	public Matrix4(double val) {
+	public Matrix4(float val) {
 		initialize(val);
 	}
 
@@ -71,7 +71,7 @@ public class Matrix4 {
 //
 //		this.array = a;
 //	}
-	public Matrix4(double[][] a) {
+	public Matrix4(float[][] a) {
 		this.array = a;
 	}
 
@@ -81,7 +81,7 @@ public class Matrix4 {
 	 */
 	public Matrix4(Matrix4 a) {
 		// Create the array
-		array = new double[Constants.SIZE_4][Constants.SIZE_4];
+		array = new float[Constants.SIZE_4][Constants.SIZE_4];
 		
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
@@ -94,9 +94,9 @@ public class Matrix4 {
 	 * Initialize a Matrix with a constant value for all elements of the matrix
 	 * @param val the initialization value
 	 */
-	protected void initialize(double val) {
+	protected void initialize(float val) {
 		// Create the array
-		array = new double[Constants.SIZE_4][Constants.SIZE_4];
+		array = new float[Constants.SIZE_4][Constants.SIZE_4];
 		// Initialize values
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
@@ -105,7 +105,7 @@ public class Matrix4 {
 		}
 	}
 	
-	public void setArray(double[][] a) throws MatrixArrayWrongSizeException {
+	public void setArray(float[][] a) throws MatrixArrayWrongSizeException {
 		if (a.length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix4 from array"); 
 		if (a[0].length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix4 from array"); 
 		this.array = a;
@@ -128,7 +128,7 @@ public class Matrix4 {
 	 * @param j column indice
 	 * @param val value to set
 	 */
-	public void set(int i, int j, double val) throws IndiceOutOfBoundException {
+	public void set(int i, int j, float val) throws IndiceOutOfBoundException {
 		if (i<0 || i>Constants.SIZE_4) throw new IndiceOutOfBoundException("Row indice ("+i+") out of bound while setting element ("+i+","+j+") of Matrix4"); 
 		if (j<0 || j>Constants.SIZE_4) throw new IndiceOutOfBoundException("Column indice ("+j+") out of bound while setting element ("+i+","+j+") of Matrix4"); 
 		array[i][j] = val;
@@ -140,11 +140,11 @@ public class Matrix4 {
 	 * @param j column indice
 	 * @return the value of the element
 	 */
-	public double get(int i, int j) {
+	public float get(int i, int j) {
 		return array[i][j];
 	}
 	
-	public double[][] getArray() {
+	public float[][] getArray() {
 		return array;
 	}
 	
@@ -152,7 +152,7 @@ public class Matrix4 {
 	 * Set all elements of the diagonal of this Matrix to a given value
 	 * @param v the value to set
 	 */
-	public void setDiagonal(double v) {
+	public void setDiagonal(float v) {
 		for (int i=0; i<Constants.SIZE_4-1; i++) {
 			array[i][i] = v;
 		}
@@ -166,7 +166,7 @@ public class Matrix4 {
 	 */
 	public Vector4 getRow(int r) throws IndiceOutOfBoundException {
 		if (r<0 || r>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix4"); 
-		double[] array = new double[Constants.SIZE_4];
+		float[] array = new float[Constants.SIZE_4];
 		Vector4 v = null;
 		// No loop for optimization
 		array[0] = this.array[r][0];
@@ -205,7 +205,7 @@ public class Matrix4 {
 	 */
 	public Vector4 getColumn(int c) throws IndiceOutOfBoundException {
 		if (c<0 || c>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix4"); 
-		double[] array = new double[Constants.SIZE_4];
+		float[] array = new float[Constants.SIZE_4];
 		Vector4 v = null;
 		// No loop for optimization
 		array[0] = this.array[0][c];
@@ -280,7 +280,7 @@ public class Matrix4 {
 	 * @param B
 	 */
 	public void timesEquals(Matrix4 b) {
-		double[][] array = new double[Constants.SIZE_4][Constants.SIZE_4];
+		float[][] array = new float[Constants.SIZE_4][Constants.SIZE_4];
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
 				array[i][j] = this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j) + this.get(i,3)*b.get(3, j);
@@ -294,7 +294,7 @@ public class Matrix4 {
 	 * @param s the scalar value
 	 * @return a new Matrix B=A*s
 	 */
-	public Matrix4 times(double s) {
+	public Matrix4 times(float s) {
 		Matrix4 r = new Matrix4();
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
@@ -314,7 +314,7 @@ public class Matrix4 {
 	 * Multiply this Matrix by a scalar A = A*s
 	 * @param s the scalar value
 	 */
-	public void timesEquals(double s) {
+	public void timesEquals(float s) {
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
 				this.array[i][j] = this.array[i][j]*s;

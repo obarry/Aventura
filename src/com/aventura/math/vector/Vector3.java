@@ -46,9 +46,9 @@ public class Vector3 {
 	public static final Vector3 ZERO_VECTOR = new Vector3(0,0,0);
 
     // Components of the Vector
-	protected double x;
-	protected double y;
-	protected double z;
+	protected float x;
+	protected float y;
+	protected float z;
 	
 	public Vector3() {
 		this.x = 0;
@@ -56,19 +56,19 @@ public class Vector3 {
 		this.z = 0;
 	}
 
-	public Vector3(double v) {
+	public Vector3(float v) {
 		this.x = v;
 		this.y = v;
 		this.z = v;
 	}
 	
-	public Vector3(double x, double y, double z) {
+	public Vector3(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;		
 	}
 		
-	public Vector3(double[] array) throws VectorArrayWrongSizeException {
+	public Vector3(float[] array) throws VectorArrayWrongSizeException {
 		if (array.length < Constants.SIZE_3) throw new VectorArrayWrongSizeException("Array passed in parameter of Vector3 constructor is out of bound: "+array.length); 
 		this.x = array[0];
 		this.y = array[1];
@@ -112,7 +112,7 @@ public class Vector3 {
 	 * @param v, the value to set
 	 * @throws IndiceOutOfBoundException
 	 */
-	public void set(int i, double v) throws IndiceOutOfBoundException {
+	public void set(int i, float v) throws IndiceOutOfBoundException {
 		switch (i) {
 		case 0:
 			this.x = v;
@@ -133,7 +133,7 @@ public class Vector3 {
 	 * Set x, the first coordinate of the Vector3, with value v
 	 * @param v, the value to set
 	 */
-	public void setX(double v) {
+	public void setX(float v) {
 		this.x = v;		
 	}
 	
@@ -141,7 +141,7 @@ public class Vector3 {
 	 * Set y, the second coordinate of the Vector3, with value v
 	 * @param v, the value to set
 	 */
-	public void setY(double v) {
+	public void setY(float v) {
 		this.y = v;		
 	}
 	
@@ -149,7 +149,7 @@ public class Vector3 {
 	 * Set z, the third coordinate of the Vector3, with value v
 	 * @param v, the value to set
 	 */
-	public void setZ(double v) {
+	public void setZ(float v) {
 		this.z = v;		
 	}
 	
@@ -159,7 +159,7 @@ public class Vector3 {
 	 * @return
 	 * @throws IndiceOutOfBoundException
 	 */
-	public double get(int i) throws IndiceOutOfBoundException {
+	public float get(int i) throws IndiceOutOfBoundException {
 		switch (i) {
 		case 0:
 			return this.x;
@@ -177,7 +177,7 @@ public class Vector3 {
 	 * Get x, the first coordinate of the Vector3
 	 * @return x
 	 */
-	public double getX() {
+	public float getX() {
 		return this.x;
 	}
 	
@@ -185,7 +185,7 @@ public class Vector3 {
 	 * Get y, the second coordinate of the Vector3
 	 * @return y
 	 */
-	public double getY() {
+	public float getY() {
 		return this.y;
 	}
 	
@@ -193,12 +193,12 @@ public class Vector3 {
 	 * Get z, the third coordinate of the Vector3
 	 * @return z
 	 */
-	public double getZ() {
+	public float getZ() {
 		return this.z;
 	}
 		
-	public double length() {
-		return Math.sqrt(this.x*this.x+this.y*this.y+this.z*this.z);
+	public float length() {
+		return (float)Math.sqrt(this.x*this.x+this.y*this.y+this.z*this.z);
 	}
 	
 	/**
@@ -206,7 +206,7 @@ public class Vector3 {
 	 * @return this vector (modified)
 	 */
 	public Vector3 normalize() {
-		double length = this.length();
+		float length = this.length();
 		// Normalize values
 		this.x/=length;
 		this.y/=length;
@@ -279,11 +279,11 @@ public class Vector3 {
 	 * @param w, the other Vector3
 	 * @return s, the dot product (double)
 	 */
-	public double dot(Vector3 w) {
+	public float dot(Vector3 w) {
 		return this.x*w.x+this.y*w.y+this.z*w.z;
 	}
 	
-	public Vector3 times(double val) {
+	public Vector3 times(float val) {
 		Vector3 r = new Vector3();
 		r.x = this.x*val;
 		r.y = this.y*val;
@@ -295,7 +295,7 @@ public class Vector3 {
 	/**
 	 * @param val
 	 */
-	public void timesEquals(double val) {
+	public void timesEquals(float val) {
 		this.x*=val;
 		this.y*=val;
 		this.z*=val;
@@ -324,7 +324,7 @@ public class Vector3 {
 	 *  @param w
 	 */
 	public void timesEquals(Vector3 w) {
-		double xp, yp, zp;
+		float xp, yp, zp;
 
 		xp = this.y*w.z-this.z*w.y;
 		yp = this.z*w.x-this.x*w.z;
@@ -363,7 +363,7 @@ public class Vector3 {
 	 * @param A the Matrix3
 	 */
 	public void timesEquals(Matrix3 A) {
-		double[] array = new double[3];
+		float[] array = new float[3];
 
 		for (int i=0; i<Constants.SIZE_3; i++) {
 			array[i] = 0;
