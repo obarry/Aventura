@@ -292,7 +292,7 @@ public class Rasterizer {
 		}
 		
 	    // Slopes
-	    double dP1P2, dP1P3;
+	    float dP1P2, dP1P3;
 
 	    // http://en.wikipedia.org/wiki/Slope
 	    // Computing slopes

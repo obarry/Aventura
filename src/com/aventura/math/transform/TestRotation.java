@@ -23,11 +23,11 @@ public class TestRotation {
 		Rotation r22 = new Rotation();
 		Rotation r23 = new Rotation();
 		try {
-			r21 = new Rotation(Math.PI/3, Constants.X_axis); 
+			r21 = new Rotation((float)Math.PI/3, Constants.X_axis); 
 			System.out.println("r21 : "+r21);
-			r22 = new Rotation(Math.PI/4, Constants.Y_axis);
+			r22 = new Rotation((float)Math.PI/4, Constants.Y_axis);
 			System.out.println("r22 : "+r22);
-			r23 = new Rotation(Math.PI/5, Constants.Z_axis);
+			r23 = new Rotation((float)Math.PI/5, Constants.Z_axis);
 			System.out.println("r23 : "+r23);
 		} catch (WrongAxisException e) {
 			// TODO Auto-generated catch block

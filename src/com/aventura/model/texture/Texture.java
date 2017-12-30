@@ -171,11 +171,11 @@ public class Texture {
 	 * @param t
 	 * @return
 	 */
-	public Color getInterpolatedColor(double s, double t) throws Exception {
+	public Color getInterpolatedColor(float s, float t) throws Exception {
 
 		// Calculate the coordinates within the texture (-0.5 as per bressenham)
-		double u = s * this.width - 0.5;
-		double v = t * this.height - 0.5;
+		float u = s * this.width - 0.5f;
+		float v = t * this.height - 0.5f;
 
 		// Calculate the integer value of u and v
 		int x0 = (int) Math.floor(u);

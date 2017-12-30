@@ -102,7 +102,7 @@ public class Sphere extends Element {
 		
 		// Create mesh to wrap Cylinder
 		rectangleMesh = new RectangleMesh(this, half_seg*2+1, half_seg, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
-		double alpha = Math.PI/half_seg;
+		float alpha = (float)Math.PI/half_seg;
 		
 		// Create Vertices
 		for (int i=0; i<=half_seg*2; i++) {

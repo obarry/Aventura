@@ -417,7 +417,7 @@ public class Vector4 {
 	/**
 	 * @param val
 	 */
-	public void timesEquals(double val) {
+	public void timesEquals(float val) {
 		this.x*=val;
 		this.y*=val;
 		this.z*=val;

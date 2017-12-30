@@ -271,7 +271,7 @@ public class GraphicContext {
 		this.depth = depth;
 	}
 	
-	public double getDepth() {
+	public float getDepth() {
 		return depth;
 	}
 

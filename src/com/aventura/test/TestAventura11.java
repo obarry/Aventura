@@ -13,7 +13,6 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -166,7 +165,7 @@ public class TestAventura11 {
 
 		int nb_images = 360;
 		for (int i=0; i<=4.9*nb_images; i++) {
-			double a = Math.PI*2*(double)i/(double)nb_images;
+			float a = (float)Math.PI*2*(float)i/(float)nb_images;
 			eye = new Vector4(15*(float)Math.cos(a),15*(float)Math.sin(a),4,1);
 			System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);

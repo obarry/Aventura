@@ -180,11 +180,11 @@ public class Trellis extends Element {
 		return ny;
 	}
 	
-	public double getWidth() {
+	public float getWidth() {
 		return width;
 	}
 	
-	public double getLength() {
+	public float getLength() {
 		return length;
 	}
 	
