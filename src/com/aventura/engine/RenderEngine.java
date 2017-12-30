@@ -382,9 +382,9 @@ public class RenderEngine {
 	protected boolean isInViewFrustum(Vertex v) {
 		
 		// Get homogeneous coordinates of the Vertex
-		double x = v.getProjPos().get3DX();
-		double y = v.getProjPos().get3DY();
-		double z = v.getProjPos().get3DZ();
+		float x = v.getProjPos().get3DX();
+		float y = v.getProjPos().get3DY();
+		float z = v.getProjPos().get3DZ();
 		
 		// Need all (homogeneous) coordinates to be within range [-1, 1]
 		if ((x<=1 && x>=-1) && (y<=1 && y>=-1) && (z<=1 && z>=-1))

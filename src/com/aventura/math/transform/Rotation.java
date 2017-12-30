@@ -91,10 +91,10 @@ public class Rotation extends Matrix4 {
 	 * @param axis among X_axis, Y_axis or Z_axis
 	 * @throws WrongAxisException
 	 */
-	public Rotation(double a, int axis) throws WrongAxisException {
+	public Rotation(float a, int axis) throws WrongAxisException {
 		super(Matrix4.IDENTITY);
-		double cosa = Math.cos(a);
-		double sina = Math.sin(a);
+		float cosa = (float)Math.cos(a);
+		float sina = (float)Math.sin(a);
 		// Initialize the array, depending on axis
 		if (axis == Constants.X_axis) {
 			// First row

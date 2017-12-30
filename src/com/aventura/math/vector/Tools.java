@@ -93,7 +93,7 @@ public class Tools {
 		
 		Vector2 P = new Vector2();
 		
-		P = A.times(1-t).plus(B.times(t));
+		P = A.times((float)(1-t)).plus(B.times((float)t));
 		
 		return P;
 	}
@@ -107,7 +107,7 @@ public class Tools {
 	 * @param a
 	 * @param b
 	 * @param t the gradient
-	 * @return double
+	 * @return float
 	 */
 	public static double interpolate(double a, double b, double t) {
 		return a*(1-t)+b*t;

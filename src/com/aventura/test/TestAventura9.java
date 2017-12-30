@@ -196,7 +196,7 @@ public class TestAventura9 {
 		}
 		
 		for (int i=0; i<=5*nb_images; i++) {
-			double a = Math.PI*2*(float)i/(float)nb_images;
+			float a = (float)Math.PI*2*(float)i/(float)nb_images;
 			Vector4 eye = new Vector4(30*(float)Math.cos(a),15*(float)Math.sin(a),5,1);
 			System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);

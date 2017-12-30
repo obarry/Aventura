@@ -316,7 +316,7 @@ public class TestVector3 {
 		try {
 			V1 = new Vector3(array);
 			V2 = new Vector3(2.0f);
-			double scal = V1.dot(V2);
+			float scal = V1.dot(V2);
 			System.out.println("V1="+V1);
 			System.out.println("V2="+V2);
 			System.out.println("scalar produc ="+scal);

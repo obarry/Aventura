@@ -48,7 +48,7 @@ public class TestTexture {
 		Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		
 		// This ratio can be adjusted to show the effect of redimensioning the initial image by the Texture object (bilinear filtering algorithm)
-		double ratio = 1.3;
+		float ratio = 1.3f;
 		
 		int width2 = (int) (width1*ratio);
 		int height2 = (int) (height1*ratio);
@@ -58,8 +58,8 @@ public class TestTexture {
 		
 		for (int i=0; i<width2; i++) {
 			for (int j=0; j<height2; j++) {
-			double u = (double)i/width2;
-			double v = (double)j/height2;
+			float u = (float)i/width2;
+			float v = (float)j/height2;
 				try{
 					image2.setRGB(i, j, tex.getInterpolatedColor(u, v).getRGB());
 				} catch (Exception e) {

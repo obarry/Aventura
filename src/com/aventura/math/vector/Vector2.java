@@ -31,15 +31,15 @@ package com.aventura.math.vector;
 **/
 public class Vector2 {
 	
-	protected double x;
-	protected double y;
+	protected float x;
+	protected float y;
 	
 	public Vector2() {
 		this.x = 0;
 		this.y = 0;
 	}
 	
-	public Vector2(double x, double y) {
+	public Vector2(float x, float y) {
 		this.x = x;
 		this.y = y;
 	}
@@ -50,36 +50,36 @@ public class Vector2 {
 	}
 
 	
-	public double getX() {
+	public float getX() {
 		return this.x;
 	}
 	
-	public double getY() {
+	public float getY() {
 		return this.y;
 	}
 	
-	public void setX(double x) {
+	public void setX(float x) {
 		this.x = x;
 	}
 	
-	public void setY(double y) {
+	public void setY(float y) {
 		this.y = y;
 	}
 	
-	public double length() {
-		return Math.sqrt(x*x+y*y);
+	public float length() {
+		return (float)Math.sqrt(x*x+y*y);
 	}
 	
-	public double dot(Vector2 w) {
+	public float dot(Vector2 w) {
 		return x*w.x+y*w.y;
 	}
 	
-	public void timesEquals(double d) {
+	public void timesEquals(float d) {
 		this.x = x*d;
 		this.y = y*d;
 	}
 	
-	public Vector2 times(double d) {
+	public Vector2 times(float d) {
 		Vector2 r = new Vector2();
 		r.x = this.x*d;
 		r.y = this.y*d;
@@ -138,7 +138,7 @@ public class Vector2 {
 	
 	
 	public void normalize() {
-		double length = this.length();
+		float length = this.length();
 		this.x = x/length;
 		this.y = y/length;
 	}
