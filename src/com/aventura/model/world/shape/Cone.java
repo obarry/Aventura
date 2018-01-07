@@ -100,7 +100,7 @@ public class Cone extends Element {
 	
 	protected void createCone(Texture t) {
 		
-		mesh = new FanMesh(this,half_seg*2+1, t); // (n) x 2 vertices on each circles + 1 duplicqte Vertex for RectangleMesh / Texture
+		mesh = new FanMesh(this,half_seg*2, t); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
 		
 		float alpha = (float)Math.PI/half_seg;
 		
