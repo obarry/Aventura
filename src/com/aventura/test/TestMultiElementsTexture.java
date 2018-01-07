@@ -30,6 +30,7 @@ import com.aventura.model.world.shape.Cone;
 import com.aventura.model.world.shape.Cube;
 import com.aventura.model.world.shape.Cylinder;
 import com.aventura.model.world.shape.Element;
+import com.aventura.model.world.shape.Pyramid;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
@@ -63,7 +64,7 @@ import com.aventura.view.View;
 * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
 */
 
-public class TestAventura15 {
+public class TestMultiElementsTexture {
 	
 	// View to be displayed
 	private SwingView view;
@@ -84,7 +85,7 @@ public class TestAventura15 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura15.this.view.draw(graph);
+		    	TestMultiElementsTexture.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -124,13 +125,14 @@ public class TestAventura15 {
 		//Texture texearth = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
 		//Texture texmoon = new Texture("resources/test/texture_moon_2048x1024.jpg");
 		Texture texfoot = new Texture("resources/test/texture_football_320x160.jpg");
-		
+		Texture texcarpet = new Texture("resources/test/texture_carpet_600x600.jpg");
+	
 		// Camera
 		Vector4 eye = new Vector4(10,6,3,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestAventura15 test = new TestAventura15();
+		TestMultiElementsTexture test = new TestMultiElementsTexture();
 				
 		// Create a new World
 		System.out.println("********* Creating World");
@@ -143,29 +145,30 @@ public class TestAventura15 {
 				for (int k=-1; k<=1; k++) {
 										
 					// Create an Element of a random type
-					switch(Math.round((float)Math.random()*5)) {
+					switch((int)(Math.random()*7)) {
 					case 0:
 						e = new Cone(1,0.5f,32, texdamier);
-						//e.setColor(Color.YELLOW);
 						break;
+						
 					case 1:
 						e = new Cylinder(1,0.5f,32, texcremedemarron);
-						//e.setColor(Color.CYAN);
 						break;
+						
 					case 2:
 						e = new Sphere(0.667f,32, texfoot);
 						e.setSpecularExp(3);
 						e.setSpecularColor(new Color(100,100,100));
 						e.setColor(new Color(200,150,255));
 						break;
+						
 					case 3:
 						e = new Cube(1, texmetalplate);
-						//e.setColor(Color.PINK);
 						break;
+						
 					case 4:
 						e = new Box(1.5f,1,0.5f, texbricks);
-						//e.setColor(Color.ORANGE);
 						break;
+						
 					case 5:
 						
 						float size = 1.5f;
@@ -187,10 +190,11 @@ public class TestAventura15 {
 							// TODO Auto-generated catch block
 							ex.printStackTrace();
 						}
-
-						//e = new Trellis(1.5,1.5,8,8, texgrass);
-						//e.setColor(Color.GREEN);
 						break;
+					case 6:
+						e = new Pyramid(1.4f, 1.4f, 1.4f, texcarpet);
+						break;
+						
 					default:
 						e = null;
 					}

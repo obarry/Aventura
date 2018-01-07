@@ -22,7 +22,6 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Cone;
 import com.aventura.model.world.shape.Pyramid;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
