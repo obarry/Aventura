@@ -131,7 +131,7 @@ public class TestFanMesh2 {
 		Vector4 vec3 = new Vector4(-1,0,0,1);
 		Vector4 vec4 = new Vector4(c,-s,0,1);
 				
-		FanMesh fan = new FanMesh(e,3, tex); // 3 vertices -> 2 triangles
+		FanMesh fan = new FanMesh(e,2, tex); // 2 triangles
 		fan.setSummit(vec1);
 		fan.getVertex(0).setPos(vec2);
 		fan.getVertex(1).setPos(vec3);

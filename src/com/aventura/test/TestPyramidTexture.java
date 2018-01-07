@@ -22,23 +22,13 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Element;
-import com.aventura.model.world.triangle.FanMesh;
+import com.aventura.model.world.shape.Cone;
+import com.aventura.model.world.shape.Pyramid;
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
-/**
- * Test FanMesh class
- * 
- * Create FanMesh with 3 triangles and apply texture
- * Check that texture is correctly wrapped:
- * - evenly distributed from summit to base
- * - concentrated on the tip and full width at the bottom
- * 
- * @author Olivier Barry
- *
- */
-public class TestFanMesh3 {
+public class TestPyramidTexture {
 	
 	// View to be displayed
 	private SwingView view;
@@ -46,7 +36,7 @@ public class TestFanMesh3 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test FanMesh 3");
+		JFrame frame = new JFrame("Test Pyramid with Texture");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -59,7 +49,7 @@ public class TestFanMesh3 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestFanMesh3.this.view.draw(graph);
+		    	TestPyramidTexture.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -86,75 +76,61 @@ public class TestFanMesh3 {
 //		Tracer.function = true;
 
 		// Camera
-		//Vector4 eye = new Vector4(4,2,3,1);
-		Vector4 eye = new Vector4(0,0,5,1);
-		Vector4 poi = new Vector4(0,0,0,1);
-		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
-		Camera camera = new Camera(eye, poi, Vector4.Y_AXIS);		
+		Vector4 eye = new Vector4(8,3,8,1);
+		//Vector4 eye = new Vector4(16,6,12,1);
+		//Vector4 eye = new Vector4(3,2,2,1);
+		Vector4 poi = new Vector4(0,0,-0.5f,1);
+		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestFanMesh3 test = new TestFanMesh3();
+		TestPyramidTexture test = new TestPyramidTexture();
 		
 		System.out.println("********* Creating World");
 		
-		Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
+		//Texture tex = new Texture("resources/test/texture_metal_mesh_463x463.jpg");
+		//Texture tex = new Texture("resources/test/texture_old_leather_box_800x610.jpg");
+		//Texture tex = new Texture("resources/test/texture_metal_plate_626x626.jpg");
+		//Texture tex = new Texture("resources/test/texture_stone1_1700x1133.jpg");
+		//Texture tex = new Texture("resources/test/texture_rock_stone_400x450.jpg");
+		//Texture tex = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
+		//Texture tex = new Texture("resources/test/texture_rust_960x539.jpg");
+		Texture tex = new Texture("resources/test/texture_carpet_600x600.jpg");
+		//Texture tex = new Texture("resources/test/texture_blue_checkboard_1300x1300.jpg");
+		//Texture tex = new Texture("resources/test/texture_geometry_1024x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_moon_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_jupiter_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_neptune_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_football_320x160.jpg");
 		
 		// Create World
 		World world = new World();
-		Element e = new Element();
+		Pyramid pyr = new Pyramid(2, 2, 2, tex);
+		pyr.setColor(new Color(200,200,255));
+		pyr.setSpecularExp(8);
+		world.addElement(pyr);
+		world.setBackgroundColor(new Color(10,10,50));
 		
-		//
-		// Create a Triangle
-		//
-		//         ^ Y
-		//  V2  |\ |
-		//      |  |
-		//      |  | \
-		//      |  |   \ V1
-		//  ----+--+----+------> X
-		//   V3 |  |   /
-		//      |    /
-		//      |  /
-		//  V4  |/
-		//      
-		
-		float c = (float)Math.cos(2*(Math.PI)/3); // -0.5
-		float s = (float)Math.sin(2*(Math.PI)/3); // 0.866
-		
-		Vector4 summit = new Vector4(1,0,0,1); // summit
-		Vector4 vec1 = new Vector4(c,s,0,1);
-		Vector4 vec2 = new Vector4(-1,s/2,0,1);
-		Vector4 vec3 = new Vector4(-1,-s/2,0,1);
-		Vector4 vec4 = new Vector4(c,-s,0,1);
-		
-				
-		FanMesh fan = new FanMesh(e,3, tex); // 3 triangles
-		fan.setSummit(summit);
-		fan.getVertex(0).setPos(vec1);
-		fan.getVertex(1).setPos(vec2);
-		fan.getVertex(2).setPos(vec3);
-		fan.getVertex(3).setPos(vec4);
-		fan.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
-				
-		world.addElement(e);
-		world.setBackgroundColor(new Color(110,0,220));
-		
+		System.out.println(world);
+		System.out.println(pyr);
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 0.5f);
-		AmbientLight al = new AmbientLight(0.5f);
-		Lighting light = new Lighting(dl, al);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
+		AmbientLight al = new AmbientLight(0.3f);
+		Lighting light = new Lighting(dl, al, false);
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
-		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
@@ -166,13 +142,11 @@ public class TestFanMesh3 {
 		renderer.setView(view);
 		renderer.render();
 
-
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-		//for (int i=0; i<=3; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
-			e.setTransformation(r);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
+			pyr.setTransformation(r);
 			renderer.render();
 		}
 
