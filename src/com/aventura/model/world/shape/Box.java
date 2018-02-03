@@ -55,7 +55,7 @@ public class Box extends Element {
 	}
 	
 	/**
-	 * Create a box aligned on axis. Need to be rotated for a different orientation.
+	 * Create a box aligned on axis with unique texture applied to all faces
 	 * 
 	 * @param x_dim dimension of the box on x axis
 	 * @param y_dim dimension of the box on y axis
@@ -74,7 +74,7 @@ public class Box extends Element {
 	}
 
 	/**
-	 * Create a box aligned on axis. Need to be rotated for a different orientation.
+	 * Create a box aligned on axis with different texture for each face
 	 * 
 	 * @param x_dim dimension of the box on x axis
 	 * @param y_dim dimension of the box on y axis
