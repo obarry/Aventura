@@ -1,6 +1,5 @@
 package com.aventura.model.world.shape;
 
-import com.aventura.math.vector.Vector3;
 import com.aventura.model.texture.Texture;
 
 /**
