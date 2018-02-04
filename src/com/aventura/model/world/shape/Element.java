@@ -207,6 +207,18 @@ public class Element implements Transformable {
 	 * Create and return Vertex
 	 * This method should necessary be used to create any Vertex' Element since it does the needful to put it in the list of vertices of this Element
 	 * 
+	 * @return the newly created Vertex
+	 */
+	public Vertex createVertex() {
+		Vertex v = new Vertex();
+		addVertex(v);
+		return v;
+	}
+	
+	/**
+	 * Create and return Vertex
+	 * This method should necessary be used to create any Vertex' Element since it does the needful to put it in the list of vertices of this Element
+	 * 
 	 * @param v4 the position of the Vertex
 	 * @return the newly created Vertex
 	 */

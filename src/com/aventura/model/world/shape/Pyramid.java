@@ -5,7 +5,6 @@ import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.triangle.FanMesh;
 import com.aventura.model.world.triangle.RectangleMesh;
-import com.aventura.model.world.triangle.Triangle;
 
 /**
  * ------------------------------------------------------------------------------ 
