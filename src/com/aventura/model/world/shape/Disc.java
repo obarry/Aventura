@@ -59,6 +59,17 @@ public class Disc extends Element {
 	}
 
 
+	public Disc(float ray, int half_seg, Texture t) {
+		super(DISC_DEFAULT_NAME, false); // A Disc is *not* a closed Element
+		subelements = null;
+		this.ray = ray;
+		this.half_seg = half_seg;
+		this.center = new Vector4(0,0,0,0);
+		this.tex = t;
+		createDisc(t);
+	}
+
+
 	/**
 	 * Creation of a Disc
 	 * @param t the Texture to apply
@@ -75,14 +86,14 @@ public class Disc extends Element {
 		Vector4 summit = new Vector4(0, 0, 0,  1);
 		mesh.setCenter(summit);
 		
-		// Create bottom vertices
-		for (int i=0; i<=half_seg*2; i++) {
+		// Create the ring of vertices around the disc
+		for (int i=0; i<half_seg*2; i++) {
 			
-			float sina = (float)Math.sin(alpha*i);
-			float cosa = (float)Math.cos(alpha*i);
+			float cosa = (float) Math.cos(alpha*i);
+			float sina = (float) Math.sin(alpha*i);
 			
-			// Bottom circle of the cylinder
-			mesh.getVertex(i).setPos(new Vector4(ray*cosa, ray*sina, 0, 1).plus(center));
+			// Set the position of the corresponding vertex in the CircularMesh
+			mesh.getVertex(i).setPos(new Vector4(this.ray*cosa, this.ray*sina, 0, 1).plus(center));
 		}
 		
 		// Create Triangles
