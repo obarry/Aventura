@@ -125,18 +125,58 @@ public class CircularMesh extends Mesh {
 
 	/**
 	 * Create triangles of the CircularMesh
+	 * And apply texture on this mesh
 	 */
 	public void createTriangles(int type) {
 		Triangle t;
+
 		// Create all triangles around the ring
-		for (int i=0; i<this.nbs-1; i++) {
-			t = new Triangle(center, vertices[i], vertices[i+1]);
-			elm.addTriangle(t);
+		for (int i=0; i<=this.nbs-1; i++) {
+
+			if (i<this.nbs-1) {
+				t = new Triangle(vertices[i], center, vertices[i+1]);
+//				t = new Triangle(center, vertices[i], vertices[i+1]);
+			} else { // i = this.nbs-1 -> last triangle to loop the circular mesh
+				t = new Triangle(vertices[i], center, vertices[0]);
+//				t = new Triangle(center, vertices[i], vertices[0]);
+			}
+
+			// Texture application on the CircularMesh, assuming regular stitches
+			if (tex!=null) {
+
+				switch (type) {
+
+				case MESH_CIRCULAR_CUT_TEXTURE:
+
+					Vector4 tv1, tv2, tv3;
+					float alpha = (float) (Math.PI/nbs);
+
+					// Create texture vectors
+					tv2 = new Vector4(0.5f,0.5f,0,1);    // First vertex of the triangle: center
+					tv1 = new Vector4((float)(0.5f+(Math.cos(alpha*i))/2f),1,0,1);  // Second vertex of the triangle: i+1
+					tv3 = new Vector4(0,(float)(0.5f+(Math.sin(alpha*i))/2f),0,1); // Last vertext of the triangle: summit
+
+					// Set texture vectors to newly created triangles
+					//t.setTextureOrientation(Triangle.TEXTURE_VERTICAL);
+					t.setTexture(tex, tv1, tv2, tv3);
+					//t.setRectoVerso(!elm.isClosed());
+
+					break;
+
+				case MESH_DEFORM_FULL_TEXTURE:
+					// TODO To be implemented
+					break;
+					
+				default:
+					// Invalid type
+					return;
+				}
+				
+				// Add newly created triangle to the reporting Element
+				elm.addTriangle(t);
+			}
+
 		}
-		// Last triangle to loop
-		t = new Triangle(center, vertices[this.nbs-1], vertices[0]);
-		elm.addTriangle(t);
-		
 	}
 	
 }
