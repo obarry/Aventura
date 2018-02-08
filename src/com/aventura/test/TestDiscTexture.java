@@ -23,7 +23,6 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Disc;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -99,9 +98,6 @@ public class TestDiscTexture {
 		
 		System.out.println("********* STARTING APPLICATION *********");
 
-//		Tracer.info = true;
-//		Tracer.function = true;
-
 		// Camera
 		Vector4 eye = new Vector4(8,3,8,1);
 		//Vector4 eye = new Vector4(16,6,12,1);
@@ -116,7 +112,7 @@ public class TestDiscTexture {
 		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
-		Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
@@ -125,10 +121,21 @@ public class TestDiscTexture {
 		//Texture tex = new Texture("resources/test/texture_metal_plate_626x626.jpg");
 		//Texture tex = new Texture("resources/test/texture_stone1_1700x1133.jpg");
 		//Texture tex = new Texture("resources/test/texture_rock_stone_400x450.jpg");
-		
+		//Texture tex = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
+		//Texture tex = new Texture("resources/test/texture_rust_960x539.jpg");
+		//Texture tex = new Texture("resources/test/texture_carpet_600x600.jpg");
+		Texture tex = new Texture("resources/test/texture_blue_checkboard_1300x1300.jpg");
+		//Texture tex = new Texture("resources/test/texture_geometry_1024x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_moon_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_jupiter_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_neptune_2048x1024.jpg");
+		//Texture tex = new Texture("resources/test/texture_football_320x160.jpg");
+
 		// Create World
 		World world = new World();
-		Disc disc = new Disc(2f, 4, tex);
+		Disc disc = new Disc(2f, 23, tex);
 		disc.setColor(new Color(200,200,255));
 		disc.setSpecularExp(8);
 		world.addElement(disc);
@@ -146,10 +153,8 @@ public class TestDiscTexture {
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
-		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
