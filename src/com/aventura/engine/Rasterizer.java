@@ -137,8 +137,16 @@ public class Rasterizer {
 		return v.get3DY()*graphic.getPixelHalfHeight();
 	}
 	
+	// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
+	protected int getXzBuf(int x) {
+		return x + graphic.getPixelHalfWidth();
+	}
 
-	
+	// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
+	protected int getYzBuf(int y) {
+		return y + graphic.getPixelHalfHeight();
+	}
+
 	// Method for Segment only Rendering
 	//
 	
@@ -374,9 +382,9 @@ public class Rasterizer {
 			boolean texture, 		// Flag for texture calculation (true) or not (false)
 			int tex_orientation) {	// Flag for isotropic, vertical or horizontal texture interpolation
 
-	    // Thanks to current Y, we can compute the gradient to compute others values like
-	    // the starting X (sx) and ending X (ex) to draw between
-	    // if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
+		// Thanks to current Y, we can compute the gradient to compute others values like
+		// the starting X (sx) and ending X (ex) to draw between
+		// if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
 		float ya = yScreen(va);
 		float yb = yScreen(vb);
 		float yc = yScreen(vc);
@@ -387,139 +395,169 @@ public class Rasterizer {
 		float xc = xScreen(vc);
 		float xd = xScreen(vd);
 
-	    float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
-	    float gradient2 = yc != yd ? (y - yc) / (yd - yc) : 1;
- 
-	    int sx = (int)Tools.interpolate(xa, xb, gradient1);
-	    int ex = (int)Tools.interpolate(xc, xd, gradient2);
-	    
-	    // To avoid gradient effect on x axis for small y variations (flat slopes) -> "cap" the sx and ex to x min and max of the triangle 
-	    int smin = (int)Math.min(xa,xb);
-	    int emax = (int)Math.max(xc, xd);
-	    if (sx<smin) sx=(int)smin;
-	    if (ex>emax) ex=(int)emax;
-	    
-	    // Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
-	    // TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
-//	    if (ex > Math.max(xScreen(vc), xScreen(vd))+100) {
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xc:"+xc+", xd:"+xd+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
-//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", ya:"+ya+", yb:"+yb+", yc:"+yc+", yd:"+yd);	    	
-//	    }
-	    
-	    // Vertices z
-	    float za = va.getProjPos().getW();
-	    float zb = vb.getProjPos().getW();
-	    float zc = vc.getProjPos().getW();
-	    float zd = vd.getProjPos().getW();
+		float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
+		float gradient2 = yc != yd ? (y - yc) / (yd - yc) : 1;
+
+		int sx = (int)Tools.interpolate(xa, xb, gradient1);
+		int ex = (int)Tools.interpolate(xc, xd, gradient2);
+
+		// To avoid gradient effect on x axis for small y variations (flat slopes) -> "cap" the sx and ex to x min and max of the triangle 
+		int smin = (int)Math.min(xa,xb);
+		int emax = (int)Math.max(xc, xd);
+		if (sx<smin) sx=(int)smin;
+		if (ex>emax) ex=(int)emax;
+
+		// Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
+		// TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
+		//	    if (ex > Math.max(xScreen(vc), xScreen(vd))+100) {
+		//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xc:"+xc+", xd:"+xd+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
+		//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", ya:"+ya+", yb:"+yb+", yc:"+yc+", yd:"+yd);	    	
+		//	    }
+
+		// Vertices z
+		float za = va.getProjPos().getW();
+		float zb = vb.getProjPos().getW();
+		float zc = vc.getProjPos().getW();
+		float zd = vd.getProjPos().getW();
 
 
-	    // Starting Z & ending Z
-	    float z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
-	    float z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
+		// Starting Z & ending Z
+		float z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
+		float z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
 
-	    
-	    // Gouraud's shading (Vertex calculation and interpolation across triangle)
-	    // Starting Colors & ending Colors for Shaded color and Specular color
-    	Color ishc1 = null, ishc2 = null; // Shaded
-    	Color ispc1 = null, ispc2 = null; // Specular
-    	if (interpolate) {
-    		// Shaded color
-        	ishc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getShadedCol(),1/za), ColorTools.multColor(vb.getShadedCol(),1/zb), gradient1);
-        	ishc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);
-        	// Specular color
-        	if (lighting.hasSpecular()) {
-        		ispc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getSpecularCol(),1/za), ColorTools.multColor(vb.getSpecularCol(),1/zb), gradient1);
-        		ispc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getSpecularCol(),1/zc), ColorTools.multColor(vd.getSpecularCol(),1/zd), gradient2);
-        	}
-	    }
 
-	    // Starting Texture & ending Texture coordinates
-    	Vector4 vt1 = null;
-    	Vector4 vt2 = null;
-    	Vector4 vt = null;
-    	if (texture && t!=null) {
-    		vt1 = Tools.interpolate(vta.times((float)1/za), vtb.times((float)1/zb), gradient1);
-    		vt2 = Tools.interpolate(vtc.times((float)1/zc), vtd.times((float)1/zd), gradient2);
+		// Gouraud's shading (Vertex calculation and interpolation across triangle)
+		// Starting Colors & ending Colors for Shaded color and Specular color
+		Color ishc1 = null, ishc2 = null; // Shaded
+		Color ispc1 = null, ispc2 = null; // Specular
+		if (interpolate) {
+			// Shaded color
+			ishc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getShadedCol(),1/za), ColorTools.multColor(vb.getShadedCol(),1/zb), gradient1);
+			ishc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);
+			// Specular color
+			if (lighting.hasSpecular()) {
+				ispc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getSpecularCol(),1/za), ColorTools.multColor(vb.getSpecularCol(),1/zb), gradient1);
+				ispc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getSpecularCol(),1/zc), ColorTools.multColor(vd.getSpecularCol(),1/zd), gradient2);
+			}
+		}
 
-    	}
+		// Starting Texture & ending Texture coordinates
+		Vector4 vt1 = null;
+		Vector4 vt2 = null;
+		Vector4 vt = null;
+		if (texture && t!=null) {
+			vt1 = Tools.interpolate(vta.times((float)1/za), vtb.times((float)1/zb), gradient1);
+			vt2 = Tools.interpolate(vtc.times((float)1/zc), vtd.times((float)1/zd), gradient2);
 
-    	Color csh = null; // Shaded color
-    	Color csp = null; // Specular color
+		}
+
+		Color csh = null; // Shaded color
+		Color csp = null; // Specular color
 		Color ctx = null; // Texture color
-		
-	    // drawing a line from left (sx) to right (ex) 
-    	for (int x = sx; x < ex; x++) {
-    		
-    		Color cc = null; // Combined color to be drawn, result of the lighting and shading calculation
-    		
-    		float gradient = (float)(x-sx)/(float)(ex-sx);
-    		float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
 
-    		// If interpolation
-    		if (interpolate) {
-    			// Color interpolation
-    			csh = ColorTools.multColor(ColorTools.interpolateColors(ishc1, ishc2, gradient),z); // Shaded color
-    			if (lighting.hasSpecular()) {
-    			csp = ColorTools.multColor(ColorTools.interpolateColors(ispc1, ispc2, gradient),z); // Specular color
-    			} else {
-    				csp = DARK_SHADING_COLOR; // No specular
-    			}
-    		} // Else c is the base color passed in arguments and csp won't be used
+		// drawing a line from left (sx) to right (ex) 
+		for (int x = sx; x < ex; x++) {
 
-    		// Texture interpolation
-    		if (texture && t!=null) {
+			// Eliminate pixels outside the view screen
+			if (isInScreenX(x) && isInScreenY(y)) {
+				// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
+				int x_zBuf = getXzBuf(x);
+				int y_zBuf = getYzBuf(y);
 
-    			vt = Tools.interpolate(vt1, vt2, gradient).times(z);
-    			try {
-    				// Projective Texture mapping using the fourth coordinate
-    				// By default W of the texture vector is 1 but if not this will help to take account of the potential geometrical distortion of the texture
-    				switch (tex_orientation) {
-    				case Triangle.TEXTURE_ISOTROPIC: // Default for a triangle
-    					ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
-    					break;
-    				case Triangle.TEXTURE_VERTICAL:
-    					ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
-    					break;
-    				case Triangle.TEXTURE_HORIZONTAL:
-    					ctx = t.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
-    					break;
-    				default:
-    					// Should never happen
-    					if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid Texture orientation for this triangle: "+tex_orientation);
-    				}
-    			} catch (Exception e) {
-    				// TODO Auto-generated catch block
-    				e.printStackTrace();
-    			}
-    			// Combine the shaded color and the Texture color
-    			
-    			cc = ColorTools.multColors(c, ctx);
-    			
-    		}
-    		
-    		// Combine colors with the following formula
-			// Color K = DTA + CDT + S = DT(A+C) + S
-			// D: diffuse color, T: texture, A: Ambient color, C: color of the light source, S: Specular color
-    		if (interpolate) {
-    			
-        		if (texture && t!=null) {
-           			cc = ColorTools.addColors(ColorTools.multColors(csh, ctx), csp);       			
-        		} else {
-           			cc = ColorTools.addColors(csh, csp);	        			
-        		}
-    			
-    		} else {
-    			
-        		if (texture && t!=null) {
-        			cc = ColorTools.multColors(c, ctx);
-        		} else {
-        			cc = c;     			
-        		}
-    		}
-    		
-    		// Draw the point with calculated Combined Color
-    		drawPoint(x, y, z, cc);
-    	}
+				// Protect against out of bounds (should not happen)
+				if (x_zBuf>=0 && x_zBuf<zBuf_width && y_zBuf>=0 && y_zBuf<zBuf_height) {
+
+					Color cc = null; // Combined color to be drawn, result of the lighting and shading calculation
+
+					float gradient = (float)(x-sx)/(float)(ex-sx);
+					float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
+
+					// zBuffer elimination at ealiest stage of computation (as soon as we know z)
+					if (z>zBuffer[getXzBuf(x)][getYzBuf(y)]) { // Discard pixel
+						discarded_pixels++;
+
+					} else { // Compute colors and draw pixel
+
+						// If interpolation
+						if (interpolate) {
+							// Color interpolation
+							csh = ColorTools.multColor(ColorTools.interpolateColors(ishc1, ishc2, gradient),z); // Shaded color
+							if (lighting.hasSpecular()) {
+								csp = ColorTools.multColor(ColorTools.interpolateColors(ispc1, ispc2, gradient),z); // Specular color
+							} else {
+								csp = DARK_SHADING_COLOR; // No specular
+							}
+						} // Else c is the base color passed in arguments and csp won't be used
+
+						// Texture interpolation
+						if (texture && t!=null) {
+
+							vt = Tools.interpolate(vt1, vt2, gradient).times(z);
+							try {
+								// Projective Texture mapping using the fourth coordinate
+								// By default W of the texture vector is 1 but if not this will help to take account of the potential geometrical distortion of the texture
+								switch (tex_orientation) {
+								case Triangle.TEXTURE_ISOTROPIC: // Default for a triangle
+									ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
+									break;
+								case Triangle.TEXTURE_VERTICAL:
+									ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
+									break;
+								case Triangle.TEXTURE_HORIZONTAL:
+									ctx = t.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
+									break;
+								default:
+									// Should never happen
+									if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid Texture orientation for this triangle: "+tex_orientation);
+								}
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							// Combine the shaded color and the Texture color
+
+							cc = ColorTools.multColors(c, ctx);
+
+						}
+
+						// Combine colors with the following formula
+						// Color K = DTA + CDT + S = DT(A+C) + S
+						// D: diffuse color, T: texture, A: Ambient color, C: color of the light source, S: Specular color
+						if (interpolate) {
+
+							if (texture && t!=null) {
+								cc = ColorTools.addColors(ColorTools.multColors(csh, ctx), csp);       			
+							} else {
+								cc = ColorTools.addColors(csh, csp);	        			
+							}
+
+						} else {
+
+							if (texture && t!=null) {
+								cc = ColorTools.multColors(c, ctx);
+							} else {
+								cc = c;     			
+							}
+						}
+
+						// Draw the point with calculated Combined Color
+						drawPoint(x, y, z, cc);
+
+					} 
+
+				} else { // Out of zBuffer range (should not happen)
+					not_rendered_pixels++;	    		
+					if (x_zBuf<0 || x_zBuf>=zBuf_width) {
+						if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value while drawing points: "+x_zBuf);
+					}
+					if (y_zBuf<0 || y_zBuf>=zBuf_height) {
+						if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_y value while drawing points: "+y_zBuf);
+					}
+				}
+			} else { // Out of screen
+				not_rendered_pixels++;
+			}
+		}
 	}
 
 	/**
@@ -530,32 +568,11 @@ public class Rasterizer {
 	 * @param c Color of the pixel
 	 */
 	protected void drawPoint(int x, int y, float z, Color c) {
-		// Eliminate pixels outside the view screen
-		if (isInScreenX(x) && isInScreenY(y)) {
-			// Z buffer is [0, width][0, height]
-			int zBuf_x = x + graphic.getPixelHalfWidth();
-			int zBuf_y = y + graphic.getPixelHalfHeight();
-			
-			if (zBuf_x<0 || zBuf_x>=zBuf_width) {
-				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value while drawing points: "+zBuf_x);
-				discarded_pixels++;
-				return;
-			}
-			
-			if (zBuf_y<0 || zBuf_y>=zBuf_height) {
-				if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_y value while drawing points: "+zBuf_y);
-				discarded_pixels++;
-				return;
-			}
-			
-			if (z>zBuffer[zBuf_x][zBuf_y]) { // Discard pixel
-				discarded_pixels++;
-				return;
-			}
-			// Else render pixel
-			if (c !=null ) {
-				view.setColor(c);
-			} else {
+		// Eliminate pixels outside the view screen is done before calling this method for optimization
+		// So at this stage we only render pixel
+		if (c !=null ) {
+			view.setColor(c);
+		} else {
 			// Compute color at this stage to avoid unused pre-processing (if pixel finally not rendered)
 			// Color is computed from
 			// - natural color of the pixel/triangle
@@ -564,29 +581,28 @@ public class Rasterizer {
 			// - generating diffuse and specular reflection
 			// Calculating shading requires to know the normal of the point at the pixel being rendered
 			// - for this we use triangle interpolation
-				
-			}
-
-			view.drawPixel(x, y);
-			zBuffer[zBuf_x][zBuf_y] = z;
-			//System.out.println("Pixel x: "+x+", y: "+y+". zBuffer: "+z);
-			rendered_pixels++;
-			
-		} else {
-			not_rendered_pixels++;
 		}
+
+		// Draw pixel in the View
+		view.drawPixel(x, y);
+
+		// Update zBuffer of this pixel to the new z
+		zBuffer[getXzBuf(x)][getYzBuf(y)] = z;
+
+		// Increment counter of rendered pixels
+		rendered_pixels++;
 	}
-	
+
 	protected boolean isInScreenX(int x) {
 		if (Math.abs(x)>graphic.getPixelHalfWidth()) return false;
 		return true;
 	}
-	
+
 	protected boolean isInScreenY(int y) {
 		if (Math.abs(y)>graphic.getPixelHalfHeight()) return false;
 		return true;
 	}
-	
+
 	/**
 	 * This method calculates the Color for a given normal and a base color of the surface of the Element
 	 * It interfaces with the Lighting object to get the ambient, directional and other types of colors
@@ -595,38 +611,38 @@ public class Rasterizer {
 	 * @return
 	 */
 	protected Color computeShadedColor(Color baseCol, Vector3 normal, float e, Color sc, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
-		
+
 		// Table of colors to be mixed
 		Color [] c = new Color[2];
 		// Default colors
 		c[0] = DARK_SHADING_COLOR; // Ambient light
 		c[1] = DARK_SHADING_COLOR; // Directional light
-		
+
 		if (lighting != null) { // If lighting exists
-			
+
 			// Primary shading: Diffuse Reflection
-			
+
 			float dotNL = 0;
 			// Ambient light
 			if (lighting.hasAmbient()) {
 				c[0] = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
 			}
-			
+
 			// Directional light
 			if (lighting.hasDirectional()) {
-				
+
 				//TODO Multiple directional colors -> loop
-				
+
 				// Compute the dot product
 				dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
 				if (rectoVerso) dotNL = Math.abs(dotNL);
-				
+
 				if (dotNL > 0) {
 					// Directional Light
 					c[1] = ColorTools.multColor(baseCol, dotNL);
 				}
 			}
-			
+
 		} else { // If no lighting, return base color
 			return baseCol;
 		}
@@ -636,7 +652,7 @@ public class Rasterizer {
 	}
 
 	protected Color computeSpecularColor(Vector3 normal, Vector3 viewer, float e, Color sc, boolean rectoVerso) {
-		
+
 		Color c = DARK_SHADING_COLOR; // Specular reflection from Directional light
 		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
 
