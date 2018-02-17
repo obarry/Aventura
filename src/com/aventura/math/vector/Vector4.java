@@ -35,6 +35,13 @@ import com.aventura.tools.tracing.Tracer;
  *
  */
 public class Vector4 {
+	
+	// *** Instrumentation ***
+	public static int nb_vectors = 0; // count the number of created instances
+	public static int nb_to_display = 0; // count before next display session
+	public static final int DISPLAY_EVERY = 10000000; // nb of count between 2 display sessions
+
+	
     public static final Vector4 X_AXIS = new Vector4(1,0,0,0);
     public static final Vector4 Y_AXIS = new Vector4(0,1,0,0);
     public static final Vector4 Z_AXIS = new Vector4(0,0,1,0);
@@ -56,10 +63,12 @@ public class Vector4 {
 		this.y = 0;
 		this.z = 0;
 		this.w = 0;
+		count();
 	}
 
 	public Vector4(float v) {
 		initialize(v);
+		count();
 	}
 	
 	public Vector4(float x, float y, float z, float w) {
@@ -67,6 +76,7 @@ public class Vector4 {
 		this.y = y;
 		this.z = z;		
 		this.w = w;		
+		count();
 	}
 		
 	public Vector4(float[] array) throws VectorArrayWrongSizeException {
@@ -76,6 +86,7 @@ public class Vector4 {
 		this.z = array[2];
 		this.w = array[3];
 
+		count();
 	}
 	
 	public Vector4(Vector4 v) {
@@ -83,6 +94,7 @@ public class Vector4 {
 		this.y = v.y;
 		this.z = v.z;
 		this.w = v.w;
+		count();
 	}
 
 	public Vector4(Vector3 v) {
@@ -90,6 +102,7 @@ public class Vector4 {
 		this.y = v.y;
 		this.z = v.z;
 		this.w = 0;
+		count();
 	}
 
 	public Vector4(int r, Matrix4 A) {
@@ -97,6 +110,7 @@ public class Vector4 {
 		this.y = A.get(r, 1);
 		this.z = A.get(r, 2);
 		this.w = A.get(r, 3);
+		count();
 	}
 	
 	public Vector4(Matrix4 A, int c) {
@@ -104,8 +118,18 @@ public class Vector4 {
 		this.y = A.get(1, c);
 		this.z = A.get(2, c);
 		this.w = A.get(3, c);
+		count();
 	}
-	
+
+	private static void count() {
+		nb_vectors++;
+		nb_to_display++;
+		if (nb_to_display>=DISPLAY_EVERY) {
+			if (Tracer.object) Tracer.traceObject(Vector4.class, "***** NB OF VECTOR4 (created since begining): "+nb_vectors);
+			nb_to_display=0;
+		}
+	}
+
 	/**
 	 * Initialize a Vector4 with a constant value for all elements of the Vector4
 	 * @param val the initialization value
