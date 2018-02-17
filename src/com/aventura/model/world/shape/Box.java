@@ -9,7 +9,7 @@ import com.aventura.model.world.triangle.RectangleMesh;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2018 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ public class Box extends Element {
 	}
 	
 	/**
-	 * Create a box aligned on axis. Need to be rotated for a different orientation.
+	 * Create a box aligned on axis with unique texture applied to all faces
 	 * 
 	 * @param x_dim dimension of the box on x axis
 	 * @param y_dim dimension of the box on y axis
@@ -74,7 +74,7 @@ public class Box extends Element {
 	}
 
 	/**
-	 * Create a box aligned on axis. Need to be rotated for a different orientation.
+	 * Create a box aligned on axis with different texture for each face
 	 * 
 	 * @param x_dim dimension of the box on x axis
 	 * @param y_dim dimension of the box on y axis

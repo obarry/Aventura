@@ -9,7 +9,7 @@ import com.aventura.model.world.shape.Element;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2018 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -87,7 +87,15 @@ public class RectangleMesh extends Mesh {
 	}
 	
 	public void initVertices(int n, int p) {
-		vertices = new Vertex[n][p];
+		this.nbv_x = n;
+		this.nbv_y = p;
+		vertices = elm.createVertexMesh(n, p);
+	}
+	
+	public void initVertices(Vertex[][] vertices) {
+		this.vertices = vertices;
+		this.nbv_x = vertices.length;
+		this.nbv_y = vertices[0].length;
 	}
 	
 	public void setVertex(int i, int j, Vertex v) {

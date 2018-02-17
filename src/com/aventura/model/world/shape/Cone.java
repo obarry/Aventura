@@ -10,7 +10,7 @@ import com.aventura.model.world.triangle.FanMesh;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2018 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -67,7 +67,6 @@ public class Cone extends Element {
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
 		this.bottom_center = new Vector4(0,0,-height/2,0);
-		this.center = new Vector4(0,0,0,0);
 		createCone(null);
 	}
 
@@ -86,21 +85,16 @@ public class Cone extends Element {
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
 		this.bottom_center = new Vector4(0,0f,-height/2,0);
-		this.center = new Vector4(0,0,0,0);
 		createCone(tex);
 	}
-	/**
-	 * Creation of a Cone moved to a given position
-	 * @param height of the Cone
-	 * @param ray of the base circle of the Cone
-	 * @param half_seg is half the number of segments for 360 degrees circle
-	 * @param center to which the Cone is moved at creation (Vector3)
-	 */
-
 	
+	/**
+	 * Creation of the Cone
+	 * @param t the Texture to apply
+	 */	
 	protected void createCone(Texture t) {
 		
-		mesh = new FanMesh(this,half_seg*2+1, t); // (n) x 2 vertices on each circles + 1 duplicqte Vertex for RectangleMesh / Texture
+		mesh = new FanMesh(this,half_seg*2, t); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
 		
 		float alpha = (float)Math.PI/half_seg;
 		

@@ -28,6 +28,30 @@ import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
 /**
+ * ------------------------------------------------------------------------------ 
+ * MIT License
+ * 
+ * Copyright (c) 2018 Olivier BARRY
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ------------------------------------------------------------------------------
+ * 
  * Test FanMesh class
  * 
  * Create FanMesh with 2 triangles and apply texture
@@ -131,7 +155,7 @@ public class TestFanMesh2 {
 		Vector4 vec3 = new Vector4(-1,0,0,1);
 		Vector4 vec4 = new Vector4(c,-s,0,1);
 				
-		FanMesh fan = new FanMesh(e,3, tex); // 3 vertices -> 2 triangles
+		FanMesh fan = new FanMesh(e,2, tex); // 2 triangles
 		fan.setSummit(vec1);
 		fan.getVertex(0).setPos(vec2);
 		fan.getVertex(1).setPos(vec3);

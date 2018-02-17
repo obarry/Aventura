@@ -13,7 +13,7 @@ import com.aventura.model.world.triangle.Triangle;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2018 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -201,6 +201,18 @@ public class Element implements Transformable {
 	
 	public void addVertex(Vertex v) {
 		this.vertices.add(v);
+	}
+	
+	/**
+	 * Create and return Vertex
+	 * This method should necessary be used to create any Vertex' Element since it does the needful to put it in the list of vertices of this Element
+	 * 
+	 * @return the newly created Vertex
+	 */
+	public Vertex createVertex() {
+		Vertex v = new Vertex();
+		addVertex(v);
+		return v;
 	}
 	
 	/**

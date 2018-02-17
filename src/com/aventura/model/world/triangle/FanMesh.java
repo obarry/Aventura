@@ -10,7 +10,7 @@ import com.aventura.model.world.shape.Element;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2018 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,7 +49,7 @@ public class FanMesh extends Mesh {
 	//    /  /  |  \  \ 
 	//  / T1/   |   \T4 \
 	// +   / T2 | T3 \   +
-	//  \ /     |     \ /  n base vertices
+	//  \ /     |     \ /  n segments -> n + 1 base vertices
 	//   +------+------+
 	
 	// Texture Wrapping constants for parameters
@@ -57,37 +57,52 @@ public class FanMesh extends Mesh {
 	public static final float TEXTURE_SUMMIT_SMALL_VALUE = 0.0001f;
 	public static final float TEXTURE_SUMMIT_SMALL_VALUE_DOUBLE = 0.0002f;
 
-	int nbv;
+	int nbs; // Number of base segments -> number of base vertices = nbs + 1
 	Vertex[] summits;
 	Vertex[] vertices;
 
 	/**
+	 * Create a FanMesh with Texture and with array of Vertices
+	 * @param e the Element to which all created vertices of the FanMesh should belong
+	 * @param vertices the array of Vertices
+	 * @param t the Texture to be wrapped on the FanMesh
+	 */
+	public FanMesh(Element e, Vertex[] vertices, Vertex summit, Texture t) {
+		super(e);
+		this.vertices = vertices;
+		this.nbs = vertices.length-1;
+		summits = elm.createVertexMesh(this.nbs);
+		this.setSummit(summit.getPos());
+		this.tex = t;
+	}
+	
+	/**
 	 * Create a FanMesh without Texture
 	 * @param e the Element to which all created vertices of the FanMesh should belong
-	 * @param n the number of base vertices of the FanMesh >= 1
+	 * @param n the number of base segments of the FanMesh >= 1
 	 */
 	public FanMesh(Element e, int n) {
 		super(e);
-		this.nbv = n;
+		this.nbs = n;
 		
 		// Need to have 1 summit for each triangle to distinguish normals at Vertex level for each (summit) of triangle even if they are all same Vertex
-		summits = elm.createVertexMesh(n-1);
-		vertices = elm.createVertexMesh(n);
+		summits = elm.createVertexMesh(n);
+		vertices = elm.createVertexMesh(n+1);
 	}
 	
 	/**
 	 * Create a FanMesh with Texture
 	 * @param e the Element to which all created vertices of the FanMesh should belong
-	 * @param n the number of base vertices of the FanMesh
+	 * @param n the number of base segments of the FanMesh >= 1
 	 * @param t the Texture to be wrapped on the FanMesh
 	 */
 	public FanMesh(Element e, int n, Texture t) {
 		super(e);
-		this.nbv = n;
+		this.nbs = n;
 		this.tex = t;
 		// Need to have 1 summit for each triangle to distinguish normals at Vertex level for each (summit) of triangle even if they are all same Vertex
-		summits = elm.createVertexMesh(n-1);
-		vertices = elm.createVertexMesh(n);
+		summits = elm.createVertexMesh(n);
+		vertices = elm.createVertexMesh(n+1);
 	}
 
 	/**
@@ -107,14 +122,14 @@ public class FanMesh extends Mesh {
 			float ti = 0;
 			float tip1 = 0;
 			
-			for (int i=0; i<nbv-1; i++) {
+			for (int i=0; i<nbs; i++) {
 
 				// Creation of triangles
 				//
 				//   summit  +
-				//         / |
-				//       +---+
-				//       i  i+1
+				//         / | \
+				//       +---+---+
+				//       i  i+1 i+2
 
 			
 				t = new Triangle(vertices[i], vertices[i+1], summits[i]);
@@ -125,23 +140,14 @@ public class FanMesh extends Mesh {
 					Vector4 tv1, tv2, tv3;
 
 					// Define position for Texture vectors in homogeneous coordinates [0,1]
-					tip1 = (float)(i+1)/(float)(nbv-1);
+					tip1 = (float)(i+1)/(float)(nbs);
 
 					// Create texture vectors with an horizontal 'stretching' texture effect (on the tip of the fan) 
-//					tv1 = new Vector4(ti,0,0,1);
-//					tv2 = new Vector4(0,tsx,0,tsz);
-//					tv3 = new Vector4(tip1,0,0,1);
-					tv1 = new Vector4(ti,1,0,1);
-					tv2 = new Vector4(tip1,1,0,1);
-					tv3 = new Vector4(0,tsx,0,tsz);
-//					tv1 = new Vector4(0,tsx,0,tsz);
-//					tv2 = new Vector4(ti,0,0,1);
-//					tv3 = new Vector4(tip1,0,0,1);
+					tv1 = new Vector4(ti,1,0,1);    // First vertex of the triangle: i
+					tv2 = new Vector4(tip1,1,0,1);  // Second vertex of the triangle: i+1
+					tv3 = new Vector4(0,tsx,0,tsz); // Last vertext of the triangle: summit
 
 					// Set texture vectors to newly created triangles
-					//t1.setTexture(new Vector4(0,0,0,1), new Vector4(1,0.0001,0,0.0002), new Vector4(0,1,0,1));
-
-//					t.setTextureOrientation(Triangle.TEXTURE_HORIZONTAL);
 					t.setTextureOrientation(Triangle.TEXTURE_VERTICAL);
 					t.setTexture(tex, tv1, tv2, tv3);
 					t.setRectoVerso(!elm.isClosed());
