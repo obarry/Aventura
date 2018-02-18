@@ -101,23 +101,23 @@ public class Sphere extends Element {
 	protected void createSphere(Texture t) {
 		
 		// Create mesh to wrap Cylinder
-		rectangleMesh = new RectangleMesh(this, half_seg*2+1, half_seg, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
-		float alpha = (float)Math.PI/half_seg;
+		rectangleMesh = new RectangleMesh(this, half_seg*2+1, half_seg+1, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
+		float alpha = (float)(Math.PI/half_seg);
 		
 		// Create Vertices
 		for (int i=0; i<=half_seg*2; i++) {
 			// South pole(s)-> there is as many south poles as meridians
 			rectangleMesh.getVertex(i, 0).setPos(northPole);
 			// Intermediate points between south and north
-			for (int j=1; j<(half_seg-1); j++) {
+			for (int j=1; j<half_seg; j++) {
 				float sina = (float)Math.sin(alpha*i);
 				float cosa = (float)Math.cos(alpha*i);
-				float sinb = (float)Math.sin(alpha*(j+1));
-				float cosb = (float)Math.cos(alpha*(j+1));
+				float sinb = (float)Math.sin(alpha*j);
+				float cosb = (float)Math.cos(alpha*j);
 				rectangleMesh.getVertex(i, j).setPos(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
 			}
 			// North pole-> there is as many north poles as meridians
-			rectangleMesh.getVertex(i, half_seg-1).setPos(southPole);
+			rectangleMesh.getVertex(i, half_seg).setPos(southPole);
 		}
 
 		// Create Triangles
@@ -131,14 +131,14 @@ public class Sphere extends Element {
 		for (int i=0; i<=half_seg*2; i++) {
 			// South pole
 			rectangleMesh.getVertex(i,0).setNormal(new Vector3(Vector3.Z_AXIS));
-			for (int j=1; j<(half_seg-1); j++) {
+			for (int j=1; j<(half_seg); j++) {
 				// For each Vertex, use the ray vector passing through the Vertex and normalize it 
 				Vector4 n = rectangleMesh.getVertex(i,j).getPos().minus(center);
 				n.normalize();
 				rectangleMesh.getVertex(i,j).setNormal(n.V3());
 			}
 			// North pole
-			rectangleMesh.getVertex(i,half_seg-1).setNormal(new Vector3(Vector3.Z_OPP_AXIS));
+			rectangleMesh.getVertex(i,half_seg).setNormal(new Vector3(Vector3.Z_OPP_AXIS));
 		}
 		calculateSubNormals();
 	}
