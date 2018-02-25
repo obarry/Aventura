@@ -434,7 +434,6 @@ public class Rasterizer {
 		float zc = vc.getProjPos().getW();
 		float zd = vd.getProjPos().getW();
 
-
 		// Starting Z & ending Z
 		float z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
 		float z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
