@@ -148,7 +148,8 @@ public class TestSphereTexture2 {
 		
 		System.out.println("********* Rendering");
 		renderer.render();
-
+		System.out.println(renderer.renderStats());
+		
 //		System.out.println("********* Rotating...");
 //		int nb_images = 450;
 //		Rotation r = new Rotation(Math.PI*2/(double)nb_images, Vector3.Z_AXIS);
