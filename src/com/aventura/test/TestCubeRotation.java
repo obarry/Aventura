@@ -13,13 +13,18 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
+import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cube;
+import com.aventura.model.world.shape.Cylinder;
+import com.aventura.model.world.shape.Element;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -51,7 +56,7 @@ import com.aventura.view.View;
  * This class is a Test class for Rasterizer
  */
 
-public class TestRasterizer4 {
+public class TestCubeRotation {
 	
 	// View to be displayed
 	private SwingView view;
@@ -59,7 +64,7 @@ public class TestRasterizer4 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 4");
+		JFrame frame = new JFrame("Test Cube Rotation");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -72,7 +77,7 @@ public class TestRasterizer4 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer4.this.view.draw(graph);
+		    	TestCubeRotation.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -88,24 +93,26 @@ public class TestRasterizer4 {
 		return view;
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		
 		System.out.println("********* STARTING APPLICATION *********");
 		
-		//Tracer.info = true;
-		//Tracer.function = true;
+//		Tracer.info = true;
+//		Tracer.function = true;
+
+		Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 
 		// Camera
 		Vector4 eye = new Vector4(8,3,2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestRasterizer4 test = new TestRasterizer4();
+		TestCubeRotation test = new TestCubeRotation();
 		
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		Cube cube = new Cube(1);
+		Cube cube = new Cube(1, tex);
 		// Set colors to triangles
 		cube.getTriangle(0).setColor(Color.CYAN);
 		cube.getTriangle(1).setColor(Color.CYAN);
@@ -122,32 +129,50 @@ public class TestRasterizer4 {
 		
 		world.addElement(cube);
 		
+		Cylinder cylinder = new Cylinder(1, 0.5f, 16);
+		Translation tl = new Translation(new Vector3(1, 1, 1));
+		cylinder.setTransformation(tl);
+		cylinder.setColor(new Color(240,50,20));
+		
+		world.addElement(cylinder);
+
+		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
-		Lighting light = new Lighting(dl);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0), 1);
+		AmbientLight al = new AmbientLight(0.2f);
+		Lighting light = new Lighting(dl,al);
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
+		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_ENABLED);
+		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
+		System.out.println(renderer.renderStats());
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		float a;
 		for (int i=0; i<=3*nb_images; i++) {
+		//for (int i=0; i<1; i++) {
 			a = (float)Math.PI*2*(float)i/(float)nb_images;
 			eye = new Vector4(8*(float)Math.cos(a),8*(float)Math.sin(a),2,1);
 			//System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();
+			//System.out.println(renderer.renderStats());
+			Thread.sleep(20);
 		}
 
 		System.out.println("********* ENDING APPLICATION *********");

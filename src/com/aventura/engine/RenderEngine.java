@@ -173,6 +173,7 @@ public class RenderEngine {
 		nbt = 0;
 		nbt_in = 0;
 		nbt_out = 0;
+		nbt_bf = 0;
 		nbe = 0;
 		
 		// Initialize backbuffer in the View
@@ -555,6 +556,11 @@ public class RenderEngine {
 		modelView.transform(o);
 		Segment s = new Segment(o, v);
 		rasterizer.drawLine(s, renderContext.lightVectorsColor);
+	}
+	
+	public String renderStats() {		
+		return "Processed: elements: "+nbe+", triangles: "+nbt+". Triangles: displayed: "+nbt_in+", not displayed: "+nbt_out+", backfacing: "+nbt_bf;
+
 	}
 
 

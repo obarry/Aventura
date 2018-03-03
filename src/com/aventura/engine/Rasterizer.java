@@ -262,7 +262,7 @@ public class Rasterizer {
 				v3 = t.getV1();
 				vt1 = t.getTexVec3();
 				vt3 = t.getTexVec1();
-			} else { // p2 lower than p3
+			} else { // p2 lower or equal than p3
 				if (v3.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p3 lower than p1
 					v1 = t.getV2();
 					v2 = t.getV3();
@@ -270,7 +270,7 @@ public class Rasterizer {
 					vt1 = t.getTexVec2();
 					vt2 = t.getTexVec3();
 					vt3 = t.getTexVec1();
-				} else { // p1 higher than p3
+				} else { // p1 higher or equal than p3
 					v1 = t.getV2();
 					v2 = t.getV1();
 					// No change for p3
@@ -303,18 +303,32 @@ public class Rasterizer {
 	    float dP1P2, dP1P3;
 
 	    // http://en.wikipedia.org/wiki/Slope
-	    // Computing slopes
+	    // Computing invert slopes
 	    if (yScreen(v2) - yScreen(v1) > 0) {
 	        dP1P2 = (xScreen(v2)-xScreen(v1))/(yScreen(v2)-yScreen(v1));
-	    } else { // vertical segment, no slope
-	        dP1P2 = 0;
+	    } else { // horizontal segment, infinite invert slope
+	        //dP1P2 = 0;
+	        dP1P2 = Float.MAX_VALUE;
 	    }
+//	    if (v2.getProjPos().getY() - v1.getProjPos().getY() > 0) {
+//	        dP1P2 = (v2.getProjPos().getX()-v1.getProjPos().getX())/(v2.getProjPos().getY()-v1.getProjPos().getY());
+//	    } else { // horizontal segment, infinite invert slope
+//	        //dP1P2 = 0;
+//	        dP1P2 = Float.MAX_VALUE;
+//	    }
 	    
 	    if (yScreen(v3) - yScreen(v1) > 0) {
 	        dP1P3 = (xScreen(v3)-xScreen(v1))/(yScreen(v3)-yScreen(v1));
-	    } else { // vertical segment, no slope
-	        dP1P3 = 0;
+	    } else { // horizontal segment, infinite invert slope
+	        //dP1P3 = 0;
+	    	dP1P3 = Float.MAX_VALUE;
 	    }
+//	    if (v3.getProjPos().getY() - v1.getProjPos().getY() > 0) {
+//	        dP1P3 = (v3.getProjPos().getX()-v1.getProjPos().getX())/(v3.getProjPos().getY()-v1.getProjPos().getY());
+//	    } else { // horizontal segment, infinite invert slope
+//	        //dP1P3 = 0;
+//	    	dP1P3 = Float.MAX_VALUE;
+//	    }
 
 	    if (dP1P2 > dP1P3) {
 	    	
@@ -397,7 +411,7 @@ public class Rasterizer {
 
 		float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
 		float gradient2 = yc != yd ? (y - yc) / (yd - yc) : 1;
-
+		
 		int sx = (int)Tools.interpolate(xa, xb, gradient1);
 		int ex = (int)Tools.interpolate(xc, xd, gradient2);
 
@@ -419,7 +433,6 @@ public class Rasterizer {
 		float zb = vb.getProjPos().getW();
 		float zc = vc.getProjPos().getW();
 		float zd = vd.getProjPos().getW();
-
 
 		// Starting Z & ending Z
 		float z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
