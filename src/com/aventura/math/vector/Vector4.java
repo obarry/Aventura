@@ -299,7 +299,7 @@ public class Vector4 {
 	 * @return the length or 'norm' of the Vector4
 	 */
 	public float length() {
-		return (float)Math.sqrt(x*x+y*y+z*z+w*w);
+		return (float)Math.sqrt(this.x*this.x+this.y*this.y+this.z*this.z+this.w*this.w);
 	}
 	
 	/**

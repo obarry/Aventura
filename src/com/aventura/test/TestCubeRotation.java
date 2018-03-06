@@ -13,7 +13,7 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-import com.aventura.math.transform.Translation;
+//import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -23,8 +23,7 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cube;
-import com.aventura.model.world.shape.Cylinder;
-import com.aventura.model.world.shape.Element;
+//import com.aventura.model.world.shape.Cylinder;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -125,17 +124,20 @@ public class TestCubeRotation {
 		cube.getTriangle(8).setColor(Color.PINK);
 		cube.getTriangle(9).setColor(Color.PINK);
 		cube.getTriangle(10).setColor(Color.LIGHT_GRAY);
-		cube.getTriangle(11).setColor(Color.LIGHT_GRAY);
-		
+		cube.getTriangle(11).setColor(Color.LIGHT_GRAY);	
 		world.addElement(cube);
 		
-		Cylinder cylinder = new Cylinder(1, 0.5f, 16);
-		Translation tl = new Translation(new Vector3(1, 1, 1));
-		cylinder.setTransformation(tl);
-		cylinder.setColor(new Color(240,50,20));
-		
-		world.addElement(cylinder);
-
+//		Cylinder cylinder1 = new Cylinder(1, 0.5f, 16);
+//		Translation tl1 = new Translation(new Vector3(1, 1, 1));
+//		cylinder1.setTransformation(tl1);
+//		cylinder1.setColor(new Color(240,50,20));
+//		world.addElement(cylinder1);
+//
+//		Cylinder cylinder2 = new Cylinder(1, 0.1f, 16);
+//		Translation tl2 = new Translation(new Vector3(1, -1, 1));
+//		cylinder2.setTransformation(tl2);
+//		cylinder2.setColor(new Color(240,50,20));
+//		world.addElement(cylinder2);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
