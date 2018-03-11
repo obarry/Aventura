@@ -3,7 +3,6 @@ package com.aventura.test;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Toolkit;
 
 import javax.swing.JFrame;
@@ -23,7 +22,7 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
-import com.aventura.tools.tracing.Tracer;
+
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -74,9 +73,7 @@ public class TestConeTexture {
 		JPanel panel = new JPanel() {
 			
 		    public void paintComponent(Graphics graph) {
-				//System.out.println("Painting JPanel");		    	
-		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestConeTexture.this.view.draw(graph);
+		    	graph.drawImage(view.getImageView(), 0, 0, null);
 		    }
 		};
 		frame.getContentPane().add(panel);

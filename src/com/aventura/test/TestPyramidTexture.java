@@ -3,7 +3,6 @@ package com.aventura.test;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Toolkit;
 
 import javax.swing.JFrame;
@@ -23,7 +22,6 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Pyramid;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -74,9 +72,7 @@ public class TestPyramidTexture {
 		JPanel panel = new JPanel() {
 			
 		    public void paintComponent(Graphics graph) {
-				//System.out.println("Painting JPanel");		    	
-		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestPyramidTexture.this.view.draw(graph);
+		    	graph.drawImage(view.getImageView(), 0, 0, null);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -98,9 +94,6 @@ public class TestPyramidTexture {
 	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
-
-//		Tracer.info = true;
-//		Tracer.function = true;
 
 		// Camera
 		Vector4 eye = new Vector4(8,3,8,1);

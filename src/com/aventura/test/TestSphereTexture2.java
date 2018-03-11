@@ -3,7 +3,6 @@ package com.aventura.test;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Toolkit;
 
 import javax.swing.JFrame;
@@ -13,7 +12,6 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -74,9 +72,7 @@ public class TestSphereTexture2 {
 		JPanel panel = new JPanel() {
 			
 		    public void paintComponent(Graphics graph) {
-				//System.out.println("Painting JPanel");		    	
-		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestSphereTexture2.this.view.draw(graph);
+		    	graph.drawImage(view.getImageView(), 0, 0, null);
 		    }
 		};
 		frame.getContentPane().add(panel);

@@ -73,9 +73,6 @@ public class TestDrawView {
 		JPanel panel = new JPanel() {
 			
 		    public void paintComponent(Graphics graph) {
-				//System.out.println("Painting JPanel");		    	
-		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	//TestDrawView.this.view.draw(graph);
 		    	graph.drawImage(view.getImageView(), 0, 0, null);
 		    }
 		};

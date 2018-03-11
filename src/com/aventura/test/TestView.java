@@ -3,10 +3,8 @@ package com.aventura.test;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Toolkit;
 
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
@@ -64,8 +62,9 @@ public class TestView {
 			
 		    public void paintComponent(Graphics graph) {
 				System.out.println("Painting JPanel");		    	
-		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestView.this.view.draw(graph);
+		    	//Graphics2D graph2D = (Graphics2D)graph;
+		    	//TestView.this.view.draw(graph);
+		    	graph.drawImage(view.getImageView(), 0, 0, null);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -86,7 +85,6 @@ public class TestView {
 		TestView test = new TestView();
 
 		View view = test.createView(GraphicContext.GRAPHIC_DEFAULT);
-
 
 		for (int i=0; i<20; i++) {
 

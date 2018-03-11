@@ -2,7 +2,6 @@ package com.aventura.test;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Toolkit;
 
 import javax.swing.JFrame;
@@ -19,6 +18,7 @@ import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Element;
@@ -74,9 +74,7 @@ public class TestAventura1 {
 		JPanel panel = new JPanel() {
 			
 		    public void paintComponent(Graphics graph) {
-				//System.out.println("Painting JPanel");		    	
-		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestAventura1.this.view.draw(graph);
+		    	graph.drawImage(view.getImageView(), 0, 0, null);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -100,10 +98,10 @@ public class TestAventura1 {
 		e.setTransformation(t);
 		
 		// Build the Element: Create Vertices
-		Vertex v1 = new Vertex(new Vector4(-1.4f,    0,     0,  1));
-		Vertex v2 = new Vertex(new Vector4(0.6f,  1.4f,  1.4f,  1));
-		Vertex v3 = new Vertex(new Vector4(0.6f, -1.4f,  1.4f,  1));
-		Vertex v4 = new Vertex(new Vector4(0.6f,    0,  -1.4f,  1));
+		Vertex v1 = e.createVertex(new Vector4(-1.4f,    0,     0,  1));
+		Vertex v2 = e.createVertex(new Vector4(0.6f,  1.4f,  1.4f,  1));
+		Vertex v3 = e.createVertex(new Vector4(0.6f, -1.4f,  1.4f,  1));
+		Vertex v4 = e.createVertex(new Vector4(0.6f,    0,  -1.4f,  1));
 		
 		// Creates Triangles from Vertices
 		Triangle t1 = new Triangle(v1, v2, v3);
@@ -126,7 +124,7 @@ public class TestAventura1 {
 		World world = new World();
 		
 		// Create an Element in the World
-		Element e = world.createElement();
+		//Element e = world.createElement();
 		
 		// Create a Transformation for this Element
 		//Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
@@ -141,6 +139,8 @@ public class TestAventura1 {
 				createElement(world, trans);
 			}
 		}
+		
+		world.calculateNormals();
 
 		// World is created
 		return world;

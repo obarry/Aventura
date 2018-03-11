@@ -3,7 +3,6 @@ package com.aventura.test;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Toolkit;
 
 import javax.swing.JFrame;
@@ -74,9 +73,7 @@ public class TestCubeRotation {
 		JPanel panel = new JPanel() {
 			
 		    public void paintComponent(Graphics graph) {
-				//System.out.println("Painting JPanel");		    	
-		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestCubeRotation.this.view.draw(graph);
+		    	graph.drawImage(view.getImageView(), 0, 0, null);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -96,9 +93,6 @@ public class TestCubeRotation {
 		
 		System.out.println("********* STARTING APPLICATION *********");
 		
-//		Tracer.info = true;
-//		Tracer.function = true;
-
 		Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
 
 		// Camera
