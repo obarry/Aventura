@@ -55,7 +55,7 @@ import com.aventura.view.View;
  * This class is a Test class for Rasterizer
  */
 
-public class TestRasterizer10 {
+public class TestTwoAttachedRings {
 
 	// View to be displayed
 	private SwingView view;
@@ -63,7 +63,7 @@ public class TestRasterizer10 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 10");
+		JFrame frame = new JFrame("Test 2 attached rings");
 		// Set the size of the frame
 		frame.setSize(1200,800);
 		
@@ -76,7 +76,7 @@ public class TestRasterizer10 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer10.this.view.draw(graph);
+		    	TestTwoAttachedRings.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -101,7 +101,7 @@ public class TestRasterizer10 {
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestRasterizer10 test = new TestRasterizer10();
+		TestTwoAttachedRings test = new TestTwoAttachedRings();
 		
 		System.out.println("********* Creating World");
 		
