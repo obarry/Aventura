@@ -124,6 +124,12 @@ public class SwingView extends View {
 		component.repaint();
 	}
 	
+	/**
+	 * This method should be called by the UI 'paint component' method to get the latest generated buffered image
+	 * In background, the back buffer is being built.
+	 * The 'paint component' method is triggered by the renderView() method that is called by render engine when view is computed.
+	 * @return the Front Buffer image
+	 */
 	public BufferedImage getImageView() {
 		return frontbuffer;
 	}
@@ -166,28 +172,5 @@ public class SwingView extends View {
 	 */
 	protected void drawSwingLine(int x1, int y1, int x2, int y2) {
 		backgraph.drawLine(x1,-y1,x2,-y2);
-	}
-	
-	/**
-	 * This is "THE" method triggering all the rendering !!!
-	 * This method is GUI type specific : as this is a callback method, it is known by the GUI, not by the engine.
-	 * 
-	 * It is called by the JPanel while this component is repainting (the method paintComponent() is called)
-	 * As we initialized the JPanel with a View (actually a SwingView as this is a Swing GUI), then all the
-	 * Aventura related processing is done by the API implementation, using the provided Graphics context: graph
-	 * (Graphics -> Graphics2D can be easily extracted).
-	 * 
-	 * This method should trigger the repaint() but not (necessarily) the rendering generation.
-	 * This means that (assuming this is implemented by the API) there is a double buffering -> this method will display the generated view only
-	 * not the one under construction (if any is under construction).
-	 * 
-	 * @param graph, the Swing interface graphic context to be used to display in the frame/panel
-	 */
-	public void draw(Graphics graph) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "draw Swing View");
-
-		// Display the buffer image #1
-		((Graphics2D)graph).drawImage(frontbuffer, null, null);
-		
 	}
 }
