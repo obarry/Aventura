@@ -20,7 +20,7 @@ import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.ConeFrustum;
+import com.aventura.model.world.shape.Sphere;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -52,7 +52,7 @@ import com.aventura.view.View;
  * This class is a Test class for Rasterizer
  */
 
-public class TestRasterizer9 {
+public class TestSphereSpecularReflection {
 	
 	// View to be displayed
 	private SwingView view;
@@ -60,7 +60,7 @@ public class TestRasterizer9 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 9");
+		JFrame frame = new JFrame("Test Sphere Specular Reflection");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -73,7 +73,7 @@ public class TestRasterizer9 {
 		    public void paintComponent(Graphics graph) {
 				//System.out.println("Painting JPanel");		    	
 		    	Graphics2D graph2D = (Graphics2D)graph;
-		    	TestRasterizer9.this.view.draw(graph);
+		    	TestSphereSpecularReflection.this.view.draw(graph);
 		    }
 		};
 		frame.getContentPane().add(panel);
@@ -97,52 +97,65 @@ public class TestRasterizer9 {
 //		Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(6,-2,0,1);
+		Vector4 eye = new Vector4(8,3,2,1);
 		Vector4 poi = new Vector4(1,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestRasterizer9 test = new TestRasterizer9();
+		TestSphereSpecularReflection test = new TestSphereSpecularReflection();
 		
 		System.out.println("********* Creating World");
 		
 		World world = new World();
-		//Cylinder c = new Cylinder(1.5, 1, 12);
-		//ConeSummit c = new ConeSummit(1.5, 1, 2);
-		ConeFrustum c = new ConeFrustum(2, 1.5f, 1, 48);
-		c.setColor(Color.CYAN);		
-		world.addElement(c);
+		Sphere s = new Sphere(1.5f, 48);
+		s.setSpecularExp(10);
+		s.setColor(Color.PINK);		
+		world.addElement(s);
 		
 		System.out.println("********* Calculating normals");
 		world.calculateNormals();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
-		AmbientLight al = new AmbientLight(0.2f);
-		Lighting light = new Lighting(dl, al);
+		Vector3 lightVector = new Vector3(1,1,0);
+		DirectionalLight dl = new DirectionalLight(lightVector, 1);
+		AmbientLight al = new AmbientLight(0.1f);
+		Lighting light = new Lighting(dl, al, true);
 		
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.4512f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
-//		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
-//		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
+		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
+		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
+		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
+
+//		System.out.println("********* Rendering...");
+//		int nb_images = 240;
+//		for (int i=0; i<=3*nb_images; i++) {
+//			double a = Math.PI*2*(double)i/(double)nb_images;
+//			eye = new Vector4(8*Math.cos(a),4*Math.sin(a),-2,1);
+//			//System.out.println("Rotation "+i+"  - Eye: "+eye);
+//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+//			renderer.render();
+//		}
 
 		System.out.println("********* Rendering...");
 		int nb_images = 240;
 		float a;
 		for (int i=0; i<=3*nb_images; i++) {
 			a = (float)Math.PI*2*(float)i/(float)nb_images;
-			eye = new Vector4(8*(float)Math.cos(a),4*(float)Math.sin(a),-2,1);
-			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			lightVector = new Vector3((float)Math.cos(a),(float)Math.sin(a),0);
+			dl.setLightVector(lightVector);
 			renderer.render();
 		}
 
 		System.out.println("********* ENDING APPLICATION *********");
+
+
 	}
+
 }
