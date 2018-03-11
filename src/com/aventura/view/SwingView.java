@@ -123,6 +123,10 @@ public class SwingView extends View {
 		// Repaint the component since the buffer has been updated
 		component.repaint();
 	}
+	
+	public BufferedImage getImageView() {
+		return frontbuffer;
+	}
 
 	@Override
 	public void setColor(Color c) {
