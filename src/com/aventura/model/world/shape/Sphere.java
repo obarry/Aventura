@@ -1,6 +1,5 @@
 package com.aventura.model.world.shape;
 
-import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.triangle.RectangleMesh;
@@ -129,16 +128,12 @@ public class Sphere extends Element {
 		
 		// Create normals of vertices
 		for (int i=0; i<=half_seg*2; i++) {
-			// South pole
-			rectangleMesh.getVertex(i,0).setNormal(new Vector3(Vector3.Z_AXIS));
-			for (int j=1; j<(half_seg); j++) {
+			for (int j=0; j<=half_seg; j++) {
 				// For each Vertex, use the ray vector passing through the Vertex and normalize it 
 				Vector4 n = rectangleMesh.getVertex(i,j).getPos().minus(center);
 				n.normalize();
 				rectangleMesh.getVertex(i,j).setNormal(n.V3());
 			}
-			// North pole
-			rectangleMesh.getVertex(i,half_seg).setNormal(new Vector3(Vector3.Z_OPP_AXIS));
 		}
 		calculateSubNormals();
 	}

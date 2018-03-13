@@ -583,9 +583,9 @@ public class Rasterizer {
 	protected void drawPoint(int x, int y, float z, Color c) {
 		// Eliminate pixels outside the view screen is done before calling this method for optimization
 		// So at this stage we only render pixel
-		if (c !=null ) {
-			view.setColor(c);
-		} else {
+//		if (c !=null ) {
+//			view.setColor(c);
+//		} else {
 			// Compute color at this stage to avoid unused pre-processing (if pixel finally not rendered)
 			// Color is computed from
 			// - natural color of the pixel/triangle
@@ -594,10 +594,11 @@ public class Rasterizer {
 			// - generating diffuse and specular reflection
 			// Calculating shading requires to know the normal of the point at the pixel being rendered
 			// - for this we use triangle interpolation
-		}
+//		}
 
 		// Draw pixel in the View
-		view.drawPixel(x, y);
+		//view.drawPixel(x, y);
+		view.drawPixel(x,y,c);
 
 		// Update zBuffer of this pixel to the new z
 		zBuffer[getXzBuf(x)][getYzBuf(y)] = z;

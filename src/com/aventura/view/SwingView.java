@@ -1,7 +1,6 @@
 package com.aventura.view;
 
 import java.awt.Component;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -149,6 +148,11 @@ public class SwingView extends View {
 		drawSwingLine(x,y,x,y);
 	}
 
+	public void drawPixel(int x, int y, Color c) {
+		//System.out.println("x: "+x+"y: "+y);
+		if (x>=-width/2 && x<width/2 && y<=height/2 && y>-height/2) backbuffer.setRGB(x+width/2, -y+height/2, c.getRGB());
+	}
+	
 
 	@Override
 	public void drawLine(int x1, int y1, int x2, int y2) {

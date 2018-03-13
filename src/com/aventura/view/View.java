@@ -73,6 +73,7 @@ public abstract class View {
 	public abstract void setColor(Color c); // Using java.awt.Color class
 	public abstract void setBackgroundColor(Color c); // Using java.awt.Color class
 	public abstract void drawPixel(int x, int y);
+	public abstract void drawPixel(int x, int y, Color c);
 	public abstract void drawLine(int x1, int y1, int x2, int y2);
 
 }
