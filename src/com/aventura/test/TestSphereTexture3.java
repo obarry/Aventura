@@ -107,7 +107,7 @@ public class TestSphereTexture3 {
 		// Create World
 		World world = new World();
 		Sphere sph = null;
-		sph = new Sphere(1, 40, tex);
+		sph = new Sphere(0.8f, 36, tex);
 		//sph.setSpecularExp(1);
 		//sph.setSpecularColor(new Color(100,100,100));
 		world.addElement(sph);
@@ -126,6 +126,7 @@ public class TestSphereTexture3 {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
+		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
@@ -136,7 +137,6 @@ public class TestSphereTexture3 {
 		for (int i=0; i<=7*nb_images; i++) {
 			float a = (float)Math.PI*2*(float)i/(float)nb_images;
 			eye = new Vector4(-8*(float)Math.cos(a),8*(float)Math.sin(a),4,1);
-			//System.out.println("Rotation "+i+"  - Eye: "+eye);
 			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();
 		}
