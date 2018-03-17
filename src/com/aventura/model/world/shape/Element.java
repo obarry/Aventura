@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import com.aventura.math.transform.Transformable;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.triangle.Triangle;
 
@@ -118,7 +119,7 @@ import com.aventura.model.world.triangle.Triangle;
  * @since March 2016
  *
  */
-public class Element implements Transformable {
+public class Element implements Transformable, Shape {
 	
 	protected static final String ELEMENT_DEFAULT_NAME = "element";
 	protected String name;
@@ -199,6 +200,20 @@ public class Element implements Transformable {
 		}
 	}
 	
+	public ArrayList<Element> getSubElements() {
+		return subelements;
+	}
+	
+	public void addElement(Element e) {
+		// If never initialized then create the Array
+		if (subelements == null) subelements = new ArrayList<Element>();
+		this.subelements.add(e);
+	}
+	
+	// ********************
+	// ***** Geometry *****
+	// ********************
+
 	public void addVertex(Vertex v) {
 		this.vertices.add(v);
 	}
@@ -267,16 +282,6 @@ public class Element implements Transformable {
 		return mesh;
 	}
 
-	public ArrayList<Element> getSubElements() {
-		return subelements;
-	}
-	
-	public void addElement(Element e) {
-		// If never initialized then create the Array
-		if (subelements == null) subelements = new ArrayList<Element>();
-		this.subelements.add(e);
-	}
-	
 	public void addTriangle(Triangle t) {
 		this.triangles.add(t);
 	}
@@ -315,6 +320,10 @@ public class Element implements Transformable {
 		return vertices.size();
 	}
 
+	// *************************
+	// ***** Transfomation *****
+	// *************************
+
 	@Override
 	public void setTransformation(Matrix4 transformation) {
 		this.transform = transformation;
@@ -343,6 +352,10 @@ public class Element implements Transformable {
 			v.setWorldPos(transformation.times(v.getPos()));
 		}
 	}
+
+	// ********************************
+	// ***** Ligthing and Shading *****
+	// ********************************
 
 	public void setColor(Color c) {
 		this.elementColor = c;
@@ -387,6 +400,10 @@ public class Element implements Transformable {
 	public String toString() {
 		return "Element name: "+name+"\nTriangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nElement color: "+elementColor+"\nSpecular color: "+specularColor+" Specular exponent: "+specularExponent;		
 	}
+	
+	// ******************************
+	// ***** Normal calculation *****
+	// ******************************
 
 	/* (non-Javadoc)
 	 * @see com.aventura.model.world.NormalGeneration#calculateNormals()
@@ -413,6 +430,93 @@ public class Element implements Transformable {
 				subelements.get(i).calculateNormals();
 			}
 		}		
+	}
+	// ******************************
+	// ***** Normal calculation *****
+	// ******************************
+	
+	public void generate() {
+		
+		calculateNormals();
+		
+	}
+
+
+	
+	// *****************
+	// ***** Shape *****
+	// *****************
+
+	@Override
+	public Element setTopTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		return null;
+	} 
+
+	@Override
+	public Element setBottomTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setLeftTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setRightTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setFrontTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setBackTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setTopColor(Color c) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setBottomColor(Color c) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setLeftColor(Color c) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setRightColor(Color c) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setFrontColor(Color c) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Element setBackColor(Color c) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

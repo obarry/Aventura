@@ -114,7 +114,7 @@ public class TestDrawView {
 		world.setBackgroundColor(new Color(50,50,50));
 		
 		System.out.println("********* Calculating normals");
-		world.calculateNormals();
+		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,1,1), 1);
 		AmbientLight al = new AmbientLight(0.5f);

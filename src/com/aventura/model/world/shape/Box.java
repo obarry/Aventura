@@ -1,5 +1,7 @@
 package com.aventura.model.world.shape;
 
+import java.awt.Color;
+
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
@@ -36,10 +38,13 @@ import com.aventura.model.world.triangle.RectangleMesh;
 public class Box extends Element {
 	
 	protected static final String BOX_DEFAULT_NAME = "box";
+	
+	protected float x_dim, y_dim, z_dim;
 
 	protected Vertex[][][] vertices;
 	protected RectangleMesh bottom, top, left, right, front, back;
 	protected Texture bottom_tex, top_tex, left_tex, right_tex, front_tex, back_tex = null;
+	protected Color bottom_col, top_col, left_col, right_col, front_col, back_col = null;
 		
 	/**
 	 * Create a box aligned on axis. Need to be rotated for a different orientation.
@@ -51,7 +56,9 @@ public class Box extends Element {
 	public Box(float x_dim, float y_dim, float z_dim) {
 		super(BOX_DEFAULT_NAME, true); // A Box is a closed Element
 		subelements = null;
-		createBox(x_dim, y_dim, z_dim);
+		this.x_dim = x_dim;
+		this.y_dim = y_dim;
+		this.z_dim = z_dim;
 	}
 	
 	/**
@@ -64,13 +71,15 @@ public class Box extends Element {
 	public Box(float x_dim, float y_dim, float z_dim, Texture tex) {
 		super(BOX_DEFAULT_NAME, true); // A Box is a closed Element
 		subelements = null;
+		this.x_dim = x_dim;
+		this.y_dim = y_dim;
+		this.z_dim = z_dim;
 		this.bottom_tex = tex;
 		this.top_tex = tex;
 		this.left_tex = tex;
 		this.right_tex = tex;
 		this.front_tex = tex;
 		this.back_tex = tex;
-		createBox(x_dim, y_dim, z_dim);
 	}
 
 	/**
@@ -83,24 +92,26 @@ public class Box extends Element {
 	public Box(float x_dim, float y_dim, float z_dim, Texture bottom_tex, Texture top_tex, Texture left_tex, Texture right_tex, Texture front_tex, Texture back_tex) {
 		super(BOX_DEFAULT_NAME, true); // A Box is a closed Element
 		subelements = null;
+		this.x_dim = x_dim;
+		this.y_dim = y_dim;
+		this.z_dim = z_dim;
 		this.bottom_tex = bottom_tex;
 		this.top_tex = top_tex;
 		this.left_tex = left_tex;
 		this.right_tex = right_tex;
 		this.front_tex = front_tex;
 		this.back_tex = back_tex; 
-		createBox(x_dim, y_dim, z_dim);
 	}
 	
-	protected void createBox(float x_dim, float y_dim, float z_dim) {
+	public void generate() {
 
 		// Box vertices, 3 dimensions array
 		vertices = new Vertex[2][2][2];
 
 		// Calculate dimensions of the box
-		float xh = x_dim/2;
-		float yh = y_dim/2;
-		float zh = z_dim/2;
+		float xh = this.x_dim/2;
+		float yh = this.y_dim/2;
+		float zh = this.z_dim/2;
 		
 		// Build the Element: Create Vertices of the Cube: 8 vertices
 		vertices[0][0][0] = createVertex(new Vector4(-xh, -yh, -zh,  1));
@@ -129,6 +140,13 @@ public class Box extends Element {
 		front = new RectangleMesh(this, front_array, front_tex);
 		back = new RectangleMesh(this, back_array, back_tex);
 		
+		bottom.setCol(this.bottom_col);
+		top.setCol(this.top_col);
+		left.setCol(this.left_col);
+		right.setCol(this.right_col);
+		front.setCol(this.front_col);
+		back.setCol(this.back_col);
+		
 		// At last create Triangles of all meshes
 		bottom.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 		top.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
@@ -136,6 +154,93 @@ public class Box extends Element {
 		right.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 		front.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 		back.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
+		
+		// Calculate normals
+		this.calculateNormals();
+	}
+	
+	@Override
+	public Element setTopTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		this.top_tex = tex;
+		return this;
+	} 
+
+	@Override
+	public Element setBottomTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		this.bottom_tex = tex;
+		return this;
+	}
+
+	@Override
+	public Element setLeftTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		this.left_tex = tex;
+		return this;
+	}
+
+	@Override
+	public Element setRightTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		this.right_tex = tex;
+		return this;
+	}
+
+	@Override
+	public Element setFrontTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		this.front_tex = tex;
+		return this;
+	}
+
+	@Override
+	public Element setBackTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		this.back_tex = tex;
+		return this;
+	}
+
+	@Override
+	public Element setTopColor(Color c) {
+		// TODO Auto-generated method stub
+		this.top_col = c;
+		return this;
+	}
+
+	@Override
+	public Element setBottomColor(Color c) {
+		// TODO Auto-generated method stub
+		this.bottom_col = c;
+		return this;
+	}
+
+	@Override
+	public Element setLeftColor(Color c) {
+		// TODO Auto-generated method stub
+		this.left_col = c;
+		return this;
+	}
+
+	@Override
+	public Element setRightColor(Color c) {
+		// TODO Auto-generated method stub
+		this.right_col = c;
+		return this;
+	}
+
+	@Override
+	public Element setFrontColor(Color c) {
+		// TODO Auto-generated method stub
+		this.front_col = c;
+		return this;
+	}
+
+	@Override
+	public Element setBackColor(Color c) {
+		// TODO Auto-generated method stub
+		this.back_col = c;
+		return this;
 	}
 
 }

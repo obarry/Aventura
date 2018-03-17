@@ -153,6 +153,7 @@ public class FanMesh extends Mesh {
 					t.setRectoVerso(!elm.isClosed());
 				}
 
+				t.setColor(this.col);
 				elm.addTriangle(t);
 				ti = tip1;
 			}

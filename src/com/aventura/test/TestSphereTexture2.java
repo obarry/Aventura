@@ -125,7 +125,7 @@ public class TestSphereTexture2 {
 		moon.setTransformation(t);
 		world.addElement(moon);
 		
-		world.calculateNormals();
+		world.generate();
 		
 		System.out.println("********* Creating light");
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,0), 0.9f);

@@ -165,7 +165,7 @@ public class TestAventura12 {
 			System.out.println(world.getElement(i));
 
 		// Calculate normals
-		world.calculateNormals();
+		world.generate();
 
 		// Create lighting
 		System.out.println("********* Creating Lighting");

@@ -172,7 +172,7 @@ public class TestRasterizer15 {
 		world.setBackgroundColor(new Color(22,0,220));
 		
 		System.out.println("********* Calculating normals");
-		world.calculateNormals();
+		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 0.5f);
 		AmbientLight al = new AmbientLight(0.5f);
