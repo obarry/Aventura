@@ -170,6 +170,7 @@ public class CircularMesh extends Mesh {
 				}
 				
 				// Add newly created triangle to the reporting Element
+				t.setColor(this.col);
 				elm.addTriangle(t);
 			}
 

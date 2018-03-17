@@ -137,7 +137,7 @@ public class TestBoxTexture {
 		System.out.println(elm);
 		System.out.println("********* Calculating normals");
 		
-		world.calculateNormals();
+		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,0,1f), 0.8f);
 		AmbientLight al = new AmbientLight(0.2f);

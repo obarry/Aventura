@@ -145,7 +145,7 @@ public class TestAventura9 {
 			}
 		}
 		// Calculate normals
-		world.calculateNormals();
+		world.generate();
 		
 		// World is created
 		return world;

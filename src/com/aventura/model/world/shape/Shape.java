@@ -1,10 +1,8 @@
-package com.aventura.model.world.triangle;
+package com.aventura.model.world.shape;
 
 import java.awt.Color;
 
 import com.aventura.model.texture.Texture;
-import com.aventura.model.world.shape.Element;
-
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -31,39 +29,31 @@ import com.aventura.model.world.shape.Element;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * Superclass for a Mesh of vertices with same Texture to create a surface part of an Element
- * A Mesh does not generate the geometry of the surface, this is the user of this class who needs to set the position of each Vertex in the space.
+ * This interface provides generic method signatures for all Elements
+ * Each specific element should implement all or part of these methods, depending on its shape.
+ * 
+ * The notion of top (+Z), bottom (-Z), left (-Y), right (+Y), front (+X) and back (-X) is valid for the Element before any transformation (rotation)
+ * 
+ * The method should return the Element itself (this) or null if not implemented because meaningless for this Element.
  * 
  * @author Olivier BARRY
- * @since June 2017
+ * @since Mar 2018
  */
-public class Mesh {
+
+public interface Shape {
 	
-	// Referred Element
-	Element elm = null;
+	public abstract Element setTopTexture(Texture tex);
+	public abstract Element setBottomTexture(Texture tex);
+	public abstract Element setLeftTexture(Texture tex);
+	public abstract Element setRightTexture(Texture tex);
+	public abstract Element setFrontTexture(Texture tex);
+	public abstract Element setBackTexture(Texture tex);
 	
-	protected Texture tex = null;
-	protected Color col = null;
-	
-	public Mesh(Element e) {
-		this.elm = e;
-	}
-
-	public Color getCol() {
-		return col;
-	}
-
-	public void setCol(Color col) {
-		this.col = col;
-	}
-
-	public Texture getTex() {
-		return tex;
-	}
-
-	public void setTex(Texture tex) {
-		this.tex = tex;
-	}
-
+	public abstract Element setTopColor(Color c);
+	public abstract Element setBottomColor(Color c);
+	public abstract Element setLeftColor(Color c);
+	public abstract Element setRightColor(Color c);
+	public abstract Element setFrontColor(Color c);
+	public abstract Element setBackColor(Color c);
 	
 }

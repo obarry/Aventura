@@ -147,7 +147,7 @@ public class TestAventura10 {
 		world.addElement(e);
 		
 		// Calculate normals
-		world.calculateNormals();
+		world.generate();
 
 		Lighting light = test.createLight();
 		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);

@@ -140,7 +140,7 @@ public class TestAventura1 {
 			}
 		}
 		
-		world.calculateNormals();
+		world.generate();
 
 		// World is created
 		return world;

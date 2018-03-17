@@ -106,19 +106,13 @@ public class TestCubeRotation {
 		
 		World world = new World();
 		Cube cube = new Cube(1, tex);
-		// Set colors to triangles
-		cube.getTriangle(0).setColor(Color.CYAN);
-		cube.getTriangle(1).setColor(Color.CYAN);
-		cube.getTriangle(2).setColor(Color.ORANGE);
-		cube.getTriangle(3).setColor(Color.ORANGE);
-		cube.getTriangle(4).setColor(Color.DARK_GRAY);
-		cube.getTriangle(5).setColor(Color.DARK_GRAY);
-		cube.getTriangle(6).setColor(Color.MAGENTA);
-		cube.getTriangle(7).setColor(Color.MAGENTA);
-		cube.getTriangle(8).setColor(Color.PINK);
-		cube.getTriangle(9).setColor(Color.PINK);
-		cube.getTriangle(10).setColor(Color.LIGHT_GRAY);
-		cube.getTriangle(11).setColor(Color.LIGHT_GRAY);	
+		// Set face colors
+		cube.setBottomColor(Color.CYAN);
+		cube.setTopColor(Color.ORANGE);
+		cube.setLeftColor(Color.DARK_GRAY);
+		cube.setRightColor(Color.MAGENTA);
+		cube.setFrontColor(Color.PINK);
+		cube.setBackColor(Color.LIGHT_GRAY);
 		world.addElement(cube);
 		
 //		Cylinder cylinder1 = new Cylinder(1, 0.5f, 16);
@@ -134,7 +128,7 @@ public class TestCubeRotation {
 //		world.addElement(cylinder2);
 		
 		System.out.println("********* Calculating normals");
-		world.calculateNormals();
+		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0), 1);
 		AmbientLight al = new AmbientLight(0.2f);

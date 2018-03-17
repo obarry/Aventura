@@ -167,6 +167,8 @@ public class RectangleMesh extends Mesh {
 						t2.setRectoVerso(!elm.isClosed());
 					}
 					
+					t1.setColor(this.col);
+					t2.setColor(this.col);
 					elm.addTriangle(t1);
 					elm.addTriangle(t2);
 				}
@@ -211,6 +213,8 @@ public class RectangleMesh extends Mesh {
 							t2.setTexture(tex, tv3, tv4, tv1);
 						}
 
+						t1.setColor(this.col);
+						t2.setColor(this.col);
 						elm.addTriangle(t1);
 						elm.addTriangle(t2);
 						
@@ -245,6 +249,8 @@ public class RectangleMesh extends Mesh {
 							t2.setTexture(tex, tv2, tv3, tv4);
 						}
 
+						t1.setColor(this.col);
+						t2.setColor(this.col);
 						elm.addTriangle(t1);
 						elm.addTriangle(t2);
 					}

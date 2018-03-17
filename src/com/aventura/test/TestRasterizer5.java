@@ -137,7 +137,7 @@ public class TestRasterizer5 {
 		world.addElement(e);
 		
 		System.out.println("********* Calculating normals");
-		world.calculateNormals();
+		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,3,0), 1);
 		Lighting light = new Lighting(dl);

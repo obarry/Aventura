@@ -79,10 +79,10 @@ public class World {
 		return elements.get(i);
 	}
 
-	public void calculateNormals() {
+	public void generate() {
 		
 		for (int i=0; i<elements.size(); i++) {
-				elements.get(i).calculateNormals();
+				elements.get(i).generate();
 		}
 	}
 	

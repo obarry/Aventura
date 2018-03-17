@@ -96,7 +96,7 @@ public class TestAventura8 {
 		world.addElement(co);
 		
 		// Calculate normals
-		world.calculateNormals();
+		world.generate();
 
 		// World is created
 		return world;
