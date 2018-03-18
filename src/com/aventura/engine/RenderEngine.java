@@ -467,7 +467,7 @@ public class RenderEngine {
 		c1.setTransformation(tc1.times(r1));
 		e1.addElement(l1);
 		e1.addElement(c1);
-		e1.calculateNormals();		
+		e1.generate();		
 		render(e1, Matrix4.IDENTITY, renderContext.landmarkXColor);
 		
 		// Y axis arrow
@@ -481,7 +481,7 @@ public class RenderEngine {
 		c2.setTransformation(tc2.times(r2));
 		e2.addElement(l2);
 		e2.addElement(c2);
-		e2.calculateNormals();		
+		e2.generate();		
 		render(e2, Matrix4.IDENTITY, renderContext.landmarkYColor);
 		
 		// Z axis arrow
@@ -494,7 +494,7 @@ public class RenderEngine {
 		c3.setTransformation(tc3);
 		e3.addElement(l3);
 		e3.addElement(c3);
-		e3.calculateNormals();		
+		e3.generate();		
 		render(e3, Matrix4.IDENTITY, renderContext.landmarkZColor);
 	}
 	

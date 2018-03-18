@@ -52,7 +52,8 @@ public class Cylinder extends Element {
 	float height;
 	float ray;
 	int half_seg;
-	protected Vertex top_center, bottom_center;
+	protected Vector4 top_center, bottom_center;
+	protected Texture tex = null;
 	
 	/**
 	 * Default creation of a Cylinder around Z axis 
@@ -66,7 +67,6 @@ public class Cylinder extends Element {
 		this.ray = ray;
 		this.height = height;
 		this.half_seg = half_seg;
-		createCylinder(null);
 	}
 
 	/**
@@ -82,18 +82,16 @@ public class Cylinder extends Element {
 		this.ray = ray;
 		this.height = height;
 		this.half_seg = half_seg;
-		createCylinder(tex);
+		this.tex = tex;
 	}
-	protected void createCylinder(Texture t) {
+	public void generate() {
 		
 		// Create centers
-//		this.top_center = new Vector4(0,0,height/2,0);
-//		this.bottom_center = new Vector4(0,0,-height/2,0);
-		this.top_center = this.createVertex(new Vector4(0,0,height/2,0));
-		this.bottom_center = this.createVertex(new Vector4(0,0,-height/2,0));
+		this.top_center = new Vector4(0,0,height/2,0);
+		this.bottom_center = new Vector4(0,0,-height/2,0);
 
 		// Create mesh to wrap Cylinder
-		rectangleMesh = new RectangleMesh(this, half_seg*2+1, 2, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
+		rectangleMesh = new RectangleMesh(this, half_seg*2+1, 2, tex); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
 		float alpha = (float)Math.PI/half_seg;
 		
 		// Create vertices of the mesh
@@ -111,6 +109,10 @@ public class Cylinder extends Element {
 		
 		// Create Triangles
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
+
+		// Calculate normals
+		this.calculateNormals();
+
 	}
 
 	@Override
@@ -120,7 +122,7 @@ public class Cylinder extends Element {
 		// Create normals of vertices
 		for (int i=0; i<=half_seg*2; i++) {
 			// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it 
-			n = (rectangleMesh.getVertex(i,0).getPos().minus(bottom_center.getPos())).V3();
+			n = rectangleMesh.getVertex(i,0).getPos().minus(bottom_center).V3();
 			n.normalize();
 			rectangleMesh.getVertex(i,0).setNormal(n);
 			// Same normal vector can be used for the corresponding top Vertex

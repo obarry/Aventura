@@ -58,7 +58,7 @@ public class Pyramid extends Element {
 	 * @param z_dim dimension of the pyramid on z axis
 	 */
 	public Pyramid(float x_dim, float y_dim, float z_dim) {
-		super(PYRAMID_DEFAULT_NAME);
+		super(PYRAMID_DEFAULT_NAME, true); // A Pyramid is a closed Element
 		subelements = null;
 		this.x_dim = x_dim;
 		this.y_dim = y_dim;
@@ -73,7 +73,7 @@ public class Pyramid extends Element {
 	 * @param z_dim dimension of the pyramid on z axis
 	 */
 	public Pyramid(float x_dim, float y_dim, float z_dim, Texture tex) {
-		super(PYRAMID_DEFAULT_NAME);
+		super(PYRAMID_DEFAULT_NAME, true); // A Pyramid is a closed Element
 		subelements = null;
 		this.bottom_tex = tex;
 		this.left_tex = tex;
@@ -93,7 +93,7 @@ public class Pyramid extends Element {
 	 * @param z_dim dimension of the pyramid on z axis
 	 */
 	public Pyramid(float x_dim, float y_dim, float z_dim, Texture base_tex, Texture left_tex, Texture right_tex, Texture front_tex, Texture back_tex) {
-		super(PYRAMID_DEFAULT_NAME);
+		super(PYRAMID_DEFAULT_NAME, true); // A Pyramid is a closed Element
 		subelements = null;
 		this.bottom_tex = base_tex;
 		this.left_tex = left_tex;

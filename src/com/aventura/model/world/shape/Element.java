@@ -437,8 +437,13 @@ public class Element implements Transformable, Shape {
 	
 	public void generate() {
 		
-		calculateNormals();
 		
+		if (subelements != null) {
+			for (int i=0; i<subelements.size(); i++) {
+				subelements.get(i).generate();
+			}
+		}		
+		calculateNormals();
 	}
 
 

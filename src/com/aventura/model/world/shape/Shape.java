@@ -42,6 +42,7 @@ import com.aventura.model.texture.Texture;
 
 public interface Shape {
 	
+	// Setting a specific Texture to each standard face of an Element
 	public abstract Element setTopTexture(Texture tex);
 	public abstract Element setBottomTexture(Texture tex);
 	public abstract Element setLeftTexture(Texture tex);
@@ -49,6 +50,7 @@ public interface Shape {
 	public abstract Element setFrontTexture(Texture tex);
 	public abstract Element setBackTexture(Texture tex);
 	
+	// Setting a specific Color to each standard face of an Element
 	public abstract Element setTopColor(Color c);
 	public abstract Element setBottomColor(Color c);
 	public abstract Element setLeftColor(Color c);

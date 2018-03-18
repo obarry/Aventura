@@ -1,6 +1,5 @@
 package com.aventura.test;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Toolkit;
@@ -21,7 +20,8 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Pyramid;
+import com.aventura.model.world.shape.ClosedCylinder;
+import com.aventura.model.world.shape.Cylinder;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -53,7 +53,7 @@ import com.aventura.view.View;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestPyramidTextureAndColor {
+public class TestClosedCylinderTexture {
 	
 	// View to be displayed
 	private SwingView view;
@@ -61,7 +61,7 @@ public class TestPyramidTextureAndColor {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Pyramid with Texture and Color");
+		JFrame frame = new JFrame("Test Closed Cylinder Texture");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -95,63 +95,46 @@ public class TestPyramidTextureAndColor {
 		
 		System.out.println("********* STARTING APPLICATION *********");
 
+//		Tracer.info = true;
+//		Tracer.function = true;
+
 		// Camera
-		Vector4 eye = new Vector4(8,3,8,1);
-		Vector4 poi = new Vector4(0,0,-0.5f,1);
+		//Vector4 eye = new Vector4(8,3,5,1);
+		//Vector4 eye = new Vector4(16,6,12,1);
+		Vector4 eye = new Vector4(6,3,4,1);
+		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestPyramidTextureAndColor test = new TestPyramidTextureAndColor();
+		TestClosedCylinderTexture test = new TestClosedCylinderTexture();
 		
 		System.out.println("********* Creating World");
 		
 		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
-		Texture tex2 = new Texture("resources/test/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
-		Texture tex3 = new Texture("resources/test/texture_metal_mesh_463x463.jpg");
-		//Texture tex = new Texture("resources/test/texture_old_leather_box_800x610.jpg");
-		//Texture tex = new Texture("resources/test/texture_metal_plate_626x626.jpg");
-		//Texture tex = new Texture("resources/test/texture_stone1_1700x1133.jpg");
-		//Texture tex = new Texture("resources/test/texture_rock_stone_400x450.jpg");
 		//Texture tex = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
-		//Texture tex3 = new Texture("resources/test/texture_rust_960x539.jpg");
-		Texture tex1 = new Texture("resources/test/texture_carpet_600x600.jpg");
-		//Texture tex = new Texture("resources/test/texture_blue_checkboard_1300x1300.jpg");
-		//Texture tex = new Texture("resources/test/texture_geometry_1024x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_moon_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_jupiter_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_neptune_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_football_320x160.jpg");
+		//Texture tex = new Texture("resources/test/texture_stone1_1700x1133.jpg");
+		Texture tex1 = new Texture("resources/test/texture_geometry_1024x1024.jpg");
+		Texture tex2 = new Texture("resources/test/texture_metal_plate_626x626.jpg");
 		
 		// Create World
 		World world = new World();
-		// Create Pyramid with general texture
-		Pyramid pyr = new Pyramid(3, 3, 2, tex1);
-		// Set specific texture and color to the bottom side
-		pyr.setBottomTexture(tex2);
-		pyr.setBottomColor(Color.CYAN);
-		// Set specific texture to the front side
-		pyr.setFrontTexture(tex3);
-		// Set specular reflection parameter
-		pyr.setSpecularColor(Color.WHITE);
-		pyr.setSpecularExp(8);
+		Cylinder cyl = null;
+		cyl = new ClosedCylinder(2, 0.8f, 20, tex1);
+//		cyl.setTopTexture(tex2);
+//		cyl.setBottomTexture(tex2);
 		
-		// Add the newly created Element to World
-		world.addElement(pyr);
-		world.setBackgroundColor(new Color(10,10,50));
+		cyl.setTransformation(new Rotation((float)Math.PI/4, Vector3.X_AXIS));
+		//cyl.setColor(new Color(200,200,255));
+		cyl.setSpecularExp(8);
+		world.addElement(cyl);
 		
-		System.out.println("********* Generate world");
-		// Generate world
+		System.out.println("********* Calculating normals");
 		world.generate();
-		
-		System.out.println(world);
-		System.out.println(pyr);
-		
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
@@ -160,20 +143,25 @@ public class TestPyramidTextureAndColor {
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 
+		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
+		Rotation r = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.Z_AXIS);
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
-			pyr.setTransformation(r);
+			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+			cyl.combineTransformation(r);
+			//cyl.setTransformation(r);
 			renderer.render();
 		}
 
