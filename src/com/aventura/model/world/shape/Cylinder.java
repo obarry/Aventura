@@ -86,6 +86,7 @@ public class Cylinder extends Element {
 	}
 	public void generate() {
 		
+		
 		// Create centers
 		this.top_center = new Vector4(0,0,height/2,0);
 		this.bottom_center = new Vector4(0,0,-height/2,0);
@@ -111,7 +112,7 @@ public class Cylinder extends Element {
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 
 		// Calculate normals
-		this.calculateNormals();
+		super.generate();
 
 	}
 

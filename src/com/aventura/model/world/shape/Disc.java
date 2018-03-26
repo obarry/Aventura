@@ -1,5 +1,7 @@
 package com.aventura.model.world.shape;
 
+import java.awt.Color;
+
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.triangle.CircularMesh;
@@ -55,7 +57,6 @@ public class Disc extends Element {
 		this.ray = ray;
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
-		createDisc(null);
 	}
 
 
@@ -66,17 +67,15 @@ public class Disc extends Element {
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
 		this.tex = t;
-		createDisc(t);
 	}
 
-
+	
 	/**
 	 * Creation of a Disc
-	 * @param t the Texture to apply
 	 */	
-	protected void createDisc(Texture t) {
+	public void generate() {
 		
-		mesh = new CircularMesh(this,half_seg*2, t); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
+		mesh = new CircularMesh(this,half_seg*2, tex); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
 		
 		float alpha = (float)Math.PI/half_seg;
 		
@@ -97,6 +96,17 @@ public class Disc extends Element {
 		}
 		
 		// Create Triangles
-		mesh.createTriangles(CircularMesh.MESH_CIRCULAR_CUT_TEXTURE);	
+		mesh.createTriangles(CircularMesh.MESH_CIRCULAR_CUT_TEXTURE);
+		
+		// Calculate normals
+		this.calculateNormals();
 	}
+	
+	@Override
+	public Element setFrontTexture(Texture tex) {
+		// TODO Auto-generated method stub
+		this.tex = tex;
+		return this;
+	}
+
 }

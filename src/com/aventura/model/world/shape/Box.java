@@ -161,6 +161,19 @@ public class Box extends Element {
 	}
 	
 	@Override
+	public void setColor(Color col) {
+		super.setColor(col);
+		// Set same color to each face
+		bottom_col = col;
+		top_col = col;
+		left_col = col;
+		right_col = col;
+		front_col = col;
+		back_col = col;
+	} 
+	
+	
+	@Override
 	public Element setTopTexture(Texture tex) {
 		// TODO Auto-generated method stub
 		this.top_tex = tex;
