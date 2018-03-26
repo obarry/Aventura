@@ -140,6 +140,7 @@ public class Box extends Element {
 		front = new RectangleMesh(this, front_array, front_tex);
 		back = new RectangleMesh(this, back_array, back_tex);
 		
+		// Set color to each face
 		bottom.setCol(this.bottom_col);
 		top.setCol(this.top_col);
 		left.setCol(this.left_col);
