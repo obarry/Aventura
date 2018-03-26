@@ -2,9 +2,9 @@ package com.aventura.model.world.shape;
 
 import java.awt.Color;
 
-import com.aventura.math.vector.Vector4;
+import com.aventura.math.transform.Translation;
+import com.aventura.math.vector.Vector3;
 import com.aventura.model.texture.Texture;
-import com.aventura.model.world.triangle.CircularMesh;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -41,84 +41,72 @@ public class ClosedCylinder extends Cylinder {
 	
 	protected static final String CLOSED_CYLINDER_DEFAULT_NAME = "closed cylinder";
 
-	protected Texture bottom_tex, top_tex = null;
-	protected Color bottom_col, top_col = null;
-	protected CircularMesh top_mesh, bottom_mesh = null;
+	protected Disc top, bottom = null;
 
 	public ClosedCylinder(float height, float ray, int half_seg) {
 		super(height, ray, half_seg);
 		this.isClosed = true;
 		this.name = CLOSED_CYLINDER_DEFAULT_NAME;
+		createSubElements();
 	}
 	
 	public ClosedCylinder(float height, float ray, int half_seg, Texture tex) {
 		super(height, ray, half_seg, tex);
 		this.isClosed = true;
 		this.name = CLOSED_CYLINDER_DEFAULT_NAME;
+		createSubElements();
+	}
+	
+	protected void createSubElements() {
+		top = new Disc(ray, half_seg);
+		Translation t_top = new Translation(Vector3.Z_AXIS, height/2);
+		top.setTransformation(t_top);
+		
+		bottom = new Disc(ray, half_seg);
+		Translation t_bottom = new Translation(Vector3.Z_AXIS, -height/2);
+		bottom.setTransformation(t_bottom);
+		
+		this.addElement(top);
+		this.addElement(bottom);
+		
 	}
 	
 	public void generate() {
 		
 		// Rely on superclass to generate the cylinder
 		super.generate();
-		
-		// Then create specific parts of ClosedCylinder: top and bottom discs
-		top_mesh = new CircularMesh(this,half_seg*2, top_tex); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
-		bottom_mesh = new CircularMesh(this,half_seg*2, bottom_tex); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
-		
-		float alpha = (float)Math.PI/half_seg;
-		
-		// Create vertices for top and bottom
-		
-		// Create summits (same Vertex for all summits)
-		top_mesh.setCenter(top_center);
-		bottom_mesh.setCenter(bottom_center);
-		
-		// Create the ring of vertices around the disc
-		for (int i=0; i<half_seg*2; i++) {
-			
-			float cosa = (float) Math.cos(alpha*i);
-			float sina = (float) Math.sin(alpha*i);
-			
-			// Set the position of the corresponding vertex in the CircularMesh
-			top_mesh.getVertex(i).setPos(new Vector4(this.ray*cosa, this.ray*sina, 0, 1).plus(top_center));
-			bottom_mesh.getVertex(i).setPos(new Vector4(this.ray*cosa, this.ray*sina, 0, 1).plus(bottom_center));
-		}
-		
-		// Create Triangles
-		top_mesh.createTriangles(CircularMesh.MESH_CIRCULAR_CUT_TEXTURE);	
-		bottom_mesh.createTriangles(CircularMesh.MESH_CIRCULAR_CUT_TEXTURE);
-		
-		
+				
 	}
 	
-
 	@Override
 	public Element setTopTexture(Texture tex) {
-		// TODO Auto-generated method stub
-		this.top_tex = tex;
+		this.top.setFrontTexture(tex);
 		return this;
 	} 
 
 	@Override
 	public Element setBottomTexture(Texture tex) {
 		// TODO Auto-generated method stub
-		this.bottom_tex = tex;
+		this.bottom.setFrontTexture(tex);
 		return this;
 	}
 
 	@Override
 	public Element setTopColor(Color c) {
 		// TODO Auto-generated method stub
-		this.top_col = c;
+		this.top.setColor(c);
 		return this;
 	}
 
 	@Override
 	public Element setBottomColor(Color c) {
 		// TODO Auto-generated method stub
-		this.bottom_col = c;
+		this.bottom.setColor(c);
 		return this;
 	}
 
+	@Override
+	public void calculateNormals() {
+		super.calculateNormals();
+	}
 }

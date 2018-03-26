@@ -421,7 +421,7 @@ public class Element implements Transformable, Shape {
 		}
 		
 		// Compute normals recursively for Sub Elements
-		calculateSubNormals();
+		//calculateSubNormals(); -> Now calculated through the recursive generate() method
 	}
 	
 	public void calculateSubNormals() {
@@ -436,16 +436,18 @@ public class Element implements Transformable, Shape {
 	// ******************************
 	
 	public void generate() {
-		
-		
+
+		calculateNormals();
+		this.subGenerate();
+	}
+	
+	public void subGenerate() {
 		if (subelements != null) {
 			for (int i=0; i<subelements.size(); i++) {
 				subelements.get(i).generate();
 			}
 		}		
-		calculateNormals();
 	}
-
 
 	
 	// *****************

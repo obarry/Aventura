@@ -1,5 +1,6 @@
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Toolkit;
@@ -124,13 +125,14 @@ public class TestClosedCylinderTexture {
 		// Create World
 		World world = new World();
 		Cylinder cyl = null;
-		cyl = new ClosedCylinder(2, 0.8f, 20, tex1);
-//		cyl.setTopTexture(tex2);
-//		cyl.setBottomTexture(tex2);
+		cyl = new ClosedCylinder(1.5f, 0.8f, 40, tex1);
+		cyl.setTopTexture(tex2);
+		cyl.setBottomTexture(tex2);
 		
 		cyl.setTransformation(new Rotation((float)Math.PI/4, Vector3.X_AXIS));
 		//cyl.setColor(new Color(200,200,255));
 		cyl.setSpecularExp(8);
+		cyl.setColor(new Color(250,150,100));
 		world.addElement(cyl);
 		
 		System.out.println("********* Calculating normals");

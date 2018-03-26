@@ -105,7 +105,12 @@ public class TestBoxRotation {
 		
 		World world = new World();
 		Box box = new Box(1,1.2f,1.5f);
-		// Set colors to triangles
+		
+		world.addElement(box);
+		System.out.println("********* Calculating normals");
+		world.generate();
+		
+		// Set colors to triangles (triangles are created only when World is generated) 
 		box.getTriangle(0).setColor(Color.CYAN);
 		box.getTriangle(1).setColor(Color.CYAN);
 		box.getTriangle(2).setColor(Color.ORANGE);
@@ -119,10 +124,6 @@ public class TestBoxRotation {
 		box.getTriangle(10).setColor(Color.LIGHT_GRAY);
 		box.getTriangle(11).setColor(Color.LIGHT_GRAY);
 		
-		world.addElement(box);
-		
-		System.out.println("********* Calculating normals");
-		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
 		AmbientLight al = new AmbientLight(0.2f);
