@@ -46,7 +46,7 @@ public class Texture {
 	public static final int TEXTURE_ORIENTATION_OPPOSITE = 2;
 	
 	// array containing data e.g. rgb values
-	protected Color[][] tex;
+	protected int[][] tex;
 	protected int width, height;
 	
 	/**
@@ -57,7 +57,7 @@ public class Texture {
 	public Texture(int width, int height) {
 		this.width = width;
 		this.height = height;
-		tex = new Color[width][height];
+		tex = new int[width][height];
 	}
 	
 	/**
@@ -74,11 +74,11 @@ public class Texture {
         this.height = img.getHeight();
         this.width = img.getWidth();
         
-        tex = new Color[width][height];
+        tex = new int[width][height];
         
         for (int h=0; h<height; h++) {
             for (int w=0; w<width; w++) {
-            	tex[w][h] = new Color(img.getRGB(w, h));
+            	tex[w][h] = img.getRGB(w, h);
             }
         }
         // Flush BufferedImage data, they are no longer needed
@@ -108,7 +108,7 @@ public class Texture {
 			// Should never happen
 		}
 
-		tex = new Color[width][height];
+		tex = new int[width][height];
 
 		for (int h=0; h<height; h++) {
 			for (int w=0; w<width; w++) {
@@ -116,18 +116,18 @@ public class Texture {
 					
 					if (horizontal_orientation == TEXTURE_ORIENTATION_NORMAL) {
 						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
-							tex[w][h] = new Color(img.getRGB(w, h));
+							tex[w][h] = img.getRGB(w, h);
 						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
-							tex[w][h] = new Color(img.getRGB(w, height-h-1));
+							tex[w][h] = img.getRGB(w, height-h-1);
 						} else {
 							// Should never happen
 						}
 
 					} else if (horizontal_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
 						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
-							tex[w][h] = new Color(img.getRGB(width-w-1, h));
+							tex[w][h] = img.getRGB(width-w-1, h);
 						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
-							tex[w][h] = new Color(img.getRGB(width-w-1, height-h-1));
+							tex[w][h] = img.getRGB(width-w-1, height-h-1);
 						} else {
 							// Should never happen
 						}
@@ -139,18 +139,18 @@ public class Texture {
 				} else if (direction == TEXTURE_DIRECTION_HORIZONTAL) {
 					if (horizontal_orientation == TEXTURE_ORIENTATION_NORMAL) {
 						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
-							tex[w][h] = new Color(img.getRGB(h, w)); // Inverse h and w reading
+							tex[w][h] = img.getRGB(h, w); // Inverse h and w reading
 						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
-							tex[w][h] = new Color(img.getRGB(height-h-1,w));
+							tex[w][h] = img.getRGB(height-h-1,w);
 						} else {
 							// Should never happen
 						}
 
 					} else if (horizontal_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
 						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
-							tex[w][h] = new Color(img.getRGB(h, width-w-1));
+							tex[w][h] = img.getRGB(h, width-w-1);
 						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
-							tex[w][h] = new Color(img.getRGB(height-h-1, width-w-1));
+							tex[w][h] = img.getRGB(height-h-1, width-w-1);
 						} else {
 							// Should never happen
 						}
@@ -199,7 +199,7 @@ public class Texture {
 		// Calculate the interpolated value as per Bilinear Filtering algorithm
 		Color result = null;
 		try {
-		 result = ColorTools.getBilinearFilteredColor(tex[x0][y0], tex[x0][y1], tex[x1][y0], tex[x1][y1], u_ratio, v_ratio);
+		 result = ColorTools.getBilinearFilteredColor(new Color(tex[x0][y0]), new Color(tex[x0][y1]), new Color(tex[x1][y0]), new Color(tex[x1][y1]), u_ratio, v_ratio);
 		} catch (java.lang.ArrayIndexOutOfBoundsException e) {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Exception getting bilinear filtered color for: x0="+x0+" y0="+y0+" x1="+x1+" y1="+y1+". Texture width: "+this.width+" height:"+this.height);
 			e.printStackTrace();
@@ -209,12 +209,12 @@ public class Texture {
 	
 	public Color getColor(int x, int y) {
 		// TODO Implement x y validation and return exception if outside width and height
-		return tex[x][y];
+		return new Color(tex[x][y]);
 	}
 		
 	public void setColor(int x, int y, Color c) {
 		// TODO Implement x y validation and return exception if outside width and height
-		tex[x][y] = c;
+		tex[x][y] = c.getRGB();
 	}
 	
 	public int getWidth() {

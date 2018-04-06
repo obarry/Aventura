@@ -102,7 +102,7 @@ public class TestClosedCylinderTexture {
 		// Camera
 		//Vector4 eye = new Vector4(8,3,5,1);
 		//Vector4 eye = new Vector4(16,6,12,1);
-		Vector4 eye = new Vector4(6,3,4,1);
+		Vector4 eye = new Vector4(7,4,4,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
@@ -117,22 +117,23 @@ public class TestClosedCylinderTexture {
 		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
-		//Texture tex = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
+		//Texture tex1 = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
 		//Texture tex = new Texture("resources/test/texture_stone1_1700x1133.jpg");
 		Texture tex1 = new Texture("resources/test/texture_geometry_1024x1024.jpg");
-		Texture tex2 = new Texture("resources/test/texture_metal_plate_626x626.jpg");
+		//Texture tex2 = new Texture("resources/test/texture_metal_plate_626x626.jpg");
+		Texture tex2 = new Texture("resources/test/texture_top_can_667x661.jpg");
 		
 		// Create World
 		World world = new World();
 		Cylinder cyl = null;
-		cyl = new ClosedCylinder(1.5f, 0.8f, 40, tex1);
+		cyl = new ClosedCylinder(1.6f, 0.8f, 40, tex1);
 		cyl.setTopTexture(tex2);
 		cyl.setBottomTexture(tex2);
 		
 		cyl.setTransformation(new Rotation((float)Math.PI/4, Vector3.X_AXIS));
 		//cyl.setColor(new Color(200,200,255));
 		cyl.setSpecularExp(8);
-		cyl.setColor(new Color(250,150,100));
+		cyl.setColor(new Color(250,200,150));
 		world.addElement(cyl);
 		
 		System.out.println("********* Calculating normals");
@@ -150,6 +151,7 @@ public class TestClosedCylinderTexture {
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
@@ -160,7 +162,7 @@ public class TestClosedCylinderTexture {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		Rotation r = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.Z_AXIS);
-		for (int i=0; i<=3*nb_images; i++) {
+		for (int i=0; i<=3*nb_images+20; i++) {
 			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
 			cyl.combineTransformation(r);
 			//cyl.setTransformation(r);
