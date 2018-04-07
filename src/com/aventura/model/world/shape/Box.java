@@ -103,7 +103,7 @@ public class Box extends Element {
 		this.back_tex = back_tex; 
 	}
 	
-	public void generate() {
+	public void createGeometry() {
 
 		// Box vertices, 3 dimensions array
 		vertices = new Vertex[2][2][2];
@@ -155,9 +155,6 @@ public class Box extends Element {
 		right.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 		front.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 		back.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
-		
-		// Calculate normals
-		this.calculateNormals();
 	}
 	
 	@Override

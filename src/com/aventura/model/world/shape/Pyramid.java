@@ -105,7 +105,7 @@ public class Pyramid extends Element {
 		this.z_dim = z_dim;
 	}
 
-	public void generate() {
+	public void createGeometry() {
 
 		vertices = new Vertex[2][2];
 
@@ -152,7 +152,6 @@ public class Pyramid extends Element {
 		back.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
 		bottom.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 		
-		this.calculateNormals();
 	}
 
 	@Override

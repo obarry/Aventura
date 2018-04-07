@@ -73,7 +73,7 @@ public class Disc extends Element {
 	/**
 	 * Creation of a Disc
 	 */	
-	public void generate() {
+	public void createGeometry() {
 		
 		mesh = new CircularMesh(this,half_seg*2, tex); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
 		
@@ -98,8 +98,6 @@ public class Disc extends Element {
 		// Create Triangles
 		mesh.createTriangles(CircularMesh.MESH_CIRCULAR_CUT_TEXTURE);
 		
-		// Calculate normals
-		this.calculateNormals();
 	}
 	
 	@Override

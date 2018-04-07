@@ -43,5 +43,5 @@ public class Cube extends Box {
 		super(length, length, length, t);
 		this.setName(CUBE_DEFAULT_NAME);
 	}
-
+	
 }
