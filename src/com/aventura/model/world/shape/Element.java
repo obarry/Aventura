@@ -437,7 +437,8 @@ public class Element implements Transformable, Shape {
 	
 	public void generate() {
 
-		calculateNormals();
+		this.createGeometry();
+		this.calculateNormals();
 		this.subGenerate();
 	}
 	
@@ -447,6 +448,11 @@ public class Element implements Transformable, Shape {
 				subelements.get(i).generate();
 			}
 		}		
+	}
+	
+	public void createGeometry() {
+		// This method should be implemented in specific Element classes
+		// Nothing to do for a generic Element that could be used as group of Elements
 	}
 
 	

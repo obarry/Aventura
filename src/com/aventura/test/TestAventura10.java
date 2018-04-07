@@ -106,8 +106,8 @@ public class TestAventura10 {
 
 		System.out.println("********* STARTING APPLICATION *********");
 		
-		Tracer.info = true;
-		Tracer.function = true;
+		//Tracer.info = true;
+		//Tracer.function = true;
 
 		// Camera
 		Vector4 eye = new Vector4(14,8,4,1);
@@ -135,10 +135,6 @@ public class TestAventura10 {
 		e1.setTransformation(t1);
 		e2.setTransformation(t2);
 		
-		// Rotate Element e (and all its sub elements)
-		//Rotation r = new Rotation(Math.PI/4, Vector4.X_AXIS);
-		//e.setTransformation(r);
-		
 		// Add subelements to Element
 		e.addElement(e1);
 		e.addElement(e2);
@@ -154,23 +150,18 @@ public class TestAventura10 {
 		View view = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
 		renderer.setView(view);
 		renderer.render();
 		
 		Rotation r;
-		//Translation t;
 		
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
 			r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
-			//t = new Translation(new Vector3(0,0,(double)(i-nb_images)*0.01));
-			//e.setTransformation(t.times(r));
 			e.setTransformation(r);
 			renderer.render();
 		}

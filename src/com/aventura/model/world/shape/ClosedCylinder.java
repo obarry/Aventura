@@ -71,10 +71,10 @@ public class ClosedCylinder extends Cylinder {
 		
 	}
 	
-	public void generate() {
+	public void createGeometry() {
 		
 		// Rely on superclass to generate the cylinder
-		super.generate();
+		super.createGeometry();
 				
 	}
 	

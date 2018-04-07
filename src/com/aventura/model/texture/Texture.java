@@ -180,21 +180,21 @@ public class Texture {
 		// Calculate the integer value of u and v
 		int x0 = (int) Math.floor(u);
 		int y0 = (int) Math.floor(v);
-		int x1 = x0+1;
-		int y1 = y0+1;
+		int x1 = x0 + 1;
+		int y1 = y0 + 1;
 		
 		// Calculate the frac value of u and v (their respective complement to 1 will be computed in the getBilinearFilteredColor method directly)
 		float u_ratio = (float)u - x0;
 		float v_ratio = (float)v - y0;
 		
-		if (x0<0) x0=0;
-		if (y0<0) y0=0;
-		if (x0>=this.width) x0=this.width-1;
-		if (y0>=this.height) y0=this.height-1;
-		if (x1<0) x1=0;
-		if (y1<0) y1=0;
-		if (x1>=this.width) x1=this.width-1;
-		if (y1>=this.height) y1=this.height-1;
+		if (x0<0) x0 = 0;
+		if (y0<0) y0 = 0;
+		if (x0>=this.width)  x0 = this.width - 1;
+		if (y0>=this.height) y0 = this.height - 1;
+		if (x1<0) x1 = 0;
+		if (y1<0) y1 = 0;
+		if (x1>=this.width)  x1 = this.width - 1;
+		if (y1>=this.height) y1 = this.height - 1;
 
 		// Calculate the interpolated value as per Bilinear Filtering algorithm
 		Color result = null;

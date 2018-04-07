@@ -84,7 +84,7 @@ public class Cylinder extends Element {
 		this.half_seg = half_seg;
 		this.tex = tex;
 	}
-	public void generate() {
+	public void createGeometry() {
 		
 		
 		// Create centers
@@ -110,9 +110,6 @@ public class Cylinder extends Element {
 		
 		// Create Triangles
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
-
-		// Calculate normals
-		super.generate();
 
 	}
 
