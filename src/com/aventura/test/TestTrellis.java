@@ -16,7 +16,6 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Trellis;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -48,7 +47,7 @@ import com.aventura.view.View;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestAventura5 {
+public class TestTrellis {
 	
 	// Create the view to be displayed
 	private SwingView view;
@@ -56,7 +55,7 @@ public class TestAventura5 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 5");
+		JFrame frame = new JFrame("Test Trellis");
 		// Set the size of the frame
 		frame.setSize(1010,630);
 		
@@ -89,20 +88,18 @@ public class TestAventura5 {
 		World world = new World();
 		
 		// Create an Element in the World
-		Trellis trel = new Trellis(3,2,3,2);
-		System.out.println(trel);
+		Trellis trel = new Trellis(20,10,19,10);
 		world.addElement(trel);
-
 		// World is created
 		return world;
 	}
 
 	public Camera createCamera() {
 		
-		Vector4 eye = new Vector4(0,-5,-2,1);
-		Vector4 poi = new Vector4(0,0,0,1);
+		Vector4 eye = new Vector4(-25,10,25,1);
+		Vector4 poi = new Vector4(0, 0, 0, 1);
 		
-		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
 		
 		return cam;
 	}
@@ -114,35 +111,24 @@ public class TestAventura5 {
 
 	public static void main(String[] args) {
 		
-		System.out.println("********* STARTING APPLICATION *********");
-		
-		Tracer.info = true;
-		Tracer.function = true;
-		
-		TestAventura5 test = new TestAventura5();
-				
-		System.out.println("********* CREATING WORLD");
+		TestTrellis test = new TestTrellis();
+						
 		World world = test.createWorld();
 		Lighting light = test.createLight();
 		
-		System.out.println("********* CREATING CAMERA");
 		Camera camera = test.createCamera();
 		
-		System.out.println("********* CREATING GRAPHIC CONTEXT");
-		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 10, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		GraphicContext context = new GraphicContext(GraphicContext.GRAPHIC_DEFAULT);
+		context.setHeight(6);
+		context.setWidth(10);
+		context.computePerspective();
 		System.out.println(context);
 		
-		System.out.println("********* CREATING VIEW");
 		View view = test.createView(context);
-		
-		System.out.println("********* CREATING RENDER ENGINE");
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
 		renderer.setView(view);
-		
-		System.out.println("********* RENDERING !!!");
 		renderer.render();
-		System.out.println("********* ENDING APPLICATION *********");
-
+		
 	}
 
 }

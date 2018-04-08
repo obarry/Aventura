@@ -54,7 +54,7 @@ import com.aventura.view.View;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestAventura13 {
+public class TestTrellisTexture {
 	
 	// View to be displayed
 	private SwingView view;
@@ -62,7 +62,7 @@ public class TestAventura13 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 13");
+		JFrame frame = new JFrame("Test Trellis with Texture");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -106,7 +106,7 @@ public class TestAventura13 {
 		Vector4 poi = new Vector4(0,0,-0.5f,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestAventura13 test = new TestAventura13();
+		TestTrellisTexture test = new TestTrellisTexture();
 		
 		System.out.println("********* Creating World");
 		
