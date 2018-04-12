@@ -130,7 +130,7 @@ public class TestCubeRotation {
 		System.out.println("********* Calculating normals");
 		world.generate();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0));
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl,al);
 		

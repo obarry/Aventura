@@ -648,7 +648,7 @@ public class Rasterizer {
 				//TODO Multiple directional colors -> loop
 
 				// Compute the dot product
-				dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
+				dotNL = lighting.getDirectionalLight().getLightVector(null).dot(normal.normalize());
 				if (rectoVerso) dotNL = Math.abs(dotNL);
 
 				if (dotNL > 0) {
@@ -672,14 +672,20 @@ public class Rasterizer {
 
 		// Secondary Shading: Specular reflection (from Directional light)
 		if (e>0) { // If e=0 this is considered as no specular reflection
-			float specular = 0;
+			//float specular = 0;
 			// Calculate reflection vector R = 2N-L and normalize it
-			Vector3 r = normal.times(2.0f).minus(lighting.getDirectionalLight().getLightVector(null)).normalize(); 
+			Vector3 r = ((normal.times(2.0f)).minus(lighting.getDirectionalLight().getLightVector(null))).normalize(); 
 			float dotRV = r.dot(viewer);
 			if (rectoVerso) dotRV = Math.abs(dotRV);
-			if (dotRV<0) dotRV = 0;
-			specular = (float) Math.pow(dotRV, e);
-			c = ColorTools.multColor(spc, specular);
+			// Compute the dot product
+			float dotNL = lighting.getDirectionalLight().getLightVector(null).dot(normal.normalize());
+//			if (rectoVerso) dotNL = Math.abs(dotNL);
+			
+			if (dotRV > 0) {
+//			if (dotNL > 0) {
+				float specular = (float) Math.pow(dotRV, e);
+				c = ColorTools.multColor(spc, specular);
+			}
 		}
 		return c;
 	}

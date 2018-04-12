@@ -59,7 +59,7 @@ import com.aventura.view.View;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestAventura9 {
+public class TestMultiElements {
 	
 	// View to be displayed
 	private SwingView view;
@@ -67,7 +67,7 @@ public class TestAventura9 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 9");
+		JFrame frame = new JFrame("Test Multi Elements");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -152,7 +152,7 @@ public class TestAventura9 {
 	}
 
 	public Lighting createLight() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,0.8f,0.5f), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,0.8f,0.5f));
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting lighting = new Lighting(dl, al);
 		return lighting;
@@ -171,7 +171,7 @@ public class TestAventura9 {
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eyeA, poi, Vector4.Z_AXIS);		
 				
-		TestAventura9 test = new TestAventura9();
+		TestMultiElements test = new TestMultiElements();
 				
 		World world = test.createWorld();
 		Lighting light = test.createLight();

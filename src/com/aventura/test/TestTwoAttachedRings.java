@@ -117,7 +117,7 @@ public class TestTwoAttachedRings {
 		System.out.println("********* Calculating normals");
 		world.generate();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1));
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, true);
 		

@@ -112,7 +112,7 @@ public class TestSphereSpecularReflection {
 		world.generate();
 		
 		Vector3 lightVector = new Vector3(1,1,0);
-		DirectionalLight dl = new DirectionalLight(lightVector, 1);
+		DirectionalLight dl = new DirectionalLight(lightVector);
 		AmbientLight al = new AmbientLight(0.1f);
 		Lighting light = new Lighting(dl, al, true);
 		
@@ -125,6 +125,7 @@ public class TestSphereSpecularReflection {
 		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
 		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);

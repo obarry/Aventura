@@ -1,5 +1,6 @@
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Toolkit;
@@ -108,8 +109,8 @@ public class TestSphereTexture3 {
 		World world = new World();
 		Sphere sph = null;
 		sph = new Sphere(0.8f, 36, tex);
-		//sph.setSpecularExp(1);
-		//sph.setSpecularColor(new Color(100,100,100));
+		sph.setSpecularExp(10);
+		sph.setSpecularColor(new Color(100,100,100));
 		world.addElement(sph);
 		
 		System.out.println("********* Calculating normals");
