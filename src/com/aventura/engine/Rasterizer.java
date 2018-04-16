@@ -724,8 +724,8 @@ public class Rasterizer {
 			
 //			if (dotRV > 0) {
 			//TODO Problem here: the following calculation creates abrupt specular 
-			//if (dotNL > 0) {
-			if (true) {
+			if (dotNL > 0) {
+			//if (true) {
 				float specular = (float) Math.pow(dotRV, e);
 				float intensity = lighting.getDirectionalLight().getIntensity(null);
 				c = ColorTools.multColor(spc, specular*intensity);

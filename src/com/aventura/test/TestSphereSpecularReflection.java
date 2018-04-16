@@ -104,7 +104,7 @@ public class TestSphereSpecularReflection {
 		
 		World world = new World();
 		Sphere s = new Sphere(1.5f, 48);
-		s.setSpecularExp(10);
+		s.setSpecularExp(20);
 		s.setColor(Color.PINK);		
 		world.addElement(s);
 		

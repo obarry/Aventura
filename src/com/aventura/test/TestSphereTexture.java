@@ -139,7 +139,7 @@ public class TestSphereTexture {
 		World world = new World();
 		Sphere sph = null;
 		sph = new Sphere(1.2f, 48, tex);
-		sph.setSpecularExp(3);
+		sph.setSpecularExp(10);
 		sph.setSpecularColor(new Color(100,100,100));
 		world.addElement(sph);
 		

@@ -104,10 +104,10 @@ public class TestTwoAttachedRings {
 		
 		World world = new World();
 		Torus torus1 = new Torus(2,0.5f,32,16);
-		torus1.setSpecularExp(2);
+		torus1.setSpecularExp(20);
 		torus1.setTransformation(new Translation(new Vector4(0,2,0,0)));
 		Torus torus2 = new Torus(2,0.5f,32,16);
-		torus2.setSpecularExp(2);
+		torus2.setSpecularExp(20);
 		torus2.setTransformation(new Rotation((float)Math.PI/2, Vector4.Y_AXIS));
 		torus1.setColor(new Color(20,100,100));
 		torus2.setColor(new Color(180,100,20));
