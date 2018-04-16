@@ -54,7 +54,7 @@ public class DirectionalLight extends Light {
 	
 	public DirectionalLight(Vector3 direction, float intensity) {
 		super();
-		this.normalized_direction = direction.normalize();
+		this.normalized_direction = new Vector3(direction).normalize();
 		this.intensity = intensity;
 		this.direction = this.normalized_direction.times(intensity);
 	}
