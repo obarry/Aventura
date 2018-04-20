@@ -215,7 +215,7 @@ public class Rasterizer {
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 normal = t.getWorldNormal();
-			Color shadedCol = computeDirectionalColor(col, normal, specExp, specCol, t.isRectoVerso());
+			Color shadedCol = computeDirectionalColor(col, normal, t.isRectoVerso());
 			// Then use the shaded color instead for whole triangle
 			col = shadedCol;
 			
@@ -237,9 +237,9 @@ public class Rasterizer {
 			viewer3.normalize();
 			
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			t.getV1().setShadedCol(computeDirectionalColor(col, t.getV1().getWorldNormal(), specExp, specCol, t.isRectoVerso()));
-			t.getV2().setShadedCol(computeDirectionalColor(col, t.getV2().getWorldNormal(), specExp, specCol, t.isRectoVerso()));
-			t.getV3().setShadedCol(computeDirectionalColor(col, t.getV3().getWorldNormal(), specExp, specCol, t.isRectoVerso()));					
+			t.getV1().setShadedCol(computeDirectionalColor(col, t.getV1().getWorldNormal(), t.isRectoVerso()));
+			t.getV2().setShadedCol(computeDirectionalColor(col, t.getV2().getWorldNormal(), t.isRectoVerso()));
+			t.getV3().setShadedCol(computeDirectionalColor(col, t.getV3().getWorldNormal(), t.isRectoVerso()));					
 
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
 			if (lighting.hasSpecular()) {
@@ -540,20 +540,21 @@ public class Rasterizer {
 							}
 							
 							// Combine the Surface (diffuse) color and the Texture color
-							cdt = ColorTools.multColors(surfCol, ctx);
+							//cdt = ColorTools.multColors(surfCol, ctx);
 
 						} // End Texture interpolation
 
 						// Combine colors with the following formula
 						// Color K = DTA + CDT + S = DT(A+C) + S : WRONG old calculation 
-						//Color K = DTA + C(DT + S) = DTA + DTC + SC
+						//Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
 						// D: diffuse color, T: texture, A: Ambient color, C: color of the light source at point, S: Specular color
 						//TODO need to decouple the Ambient light from the shaded color calculation. This is easy as Ambient light do not need any interpolation
 						// This will allow to calculate the CS (shaded*specular
 						if (interpolate) {
 
 							if (texture && t!=null) {
-								cc = ColorTools.addColors(ColorTools.addColors(ColorTools.multColors(ambientCol,cdt), ColorTools.multColors(csh, cdt)), ColorTools.multColors(csh,csp));
+//								cc = ColorTools.addColors(ColorTools.addColors(ColorTools.multColors(ambientCol,cdt), ColorTools.multColors(csh, cdt)), ColorTools.multColors(csh,csp));
+								cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
 								//cc = ColorTools.multColors(csh,csp);
 							} else {
 								cc = ColorTools.addColors(csh, csp);	
@@ -654,7 +655,7 @@ public class Rasterizer {
 	 * @param normal of the surface in this area
 	 * @return the Directional light at point
 	 */
-	protected Color computeDirectionalColor(Color baseCol, Vector3 normal, float e, Color sc, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+	protected Color computeDirectionalColor(Color baseCol, Vector3 normal, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 
 		// Table of colors to be mixed
 		Color c;
