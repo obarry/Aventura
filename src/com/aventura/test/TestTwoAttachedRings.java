@@ -118,8 +118,9 @@ public class TestTwoAttachedRings {
 		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1));
-		AmbientLight al = new AmbientLight(0.2f);
-		Lighting light = new Lighting(dl, al, true);
+//		AmbientLight al = new AmbientLight(0.2f);
+//		Lighting light = new Lighting(dl, al, true);
+		Lighting light = new Lighting(dl, true);
 		
 		GraphicContext gContext = new GraphicContext(1.2f, 0.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		View view = test.createView(gContext);

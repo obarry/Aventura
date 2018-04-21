@@ -113,8 +113,9 @@ public class TestSphereSpecularReflection {
 		
 		Vector3 lightVector = new Vector3(1,1,0);
 		DirectionalLight dl = new DirectionalLight(lightVector);
-		AmbientLight al = new AmbientLight(0.1f);
-		Lighting light = new Lighting(dl, al, true);
+//		AmbientLight al = new AmbientLight(0.1f);
+//		Lighting light = new Lighting(dl, al, true);
+		Lighting light = new Lighting(dl, true);
 		
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.4512f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);

@@ -476,7 +476,7 @@ public class Rasterizer {
 		Color csh = null; // Shaded color
 		Color csp = null; // Specular color
 		Color ctx = null; // Texture color
-		Color cdt = null; // Diffuse.Texture color combined
+//		Color cdt = null; // Diffuse.Texture color combined
 		Color cc; // Combined color to be drawn, result of the lighting and shading calculation
 
 		// drawing a line from left (sx) to right (ex) 
@@ -557,13 +557,16 @@ public class Rasterizer {
 								cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
 								//cc = ColorTools.multColors(csh,csp);
 							} else {
-								cc = ColorTools.addColors(csh, csp);	
+//								cc = ColorTools.addColors(ColorTools.addColors(ambientCol, csh),ColorTools.addColors(csh, csp));	
+								cc = ColorTools.addColors(ambientCol,ColorTools.addColors(csh, csp));	
+//								cc = ColorTools.addColors(csh, csp);	
 							}
 
 						} else {
 
 							if (texture && t!=null) {
-								cc = ColorTools.multColors(surfCol, ctx);
+//								cc = ColorTools.multColors(surfCol, ctx);
+								cc = ColorTools.addColors(ambientCol,ColorTools.multColors(surfCol, ctx));
 							} else {
 								cc = surfCol;     			
 							}

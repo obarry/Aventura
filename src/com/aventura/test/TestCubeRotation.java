@@ -131,7 +131,7 @@ public class TestCubeRotation {
 		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0));
-		AmbientLight al = new AmbientLight(0.2f);
+		AmbientLight al = new AmbientLight(0.5f);
 		Lighting light = new Lighting(dl,al);
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);

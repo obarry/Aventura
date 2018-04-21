@@ -52,6 +52,11 @@ public class Lighting {
 		this.directional = directional;
 	}
 	
+	public Lighting(DirectionalLight directional, boolean specularLight) {
+		this.directional = directional;
+		this.specularLight = specularLight;
+	}
+	
 	public Lighting(DirectionalLight directional, AmbientLight ambient, boolean specularLight) {
 		this.ambient = ambient;
 		this.directional = directional;
