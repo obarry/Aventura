@@ -142,7 +142,7 @@ public class TestCubeRotation {
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
+		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
 		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		
