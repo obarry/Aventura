@@ -130,8 +130,8 @@ public class TestCubeRotation {
 		System.out.println("********* Calculating normals");
 		world.generate();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0), 1);
-		AmbientLight al = new AmbientLight(0.2f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0));
+		AmbientLight al = new AmbientLight(0.5f);
 		Lighting light = new Lighting(dl,al);
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
@@ -142,7 +142,7 @@ public class TestCubeRotation {
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
+		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
 		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		

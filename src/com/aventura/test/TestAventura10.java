@@ -93,7 +93,7 @@ public class TestAventura10 {
 	}
 	
 	public Lighting createLight() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,2,3), 1);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,2,3));
 		AmbientLight al = new AmbientLight(0.1f);
 		Lighting lighting = new Lighting(dl, al);
 		return lighting;

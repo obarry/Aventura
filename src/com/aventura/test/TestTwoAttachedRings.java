@@ -104,10 +104,10 @@ public class TestTwoAttachedRings {
 		
 		World world = new World();
 		Torus torus1 = new Torus(2,0.5f,32,16);
-		torus1.setSpecularExp(2);
+		torus1.setSpecularExp(20);
 		torus1.setTransformation(new Translation(new Vector4(0,2,0,0)));
 		Torus torus2 = new Torus(2,0.5f,32,16);
-		torus2.setSpecularExp(2);
+		torus2.setSpecularExp(20);
 		torus2.setTransformation(new Rotation((float)Math.PI/2, Vector4.Y_AXIS));
 		torus1.setColor(new Color(20,100,100));
 		torus2.setColor(new Color(180,100,20));
@@ -117,9 +117,10 @@ public class TestTwoAttachedRings {
 		System.out.println("********* Calculating normals");
 		world.generate();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1), 1);
-		AmbientLight al = new AmbientLight(0.2f);
-		Lighting light = new Lighting(dl, al, true);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1));
+//		AmbientLight al = new AmbientLight(0.2f);
+//		Lighting light = new Lighting(dl, al, true);
+		Lighting light = new Lighting(dl, true);
 		
 		GraphicContext gContext = new GraphicContext(1.2f, 0.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		View view = test.createView(gContext);

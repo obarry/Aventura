@@ -43,17 +43,32 @@ import com.aventura.math.vector.Vector4;
 public class DirectionalLight extends Light {
 	
 	protected Vector3 direction;
+	protected Vector3 normalized_direction;
+	
+	public DirectionalLight(Vector3 direction) {
+		super();
+		this.direction = direction;
+		this.normalized_direction = new Vector3(direction).normalize();
+		this.intensity = direction.length();
+	}
 	
 	public DirectionalLight(Vector3 direction, float intensity) {
 		super();
-		this.direction = direction;
+		this.normalized_direction = new Vector3(direction).normalize();
 		this.intensity = intensity;
+		this.direction = this.normalized_direction.times(intensity);
 	}
 
 	@Override
 	public Vector3 getLightVector(Vector4 point) {
 		// Same direction vector in all world space by definition of Directional Light
-		return direction;
+		return this.direction;
+	}
+	
+	@Override
+	public Vector3 getLightNormalizedVector(Vector4 point) {
+		// TODO Auto-generated method stub
+		return this.normalized_direction;
 	}
 
 	@Override
@@ -70,12 +85,22 @@ public class DirectionalLight extends Light {
 
 	@Override
 	public void setLightVector(Vector3 light) {
-		this.direction = light;		
+		this.direction = light;
+		this.normalized_direction = new Vector3(light).normalize();
+		this.intensity = light.length();
+	}
+
+	@Override
+	public void setLightNormalizedVector(Vector3 light) {
+		// TODO Auto-generated method stub
+		this.normalized_direction = light.normalize();
+		this.direction = this.normalized_direction.times(intensity);
 	}
 
 	@Override
 	public void setIntensity(float intensity) {
-		this.intensity = intensity;		
+		this.intensity = intensity;
+		this.direction = this.normalized_direction.times(intensity);
 	}
 
 	@Override

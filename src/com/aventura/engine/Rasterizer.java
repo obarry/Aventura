@@ -192,17 +192,18 @@ public class Rasterizer {
 	 * https://www.davrous.com/2013/06/21/tutorial-part-4-learning-how-to-write-a-3d-software-engine-in-c-ts-or-js-rasterization-z-buffering/
 	 * 
 	 * @param t the triangle to render
-	 * @param c the base color of the triangle, may be inherited from the element or default
-	 * @param se the specular exponent of the Element
-	 * @param sc the specular color of the Element
+	 * @param surfCol the base surface color of the triangle, may be inherited from the element or world (default)
+	 * @param specExp the specular exponent of the Element
+	 * @param specCol the specular color of the Element
 	 * @param interpolate a boolean to indicate if interpolation of colors is activated (true) or not (false)
 	 * @param texture a boolean to indicate if texture processing is activated (true) or not (false) 
 	 **/
-	public void rasterizeTriangle(Triangle t, Color c, float se, Color sc, boolean interpolate, boolean texture) {
+	public void rasterizeTriangle(Triangle t, Color surfCol, float specExp, Color specCol, boolean interpolate, boolean texture) {
 		
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+c);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+surfCol);
 		
-		Color col = c; // Let's initialize the base color with the provided one (from triangle or default color)
+		Color shadedCol = null;
+		Color ambientCol = computeAmbientColor(surfCol); // Let's compute Ambient color once per triangle (not needed at each line or pixel)
 
 		// Init pixel stats
 		rendered_pixels = 0;
@@ -214,32 +215,36 @@ public class Rasterizer {
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 normal = t.getWorldNormal();
-			Color shadedCol = computeShadedColor(col, normal, se, sc, t.isRectoVerso());
-			// Then use the shaded color instead for whole triangle
-			col = shadedCol;
-		} else {
+			shadedCol = computeDirectionalColor(surfCol, normal, t.isRectoVerso());			
+			//TODO Specular reflection with plain faces.
 			
+		} else {
+
 			// TODO Optimization: pre-calculate the viewer vectors and shaded colors to each Vertex before in 1 row
 			// This will avoid to do the same calculation for a Vertex shared by several triangles (which is the general case)
-			
+
 			// Calculate viewer vectors
-			Vector4 viewer1, viewer2, viewer3;
-			viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).normalize();
-			viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).normalize();
-			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).normalize();
+			Vector3 viewer1, viewer2, viewer3;
+			viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).V3();
+			viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).V3();
+			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).V3();
+			
+			viewer1.normalize();
+			viewer2.normalize();
+			viewer3.normalize();
 			
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			t.getV1().setShadedCol(computeShadedColor(col, t.getV1().getWorldNormal(), se, sc, t.isRectoVerso()));
-			t.getV2().setShadedCol(computeShadedColor(col, t.getV2().getWorldNormal(), se, sc, t.isRectoVerso()));
-			t.getV3().setShadedCol(computeShadedColor(col, t.getV3().getWorldNormal(), se, sc, t.isRectoVerso()));					
+			t.getV1().setShadedCol(computeDirectionalColor(surfCol, t.getV1().getWorldNormal(), t.isRectoVerso()));
+			t.getV2().setShadedCol(computeDirectionalColor(surfCol, t.getV2().getWorldNormal(), t.isRectoVerso()));
+			t.getV3().setShadedCol(computeDirectionalColor(surfCol, t.getV3().getWorldNormal(), t.isRectoVerso()));					
 
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
 			if (lighting.hasSpecular()) {
-				t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1.V3(), se, sc, t.isRectoVerso()));
-				t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2.V3(), se, sc, t.isRectoVerso()));
-				t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3.V3(), se, sc, t.isRectoVerso()));
+				t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1, specExp, specCol, t.isRectoVerso()));
+				t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2, specExp, specCol, t.isRectoVerso()));
+				t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3, specExp, specCol, t.isRectoVerso()));
 			}
-}
+		}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
 	    // with v1 always down (thus having the highest possible Y)
@@ -307,28 +312,14 @@ public class Rasterizer {
 	    if (yScreen(v2) - yScreen(v1) > 0) {
 	        dP1P2 = (xScreen(v2)-xScreen(v1))/(yScreen(v2)-yScreen(v1));
 	    } else { // horizontal segment, infinite invert slope
-	        //dP1P2 = 0;
 	        dP1P2 = Float.MAX_VALUE;
 	    }
-//	    if (v2.getProjPos().getY() - v1.getProjPos().getY() > 0) {
-//	        dP1P2 = (v2.getProjPos().getX()-v1.getProjPos().getX())/(v2.getProjPos().getY()-v1.getProjPos().getY());
-//	    } else { // horizontal segment, infinite invert slope
-//	        //dP1P2 = 0;
-//	        dP1P2 = Float.MAX_VALUE;
-//	    }
 	    
 	    if (yScreen(v3) - yScreen(v1) > 0) {
 	        dP1P3 = (xScreen(v3)-xScreen(v1))/(yScreen(v3)-yScreen(v1));
 	    } else { // horizontal segment, infinite invert slope
-	        //dP1P3 = 0;
 	    	dP1P3 = Float.MAX_VALUE;
 	    }
-//	    if (v3.getProjPos().getY() - v1.getProjPos().getY() > 0) {
-//	        dP1P3 = (v3.getProjPos().getX()-v1.getProjPos().getX())/(v3.getProjPos().getY()-v1.getProjPos().getY());
-//	    } else { // horizontal segment, infinite invert slope
-//	        //dP1P3 = 0;
-//	    	dP1P3 = Float.MAX_VALUE;
-//	    }
 
 	    if (dP1P2 > dP1P3) {
 	    	
@@ -347,9 +338,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
+	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
 	            } else {
-	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
+	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
 	            }
 	        }
 
@@ -370,9 +361,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
+	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
 	            } else {
-	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), col, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
+	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
 	            }
 	        }
 	    }
@@ -391,7 +382,8 @@ public class Rasterizer {
 			Vector4 vtc,			// Texture Vector of Vertex C
 			Vector4 vtd,			// Texture Vector of Vertex D
 			Texture t,				// Texture object for this triangle
-			Color c,				// Base color
+			Color shadedCol,		// Shadede color if Normal at triangle level (else should be null)
+			Color ambientCol,		// Ambient color (independent of the position in space)
 			boolean interpolate,	// Flag for interpolation (true) or not (false)
 			boolean texture, 		// Flag for texture calculation (true) or not (false)
 			int tex_orientation) {	// Flag for isotropic, vertical or horizontal texture interpolation
@@ -461,12 +453,12 @@ public class Rasterizer {
 		if (texture && t!=null) {
 			vt1 = Tools.interpolate(vta.times((float)1/za), vtb.times((float)1/zb), gradient1);
 			vt2 = Tools.interpolate(vtc.times((float)1/zc), vtd.times((float)1/zd), gradient2);
-
 		}
 
 		Color csh = null; // Shaded color
 		Color csp = null; // Specular color
 		Color ctx = null; // Texture color
+		Color cc; // Combined color to be drawn, result of the lighting and shading calculation
 
 		// drawing a line from left (sx) to right (ex) 
 		for (int x = sx; x < ex; x++) {
@@ -480,7 +472,7 @@ public class Rasterizer {
 				// Protect against out of bounds (should not happen)
 				if (x_zBuf>=0 && x_zBuf<zBuf_width && y_zBuf>=0 && y_zBuf<zBuf_height) {
 
-					Color cc = null; // Combined color to be drawn, result of the lighting and shading calculation
+					cc = null;
 
 					float gradient = (float)(x-sx)/(float)(ex-sx);
 					float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
@@ -500,7 +492,11 @@ public class Rasterizer {
 							} else {
 								csp = DARK_SHADING_COLOR; // No specular
 							}
-						} // Else c is the base color passed in arguments and csp won't be used
+						} else { // Else csh is the base color passed in arguments and csp won't be used
+							csh = shadedCol; // Shaded color passed in argument
+							if (csh == null) if (Tracer.error) Tracer.traceError(this.getClass(), "Error shadedCol is null while no interpolation");
+							// TODO specular color to be implemented
+						}
 
 						// Texture interpolation
 						if (texture && t!=null) {
@@ -527,35 +523,35 @@ public class Rasterizer {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
-							// Combine the shaded color and the Texture color
 
-							cc = ColorTools.multColors(c, ctx);
-
-						}
+						} // End Texture interpolation
 
 						// Combine colors with the following formula
-						// Color K = DTA + CDT + S = DT(A+C) + S
-						// D: diffuse color, T: texture, A: Ambient color, C: color of the light source, S: Specular color
-						if (interpolate) {
+						// Color K = DTA + CDT + S = DT(A+C) + S : WRONG old calculation 
+						//Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
+						// D: diffuse color, T: texture, A: Ambient color, C: color of the light source at point, S: Specular color
+						//TODO need to decouple the Ambient light from the shaded color calculation. This is easy as Ambient light do not need any interpolation
+						// This will allow to calculate the CS (shaded*specular
 
-							if (texture && t!=null) {
-								cc = ColorTools.addColors(ColorTools.multColors(csh, ctx), csp);       			
+						if (texture && t!=null) {
+							if (ctx == null) if (Tracer.error) Tracer.traceError(this.getClass(), "Error ctx is null while texture enabled");
+							if (csh == null) if (Tracer.error) Tracer.traceError(this.getClass(), "Error csh is null");
+							if (ambientCol == null) if (Tracer.error) Tracer.traceError(this.getClass(), "Error ambientCol is null");
+							if (lighting.hasSpecular() && csp != null) {
+								cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
 							} else {
-								cc = ColorTools.addColors(csh, csp);	        			
+								cc = ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh));
 							}
-
 						} else {
-
-							if (texture && t!=null) {
-								cc = ColorTools.multColors(c, ctx);
+							if (lighting.hasSpecular() && csp != null) {
+								cc = ColorTools.addColors(ambientCol,ColorTools.addColors(csh, csp));	
 							} else {
-								cc = c;     			
+								cc = ColorTools.addColors(ambientCol,csh);
 							}
 						}
 
 						// Draw the point with calculated Combined Color
 						drawPoint(x, y, z, cc);
-
 					} 
 
 				} else { // Out of zBuffer range (should not happen)
@@ -597,7 +593,6 @@ public class Rasterizer {
 //		}
 
 		// Draw pixel in the View
-		//view.drawPixel(x, y);
 		view.drawPixel(x,y,c);
 
 		// Update zBuffer of this pixel to the new z
@@ -616,31 +611,42 @@ public class Rasterizer {
 		if (Math.abs(y)>graphic.getPixelHalfHeight()) return false;
 		return true;
 	}
+	
+	/**
+	 * This method return the Color resulting from Ambient light
+	 * It is agnostic to any position in space as per definition of Ambient light
+	 * @param baseCol of the surface in this area
+	 * @return Ambient Color
+	 */
+	protected Color computeAmbientColor(Color baseCol) {
+
+		if (lighting != null && lighting.hasAmbient()) {
+			return ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
+		} else {
+			// Default color
+			return DARK_SHADING_COLOR; // Ambient light
+		}
+	}
 
 	/**
-	 * This method calculates the Color for a given normal and a base color of the surface of the Element
-	 * It interfaces with the Lighting object to get the ambient, directional and other types of colors
+	 * This method calculates the Color for a given normal and a base color of the surface of the Element resulting from Directional light
 	 * @param baseCol of the surface in this area
 	 * @param normal of the surface in this area
-	 * @return
+	 * @return the Directional light at point
 	 */
-	protected Color computeShadedColor(Color baseCol, Vector3 normal, float e, Color sc, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+	protected Color computeDirectionalColor(Color baseCol, Vector3 normal, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 
 		// Table of colors to be mixed
-		Color [] c = new Color[2];
-		// Default colors
-		c[0] = DARK_SHADING_COLOR; // Ambient light
-		c[1] = DARK_SHADING_COLOR; // Directional light
+		Color c;
+		
+		// Default color
+		c = DARK_SHADING_COLOR; // Directional light
 
 		if (lighting != null) { // If lighting exists
 
 			// Primary shading: Diffuse Reflection
 
 			float dotNL = 0;
-			// Ambient light
-			if (lighting.hasAmbient()) {
-				c[0] = ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
-			}
 
 			// Directional light
 			if (lighting.hasDirectional()) {
@@ -648,12 +654,12 @@ public class Rasterizer {
 				//TODO Multiple directional colors -> loop
 
 				// Compute the dot product
-				dotNL = (float)(lighting.getDirectionalLight().getLightVector(null)).dot(normal);
+				dotNL = lighting.getDirectionalLight().getLightVector(null).dot(normal.normalize());
 				if (rectoVerso) dotNL = Math.abs(dotNL);
 
 				if (dotNL > 0) {
 					// Directional Light
-					c[1] = ColorTools.multColor(baseCol, dotNL);
+					c = ColorTools.multColor(baseCol, dotNL);
 				}
 			}
 
@@ -661,10 +667,17 @@ public class Rasterizer {
 			return baseCol;
 		}
 
-		// returned color is an addition of Ambient and Directional lights
-		return ColorTools.addColors(c);
+		return c;
 	}
 
+	/**
+	 * @param normal the normal vector
+	 * @param viewer normized vector
+	 * @param e specular exponent
+	 * @param sc specular color
+	 * @param rectoVerso true if this triangle can be seen back side
+	 * @return the specular color
+	 */
 	protected Color computeSpecularColor(Vector3 normal, Vector3 viewer, float e, Color sc, boolean rectoVerso) {
 
 		Color c = DARK_SHADING_COLOR; // Specular reflection from Directional light
@@ -672,14 +685,23 @@ public class Rasterizer {
 
 		// Secondary Shading: Specular reflection (from Directional light)
 		if (e>0) { // If e=0 this is considered as no specular reflection
-			float specular = 0;
+			// R: Reflection vector, L: Light vector, N: Normal vector on the surface. R+L=N+N => R = 2N-L
 			// Calculate reflection vector R = 2N-L and normalize it
-			Vector3 r = normal.times(2.0f).minus(lighting.getDirectionalLight().getLightVector(null)).normalize(); 
+			float dotNL = lighting.getDirectionalLight().getLightNormalizedVector(null).dot(normal.normalize());
+			Vector3 r = (normal.times(2*dotNL)).minus(lighting.getDirectionalLight().getLightNormalizedVector(null)); 
+
 			float dotRV = r.dot(viewer);
-			if (rectoVerso) dotRV = Math.abs(dotRV);
-			if (dotRV<0) dotRV = 0;
-			specular = (float) Math.pow(dotRV, e);
-			c = ColorTools.multColor(spc, specular);
+			if (rectoVerso)
+				dotRV = Math.abs(dotRV);
+			else
+				if (dotRV <0) dotRV = 0; // Clamped to 0 if negative
+			// Compute the dot product
+			//TODO Problem here: the following calculation creates abrupt specular (but it seems normal situation with Gouraud's shading
+			if (dotNL > 0) {
+				float specular = (float) Math.pow(dotRV, e);
+				float intensity = lighting.getDirectionalLight().getIntensity(null);
+				c = ColorTools.multColor(spc, specular*intensity);
+			}
 		}
 		return c;
 	}

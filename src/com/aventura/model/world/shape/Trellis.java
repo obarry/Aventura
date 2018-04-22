@@ -5,6 +5,8 @@ import com.aventura.model.texture.Texture;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.triangle.RectangleMesh;
 
+import com.aventura.model.world.Vertex;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -97,7 +99,6 @@ public class Trellis extends Element {
 		Vector4 position = new Vector4(-width/2,-length/2,0,0);
 		rectangleMesh = new RectangleMesh(this, nx+1, ny+1, tex);
 		initTrellis(position);
-		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
 	}
 
 	/**
@@ -123,7 +124,6 @@ public class Trellis extends Element {
 		}
 		rectangleMesh = new RectangleMesh(this, nx+1, ny+1);
 		initTrellis(position, array);
-		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
 	}
 	
 	/**
@@ -149,7 +149,10 @@ public class Trellis extends Element {
 		}
 		rectangleMesh = new RectangleMesh(this, nx+1, ny+1, tex);
 		initTrellis(position, array);
-		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
+	}
+	
+	public void createGeometry() {
+		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);		
 	}
 
 	protected void initTrellis(Vector4 position) {
@@ -234,5 +237,16 @@ public class Trellis extends Element {
 			}
 		}
 		calculateSubNormals();
+	}
+	
+	/**
+	 * Set Altitude for one point (x,y) of the Trellis
+	 * @param x
+	 * @param y
+	 * @param altitude
+	 */
+	public void setZ(int x, int y, float altitude) {
+		// Select the corresponding Vertex in the RectangleMesh and set the Z altitude of the Vertex
+		rectangleMesh.getVertex(x, y).getPos().setZ(altitude);
 	}
 }

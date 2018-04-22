@@ -66,7 +66,7 @@ public class AmbientLight extends Light {
 
 	@Override
 	public void setLightVector(Vector3 light) {
-		// TODO Auto-generated method stub
+		// No vector for Ambient light nothing to do
 		
 	}
 
@@ -79,6 +79,17 @@ public class AmbientLight extends Light {
 	public void setLightColor(Color c) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public Vector3 getLightNormalizedVector(Vector4 point) {
+		// No direction by definition of Ambient Light
+		return new Vector3(Vector3.ZERO_VECTOR);
+	}
+
+	@Override
+	public void setLightNormalizedVector(Vector3 light) {
+		// No vector for Ambient light nothing to do		
 	}
 
 }

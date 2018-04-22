@@ -9,9 +9,9 @@ public class TestLighting {
 		
 		Lighting lighting = new Lighting();
 		
-		DirectionalLight dl1 = new DirectionalLight(new Vector3(-1,-1,-1), 1);
-		DirectionalLight dl2 = new DirectionalLight(new Vector3(0,0,-1), 1);
-		DirectionalLight dl3 = new DirectionalLight(new Vector3(0.5f,0.5f,-1), 1);
+		DirectionalLight dl1 = new DirectionalLight(new Vector3(-1,-1,-1));
+		DirectionalLight dl2 = new DirectionalLight(new Vector3(0,0,-1));
+		DirectionalLight dl3 = new DirectionalLight(new Vector3(0.5f,0.5f,-1));
 			
 //		lighting.addLight(dl1);
 //		lighting.addLight(dl2);

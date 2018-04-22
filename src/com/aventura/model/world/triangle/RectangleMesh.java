@@ -211,6 +211,8 @@ public class RectangleMesh extends Mesh {
 							// Set texture vectors to newly created triangles
 							t1.setTexture(tex, tv1, tv2, tv3);
 							t2.setTexture(tex, tv3, tv4, tv1);
+							t1.setRectoVerso(!elm.isClosed());
+							t2.setRectoVerso(!elm.isClosed());
 						}
 
 						t1.setColor(this.col);
@@ -247,6 +249,8 @@ public class RectangleMesh extends Mesh {
 							// Set texture vectors to newly created triangles
 							t1.setTexture(tex, tv4, tv1, tv2);
 							t2.setTexture(tex, tv2, tv3, tv4);
+							t1.setRectoVerso(!elm.isClosed());
+							t2.setRectoVerso(!elm.isClosed());
 						}
 
 						t1.setColor(this.col);

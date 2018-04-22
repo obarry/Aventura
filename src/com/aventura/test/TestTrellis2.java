@@ -1,6 +1,5 @@
 package com.aventura.test;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Toolkit;
@@ -12,22 +11,12 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-import com.aventura.math.transform.Translation;
-import com.aventura.math.vector.Tools;
-import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
-import com.aventura.model.light.AmbientLight;
-import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Box;
-import com.aventura.model.world.shape.Cone;
-import com.aventura.model.world.shape.Cube;
-import com.aventura.model.world.shape.Cylinder;
-import com.aventura.model.world.shape.Element;
-import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -59,17 +48,17 @@ import com.aventura.view.View;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestAventura9 {
+public class TestTrellis2 {
 	
-	// View to be displayed
+	// Create the view to be displayed
 	private SwingView view;
 	
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 9");
+		JFrame frame = new JFrame("Test Trellis 2");
 		// Set the size of the frame
-		frame.setSize(1000,600);
+		frame.setSize(1010,630);
 		
 		// Create the view to be displayed
 		view = new SwingView(context, frame);
@@ -98,108 +87,60 @@ public class TestAventura9 {
 		
 		// Create a new World
 		World world = new World();
-		world.setBackgroundColor(Color.DARK_GRAY);
-		Element e;
 		
-		for (int i=-2; i<=2; i++) {
-			for (int j=-2; j<=2; j++) {
-				for (int k=-2; k<=2; k++) {
-										
-					// Create an Element of a random type
-					switch(Math.round((float)Math.random()*5)) {
-					case 0:
-						e = new Cone(1,0.5f,8);
-						e.setColor(Color.YELLOW);
-						break;
-					case 1:
-						e = new Cylinder(1,0.5f,8);
-						e.setColor(Color.CYAN);
-						break;
-					case 2:
-						e = new Sphere(1,8);
-						e.setColor(Color.MAGENTA);
-						break;
-					case 3:
-						e = new Cube(1);
-						e.setColor(Color.PINK);
-						break;
-					case 4:
-						e = new Box(1,0.5f,0.3f);
-						e.setColor(Color.ORANGE);
-						break;
-					case 5:
-						e = new Trellis(1,1,8,8);
-						e.setColor(Color.LIGHT_GRAY);
-						break;
-					default:
-						e = null;
-					}
-					
-					// Translate this element at some i,j,k indices of a 3D cube:
-					Translation t = new Translation(new Vector3(i*2, j*2, k*2));
-					e.setTransformation(t);
+		// Create an Element in the World
+		Trellis trel = new Trellis(3,2,3,2);
+		System.out.println(trel);
+		world.addElement(trel);
 
-					// Add the element to the world
-					world.addElement(e);
-				}
-			}
-		}
-		// Calculate normals
-		world.generate();
-		
 		// World is created
 		return world;
 	}
 
+	public Camera createCamera() {
+		
+		Vector4 eye = new Vector4(0,-5,-2,1);
+		Vector4 poi = new Vector4(0,0,0,1);
+		
+		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		
+		
+		return cam;
+	}
+
 	public Lighting createLight() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,0.8f,0.5f), 1);
-		AmbientLight al = new AmbientLight(0.2f);
-		Lighting lighting = new Lighting(dl, al);
+		Lighting lighting = new Lighting();
 		return lighting;
 	}
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
-
+		
 		System.out.println("********* STARTING APPLICATION *********");
 		
-		// Camera
-		Vector4 eyeA = new Vector4(60,40,20,1);
-		Vector4 eyeB = new Vector4(4,3,2,1);
-		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eyeA, poi, Vector4.Z_AXIS);		
+		Tracer.info = true;
+		Tracer.function = true;
+		
+		TestTrellis2 test = new TestTrellis2();
 				
-		TestAventura9 test = new TestAventura9();
-				
+		System.out.println("********* CREATING WORLD");
 		World world = test.createWorld();
 		Lighting light = test.createLight();
-		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		
+		System.out.println("********* CREATING CAMERA");
+		Camera camera = test.createCamera();
+		
+		System.out.println("********* CREATING GRAPHIC CONTEXT");
+		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 10, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		System.out.println(context);
+		
+		System.out.println("********* CREATING VIEW");
 		View view = test.createView(context);
-
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
-		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
-		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
+		System.out.println("********* CREATING RENDER ENGINE");
+		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
 		renderer.setView(view);
-		int nb_images = 180;
-		for (int i=0; i<=nb_images; i++) {
-			Vector4 eye = Tools.interpolate(eyeA, eyeB, (float)i/nb_images);
-			System.out.println("Interpolation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
-			renderer.render();
-		}
 		
-		for (int i=0; i<=5*nb_images; i++) {
-			float a = (float)Math.PI*2*(float)i/(float)nb_images;
-			Vector4 eye = new Vector4(30*(float)Math.cos(a),15*(float)Math.sin(a),5,1);
-			System.out.println("Rotation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
-			renderer.render();
-		}
-		
+		System.out.println("********* RENDERING !!!");
+		renderer.render();
 		System.out.println("********* ENDING APPLICATION *********");
 
 	}

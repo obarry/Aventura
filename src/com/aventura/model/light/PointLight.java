@@ -76,4 +76,16 @@ public class PointLight extends Light {
 		
 	}
 
+	@Override
+	public Vector3 getLightNormalizedVector(Vector4 point) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setLightNormalizedVector(Vector3 light) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
