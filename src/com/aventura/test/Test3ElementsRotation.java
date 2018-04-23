@@ -25,7 +25,6 @@ import com.aventura.model.world.shape.Cone;
 import com.aventura.model.world.shape.Cube;
 import com.aventura.model.world.shape.Cylinder;
 import com.aventura.model.world.shape.Element;
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -57,7 +56,7 @@ import com.aventura.view.View;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestAventura10 {
+public class Test3ElementsRotation {
 	
 	// View to be displayed
 	private SwingView view;
@@ -65,7 +64,7 @@ public class TestAventura10 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 10");
+		JFrame frame = new JFrame("Test 3 Elements Rotation");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -105,16 +104,13 @@ public class TestAventura10 {
 	public static void main(String[] args) {
 
 		System.out.println("********* STARTING APPLICATION *********");
-		
-		//Tracer.info = true;
-		//Tracer.function = true;
 
 		// Camera
 		Vector4 eye = new Vector4(14,8,4,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestAventura10 test = new TestAventura10();
+		Test3ElementsRotation test = new Test3ElementsRotation();
 		
 		// Create a new World
 		World world = new World();

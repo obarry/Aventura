@@ -494,7 +494,6 @@ public class Rasterizer {
 							}
 						} else { // Else csh is the base color passed in arguments and csp won't be used
 							csh = shadedCol; // Shaded color passed in argument
-							if (csh == null) if (Tracer.error) Tracer.traceError(this.getClass(), "Error shadedCol is null while no interpolation");
 							// TODO specular color to be implemented
 						}
 
@@ -534,9 +533,6 @@ public class Rasterizer {
 						// This will allow to calculate the CS (shaded*specular
 
 						if (texture && t!=null) {
-							if (ctx == null) if (Tracer.error) Tracer.traceError(this.getClass(), "Error ctx is null while texture enabled");
-							if (csh == null) if (Tracer.error) Tracer.traceError(this.getClass(), "Error csh is null");
-							if (ambientCol == null) if (Tracer.error) Tracer.traceError(this.getClass(), "Error ambientCol is null");
 							if (lighting.hasSpecular() && csp != null) {
 								cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
 							} else {

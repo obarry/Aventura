@@ -1,7 +1,5 @@
 package com.aventura.model.world.shape;
 
-import java.awt.Color;
-
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.triangle.CircularMesh;
