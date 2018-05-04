@@ -103,7 +103,7 @@ public class TestSphereTexture3 {
 		
 		System.out.println("********* Creating World");
 		
-		Texture tex = new Texture("resources/test/texture_smiley_1920x1200.jpg");
+		Texture tex = new Texture("resources/texture/texture_smiley_1920x1200.jpg");
 		
 		// Create World
 		World world = new World();

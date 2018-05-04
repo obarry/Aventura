@@ -1,4 +1,4 @@
-package com.aventura.test;
+package com.aventura.demo;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -25,13 +25,14 @@ import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Box;
+import com.aventura.model.world.shape.ClosedCylinder;
 import com.aventura.model.world.shape.Cone;
 import com.aventura.model.world.shape.Cube;
-import com.aventura.model.world.shape.Cylinder;
 import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.shape.Pyramid;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
+import com.aventura.test.TestMultiElementsTexture;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -60,18 +61,17 @@ import com.aventura.view.View;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  * 
- * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
+ * This class is a demo application using Aventura Render Engine API
  */
+public class AventuraDemo {
 
-public class TestMultiElementsTexture {
-	
 	// View to be displayed
 	private SwingView view;
 	
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 15");
+		JFrame frame = new JFrame("AventuraDemo");
 		// Set the size of the frame
 		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
@@ -123,6 +123,7 @@ public class TestMultiElementsTexture {
 		//Texture texmoon = new Texture("resources/texture/texture_moon_2048x1024.jpg");
 		Texture texfoot = new Texture("resources/texture/texture_football_320x160.jpg");
 		Texture texcarpet = new Texture("resources/texture/texture_carpet_600x600.jpg");
+		Texture textop = new Texture("resources/texture/texture_top_can_667x661.jpg");
 	
 		// Camera
 		Vector4 eye = new Vector4(10,6,3,1);
@@ -137,9 +138,9 @@ public class TestMultiElementsTexture {
 		world.setBackgroundColor(Color.BLACK);
 		Element e;
 		
-		for (int i=-1; i<=1; i++) {
-			for (int j=-1; j<=1; j++) {
-				for (int k=-1; k<=1; k++) {
+		for (int i=0; i<=1; i++) {
+			for (int j=0; j<=1; j++) {
+				for (int k=0; k<=1; k++) {
 										
 					// Create an Element of a random type
 					switch((int)(Math.random()*7)) {
@@ -148,7 +149,9 @@ public class TestMultiElementsTexture {
 						break;
 						
 					case 1:
-						e = new Cylinder(1,0.5f,32, texcremedemarron);
+						e = new ClosedCylinder(1,0.5f,32,texcremedemarron);
+						e.setTopTexture(textop);
+						e.setBottomTexture(textop);
 						break;
 						
 					case 2:
@@ -197,7 +200,7 @@ public class TestMultiElementsTexture {
 					}
 					
 					// Translate this element at some i,j,k indices of a 3D cube:
-					Translation t = new Translation(new Vector3(i*2, j*2, k*2));
+					Translation t = new Translation(new Vector3(i*2-1, j*2-1, k*2-1));
 					e.setTransformation(t);
 
 					// Add the element to the world

@@ -111,29 +111,29 @@ public class TestSphereTexture {
 		
 		System.out.println("********* Creating World");
 		
-		//Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
-		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
-		//Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
-		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
-		//Texture tex = new Texture("resources/test/texture_grass_900x600.jpg");
-		//Texture tex = new Texture("resources/test/texture_ground_stone_600x600.jpg");
-		//Texture tex = new Texture("resources/test/texture_snow_590x590.jpg");
-		//Texture tex = new Texture("resources/test/texture_metal_mesh_463x463.jpg");
-		//Texture tex = new Texture("resources/test/texture_old_leather_box_800x610.jpg");
-		//Texture tex = new Texture("resources/test/texture_metal_plate_626x626.jpg");
-		//Texture tex = new Texture("resources/test/texture_stone1_1700x1133.jpg");
-		//Texture tex = new Texture("resources/test/texture_rock_stone_400x450.jpg");
-		//Texture tex = new Texture("resources/test/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
-		//Texture tex = new Texture("resources/test/texture_rust_960x539.jpg");
-		//Texture tex = new Texture("resources/test/texture_carpet_600x600.jpg");
-		//Texture tex = new Texture("resources/test/texture_blue_checkboard_1300x1300.jpg");
-		//Texture tex = new Texture("resources/test/texture_geometry_1024x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_earthtruecolor_nasa_big_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_moon_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_jupiter_2048x1024.jpg");
-		Texture tex = new Texture("resources/test/texture_mars_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_neptune_2048x1024.jpg");
-		//Texture tex = new Texture("resources/test/texture_football_320x160.jpg");
+		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
+		//Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
+		//Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
+		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
+		//Texture tex = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
+		//Texture tex = new Texture("resources/texture/texture_old_leather_box_800x610.jpg");
+		//Texture tex = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
+		//Texture tex = new Texture("resources/texture/texture_stone1_1700x1133.jpg");
+		//Texture tex = new Texture("resources/texture/texture_rock_stone_400x450.jpg");
+		//Texture tex = new Texture("resources/texture/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
+		//Texture tex = new Texture("resources/texture/texture_rust_960x539.jpg");
+		//Texture tex = new Texture("resources/texture/texture_carpet_600x600.jpg");
+		//Texture tex = new Texture("resources/texture/texture_blue_checkboard_1300x1300.jpg");
+		//Texture tex = new Texture("resources/texture/texture_geometry_1024x1024.jpg");
+		//Texture tex = new Texture("resources/texture/texture_earthtruecolor_nasa_big_2048x1024.jpg");
+		//Texture tex = new Texture("resources/texture/texture_moon_2048x1024.jpg");
+		//Texture tex = new Texture("resources/texture/texture_jupiter_2048x1024.jpg");
+		Texture tex = new Texture("resources/texture/texture_mars_2048x1024.jpg");
+		//Texture tex = new Texture("resources/texture/texture_neptune_2048x1024.jpg");
+		//Texture tex = new Texture("resources/texture/texture_football_320x160.jpg");
 		
 		// Create World
 		World world = new World();
