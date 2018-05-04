@@ -61,18 +61,18 @@ public class TestTexture {
 		frame.setLocation(dim.width/2 - frame.getWidth()/2, dim.height/2 - frame.getHeight()/2);
 		
 		// Loading image in order to display the original source
-		//image1 = new ImageIcon("resources/test/texture_damier_600x591.gif").getImage();
-		//image1 = new ImageIcon("resources/test/texture_blueground_204x204.jpg").getImage();
-		image1 = new ImageIcon("resources/test/texture_bricks_204x204.jpg").getImage();
+		//image1 = new ImageIcon("resources/texture/texture_damier_600x591.gif").getImage();
+		//image1 = new ImageIcon("resources/texture/texture_blueground_204x204.jpg").getImage();
+		image1 = new ImageIcon("resources/texture/texture_bricks_204x204.jpg").getImage();
 		int width1 = image1.getWidth(null);
 		int height1 = image1.getHeight(null);
         System.out.println("Height image1: "+image1.getHeight(null));
         System.out.println("Width image1: "+image1.getWidth(null));
 		
 		// Let's now create the Texture object itself, from the same image file (to be selected) 
-		//Texture tex = new Texture("resources/test/texture_damier_600x591.gif");
-		//Texture tex = new Texture("resources/test/texture_blueground_204x204.jpg");
-		Texture tex = new Texture("resources/test/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
 		
 		// This ratio can be adjusted to show the effect of redimensioning the initial image by the Texture object (bilinear filtering algorithm)
 		float ratio = 1.3f;

@@ -93,7 +93,7 @@ public class TestCubeRotation {
 		
 		System.out.println("********* STARTING APPLICATION *********");
 		
-		Texture tex = new Texture("resources/test/texture_woodfloor_160x160.jpg");
+		Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 
 		// Camera
 		Vector4 eye = new Vector4(8,3,2,1);

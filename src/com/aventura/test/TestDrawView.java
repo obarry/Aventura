@@ -91,8 +91,8 @@ public class TestDrawView {
 
 	public static void main(String[] args) {
 		
-		Texture tex = new Texture("resources/test/texture_wood_grain_500x375.jpg");
-		//Texture tex = new Texture("resources/test/texture_drawing_600x600.jpg");
+		Texture tex = new Texture("resources/texture/texture_wood_grain_500x375.jpg");
+		//Texture tex = new Texture("resources/texture/texture_drawing_600x600.jpg");
 		
 		System.out.println("********* STARTING APPLICATION *********");
 		

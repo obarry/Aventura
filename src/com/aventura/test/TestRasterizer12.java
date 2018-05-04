@@ -103,9 +103,9 @@ public class TestRasterizer12 {
 		
 		System.out.println("********* Creating World");
 		
-		Texture tex1 = new Texture("resources/test/texture_bricks_204x204.jpg");
-		Texture tex2 = new Texture("resources/test/texture_blueground_204x204.jpg");
-		Texture tex3 = new Texture("resources/test/texture_woodfloor_160x160.jpg");
+		Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		Texture tex2 = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		Texture tex3 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
 		Box box = new Box(1.6f,2,1.3f);
