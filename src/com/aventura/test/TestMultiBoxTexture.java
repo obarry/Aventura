@@ -141,7 +141,7 @@ public class TestMultiBoxTexture {
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
-		renderer.render();
+		//renderer.render();
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;

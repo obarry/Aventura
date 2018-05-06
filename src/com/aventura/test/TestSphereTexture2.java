@@ -114,12 +114,12 @@ public class TestSphereTexture2 {
 		World world = new World();
 		
 		Sphere earth = new Sphere(12.742f, 48, texearth);
-		earth.setSpecularExp(5);
+		earth.setSpecularExp(4);
 		earth.setSpecularColor(new Color(100,100,100));
 		world.addElement(earth);
 		
 		Sphere moon = new Sphere(3.474f, 48, texmoon);
-		moon.setSpecularExp(5);
+		moon.setSpecularExp(4);
 		moon.setSpecularColor(new Color(100,100,100));
 		Translation t = new Translation(new Vector4(384.4f,0,0,0));
 		moon.setTransformation(t);
@@ -128,7 +128,7 @@ public class TestSphereTexture2 {
 		world.generate();
 		
 		System.out.println("********* Creating light");
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,0), 1.2f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,0), 1.0f);
 		AmbientLight al = new AmbientLight(0.05f);
 		Lighting light = new Lighting(dl, al, true);
 		
