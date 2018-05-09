@@ -125,9 +125,9 @@ public class Box extends Element {
 		
 		// Create RectangleMeshs for each face of the box to wrap each face into Textures
 		// For this create 6 temporary Vertex arrays used to point on the box vertices of each face
-		Vertex [][] bottom_array = new Vertex [][] {{vertices[0][0][0],vertices[1][0][0]},{vertices[0][1][0],vertices[1][1][0]}}; // Z const
+		Vertex [][] bottom_array = new Vertex [][] {{vertices[0][1][0],vertices[0][0][0]},{vertices[1][1][0],vertices[1][0][0]}}; // Z const
 		Vertex [][] top_array    = new Vertex [][] {{vertices[1][1][1],vertices[1][0][1]},{vertices[0][1][1],vertices[0][0][1]}}; // Z const
-		Vertex [][] left_array   = new Vertex [][] {{vertices[0][0][0],vertices[0][1][0]},{vertices[0][0][1],vertices[0][1][1]}}; // X const
+		Vertex [][] left_array   = new Vertex [][] {{vertices[0][1][0],vertices[0][1][1]},{vertices[0][0][0],vertices[0][0][1]}}; // X const
 		Vertex [][] right_array  = new Vertex [][] {{vertices[1][1][1],vertices[1][1][0]},{vertices[1][0][1],vertices[1][0][0]}}; // X const
 		Vertex [][] front_array  = new Vertex [][] {{vertices[0][0][0],vertices[0][0][1]},{vertices[1][0][0],vertices[1][0][1]}}; // Y const
 		Vertex [][] back_array   = new Vertex [][] {{vertices[1][1][0],vertices[1][1][1]},{vertices[0][1][0],vertices[0][1][1]}}; // Y const

@@ -80,14 +80,7 @@ public class Matrix4 {
 	 * @param a the other Matrix
 	 */
 	public Matrix4(Matrix4 a) {
-		// Create the array
-		array = new float[Constants.SIZE_4][Constants.SIZE_4];
-		
-		for (int i=0; i<Constants.SIZE_4; i++) {
-			for (int j=0; j<Constants.SIZE_4; j++) {
-				this.array[i][j] = a.array[i][j];
-			}
-		}
+		set(a);
 	}
 		
 	/**
@@ -133,6 +126,22 @@ public class Matrix4 {
 		if (j<0 || j>Constants.SIZE_4) throw new IndiceOutOfBoundException("Column indice ("+j+") out of bound while setting element ("+i+","+j+") of Matrix4"); 
 		array[i][j] = val;
 	}
+
+	/**
+	 * Set Matrix from another Matrix4
+	 * @param a the other Matrix
+	 */
+	public void set(Matrix4 a) {
+		// Create the array
+		array = new float[Constants.SIZE_4][Constants.SIZE_4];
+		
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				this.array[i][j] = a.array[i][j];
+			}
+		}
+	}
+
 
 	/**
 	 * Get value of an element of the Matrix

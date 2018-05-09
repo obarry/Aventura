@@ -110,22 +110,37 @@ public class TestMultiBoxTexture {
 		// Create World
 		World world = new World();
 		
+		// Create 3 boxes with texture
 		Box elm1 = new Box(2,1.2f,1, tex);
 		Box elm2 = new Box(2,1.2f,1, tex);
 		Box elm3 = new Box(2,1.2f,1, tex);
+		
+		// Set some colors on some faces of the boxes
+		elm1.setLeftColor(Color.PINK);
+		elm2.setColor(Color.CYAN);
+		elm2.setLeftColor(Color.BLUE);
+		elm2.setRightColor(Color.BLUE);
+		elm3.setColor(Color.GREEN);
+		elm3.setLeftColor(Color.DARK_GRAY);
+		elm3.setRightColor(Color.DARK_GRAY);
+		
+		// Add boxes to the World
 		world.addElement(elm1);
 		world.addElement(elm2);
 		world.addElement(elm3);
 		world.setBackgroundColor(new Color(20,10,5));
 		
+		// Generate the world geometry (including vertices and triangles) based on initialization data
+		System.out.println("********* Calculating normals");
+		world.generate();
+		
+		// Print the world and each element's characteristics
 		System.out.println(world);
 		System.out.println(elm1);
 		System.out.println(elm2);
 		System.out.println(elm3);
-		System.out.println("********* Calculating normals");
 		
-		world.generate();
-		
+		// Create some lighting
 		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,0,1f), 0.8f);
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, false);
@@ -135,13 +150,15 @@ public class TestMultiBoxTexture {
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
-		renderer.render();
+		//renderer.render();
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
