@@ -12,7 +12,7 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-//import com.aventura.math.transform.Translation;
+import com.aventura.math.transform.Rotation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -21,8 +21,8 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Cube;
-//import com.aventura.model.world.shape.Cylinder;
+import com.aventura.model.world.shape.ClosedCone;
+
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -51,10 +51,10 @@ import com.aventura.view.View;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  * 
- * This class is a Test class for Rasterizer
+ * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestCubeRotation {
+public class TestClosedConeTexture {
 	
 	// View to be displayed
 	private SwingView view;
@@ -62,7 +62,7 @@ public class TestCubeRotation {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Cube Rotation");
+		JFrame frame = new JFrame("Test Closed Cone with Texture");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -89,80 +89,79 @@ public class TestCubeRotation {
 		return view;
 	}
 
-	public static void main(String[] args) throws InterruptedException {
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
-		
-		Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
+
+//		Tracer.info = true;
+//		Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(8,3,2,1);
-		Vector4 poi = new Vector4(0,0,0,1);
+		Vector4 eye = new Vector4(10,4,10,1);
+		//Vector4 eye = new Vector4(16,6,12,1);
+		//Vector4 eye = new Vector4(3,2,2,1);
+		Vector4 poi = new Vector4(0,0,-0.5f,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestCubeRotation test = new TestCubeRotation();
+		TestClosedConeTexture test = new TestClosedConeTexture();
 		
 		System.out.println("********* Creating World");
 		
+		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
+		Texture tex1 = new Texture("resources/texture/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
+		//Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
+		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
+		Texture tex2 = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
+		//Texture tex2 = new Texture("resources/texture/texture_old_leather_box_800x610.jpg");
+		//Texture tex = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
+		//Texture tex = new Texture("resources/texture/texture_stone1_1700x1133.jpg");
+		//Texture tex = new Texture("resources/texture/texture_rock_stone_400x450.jpg");
+		
+		// Create World
 		World world = new World();
-		Cube cube = new Cube(1, tex);
-		// Set face colors
-		cube.setBottomColor(Color.CYAN);
-		cube.setTopColor(Color.ORANGE);
-		cube.setLeftColor(Color.DARK_GRAY);
-		cube.setRightColor(Color.MAGENTA);
-		cube.setFrontColor(Color.PINK);
-		cube.setBackColor(Color.LIGHT_GRAY);
-		world.addElement(cube);
+		ClosedCone cone = new ClosedCone(3, 2, 24, tex1);
+		cone.setColor(new Color(200,200,255));
+		cone.setSpecularExp(8);
+		cone.setBottomTexture(tex2);
+		world.addElement(cone);
+		world.setBackgroundColor(new Color(10,10,50));
 		
-//		Cylinder cylinder1 = new Cylinder(1, 0.5f, 16);
-//		Translation tl1 = new Translation(new Vector3(1, 1, 1));
-//		cylinder1.setTransformation(tl1);
-//		cylinder1.setColor(new Color(240,50,20));
-//		world.addElement(cylinder1);
-//
-//		Cylinder cylinder2 = new Cylinder(1, 0.1f, 16);
-//		Translation tl2 = new Translation(new Vector3(1, -1, 1));
-//		cylinder2.setTransformation(tl2);
-//		cylinder2.setColor(new Color(240,50,20));
-//		world.addElement(cylinder2);
-		
+		System.out.println(world);
+		System.out.println(cone);
 		System.out.println("********* Calculating normals");
 		world.generate();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,0));
-		AmbientLight al = new AmbientLight(0.5f);
-		Lighting light = new Lighting(dl,al);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
+		AmbientLight al = new AmbientLight(0.3f);
+		Lighting light = new Lighting(dl, al, false);
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		View view = test.createView(gContext);
 
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
-		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
-		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_ENABLED);
-		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
+		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+
+		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
-		System.out.println(renderer.renderStats());
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
-		float a;
 		for (int i=0; i<=3*nb_images; i++) {
-		//for (int i=0; i<1; i++) {
-			a = (float)Math.PI*2*(float)i/(float)nb_images;
-			eye = new Vector4(8*(float)Math.cos(a),8*(float)Math.sin(a),2,1);
-			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
+			cone.setTransformation(r);
 			renderer.render();
-			//System.out.println(renderer.renderStats());
-			Thread.sleep(20);
 		}
 
 		System.out.println("********* ENDING APPLICATION *********");

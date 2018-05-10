@@ -83,8 +83,8 @@ public class Cylinder extends Element {
 		this.half_seg = half_seg;
 		this.tex = tex;
 	}
+	
 	public void createGeometry() {
-		
 		
 		// Create centers
 		this.top_center = new Vector4(0,0,height/2,0);
