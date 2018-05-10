@@ -31,42 +31,38 @@ import com.aventura.model.texture.Texture;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * A Cylinder, closed at top and bottom like a can
+ * A Cone, closed at the bottom by a disc
  * 
  * @author Olivier BARRY
- * @since March 2018
+ * @since May 2018
  */
 
-public class ClosedCylinder extends Cylinder {
+public class ClosedCone extends Cone {
 	
-	protected static final String CLOSED_CYLINDER_DEFAULT_NAME = "closed cylinder";
+	protected static final String CLOSED_CONE_DEFAULT_NAME = "closed cone";
 
-	protected Disc top, bottom = null;
+	protected Disc bottom = null;
 
-	public ClosedCylinder(float height, float ray, int half_seg) {
+	public ClosedCone(float height, float ray, int half_seg) {
 		super(height, ray, half_seg);
 		this.isClosed = true;
-		this.name = CLOSED_CYLINDER_DEFAULT_NAME;
+		this.name = CLOSED_CONE_DEFAULT_NAME;
 		createSubElements();
 	}
 	
-	public ClosedCylinder(float height, float ray, int half_seg, Texture tex) {
+	public ClosedCone(float height, float ray, int half_seg, Texture tex) {
 		super(height, ray, half_seg, tex);
 		this.isClosed = true;
-		this.name = CLOSED_CYLINDER_DEFAULT_NAME;
+		this.name = CLOSED_CONE_DEFAULT_NAME;
 		createSubElements();
 	}
 	
 	protected void createSubElements() {
-		top = new Disc(ray, half_seg);
-		Translation t_top = new Translation(Vector3.Z_AXIS, height/2);
-		top.setTransformation(t_top);
 		
 		bottom = new Disc(ray, half_seg);
 		Translation t_bottom = new Translation(Vector3.Z_AXIS, -height/2);
 		bottom.setTransformation(t_bottom);
 		
-		this.addElement(top);
 		this.addElement(bottom);
 		
 	}
@@ -77,11 +73,6 @@ public class ClosedCylinder extends Cylinder {
 		super.createGeometry();		
 	}
 	
-	@Override
-	public Element setTopTexture(Texture tex) {
-		this.top.setFrontTexture(tex);
-		return this;
-	} 
 
 	@Override
 	public Element setBottomTexture(Texture tex) {
@@ -90,12 +81,6 @@ public class ClosedCylinder extends Cylinder {
 		return this;
 	}
 
-	@Override
-	public Element setTopColor(Color c) {
-		// TODO Auto-generated method stub
-		this.top.setColor(c);
-		return this;
-	}
 
 	@Override
 	public Element setBottomColor(Color c) {

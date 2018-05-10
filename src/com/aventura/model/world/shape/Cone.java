@@ -52,6 +52,7 @@ public class Cone extends Element {
 	float ray;
 	int half_seg;
 	protected Vector4 center, bottom_center;
+	protected Texture tex = null;
 	
 	/**
 	 * Default creation of a Cone around Z axis 
@@ -67,7 +68,6 @@ public class Cone extends Element {
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
 		this.bottom_center = new Vector4(0,0,-height/2,0);
-		createCone(null);
 	}
 
 	/**
@@ -85,16 +85,16 @@ public class Cone extends Element {
 		this.half_seg = half_seg;
 		this.center = new Vector4(0,0,0,0);
 		this.bottom_center = new Vector4(0,0f,-height/2,0);
-		createCone(tex);
+		this.tex = tex;
 	}
 	
 	/**
 	 * Creation of the Cone
 	 * @param t the Texture to apply
 	 */	
-	protected void createCone(Texture t) {
+	public void createGeometry() {
 		
-		mesh = new FanMesh(this,half_seg*2, t); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
+		mesh = new FanMesh(this,half_seg*2, tex); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
 		
 		float alpha = (float)Math.PI/half_seg;
 		
