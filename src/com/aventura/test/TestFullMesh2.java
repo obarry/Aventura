@@ -59,7 +59,7 @@ import com.aventura.view.View;
  *
  */
 
-public class TestFullMesh {
+public class TestFullMesh2 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -67,7 +67,7 @@ public class TestFullMesh {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Full Mesh");
+		JFrame frame = new JFrame("Test Full Mesh 2");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -111,7 +111,7 @@ public class TestFullMesh {
 		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 		Camera camera = new Camera(eye, poi, Vector4.Y_AXIS);		
 				
-		TestFullMesh test = new TestFullMesh();
+		TestFullMesh2 test = new TestFullMesh2();
 		
 		System.out.println("********* Creating World");
 		
@@ -140,18 +140,43 @@ public class TestFullMesh {
 		// V1 +---------------+ V2
 		//
 		
-		Vector4 V1 = new Vector4(-0.5f,-0.5f,0,1);
-		Vector4 V2 = new Vector4(0.5f,-0.5f,0,1);
-		Vector4 V3 = new Vector4(0.5f,0.5f,0,1);
-		Vector4 V4 = new Vector4(-0.5f,0.5f,0,1);
-		Vector4 VC = new Vector4(0,0,0,1);
+		float x1 = -0.7f;
+		float y1 = -0.5f;
+		float x2 = 0.7f;
+		float y2 = 0.5f;
+		float lx = x2-x1;
+		float ly = y2-y1;
+		
+		int nx = 2;
+		int ny = 2;
+		
+		Vector4 V1, V2, V3, V4, VC = null;
 				
-		FullMesh full = new FullMesh(e, 2, 2, tex); // 4 triangles
-		full.getMainVertex(0,0).setPos(V1);
-		full.getMainVertex(1,0).setPos(V2);
-		full.getMainVertex(1,1).setPos(V3);
-		full.getMainVertex(0,1).setPos(V4);
-		full.getSecondaryVertex(0,0).setPos(VC);
+		FullMesh full = new FullMesh(e, nx+1, ny+1, tex);
+		
+		for (int i=0; i<nx; i++) {
+			
+			float xi = x1+i*lx/nx;
+			float xip1 = x1+(i+1)*lx/nx;
+			
+			for (int j=0; j<ny; j++) {
+				
+				float yj = y1+j*ly/ny;
+				float yjp1 = y1+(j+1)*ly/ny;
+				
+				V1 = new Vector4(xi, yj, 0, 1);
+				V2 = new Vector4(xip1, yj, 0, 1);
+				V3 = new Vector4(xip1, yjp1, 0, 1);
+				V4 = new Vector4(xi, yjp1, 0, 1);
+				VC = new Vector4((xi+xip1)/2, (yj+yjp1)/2, 0, 1);
+				
+				full.getMainVertex(i,j).setPos(V1);
+				full.getMainVertex(i+1,j).setPos(V2);
+				full.getMainVertex(i+1,j+1).setPos(V3);
+				full.getMainVertex(i,j+1).setPos(V4);
+				full.getSecondaryVertex(i,j).setPos(VC);				
+			}
+		}
 
 		full.createTriangles();
 				
@@ -173,6 +198,7 @@ public class TestFullMesh {
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
