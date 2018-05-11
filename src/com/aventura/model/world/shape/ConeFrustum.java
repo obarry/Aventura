@@ -69,7 +69,6 @@ public class ConeFrustum extends Element {
 		this.center = new Vector4(0,0,0,0);
 		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
 		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
-		createConeFrustum();
 	}
 
 	/**
@@ -90,7 +89,6 @@ public class ConeFrustum extends Element {
 		this.center = new Vector4(center);
 		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
 		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
-		createConeFrustum();
 	}
 	
 	/**
@@ -111,11 +109,10 @@ public class ConeFrustum extends Element {
 		this.center = center;
 		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
 		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
-		createConeFrustum();
 	}
 
 	
-	protected void createConeFrustum() {
+	public void createGeometry() {
 		
 		vertices = new Vertex[half_seg*2][3]; // (n) x 3 vertices on each circles
 		float alpha = (float)Math.PI/half_seg;
@@ -127,6 +124,9 @@ public class ConeFrustum extends Element {
 		summit = createVertex(new Vector4(0, 0, cone_height/2,  1).plus(center));
 		
 		// Create circle vertices
+		float ray_top = ray*(cone_height - frustum_height)/cone_height;
+		float ray_mid = ray*(cone_height - mid_height)/cone_height;
+		
 		for (int i=0; i<half_seg*2; i++) {
 			
 			float sina = (float)Math.sin(alpha*i);
@@ -136,14 +136,12 @@ public class ConeFrustum extends Element {
 			vertices[i][0] = createVertex(new Vector4(ray*cosa, ray*sina, -cone_height/2, 1).plus(center));
 			
 			// Top circle of the cone
-			float ratio = (cone_height - frustum_height)/cone_height;
-			vertices[i][2] = createVertex(new Vector4(ratio*ray*cosa, ratio*ray*sina, (frustum_height-(cone_height/2)), 1).plus(center));
+			vertices[i][2] = createVertex(new Vector4(ray_top*cosa, ray_top*sina, (frustum_height-(cone_height/2)), 1).plus(center));
 			
 			// Middle circle of the cylinder
 			float sinb = (float)Math.sin(alpha*i+beta);
 			float cosb = (float)Math.cos(alpha*i+beta);
-			ratio = (cone_height - mid_height)/cone_height;
-			vertices[i][1] = createVertex(new Vector4(ratio*ray*cosb, ratio*ray*sinb, (mid_height-(cone_height/2)), 1).plus(center));
+			vertices[i][1] = createVertex(new Vector4(ray_mid*cosb, ray_mid*sinb, (mid_height-(cone_height/2)), 1).plus(center));
 		}
 		
 		// Create Triangles
