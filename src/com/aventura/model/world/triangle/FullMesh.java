@@ -66,6 +66,13 @@ public class FullMesh extends Mesh {
 		super(e);
 	}
 	
+	/**
+	 * Create a FullMesh from sets of vertices
+	 * @param e the referenced Element
+	 * @param vertices_main the array of main vertices
+	 * @param vertices_secondary the array of secondary vertices, centers of the stitches
+	 * @param t  the Texture to apply to the mesh
+	 */
 	public FullMesh(Element e, Vertex[][] vertices_main, Vertex[][] vertices_secondary, Texture t) {
 		super(e);
 		this.vertices_main = vertices_main;
@@ -75,28 +82,41 @@ public class FullMesh extends Mesh {
 		this.tex = t;
 	}
 	
+	/**
+	 * Create a FullMesh of [n,p] stitches
+	 * @param e the referenced Element
+	 * @param n number of stitches in X
+	 * @param p number of stitches in Y
+	 */
 	public FullMesh(Element e, int n, int p) {
 		super(e);
-		this.nbv_x = n;
-		this.nbv_y = p;
-		vertices_main = elm.createVertexMesh(n, p);
-		vertices_secondary = elm.createVertexMesh(n-1, p-1);
+		this.nbv_x = n+1; // Number of vertices is +1 the number of stitches
+		this.nbv_y = p+1; // Number of vertices is +1 the number of stitches
+		vertices_main = elm.createVertexMesh(n+1, p+1);
+		vertices_secondary = elm.createVertexMesh(n, p);
 	}
 	
+	/**
+	 * Create a FullMesh of [n,p] stitches with Texture
+	 * @param e the referenced Element
+	 * @param n number of stitches in X
+	 * @param p number of stitches in Y
+	 * @param t the Texture to apply to the mesh
+	 */
 	public FullMesh(Element e, int n, int p, Texture t) {
 		super(e);
-		this.nbv_x = n;
-		this.nbv_y = p;
+		this.nbv_x = n+1; // Number of vertices is +1 the number of stitches
+		this.nbv_y = p+1; // Number of vertices is +1 the number of stitches
 		this.tex = t;
-		vertices_main = elm.createVertexMesh(n, p);
-		vertices_secondary = elm.createVertexMesh(n-1, p-1);
+		vertices_main = elm.createVertexMesh(n+1, p+1);
+		vertices_secondary = elm.createVertexMesh(n, p);
 	}
 	
 	public void initVertices(int n, int p) {
-		this.nbv_x = n;
-		this.nbv_y = p;
-		vertices_main = elm.createVertexMesh(n, p);
-		vertices_secondary = elm.createVertexMesh(n-1, p-1);
+		this.nbv_x = n+1; // Number of vertices is +1 the number of stitches
+		this.nbv_y = p+1; // Number of vertices is +1 the number of stitches
+		vertices_main = elm.createVertexMesh(n+1, p+1);
+		vertices_secondary = elm.createVertexMesh(n, p);
 	}
 	
 	public void initVertices(Vertex[][] vertices_main, Vertex[][] vertices_secondary) {

@@ -59,7 +59,7 @@ import com.aventura.view.View;
  *
  */
 
-public class TestFullMesh1 {
+public class TestFullMesh3 {
 	
 	// View to be displayed
 	private SwingView view;
@@ -67,7 +67,7 @@ public class TestFullMesh1 {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Full Mesh 1");
+		JFrame frame = new JFrame("Test Full Mesh 3");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -111,14 +111,14 @@ public class TestFullMesh1 {
 		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 		Camera camera = new Camera(eye, poi, Vector4.Y_AXIS);		
 				
-		TestFullMesh1 test = new TestFullMesh1();
+		TestFullMesh3 test = new TestFullMesh3();
 		
 		System.out.println("********* Creating World");
 		
-		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
-		Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
@@ -127,32 +127,73 @@ public class TestFullMesh1 {
 		World world = new World();
 		Element e = new Element();
 		
-		//
-		//   V4              V3
-		//    +---------------+ 
-		//    | \     T3    / |
-		//    |   \       /   |
-		//    |     \ VC/     |
-		//    |  T4   x   T2  |  
-		//    |     /   \     |  
-		//    |   /   T1  \   |
-		//    | /           \ |
-		// V1 +---------------+ V2
+		//           lx2        
+		//     +-----______ 
+		//     |           -----+ 
+		//     |                |
+		// ly1 |                | 
+		//     |                 |  ly2
+		//     |                 | 
+		//     |                  |
+		//     |                  |
+		// x1  +------------------+
+		//     y1       lx1
 		//
 		
-		Vector4 V1 = new Vector4(-0.5f,-0.5f,0,1);
-		Vector4 V2 = new Vector4(0.5f,-0.5f,0,1);
-		Vector4 V3 = new Vector4(0.5f,0.5f,0,1);
-		Vector4 V4 = new Vector4(-0.5f,0.5f,0,1);
-		Vector4 VC = new Vector4(0,0,0,1);
+		// Dimensions of the whole mesh
+		float x1 = -0.7f;
+		float y1 = -0.5f;
+		float lx1 = 1.4f;
+		float ly1 = 1;
+		float lx2 = 1;
+		float ly2 = 0.7f;
+		
+		// Number of stitches in X and Y
+		int nx = 3;
+		int ny = 3;
+		
+		// Instantiation of the FullMesh
+		FullMesh full = new FullMesh(e, nx, ny, tex);
+		
+		// Generation of the vertices
+		Vector4 V1, V2, V3, V4, VC = null;
+		for (int i=0; i<nx; i++) {
+			
+			float x1_i = x1+i*lx1/nx; // xi on bottom segment
+			float x1_ip1 = x1+(i+1)*lx1/nx; // xip1 on bottom segment
+			
+			float x2_i = x1+i*lx2/nx; // xi on top segment
+			float x2_ip1 = x1+(i+1)*lx2/nx; // xip1 on top segment
+			
+			for (int j=0; j<ny; j++) {
 				
-		FullMesh full = new FullMesh(e, 1, 1, tex); // 4 triangles
-		full.getMainVertex(0,0).setPos(V1);
-		full.getMainVertex(1,0).setPos(V2);
-		full.getMainVertex(1,1).setPos(V3);
-		full.getMainVertex(0,1).setPos(V4);
-		full.getSecondaryVertex(0,0).setPos(VC);
+				float xi = x1_i+(x2_i-x1_i)*j/ny; // xi depending on x2 x1 variation
+				float xip1 = x1_ip1+(x2_ip1-x1_ip1)*j/ny;
+				
+				float y1_j = y1+j*ly1/ny; // xi on bottom segment
+				float y1_jp1 = y1+(j+1)*ly1/ny; // xip1 on bottom segment
+				
+				float y2_j = y1+j*ly2/ny; // xi on top segment
+				float y2_jp1 = y1+(j+1)*ly2/ny; // xip1 on top segment
+				
+				float yj = y1_j+(y2_j-y1_j)*i/nx; // yj depending on y2 y1 variation
+				float yjp1 = y1_jp1+(y2_jp1-y1_jp1)*i/nx;
 
+				V1 = new Vector4(xi, yj, 0, 1);
+				V2 = new Vector4(xip1, yj, 0, 1);
+				V3 = new Vector4(xip1, yjp1, 0, 1);
+				V4 = new Vector4(xi, yjp1, 0, 1);
+				VC = new Vector4((xi+xip1)/2, (yj+yjp1)/2, 0, 1);
+				
+				full.getMainVertex(i,j).setPos(V1);
+				full.getMainVertex(i+1,j).setPos(V2);
+				full.getMainVertex(i+1,j+1).setPos(V3);
+				full.getMainVertex(i,j+1).setPos(V4);
+				full.getSecondaryVertex(i,j).setPos(VC);				
+			}
+		}
+
+		// Creation of mesh's triangles
 		full.createTriangles();
 				
 		world.addElement(e);
@@ -173,6 +214,7 @@ public class TestFullMesh1 {
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		

@@ -127,19 +127,19 @@ public class TestFullMesh2 {
 		World world = new World();
 		Element e = new Element();
 		
-		//
-		//   V4              V3
-		//    +---------------+ 
+		//                   x2
+		//    +---------------+ y2 
 		//    | \     T3    / |
 		//    |   \       /   |
-		//    |     \ VC/     |
+		//    |     \   /     |
 		//    |  T4   x   T2  |  
 		//    |     /   \     |  
 		//    |   /   T1  \   |
 		//    | /           \ |
-		// V1 +---------------+ V2
-		//
+		// x1 +---------------+
+		//    y1
 		
+		// Dimensions of the whole mesh
 		float x1 = -0.7f;
 		float y1 = -0.5f;
 		float x2 = 0.7f;
@@ -147,13 +147,15 @@ public class TestFullMesh2 {
 		float lx = x2-x1;
 		float ly = y2-y1;
 		
+		// Number of stitches in X and Y
 		int nx = 2;
 		int ny = 2;
 		
-		Vector4 V1, V2, V3, V4, VC = null;
-				
-		FullMesh full = new FullMesh(e, nx+1, ny+1, tex);
+		// Instantiation of the FullMesh
+		FullMesh full = new FullMesh(e, nx, ny, tex);
 		
+		// Generation of the vertices
+		Vector4 V1, V2, V3, V4, VC = null;
 		for (int i=0; i<nx; i++) {
 			
 			float xi = x1+i*lx/nx;
@@ -178,6 +180,7 @@ public class TestFullMesh2 {
 			}
 		}
 
+		// Creation of mesh's triangles
 		full.createTriangles();
 				
 		world.addElement(e);
