@@ -140,7 +140,13 @@ public class ConeFrustum extends Element {
 	
 	public void createGeometry() {
 		
-		//vertices = new Vertex[half_seg*2][3]; // (n) x 3 vertices on each circles
+		//FullMesh of 1 stitch high and n stitches wide -> (n+1) x 2 vertices for top and bottom circles, n vertices for middle circle
+		//  +-------+-------+ top
+		//  | \   / | \   / |
+		//  |   +   |   x   | middle
+		//  | /   \ | /   \ |
+		//  +-------+-------+ bottom
+
 		fullMesh = new FullMesh(this, half_seg*2, 1, tex);
 		
 		float alpha = (float)Math.PI/half_seg;
@@ -155,62 +161,26 @@ public class ConeFrustum extends Element {
 		float ray_top = ray*(cone_height - frustum_height)/cone_height;
 		float ray_mid = ray*(cone_height - mid_height)/cone_height;
 		
-		for (int i=0; i<half_seg*2; i++) {
+		for (int i=0; i<half_seg*2+1; i++) {
 			
 			float sina = (float)Math.sin(alpha*i);
 			float cosa = (float)Math.cos(alpha*i);
 			
 			// Bottom circle of the cone
-			//vertices[i][0] = createVertex(new Vector4(ray*cosa, ray*sina, -cone_height/2, 1).plus(center));
 			fullMesh.getMainVertex(i, 0).setPos(new Vector4(ray*cosa, ray*sina, -cone_height/2, 1).plus(center));
-			// Top circle of the cone
-			//vertices[i][2] = createVertex(new Vector4(ray_top*cosa, ray_top*sina, (frustum_height-(cone_height/2)), 1).plus(center));
-			fullMesh.getMainVertex(i, 1).setPos(new Vector4(ray_top*cosa, ray_top*sina, (frustum_height-(cone_height/2)), 1).plus(center));
 			
-			// Middle circle of the cylinder
-			float sinb = (float)Math.sin(alpha*i+beta);
-			float cosb = (float)Math.cos(alpha*i+beta);
-			//vertices[i][1] = createVertex(new Vector4(ray_mid*cosb, ray_mid*sinb, (mid_height-(cone_height/2)), 1).plus(center));
-			fullMesh.getSecondaryVertex(i, 0).setPos(new Vector4(ray_mid*cosb, ray_mid*sinb, (mid_height-(cone_height/2)), 1).plus(center));
+			// Top circle of the cone
+			fullMesh.getMainVertex(i, 1).setPos(new Vector4(ray_top*cosa, ray_top*sina, (frustum_height-(cone_height/2)), 1).plus(center));
 		}
 		
-		// Create Triangles
-		
-		// V[i][2] +---+ V[i+1][2]
-		//        /| T3|\
-		//       /  | |  \
-		//      / T2 + T4 \ V[i][1]
-		//     /   /   \   \
-		//    / /   T1   \  \
-		//    +-------------+
-		// V[i][0]      V[i+1][0]
-		
-//		Triangle t1, t2, t3, t4; // local variable
-//		for (int i=0; i<half_seg*2-1; i++) {
-//			
-//			// For each face of the cone, create 4 triangles
-//			t1 = new Triangle(vertices[i][0], vertices[i+1][0], vertices[i][1]);
-//			t2 = new Triangle(vertices[i][0], vertices[i][1], vertices[i][2]);
-//			t3 = new Triangle(vertices[i][2], vertices[i][1], vertices[i+1][2]);
-//			t4 = new Triangle(vertices[i+1][0], vertices[i+1][2], vertices[i][1]);
-//
-//			// Add triangles to Element
-//			this.addTriangle(t1);			
-//			this.addTriangle(t2);			
-//			this.addTriangle(t3);			
-//			this.addTriangle(t4);			
-//		}
-//		// Create 4 last triangles (i->half_seg*2-1, i+1->0)
-//		t1 = new Triangle(vertices[half_seg*2-1][0], vertices[0][0], vertices[half_seg*2-1][1]);
-//		t2 = new Triangle(vertices[half_seg*2-1][0], vertices[half_seg*2-1][1], vertices[half_seg*2-1][2]);
-//		t3 = new Triangle(vertices[half_seg*2-1][2], vertices[half_seg*2-1][1], vertices[0][2]);
-//		t4 = new Triangle(vertices[0][0], vertices[0][2], vertices[half_seg*2-1][1]);
-//		
-//		// Add last triangles
-//		this.addTriangle(t1);			
-//		this.addTriangle(t2);			
-//		this.addTriangle(t3);			
-//		this.addTriangle(t4);			
+		for (int i=0; i<half_seg*2; i++) {
+			
+			float sinb = (float)Math.sin(alpha*i+beta);
+			float cosb = (float)Math.cos(alpha*i+beta);
+			
+			// Middle circle of the cylinder
+			fullMesh.getSecondaryVertex(i, 0).setPos(new Vector4(ray_mid*cosb, ray_mid*sinb, (mid_height-(cone_height/2)), 1).plus(center));
+		}
 	}
 
 	@Override
