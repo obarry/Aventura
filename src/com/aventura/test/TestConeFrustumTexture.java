@@ -162,7 +162,7 @@ public class TestConeFrustumTexture {
 			cone.setTransformation(r);
 			renderer.render();
 		}
-
+		System.out.println(renderer.renderStats());
 		System.out.println("********* ENDING APPLICATION *********");
 	}
 }

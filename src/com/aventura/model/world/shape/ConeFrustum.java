@@ -5,6 +5,7 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.triangle.FullMesh;
+import com.aventura.model.world.triangle.RectangleMesh;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -46,6 +47,7 @@ import com.aventura.model.world.triangle.FullMesh;
 
 public class ConeFrustum extends Element {
 	
+	protected static final String CONE_FRUSTUME_DEFAULT_NAME = "cone frustum";
 	//protected Vertex[][] vertices;
 	protected FullMesh fullMesh;
 	protected Vertex summit;
@@ -62,7 +64,7 @@ public class ConeFrustum extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
 	public ConeFrustum(float cone_height, float frustum_height, float ray, int half_seg) {
-		super();
+		super(CONE_FRUSTUME_DEFAULT_NAME, false); // A Cone Frustum is not a closed Element
 		subelements = null;
 		this.ray = ray;
 		this.cone_height = cone_height;
@@ -82,7 +84,7 @@ public class ConeFrustum extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees circles
 	 */
 	public ConeFrustum(float cone_height, float frustum_height, float ray, int half_seg, Texture tex) {
-		super();
+		super(CONE_FRUSTUME_DEFAULT_NAME, false); // A Cone Frustum is not a closed Element
 		subelements = null;
 		this.ray = ray;
 		this.cone_height = cone_height;
@@ -181,6 +183,9 @@ public class ConeFrustum extends Element {
 			// Middle circle of the cylinder
 			fullMesh.getSecondaryVertex(i, 0).setPos(new Vector4(ray_mid*cosb, ray_mid*sinb, (mid_height-(cone_height/2)), 1).plus(center));
 		}
+		
+		// Create Triangles
+		fullMesh.createTriangles();
 	}
 
 	@Override
@@ -188,7 +193,7 @@ public class ConeFrustum extends Element {
 		Vector4 u, n;
 			
 		// Create normals of vertices
-		for (int i=0; i<half_seg*2; i++) {
+		for (int i=0; i<half_seg*2+1; i++) {
 			
 			// For each bottom and top Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
@@ -197,7 +202,9 @@ public class ConeFrustum extends Element {
 			n.normalize();
 			fullMesh.getMainVertex(i,0).setNormal(n.V3());
 			fullMesh.getMainVertex(i,1).setNormal(n.V3());
-			
+		}
+		
+		for (int i=0; i<half_seg*2; i++) {		
 			// For each middle Vertex
 			if (i==half_seg*2-1) { // Last one
 				//n = vertices[0][2].getPos().minus(vertices[half_seg*2-1][0].getPos()).times(vertices[half_seg*2-1][2].getPos().minus(vertices[0][0].getPos()));				
