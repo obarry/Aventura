@@ -112,22 +112,21 @@ public class TestConeFrustumTexture {
 		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
 		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
 		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
-		Texture tex1 = new Texture("resources/texture/texture_damier_600x591.gif");
+		Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
 		//Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
 		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
-		Texture tex2 = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
-		//Texture tex2 = new Texture("resources/texture/texture_old_leather_box_800x610.jpg");
+		//Texture tex = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
+		//Texture tex = new Texture("resources/texture/texture_old_leather_box_800x610.jpg");
 		//Texture tex = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
 		//Texture tex = new Texture("resources/texture/texture_stone1_1700x1133.jpg");
 		//Texture tex = new Texture("resources/texture/texture_rock_stone_400x450.jpg");
 		
 		// Create World
 		World world = new World();
-		ConeFrustum cone = new ConeFrustum(3, 2, 2, 24);
+		ConeFrustum cone = new ConeFrustum(3, 2, 2, 24, tex);
 		cone.setColor(new Color(200,100,55));
 		cone.setSpecularExp(8);
-		cone.setBottomTexture(tex2);
 		world.addElement(cone);
 		world.setBackgroundColor(new Color(10,10,50));
 		
@@ -145,7 +144,7 @@ public class TestConeFrustumTexture {
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		//rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 
