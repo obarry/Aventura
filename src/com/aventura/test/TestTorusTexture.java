@@ -124,15 +124,15 @@ public class TestTorusTexture {
 		Torus torus1 = new Torus(3,1.5f,32,16, tex);
 		torus1.setColor(new Color(246, 200, 125));
 		//torus1.setColor(new Color(123, 100, 63));
-		torus1.setSpecularExp(30);
+		torus1.setSpecularExp(5);
 		world.addElement(torus1);
 		world.setBackgroundColor(new Color(0,0,55));
 		
-		System.out.println("********* Calculating normals");
+		System.out.println("********* Generating World");
 		world.generate();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1),1.2f);
-		AmbientLight al = new AmbientLight(0.2f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1),1.0f);
+		AmbientLight al = new AmbientLight(0.1f);
 		Lighting light = new Lighting(dl, al, true);
 		
 		GraphicContext gContext = new GraphicContext(1.2f, 0.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
@@ -144,6 +144,7 @@ public class TestTorusTexture {
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		//rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);

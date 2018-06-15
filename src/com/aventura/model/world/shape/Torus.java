@@ -53,6 +53,7 @@ public class Torus extends Element {
 	float torus_ray, pipe_ray;
 	int half_circ, half_seg;
 	protected Vector4 center;
+	protected Texture tex = null;
 	
 	/**
 	 * Default creation of a Cylinder around Z axis 
@@ -67,7 +68,6 @@ public class Torus extends Element {
 		this.pipe_ray = pipe_ray;
 		this. half_circ = half_circ;
 		this.half_seg = half_seg;
-		createTorus(null);
 	}
 
 	/**
@@ -84,16 +84,16 @@ public class Torus extends Element {
 		this.pipe_ray = pipe_ray;
 		this. half_circ = half_circ;
 		this.half_seg = half_seg;
-		createTorus(tex);
+		this.tex = tex;
 	}
 
-	protected void createTorus(Texture t) {
+	public void createGeometry() {
 		
 		// Create Mesh
 		// (half_seg x 2 + 1) vertices on each circles
 		// and (half_circ x 2 + 1) circles
 		// + 1 (duplicate Vertices) is needed for RectangleMesh / Texture overlay
-		rectangleMesh = new RectangleMesh(this, half_circ*2+1, half_seg*2+1, t);
+		rectangleMesh = new RectangleMesh(this, half_circ*2+1, half_seg*2+1, tex);
 		
 		centers = new Vector4[half_circ*2+1];
 		float alpha_circ = (float)Math.PI/half_circ;

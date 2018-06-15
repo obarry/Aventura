@@ -18,7 +18,6 @@ import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
-import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
@@ -114,7 +113,7 @@ public class TestTwoAttachedRings {
 		world.addElement(torus1);
 		world.addElement(torus2);
 		
-		System.out.println("********* Calculating normals");
+		System.out.println("********* Generating World");
 		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1));

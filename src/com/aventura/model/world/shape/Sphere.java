@@ -68,6 +68,7 @@ public class Sphere extends Element {
 	float ray;
 	int half_seg;
 	protected Vector4 center;
+	protected Texture tex = null;
 	
 	public Sphere(float ray, int half_seg) {
 		super(SPHERE_DEFAULT_NAME, true); // A Sphere is a closed Element
@@ -77,7 +78,6 @@ public class Sphere extends Element {
 		this.center = new Vector4(0,0,0,0);
 		this.northPole = new Vector4(0, 0, ray,  1);
 		this.southPole = new Vector4(0, 0, -ray,  1);
-		createSphere(null);
 	}
 
 	public Sphere(float ray, int half_seg, Texture t) {
@@ -88,7 +88,7 @@ public class Sphere extends Element {
 		this.center = new Vector4(0,0,0,0);
 		this.northPole = new Vector4(0, 0, ray,  1);
 		this.southPole = new Vector4(0, 0, -ray,  1);
-		createSphere(t);
+		this.tex = t;
 	}
 
 	/**
@@ -97,10 +97,10 @@ public class Sphere extends Element {
 	 * @param half_seg is half the number of segments for 360 degrees
 	 * @param center to translate the Sphere vertices by the Vector4 center
 	 */
-	protected void createSphere(Texture t) {
+	public void createGeometry() {
 		
 		// Create mesh to wrap Cylinder
-		rectangleMesh = new RectangleMesh(this, half_seg*2+1, half_seg+1, t); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
+		rectangleMesh = new RectangleMesh(this, half_seg*2+1, half_seg+1, tex); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
 		float alpha = (float)(Math.PI/half_seg);
 		
 		// Create Vertices
