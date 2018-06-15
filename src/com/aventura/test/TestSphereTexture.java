@@ -143,7 +143,7 @@ public class TestSphereTexture {
 		sph.setSpecularColor(new Color(100,100,100));
 		world.addElement(sph);
 		
-		System.out.println("********* Calculating normals");
+		System.out.println("********* Generating World");
 		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.9f);
