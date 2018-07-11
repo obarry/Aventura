@@ -133,7 +133,9 @@ public class TestClosedCylinderTexture {
 		cyl.setTransformation(new Rotation((float)Math.PI/4, Vector3.X_AXIS));
 		//cyl.setColor(new Color(200,200,255));
 		cyl.setSpecularExp(8);
-		cyl.setColor(new Color(250,200,150));
+		cyl.setColor(new Color(90,220,160));
+		cyl.setTopColor(new Color(250,200,150));
+		cyl.setBottomColor(new Color(250,200,150));
 		world.addElement(cyl);
 		
 		System.out.println("********* Calculating normals");
