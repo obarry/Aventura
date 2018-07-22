@@ -130,7 +130,7 @@ public class AventuraDemo {
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestMultiElementsTexture test = new TestMultiElementsTexture();
+		AventuraDemo demo = new AventuraDemo();
 				
 		// Create a new World
 		System.out.println("********* Creating World");
@@ -223,7 +223,7 @@ public class AventuraDemo {
 		Lighting lighting = new Lighting(dl, al, true);
 
 		GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
-		View view = test.createView(context);
+		View view = demo.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);

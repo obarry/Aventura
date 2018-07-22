@@ -71,7 +71,7 @@ public class TestMultiElementsTexture {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Aventura 15");
+		JFrame frame = new JFrame("Test Multi Elements with Texture");
 		// Set the size of the frame
 		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
@@ -206,12 +206,13 @@ public class TestMultiElementsTexture {
 			}
 		}
 		
+		// Generate world and normals
+		world.generate();
+
+		// Print World characteristics on console
 		System.out.println(world);
 		for (int i=0; i<world.getNbElements(); i++)
 			System.out.println(world.getElement(i));
-
-		// Calculate normals
-		world.generate();
 
 		// Create lighting
 		System.out.println("********* Creating Lighting");
