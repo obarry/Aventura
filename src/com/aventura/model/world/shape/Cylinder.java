@@ -126,6 +126,6 @@ public class Cylinder extends Element {
 			rectangleMesh.getVertex(i,1).setNormal(n);
 		}
 		
-		calculateSubNormals();
+		//calculateSubNormals();
 	}
 }
