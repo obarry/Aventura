@@ -13,6 +13,7 @@ import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Scaling;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -53,7 +54,7 @@ import com.aventura.view.View;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestBoxTexture {
+public class TestScaling {
 	
 	// View to be displayed
 	private SwingView view;
@@ -61,7 +62,7 @@ public class TestBoxTexture {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Box with Texture");
+		JFrame frame = new JFrame("Test Scaling");
 		// Set the size of the frame
 		frame.setSize(1500,900);
 		
@@ -99,13 +100,13 @@ public class TestBoxTexture {
 //		Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(-4,-8,5,1);
-		//Vector4 eye = new Vector4(16,6,12,1);
+		//Vector4 eye = new Vector4(-4,-8,5,1);
+		Vector4 eye = new Vector4(16,6,12,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestBoxTexture test = new TestBoxTexture();
+		TestScaling test = new TestScaling();
 		
 		System.out.println("********* Creating World");
 		
@@ -118,10 +119,10 @@ public class TestBoxTexture {
 		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
 		//Texture tex = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
 		//Texture tex = new Texture("resources/texture/texture_old_leather_box_800x610.jpg");
-		Texture tex = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
+		//Texture tex = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
 		//Texture tex = new Texture("resources/texture/texture_stone1_1700x1133.jpg");
 		//Texture tex = new Texture("resources/texture/texture_rock_stone_400x450.jpg");
-
+		Texture tex = new Texture("resources/texture/texture_barnwood_576x358.jpg");
 		
 		// Create World
 		World world = new World();
@@ -161,7 +162,9 @@ public class TestBoxTexture {
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
 			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
-			elm.setTransformation(r);
+			Scaling s = new Scaling(1+(float)i/180,1,1);
+			elm.setTransformation(r.times(s));
+			//elm.combineTransformation(s);
 			renderer.render();
 		}
 
