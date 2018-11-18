@@ -23,6 +23,7 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Box;
+import com.aventura.model.world.shape.Sphere;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -127,7 +128,8 @@ public class TestScaling {
 		// Create World
 		World world = new World();
 		
-		Box elm = new Box(3,2,1.5f, tex);
+		//Box elm = new Box(3,2,1.5f, tex);
+		Sphere elm = new Sphere(1f,32, tex);
 		//elm.setColor(new Color(100,200,255));
 		//elm.setSpecularExp(8);
 		world.addElement(elm);
@@ -143,7 +145,7 @@ public class TestScaling {
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -161,9 +163,10 @@ public class TestScaling {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
-			Scaling s = new Scaling(1+(float)i/180,1,1);
-			elm.setTransformation(r.times(s));
+			Rotation r1 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
+			Rotation r2 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+			Scaling s = new Scaling(1+(float)i/180,1+(float)i/180,1);
+			elm.setTransformation(r1.times(r2.times(s)));
 			//elm.combineTransformation(s);
 			renderer.render();
 		}
