@@ -299,6 +299,42 @@ public class Matrix4 {
 	}
 	
 	/**
+	 * Matrix transposition
+	 * @return a new Matrix corresponding to the transposition of the current Matrix 
+	 */
+	public Matrix4 transpose() {
+		Matrix4 r = new Matrix4();
+		
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				try {
+					r.set(i,j, this.get(j, i));
+				} catch (IndiceOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();				
+				}
+			}
+		}
+		return r;
+	}
+
+	/**
+	 * Matrix transposition
+	 *Transpose the current Matrix 
+	 */
+	public void transposeEquals() {
+		float[][] array = new float[Constants.SIZE_4][Constants.SIZE_4];
+		
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				array[i][j] = this.get(j,i);
+			}
+		}
+		this.array = array;
+	}
+
+	/**
 	 * Multiply a Matrix by a scalar B=A*s
 	 * @param s the scalar value
 	 * @return a new Matrix B=A*s
