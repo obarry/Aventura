@@ -230,6 +230,7 @@ public class TestMatrix3 {
 		}
 	}
 	
+
 	@Test
 	public void testMatrix3_times() {
 		System.out.println("***** Test Matrix3 : testMatrix3_times() *****");
@@ -272,5 +273,70 @@ public class TestMatrix3 {
 			fail("Matrix3 C array is out of bound");
 		}
 	}
+	@Test
+	public void testMatrix3_transpose1() {
+		System.out.println("***** Test Matrix3 : testMatrix3_transpose1() *****");
+		
+		float[][] array = new float[3][3];
+		
+		for (int i=0; i<3; i++) {
+			for (int j=0; j<3; j++) {
+				array[i][j] = i-j+2;
+			}
+		}
+		
+		/* 
+		 * A=[[2.0, 1.0, 0.0]
+		 *    [3.0, 2.0, 1.0]
+		 *    [4.0, 3.0, 2.0]]
+		 */ 
 
+		Matrix3 A;
+
+		try {
+			A = new Matrix3(array);
+			System.out.println("A="+A);
+			Matrix3 B = A.transpose();
+			System.out.println("B="+B);
+			Matrix3 C = B.transpose();
+			if (!A.equals(C)) fail("C =transpose(transpose(A)) does not equals A");
+
+		} catch (MatrixArrayWrongSizeException e) {
+			fail("Matrix3 C array is out of bound");
+		}
+	}
+
+	@Test
+	public void testMatrix3_transpose2() {
+		System.out.println("***** Test Matrix3 : testMatrix3_transpose2() *****");
+		
+		float[][] array = new float[3][3];
+		
+		for (int i=0; i<3; i++) {
+			for (int j=0; j<3; j++) {
+				array[i][j] = i-j+2;
+			}
+		}
+		
+		/* 
+		 * A=[[2.0, 1.0, 0.0]
+		 *    [3.0, 2.0, 1.0]
+		 *    [4.0, 3.0, 2.0]]
+		 */ 
+
+		Matrix3 A;
+
+		try {
+			A = new Matrix3(array);
+			System.out.println("A="+A);
+			Matrix3 B = new Matrix3(A); // Keep image of A before transposition
+			A.transposeEquals();
+			System.out.println("A transposed ="+A);
+			Matrix3 C = A.transpose(); // Do not modify A for this transposition
+			if (!B.equals(C)) fail("transpose(transpose(A)) does not equals A");
+
+		} catch (MatrixArrayWrongSizeException e) {
+			fail("Matrix3 C array is out of bound");
+		}
+	}
 }

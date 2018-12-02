@@ -327,6 +327,7 @@ public class Element implements Transformable, Shape {
 	@Override
 	public void setTransformation(Matrix4 transformation) {
 		this.transform = transformation;
+		this.calculateNormals();
 	}
 
 	@Override
@@ -334,6 +335,7 @@ public class Element implements Transformable, Shape {
 		// TODO Auto-generated method stub
 		//this.transform.timesEquals(transformation);
 		this.transform = transformation.times(this.transform);
+		this.calculateNormals();
 	}
 
 	@Override

@@ -73,14 +73,7 @@ public class Matrix3 {
 	 * @param a the other Matrix
 	 */
 	public Matrix3(Matrix3 a) {
-		// Create the array
-		array = new float[Constants.SIZE_3][Constants.SIZE_3];
-		
-		for (int i=0; i<Constants.SIZE_3; i++) {
-			for (int j=0; j<Constants.SIZE_3; j++) {
-				this.array[i][j] = a.array[i][j];
-			}
-		}
+		set(a);
 	}
 		
 	/**
@@ -102,6 +95,21 @@ public class Matrix3 {
 		if (a.length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix3 from array"); 
 		if (a[0].length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array"); 
 		this.array = a;
+	}
+
+	/**
+	 * Set Matrix from another Matrix4
+	 * @param a the other Matrix
+	 */
+	public void set(Matrix3 a) {
+		// Create the array
+		array = new float[Constants.SIZE_3][Constants.SIZE_3];
+		
+		for (int i=0; i<Constants.SIZE_3; i++) {
+			for (int j=0; j<Constants.SIZE_3; j++) {
+				this.array[i][j] = a.array[i][j];
+			}
+		}
 	}
 	
 	@Override
@@ -283,6 +291,43 @@ public class Matrix3 {
 			}
 		}
 	}
+	
+	/**
+	 * Matrix transposition
+	 * @return a new Matrix corresponding to the transposition of the current Matrix 
+	 */
+	public Matrix3 transpose() {
+		Matrix3 r = new Matrix3();
+		
+		for (int i=0; i<Constants.SIZE_3; i++) {
+			for (int j=0; j<Constants.SIZE_3; j++) {
+				try {
+					r.set(i,j, this.get(j, i));
+				} catch (IndiceOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();				
+				}
+			}
+		}
+		return r;
+	}
+
+	/**
+	 * Matrix transposition
+	 *Transpose the current Matrix 
+	 */
+	public void transposeEquals() {
+		float[][] array = new float[Constants.SIZE_3][Constants.SIZE_3];
+		
+		for (int i=0; i<Constants.SIZE_3; i++) {
+			for (int j=0; j<Constants.SIZE_3; j++) {
+				array[i][j] = this.get(j,i);
+			}
+		}
+		this.array = array;
+	}
+
 	
 	/**
 	 * Matrix addition C=A+B. Do not modify this Matrix (A), this Matrix and return C a newly created Matrix.

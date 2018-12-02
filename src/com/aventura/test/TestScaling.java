@@ -23,6 +23,7 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Box;
+import com.aventura.model.world.shape.Sphere;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -96,12 +97,10 @@ public class TestScaling {
 		
 		System.out.println("********* STARTING APPLICATION *********");
 
-//		Tracer.info = true;
-//		Tracer.function = true;
-
 		// Camera
 		//Vector4 eye = new Vector4(-4,-8,5,1);
-		Vector4 eye = new Vector4(16,6,12,1);
+		//Vector4 eye = new Vector4(16,6,12,1);
+		Vector4 eye = new Vector4(6,12,16,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -127,23 +126,24 @@ public class TestScaling {
 		// Create World
 		World world = new World();
 		
-		Box elm = new Box(3,2,1.5f, tex);
+		//Box elm = new Box(3,2,1.5f, tex);
+		//Sphere elm = new Sphere(2f,32, tex);
+		Sphere elm = new Sphere(0.7f,32, tex);
 		//elm.setColor(new Color(100,200,255));
 		//elm.setSpecularExp(8);
 		world.addElement(elm);
 		world.setBackgroundColor(new Color(20,10,5));
 		
+		System.out.println("********* Generating World");		
+		world.generate();
 		System.out.println(world);
 		System.out.println(elm);
-		System.out.println("********* Calculating normals");
-		
-		world.generate();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,0,1f), 0.8f);
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -160,10 +160,13 @@ public class TestScaling {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
+		Scaling s = new Scaling(2,2,1);
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
-			Scaling s = new Scaling(1+(float)i/180,1,1);
-			elm.setTransformation(r.times(s));
+			Rotation r1 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
+			Rotation r2 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+			//Scaling s = new Scaling(1+(float)i/180,1+(float)i/180,1);
+			elm.setTransformation(r1.times(r2.times(s)));
+			//elm.setTransformation(r1.times(r2));
 			//elm.combineTransformation(s);
 			renderer.render();
 		}
