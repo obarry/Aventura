@@ -295,9 +295,10 @@ public class TestMatrix4 {
 		}
 
 		/* 
-		 * A=[[2.0, 1.0, 0.0]
-		 *    [3.0, 2.0, 1.0]
-		 *    [4.0, 3.0, 2.0]]
+		 * A=[[3.0, 2.0, 1.0, 0.0]
+		 *    [4.0, 3.0, 2.0, 1.0]
+		 *    [5.0, 4.0, 3.0, 2.0]
+		 *    [6.0, 5.0, 4.0, 3.0]]
 		 */ 
 
 		Matrix4 A;
@@ -311,4 +312,67 @@ public class TestMatrix4 {
 		if (!B.equals(C)) fail("transpose(transpose(A)) does not equals A");
 
 	}
+	
+	@Test
+	public void testMatrix4_inverse1() {
+		System.out.println("***** Test Matrix4 : testMatrix4_inverse1() *****");
+
+		float[][] array = new float[4][4];
+
+		for (int i=0; i<4; i++) {
+			for (int j=0; j<4; j++) {
+				array[i][j] = i-j+2;
+			}
+		}
+
+		/* 
+		 * A=[[3.0, 2.0, 1.0, 0.0]
+		 *    [4.0, 3.0, 2.0, 1.0]
+		 *    [5.0, 4.0, 3.0, 2.0]
+		 *    [6.0, 5.0, 4.0, 3.0]]
+		 */ 
+
+		Matrix4 A;
+
+		A = new Matrix4(array);
+		System.out.println("A="+A);
+		Matrix4 B = A.inverse(); // Calculate inverse
+		System.out.println("B="+B);
+		Matrix4 C = B.inverse(); // Inverse the inverse
+		System.out.println("C ="+C);
+		if (!B.equals(C)) fail("inverse(inverse(A)) does not equals A");
+
+	}
+	
+	@Test
+	public void testMatrix4_inverse2() {
+		System.out.println("***** Test Matrix4 : testMatrix4_inverse2() *****");
+
+		float[][] array = new float[4][4];
+
+		for (int i=0; i<4; i++) {
+			for (int j=0; j<4; j++) {
+				array[i][j] = i-j+2;
+			}
+		}
+
+		/* 
+		 * A=[[3.0, 2.0, 1.0, 0.0]
+		 *    [4.0, 3.0, 2.0, 1.0]
+		 *    [5.0, 4.0, 3.0, 2.0]
+		 *    [6.0, 5.0, 4.0, 3.0]]
+		 */ 
+
+		Matrix4 A;
+
+		A = new Matrix4(array);
+		System.out.println("A="+A);
+		Matrix4 B = A.inverse(); // Calculate inverse
+		System.out.println("B="+B);
+		Matrix4 C = B.times(A); // Inverse the inverse
+		System.out.println("C ="+C);
+		if (!C.equals(Matrix4.IDENTITY)) fail("A.inverse(A) does not equals I");
+
+	}
+	
 }
