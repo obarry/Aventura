@@ -462,4 +462,67 @@ public class Matrix4 {
 		return r;
 	}
 	
+	public Matrix4 inverse() {
+		Matrix4 identity = new Matrix4(IDENTITY);
+		Matrix4 matrix = new Matrix4(this); // copy of the current Matrix to not modify it
+
+		//methode du pivot de gauss
+		int r = -1; //indiceLigneDernierPivot
+
+		try {
+			// parcours de toutes les colonnes
+			for (int j = 0; j < Constants.SIZE_4; j++) { // colonne
+				int k = indiceOfMaxColonne(this, j); // maxColonne
+				float pivot = matrix.get(k,j);
+				if (pivot != 0) {
+					r++;
+					// Change ligne k et r
+					float tmpPivot;
+					if (k != r) {
+						for (int i = 0; i < Constants.SIZE_4; i++) {
+							tmpPivot = matrix.get(k,i);
+							matrix.set(k,i,matrix.get(r,i));
+							matrix.set(r,i, tmpPivot);
+							tmpPivot = identity.get(k,i);
+							identity.set(k,i, identity.get(r,i));
+							identity.set(r,i, tmpPivot);
+						}
+						// division de la ligne k par pivot
+						for (int jTmp = 0; jTmp < Constants.SIZE_4; jTmp++) {
+							matrix.set(k, jTmp, matrix.get(k, jTmp)/ pivot);
+							identity.set(k, jTmp, identity.get(k, jTmp)/pivot);
+						}
+					}
+					for (int i = 0; i < Constants.SIZE_4; i++) {
+						if (i != r) {
+							// soustraire la ligne i à la ligne r multiplié par matrice[i, j]
+							for (int tmpColonne = 0; tmpColonne < Constants.SIZE_4; tmpColonne++) {
+								matrix.set(i,tmpColonne, matrix.get(i,tmpColonne) - matrix.get(r,tmpColonne) * matrix.get(i,j));
+								identity.set(i,tmpColonne,  identity.get(i,tmpColonne) - identity.get(r,tmpColonne) * matrix.get(i,j));
+							}
+						}
+					}
+				}
+			}
+		} catch (IndiceOutOfBoundException e) {
+			// Do nothing, this won't happen as all arrays are controlled in size
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+			e.printStackTrace();
+		}
+		return identity;
+	}
+	
+	protected int indiceOfMaxColonne(Matrix4 m, int colonne) {
+        double max = m.get(0, colonne);
+        int indiceMax = 0;
+        for (int i=1; i < Constants.SIZE_4; i++) {
+            if (max < Math.abs(m.get(i, colonne))) {
+                max = Math.abs(m.get(i,colonne));
+                indiceMax = i;
+            }
+        }
+        return indiceMax;
+}
+
+	
 }
