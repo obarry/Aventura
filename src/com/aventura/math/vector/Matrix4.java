@@ -462,10 +462,41 @@ public class Matrix4 {
 		return r;
 	}
 	
-	public Matrix4 inverse() {
+	public Matrix4 inverse() throws NotInvertibleMatrixException {
 		Matrix4 identity = new Matrix4(IDENTITY);
 		Matrix4 matrix = new Matrix4(this); // copy of the current Matrix to not modify it
+		
+		/* Methode du Pivot de Gauss
 
+		L’algorithme du pivot de Gauss se déroule de la façon suivante :
+		— on choisit un pivot non nul dans la première colonne, disons sur la ligne i;
+		— on échange la première et la i-ème ligne ;
+		— on effectue les opérations suivantes sur les lignes 2 ≤ k ≤ n : Lk ← Lk − (ak1/a11) * L1 ;
+		— on passe à la colonne suivante ;
+		À la colonne j, on effectue les opérations suivantes :
+		— on choisit un pivot non nul dans la colonne j dans une ligne d’indice supérieur (≥) à j ;
+		— on ramène le pivot sur la ligne j en effectuant éventuellement un échange de lignes ;
+		— on effectue les opérations suivantes sur les lignes j < k ≤ n : Lk ← Lk − (akj/ajj) * Lj.
+		
+		Ces opérations ont pour effet de transformer le système en un système triangulaire. Une fois arrivé à un système
+		triangulaire de la forme :
+			a∗11.u1  + 	a∗12.u2  + · · · +	a∗1n.un = b∗1
+						a∗22.u2  + · · · +	a∗2n.un = b∗2
+						.
+							.
+								.
+											a∗n.nun = b∗n
+		il suffit d’effectuer les opérations suivantes :
+		
+			un = b∗n/ a∗nn										(1)
+			un−1 = (1 / a∗n−1,n−1) * (b∗n−1 − a∗n−1,nun)			(2)
+				.
+				.
+				. 												(3)
+			u1 = (1 / a∗11) * (b∗1 − a∗12u2 − · · · − a∗1nun)	(4)
+
+		 */
+		
 		//methode du pivot de gauss
 		int r = -1; //indiceLigneDernierPivot
 
@@ -502,6 +533,8 @@ public class Matrix4 {
 							}
 						}
 					}
+				} else { // pivot is null
+					throw new NotInvertibleMatrixException();
 				}
 			}
 		} catch (IndiceOutOfBoundException e) {

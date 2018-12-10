@@ -336,11 +336,15 @@ public class TestMatrix4 {
 
 		A = new Matrix4(array);
 		System.out.println("A="+A);
-		Matrix4 B = A.inverse(); // Calculate inverse
-		System.out.println("B="+B);
-		Matrix4 C = B.inverse(); // Inverse the inverse
-		System.out.println("C ="+C);
-		if (!B.equals(C)) fail("inverse(inverse(A)) does not equals A");
+		try {
+			Matrix4 B = A.inverse(); // Calculate inverse
+			System.out.println("B="+B);
+			Matrix4 C = B.inverse(); // Inverse the inverse
+			System.out.println("C ="+C);
+			if (!B.equals(C)) fail("inverse(inverse(A)) does not equals A");
+		} catch (NotInvertibleMatrixException e) {
+			fail("Not invertible Matrix");
+		}
 
 	}
 	
@@ -367,11 +371,15 @@ public class TestMatrix4 {
 
 		A = new Matrix4(array);
 		System.out.println("A="+A);
-		Matrix4 B = A.inverse(); // Calculate inverse
-		System.out.println("B="+B);
-		Matrix4 C = B.times(A); // Inverse the inverse
-		System.out.println("C ="+C);
-		if (!C.equals(Matrix4.IDENTITY)) fail("A.inverse(A) does not equals I");
+		try {
+			Matrix4 B = A.inverse(); // Calculate inverse
+			System.out.println("B="+B);
+			Matrix4 C = B.times(A); // Inverse the inverse
+			System.out.println("C ="+C);
+			if (!C.equals(Matrix4.IDENTITY)) fail("A.inverse(A) does not equals I");
+		} catch (NotInvertibleMatrixException e) {
+			fail("Not invertible Matrix");
+		}
 
 	}
 	
