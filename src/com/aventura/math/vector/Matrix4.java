@@ -462,6 +462,36 @@ public class Matrix4 {
 		return r;
 	}
 	
+	/**
+	 * Swap rows a and b of the matrix
+	 * @param a first row to swap
+	 * @param b second row to swap
+	 */
+	public void swapRows(int a, int b) throws IndiceOutOfBoundException {
+		if (a<0 || a>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while swapping Row ("+a+") of Matrix4"); 
+		if (b<0 || b>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while swapping Row ("+b+") of Matrix4"); 
+		float row_a;
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			row_a = this.array[i][a];
+			this.array[i][a] = this.array[i][b];
+			this.array[i][a] = row_a;
+		}
+	}
+	
+	/**
+	 * Multiply row a by value s
+	 * @param a row
+	 * @param s value
+	 * @throws IndiceOutOfBoundException
+	 */
+	public void timesRow(int a, float s) throws IndiceOutOfBoundException {
+		if (a<0 || a>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while multiplying Row ("+a+") of Matrix4"); 
+		
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			this.array[i][a]*=s;
+		}
+	}
+	
 	public Matrix4 inverse() throws NotInvertibleMatrixException {
 		Matrix4 identity = new Matrix4(IDENTITY);
 		Matrix4 matrix = new Matrix4(this); // copy of the current Matrix to not modify it
@@ -496,6 +526,46 @@ public class Matrix4 {
 			u1 = (1 / a∗11) * (b∗1 − a∗12u2 − · · · − a∗1nun)	(4)
 
 		 */
+		
+		// Browsing columns one by one
+		for (int j=0; j<Constants.SIZE_4; j++) {
+			// Let's choose the first non null pivot in the column on row i
+			int i=j;
+			float pivot = 0;
+			for (; i < Constants.SIZE_4; i++) {
+				pivot = matrix.get(i,j);
+				if (pivot != 0) break; // break once first non null pivot is found
+			}
+			if (pivot == 0) throw new NotInvertibleMatrixException();
+			// Let's swap the rows j and i
+			if (i != j) {
+				try {
+					matrix.swapRows(i,j);
+					identity.swapRows(i,j);
+				} catch (IndiceOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();
+				}
+			}
+			try {
+				for (int k=j; k < Constants.SIZE_4; k++) {
+					for (int col=0; col < Constants.SIZE_4; col++) {
+						float coef_matrix = matrix.get(k, j)/matrix.get(j, j);
+						float coef_identity = identity.get(k, j)/identity.get(j, j);
+						matrix.set(k,col, matrix.get(k,col) - coef_matrix*matrix.get(j, col));
+						identity.set(k,col, identity.get(k,col) - coef_identity*matrix.get(j, col));
+					}
+				}
+			} catch (IndiceOutOfBoundException e) {
+				// Do nothing, this won't happen as all arrays are controlled in size
+				if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+				e.printStackTrace();
+			}
+
+		}
+		
+		
 		
 		//methode du pivot de gauss
 		int r = -1; //indiceLigneDernierPivot
