@@ -45,8 +45,6 @@ public class TestVector3Matrix3 {
 			
 		} catch (VectorArrayWrongSizeException e) {
 			fail("Vector V1 array is out of bound");
-		} catch (MatrixArrayWrongSizeException e) {
-		fail("Matrix3 A array is out of bound");
 		} catch (IndiceOutOfBoundException e) {
 			fail("V2 indice out of bound");		
 		}
@@ -83,8 +81,6 @@ public class TestVector3Matrix3 {
 			System.out.println("V2="+V2);
 			if (!(V2.get(0) == 3.0 && V2.get(1) == 4.0 && V2.get(2) == 5.0)) fail("V2 does not equals to third column");
 			
-		} catch (MatrixArrayWrongSizeException e) {
-		fail("Matrix3 A array is out of bound");
 		} catch (IndiceOutOfBoundException e) {
 			fail("V2 indice out of bound");		
 		}
