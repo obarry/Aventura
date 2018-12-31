@@ -1,4 +1,5 @@
-package com.aventura.math;
+
+package com.aventura.math.vector;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -25,18 +26,32 @@ package com.aventura.math;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
 **/
+public class NotInvertibleMatrixException extends Vector3DException {
 
-public interface Constants {
-	
-	public static final int SIZE_2 = 2;
-	public static final int SIZE_3 = 3;
-	public static final int SIZE_4 = 4;
-	
-	public static final int X_axis = 0;
-	public static final int Y_axis = 1;
-	public static final int Z_axis = 2;
-	
-	public static final float EPSILON = (float) 1.0E-6;
-	
+	public NotInvertibleMatrixException() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public NotInvertibleMatrixException(String arg0) {
+		super(arg0);
+		// TODO Auto-generated constructor stub
+	}
+
+	public NotInvertibleMatrixException(Throwable arg0) {
+		super(arg0);
+		// TODO Auto-generated constructor stub
+	}
+
+	public NotInvertibleMatrixException(String arg0, Throwable arg1) {
+		super(arg0, arg1);
+		// TODO Auto-generated constructor stub
+	}
+
+	public NotInvertibleMatrixException(String arg0, Throwable arg1, boolean arg2,
+			boolean arg3) {
+		super(arg0, arg1, arg2, arg3);
+		// TODO Auto-generated constructor stub
+	}
 
 }
+
