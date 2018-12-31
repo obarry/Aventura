@@ -121,9 +121,9 @@ public class Matrix4 {
 	 * @param j column indice
 	 * @param val value to set
 	 */
-	public void set(int i, int j, float val) throws IndiceOutOfBoundException {
-		if (i<0 || i>Constants.SIZE_4) throw new IndiceOutOfBoundException("Row indice ("+i+") out of bound while setting element ("+i+","+j+") of Matrix4"); 
-		if (j<0 || j>Constants.SIZE_4) throw new IndiceOutOfBoundException("Column indice ("+j+") out of bound while setting element ("+i+","+j+") of Matrix4"); 
+	public void set(int i, int j, float val) {
+//		if (i<0 || i>Constants.SIZE_4) throw new IndiceOutOfBoundException("Row indice ("+i+") out of bound while setting element ("+i+","+j+") of Matrix4"); 
+//		if (j<0 || j>Constants.SIZE_4) throw new IndiceOutOfBoundException("Column indice ("+j+") out of bound while setting element ("+i+","+j+") of Matrix4"); 
 		array[i][j] = val;
 	}
 
@@ -259,7 +259,22 @@ public class Matrix4 {
 			}
 		}
 		return true;
+	}
+	
+	/**
+	 * Compare this Matrix with another
+	 * @param B the other Matrix
+	 * @param epsilon a very small threshold value to allow rounding errors
+	 * @return true if all the elements of this Matrix are equals to the elements of B
+	 */
+	public boolean equalsEpsilon(Matrix4 B, float epsilon) {
 		
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				if (Math.abs(this.get(i,j) - B.get(i,j)) > epsilon) return false;
+			}
+		}
+		return true;
 	}
 	
 	/**
@@ -272,13 +287,13 @@ public class Matrix4 {
 		
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
-				try {
+//				try {
 					r.set(i,j, this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j) + this.get(i,3)*b.get(3, j));
-				} catch (IndiceOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();				
-				}
+//				} catch (IndiceOutOfBoundException e) {
+//					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
+//					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+//					e.printStackTrace();				
+//				}
 			}
 		}
 		return r;
@@ -307,13 +322,13 @@ public class Matrix4 {
 		
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
-				try {
+//				try {
 					r.set(i,j, this.get(j, i));
-				} catch (IndiceOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();				
-				}
+//				} catch (IndiceOutOfBoundException e) {
+//					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
+//					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+//					e.printStackTrace();				
+//				}
 			}
 		}
 		return r;
@@ -343,13 +358,13 @@ public class Matrix4 {
 		Matrix4 r = new Matrix4();
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
-				try {
+//				try {
 					r.set(i,j, this.array[i][j]*s);
-				} catch (IndiceOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();				
-				}
+//				} catch (IndiceOutOfBoundException e) {
+//					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
+//					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+//					e.printStackTrace();				
+//				}
 			}
 		}
 		return r;
@@ -376,13 +391,13 @@ public class Matrix4 {
 		Matrix4 r = new Matrix4();
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
-				try {
+//				try {
 					r.set(i,j, this.array[i][j]+B.get(i,j));
-				} catch (IndiceOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();				
-				}
+//				} catch (IndiceOutOfBoundException e) {
+//					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
+//					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+//					e.printStackTrace();				
+//				}
 			}
 		}
 		return r;		
@@ -409,13 +424,13 @@ public class Matrix4 {
 		Matrix4 r = new Matrix4();
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
-				try {
+//				try {
 					r.set(i,j, this.array[i][j]-B.get(i,j));
-				} catch (IndiceOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();				
-				}
+//				} catch (IndiceOutOfBoundException e) {
+//					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
+//					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+//					e.printStackTrace();				
+//				}
 			}
 		}
 		return r;		
@@ -467,19 +482,19 @@ public class Matrix4 {
 	 * @param a first row to swap
 	 * @param b second row to swap
 	 */
-	public void swapRows(int a, int b) throws IndiceOutOfBoundException {
-		if (a<0 || a>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while swapping Row ("+a+") of Matrix4"); 
-		if (b<0 || b>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while swapping Row ("+b+") of Matrix4"); 
+	public void swapRows(int a, int b) {
+//		if (a<0 || a>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while swapping Row ("+a+") of Matrix4"); 
+//		if (b<0 || b>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while swapping Row ("+b+") of Matrix4"); 
 		float row_a;
-		for (int i=0; i<Constants.SIZE_4; i++) {
-			row_a = this.array[i][a];
-			this.array[i][a] = this.array[i][b];
-			this.array[i][a] = row_a;
+		for (int j=0; j<Constants.SIZE_4; j++) {
+			row_a = this.array[a][j];
+			this.array[a][j] = this.array[b][j];
+			this.array[b][j] = row_a;
 		}
 	}
 	
 	/**
-	 * Multiply row a by value s
+	 * Multiply entire row a by value s
 	 * @param a row
 	 * @param s value
 	 * @throws IndiceOutOfBoundException
@@ -487,140 +502,64 @@ public class Matrix4 {
 	public void timesRow(int a, float s) throws IndiceOutOfBoundException {
 		if (a<0 || a>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while multiplying Row ("+a+") of Matrix4"); 
 		
-		for (int i=0; i<Constants.SIZE_4; i++) {
-			this.array[i][a]*=s;
+		for (int j=0; j<Constants.SIZE_4; j++) {
+			this.array[a][j]*=s;
 		}
 	}
 	
 	public Matrix4 inverse() throws NotInvertibleMatrixException {
 		Matrix4 identity = new Matrix4(IDENTITY);
-		Matrix4 matrix = new Matrix4(this); // copy of the current Matrix to not modify it
+		Matrix4 matrix = new Matrix4(this); // copy of the current Matrix to not modify the original
 		
-		/* Methode du Pivot de Gauss
-
-		L’algorithme du pivot de Gauss se déroule de la façon suivante :
-		— on choisit un pivot non nul dans la première colonne, disons sur la ligne i;
-		— on échange la première et la i-ème ligne ;
-		— on effectue les opérations suivantes sur les lignes 2 ≤ k ≤ n : Lk ← Lk − (ak1/a11) * L1 ;
-		— on passe à la colonne suivante ;
-		À la colonne j, on effectue les opérations suivantes :
-		— on choisit un pivot non nul dans la colonne j dans une ligne d’indice supérieur (≥) à j ;
-		— on ramène le pivot sur la ligne j en effectuant éventuellement un échange de lignes ;
-		— on effectue les opérations suivantes sur les lignes j < k ≤ n : Lk ← Lk − (akj/ajj) * Lj.
-		
-		Ces opérations ont pour effet de transformer le système en un système triangulaire. Une fois arrivé à un système
-		triangulaire de la forme :
-			a∗11.u1  + 	a∗12.u2  + · · · +	a∗1n.un = b∗1
-						a∗22.u2  + · · · +	a∗2n.un = b∗2
-						.
-							.
-								.
-											a∗n.nun = b∗n
-		il suffit d’effectuer les opérations suivantes :
-		
-			un = b∗n/ a∗nn										(1)
-			un−1 = (1 / a∗n−1,n−1) * (b∗n−1 − a∗n−1,nun)			(2)
-				.
-				.
-				. 												(3)
-			u1 = (1 / a∗11) * (b∗1 − a∗12u2 − · · · − a∗1nun)	(4)
-
-		 */
+		// Methode du Pivot de Gauss
+		// From this reference:  https://fr.wikipedia.org/wiki/%C3%89limination_de_Gauss-Jordan
+				
+		int r = 0; // last pivot row
+		float pivot = 0; // Pivot value
 		
 		// Browsing columns one by one
 		for (int j=0; j<Constants.SIZE_4; j++) {
-			// Let's choose the first non null pivot in the column on row i
-			int i=j;
-			float pivot = 0;
-			for (; i < Constants.SIZE_4; i++) {
-				pivot = matrix.get(i,j);
-				if (pivot != 0) break; // break once first non null pivot is found
-			}
+			int k = indiceOfMaxRowInColumn(matrix,j, r);
+			pivot = matrix.get(k, j); // Pivot
+			System.out.println("Indice of max row = "+k+" for iteration j="+j+" Pivot = "+pivot);
+			
 			if (pivot == 0) throw new NotInvertibleMatrixException();
-			// Let's swap the rows j and i
-			if (i != j) {
-				try {
-					matrix.swapRows(i,j);
-					identity.swapRows(i,j);
-				} catch (IndiceOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();
-				}
+			// Else if pivot is not null then continue
+			
+			// Divide all the row by the pivot to reduce the pivot to 1
+			for (int col=0; col < Constants.SIZE_4; col++) {
+				matrix.set(k,col, matrix.get(k,col)/pivot);
+				identity.set(k,col, identity.get(k,col)/pivot);
 			}
-			try {
-				for (int k=j; k < Constants.SIZE_4; k++) {
+			// Let's swap the rows k and r
+			if (r != k) {
+				matrix.swapRows(r,k);
+				identity.swapRows(r,k);
+			}
+			for (int i=0; i<Constants.SIZE_4; i++) {
+				if (i != r) {
+					float matrix_ij = matrix.get(i, j);
 					for (int col=0; col < Constants.SIZE_4; col++) {
-						float coef_matrix = matrix.get(k, j)/matrix.get(j, j);
-						float coef_identity = identity.get(k, j)/identity.get(j, j);
-						matrix.set(k,col, matrix.get(k,col) - coef_matrix*matrix.get(j, col));
-						identity.set(k,col, identity.get(k,col) - coef_identity*matrix.get(j, col));
-					}
-				}
-			} catch (IndiceOutOfBoundException e) {
-				// Do nothing, this won't happen as all arrays are controlled in size
-				if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-				e.printStackTrace();
-			}
-
-		}
-		
-		
-		
-		//methode du pivot de gauss
-		int r = -1; //indiceLigneDernierPivot
-
-		try {
-			// parcours de toutes les colonnes
-			for (int j = 0; j < Constants.SIZE_4; j++) { // colonne
-				int k = indiceOfMaxColonne(this, j); // maxColonne
-				float pivot = matrix.get(k,j);
-				if (pivot != 0) {
-					r++;
-					// Change ligne k et r
-					float tmpPivot;
-					if (k != r) {
-						for (int i = 0; i < Constants.SIZE_4; i++) {
-							tmpPivot = matrix.get(k,i);
-							matrix.set(k,i,matrix.get(r,i));
-							matrix.set(r,i, tmpPivot);
-							tmpPivot = identity.get(k,i);
-							identity.set(k,i, identity.get(r,i));
-							identity.set(r,i, tmpPivot);
-						}
-						// division de la ligne k par pivot
-						for (int jTmp = 0; jTmp < Constants.SIZE_4; jTmp++) {
-							matrix.set(k, jTmp, matrix.get(k, jTmp)/ pivot);
-							identity.set(k, jTmp, identity.get(k, jTmp)/pivot);
-						}
-					}
-					for (int i = 0; i < Constants.SIZE_4; i++) {
-						if (i != r) {
-							// soustraire la ligne i à la ligne r multiplié par matrice[i, j]
-							for (int tmpColonne = 0; tmpColonne < Constants.SIZE_4; tmpColonne++) {
-								matrix.set(i,tmpColonne, matrix.get(i,tmpColonne) - matrix.get(r,tmpColonne) * matrix.get(i,j));
-								identity.set(i,tmpColonne,  identity.get(i,tmpColonne) - identity.get(r,tmpColonne) * matrix.get(i,j));
-							}
-						}
-					}
-				} else { // pivot is null
-					throw new NotInvertibleMatrixException();
+						matrix.set(i,col, matrix.get(i,col) - matrix.get(r,col)*matrix_ij);
+						identity.set(i,col, identity.get(i,col) - identity.get(r,col)*matrix_ij);
+					}					
 				}
 			}
-		} catch (IndiceOutOfBoundException e) {
-			// Do nothing, this won't happen as all arrays are controlled in size
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-			e.printStackTrace();
+			r++;
 		}
+		
+		System.out.println("Matrice transformee en I =\n"+matrix);
+
 		return identity;
 	}
 	
-	protected int indiceOfMaxColonne(Matrix4 m, int colonne) {
-        double max = m.get(0, colonne);
-        int indiceMax = 0;
-        for (int i=1; i < Constants.SIZE_4; i++) {
-            if (max < Math.abs(m.get(i, colonne))) {
-                max = Math.abs(m.get(i,colonne));
+	static protected int indiceOfMaxRowInColumn(Matrix4 m, int col, int pivot) {
+        float max = 0;
+        int indiceMax = pivot;
+        for (int i=pivot+1; i < Constants.SIZE_4; i++) {
+        	float val = Math.abs(m.get(i, col));
+            if (max < val) {
+                max = val;
                 indiceMax = i;
             }
         }

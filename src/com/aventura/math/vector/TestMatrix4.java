@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.aventura.math.Constants;
+
 public class TestMatrix4 {
 
 	@Test
@@ -58,7 +60,7 @@ public class TestMatrix4 {
 
 		Matrix4 A;
 		Matrix4 B;
-		try {
+//		try {
 			A = new Matrix4(array);
 			B = new Matrix4(5);
 			B.set(1,2,22.3f);
@@ -66,9 +68,9 @@ public class TestMatrix4 {
 			System.out.println("B="+B);
 
 			if (!A.equals(B)) fail("A does not equals B");
-		} catch (IndiceOutOfBoundException e) {
-			fail("Indice out of bound");		
-		}
+//		} catch (IndiceOutOfBoundException e) {
+//			fail("Indice out of bound");		
+//		}
 	}
 
 	@Test
@@ -321,29 +323,39 @@ public class TestMatrix4 {
 
 		for (int i=0; i<4; i++) {
 			for (int j=0; j<4; j++) {
-				array[i][j] = i-j+2;
+				if (i>j) {
+					array[i][j] = 0;
+				} else {
+					array[i][j] = 10-2*i-j;
+				}
 			}
 		}
 
 		/* 
-		 * A=[[3.0, 2.0, 1.0, 0.0]
-		 *    [4.0, 3.0, 2.0, 1.0]
-		 *    [5.0, 4.0, 3.0, 2.0]
-		 *    [6.0, 5.0, 4.0, 3.0]]
+		 * A=[[10.0, 9.0, 8.0, 7.0]
+		 *    [0.0, 7.0, 6.0, 5.0]
+		 *    [0.0, 0.0, 4.0, 3.0]
+		 *    [0.0, 0.0, 0.0, 1.0]]
 		 */ 
 
-		Matrix4 A;
+		Matrix4 A, B, C;
 
 		A = new Matrix4(array);
+		B= null;
+		
 		System.out.println("A="+A);
 		try {
-			Matrix4 B = A.inverse(); // Calculate inverse
+			B = A.inverse(); // Calculate inverse
 			System.out.println("B="+B);
-			Matrix4 C = B.inverse(); // Inverse the inverse
-			System.out.println("C ="+C);
-			if (!B.equals(C)) fail("inverse(inverse(A)) does not equals A");
 		} catch (NotInvertibleMatrixException e) {
-			fail("Not invertible Matrix");
+			fail("Not invertible Matrix A");
+		}
+		try {
+			C = B.inverse(); // Inverse the inverse
+			System.out.println("C ="+C);
+			if (!A.equalsEpsilon(C, Constants.EPSILON)) fail("inverse(inverse(A)) does not equals A");
+		} catch (NotInvertibleMatrixException e) {
+			fail("Not invertible Matrix B");
 		}
 
 	}
@@ -356,15 +368,19 @@ public class TestMatrix4 {
 
 		for (int i=0; i<4; i++) {
 			for (int j=0; j<4; j++) {
-				array[i][j] = i-j+2;
+				if (i>j) {
+					array[i][j] = 0;
+				} else {
+					array[i][j] = 10-2*i-j;
+				}
 			}
 		}
 
 		/* 
-		 * A=[[3.0, 2.0, 1.0, 0.0]
-		 *    [4.0, 3.0, 2.0, 1.0]
-		 *    [5.0, 4.0, 3.0, 2.0]
-		 *    [6.0, 5.0, 4.0, 3.0]]
+		 * A=[[10.0, 9.0, 8.0, 7.0]
+		 *    [0.0, 7.0, 6.0, 5.0]
+		 *    [0.0, 0.0, 4.0, 3.0]
+		 *    [0.0, 0.0, 0.0, 1.0]]
 		 */ 
 
 		Matrix4 A;
@@ -374,13 +390,39 @@ public class TestMatrix4 {
 		try {
 			Matrix4 B = A.inverse(); // Calculate inverse
 			System.out.println("B="+B);
-			Matrix4 C = B.times(A); // Inverse the inverse
+			Matrix4 C = B.times(A); // inverse(A).A = I
 			System.out.println("C ="+C);
-			if (!C.equals(Matrix4.IDENTITY)) fail("A.inverse(A) does not equals I");
+			if (!C.equalsEpsilon(Matrix4.IDENTITY, Constants.EPSILON)) fail("A.inverse(A) does not equals I");
 		} catch (NotInvertibleMatrixException e) {
 			fail("Not invertible Matrix");
 		}
 
 	}
-	
+
+	@Test
+	public void testMatrix4_inverse3() {
+		System.out.println("***** Test Matrix4 : testMatrix4_inverse3() *****");
+
+		/* 
+		 * A=[[1.0, 0.0, 0.0, 0.0]
+		 *    [0.0, 1.0, 0.0, 0.0]
+		 *    [0.0, 0.0, 1.0, 0.0]
+		 *    [0.0, 0.0, 0.0, 1.0]]
+		 */ 
+
+		Matrix4 A;
+
+		A = new Matrix4(Matrix4.IDENTITY);		
+		System.out.println("A="+A);
+		
+		try {
+			Matrix4 B = A.inverse(); // Calculate inverse
+			System.out.println("B="+B);
+			if (!B.equals(Matrix4.IDENTITY)) fail("inverse of Identity does not equals I");
+		} catch (NotInvertibleMatrixException e) {
+			fail("Not invertible Matrix");
+		}
+
+	}
+
 }
