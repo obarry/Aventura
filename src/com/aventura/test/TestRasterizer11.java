@@ -105,17 +105,18 @@ public class TestRasterizer11 {
 		
 		World world = new World();
 		Pyramid pyr = new Pyramid(1.2f,1.5f,1);
-		// Set colors to triangles
-		pyr.getTriangle(0).setColor(Color.CYAN);
-		pyr.getTriangle(1).setColor(Color.ORANGE);
-		pyr.getTriangle(2).setColor(Color.PINK);
-		pyr.getTriangle(3).setColor(Color.GRAY);
 		
 		world.addElement(pyr);
 		
 		System.out.println("********* Calculating normals");
 		world.generate();
-		
+
+		// Set colors to triangles
+		pyr.getTriangle(0).setColor(Color.CYAN);
+		pyr.getTriangle(1).setColor(Color.ORANGE);
+		pyr.getTriangle(2).setColor(Color.PINK);
+		pyr.getTriangle(3).setColor(Color.GRAY);
+
 		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0.5f,1));
 		AmbientLight al = new AmbientLight(0.1f);
 		Lighting light = new Lighting(dl, al);

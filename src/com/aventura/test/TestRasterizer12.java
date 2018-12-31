@@ -111,6 +111,11 @@ public class TestRasterizer12 {
 		Box box = new Box(1.6f,2,1.3f);
 		//Box box = new Box(3.2,4,2.6);
 		
+		world.addElement(box);
+		
+		System.out.println("********* Calculating normals");
+		world.generate();
+		
 		// Set Texture to all Triangles of the Box
 		// Bottom
 		box.getTriangle(0).setTexture(tex3, new Vector4(0,0,0,1), new Vector4(0,1,0,1), new Vector4(1,1,0,1));
@@ -131,11 +136,6 @@ public class TestRasterizer12 {
 		box.getTriangle(10).setTexture(tex1, new Vector4(0,0,0,1), new Vector4(0,1,0,1), new Vector4(1,1,0,1));
 		box.getTriangle(11).setTexture(tex1, new Vector4(1,1,0,1), new Vector4(1,0,0,1), new Vector4(0,0,0,1));
 
-		world.addElement(box);
-		
-		System.out.println("********* Calculating normals");
-		world.generate();
-		
 		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0.5f,1));
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al);
