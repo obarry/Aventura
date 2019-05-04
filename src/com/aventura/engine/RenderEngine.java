@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
+import com.aventura.math.transform.NotARotationException;
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Matrix4;
@@ -188,7 +189,7 @@ public class RenderEngine {
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
-			render(e, Matrix4.IDENTITY, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+			render(e, null, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
@@ -214,7 +215,7 @@ public class RenderEngine {
 	/**
 	 * Render a single Element and all its sub-elements recursively
 	 * @param e the Element to renderContext
-	 * @param matrix, the model matrix, for recursive calls of sub-elements or should be IDENTITY matrix for root element
+	 * @param matrix, the model matrix, for recursive calls of sub-elements or should be null for root element
 	 * @param c (optional, should be null for shading calculation) the color for the various elements to be rendered
 	 */
 	public void render(Element e, Matrix4 matrix, Color c) {
@@ -228,7 +229,12 @@ public class RenderEngine {
 		
 		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
-		Matrix4 model = matrix.times(e.getTransformation());
+		Matrix4 model = null;
+		if (matrix == null) {
+			model = e.getTransformation();			
+		} else {
+			model = matrix.times(e.getTransformation());
+		}
 		modelView.setModel(model);
 		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (view)
 		
@@ -454,49 +460,45 @@ public class RenderEngine {
 		final float arrow_ray = 0.04f;
 		final float spear_ray = 0.08f;
 		final float spear_length = 0.2f;
-		final int nb_seg =16; 
 		
 		// X axis arrow
 		Rotation r1 = new Rotation((float)Math.PI/2, Vector4.Y_AXIS);
-		Element e1 = new Element();
-		Element l1 = new Cylinder(arrow_length, arrow_ray, nb_seg);
-		Translation tl1 = new Translation(new Vector3(arrow_length/2, 0, 0));
-		l1.setTransformation(tl1.times(r1));
-		Element c1 = new Cone(spear_length,spear_ray,nb_seg);
-		Translation tc1 = new Translation(new Vector3(arrow_length, 0, 0));
-		c1.setTransformation(tc1.times(r1));
-		e1.addElement(l1);
-		e1.addElement(c1);
-		e1.generate();		
-		render(e1, Matrix4.IDENTITY, renderContext.landmarkXColor);
+		Element e1 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r1);	
+		render(e1, null, renderContext.landmarkXColor);
 		
 		// Y axis arrow
 		Rotation r2 = new Rotation((float)-Math.PI/2, Vector4.X_AXIS);
-		Element e2 = new Element();
-		Element l2 = new Cylinder(arrow_length, arrow_ray, nb_seg);
-		Translation tl2 = new Translation(new Vector3(0, arrow_length/2, 0));
-		l2.setTransformation(tl2.times(r2));
-		Element c2 = new Cone(spear_length,spear_ray,nb_seg);
-		Translation tc2 = new Translation(new Vector3(0, arrow_length, 0));
-		c2.setTransformation(tc2.times(r2));
-		e2.addElement(l2);
-		e2.addElement(c2);
-		e2.generate();		
-		render(e2, Matrix4.IDENTITY, renderContext.landmarkYColor);
-		
+		Element e2 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r2);	
+		render(e2, null, renderContext.landmarkYColor);
+	
 		// Z axis arrow
-		Element e3 = new Element();
-		Element l3 = new Cylinder(arrow_length, arrow_ray, nb_seg);
-		Translation tl3 = new Translation(new Vector3(0, 0, arrow_length/2));
-		l3.setTransformation(tl3);
-		Element c3 = new Cone(spear_length,spear_ray,nb_seg);
-		Translation tc3 = new Translation(new Vector3(0, 0, arrow_length));
-		c3.setTransformation(tc3);
-		e3.addElement(l3);
-		e3.addElement(c3);
-		e3.generate();		
-		render(e3, Matrix4.IDENTITY, renderContext.landmarkZColor);
+		Rotation r3 = null;
+		try {
+			r3 = new Rotation(Matrix4.IDENTITY);
+		} catch (NotARotationException e) {
+			// Nothing to do - should never happen
+			e.printStackTrace();
+		}
+		Element e3 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r3);		
+		render(e3, null, renderContext.landmarkZColor);
+
 	}
+	
+	public Element createAxisArrow(float arrow_length, float arrow_ray, float spear_length, float spear_ray, Rotation r) {
+		int nb_seg =16; 
+		Element e = new Element();
+		Element l = new Cylinder(arrow_length, arrow_ray, nb_seg);
+		Translation tl = new Translation(new Vector3(0, 0, arrow_length/2));
+		l.setTransformation(tl);
+		Element c = new Cone(spear_length,spear_ray,nb_seg);
+		Translation tc = new Translation(new Vector3(0, 0, arrow_length));
+		c.setTransformation(tc);
+		e.addElement(l);
+		e.addElement(c);
+		e.setTransformation(r);
+		e.generate();
+		return e;
+}
 	
 	public void displayNormalVectors(Triangle t) {
 		// Caution: in this section, we need to take the original triangle containing the normal and other attributes !!!
