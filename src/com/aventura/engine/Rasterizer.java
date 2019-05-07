@@ -121,6 +121,10 @@ public class Rasterizer {
 		}
 	}
 	
+	//
+	// A few tools, some methods to simplify method calls
+	//
+	
 	protected float xScreen(Vertex v) {
 		return xScreen(v.getProjPos());
 	}
@@ -146,7 +150,12 @@ public class Rasterizer {
 	protected int getYzBuf(int y) {
 		return y + graphic.getPixelHalfHeight();
 	}
+	
+	//
+	// End few tools
+	//
 
+	// 
 	// Method for Segment only Rendering
 	//
 	
@@ -185,6 +194,7 @@ public class Rasterizer {
 	
 	//
 	// End methods for Segment only Rendering
+	//
 	
 	/**
 	 * Triangle rasterization and zBuffering
@@ -415,10 +425,6 @@ public class Rasterizer {
 
 		// Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
 		// TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
-		//	    if (ex > Math.max(xScreen(vc), xScreen(vd))+100) {
-		//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid ex:"+ex+", sx:"+sx+", xc:"+xc+", xd:"+xd+", gradient1:"+gradient1+", gradient2:"+gradient2);	    	
-		//	    	if (Tracer.error) Tracer.traceError(this.getClass(), "-> y:"+y+", ya:"+ya+", yb:"+yb+", yc:"+yc+", yd:"+yd);	    	
-		//	    }
 
 		// Vertices z
 		float za = va.getProjPos().getW();
@@ -574,19 +580,7 @@ public class Rasterizer {
 	 */
 	protected void drawPoint(int x, int y, float z, Color c) {
 		// Eliminate pixels outside the view screen is done before calling this method for optimization
-		// So at this stage we only render pixel
-//		if (c !=null ) {
-//			view.setColor(c);
-//		} else {
-			// Compute color at this stage to avoid unused pre-processing (if pixel finally not rendered)
-			// Color is computed from
-			// - natural color of the pixel/triangle
-			// - ambient (uniform) light
-			// - one or several Directional/Point/Spot light(s)
-			// - generating diffuse and specular reflection
-			// Calculating shading requires to know the normal of the point at the pixel being rendered
-			// - for this we use triangle interpolation
-//		}
+		// So at this stage we only render pixel and update the zBuffer
 
 		// Draw pixel in the View
 		view.drawPixel(x,y,c);
@@ -641,7 +635,7 @@ public class Rasterizer {
 		if (lighting != null) { // If lighting exists
 
 			// Primary shading: Diffuse Reflection
-
+			
 			float dotNL = 0;
 
 			// Directional light
@@ -652,13 +646,11 @@ public class Rasterizer {
 				// Compute the dot product
 				dotNL = lighting.getDirectionalLight().getLightVector(null).dot(normal.normalize());
 				if (rectoVerso) dotNL = Math.abs(dotNL);
-
 				if (dotNL > 0) {
 					// Directional Light
 					c = ColorTools.multColor(baseCol, dotNL);
 				}
 			}
-
 		} else { // If no lighting, return base color
 			return baseCol;
 		}
