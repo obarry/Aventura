@@ -130,7 +130,7 @@ public class TestScaling {
 		//Sphere elm = new Sphere(2f,32, tex);
 		Sphere elm = new Sphere(0.7f,32, tex);
 		//elm.setColor(new Color(100,200,255));
-		//elm.setSpecularExp(8);
+		elm.setSpecularExp(8);
 		world.addElement(elm);
 		world.setBackgroundColor(new Color(20,10,5));
 		
@@ -141,7 +141,7 @@ public class TestScaling {
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,0,1f), 0.8f);
 		AmbientLight al = new AmbientLight(0.2f);
-		Lighting light = new Lighting(dl, al, false);
+		Lighting light = new Lighting(dl, al, true);
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
@@ -160,11 +160,11 @@ public class TestScaling {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
-		Scaling s = new Scaling(2,2,1);
+		//Scaling s = new Scaling(2,2,1);
 		for (int i=0; i<=3*nb_images; i++) {
 			Rotation r1 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
 			Rotation r2 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
-			//Scaling s = new Scaling(1+(float)i/180,1+(float)i/180,1);
+			Scaling s = new Scaling(1+(float)i/180,1+(float)i/180,1);
 			elm.setTransformation(r1.times(r2.times(s)));
 			//elm.setTransformation(r1.times(r2));
 			//elm.combineTransformation(s);
