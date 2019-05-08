@@ -475,7 +475,7 @@ public class Matrix4 {
 		for (int j=0; j<Constants.SIZE_4; j++) {
 			int k = indiceOfMaxRowInColumn(matrix,j, r);
 			pivot = matrix.get(k, j); // Pivot
-			System.out.println("Indice of max row = "+k+" for iteration j="+j+" Pivot = "+pivot);
+			//System.out.println("Indice of max row = "+k+" for iteration j="+j+" Pivot = "+pivot);
 			
 			if (pivot == 0) throw new NotInvertibleMatrixException();
 			// Else if pivot is not null then continue
@@ -502,7 +502,7 @@ public class Matrix4 {
 			r++;
 		}
 		
-		System.out.println("Matrice transformee en I =\n"+matrix);
+		//System.out.println("Matrice transformee en I =\n"+matrix);
 
 		return identity;
 	}

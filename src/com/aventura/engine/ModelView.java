@@ -1,6 +1,7 @@
 package com.aventura.engine;
 
 import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.NotInvertibleMatrixException;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.Triangle;
@@ -84,9 +85,11 @@ public class ModelView {
 	Matrix4 projection;
 	Matrix4 view;
 	Matrix4 model;
+	Matrix4 model_normals;
 	
 	// This matrix is the result of the multiplication of all Matrices
 	Matrix4 full;
+	Matrix4 full_normals;
 	
 	/**
 	 * Default constructor.
@@ -141,7 +144,27 @@ public class ModelView {
 	 */
 	public void setModel(Matrix4 model) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModel(model)");
+		// Vertices Model matrix
 		this.model = model;
+		
+		// Normals Model matrix
+		// Use the inverse transpose matrix in case of non orthogonal transformation (e.g. non uniform scaling)
+		// To test if the transformation Matrix is orthogonal, we can use the test Transpose(A).A = I (Identity Matrix) else it is not.
+		if (model.times(model.transpose()).equals(Matrix4.IDENTITY)) {
+			// No need to compute the inverse Matrix in this case, the transformation is orthogonal
+			model_normals = model;
+			if (Tracer.info) Tracer.traceInfo(this.getClass(),"Model normals matrix = Model matrix !!!");
+		} else {
+			try {
+				model_normals = model.transpose().inverse();
+			} catch (NotInvertibleMatrixException e) {
+				// Should never happen but just in case use the model Matrix for normals transformation in this case
+				model_normals = model;
+				// And log the stack trace
+				e.printStackTrace();
+				if (Tracer.info) Tracer.traceInfo(this.getClass(),"Error in matrix inversion !!!");
+			}
+		}
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Matrix:\n"+ model);
 	}
 		
@@ -152,12 +175,15 @@ public class ModelView {
 	public void computeTransformation() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
 		full = projection.times(view.times(model));
+		full_normals = projection.times(view.times(model_normals));
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
 	}
 	
 	/**
 	 * Fully compute Vertex projections resulting from the ModelView transformation for both ModelToWorld and ModelToClip projections
 	 * Complete the provided Vertex with projection data but do not modify original position data
+	 * Calculate the normal projection (Vertex normal) taking care of using the normals Model matrix (in case of non uniform scaling)
+	 * and not the standard Model matrix.
 	 * 
 	 * @param v the provided Vertex
 	 */
@@ -165,8 +191,8 @@ public class ModelView {
 		v.setProjPos(full.times(v.getPos()));
 		v.setWorldPos(model.times(v.getPos()));
 		if (v.getNormal() != null) {
-			v.setProjNormal(full.times(v.getNormal().V4()).V3());
-			v.setWorldNormal(model.times(v.getNormal().V4()).V3());
+			v.setProjNormal(full_normals.times(v.getNormal().V4()).V3());
+			v.setWorldNormal(model_normals.times(v.getNormal().V4()).V3());
 		}
 	}
 	
@@ -181,14 +207,18 @@ public class ModelView {
 		}
 	}
 	
+	/**
+	 * Transform the normal of a Triangle (in case of usage of Triangle normal instead of Vertex normal)
+	 * @param t
+	 */
 	public void transformNormal(Triangle t) {
+				
 		if (t.getNormal() != null) {
-			t.setProjNormal(full.times(t.getNormal().V4()).V3());
-			t.setWorldNormal(model.times(t.getNormal().V4()).V3());
+			t.setProjNormal(full_normals.times(t.getNormal().V4()).V3());
+			t.setWorldNormal(model_normals.times(t.getNormal().V4()).V3());
 		} else {
 			t.setProjNormal(null);
 			t.setWorldNormal(null);
-			
 		}
 	}
 }
