@@ -32,7 +32,6 @@ import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.shape.Pyramid;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
-import com.aventura.test.TestMultiElementsTexture;
 import com.aventura.view.SwingView;
 import com.aventura.view.View;
 
@@ -106,24 +105,28 @@ public class AventuraDemo {
 
 		System.out.println("********* STARTING APPLICATION *********");
 
-		Texture texbricks = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		//Texture texbricks = new Texture("resources/texture/texture_bricks_204x204.jpg");
 		//Texture texblue = new Texture("resources/texture/texture_blueground_204x204.jpg");
 		//Texture texwood = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		Texture texdamier = new Texture("resources/texture/texture_damier_600x591.gif");
-		Texture texgrass = new Texture("resources/texture/texture_grass_900x600.jpg");
+		//Texture texgrass = new Texture("resources/texture/texture_grass_900x600.jpg");
 		//Texture texstone = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
 		//Texture texsnow = new Texture("resources/texture/texture_snow_590x590.jpg");
 		//Texture texmetal = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
 		//Texture texleather = new Texture("resources/texture/texture_old_leather_box_800x610.jpg");
-		Texture texmetalplate = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
+		//Texture texmetalplate = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
 		//Texture texstone1 = new Texture("resources/texture/texture_stone1_1700x1133.jpg");
 		//Texture texrock = new Texture("resources/texture/texture_rock_stone_400x450.jpg");
 		Texture texcremedemarron = new Texture("resources/texture/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
 		//Texture texearth = new Texture("resources/texture/texture_earthtruecolor_nasa_big_2048x1024.jpg");
 		//Texture texmoon = new Texture("resources/texture/texture_moon_2048x1024.jpg");
 		Texture texfoot = new Texture("resources/texture/texture_football_320x160.jpg");
-		Texture texcarpet = new Texture("resources/texture/texture_carpet_600x600.jpg");
+		//Texture texcarpet = new Texture("resources/texture/texture_carpet_600x600.jpg");
 		Texture textop = new Texture("resources/texture/texture_top_can_667x661.jpg");
+		Texture texbricks = new Texture("resources/texture/texture_stone_wall_700x700.jpg");
+		Texture texmetalplate = new Texture("resources/texture/texture_multimetal_500x600.jpg");
+		Texture texcarpet = new Texture("resources/texture/texture_painting_2_596x460.jpg");
+		Texture texgrass = new Texture("resources/texture/texture_stone_1706x1279.jpg");
 	
 		// Camera
 		Vector4 eye = new Vector4(10,6,3,1);
@@ -138,12 +141,15 @@ public class AventuraDemo {
 		world.setBackgroundColor(Color.BLACK);
 		Element e;
 		
+		int num_element = 0;
+		
 		for (int i=0; i<=1; i++) {
 			for (int j=0; j<=1; j++) {
 				for (int k=0; k<=1; k++) {
 										
 					// Create an Element of a random type
-					switch((int)(Math.random()*7)) {
+					//switch((int)(Math.random()*7)) {
+					switch(num_element%7) {
 					case 0:
 						e = new Cone(1,0.5f,32, texdamier);
 						break;
@@ -172,7 +178,7 @@ public class AventuraDemo {
 					case 5:
 						
 						float size = 1.5f;
-						int n = 10;
+						int n = 16;
 						int nb_sin = 2;
 						float array[][] = new float[n+1][n+1];
 						for (int p=0; p<=n; p++) {
@@ -205,6 +211,8 @@ public class AventuraDemo {
 
 					// Add the element to the world
 					world.addElement(e);
+					
+					num_element++;
 				}
 			}
 		}
@@ -239,9 +247,13 @@ public class AventuraDemo {
 		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
 		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
 		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
+		Vector4 camera_trans = new Vector4(new Vector4(0,-10,-2,1).minus(eye).times((float)1/(nb_images)));
 		Matrix4 r = r1.times(r2).times(r3);
+		renderer.render();
 		for (int i=0; i<=nb_images; i++) {
 			world.expandTransformation(r);
+			eye.plusEquals(camera_trans);
+			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 			renderer.render();
 		}
 
