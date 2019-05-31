@@ -14,6 +14,7 @@ import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Scaling;
+import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -54,7 +55,7 @@ import com.aventura.view.View;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestScaling {
+public class Test3StonesRotation {
 	
 	// View to be displayed
 	private SwingView view;
@@ -62,7 +63,7 @@ public class TestScaling {
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Scaling");
+		JFrame frame = new JFrame("Test 3 Stones Rotation");
 		// Set the size of the frame
 		frame.setSize(1500,900);
 		
@@ -97,76 +98,110 @@ public class TestScaling {
 		System.out.println("********* STARTING APPLICATION *********");
 
 		// Camera
-		//Vector4 eye = new Vector4(-4,-8,5,1);
-		//Vector4 eye = new Vector4(16,6,12,1);
-		Vector4 eye = new Vector4(6,12,16,1);
-		//Vector4 eye = new Vector4(3,2,2,1);
+		Vector4 eye = new Vector4(-6,-12,8,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestScaling test = new TestScaling();
+		Test3StonesRotation test = new Test3StonesRotation();
 		
 		System.out.println("********* Creating World");
 		
-		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
-		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
-		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
-		//Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
-		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
-		//Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
-		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
-		//Texture tex = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
-		//Texture tex = new Texture("resources/texture/texture_old_leather_box_800x610.jpg");
-		//Texture tex = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
-		//Texture tex = new Texture("resources/texture/texture_stone1_1700x1133.jpg");
-		//Texture tex = new Texture("resources/texture/texture_rock_stone_400x450.jpg");
-		Texture tex = new Texture("resources/texture/texture_barnwood_576x358.jpg");
+		Texture tex = new Texture("resources/texture/texture_stone_1023x852.jpg");
 		
 		// Create World
 		World world = new World();
 		
-		//Box elm = new Box(3,2,1.5f, tex);
-		//Sphere elm = new Sphere(2f,32, tex);
-		Sphere elm = new Sphere(0.7f,32, tex);
-		//elm.setColor(new Color(100,200,255));
-		elm.setSpecularExp(8);
-		world.addElement(elm);
+		// Create 3 boxes with texture
+		Sphere elm1 = new Sphere(1,20, tex);
+		Sphere elm2 = new Sphere(1,20, tex);
+		Sphere elm3 = new Sphere(1,20, tex);
+		
+		// Scaling for stones not round
+		Scaling s = new Scaling(1,0.6f,0.3f);
+//		elm1.setTransformation(s);
+//		elm2.setTransformation(s);
+//		elm3.setTransformation(s);
+		
+		// Set some colors on some faces of the boxes
+		elm2.setColor(Color.ORANGE);
+		elm3.setColor(Color.BLUE);
+		
+		// Add boxes to the World
+		world.addElement(elm1);
+		world.addElement(elm2);
+		world.addElement(elm3);
 		world.setBackgroundColor(new Color(20,10,5));
 		
-		System.out.println("********* Generating World");		
+		// Generate the world geometry (including vertices and triangles) based on initialization data
+		System.out.println("********* Calculating normals");
 		world.generate();
-		System.out.println(world);
-		System.out.println(elm);
 		
+		// Print the world and each element's characteristics
+		System.out.println(world);
+		System.out.println(elm1);
+		System.out.println(elm2);
+		System.out.println(elm3);
+		
+		// Create some lighting
 		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,0,1f), 0.8f);
 		AmbientLight al = new AmbientLight(0.2f);
-		Lighting light = new Lighting(dl, al, true);
+		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
-
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
-		renderer.render();
+		//renderer.render();
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
-		//Scaling s = new Scaling(2,2,1);
+		float alpha = (float)Math.PI*2/(float)nb_images;
+		float beta = (float)Math.PI*2/(float)nb_images*2;
+		float gamma = (float)Math.PI*2/(float)nb_images/3;
+		float delta = (float)Math.PI*2/(float)nb_images;
+		float offset1 = (float)Math.PI*2/3;
+		float offset2 = 2*offset1;
+		float distance = 1.5f;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r1 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
-			Rotation r2 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
-			Scaling s = new Scaling(1+(float)i/180,1+(float)i/180,1);
-			elm.setTransformation(r1.times(r2.times(s)));
-			//elm.setTransformation(r1.times(r2));
-			//elm.combineTransformation(s);
+			Rotation rx1 = new Rotation(alpha*i, Vector3.X_AXIS);
+			Rotation ry1 = new Rotation(beta*i, Vector3.Y_AXIS);
+			Rotation rz1 = new Rotation(gamma*i, Vector3.Z_AXIS);
+			Rotation rx2 = new Rotation(alpha*i+offset1, Vector3.X_AXIS);
+			Rotation ry2 = new Rotation(beta*i+offset1, Vector3.Y_AXIS);
+			Rotation rz2 = new Rotation(gamma*i+offset1, Vector3.Z_AXIS);
+			Rotation rx3 = new Rotation(alpha*i+offset2, Vector3.X_AXIS);
+			Rotation ry3 = new Rotation(beta*i+offset2, Vector3.Y_AXIS);
+			Rotation rz3 = new Rotation(gamma*i+offset2, Vector3.Z_AXIS);
+			elm1.setTransformation(rx1.times(ry1).times(rz1).times(s));
+			elm2.setTransformation(rx2.times(ry2).times(rz2).times(s));
+			elm3.setTransformation(rx3.times(ry3).times(rz3).times(s));
+			Vector4 orbit1 = new Vector4(Vector4.X_AXIS);
+			Vector4 orbit2 = new Vector4(Vector4.X_AXIS);
+			Vector4 orbit3 = new Vector4(Vector4.X_AXIS);
+			orbit1.timesEquals(distance);
+			orbit2.timesEquals(distance);
+			orbit3.timesEquals(distance);
+			Rotation ro1 = new Rotation(delta*i, Vector3.Z_AXIS);
+			Rotation ro2 = new Rotation(delta*i+offset1, Vector3.Z_AXIS);
+			Rotation ro3 = new Rotation(delta*i+offset2, Vector3.Z_AXIS);
+			orbit1.timesEquals(ro1);
+			orbit2.timesEquals(ro2);
+			orbit3.timesEquals(ro3);
+			Translation to1 = new Translation(orbit1);
+			Translation to2 = new Translation(orbit2);
+			Translation to3 = new Translation(orbit3);
+			elm1.combineTransformation(to1);
+			elm2.combineTransformation(to2);
+			elm3.combineTransformation(to3);
 			renderer.render();
 		}
 
