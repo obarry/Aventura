@@ -12,6 +12,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.shading.Shading;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
@@ -69,16 +70,17 @@ import com.aventura.view.View;
  *     +---------------------+        |						  |			 		     |				|				|
  *                					  |						  |			+---------------------+		|				|
  *                   				  |						  +-------->|      Rasterizer     |-----+--------+		|
- *                					  |						  |			+---------------------+		         |		|
- *                					  |						  |											     v		|
+ *     +---------------------+		  |						  |			+---------------------+		         |		|
+ *     |      Lighting       | <------+						  |											     v		|
  *     +---------------------+		  |		+---------------------+										 +---------------------+
- *     |      Lighting       | <------+-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
- *     +---------------------+		  |		+---------------------+ 									 +---------------------+
- *                					  				   |	  													    
- *                   				  |				   |	  								
- *                	 				  				   |	  
+ *                                    |-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
+ *                          		  |		+---------------------+ 									 +---------------------+
+ *     +---------------------+		  |	               |
+ *     |       Shading       | <------+                |
+ *     +---------------------+		  |	               |
+ *                                    |                |
  *     						          |        		   v		
- *     +---------------------+ 		        +---------------------+
+ *     +---------------------+ 		  |     +---------------------+
  *     |       Camera        | <------+-----|      ModelView      |
  *	   +---------------------+		    	+---------------------+
  *
@@ -105,6 +107,7 @@ public class RenderEngine {
 	private World world;
 	private Lighting lighting;
 	private Camera camera;
+	private Shading shading;
 	
 	// View
 	private View view;
@@ -143,6 +146,33 @@ public class RenderEngine {
 		this.rasterizer = new Rasterizer(camera, graphic, lighting);
 	}
 		
+	/**
+	 * Create a Rendering Engine with shading capabilities
+	 * 
+	 * @param world the world to renderContext
+	 * @param lighting the directional lighting the world
+	 * @param shading the component creating shadows in correspondance to the light
+	 * @param camera the camera watching the world
+	 * @param renderContext the renderContext context containing parameters to renderContext the scene
+	 * @param graphicContext the graphicContext context to contain parameters to display the scene
+	 */
+	public RenderEngine(World world, Lighting lighting, Shading shading, Camera camera, RenderContext render, GraphicContext graphic) {
+		this.renderContext = render;
+		//this.graphicContext = graphic;
+		this.world = world;
+		this.lighting = lighting;
+		this.shading = shading;
+		this.camera = camera;
+		
+		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
+		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
+		
+		// Delegate rasterization tasks to a dedicated engine
+		this.rasterizer = new Rasterizer(camera, graphic, lighting);
+		
+		this.shading.setLighting(lighting);
+	}
+
 	public void setView(View v) {
 		view = v;
 		rasterizer.setView(v);
