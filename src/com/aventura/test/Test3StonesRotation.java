@@ -107,7 +107,7 @@ public class Test3StonesRotation {
 		System.out.println("********* Creating World");
 		
 		Texture tex = new Texture("resources/texture/texture_stone_1023x852.jpg");
-		
+		//Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
 		// Create World
 		World world = new World();
 		

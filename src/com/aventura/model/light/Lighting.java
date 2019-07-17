@@ -33,7 +33,9 @@ package com.aventura.model.light;
 public class Lighting {
 	
 	protected AmbientLight ambient;
+	// Future evolution is to have multiple directional lights (and still 1 ambient light)
 	protected DirectionalLight directional;
+	// In case of multiple lights, the notion of specular reflection may be associated to each directional light (+ 1 general flag to activate/deactivate specular reflection)
 	protected boolean specularLight = false; // Default is no specular reflection
 	
 	public Lighting() {

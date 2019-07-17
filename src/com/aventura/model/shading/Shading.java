@@ -1,5 +1,6 @@
 package com.aventura.model.shading;
 
+import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 
 /**
@@ -35,11 +36,14 @@ import com.aventura.model.light.Lighting;
 public class Shading {
 	
 	protected Lighting lighting; // A reference to the lighting element of the RenderEngine
+	
+	// Future evolution : multiple directional light would mean multiple cameras
+	protected Camera directional_cam;
 
 	public void setLighting(Lighting lighting) {
 		this.lighting = lighting;
-		
 	}
+	
 	
 //	protected AmbientLight ambient;
 //	protected DirectionalLight directional;
