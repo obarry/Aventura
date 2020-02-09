@@ -114,7 +114,7 @@ public class MovingCamera {
 	}
 
 	public void rotateCameraRight() {
-		Rotation r = new Rotation(-increment_rotation, direction.times(Vector4.Z_AXIS));
+		Rotation r = new Rotation(-increment_rotation, Vector3.Z_AXIS);
 		direction.timesEquals(r);		
 		Vector4 poi = new Vector4(eye.plus(direction));
 		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
@@ -122,16 +122,16 @@ public class MovingCamera {
 	}
 
 	public void rotateCameraUp() {
-		Rotation r = new Rotation(increment_rotation, Vector4.Z_AXIS.times(direction));
+		Rotation r = new Rotation(-increment_rotation, Vector4.Z_AXIS.times(direction));
 		direction.timesEquals(r);
-		
 		Vector4 poi = new Vector4(eye.plus(direction));
 		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 		renderer.render();
 	}
 
 	public void rotateCameraDown() {
-		
+		Rotation r = new Rotation(increment_rotation, Vector4.Z_AXIS.times(direction));
+		direction.timesEquals(r);		
 		Vector4 poi = new Vector4(eye.plus(direction));
 		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
 		renderer.render();
