@@ -1,5 +1,7 @@
 package com.aventura.engine;
 
+import com.aventura.math.Constants;
+import com.aventura.math.vector.Matrix3;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.NotInvertibleMatrixException;
 import com.aventura.model.world.Vertex;
@@ -11,7 +13,7 @@ import com.aventura.tools.tracing.Tracer;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2019 Olivier BARRY
+ * Copyright (c) 2021 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -147,10 +149,14 @@ public class ModelView {
 		// Vertices Model matrix
 		this.model = model;
 		
-		// Normals Model matrix
+		// Normals Model matrix :
+		// Use the Model matrix for orthogonal transformation (orthogonal transformations preserve lengths of vectors and angles between them)
 		// Use the inverse transpose matrix in case of non orthogonal transformation (e.g. non uniform scaling)
+		// Test of orthogonal transformation only need Matrix3 (not full Matrix 4 / homogeneous coordinate)
+		Matrix3 model3 = model.getMatrix3();
 		// To test if the transformation Matrix is orthogonal, we can use the test Transpose(A).A = I (Identity Matrix) else it is not.
-		if (model.times(model.transpose()).equals(Matrix4.IDENTITY)) {
+		// Rounding errors in the calculation requires comparison with a margin of tolerance (Epsilon). Surprisingly the experience shows that 1.0E-4 is the lowest epsilon
+		if (model3.times(model3.transpose()).equalsEpsilon(Matrix3.IDENTITY, (float) 1.0E-4)) {
 			// No need to compute the inverse Matrix in this case, the transformation is orthogonal
 			model_normals = model;
 			if (Tracer.info) Tracer.traceInfo(this.getClass(),"Model normals matrix = Model matrix !!!");

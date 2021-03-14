@@ -29,7 +29,7 @@ import com.aventura.view.View;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2019 Olivier BARRY
+ * Copyright (c) 2021 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -129,20 +129,13 @@ public class TestTwoAttachedRings {
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		//rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
 
 		System.out.println("********* Rendering...");
-//		int nb_images = 180;
-//		for (int i=0; i<=3*nb_images; i++) {
-//			double a = Math.PI*2*(double)i/(double)nb_images;
-//			eye = new Vector4(6*Math.cos(a),3, 6*Math.sin(a),1);
-//			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
-//			renderer.render();
-//		}
 		
 		System.out.println("********* Rendering...");
 		int nb_images = 360;

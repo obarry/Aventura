@@ -62,16 +62,24 @@ import com.aventura.view.View;
  * 
  * This class is a demo application using Aventura Render Engine API
  */
-public class AventuraDemo {
+
+public class MovingCamera {
 
 	// View to be displayed
 	private SwingView view;
+	private static Vector4 eye;
+	private static Vector4 direction;
+	private static float increment_direction = 0.1f;
+	private static float increment_rotation = (float)Math.PI/180;
+	private static Camera camera;
+	private static RenderEngine renderer;
 	
+	// This method will create a basic Swing view
 	public View createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("AventuraDemo");
-		// Set the size of the frame
+		KeyFrame frame = new KeyFrame(this, "MovingCamera");
+		// Set the size of the frame based on GraphicContext
 		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
 		// Create the view to be displayed
@@ -97,6 +105,52 @@ public class AventuraDemo {
 		return view;
 	}
 	
+	public void rotateCameraLeft() {
+		Rotation r = new Rotation(increment_rotation, Vector3.Z_AXIS);
+		direction.timesEquals(r);
+		Vector4 poi = new Vector4(eye.plus(direction));
+		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		renderer.render();
+	}
+
+	public void rotateCameraRight() {
+		Rotation r = new Rotation(-increment_rotation, Vector3.Z_AXIS);
+		direction.timesEquals(r);		
+		Vector4 poi = new Vector4(eye.plus(direction));
+		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		renderer.render();
+	}
+
+	public void rotateCameraUp() {
+		Rotation r = new Rotation(-increment_rotation, Vector4.Z_AXIS.times(direction));
+		direction.timesEquals(r);
+		Vector4 poi = new Vector4(eye.plus(direction));
+		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		renderer.render();
+	}
+
+	public void rotateCameraDown() {
+		Rotation r = new Rotation(increment_rotation, Vector4.Z_AXIS.times(direction));
+		direction.timesEquals(r);		
+		Vector4 poi = new Vector4(eye.plus(direction));
+		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		renderer.render();
+	}
+	
+	public void moveCameraFront() {
+		eye.plusEquals(direction.times(increment_direction));
+		Vector4 poi = new Vector4(eye.plus(direction));
+		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		renderer.render();
+	}
+
+	public void moveCameraBack() {
+		eye.minusEquals(direction.times(increment_direction));
+		Vector4 poi = new Vector4(eye.plus(direction));
+		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		renderer.render();	
+	}
+
 
 	/**
 	 * @param args
@@ -105,23 +159,9 @@ public class AventuraDemo {
 
 		System.out.println("********* STARTING APPLICATION *********");
 
-		//Texture texbricks = new Texture("resources/texture/texture_bricks_204x204.jpg");
-		//Texture texblue = new Texture("resources/texture/texture_blueground_204x204.jpg");
-		//Texture texwood = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		Texture texdamier = new Texture("resources/texture/texture_damier_600x591.gif");
-		//Texture texgrass = new Texture("resources/texture/texture_grass_900x600.jpg");
-		//Texture texstone = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
-		//Texture texsnow = new Texture("resources/texture/texture_snow_590x590.jpg");
-		//Texture texmetal = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
-		//Texture texleather = new Texture("resources/texture/texture_old_leather_box_800x610.jpg");
-		//Texture texmetalplate = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
-		//Texture texstone1 = new Texture("resources/texture/texture_stone1_1700x1133.jpg");
-		//Texture texrock = new Texture("resources/texture/texture_rock_stone_400x450.jpg");
 		Texture texcremedemarron = new Texture("resources/texture/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
-		//Texture texearth = new Texture("resources/texture/texture_earthtruecolor_nasa_big_2048x1024.jpg");
-		//Texture texmoon = new Texture("resources/texture/texture_moon_2048x1024.jpg");
 		Texture texfoot = new Texture("resources/texture/texture_football_320x160.jpg");
-		//Texture texcarpet = new Texture("resources/texture/texture_carpet_600x600.jpg");
 		Texture textop = new Texture("resources/texture/texture_top_can_667x661.jpg");
 		Texture texbricks = new Texture("resources/texture/texture_stone_wall_700x700.jpg");
 		Texture texmetalplate = new Texture("resources/texture/texture_multimetal_500x600.jpg");
@@ -129,11 +169,13 @@ public class AventuraDemo {
 		Texture texgrass = new Texture("resources/texture/texture_stone_1706x1279.jpg");
 	
 		// Camera
-		Vector4 eye = new Vector4(10,6,3,1);
+		eye = new Vector4(10,6,3,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		camera = new Camera(eye, poi, Vector4.Z_AXIS);
+		direction = new Vector4(poi.minus(eye));
+		direction.normalize();
 				
-		AventuraDemo demo = new AventuraDemo();
+		MovingCamera appli = new MovingCamera();
 				
 		// Create a new World
 		System.out.println("********* Creating World");
@@ -143,40 +185,34 @@ public class AventuraDemo {
 		
 		int num_element = 0;
 		
+		// Build a series of elements to display in a cube fashion
 		for (int i=0; i<=1; i++) {
 			for (int j=0; j<=1; j++) {
-				for (int k=0; k<=1; k++) {
-										
+				for (int k=0; k<=1; k++) {			
 					// Create an Element of a random type
 					//switch((int)(Math.random()*7)) {
 					switch(num_element%7) {
 					case 0:
 						e = new Cone(1,0.5f,32, texdamier);
 						break;
-						
 					case 1:
 						e = new ClosedCylinder(1,0.5f,32,texcremedemarron);
 						e.setTopTexture(textop);
 						e.setBottomTexture(textop);
 						break;
-						
 					case 2:
 						e = new Sphere(0.667f,32, texfoot);
 						e.setSpecularExp(3);
 						e.setSpecularColor(new Color(100,100,100));
 						e.setColor(new Color(200,150,255));
 						break;
-						
 					case 3:
 						e = new Cube(1, texmetalplate);
 						break;
-						
 					case 4:
 						e = new Box(1.5f,1,0.5f, texbricks);
 						break;
-						
-					case 5:
-						
+					case 5:				
 						float size = 1.5f;
 						int n = 16;
 						int nb_sin = 2;
@@ -186,7 +222,6 @@ public class AventuraDemo {
 								float a = (float)Math.PI*(float)nb_sin*(float)p/(float)n;
 								float b = (float)Math.PI*(float)nb_sin*(float)q/(float)n;
 								array[p][q] = size*(float)Math.sin(a)*(float)Math.sin(b)/((float)nb_sin*2);
-
 							}
 						}
 						e = null;
@@ -204,14 +239,11 @@ public class AventuraDemo {
 					default:
 						e = null;
 					}
-					
 					// Translate this element at some i,j,k indices of a 3D cube:
 					Translation t = new Translation(new Vector3(i*2-1, j*2-1, k*2-1));
 					e.setTransformation(t);
-
 					// Add the element to the world
 					world.addElement(e);
-					
 					num_element++;
 				}
 			}
@@ -231,32 +263,31 @@ public class AventuraDemo {
 		Lighting lighting = new Lighting(dl, al, true);
 
 		GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
-		View view = demo.createView(context);
+		View view = appli.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		
-		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
+		renderer = new RenderEngine(world, lighting, camera, rContext, context);
 		renderer.setView(view);
 		renderer.render();
 		
-		System.out.println("********* Rendering...");
-		int nb_images = 360;
-		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
-		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
-		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
-		Vector4 camera_trans = new Vector4(new Vector4(0,-10,-2,1).minus(eye).times((float)1/(nb_images)));
-		Matrix4 r = r1.times(r2).times(r3);
-		renderer.render();
-		for (int i=0; i<=nb_images; i++) {
-			world.expandTransformation(r);
-			eye.plusEquals(camera_trans);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
-			renderer.render();
-		}
-
+//		System.out.println("********* Rendering...");
+//		int nb_images = 360;
+//		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
+//		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
+//		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
+//		Vector4 camera_trans = new Vector4(new Vector4(0,-10,-2,1).minus(eye).times((float)1/(nb_images)));
+//		Matrix4 r = r1.times(r2).times(r3);
+//		renderer.render();
+//		for (int i=0; i<=nb_images; i++) {
+//			world.expandTransformation(r);
+//			eye.plusEquals(camera_trans);
+//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+//			renderer.render();
+//		}
 		System.out.println("********* ENDING APPLICATION *********");
 
 	}

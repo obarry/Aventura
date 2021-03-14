@@ -1,9 +1,9 @@
-package com.aventura.model.light;
+package com.aventura.demo;
 
-import java.awt.Color;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
+import javax.swing.JFrame;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -29,63 +29,60 @@ import com.aventura.math.vector.Vector4;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
- * Point Light source is one that radiates light equally in every direction from a single point in space.
- * The intensity of light naturally decreases with distance according to the inverse square law.
- *
- * @author Olivier BARRY
- * @since July 2016
  * 
+ * This class is the JFrame container for the MovingCamera demo application allowing using keyboard interaction to move
+ * camera through the 3D landscape.
  */
 
-public class PointLight extends Light {
+public class KeyFrame extends JFrame implements KeyListener {
+	
+	private MovingCamera camera;
 
-	@Override
-	public Vector3 getLightVector(Vector4 point) {
-		// TODO Auto-generated method stub
-		return null;
+	public KeyFrame(MovingCamera camera, String string) {
+		// TODO Auto-generated constructor stub
+		super(string);
+		this.camera = camera;
+	    addKeyListener(this);
 	}
 
 	@Override
-	public float getIntensity(Vector4 point) {
+	public void keyPressed(KeyEvent arg0) {
 		// TODO Auto-generated method stub
-		return 0;
+
 	}
 
 	@Override
-	public Color getLightColor(Vector4 point) {
+	public void keyReleased(KeyEvent e) {
 		// TODO Auto-generated method stub
-		return null;
+
 	}
 
 	@Override
-	public void setLightVector(Vector3 light) {
+	public void keyTyped(KeyEvent evt) {
 		// TODO Auto-generated method stub
-		
-	}
+		if (evt.getKeyChar() == '8') {
+			System.out.println("Key typed : 8");
+			camera.rotateCameraUp();
+		} else if (evt.getKeyChar() == '2') {
+			System.out.println("Key typed : 2");
+			camera.rotateCameraDown();
+		} else if (evt.getKeyChar() == '4') {
+			System.out.println("Key typed : 4");
+			camera.rotateCameraLeft();
+		} else if (evt.getKeyChar() == '6') {
+			System.out.println("Key typed : 6");
+			camera.rotateCameraRight();
+		} else if (evt.getKeyChar() == '5') {
+			System.out.println("Key typed : 5");
+			camera.moveCameraFront();
+		} else if (evt.getKeyChar() == '0') {
+			System.out.println("Key typed : 0");
+			camera.moveCameraBack();
+		} else {
+			System.out.println("Other Key typed");			
+		}
+		//repaint();
 
-	@Override
-	public void setIntensity(float intensity) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setLightColor(Color c) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public Vector3 getLightNormalizedVector(Vector4 point) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setLightNormalizedVector(Vector3 light) {
-		// TODO Auto-generated method stub
-		
 	}
 
 }
