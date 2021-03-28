@@ -113,6 +113,25 @@ public class LookAt extends Matrix4 {
 		generateLookAt(e4, p4, u4);												
 	}
 	
+	/**
+	 * Construction of Camera's LookAt Matrix based on Points and Vector3
+	 * 
+	 * @param f the forward vector
+	 * @param u the Up vector for the World to leverage for the Camera
+	 */
+	public LookAt(Vector4 f, Vector4 u) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(f, u) with Vector4");
+		
+		generateLookAt(f, u);												
+	}
+	
+	/**
+	 * Construction of Camera's LookAt Matrix based on Points and Vector4
+	 * 
+	 * @param e the Eye point
+	 * @param p the Point of interest
+	 * @param u the Up vector for the World to leverage for the Camera
+	 */
 	public void generateLookAt(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "createLookAt(e, p, u)");
 
@@ -145,6 +164,35 @@ public class LookAt extends Matrix4 {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);						
 	}
 
+	/**
+	 * Construction of Camera's LookAt Matrix based on forward vector
+	 * Useful for the "camera light" (needed for shading calculation) elaboration
+	 * 
+	 * @param f the forward vector
+	 * @param u the Up vector for the World to leverage for the Camera
+	 */
+	public void generateLookAt(Vector4 f, Vector4 u) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "createLookAt(f, u)");
+
+		// Build forward, up and side Vectors
+		f.normalize();
+		Vector4 s =  (f.times(u)).normalize();
+		Vector4 up = (s.times(f)).normalize();
+
+		// Construct array of Reorientation Matrix
+		float[][] array = { {  s.getX(),  s.getY(),  s.getZ(), 0.0f },
+							{ up.getX(), up.getY(), up.getZ(), 0.0f },
+							{ -f.getX(), -f.getY(), -f.getZ(), 0.0f },
+							{  0.0f    ,  0.0f    ,  0.0f    , 1.0f } };
+
+		// Then combine the reorientation with the translation. Translation first then Reorientation.
+		try {
+			this.setArray(array);
+		} catch (Exception exc) {
+			// Should never happen
+		}
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);						
+	}
 	
 	/**
 	 * Construction of a LookAt Matrix from another Matrix4

@@ -1,5 +1,8 @@
 package com.aventura.model.shading;
 
+import com.aventura.engine.ModelView;
+import com.aventura.math.transform.LookAt;
+import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 
@@ -39,9 +42,45 @@ public class Shading {
 	
 	// Future evolution : multiple directional light would mean multiple cameras
 	protected Camera directional_cam;
+	
+	// ModelView matrix and vertices conversion tool for the calculation of the Shadow map
+	protected ModelView modelview;
+	
+	// Shadow map
+	private float[][] map;
+	
+	public Shading(Lighting lighting) {
+		this.lighting = lighting;
+		lighting.getDirectionalLight();
+		
+		// *** UNDER CONSTRUCTION ***
+		// LookAt matrix -> direction of the light
+		LookAt la = new LookAt(lighting.getDirectionalLight().getLightVector(null).V4(), Vector4.Y_AXIS);
+		this.directional_cam = new Camera(la, null); // Eye TBD
+		// Camera -> from LookAt
+		//directional_cam = new Camera(eye, poi, Vector4.Y_AXIS);	
+		
+		//directional_cam = new Camera();
+		// *** END UNDER CONSTRUCTION ***
+	}
+
 
 	public void setLighting(Lighting lighting) {
 		this.lighting = lighting;
+	}
+	
+	public void initShading() {
+		
+		// Define the bounding box
+		
+		// Create the orthographic projection matrix
+		
+		// Create the light's "camera" matrix using the light direction as camera direction
+		
+	}
+	
+	public void generateShadowMap() {
+		
 	}
 	
 	

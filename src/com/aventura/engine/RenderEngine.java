@@ -139,40 +139,20 @@ public class RenderEngine {
 		this.lighting = lighting;
 		this.camera = camera;
 		
-		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
-		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
-		
-		// Delegate rasterization tasks to a dedicated engine
-		this.rasterizer = new Rasterizer(camera, graphic, lighting);
-	}
-		
-	/**
-	 * Create a Rendering Engine with shading capabilities
-	 * 
-	 * @param world the world to renderContext
-	 * @param lighting the directional lighting the world
-	 * @param shading the component creating shadows in correspondance to the light
-	 * @param camera the camera watching the world
-	 * @param renderContext the renderContext context containing parameters to renderContext the scene
-	 * @param graphicContext the graphicContext context to contain parameters to display the scene
-	 */
-	public RenderEngine(World world, Lighting lighting, Shading shading, Camera camera, RenderContext render, GraphicContext graphic) {
-		this.renderContext = render;
-		//this.graphicContext = graphic;
-		this.world = world;
-		this.lighting = lighting;
-		this.shading = shading;
-		this.camera = camera;
+		if (renderContext.shading == RenderContext.SHADING_ENABLED) {
+			this.shading = new Shading(lighting);
+		} else {
+			this.shading = null;
+		}
 		
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
 		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
 		
 		// Delegate rasterization tasks to a dedicated engine
-		this.rasterizer = new Rasterizer(camera, graphic, lighting);
-		
-		this.shading.setLighting(lighting);
+		// No shading in this constructor -> null
+		this.rasterizer = new Rasterizer(camera, graphic, lighting, shading);
 	}
-
+		
 	public void setView(View v) {
 		view = v;
 		rasterizer.setView(v);
@@ -215,6 +195,17 @@ public class RenderEngine {
 		if (renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
 			rasterizer.initZBuffer();
 		}
+		
+		// *** UNDER CONSTRUCTION ***
+		// Shading initialization and Shadow map(s) calculation
+		if (renderContext.shading == RenderContext.SHADING_ENABLED) {
+			
+			// Calculate the matrix
+			shading.initShading();
+			// Generate the shadow map
+			shading.generateShadowMap(); // need to recurse on each Element
+		}
+		// *** END UNDER CONSTRUCTION ***
 		
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
