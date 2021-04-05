@@ -12,6 +12,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.shading.Shading;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
@@ -55,8 +56,9 @@ import com.aventura.view.View;
  * - A camera
  * - Some lighting
  * - some display and graphics (called View)
- * - a render context to provide information on how to renderContext the world
- * - a graphic context to provide information on how to display the view 
+ * - The 2 API contexts allowing to define all parameters before calling API methods
+ * 		* a render context to provide information on how to render the world
+ * 		* a graphic context to provide information on how to display the view
  * 
  * 
  *                   				   				    	  				          +---------------------+					
@@ -69,16 +71,17 @@ import com.aventura.view.View;
  *     +---------------------+        |						  |			 		     |				|				|
  *                					  |						  |			+---------------------+		|				|
  *                   				  |						  +-------->|      Rasterizer     |-----+--------+		|
- *                					  |						  |			+---------------------+		         |		|
- *                					  |						  |											     v		|
+ *     +---------------------+		  |						  |			+---------------------+		         |		|
+ *     |      Lighting       | <------+						  |											     v		|
  *     +---------------------+		  |		+---------------------+										 +---------------------+
- *     |      Lighting       | <------+-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
- *     +---------------------+		  |		+---------------------+ 									 +---------------------+
- *                					  				   |	  													    
- *                   				  |				   |	  								
- *                	 				  				   |	  
+ *                ^                   |-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
+ *                |          		  |		+---------------------+ 									 +---------------------+
+ *     +---------------------+		  |	               |
+ *     |       Shading       | <------+                |
+ *     +---------------------+		  |	               |
+ *                                    |                |
  *     						          |        		   v		
- *     +---------------------+ 		        +---------------------+
+ *     +---------------------+ 		  |     +---------------------+
  *     |       Camera        | <------+-----|      ModelView      |
  *	   +---------------------+		    	+---------------------+
  *
@@ -105,6 +108,7 @@ public class RenderEngine {
 	private World world;
 	private Lighting lighting;
 	private Camera camera;
+	private Shading shading;
 	
 	// View
 	private View view;
@@ -136,11 +140,20 @@ public class RenderEngine {
 		this.lighting = lighting;
 		this.camera = camera;
 		
+		// Create the Shading context if it is enabled
+		if (renderContext.shading == RenderContext.SHADING_ENABLED) {
+			// Build Shading using a reference to Lighting object
+			this.shading = new Shading(lighting);
+		} else {
+			this.shading = null;
+		}
+		
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
 		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
 		
 		// Delegate rasterization tasks to a dedicated engine
-		this.rasterizer = new Rasterizer(camera, graphic, lighting);
+		// No shading in this constructor -> null
+		this.rasterizer = new Rasterizer(camera, graphic, lighting, shading);
 	}
 		
 	public void setView(View v) {
@@ -185,6 +198,42 @@ public class RenderEngine {
 		if (renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
 			rasterizer.initZBuffer();
 		}
+		
+		// *** UNDER CONSTRUCTION ***
+		// Shading initialization and Shadow map(s) calculation
+		if (renderContext.shading == RenderContext.SHADING_ENABLED) {
+			
+			// To calculate the projection matrix (or matrices if several light sources) :
+			// - Need to define the bounding box in which the elements will used to calculate the shadow map
+			// 		* By default it could be a box containing just the view frustrum of the eye camera
+			// 		* But there is a risk that elements outside of this box could generate shadows inside the box
+			// 		* A costly solution could be to define a box containing all elements of the scene
+			// 		* Otherwise some algorithm could be used for later improvement
+			// - Then create the matrix
+			// 		* LookAt from light source (View matrix)
+			//		* Orthographic projection Matrix
+			//		* View * Projection matrix
+			//
+			// Mat4 viewMatrix = LookAt(lighting.mCameraPosition,
+			//							lighting.mCameraPosition + glm::normalize(directionalLight.mLightDirection),
+			//							Vec3(0.0f, 1.0f, 0.0f));
+			//							
+			// Mat4 lightVP = CreateOrthographicMatrix(lighting.mCameraPosition.x - 25.0f, lighting.mCameraPosition.x + 25.0f, 
+			//											lighting.mCameraPosition.y - 25.0f, lighting.mCameraPosition.y + 25.0f,
+			// 											lighting.mCameraPosition.z + 25.0f, lighting.mCameraPosition.z - 25.0f)
+			//					* viewMatrix;
+			// Goal is to try to rely on ModelView class for part of the calculation and later use the methods of this class for
+			// vertices transformation that will be used before rasterization and generation of the Shadow map
+			
+			// Initiate the Shading:
+			// - Need the camera Up vector for Shadow Map orientation
+			// - Calculate the matrix(ces)
+			shading.initShading(camera.getUp());
+			
+			// Generate the shadow map
+			shading.generateShadowMap(); // need to recurse on each Element
+		}
+		// *** END UNDER CONSTRUCTION ***
 		
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			

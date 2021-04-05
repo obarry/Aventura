@@ -134,6 +134,60 @@ public class World {
 		return n;
 	}
 	
+	public float getMaxX() {
+		float max = elements.get(0).getMaxX();
+		for (int i=1; i<elements.size(); i++) {
+			float newmax = elements.get(i).getMaxX();
+			if (newmax > max) max = newmax;
+		}
+		return max;
+	}
+	
+	public float getMaxY() {
+		float max = elements.get(0).getMaxY();
+		for (int i=1; i<elements.size(); i++) {
+			float newmax = elements.get(i).getMaxY();
+			if (newmax > max) max = newmax;
+		}
+		return max;
+	}
+	
+	public float getMaxZ() {
+		float max = elements.get(0).getMaxZ();
+		for (int i=1; i<elements.size(); i++) {
+			float newmax = elements.get(i).getMaxZ();
+			if (newmax > max) max = newmax;
+		}
+		return max;
+	}
+	
+	public float getMinX() {
+		float min = elements.get(0).getMinX();
+		for (int i=1; i<elements.size(); i++) {
+			float newmin = elements.get(i).getMinX();
+			if (newmin < min) min = newmin;
+		}
+		return min;
+	}
+	
+	public float getMinY() {
+		float min = elements.get(0).getMinY();
+		for (int i=1; i<elements.size(); i++) {
+			float newmin = elements.get(i).getMinY();
+			if (newmin < min) min = newmin;
+		}
+		return min;
+	}
+	
+	public float getMinZ() {
+		float min = elements.get(0).getMinZ();
+		for (int i=1; i<elements.size(); i++) {
+			float newmin = elements.get(i).getMinZ();
+			if (newmin < min) min = newmin;
+		}
+		return min;
+	}
+	
 	public String getName() {
 		return name;
 	}

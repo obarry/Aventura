@@ -534,4 +534,58 @@ public class Element implements Transformable, Shape {
 		return null;
 	}
 
+	public float getMaxX() {
+		float max = vertices.get(0).getPos().getX();
+		for (int i=1; i<vertices.size(); i++) {
+			float newmax = vertices.get(i).getPos().getX();
+			if (newmax > max) max = newmax;
+		}
+		return max;
+	}
+
+	public float getMaxY() {
+		float max = vertices.get(0).getPos().getY();
+		for (int i=1; i<vertices.size(); i++) {
+			float newmax = vertices.get(i).getPos().getY();
+			if (newmax > max) max = newmax;
+		}
+		return max;
+	}
+
+	public float getMaxZ() {
+		float max = vertices.get(0).getPos().getZ();
+		for (int i=1; i<vertices.size(); i++) {
+			float newmax = vertices.get(i).getPos().getZ();
+			if (newmax > max) max = newmax;
+		}
+		return max;
+	}
+
+	public float getMinX() {
+		float min = vertices.get(0).getPos().getX();
+		for (int i=1; i<vertices.size(); i++) {
+			float newmin = vertices.get(i).getPos().getX();
+			if (newmin < min) min = newmin;
+		}
+		return min;
+	}
+
+	public float getMinY() {
+		float min = vertices.get(0).getPos().getY();
+		for (int i=1; i<vertices.size(); i++) {
+			float newmin = vertices.get(i).getPos().getY();
+			if (newmin < min) min = newmin;
+		}
+		return min;
+	}
+
+	public float getMinZ() {
+		float min = vertices.get(0).getPos().getZ();
+		for (int i=1; i<vertices.size(); i++) {
+			float newmin = vertices.get(i).getPos().getZ();
+			if (newmin < min) min = newmin;
+		}
+		return min;
+	}
+
 }

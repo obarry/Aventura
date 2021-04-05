@@ -29,17 +29,18 @@ import java.awt.Color;
  * 
  * 
  * The RenderContext describes the information and parameters to be used by the RenderEngine to render the World properly
- * This is all elements not related to the World, the Lighting or the Camera.
+ * This is all parameters not directly related to the World, the Lighting or the Camera nor the Display that is defined in GraphicContext
  * It can be to force the rendering to be plain or lines, to use or not textures, etc...
- * This can also allow future evolutions like selecting using a HW graphic acceleration
  * 
  * The RenderContext is passed as a parameter of the RenderEngine before asking him to render the World 
+ * The application may create Several RenderContex instances to render differently a same World
  * 
- * The application may create Several RenderContex instances to render differently a same World.
- * Several default contexts should be accessible as constants to perform standard rendering.
+ * Several pre-built-in default contexts are accessible as constants to perform standard rendering.
  * 
- * The RenderContext should remain as independent as possible on the display and windowing technology (e.g. Swing or SWT).
- * Another class (GraphicContext) should handle these specifics.
+ * Future Evolution :
+ * - The RenderContext should remain as independent as possible on the display and windowing technology (e.g. Swing or SWT). Another
+ * class (GraphicContext) should handle these specifics.
+ * - The RenderContext could also be used to define a parameter to trigger between using or not HW graphic acceleration
  * 
  * @author Olivier BARRY
  * @since May 2016
@@ -72,6 +73,9 @@ public class RenderContext {
 	public static final int TEXTURE_PROCESSING_DISABLED = 0;
 	public static final int TEXTURE_PROCESSING_ENABLED = 1;
 	
+	public static final int SHADING_DISABLED = 0;
+	public static final int SHADING_ENABLED = 1;
+	
 	// ------------------------
 	// RenderContext Attributes
 	// ------------------------
@@ -90,6 +94,9 @@ public class RenderContext {
 	
 	// Texture processing
 	public int textureProcessing = TEXTURE_PROCESSING_DISABLED; // Default
+	
+	// Shading
+	public int shading = SHADING_DISABLED; // Default
 	
 	// --------------
 	// Default colors
@@ -212,6 +219,14 @@ public class RenderContext {
 	
 	public int getTextureProcessing() {
 		return this.textureProcessing;
+	}
+
+	public void setShading(int tp) {
+		this.shading = tp;
+	}
+	
+	public int getShading() {
+		return this.shading;
 	}
 
 }
