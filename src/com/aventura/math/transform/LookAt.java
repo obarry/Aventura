@@ -81,6 +81,8 @@ import com.aventura.tools.tracing.Tracer;
  */
 
 public class LookAt extends Matrix4 {
+	
+	protected Vector4 f, s, up; // Calculated Forward, Side and Up vectors
 
 	/**
 	 * 
@@ -114,7 +116,7 @@ public class LookAt extends Matrix4 {
 	}
 	
 	/**
-	 * Construction of Camera's LookAt Matrix based on Points and Vector3
+	 * Construction of Camera's LookAt Matrix based on forward vector only (no points), useful for 'camera light' initialization
 	 * 
 	 * @param f the forward vector
 	 * @param u the Up vector for the World to leverage for the Camera
@@ -134,11 +136,13 @@ public class LookAt extends Matrix4 {
 	 */
 	public void generateLookAt(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "createLookAt(e, p, u)");
+		
+		// The transformation matrix for the camera is based on a reorientation + a translation (eye - origin) 
 
 		// Build forward, up and side Vectors
-		Vector4 f =  (p.minus(e)).normalize();
-		Vector4 s =  (f.times(u)).normalize();
-		Vector4 up = (s.times(f)).normalize();
+		f =  (p.minus(e)).normalize();
+		s =  (f.times(u)).normalize();
+		up = (s.times(f)).normalize();
 
 		// Construct array of Reorientation Matrix
 		float[][] array = { {  s.getX(),  s.getY(),  s.getZ(), 0.0f },
@@ -150,7 +154,6 @@ public class LookAt extends Matrix4 {
 		Matrix4 orientation = new Matrix4(array);
 
 		// Prepare translation Vector
-
 		Vector4 em = e.times(-1); 
 		// Build the translation Matrix
 		Matrix4 translation = new Translation(em);
@@ -165,19 +168,19 @@ public class LookAt extends Matrix4 {
 	}
 
 	/**
-	 * Construction of Camera's LookAt Matrix based on forward vector
+	 * Construction of Camera's LookAt Matrix based on forward and up vectors only (no eye or PoI points)
 	 * Useful for the "camera light" (needed for shading calculation) elaboration
 	 * 
 	 * @param f the forward vector
 	 * @param u the Up vector for the World to leverage for the Camera
 	 */
-	public void generateLookAt(Vector4 f, Vector4 u) {
+	public void generateLookAt(Vector4 fwd, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "createLookAt(f, u)");
 
-		// Build forward, up and side Vectors
-		f.normalize();
-		Vector4 s =  (f.times(u)).normalize();
-		Vector4 up = (s.times(f)).normalize();
+		// From forward vector, build up and side Vectors
+		this.f = fwd.normalize();
+		s =  (f.times(u)).normalize();
+		up = (s.times(f)).normalize();
 
 		// Construct array of Reorientation Matrix
 		float[][] array = { {  s.getX(),  s.getY(),  s.getZ(), 0.0f },
@@ -201,6 +204,30 @@ public class LookAt extends Matrix4 {
 	 */
 	public LookAt(Matrix4 m) {
 		super(m);
+	}
+	
+	/**
+	 * Getter for Up Vector (no setter since it is calculated)
+	 * @return the Up Vector
+	 */
+	public Vector4 getUp() {
+		return up;
+	}
+
+	/**
+	 * Getter for Side Vector (no setter since it is calculated)
+	 * @return the Side Vector
+	 */
+	public Vector4 getSide() {
+		return s;
+	}
+
+	/**
+	 * Getter for Forward Vector (no setter since it is calculated)
+	 * @return the Forward Vector
+	 */
+	public Vector4 getForward() {
+		return f;
 	}
 
 }

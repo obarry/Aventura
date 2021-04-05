@@ -37,7 +37,7 @@ import com.aventura.tools.tracing.Tracer;
 
 public class Camera {
 
-	protected LookAt matrix;
+	protected LookAt lookAt;
 	protected Vector4 eye;
 
 	public Camera() {
@@ -47,13 +47,13 @@ public class Camera {
 	public Camera(LookAt la, Vector4 e) {
 		super();
 		eye =e;
-		matrix = la;
+		lookAt = la;
 	}
 
 	public Camera(Matrix4 m, Vector4 e) {
 		super();
 		eye = e;
-		matrix = new LookAt(m);
+		lookAt = new LookAt(m);
 	}
 
 	/**
@@ -68,21 +68,45 @@ public class Camera {
 		super();
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating Camera");
 		eye = e;
-		matrix = new LookAt(e,p,u);
+		lookAt = new LookAt(e,p,u);
 	}
 	
 	public void updateCamera(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Updating Camera");
 		eye = e;
-		matrix.generateLookAt(e, p, u);
+		lookAt.generateLookAt(e, p, u);
 	}
 
 	public Matrix4 getMatrix() {
-		return (Matrix4) matrix;
+		return (Matrix4) lookAt;
 	}
 	
 	public Vector4 getEye() {
 		return eye;
+	}
+	
+	/**
+	 * Getter for Up Vector (no setter since it is calculated)
+	 * @return the Up Vector
+	 */
+	public Vector4 getUp() {
+		return lookAt.getUp();
+	}
+
+	/**
+	 * Getter for Side Vector (no setter since it is calculated)
+	 * @return the Side Vector
+	 */
+	public Vector4 getSide() {
+		return lookAt.getSide();
+	}
+
+	/**
+	 * Getter for Forward Vector (no setter since it is calculated)
+	 * @return the Forward Vector
+	 */
+	public Vector4 getForward() {
+		return lookAt.getForward();
 	}
 
 }

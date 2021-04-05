@@ -31,6 +31,15 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
+ * The GraphicContext is a parameter class containing all information allowing to display the world
+ * This is where the view frustum planes are defined and also where the rasterizing definition (pixel per unit)
+ * is also set.
+ * At last this is where the projection Matrix is built and stored using the perspective parameters of the GraphicContext.
+ * The resulting projection Matrix can be obtained using the corresponding getter.
+ * 
+ * The GraphicContext is passed as a parameter of the RenderEngine before asking him to render the World
+ * As a "parameter" object, the application using Aventura API can prepare several GraphicContext and switch from one to another
+ * 
  * Frustum definition:
  * ------------------
  * 
@@ -150,10 +159,18 @@ public class GraphicContext {
 		this.near = dist;
 		this.far = dist + depth;
 
-		
+		// Generate the perspective using the parameters of the other GraphicContext
 		createPerspective(perspective_type, left , right, bottom, top, near, far);
 	}
 	
+	/**
+	 * @param width
+	 * @param height
+	 * @param dist
+	 * @param depth
+	 * @param perspective
+	 * @param ppu
+	 */
 	public GraphicContext(float width, float height, float dist, float depth, int perspective, int ppu) {
 		this.width = width;
 		this.height = height;
@@ -246,10 +263,6 @@ public class GraphicContext {
 		return height;
 	}
 
-	public int getPPU() {
-		return ppu;
-	}
-	
 	public int getPixelWidth() {
 		return pixelWidth;
 	}
@@ -283,7 +296,11 @@ public class GraphicContext {
 		return dist;
 	}
 	
-	public void setPerspective(int perspective) {
+	/**
+	 * Define a (new) perspective with a new type then create (or recreate) it with this type
+	 * @param perspective the type of the perspective as defined in the list of constants
+	 */
+	public void setAndCreatePerspective(int perspective) {
 		this.perspective_type = perspective;
 		
 		float left = -width/2;
@@ -294,9 +311,14 @@ public class GraphicContext {
 		float far = dist + depth;
 		
 		createPerspective(perspective, left , right, bottom, top, near, far);
-
 	}
 	
+	/**
+	 * Create the perspective using the parameters of the GraphicContext
+	 * To be used in case of :
+	 * - GraphicContext created from scratch (without using any constructor with parameters)
+	 * - After changing parameters of the GraphicContext, need a refresh of the perspective
+	 */
 	public void computePerspective() {
 		
 		float left = -width/2;
@@ -307,7 +329,6 @@ public class GraphicContext {
 		float far = dist + depth;
 		
 		createPerspective(perspective_type, left , right, bottom, top, near, far);
-		
 	}
 	
 	public int getPerspectiveType() {
@@ -318,11 +339,11 @@ public class GraphicContext {
 		return (Perspective)projection;
 	}
 		
-	public void setPpu(int ppu) {
+	public void setPPU(int ppu) {
 		this.ppu = ppu;
 	}
 	
-	public int getPpu() {
+	public int getPPU() {
 		return ppu;
 	}
 	
