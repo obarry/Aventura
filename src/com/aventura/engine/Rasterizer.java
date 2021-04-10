@@ -8,7 +8,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.shading.Shading;
+import com.aventura.model.shadow.Shadowing;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.shape.Segment;
@@ -60,7 +60,7 @@ public class Rasterizer {
 	protected GraphicContext graphic;
 	protected View view;
 	protected Lighting lighting;
-	protected Shading shading;
+	protected Shadowing shading;
 	protected Camera camera;
 	
 	// Static data
@@ -90,7 +90,7 @@ public class Rasterizer {
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param graphic
 	 */
-	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting, Shading shading) {
+	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting, Shadowing shading) {
 		this.camera = camera;
 		this.graphic = graphic;
 		this.lighting = lighting;

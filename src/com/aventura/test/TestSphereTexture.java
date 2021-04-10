@@ -153,6 +153,8 @@ public class TestSphereTexture {
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		View view = test.createView(gContext);
 
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
+		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
