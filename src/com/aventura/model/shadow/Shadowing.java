@@ -3,10 +3,10 @@ package com.aventura.model.shadow;
 import com.aventura.context.GraphicContext;
 import com.aventura.engine.ModelView;
 import com.aventura.math.perspective.Orthographic;
-import com.aventura.math.transform.LookAt;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.camera.LookAt;
 import com.aventura.model.light.Lighting;
 
 /**

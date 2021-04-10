@@ -1,6 +1,5 @@
 package com.aventura.model.camera;
 
-import com.aventura.math.transform.LookAt;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.tools.tracing.Tracer;
