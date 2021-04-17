@@ -3,11 +3,16 @@ package com.aventura.model.shadow;
 import com.aventura.context.GraphicContext;
 import com.aventura.engine.ModelView;
 import com.aventura.math.perspective.Orthographic;
+import com.aventura.math.perspective.Perspective;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.camera.LookAt;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.world.World;
+import com.aventura.model.world.shape.Element;
+import com.aventura.model.world.triangle.Triangle;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -39,6 +44,10 @@ import com.aventura.model.light.Lighting;
  * 
  */
 
+/**
+ * @author obarry
+ *
+ */
 public class Shadowing {
 	
 	protected GraphicContext graphicContext; // to get far, near, width, eight distances
@@ -48,12 +57,13 @@ public class Shadowing {
 	
 	// Future evolution : multiple directional light would mean multiple cameras
 	protected Camera camera_light;
+	protected Perspective perspective_light;
 	
 	// ModelView matrix and vertices conversion tool for the calculation of the Shadow map
-	protected ModelView modelview;
+	protected ModelView modelView;
 	
 	// Shadow map
-	private float[][] map;
+	protected float[][] map;
 	
 	// View Frustum
 	protected Vector4 frustumCenter;
@@ -80,7 +90,7 @@ public class Shadowing {
 	/**
 	 * Initialize the Shading object by calculating the projection matrix(ces) for the light source(s)
 	 * 
-	 * As a first implementation, only (1 single) directional light will be used for shading
+	 * As of first implementation, only (1 single) directional light will be used for shading
 	 */
 	public void initShading() {
 		
@@ -95,6 +105,10 @@ public class Shadowing {
 		Vector4 eye = camera_view.getEye();
 		// - The eye-point of interest (camera direction) normalized vector
 		Vector4 fwd = camera_view.getForward().normalize();
+		
+		// TODO can we move out the Perspective class from the graphic context  ?
+		// In order to have something more generic and more consistent
+
 		// - The distance to the near plane
 		float near = graphicContext.getNear();
 		// - The distance to the far plane
@@ -108,32 +122,34 @@ public class Shadowing {
 		
 		// - the half width and half eight of the far plane
 		// Calculate the width and height on far plane using Thales: knowing that width and height are defined on the near plane
-		// width_far = width_near * far/near
-		// height_far = height_near * far/near
-		float half_height_far = half_eight_near * far/near;
-		float half_width_far = half_width_near * far/near;
-		//
+		float half_height_far = half_eight_near * far/near; // height_far = height_near * far/near
+		float half_width_far = half_width_near * far/near; // width_far = width_near * far/near
+		
+		// Calculate all 8 points, vertices of the View Frustum
+		Vector4[][] P = new Vector4[2][4];
+		// TODO : later, this calculation could be done and points provided through methods in the "Frustum" class or any class
+		// directly related to the view Frustum
 		// P11 = Eye + cam_dir*near + up*half_height_near + side*half_width_near
-		Vector4 P11 = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).plus(side.times(half_width_near));
+		P[0][0] = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).plus(side.times(half_width_near));
 		// P12 = Eye + cam_dir*near + up*half_height_near - side*half_width_near
-		Vector4 P12 = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).minus(side.times(half_width_near));
+		P[0][1] = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).minus(side.times(half_width_near));
 		// P13 = Eye + cam_dir*near - up*half_height_near - side*half_width_near
-		Vector4 P13 = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).minus(side.times(half_width_near));
+		P[0][2] = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).minus(side.times(half_width_near));
 		// P14 = Eye + cam_dir*near - up*half_height_near + side*half_width_near
-		Vector4 P14 = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).plus(side.times(half_width_near));
+		P[0][3] = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).plus(side.times(half_width_near));
 		//
 		// P21 = Eye + cam_dir*far + up*half_height_far + side*half_width_far
-		Vector4 P21 = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).plus(side.times(half_width_far));
+		P[1][0] = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).plus(side.times(half_width_far));
 		// P22 = Eye + cam_dir*far + up*half_height_far - side*half_width_far
-		Vector4 P22 = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).minus(side.times(half_width_far));
+		P[1][1] = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).minus(side.times(half_width_far));
 		// P23 = Eye + cam_dir*far - up*half_height_far - side*half_width_far
-		Vector4 P23 = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).minus(side.times(half_width_far));
+		P[1][2] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).minus(side.times(half_width_far));
 		// P24 = Eye + cam_dir*far - up*half_height_far + side*half_width_far
-		Vector4 P24 = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).plus(side.times(half_width_far));
+		P[1][3] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).plus(side.times(half_width_far));
 		
 		// Then the center of this Frustrum is (P11+P12+P13+P14 + P21+P22+P23+P24)/8
 		// We take it as PoI for the Camera light
-		Vector4 light_PoI = (P11.plus(P12).plus(P13).plus(P14).plus(P21).plus(P22).plus(P23).plus(P24)).times(1/8);
+		Vector4 light_PoI = (P[0][0].plus(P[0][1]).plus(P[0][2]).plus(P[0][3]).plus(P[1][0]).plus(P[1][1]).plus(P[1][2]).plus(P[1][3])).times(1/8);
 		
 		Vector4 light_dir = lighting.getDirectionalLight().getLightVector(null).V4();
 		
@@ -143,6 +159,8 @@ public class Shadowing {
 		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the view frustum.
 		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
 		Vector4 light_eye = light_PoI.minus(light_dir.times(far-near));
+		
+		// Define camera and LookAt matrix using light eye and PoI defined as center of the view frustum and up vector of camera view
 		camera_light = new Camera(light_eye, light_PoI, up);
 				
 		/*
@@ -157,9 +175,32 @@ public class Shadowing {
 		 * 											lighting.mCameraPosition.z + 25.0f,
 		 * 											lighting.mCameraPosition.z - 25.0f) * viewMatrix;
 		 */
-		// Camera -> from LookAt
 
-		// Define the bounding box
+		// Define the bounding box for the light camera
+		// For this let's transform the 8 vertices of the view frustrum in light coordinates
+
+		// Calculate the left, right, bottom, top, near, far distances depending on the View's frustrum planes in the Light's coordinates
+		// For this let's use the corner's of the View Frustum and transform them into the Light camera coordinates using the camera_light
+		// matrix
+		Vector4 [][] Q = new Vector4[2][4]; // The transformed frustum vertices in light coordinates
+		// And take the min and max in each dimension of these vertices in light coordinates
+		float maxX = 0, maxY = 0, maxZ = 0;
+		float minX = 0, minY = 0, minZ = 0;
+		for (int i=0; i<2; i++) {
+			for (int j= 0; j<4; j++) {
+				Q[i][j] = camera_light.getMatrix().times(P[i][j]);
+				// Find the max and min X and Y of all the points in light coordinates -> this will become the right, left, top, bottom
+				// of projection matrix
+				// Find the max and min Z -> This will define the near and far of projection matrix
+				maxX = maxX > Q[i][j].getX() ? maxX : Q[i][j].getX();
+				maxY = maxY > Q[i][j].getY() ? maxY : Q[i][j].getY();
+				maxZ = maxZ > Q[i][j].getZ() ? maxZ : Q[i][j].getZ();
+				minX = minX < Q[i][j].getX() ? minX : Q[i][j].getX();
+				minY = minY < Q[i][j].getY() ? minY : Q[i][j].getY();
+				minZ = minZ < Q[i][j].getZ() ? minZ : Q[i][j].getZ();
+				// TODO Note that another possibility for X and Y is to calculate only their absolute max and use it as half width and half height
+			}
+		}
 		
 		/*
 		 * From: https://community.khronos.org/t/directional-light-and-shadow-mapping-view-projection-matrices/71386
@@ -179,84 +220,65 @@ public class Shadowing {
 		 you can assume the light “position” is at the center of the bounding box enclosing all visible objects.
 		 */
 		
-		// Calculate the left, right, bottom, top, near, far distances depending on the View's frustrum planes in the Light's coordinates
-		
-		// Define camera from Lookat to calculate the shadow map
-		
-		// Orthographic projection
-		// -> From math.perspective
-		Matrix4 projection = new Orthographic(0, 0, 0, 0, 0, 0); // To be implemented
+		// At last initialize the Orthographic projection
+		// Orthographic(float left, float right, float bottom, float top, float near, float far)
+		perspective_light = new Orthographic(minX, maxX, minY, maxY, minZ, maxZ);
 
-		
 		// Create the orthographic projection matrix
-		modelview = new ModelView(camera_light.getMatrix(), projection);
-		
-		// Create the light's "camera" matrix using the light direction as camera direction
+		//modelview = new ModelView(camera_light.getMatrix(), projection);
 		
 	}
 	
-	public void generateShadowMap() {
-		
+	/**
+	 * This method will generate the shadow map for the elements of the world passed in parameter with the camera light previously
+	 * initiated and light matrix calculated.
+	 * It will use similar recursive algorithm than RenderEngine algorithm for rendering world but will only calculate a shadow map without
+	 * any more rendering or rasterization calculation.
+	 * @param world
+	 */
+	public void generateShadowMap(World world) {
+	
+		// For each element of the world
+		for (int i=0; i<world.getElements().size(); i++) {			
+			Element e = world.getElement(i);
+			generateShadowMap(e, null); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+		}
 	}
 	
+	protected void generateShadowMap(Element e, Matrix4 matrix) {
+		
+		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
+		// with the previous one for recursive calls (initialized to IDENTITY at first call)
+		Matrix4 model = null;
+		if (matrix == null) {
+			model = e.getTransformation();			
+		} else {
+			model = matrix.times(e.getTransformation());
+		}
+		modelView.setModel(model);
+		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (view)
+
+		// Calculate projection for all vertices of this Element
+		modelView.transformVertices(e);
+				
+		// Process each Triangle
+		for (int j=0; j<e.getTriangles().size(); j++) {
+			Triangle t = e.getTriangle(j);
+			// Scissor test for the triangle
+			// If triangle is totally or partially in the View Frustum
+			// Then renderContext its fragments in the View
+			//if (isInViewFrustum(t)) {
+			//}
+			
+		}
 	
-//	protected AmbientLight ambient;
-//	protected DirectionalLight directional;
-//	protected boolean specularLight = false; // Default is no specular reflection
-//	
-//	public Lighting() {
-//	}
-//	
-//	public Lighting(DirectionalLight directional) {
-//		this.directional = directional;
-//	}
-//	
-//	public Lighting(AmbientLight ambient) {
-//		this.ambient = ambient;
-//	}
-//	
-//	public Lighting(DirectionalLight directional, AmbientLight ambient) {
-//		this.ambient = ambient;
-//		this.directional = directional;
-//	}
-//	
-//	public Lighting(DirectionalLight directional, boolean specularLight) {
-//		this.directional = directional;
-//		this.specularLight = specularLight;
-//	}
-//	
-//	public Lighting(DirectionalLight directional, AmbientLight ambient, boolean specularLight) {
-//		this.ambient = ambient;
-//		this.directional = directional;
-//		this.specularLight = specularLight;
-//	}
-//	
-//	public boolean hasAmbient() {
-//		return ambient!=null ? true : false;
-//	}
-//	
-//	public boolean hasDirectional() {
-//		return directional!=null ? true : false;
-//	}
-//	
-//	public boolean hasSpecular() {
-//		return specularLight;
-//	}
-//		
-//	public AmbientLight getAmbientLight() {
-//		return ambient;
-//	}
-//	
-//	public void setAmbientLight(AmbientLight ambient) {
-//		this.ambient = ambient;
-//	}
-//
-//	public DirectionalLight getDirectionalLight() {
-//		return directional;
-//	}
-//	
-//	public void setDirectionalLight(DirectionalLight directional) {
-//		this.directional = directional;
-//	}
+		// Do a recursive call for SubElements
+		if (!e.isLeaf()) {
+			for (int i=0; i<e.getSubElements().size(); i++) {
+				// Recursive call
+				generateShadowMap(e.getSubElements().get(i), model);
+			}
+		}
+	}
 	
 }

@@ -229,7 +229,7 @@ public class RenderEngine {
 			shadowing.initShading();
 			
 			// Generate the shadow map
-			shadowing.generateShadowMap(); // need to recurse on each Element
+			shadowing.generateShadowMap(world); // need to recurse on each Element
 		}
 		// *** END UNDER CONSTRUCTION ***
 		
