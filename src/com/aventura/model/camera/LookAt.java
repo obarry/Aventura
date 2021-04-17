@@ -1,5 +1,6 @@
-package com.aventura.math.transform;
+package com.aventura.model.camera;
 
+import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;

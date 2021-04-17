@@ -32,10 +32,7 @@ package com.aventura.math.vector;
  * @since June 2016
  * 
  */
-/**
- * @author Olivier BARRY
- *
- */
+
 public class Tools {
 	
 	/**

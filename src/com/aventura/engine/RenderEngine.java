@@ -12,7 +12,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.shading.Shading;
+import com.aventura.model.shadow.Shadowing;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
@@ -96,7 +96,7 @@ public class RenderEngine {
 	
 	// Context's parameters
 	private RenderContext renderContext;
-	//private GraphicContext graphicContext;
+	private GraphicContext graphicContext;
 
 	// Statistics
 	private int nbt = 0; // Number of triangles processed
@@ -108,7 +108,7 @@ public class RenderEngine {
 	private World world;
 	private Lighting lighting;
 	private Camera camera;
-	private Shading shading;
+	private Shadowing shadowing;
 	
 	// View
 	private View view;
@@ -135,7 +135,7 @@ public class RenderEngine {
 	 */
 	public RenderEngine(World world, Lighting lighting, Camera camera, RenderContext render, GraphicContext graphic) {
 		this.renderContext = render;
-		//this.graphicContext = graphic;
+		this.graphicContext = graphic;
 		this.world = world;
 		this.lighting = lighting;
 		this.camera = camera;
@@ -143,9 +143,9 @@ public class RenderEngine {
 		// Create the Shading context if it is enabled
 		if (renderContext.shading == RenderContext.SHADING_ENABLED) {
 			// Build Shading using a reference to Lighting object
-			this.shading = new Shading(lighting);
+			this.shadowing = new Shadowing(graphicContext, lighting, camera);
 		} else {
-			this.shading = null;
+			this.shadowing = null;
 		}
 		
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
@@ -153,7 +153,7 @@ public class RenderEngine {
 		
 		// Delegate rasterization tasks to a dedicated engine
 		// No shading in this constructor -> null
-		this.rasterizer = new Rasterizer(camera, graphic, lighting, shading);
+		this.rasterizer = new Rasterizer(camera, graphic, lighting, shadowing);
 	}
 		
 	public void setView(View v) {
@@ -225,13 +225,11 @@ public class RenderEngine {
 			// Goal is to try to rely on ModelView class for part of the calculation and later use the methods of this class for
 			// vertices transformation that will be used before rasterization and generation of the Shadow map
 			
-			// Initiate the Shading:
-			// - Need the camera Up vector for Shadow Map orientation
-			// - Calculate the matrix(ces)
-			shading.initShading(camera.getUp());
+			// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
+			shadowing.initShading();
 			
 			// Generate the shadow map
-			shading.generateShadowMap(); // need to recurse on each Element
+			shadowing.generateShadowMap(world); // need to recurse on each Element
 		}
 		// *** END UNDER CONSTRUCTION ***
 		
