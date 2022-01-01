@@ -73,8 +73,8 @@ public class RenderContext {
 	public static final int TEXTURE_PROCESSING_DISABLED = 0;
 	public static final int TEXTURE_PROCESSING_ENABLED = 1;
 	
-	public static final int SHADING_DISABLED = 0;
-	public static final int SHADING_ENABLED = 1;
+	public static final int SHADOWING_DISABLED = 0;
+	public static final int SHADOWING_ENABLED = 1;
 	
 	// ------------------------
 	// RenderContext Attributes
@@ -96,7 +96,7 @@ public class RenderContext {
 	public int textureProcessing = TEXTURE_PROCESSING_DISABLED; // Default
 	
 	// Shading
-	public int shading = SHADING_DISABLED; // Default
+	public int shadowing = SHADOWING_DISABLED; // Default
 	
 	// --------------
 	// Default colors
@@ -221,12 +221,12 @@ public class RenderContext {
 		return this.textureProcessing;
 	}
 
-	public void setShading(int tp) {
-		this.shading = tp;
+	public void setShadowing(int tp) {
+		this.shadowing = tp;
 	}
 	
-	public int getShading() {
-		return this.shading;
+	public int getShadowing() {
+		return this.shadowing;
 	}
 
 }

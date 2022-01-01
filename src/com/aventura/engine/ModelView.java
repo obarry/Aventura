@@ -197,7 +197,7 @@ public class ModelView {
 		v.setProjPos(full.times(v.getPos()));
 		v.setWorldPos(model.times(v.getPos()));
 		if (v.getNormal() != null) {
-			v.setProjNormal(full_normals.times(v.getNormal().V4()).V3());
+			//v.setProjNormal(full_normals.times(v.getNormal().V4()).V3()); // Not used - Removed 1/1/2022
 			v.setWorldNormal(model_normals.times(v.getNormal().V4()).V3());
 		}
 	}

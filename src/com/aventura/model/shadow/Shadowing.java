@@ -39,15 +39,18 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
+ * In parallel of Lighting class, the Shadowing class aims at providing the services to generate Shadows
+ * More specifically and close to the Rasterizer class, Shodowing class aims at calculating a Shadow map (in future: several shadow maps), contained in this class.
+ * 
+ * Future steps / possibilities :
+ * - If applicable, homogeneize classes Lighting and Shadowing to perform similar tasks (map generation -> not the case for Lighting as Rasterizer class has the role)
+ * - Try to generalize the work to be done between Lighting and Shadowing (e.g. map generation), create common class / ancestor and use inheritance for specialization
+ *
  * @author Olivier BARRY
  * @since July 2019
  * 
  */
 
-/**
- * @author obarry
- *
- */
 public class Shadowing {
 	
 	protected GraphicContext graphicContext; // to get far, near, width, eight distances
@@ -259,17 +262,20 @@ public class Shadowing {
 		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (view)
 
 		// Calculate projection for all vertices of this Element
-		modelView.transformVertices(e);
+		modelView.transformVertices(e); // Calculate prj_pos of each vertex
+		// TODO Verify that modelView.transformVertices does not calculate normals (not needed here) projection
 				
 		// Process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			Triangle t = e.getTriangle(j);
 			// Scissor test for the triangle
 			// If triangle is totally or partially in the View Frustum
-			// Then renderContext its fragments in the View
-			//if (isInViewFrustum(t)) {
-			//}
-			
+			// Then shadowmap this triangle
+			if (t.isInViewFrustum()) {
+				
+				// TBD
+				
+			}
 		}
 	
 		// Do a recursive call for SubElements

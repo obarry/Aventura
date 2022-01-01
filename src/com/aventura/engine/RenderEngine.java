@@ -77,7 +77,7 @@ import com.aventura.view.View;
  *                ^                   |-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
  *                |          		  |		+---------------------+ 									 +---------------------+
  *     +---------------------+		  |	               |
- *     |       Shading       | <------+                |
+ *     |      Shadowing      | <------+                |
  *     +---------------------+		  |	               |
  *                                    |                |
  *     						          |        		   v		
@@ -141,7 +141,7 @@ public class RenderEngine {
 		this.camera = camera;
 		
 		// Create the Shading context if it is enabled
-		if (renderContext.shading == RenderContext.SHADING_ENABLED) {
+		if (renderContext.shadowing == RenderContext.SHADOWING_ENABLED) {
 			// Build Shading using a reference to Lighting object
 			this.shadowing = new Shadowing(graphicContext, lighting, camera);
 		} else {
@@ -156,6 +156,33 @@ public class RenderEngine {
 		this.rasterizer = new Rasterizer(camera, graphic, lighting, shadowing);
 	}
 		
+	/**
+	 * Create a Rendering Engine with Shadowing created externally and passed as an argument to the RenderEngine
+	 * Usefull if the Shadowing object needs to be used outside the context of Rendering (e.g. to access its ShadowMap)
+	 * 
+	 * @param world the world to renderContext
+	 * @param lighting the directional lighting the world
+	 * @param shadowing the pre-initialized shadowing object to be used for this rendering
+	 * @param camera the camera watching the world
+	 * @param renderContext the renderContext context containing parameters to renderContext the scene
+	 * @param graphicContext the graphicContext context to contain parameters to display the scene
+	 */
+	public RenderEngine(World world, Lighting lighting, Shadowing shadowing, Camera camera, RenderContext render, GraphicContext graphic) {
+		this.renderContext = render;
+		this.graphicContext = graphic;
+		this.world = world;
+		this.lighting = lighting;
+		this.shadowing = shadowing;
+		this.camera = camera;
+				
+		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
+		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
+		
+		// Delegate rasterization tasks to a dedicated engine
+		// No shading in this constructor -> null
+		this.rasterizer = new Rasterizer(camera, graphic, lighting, shadowing);
+	}
+
 	public void setView(View v) {
 		view = v;
 		rasterizer.setView(v);
@@ -199,9 +226,8 @@ public class RenderEngine {
 			rasterizer.initZBuffer();
 		}
 		
-		// *** UNDER CONSTRUCTION ***
-		// Shading initialization and Shadow map(s) calculation
-		if (renderContext.shading == RenderContext.SHADING_ENABLED) {
+		// Shadowing initialization and Shadow map(s) calculation
+		if (renderContext.shadowing == RenderContext.SHADOWING_ENABLED) {
 			
 			// To calculate the projection matrix (or matrices if several light sources) :
 			// - Need to define the bounding box in which the elements will used to calculate the shadow map
@@ -231,7 +257,6 @@ public class RenderEngine {
 			// Generate the shadow map
 			shadowing.generateShadowMap(world); // need to recurse on each Element
 		}
-		// *** END UNDER CONSTRUCTION ***
 		
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
@@ -346,7 +371,7 @@ public class RenderEngine {
 		// Scissor test for the triangle
 		// If triangle is totally or partially in the View Frustum
 		// Then renderContext its fragments in the View
-		if (isInViewFrustum(t)) { // Render triangle
+		if (t.isInViewFrustum()) { // Render triangle
 			
 			// If triangle normal then transform triangle normal
 			if (renderContext.renderingType != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal() || backfaceCulling) {
@@ -410,43 +435,7 @@ public class RenderEngine {
 			nbt_out++;
 		}
 	}
-	
-	
-	/**
-	 * Is true if at least one Vertex of the Triangle is in the View Frustum
-	 * 
-	 * @param t the Triangle
-	 * @return true if triangle is at least partially inside the View Frustum, else false
-	 */
-	protected boolean isInViewFrustum(Triangle t) {
-
-		// Need at least one vertice to be in the view frustum
-		if (isInViewFrustum(t.getV1()) || isInViewFrustum(t.getV2()) || isInViewFrustum(t.getV3()))
-			return true;
-		else
-			return false;
-	}
-	
-	/**
-	 * Is true if the Vertex is in the View Frustum
-	 * 
-	 * @param v the Vertex
-	 * @return true if Vertex is inside the View Frustum, else false
-	 */
-	protected boolean isInViewFrustum(Vertex v) {
 		
-		// Get homogeneous coordinates of the Vertex
-		float x = v.getProjPos().get3DX();
-		float y = v.getProjPos().get3DY();
-		float z = v.getProjPos().get3DZ();
-		
-		// Need all (homogeneous) coordinates to be within range [-1, 1]
-		if ((x<=1 && x>=-1) && (y<=1 && y>=-1) && (z<=1 && z>=-1))
-			return true;
-		else
-			return false;
-	}
-	
 	/**
 	 * Is true if triangle is "back face" with regards to its normal, else false
 	 * 

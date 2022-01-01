@@ -60,7 +60,7 @@ public class Rasterizer {
 	protected GraphicContext graphic;
 	protected View view;
 	protected Lighting lighting;
-	protected Shadowing shading;
+	protected Shadowing shadowing;
 	protected Camera camera;
 	
 	// Static data
@@ -90,11 +90,11 @@ public class Rasterizer {
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param graphic
 	 */
-	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting, Shadowing shading) {
+	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting, Shadowing shadowing) {
 		this.camera = camera;
 		this.graphic = graphic;
 		this.lighting = lighting;
-		this.shading = shading;
+		this.shadowing = shadowing;
 	}
 	
 	public void setView(View v) {
