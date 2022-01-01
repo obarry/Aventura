@@ -48,10 +48,10 @@ import java.awt.Color;
  */
 public class RenderContext {
 	
-	public static final int RENDERING_TYPE_LINE = 1;		// Draw only lines
-	public static final int RENDERING_TYPE_MONOCHROME = 2;  // Draw lines and fill with monochrome color each triangle
-	public static final int RENDERING_TYPE_PLAIN = 3;		// Fill each triangle with one color depending on Lighting and orientation
-	public static final int RENDERING_TYPE_INTERPOLATE = 4; // Fill each triangle by interpolating each pixel's color
+	public static final int RENDERING_TYPE_LINE = 1;				// Draw only lines
+	public static final int RENDERING_TYPE_MONOCHROME = 2;  		// Draw lines and fill with monochrome color each triangle
+	public static final int RENDERING_TYPE_PLAIN = 3;				// Fill each triangle with one color depending on Lighting and orientation
+	public static final int RENDERING_TYPE_INTERPOLATE = 4; 		// Fill each triangle by interpolating each pixel's color
 
 	public static final int RENDERING_LINES_DISABLED = 0;
 	public static final int RENDERING_LINES_ENABLED = 1;
@@ -111,8 +111,10 @@ public class RenderContext {
 	
 	// Default RenderContext to be used for easy display
 	public static RenderContext RENDER_STANDARD_PLAIN = new RenderContext(RenderContext.RENDERING_TYPE_PLAIN, RenderContext.DISPLAY_LANDMARK_DISABLED);
+	public static RenderContext RENDER_STANDARD_PLAIN_SHADOWS = new RenderContext(RenderContext.RENDERING_TYPE_PLAIN, RenderContext.DISPLAY_LANDMARK_DISABLED, RenderContext.SHADOWING_ENABLED);
 	public static RenderContext RENDER_STANDARD_PLAIN_WITH_LANDMARKS = new RenderContext(RenderContext.RENDERING_TYPE_PLAIN, RenderContext.DISPLAY_LANDMARK_ENABLED);
 	public static RenderContext RENDER_STANDARD_INTERPOLATE = new RenderContext(RENDERING_TYPE_INTERPOLATE, DISPLAY_LANDMARK_DISABLED);
+	public static RenderContext RENDER_STANDARD_INTERPOLATE_SHADOWS = new RenderContext(RENDERING_TYPE_INTERPOLATE, DISPLAY_LANDMARK_DISABLED, RenderContext.SHADOWING_ENABLED);
 	public static RenderContext RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS = new RenderContext(RENDERING_TYPE_INTERPOLATE, DISPLAY_LANDMARK_ENABLED);
 	public static RenderContext RENDER_DEFAULT = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED);
 	public static RenderContext RENDER_DEFAULT_ALL_ENABLED = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED, DISPLAY_NORMALS_ENABLED, DISPLAY_LIGHT_VECTORS_ENABLED);
@@ -141,6 +143,12 @@ public class RenderContext {
 		this.displayLandmark = display_landmark;
 	}
 		
+	public RenderContext(int type, int display_landmark, int shadowing) {
+		this.renderingType = type;
+		this.displayLandmark = display_landmark;
+		this.shadowing = shadowing;
+	}
+
 	public RenderContext(int type, int display_landmark, int display_normals, int display_light) {
 		this.renderingType = type;
 		this.displayLandmark = display_landmark;
