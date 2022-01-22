@@ -252,7 +252,7 @@ public class RenderEngine {
 			// vertices transformation that will be used before rasterization and generation of the Shadow map
 			
 			// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
-			shadowing.initShading();
+			shadowing.initShadowing();
 			
 			// Generate the shadow map
 			shadowing.generateShadowMap(world); // need to recurse on each Element

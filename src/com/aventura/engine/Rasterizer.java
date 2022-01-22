@@ -318,6 +318,22 @@ public class Rasterizer {
 			}
 		}
 		
+		// Shadows
+		Vector4 vs1 = null, vs2 = null, vs3 = null;
+		
+		if (shadows) { // then do the needeed calculation to know if the element is in shadow or not
+
+			// For each light - TODO in next evolution (one single light for instance)
+			// For each of the 3 Vertices
+			// Get the World position
+			// translate in Light coordinates using the matrix in Shadowing class
+			vs1 = shadowing.getModelView().project(v1);
+			vs2 = shadowing.getModelView().project(v2);
+			vs3 = shadowing.getModelView().project(v3);
+			// Get the depth of the vertices in Light coordinates
+			// Prepare the 3 depths to be interpolated in the rasterizeScanLine method
+		}
+		
 	    // Slopes
 	    float dP1P2, dP1P3;
 
@@ -352,9 +368,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows);
+	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1, vs3, vs1, vs2);
 	            } else {
-	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows);
+	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1, vs3, vs2, vs3);
 	            }
 	        }
 
@@ -375,9 +391,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows);
+	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1, vs2, vs1, vs3);
 	            } else {
-	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows);
+	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs2, vs3, vs1, vs3);
 	            }
 	        }
 	    }
@@ -396,12 +412,16 @@ public class Rasterizer {
 			Vector4 vtc,			// Texture Vector of Vertex C
 			Vector4 vtd,			// Texture Vector of Vertex D
 			Texture t,				// Texture object for this triangle
-			Color shadedCol,		// Shadede color if Normal at triangle level (else should be null)
+			Color shadedCol,		// Shaded color if Normal at triangle level (else should be null)
 			Color ambientCol,		// Ambient color (independent of the position in space)
 			boolean interpolate,	// Flag for interpolation (true) or not (false)
 			boolean texture, 		// Flag for texture calculation (true) or not (false)
 			int tex_orientation,	// Flag for isotropic, vertical or horizontal texture interpolation
-			boolean shadows)   {	// Flag for shadowing enabled (true) or disabled (false)
+			boolean shadows,		// Flag for shadowing enabled (true) or disabled (false)
+			Vector4 vsa,			// Projected position in light coordinates of Vertex A
+			Vector4 vsb,			// Projected position in light coordinates of Vertex B
+			Vector4 vsc,			// Projected position in light coordinates of Vertex C
+			Vector4 vsd)   {		// Projected position in light coordinates of Vertex D
 
 		// Thanks to current Y, we can compute the gradient to compute others values like
 		// the starting X (sx) and ending X (ex) to draw between
@@ -416,7 +436,9 @@ public class Rasterizer {
 		float xc = xScreen(vc);
 		float xd = xScreen(vd);
 
+		// Gradient 1 is the gradient on VA VB segment
 		float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
+		// Gradient 2 is the gradient on VC VD segment
 		float gradient2 = yc != yd ? (y - yc) / (yd - yc) : 1;
 		
 		int sx = (int)Tools.interpolate(xa, xb, gradient1);
@@ -440,6 +462,23 @@ public class Rasterizer {
 		// Starting Z & ending Z
 		float z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
 		float z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
+		
+		// Shadows
+		float zs1 = 0, zs2 = 0;
+		if (shadows) { // then do the needeed calculation to know if the element is in shadow or not
+			// TODO
+			// For each light
+			// Get the depth of the vertices in Light coordinates
+			float zsa = vsa.getW();
+			float zsb = vsb.getW();
+			float zsc = vsc.getW();
+			float zsd = vsd.getW();
+			
+			// Interpolate across the 2 segments using gradients
+			// Starting Z & ending Z
+			zs1 = 1/Tools.interpolate(1/zsa, 1/zsb, gradient1);
+			zs2 = 1/Tools.interpolate(1/zsc, 1/zsd, gradient2);			
+		}
 
 
 		// Gouraud's shading (Vertex calculation and interpolation across triangle)
@@ -537,8 +576,28 @@ public class Rasterizer {
 						} // End Texture interpolation
 						
 						// Shadowing
-						if (shadows) { // then do the needeed calculation to know if the element is in shadow or not
+						if (shadows) { // then do the needful to know if the element is in shadow or not
 							// TODO
+							// For each light
+							int xs = 0, ys = 0; // projected position for shadow map
+							// Interpolate across the 2 segments using gradient
+							float zs = 1/Tools.interpolate(1/zs1, 1/zs2, gradient);
+							// Calculate xs and ys by
+							// - projection using the Light coordinates matrix
+							// - tranform from [-1.1] coordinates to [0,1] by multiplying the projection matrix appropriately
+							// - transformation in integer indices of the size of the shadow map
+							if (zs<shadowing.getMap(xs,ys)) {
+								
+							} else {
+								// in shadow
+							}
+						
+							// Is there a needed correction using W coordinate ?
+							// Get the depth from the depth map using texture mapping interpolation technique
+							// Compare the 2 depths and if depth of the fragment is deeper than depth map
+							// then this fragment is in shadow and the corresponding shadow light should be 0
+							// else this fragment is in the light and shadow light should be 1
+							
 						}
 
 						// Combine colors with the following formula
@@ -547,7 +606,7 @@ public class Rasterizer {
 						// ctx = T, csh  = C, ambientCol = A, csp = S
 						// D: diffuse color, T: texture, A: Ambient color, C: color of the light source at point, S: Specular color
 						//TODO need to decouple the Ambient light from the shaded color calculation. This is easy as Ambient light do not need any interpolation
-						// This will allow to calculate the CS (shaded*specular
+						// This will allow to calculate the CS (shaded*specular) color
 
 						if (texture && t!=null) {
 							if (lighting.hasSpecular() && csp != null) {

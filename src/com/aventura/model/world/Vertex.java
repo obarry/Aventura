@@ -55,7 +55,7 @@ public class Vertex {
 	// Dynamic characteristics: Projection and Shading
 	//
 	
-	// Projected Geometry
+	// Projected or calculated Geometry
 	protected Vector4 wld_position = null; // Position of this Vertex in World reference (Model to World projection)
 	protected Vector4 prj_position = null; // Position of this Vertex in Homogeneous (clip) coordinates (Model to Clip projection)
 	protected Vector3 wld_normal = null; // Normal in World coordinates

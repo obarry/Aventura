@@ -7,7 +7,7 @@ import com.aventura.math.perspective.Perspective;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
-import com.aventura.model.camera.LookAt;
+//import com.aventura.model.camera.LookAt;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Element;
@@ -66,7 +66,7 @@ public class Shadowing {
 	protected ModelView modelView;
 	
 	// Shadow map
-	protected float[][] map;
+	protected float[][] map; // TODO multiple maps if multiple lights
 	
 	// View Frustum
 	protected Vector4 frustumCenter;
@@ -95,7 +95,7 @@ public class Shadowing {
 	 * 
 	 * As of first implementation, only (1 single) directional light will be used for shading
 	 */
-	public void initShading() {
+	public void initShadowing() {
 		
 		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the view frustrum
 		
@@ -228,7 +228,7 @@ public class Shadowing {
 		perspective_light = new Orthographic(minX, maxX, minY, maxY, minZ, maxZ);
 
 		// Create the orthographic projection matrix
-		//modelview = new ModelView(camera_light.getMatrix(), projection);
+		modelView = new ModelView(camera_light.getMatrix(), perspective_light);
 		
 	}
 	
@@ -258,11 +258,11 @@ public class Shadowing {
 		} else {
 			model = matrix.times(e.getTransformation());
 		}
-		modelView.setModel(model);
+		modelView.setModelWithoutNormals(model);
 		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (view)
 
 		// Calculate projection for all vertices of this Element
-		modelView.transformVertices(e); // Calculate prj_pos of each vertex
+		modelView.transformVerticesWithoutNormals(e); // Calculate prj_pos of each vertex
 		// TODO Verify that modelView.transformVertices does not calculate normals (not needed here) projection
 				
 		// Process each Triangle
@@ -285,6 +285,14 @@ public class Shadowing {
 				generateShadowMap(e.getSubElements().get(i), model);
 			}
 		}
+	}
+	
+	public ModelView getModelView() {
+		return modelView;
+	}
+	
+	public float getMap(int x, int y) {
+		return map[x][y];
 	}
 	
 }

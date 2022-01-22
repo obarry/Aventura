@@ -4,6 +4,7 @@ import com.aventura.math.Constants;
 import com.aventura.math.vector.Matrix3;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.NotInvertibleMatrixException;
+import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.Triangle;
@@ -84,14 +85,14 @@ import com.aventura.tools.tracing.Tracer;
 public class ModelView {
 	
 	// Transformation matrices
-	Matrix4 projection;
-	Matrix4 view;
-	Matrix4 model;
-	Matrix4 model_normals;
+	Matrix4 projection = null;
+	Matrix4 view = null;
+	Matrix4 model = null;
+	Matrix4 model_normals = null;
 	
 	// This matrix is the result of the multiplication of all Matrices
-	Matrix4 full;
-	Matrix4 full_normals;
+	Matrix4 full = null;
+	Matrix4 full_normals = null;
 	
 	/**
 	 * Default constructor.
@@ -154,6 +155,7 @@ public class ModelView {
 		// Use the inverse transpose matrix in case of non orthogonal transformation (e.g. non uniform scaling)
 		// Test of orthogonal transformation only need Matrix3 (not full Matrix 4 / homogeneous coordinate)
 		Matrix3 model3 = model.getMatrix3();
+		
 		// To test if the transformation Matrix is orthogonal, we can use the test Transpose(A).A = I (Identity Matrix) else it is not.
 		// Rounding errors in the calculation requires comparison with a margin of tolerance (Epsilon). Surprisingly the experience shows that 1.0E-4 is the lowest epsilon
 		if (model3.times(model3.transpose()).equalsEpsilon(Matrix3.IDENTITY, (float) 1.0E-4)) {
@@ -175,14 +177,29 @@ public class ModelView {
 	}
 		
 	/**
+	 * Set the model Matrix to transform from Model (Element in Aventura) coordinates into World coordinates
+	 * @param model the Model Matrix4
+	 */
+	public void setModelWithoutNormals(Matrix4 model) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModelWithoutNormals(model)");
+		// Vertices Model matrix
+		this.model = model;
+		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Matrix:\n"+ model);
+	}
+	/**
 	 *  The complete transformation, from model to homogeneous coordinates, is done through the following formula:
 	 * TransformedVector = [Projection Matrix] * [View Matrix] * [Model Matrix] * OriginalVector
 	 */
 	public void computeTransformation() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
 		full = projection.times(view.times(model));
-		full_normals = projection.times(view.times(model_normals));
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
+		
+		// Do not compute the transformation for normals if model_normals not initialized (not required e.g. shadow map calculation)
+		if (model_normals != null) {
+			full_normals = projection.times(view.times(model_normals));
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
+		}
 	}
 	
 	/**
@@ -203,6 +220,30 @@ public class ModelView {
 	}
 	
 	/**
+	 * Fully compute Vertex projections resulting from the ModelView transformation for both ModelToWorld and ModelToClip projections
+	 * Complete the provided Vertex with projection data but do not modify original position data
+	 * Calculate the normal projection (Vertex normal) taking care of using the normals Model matrix (in case of non uniform scaling)
+	 * and not the standard Model matrix.
+	 * 
+	 * @param v the provided Vertex
+	 */
+	public void transformWithoutNormals(Vertex v) {
+		v.setProjPos(full.times(v.getPos()));
+		v.setWorldPos(model.times(v.getPos())); // TBC if required for Shadow map and shadow casting calculation
+	}
+	
+	/**
+	 * Project Vertex using the projection resulting from the ModelView transformation for ModelToClip projection (full)
+	 * Return the resulting Vector4 without updating the Vertex (does not update Vertex's projection fields)
+	 * 
+	 * @param v the provided Vertex
+	 * @return the projected Vector4 without Vertex transformation
+	 */
+	public Vector4 project(Vertex v) {
+		return full.times(v.getPos());
+	}
+	
+	/**
 	 * Transform all vertices of an Element
 	 * 
 	 * @param e the Element
@@ -210,6 +251,17 @@ public class ModelView {
 	public void transformVertices(Element e) {
 		for (int i=0; i<e.getNbVertices(); i++) {
 			transform(e.getVertex(i));
+		}
+	}
+	
+	/**
+	 * Transform all vertices of an Element without normal calculation (shadowing)
+	 * 
+	 * @param e the Element
+	 */
+	public void transformVerticesWithoutNormals(Element e) {
+		for (int i=0; i<e.getNbVertices(); i++) {
+			transformWithoutNormals(e.getVertex(i));
 		}
 	}
 	
