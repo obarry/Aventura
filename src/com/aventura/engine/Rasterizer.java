@@ -60,7 +60,7 @@ public class Rasterizer {
 	protected GraphicContext graphic;
 	protected View view;
 	protected Lighting lighting;
-	protected Shadowing shading;
+	protected Shadowing shadowing;
 	protected Camera camera;
 	
 	// Static data
@@ -90,11 +90,11 @@ public class Rasterizer {
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param graphic
 	 */
-	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting, Shadowing shading) {
+	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting, Shadowing shadowing) {
 		this.camera = camera;
 		this.graphic = graphic;
 		this.lighting = lighting;
-		this.shading = shading;
+		this.shadowing = shadowing;
 	}
 	
 	public void setView(View v) {
@@ -209,9 +209,10 @@ public class Rasterizer {
 	 * @param specExp the specular exponent of the Element
 	 * @param specCol the specular color of the Element
 	 * @param interpolate a boolean to indicate if interpolation of colors is activated (true) or not (false)
-	 * @param texture a boolean to indicate if texture processing is activated (true) or not (false) 
+	 * @param texture a boolean to indicate if texture processing is activated (true) or not (false)
+	 * @param shadows a boolean to indicate if shadowing is enabled (true) or not (false)
 	 **/
-	public void rasterizeTriangle(Triangle t, Color surfCol, float specExp, Color specCol, boolean interpolate, boolean texture) {
+	public void rasterizeTriangle(Triangle t, Color surfCol, float specExp, Color specCol, boolean interpolate, boolean texture, boolean shadows) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+surfCol);
 		
@@ -351,9 +352,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
+	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows);
 	            } else {
-	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
+	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows);
 	            }
 	        }
 
@@ -374,9 +375,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
+	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows);
 	            } else {
-	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation());
+	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows);
 	            }
 	        }
 	    }
@@ -399,7 +400,8 @@ public class Rasterizer {
 			Color ambientCol,		// Ambient color (independent of the position in space)
 			boolean interpolate,	// Flag for interpolation (true) or not (false)
 			boolean texture, 		// Flag for texture calculation (true) or not (false)
-			int tex_orientation) {	// Flag for isotropic, vertical or horizontal texture interpolation
+			int tex_orientation,	// Flag for isotropic, vertical or horizontal texture interpolation
+			boolean shadows)   {	// Flag for shadowing enabled (true) or disabled (false)
 
 		// Thanks to current Y, we can compute the gradient to compute others values like
 		// the starting X (sx) and ending X (ex) to draw between
@@ -512,7 +514,7 @@ public class Rasterizer {
 							vt = Tools.interpolate(vt1, vt2, gradient).times(z);
 							try {
 								// Projective Texture mapping using the fourth coordinate
-								// By default W of the texture vector is 1 but if not this will help to take account of the potential geometrical distortion of the texture
+								// By default W of the texture vector is 1 but if not this will help to take account of the potential geometric distortion of the texture
 								switch (tex_orientation) {
 								case Triangle.TEXTURE_ISOTROPIC: // Default for a triangle
 									ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
@@ -533,10 +535,16 @@ public class Rasterizer {
 							}
 
 						} // End Texture interpolation
+						
+						// Shadowing
+						if (shadows) { // then do the needeed calculation to know if the element is in shadow or not
+							// TODO
+						}
 
 						// Combine colors with the following formula
 						// Color K = DTA + CDT + S = DT(A+C) + S : WRONG old calculation 
-						//Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
+						// Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
+						// ctx = T, csh  = C, ambientCol = A, csp = S
 						// D: diffuse color, T: texture, A: Ambient color, C: color of the light source at point, S: Specular color
 						//TODO need to decouple the Ambient light from the shaded color calculation. This is easy as Ambient light do not need any interpolation
 						// This will allow to calculate the CS (shaded*specular

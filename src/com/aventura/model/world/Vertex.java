@@ -45,7 +45,8 @@ public class Vertex {
 	
 	// Physical characteristic
 	protected Color color = null; // color of this Vertex, if null the Element's color (or World's color) is used. Lowest level priority.
-	protected int material; // To be defined, a specific class may be needed for a complex material representation
+	// TODO Material
+	//protected int material; // To be defined, a specific class may be needed for a complex material representation
 
 	// Reflectivity
 	// TODO
@@ -58,7 +59,7 @@ public class Vertex {
 	protected Vector4 wld_position = null; // Position of this Vertex in World reference (Model to World projection)
 	protected Vector4 prj_position = null; // Position of this Vertex in Homogeneous (clip) coordinates (Model to Clip projection)
 	protected Vector3 wld_normal = null; // Normal in World coordinates
-	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates
+	// protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates - Not used - Removed 1/1/2022
 	
 	// Lighting and Shading
 	protected Color shadedCol = null; // Gouraud's shading at this Vertex, calculated at Rasterization time
@@ -72,7 +73,7 @@ public class Vertex {
 		this.position = (v.position != null) ? new Vector4(v.position) : null;
 		this.normal = (v.normal != null) ? new Vector3(v.normal) : null;
 		this.color = v.getColor();
-		this.material = v.material;
+		//this.material = v.material; TODO
 	}
 	
 	public Vertex() {
@@ -147,12 +148,13 @@ public class Vertex {
 		return wld_normal;
 	}
 	
-	public void setProjNormal(Vector3 n) {
-		prj_normal = n;
-	}
-	public Vector3 getProjNormal() {
-		return prj_normal;
-	}
+	// Not used - Removed 1/1/2022
+//	public void setProjNormal(Vector3 n) {
+//		prj_normal = n;
+//	}
+//	public Vector3 getProjNormal() {
+//		return prj_normal;
+//	}
 			
 	public void setColor(Color c) {
 		this.color = c;
@@ -189,5 +191,25 @@ public class Vertex {
 			// TODO
 		}
 	}
+	
+	/**
+	 * Is true if the Vertex is in the View Frustum in homogeneous coordinates
+	 * Assumes that the Vertex projection is done
+	 * @return true if Vertex is inside the View Frustum, else false
+	 */
+	public boolean isInViewFrustum() {
+		
+		// Get homogeneous coordinates of the Vertex
+		float x = prj_position.get3DX();
+		float y = prj_position.get3DY();
+		float z = prj_position.get3DZ();
+		
+		// Need all (homogeneous) coordinates to be within range [-1, 1]
+		if ((x<=1 && x>=-1) && (y<=1 && y>=-1) && (z<=1 && z>=-1))
+			return true;
+		else
+			return false;
+	}
+
 
 }

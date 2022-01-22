@@ -314,4 +314,20 @@ public class Triangle {
 		normal.normalize();
 	}
 	
+	/**
+	 * Is true if at least one Vertex of the Triangle is in the View Frustum in homogeneous coordinates
+	 * Assumes that the projection of the vertices has been done previously
+	 * @param t the Triangle
+	 * @return true if triangle is at least partially inside the View Frustum, else false
+	 */
+	public boolean isInViewFrustum() {
+
+		// Need at least one vertice to be in the view frustum
+		if (v1.isInViewFrustum() || v2.isInViewFrustum() || v3.isInViewFrustum())
+			return true;
+		else
+			return false;
+	}
+
+	
 }

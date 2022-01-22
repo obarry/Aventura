@@ -57,7 +57,7 @@ import com.aventura.view.View;
 public class TestTrellisTexture {
 	
 	// View to be displayed
-	private SwingView view;
+	//private SwingView view;
 
 	public View createView(GraphicContext context) {
 
@@ -67,7 +67,7 @@ public class TestTrellisTexture {
 		frame.setSize(1000,600);
 		
 		// Create the view to be displayed
-		view = new SwingView(context, frame);
+		SwingView view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
 		JPanel panel = new JPanel() {

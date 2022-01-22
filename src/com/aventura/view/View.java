@@ -60,6 +60,11 @@ public abstract class View {
 		height = context.getPixelHeight();
 	}
 	
+	public View(float[][] map) {
+		width = map[1].length;
+		height = map.length;
+	}
+	
 	public int getViewWidth() {
 		return width;
 	}
