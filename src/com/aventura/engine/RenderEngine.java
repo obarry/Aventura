@@ -12,7 +12,6 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.shadow.Shadowing;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
@@ -76,11 +75,8 @@ import com.aventura.view.View;
  *     +---------------------+		  |		+---------------------+										 +---------------------+
  *                ^                   |-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
  *                |          		  |		+---------------------+ 									 +---------------------+
- *     +---------------------+		  |	               |
- *     |      Shadowing      | <------+                |
- *     +---------------------+		  |	               |
- *                                    |                |
- *     						          |        		   v		
+ *                |                   |                |
+ *     			  |			          |        		   v		
  *     +---------------------+ 		  |     +---------------------+
  *     |       Camera        | <------+-----|      ModelView      |
  *	   +---------------------+		    	+---------------------+
@@ -108,7 +104,6 @@ public class RenderEngine {
 	private World world;
 	private Lighting lighting;
 	private Camera camera;
-	private Shadowing shadowing;
 	
 	// View
 	private View view;
@@ -139,49 +134,15 @@ public class RenderEngine {
 		this.world = world;
 		this.lighting = lighting;
 		this.camera = camera;
-		
-		// Create the Shading context if it is enabled
-		if (renderContext.shadowing == RenderContext.SHADOWING_ENABLED) {
-			// Build Shading using a reference to Lighting object
-			this.shadowing = new Shadowing(graphicContext, lighting, camera);
-		} else {
-			this.shadowing = null;
-		}
-		
-		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
-		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
-		
-		// Delegate rasterization tasks to a dedicated engine
-		// No shading in this constructor -> null
-		this.rasterizer = new Rasterizer(camera, graphic, lighting, shadowing);
-	}
-		
-	/**
-	 * Create a Rendering Engine with Shadowing created externally and passed as an argument to the RenderEngine
-	 * Usefull if the Shadowing object needs to be used outside the context of Rendering (e.g. to access its ShadowMap)
-	 * 
-	 * @param world the world to renderContext
-	 * @param lighting the directional lighting the world
-	 * @param shadowing the pre-initialized shadowing object to be used for this rendering
-	 * @param camera the camera watching the world
-	 * @param renderContext the renderContext context containing parameters to renderContext the scene
-	 * @param graphicContext the graphicContext context to contain parameters to display the scene
-	 */
-	public RenderEngine(World world, Lighting lighting, Shadowing shadowing, Camera camera, RenderContext render, GraphicContext graphic) {
-		this.renderContext = render;
-		this.graphicContext = graphic;
-		this.world = world;
-		this.lighting = lighting;
-		this.shadowing = shadowing;
-		this.camera = camera;
 				
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
 		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
 		
 		// Delegate rasterization tasks to a dedicated engine
 		// No shading in this constructor -> null
-		this.rasterizer = new Rasterizer(camera, graphic, lighting, shadowing);
+		this.rasterizer = new Rasterizer(camera, graphic, lighting);
 	}
+		
 
 	public void setView(View v) {
 		view = v;
@@ -251,11 +212,13 @@ public class RenderEngine {
 			// Goal is to try to rely on ModelView class for part of the calculation and later use the methods of this class for
 			// vertices transformation that will be used before rasterization and generation of the Shadow map
 			
+			// TODO: loop on all Lights (all ShadowingLight, not only the DirectionalLight)
+			
 			// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
-			shadowing.initShadowing();
+			lighting.getDirectionalLight().initShadowing(graphicContext, camera);
 			
 			// Generate the shadow map
-			shadowing.generateShadowMap(world); // need to recurse on each Element
+			lighting.getDirectionalLight().generateShadowMap(world); // need to recurse on each Element
 		}
 		
 		// For each element of the world

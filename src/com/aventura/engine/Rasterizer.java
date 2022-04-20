@@ -8,7 +8,6 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.shadow.Shadowing;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.shape.Segment;
@@ -60,7 +59,6 @@ public class Rasterizer {
 	protected GraphicContext graphic;
 	protected View view;
 	protected Lighting lighting;
-	protected Shadowing shadowing;
 	protected Camera camera;
 	
 	// Static data
@@ -90,11 +88,10 @@ public class Rasterizer {
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param graphic
 	 */
-	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting, Shadowing shadowing) {
+	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting) {
 		this.camera = camera;
 		this.graphic = graphic;
 		this.lighting = lighting;
-		this.shadowing = shadowing;
 	}
 	
 	public void setView(View v) {
@@ -327,9 +324,9 @@ public class Rasterizer {
 			// For each of the 3 Vertices
 			// Get the World position
 			// translate in Light coordinates using the matrix in Shadowing class
-			vs1 = shadowing.getModelView().project(v1);
-			vs2 = shadowing.getModelView().project(v2);
-			vs3 = shadowing.getModelView().project(v3);
+			vs1 = lighting.getDirectionalLight().getModelView().project(v1);
+			vs2 = lighting.getDirectionalLight().getModelView().project(v2);
+			vs3 = lighting.getDirectionalLight().getModelView().project(v3);
 			// Get the depth of the vertices in Light coordinates
 			// Prepare the 3 depths to be interpolated in the rasterizeScanLine method
 		}
@@ -586,7 +583,7 @@ public class Rasterizer {
 							// - projection using the Light coordinates matrix
 							// - tranform from [-1.1] coordinates to [0,1] by multiplying the projection matrix appropriately
 							// - transformation in integer indices of the size of the shadow map
-							if (zs<shadowing.getMap(xs,ys)) {
+							if (zs<lighting.getDirectionalLight().getMap(xs,ys)) {
 								
 							} else {
 								// in shadow

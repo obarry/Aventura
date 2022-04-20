@@ -1,6 +1,5 @@
 package com.aventura.engine;
 
-import com.aventura.math.Constants;
 import com.aventura.math.vector.Matrix3;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.NotInvertibleMatrixException;

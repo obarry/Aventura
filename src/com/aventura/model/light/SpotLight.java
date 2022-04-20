@@ -2,8 +2,10 @@ package com.aventura.model.light;
 
 import java.awt.Color;
 
+import com.aventura.context.GraphicContext;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
 
 
 /**
@@ -40,7 +42,7 @@ import com.aventura.math.vector.Vector4;
  * 
  */
 
-public class SpotLight extends Light {
+public class SpotLight extends ShadowingLight {
 
 	@Override
 	public Vector3 getLightVector(Vector4 point) {
@@ -86,6 +88,12 @@ public class SpotLight extends Light {
 
 	@Override
 	public void setLightNormalizedVector(Vector3 light) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void initShadowing(GraphicContext graphicContext, Camera camera_view) {
 		// TODO Auto-generated method stub
 		
 	}
