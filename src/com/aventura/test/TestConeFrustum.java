@@ -122,7 +122,7 @@ public class TestConeFrustum {
 
 //		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
 //		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);

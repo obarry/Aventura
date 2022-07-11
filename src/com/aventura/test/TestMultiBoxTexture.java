@@ -155,6 +155,7 @@ public class TestMultiBoxTexture {
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
+		System.out.println(rContext);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);

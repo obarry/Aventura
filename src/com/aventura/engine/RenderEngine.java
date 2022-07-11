@@ -231,7 +231,7 @@ public class RenderEngine {
 
 		// Display the landmarks if enabled (RenderContext)
 		if (renderContext.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
-			if (renderContext.getRendering() == RenderContext.RENDERING_TYPE_INTERPOLATE) {
+			if (renderContext.getRenderingType() == RenderContext.RENDERING_TYPE_INTERPOLATE) {
 				displayLandMarkLinesInterpolate();							
 			} else { // Default
 				displayLandMarkLines();			

@@ -140,7 +140,7 @@ public class TestCubeRotationTexture {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
-		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
 		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_ENABLED);

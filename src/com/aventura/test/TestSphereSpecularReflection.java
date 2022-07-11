@@ -122,7 +122,7 @@ public class TestSphereSpecularReflection {
 		View view = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
 		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
