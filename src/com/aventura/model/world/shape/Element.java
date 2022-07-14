@@ -400,7 +400,15 @@ public class Element implements Transformable, Shape {
 	}
 
 	public String toString() {
-		return "Element name: "+name+"\nTriangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nElement color: "+elementColor+"\nSpecular color: "+specularColor+" Specular exponent: "+specularExponent;		
+		String element = "Element\n";
+		element += "* Name: "+name + "\n";
+		element += "* Triangles: " + getNbTriangles() + "\n";
+		element += "* Vertices: " + getNbVertices() + "\n";
+		element += "* Element color: " + getColor() + "\n";
+		element += "* Specular color: " + getSpecularColor() + "\n";
+		element += "* Specular exponent: " + getSpecularExp() + "\n";		
+		return element;
+		//return "Element name: "+name+"\nTriangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nElement color: "+elementColor+"\nSpecular color: "+specularColor+" Specular exponent: "+specularExponent;		
 	}
 	
 	// ******************************

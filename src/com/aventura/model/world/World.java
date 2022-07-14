@@ -197,7 +197,15 @@ public class World {
 	}
 
 	public String toString() {
-		return "World name: "+name+"\nElements: "+getNbElements()+", Triangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nBackground color: "+backgroundColor+"\nWorld color: "+worldColor;		
+		String world = "World\n";
+		world += "* Name: "+name + "\n";
+		world += "* Elements: " + getNbElements() + "\n";
+		world += "* Triangles: " + getNbTriangles() + "\n";
+		world += "* Vertices: " + getNbVertices() + "\n";
+		world += "* Background color: " + getBackgroundColor() + "\n";
+		world += "* World color: " + getColor() + "\n";
+		return world;
+		//return "World name: "+name+"\nElements: "+getNbElements()+", Triangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nBackground color: "+backgroundColor+"\nWorld color: "+worldColor;		
 	}
 
 }
