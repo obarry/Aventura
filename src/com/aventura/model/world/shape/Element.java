@@ -14,7 +14,7 @@ import com.aventura.model.world.triangle.Triangle;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016-2021 Olivier BARRY
+ * Copyright (c) 2016-2022 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -400,7 +400,15 @@ public class Element implements Transformable, Shape {
 	}
 
 	public String toString() {
-		return "Element name: "+name+"\nTriangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nElement color: "+elementColor+"\nSpecular color: "+specularColor+" Specular exponent: "+specularExponent;		
+		String element = "Element\n";
+		element += "* Name: "+name + "\n";
+		element += "* Triangles: " + getNbTriangles() + "\n";
+		element += "* Vertices: " + getNbVertices() + "\n";
+		element += "* Element color: " + getColor() + "\n";
+		element += "* Specular color: " + getSpecularColor() + "\n";
+		element += "* Specular exponent: " + getSpecularExp() + "\n";		
+		return element;
+		//return "Element name: "+name+"\nTriangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nElement color: "+elementColor+"\nSpecular color: "+specularColor+" Specular exponent: "+specularExponent;		
 	}
 	
 	// ******************************

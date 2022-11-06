@@ -10,7 +10,7 @@ import com.aventura.model.world.shape.Element;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016-2021 Olivier BARRY
+ * Copyright (c) 2016-2022 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -197,7 +197,15 @@ public class World {
 	}
 
 	public String toString() {
-		return "World name: "+name+"\nElements: "+getNbElements()+", Triangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nBackground color: "+backgroundColor+"\nWorld color: "+worldColor;		
+		String world = "World\n";
+		world += "* Name: "+name + "\n";
+		world += "* Elements: " + getNbElements() + "\n";
+		world += "* Triangles: " + getNbTriangles() + "\n";
+		world += "* Vertices: " + getNbVertices() + "\n";
+		world += "* Background color: " + getBackgroundColor() + "\n";
+		world += "* World color: " + getColor() + "\n";
+		return world;
+		//return "World name: "+name+"\nElements: "+getNbElements()+", Triangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nBackground color: "+backgroundColor+"\nWorld color: "+worldColor;		
 	}
 
 }

@@ -6,7 +6,7 @@ import java.awt.Color;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016-2021 Olivier BARRY
+ * Copyright (c) 2016-2022 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -173,11 +173,11 @@ public class RenderContext {
 		this.textureProcessing = textureProcessing;
 	}
 		
-	public void setRendering(int type) {
+	public void setRenderingType(int type) {
 		this.renderingType = type;
 	}
 	
-	public int getRendering() {
+	public int getRenderingType() {
 		return this.renderingType;
 	}
 	
@@ -235,6 +235,106 @@ public class RenderContext {
 	
 	public int getShadowing() {
 		return this.shadowing;
+	}
+	
+	public String toString() {
+		String renderContext = "Render Context:\n";
+		
+		renderContext += "* Rendering type: ";
+		switch (getRenderingType()) {
+		case RENDERING_TYPE_LINE:
+			renderContext += "LINE";
+			break;
+		case RENDERING_TYPE_MONOCHROME:
+			renderContext += "MONOCHROME";
+			break;
+		case RENDERING_TYPE_PLAIN:
+			renderContext += "PLAIN";
+			break;
+		case RENDERING_TYPE_INTERPOLATE:
+			renderContext += "INTERPOLATE";
+			break;
+		}
+		renderContext += "\n";
+		
+		renderContext += "* Rendering lines: ";
+		switch (getRenderingLines()) {
+		case RENDERING_LINES_DISABLED:
+			renderContext += "DISABLED";
+			break;
+		case RENDERING_LINES_ENABLED:
+			renderContext += "ENABLED";
+			break;
+		}
+		renderContext += "\n";
+		
+		renderContext += "* Display landmark: ";
+		switch (getDisplayLandmark()) {
+		case DISPLAY_LANDMARK_DISABLED:
+			renderContext += "DISABLED";
+			break;
+		case DISPLAY_LANDMARK_ENABLED:
+			renderContext += "ENABLED";
+			break;
+		}
+		renderContext += "\n";
+
+		renderContext += "* Display normals: ";
+		switch (getDisplayNormals()) {
+		case DISPLAY_NORMALS_DISABLED:
+			renderContext += "DISABLED";
+			break;
+		case DISPLAY_NORMALS_ENABLED:
+			renderContext += "ENABLED";
+			break;
+		}
+		renderContext += "\n";
+
+		renderContext += "* Display light vectors: ";
+		switch (getDisplayLight()) {
+		case DISPLAY_LIGHT_VECTORS_DISABLED:
+			renderContext += "DISABLED";
+			break;
+		case DISPLAY_LIGHT_VECTORS_ENABLED:
+			renderContext += "ENABLED";
+			break;
+		}
+		renderContext += "\n";
+
+		renderContext += "* Backface culling: ";
+		switch (getBackFaceCulling()) {
+		case BACKFACE_CULLING_DISABLED:
+			renderContext += "DISABLED";
+			break;
+		case BACKFACE_CULLING_ENABLED:
+			renderContext += "ENABLED";
+			break;
+		}
+		renderContext += "\n";
+
+		renderContext += "* Texture processing: ";
+		switch (getTextureProcessing()) {
+		case TEXTURE_PROCESSING_DISABLED:
+			renderContext += "DISABLED";
+			break;
+		case TEXTURE_PROCESSING_ENABLED:
+			renderContext += "ENABLED";
+			break;
+		}
+		renderContext += "\n";
+
+		renderContext += "* Shadowing: ";
+		switch (getShadowing()) {
+		case SHADOWING_DISABLED:
+			renderContext += "DISABLED";
+			break;
+		case SHADOWING_ENABLED:
+			renderContext += "ENABLED";
+			break;
+		}
+		renderContext += "\n";
+		
+		return renderContext;
 	}
 
 }

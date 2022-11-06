@@ -26,7 +26,7 @@ import com.aventura.view.View;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016-2021 Olivier BARRY
+ * Copyright (c) 2016-2022 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -231,7 +231,7 @@ public class RenderEngine {
 
 		// Display the landmarks if enabled (RenderContext)
 		if (renderContext.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
-			if (renderContext.getRendering() == RenderContext.RENDERING_TYPE_INTERPOLATE) {
+			if (renderContext.getRenderingType() == RenderContext.RENDERING_TYPE_INTERPOLATE) {
 				displayLandMarkLinesInterpolate();							
 			} else { // Default
 				displayLandMarkLines();			
