@@ -414,8 +414,8 @@ public class Matrix4 {
 	}
 
 	public Vector4 times(Vector4 v) {
-		// Rely on the service provided by the Vector3D class
-		// Optimal call is to use Vector3D method directly
+		// Rely on the service provided by the Vector4D class
+		// Optimal call is to use Vector4D method directly
 		return v.times(this);
 	}
 	

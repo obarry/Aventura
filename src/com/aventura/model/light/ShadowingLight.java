@@ -174,6 +174,11 @@ public abstract class ShadowingLight extends Light {
 			if (t.isInViewFrustum()) {
 				
 				// TBD
+				// Use Rasterizer with a dedicated algorithm for Shadow Map generation (simpler than full rasterization) but trying to reuse the
+				// common parts.
+				// "Strategy" design pattern could be used with a generic interface implementing different rasterization strategies (to be passed
+				// in parameter of the generic method) and still keeping only one RasterizeTriangle method. E.g. :
+				//     rasterizer.rasterizeTriangle(triangle, rasterizationStrategy);
 				
 			}
 		}
