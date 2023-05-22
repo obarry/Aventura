@@ -65,5 +65,5 @@ public abstract class Perspective extends Matrix4 {
 	public float getFar() {
 		return far;
 	}
-
+	
 }
