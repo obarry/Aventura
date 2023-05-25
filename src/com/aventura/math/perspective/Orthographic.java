@@ -39,10 +39,10 @@ public class Orthographic extends Perspective {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Orthographic perspective");
 		
-		float[][] array = { { 1/(right-left)       , 0.0f            ,  0.0f          , (right+left)/(right-left) },
+		float[][] array = { { 1/(right-left)       , 0.0f            ,  0.0f          , -(right+left)/(right-left) },
 				 			{ 0.0f                 , 2/(top-bottom)  ,  0.0f          , (bottom+top)/(bottom-top) },
-				 			{ 0.0f                 , 0.0f            ,  2/(near-far)  , near+far/(far-near)       },
-				 			{ 0.0f                 , 0.0f            ,  0.0f          , 1.0f                      } };
+				 			{ 0.0f                 , 0.0f            ,  2/(near-far)  , -(near+far)/(far-near)     },
+				 			{ 0.0f                 , 0.0f            ,  0.0f          , -1.0f                      } };
 		
 		try {
 			this.setArray(array);
