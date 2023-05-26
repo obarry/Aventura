@@ -126,6 +126,7 @@ public class TestMultiElementsTextureOrtho {
 	
 		// Camera
 		Vector4 eye = new Vector4(10,6,3,1);
+		//Vector4 eye = new Vector4(10,0,0,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
@@ -220,7 +221,7 @@ public class TestMultiElementsTextureOrtho {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 1000);
+		GraphicContext context = new GraphicContext(8, 6, 2, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 100);
 		//GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		View view = test.createView(context);
 		System.out.println(context.getPerspective());
