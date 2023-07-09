@@ -90,7 +90,12 @@ public class TestMultiElementsTextureOrtho {
  
 		// Locate application frame in the center of the screen
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		frame.setLocation(dim.width/2 - frame.getWidth()/2, dim.height/2 - frame.getHeight()/2);
+		int loc_x = dim.width/2 - frame.getWidth()/2;
+		if (loc_x < 0) loc_x = 0;
+		int loc_y = dim.height/2 - frame.getHeight()/2;
+		if (loc_y < 0) loc_y = 0;
+		frame.setLocation(loc_x, loc_y);
+		//frame.setLocation(dim.width/2, dim.height/2);
 		
 		// Render the frame on the display
 		frame.setVisible(true);
@@ -125,7 +130,9 @@ public class TestMultiElementsTextureOrtho {
 		Texture texcarpet = new Texture("resources/texture/texture_carpet_600x600.jpg");
 	
 		// Camera
-		Vector4 eye = new Vector4(10,6,3,1);
+		//Vector4 eye = new Vector4(10,6,3,1);
+		Vector4 eye = new Vector4(10,0,3,1); // Orthographic view
+		//Vector4 eye = new Vector4(10/3,0,1,1); // Frustum view
 		//Vector4 eye = new Vector4(10,0,0,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -138,74 +145,79 @@ public class TestMultiElementsTextureOrtho {
 		world.setBackgroundColor(Color.BLUE);
 		Element e;
 		
-		for (int i=-1; i<=1; i++) {
-			for (int j=-1; j<=1; j++) {
-				for (int k=-1; k<=1; k++) {
-										
-					// Create an Element of a random type
-					switch((int)(Math.random()*7)) {
-					case 0:
-						e = new Cone(1,0.5f,32, texdamier);
-						break;
-						
-					case 1:
-						e = new Cylinder(1,0.5f,32, texcremedemarron);
-						break;
-						
-					case 2:
-						e = new Sphere(0.667f,32, texfoot);
-						e.setSpecularExp(3);
-						e.setSpecularColor(new Color(100,100,100));
-						e.setColor(new Color(200,150,255));
-						break;
-						
-					case 3:
-						e = new Cube(1, texmetalplate);
-						break;
-						
-					case 4:
-						e = new Box(1.5f,1,0.5f, texbricks);
-						break;
-						
-					case 5:
-						
-						float size = 1.5f;
-						int n = 10;
-						int nb_sin = 2;
-						float array[][] = new float[n+1][n+1];
-						for (int p=0; p<=n; p++) {
-							for (int q=0; q<=n; q++) {
-								float a = (float)Math.PI*(float)nb_sin*(float)p/(float)n;
-								float b = (float)Math.PI*(float)nb_sin*(float)q/(float)n;
-								array[p][q] = size*(float)Math.sin(a)*(float)Math.sin(b)/((float)nb_sin*2);
+//		for (int i=-1; i<=1; i++) {
+//			for (int j=-1; j<=1; j++) {
+//				for (int k=-1; k<=1; k++) {
+//										
+//					// Create an Element of a random type
+//					switch((int)(Math.random()*7)) {
+//					case 0:
+//						e = new Cone(1,0.5f,32, texdamier);
+//						break;
+//						
+//					case 1:
+//						e = new Cylinder(1,0.5f,32, texcremedemarron);
+//						break;
+//						
+//					case 2:
+//						e = new Sphere(0.667f,32, texfoot);
+//						e.setSpecularExp(3);
+//						e.setSpecularColor(new Color(100,100,100));
+//						e.setColor(new Color(200,150,255));
+//						break;
+//						
+//					case 3:
+//						e = new Cube(1, texmetalplate);
+//						break;
+//						
+//					case 4:
+//						e = new Box(1.5f,1,0.5f, texbricks);
+//						break;
+//						
+//					case 5:
+//						
+//						float size = 1.5f;
+//						int n = 10;
+//						int nb_sin = 2;
+//						float array[][] = new float[n+1][n+1];
+//						for (int p=0; p<=n; p++) {
+//							for (int q=0; q<=n; q++) {
+//								float a = (float)Math.PI*(float)nb_sin*(float)p/(float)n;
+//								float b = (float)Math.PI*(float)nb_sin*(float)q/(float)n;
+//								array[p][q] = size*(float)Math.sin(a)*(float)Math.sin(b)/((float)nb_sin*2);
+//
+//							}
+//						}
+//						e = null;
+//						try {
+//							e = new Trellis(size, size, n, n, array, texgrass);
+//						} catch (WrongArraySizeException ex) {
+//							// TODO Auto-generated catch block
+//							ex.printStackTrace();
+//						}
+//						break;
+//					case 6:
+//						e = new Pyramid(1.4f, 1.4f, 1.4f, texcarpet);
+//						break;
+//						
+//					default:
+//						e = null;
+//					}
+//					
+//					// Translate this element at some i,j,k indices of a 3D cube:
+//					Translation t = new Translation(new Vector3(i*2, j*2, k*2));
+//					e.setTransformation(t);
+//
+//					// Add the element to the world
+//					world.addElement(e);
+//				}
+//			}
+//		}
+		
+		
+		e = new Cube(1, texmetalplate);
+		world.addElement(e);
 
-							}
-						}
-						e = null;
-						try {
-							e = new Trellis(size, size, n, n, array, texgrass);
-						} catch (WrongArraySizeException ex) {
-							// TODO Auto-generated catch block
-							ex.printStackTrace();
-						}
-						break;
-					case 6:
-						e = new Pyramid(1.4f, 1.4f, 1.4f, texcarpet);
-						break;
-						
-					default:
-						e = null;
-					}
-					
-					// Translate this element at some i,j,k indices of a 3D cube:
-					Translation t = new Translation(new Vector3(i*2, j*2, k*2));
-					e.setTransformation(t);
-
-					// Add the element to the world
-					world.addElement(e);
-				}
-			}
-		}
 		
 		// Generate world and normals
 		world.generate();
@@ -221,22 +233,23 @@ public class TestMultiElementsTextureOrtho {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		GraphicContext context = new GraphicContext(8, 6, 2, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 100);
-		//GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		GraphicContext context = new GraphicContext(4, 3, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 300);
+		//GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 800);
 		View view = test.createView(context);
 		System.out.println(context.getPerspective());
 
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
-		//rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
+		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
 		renderer.setView(view);
 		renderer.render();
 		
 		System.out.println("********* Rendering...");
-		int nb_images = 360;
+		int nb_images = 3600;
 		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
 		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
 		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);

@@ -235,12 +235,12 @@ public class Triangle {
 		return wld_normal;
 	}
 	
-	public void setProjNormal(Vector3 n) {
-		prj_normal = n;
-	}
-	public Vector3 getProjNormal() {
-		return prj_normal;
-	}
+//	public void setProjNormal(Vector3 n) {
+//		prj_normal = n;
+//	}
+//	public Vector3 getProjNormal() {
+//		return prj_normal;
+//	}
 
 	public void setColor(Color c) {
 		this.color = c;

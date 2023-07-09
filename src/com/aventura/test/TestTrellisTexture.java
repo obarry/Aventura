@@ -100,7 +100,8 @@ public class TestTrellisTexture {
 //		Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(8,3,5,1);
+		//Vector4 eye = new Vector4(8,3,5,1);
+		Vector4 eye = new Vector4(8,0,5,1);
 		//Vector4 eye = new Vector4(16,6,12,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
 		Vector4 poi = new Vector4(0,0,-0.5f,1);
@@ -150,7 +151,9 @@ public class TestTrellisTexture {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		//GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(8f, 4.5f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 125);
+		
 		View view = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -164,6 +167,13 @@ public class TestTrellisTexture {
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(view);
 		renderer.render();
+		
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();			
+			Thread.currentThread().interrupt();
+		}
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;

@@ -126,20 +126,22 @@ public class Rasterizer {
 	//
 	
 	protected float xScreen(Vertex v) {
-		return xScreen(v.getProjPos());
+		//return xScreen(v.getProjPos());
+		return v.getProjPos().get3DX()*graphic.getPixelHalfWidth();
 	}
 	
 	protected float yScreen(Vertex v) {
-		return yScreen(v.getProjPos());
+		//return yScreen(v.getProjPos());
+		return v.getProjPos().get3DY()*graphic.getPixelHalfHeight();
 	}
 	
-	protected float xScreen(Vector4 v) {
-		return v.get3DX()*graphic.getPixelHalfWidth();
-	}
-	
-	protected float yScreen(Vector4 v) {
-		return v.get3DY()*graphic.getPixelHalfHeight();
-	}
+//	protected float xScreen(Vector4 v) {
+//		return v.get3DX()*graphic.getPixelHalfWidth();
+//	}
+//	
+//	protected float yScreen(Vector4 v) {
+//		return v.get3DY()*graphic.getPixelHalfHeight();
+//	}
 	
 	// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
 	protected int getXzBuf(int x) {
@@ -449,17 +451,43 @@ public class Rasterizer {
 
 		// Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
 		// TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
-
-		// Vertices z
-		float za = va.getProjPos().getW();
-		float zb = vb.getProjPos().getW();
-		float zc = vc.getProjPos().getW();
-		float zd = vd.getProjPos().getW();
-
-		// Starting Z & ending Z
-		float z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
-		float z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
 		
+		float z1 = 0, z2 = 0, za = 0, zb = 0, zc = 0, zd = 0;
+
+
+		switch (graphic.getPerspectiveType()) {
+
+		case GraphicContext.PERSPECTIVE_TYPE_FRUSTUM :
+			// Vertices z
+			za = va.getProjPos().getW();
+			zb = vb.getProjPos().getW();
+			zc = vc.getProjPos().getW();
+			zd = vd.getProjPos().getW();
+
+			// Starting Z & ending Z
+			z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
+			z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
+			
+			break;
+
+		case GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+			// Orthographic projection -> don't use W but use rather Z instead
+			za = va.getProjPos().getZ();
+			zb = vb.getProjPos().getZ();
+			zc = vc.getProjPos().getZ();
+			zd = vd.getProjPos().getZ();
+			
+			// Starting Z & ending Z
+			z1 = Tools.interpolate(za, zb, gradient1);
+			z2 = Tools.interpolate(zc, zd, gradient2);
+			
+			break;
+
+		default :
+			// Not implemented
+			// TODO raise an UnimplementedException
+		}
+
 		// Shadows
 		float zs1 = 0, zs2 = 0;
 		if (shadows) { // then do the needeed calculation to know if the element is in shadow or not
@@ -523,6 +551,7 @@ public class Rasterizer {
 
 					float gradient = (float)(x-sx)/(float)(ex-sx);
 					float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
+					//float z=Tools.interpolate(z1,z2,gradient); // Used for debugging Orthographic projection
 
 					// zBuffer elimination at ealiest stage of computation (as soon as we know z)
 					if (z>zBuffer[getXzBuf(x)][getYzBuf(y)]) { // Discard pixel

@@ -91,7 +91,7 @@ public class ModelView {
 	
 	// This matrix is the result of the multiplication of all Matrices
 	Matrix4 full = null;
-	Matrix4 full_normals = null;
+	//Matrix4 full_normals = null;
 	
 	/**
 	 * Default constructor.
@@ -195,10 +195,11 @@ public class ModelView {
 		full = projection.times(view.times(model));
 		
 		// Do not compute the transformation for normals if model_normals not initialized (not required e.g. shadow map calculation)
-		if (model_normals != null) {
-			full_normals = projection.times(view.times(model_normals));
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
-		}
+//		if (model_normals != null) {
+//			full_normals = projection.times(view.times(model_normals));
+//			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
+//		}
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
 	}
 	
 	/**
@@ -271,10 +272,10 @@ public class ModelView {
 	public void transformNormal(Triangle t) {
 				
 		if (t.getNormal() != null) {
-			t.setProjNormal(full_normals.times(t.getNormal().V4()).V3());
+			//t.setProjNormal(full_normals.times(t.getNormal().V4()).V3());
 			t.setWorldNormal(model_normals.times(t.getNormal().V4()).V3());
 		} else {
-			t.setProjNormal(null);
+			//t.setProjNormal(null);
 			t.setWorldNormal(null);
 		}
 	}
