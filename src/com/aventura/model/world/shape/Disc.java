@@ -8,7 +8,7 @@ import com.aventura.model.world.triangle.CircularMesh;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016-2022 Olivier BARRY
+ * Copyright (c) 2016-2023 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
