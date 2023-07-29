@@ -59,7 +59,7 @@ public class Vertex {
 	protected Vector4 wld_position = null; // Position of this Vertex in World reference (Model to World projection)
 	protected Vector4 prj_position = null; // Position of this Vertex in Homogeneous (clip) coordinates (Model to Clip projection)
 	protected Vector3 wld_normal = null; // Normal in World coordinates
-	// protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates - Not used - Removed 1/1/2022
+	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates - Not used - Removed 1/1/2022 - restored 11/7/2023
 	
 	// Lighting and Shading
 	protected Color shadedCol = null; // Gouraud's shading at this Vertex, calculated at Rasterization time
@@ -149,12 +149,13 @@ public class Vertex {
 	}
 	
 	// Not used - Removed 1/1/2022
-//	public void setProjNormal(Vector3 n) {
-//		prj_normal = n;
-//	}
-//	public Vector3 getProjNormal() {
-//		return prj_normal;
-//	}
+	// restored 11/7/2023
+	public void setProjNormal(Vector3 n) {
+		prj_normal = n;
+	}
+	public Vector3 getProjNormal() {
+		return prj_normal;
+	}
 			
 	public void setColor(Color c) {
 		this.color = c;

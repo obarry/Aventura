@@ -3,6 +3,7 @@ package com.aventura.engine;
 import com.aventura.math.vector.Matrix3;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.NotInvertibleMatrixException;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.shape.Element;
@@ -91,7 +92,7 @@ public class ModelView {
 	
 	// This matrix is the result of the multiplication of all Matrices
 	Matrix4 full = null;
-	//Matrix4 full_normals = null;
+	Matrix4 full_normals = null; // restored 11/7/2023
 	
 	/**
 	 * Default constructor.
@@ -173,6 +174,7 @@ public class ModelView {
 			}
 		}
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Matrix:\n"+ model);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Normals Matrix:\n"+ model_normals);
 	}
 		
 	/**
@@ -195,10 +197,11 @@ public class ModelView {
 		full = projection.times(view.times(model));
 		
 		// Do not compute the transformation for normals if model_normals not initialized (not required e.g. shadow map calculation)
-//		if (model_normals != null) {
-//			full_normals = projection.times(view.times(model_normals));
-//			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
-//		}
+		// restored 11/7/2023
+		if (model_normals != null) { 
+			full_normals = projection.times(view.times(model_normals));
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation normal matrix:\n"+ full_normals);
+		}
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
 	}
 	
@@ -214,7 +217,7 @@ public class ModelView {
 		v.setProjPos(full.times(v.getPos()));
 		v.setWorldPos(model.times(v.getPos()));
 		if (v.getNormal() != null) {
-			//v.setProjNormal(full_normals.times(v.getNormal().V4()).V3()); // Not used - Removed 1/1/2022
+			v.setProjNormal(full_normals.times(v.getNormal().V4()).V3()); // Not used - Removed 1/1/2022 - restored 11/7/2023 
 			v.setWorldNormal(model_normals.times(v.getNormal().V4()).V3());
 		}
 	}
@@ -272,11 +275,25 @@ public class ModelView {
 	public void transformNormal(Triangle t) {
 				
 		if (t.getNormal() != null) {
-			//t.setProjNormal(full_normals.times(t.getNormal().V4()).V3());
+			// t.setProjNormal(full_normals.times(t.getNormal().V4()).V3()); // restored 11/7/2023
 			t.setWorldNormal(model_normals.times(t.getNormal().V4()).V3());
 		} else {
-			//t.setProjNormal(null);
+			// t.setProjNormal(null); // restored 11/7/2023
 			t.setWorldNormal(null);
+		}
+	}
+	
+	/**
+	 * Transform the normal of a Triangle (in case of usage of Triangle normal instead of Vertex normal)
+	 * @param t the Triangle
+	 * @return the triangle normal as Vector3
+	 */
+	public Vector3 calculateProjNormal(Triangle t) {
+				
+		if (t.getNormal() != null) {
+			return full_normals.times(t.getNormal().V4()).V3();
+		} else {
+			return null;
 		}
 	}
 }

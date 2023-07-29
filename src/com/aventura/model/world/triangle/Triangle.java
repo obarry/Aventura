@@ -35,6 +35,11 @@ import com.aventura.model.world.Vertex;
  * Most basic surface element, the Triangle can be rendered autonomously without any other information
  * than those contained in its attributes.
  * 
+ * A triangle has normals at Vertex level by default (3 different normals) to define a continuous surface.
+ * But it can also have a normal at Triangle level (which then will supersede the Vertex normals) to define a non-continuous surface.
+ * This is typically used for elements like cubes, rectangles and pyramids : they have sharp edges from one face to the other so the 
+ * Vertex normals are meaningless in this situation (Vertex are shared by 2 or more non-continuous faces of these elements).
+ * 
  * @author Olivier BARRY
  * @since May 2016
  */
@@ -67,7 +72,7 @@ public class Triangle {
 	
 	// Projected normals
 	protected Vector3 wld_normal = null; // Normal in World coordinates
-	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates
+	//protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates
 	
 	// Recto Verso characteristics (should the face of this Triangle opposite to normal(s) be displayed?)
 	protected boolean rectoVerso = false; // Default is false (closed Elements) but can be set to true for open Elements
@@ -152,10 +157,17 @@ public class Triangle {
 		return ("Triangle vertices:\n"+" v1: "+v1+"\n v2: "+v2+"\n v3: "+v3);
 	}
 
+	/**
+	 * @return true if a normal at triangle level exists (and supersedes the normals at Vertex level)
+	 */
 	public boolean isTriangleNormal() {
 		return triangleNormal;
 	}
 	
+	/**
+	 * Use to indicate that the triangle has a triangle normal : this will supersede the other normals at vertex level
+	 * @param b boolean to indicate if there is a triangle normal (true) or not (false)
+	 */
 	public void setTriangleNormal(boolean b) {
 		this.triangleNormal = b;
 	}
@@ -235,6 +247,7 @@ public class Triangle {
 		return wld_normal;
 	}
 	
+	// restored 11/7/2023
 //	public void setProjNormal(Vector3 n) {
 //		prj_normal = n;
 //	}

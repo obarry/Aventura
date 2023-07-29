@@ -408,19 +408,42 @@ public class RenderEngine {
 	protected boolean isBackFace(Triangle t) {
 		// In homogeneous coordinates, the camera direction is Z axis		
 		try {
-			
+
 			if (t.isTriangleNormal()) {
-				// Take any vertex of the triangle -> same result as a triangle is a plan
-				Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
-				return t.getWorldNormal().dot(ey)>0;
+				switch (graphicContext.getPerspectiveType()) {
+				case GraphicContext.PERSPECTIVE_TYPE_FRUSTUM:
+					// Take any vertex of the triangle -> same result as a triangle is a plan
+					Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
+					return t.getWorldNormal().dot(ey)>0;
+				case GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+					// Need only to test the normal in homogeneous coordinate has a non-null positive Z component (hence pointing behind camera)
+					return modelView.calculateProjNormal(t).getZ()>0;
+				default:
+					// Should never happen
+					break;
+				}
+				// Should never happen
+				return modelView.calculateProjNormal(t).getZ()>0;
 			} else {
-				// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
-				return t.getV1().getWorldNormal().dot(t.getV1().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV2().getWorldNormal().dot(t.getV2().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV3().getWorldNormal().dot(t.getV3().getWorldPos().minus(camera.getEye()).V3())>0;				
+				switch (graphicContext.getPerspectiveType()) {
+				case GraphicContext.PERSPECTIVE_TYPE_FRUSTUM:
+					// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
+					return t.getV1().getWorldNormal().dot(t.getV1().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV2().getWorldNormal().dot(t.getV2().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV3().getWorldNormal().dot(t.getV3().getWorldPos().minus(camera.getEye()).V3())>0;
+				case GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+					return t.getV1().getProjNormal().getZ() > 0 && t.getV2().getProjNormal().getZ() > 0 && t.getV3().getProjNormal().getZ() > 0;				
+
+				default:
+					// Should never happen
+					break;
+				}
+				// Should never happen
+				return t.getV1().getProjNormal().getZ() > 0 && t.getV2().getProjNormal().getZ() > 0 && t.getV3().getProjNormal().getZ() > 0;				
 			}
-			
+
 		} catch (Exception e) { // If no Vertex normals, then use Triangle normal with same test
-			Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
-			return t.getWorldNormal().dot(ey)>0;
+			//Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
+			//return t.getWorldNormal().dot(ey)>0;
+			return modelView.calculateProjNormal(t).getZ()>0;
 		}
 	}
 	

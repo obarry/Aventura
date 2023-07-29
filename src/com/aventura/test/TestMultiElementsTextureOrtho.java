@@ -132,7 +132,7 @@ public class TestMultiElementsTextureOrtho {
 		// Camera
 		//Vector4 eye = new Vector4(10,6,3,1);
 		Vector4 eye = new Vector4(10,0,3,1); // Orthographic view
-		//Vector4 eye = new Vector4(10/3,0,1,1); // Frustum view
+		//Vector4 eye = new Vector4(4,0,1,1); // Frustum view
 		//Vector4 eye = new Vector4(10,0,0,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -217,6 +217,14 @@ public class TestMultiElementsTextureOrtho {
 		
 		e = new Cube(1, texmetalplate);
 		world.addElement(e);
+		
+		e = new Cube(1, texmetalplate);
+		e.setTransformation(new Translation(new Vector3(2,0,0)));
+		world.addElement(e);
+
+		e = new Cube(1, texmetalplate);
+		e.setTransformation(new Translation(new Vector3(-2,0,0)));
+		world.addElement(e);
 
 		
 		// Generate world and normals
@@ -233,15 +241,15 @@ public class TestMultiElementsTextureOrtho {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		GraphicContext context = new GraphicContext(4, 3, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 300);
-		//GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 800);
+		GraphicContext context = new GraphicContext(8, 6, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
+		//GraphicContext context = new GraphicContext(3.0f, 1.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 400);
 		View view = test.createView(context);
 		System.out.println(context.getPerspective());
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
+		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
+		rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
@@ -250,10 +258,15 @@ public class TestMultiElementsTextureOrtho {
 		
 		System.out.println("********* Rendering...");
 		int nb_images = 3600;
-		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
-		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
-		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
-		Matrix4 r = r1.times(r2).times(r3);
+//		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
+//		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
+//		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
+//		Matrix4 r = r1.times(r2).times(r3);
+//		for (int i=0; i<=nb_images; i++) {
+//			world.expandTransformation(r);
+//			renderer.render();
+//		}
+		Rotation r = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
 		for (int i=0; i<=nb_images; i++) {
 			world.expandTransformation(r);
 			renderer.render();
