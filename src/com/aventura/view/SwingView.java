@@ -111,6 +111,7 @@ public class SwingView extends View {
 		backgraph.translate(width/2, height/2);
 	}
 
+
 	@Override
 	public void renderView() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render SwingView");
@@ -177,4 +178,5 @@ public class SwingView extends View {
 	protected void drawSwingLine(int x1, int y1, int x2, int y2) {
 		backgraph.drawLine(x1,-y1,x2,-y2);
 	}
+
 }

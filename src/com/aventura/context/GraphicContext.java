@@ -31,6 +31,11 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
+ * Evolutions :
+ * ----------
+ * 6-Oct-2023 : Proposal to rename GraphicContext into GeometryContext
+ * -------------------------------------------------------------------
+ * 
  * The GraphicContext is a parameter class containing all information allowing to display the world
  * This is where the view frustum planes are defined and also where the rasterizing definition (pixel per unit)
  * is also set.

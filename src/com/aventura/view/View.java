@@ -47,6 +47,10 @@ public abstract class View {
 	protected int width;
 	protected int height;
 	
+	public View() {
+		// Do nothing
+	}
+	
 	/**
 	 * Create the view based on GraphicContext to get width and height information of the view frustum
 	 * Indeed the View is expected to match exactly these dimensions. 
@@ -75,6 +79,11 @@ public abstract class View {
 	
 	public abstract void initView(); // init back buffer
 	public abstract void renderView(); // swap back buffer to front buffer, ready to display once the GUI will refresh
+	
+	public abstract void initView(View map); // init back buffer with another map view
+	public abstract Color getPixel(int x, int y); // Return Color of the pixel
+
+	
 	public abstract void setColor(Color c); // Using java.awt.Color class
 	public abstract void setBackgroundColor(Color c); // Using java.awt.Color class
 	public abstract void drawPixel(int x, int y);
