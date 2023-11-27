@@ -61,26 +61,34 @@ import com.aventura.view.View;
  * @since Nov 2023
  */
 
-public class TestTreillisFractal implements MouseListener {
+public class TestTreillisFractal implements MouseListener, KeyListener {
 	
-	// View to be displayed
-	//private SwingView view;
+	// Camera
+	Vector4 eye;
+	Vector4 poi;
+	Camera camera;
 	
+	// Render engine
 	RenderEngine renderer;
+	
+	// Trellis element
 	Trellis tre;
+	
+	// Movement variables
 	int i_rotation = 0;
 	int j_rotation = 0;
+	int zoom = 0;
 	static int NB_ROTATIONS = 90;
+	
+	// CTRL key + mouse flag
+	boolean key_control = false;
 
 	public View createView(GraphicContext context) {
 		
-		int size_x = 1000;
-		int size_y = 600;
-
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Fractal generated Treillis");
 		// Set the size of the frame
-		frame.setSize(size_x,size_y);
+		frame.setSize(1000,600);
 		
 		// Create the view to be displayed
 		SwingView view = new SwingView(context, frame);
@@ -105,32 +113,68 @@ public class TestTreillisFractal implements MouseListener {
         //where initialization occurs:
         //Register for mouse events on blankArea and the panel.
         frame.addMouseListener(this);
+        frame.addKeyListener(this);
         //panel.addMouseListener(this);
 		
 		return view;
 	}
 	
+	public void keyTyped(KeyEvent e) {
+	    //saySomething("Key typed", e);
+	}
+
+	public void keyPressed(KeyEvent e) {
+	    //saySomething("Key pressed", e);
+	    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+	    	key_control = true;
+	    	//System.out.println("KEY CTRL pressed");
+	    }
+	}
+ 
+	public void keyReleased(KeyEvent e) {
+	    //saySomething("Mey released", e);
+	    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+	    	key_control = false;
+	    	//System.out.println("KEY CTRL released");
+	    }
+	}
+
+	
     public void mousePressed(MouseEvent e) {
         saySomething("Mouse pressed; X: " + e.getX()+" Y: " + e.getY() + " - ", e);
         
         if (e.getX()>2*e.getComponent().getWidth()/3) {
-    		i_rotation++;
-       	
+        	i_rotation++;
         } else if (e.getX()<e.getComponent().getWidth()/3){
-    		i_rotation--;
+        	i_rotation--;
         }
         
         if (e.getY()>2*e.getComponent().getHeight()/3) {
-    		j_rotation++;
-       	
-        } else if (e.getY()<e.getComponent().getHeight()/3){
-    		j_rotation--;
-        }
-		Rotation rz = new Rotation((float)Math.PI*2*(float)i_rotation/NB_ROTATIONS, Vector3.Z_AXIS);
-		Rotation ry = new Rotation((float)Math.PI*2*(float)j_rotation/NB_ROTATIONS, Vector3.Y_AXIS);
-		tre.setTransformation(rz.times(ry));
-		renderer.render();
+         	if (key_control) {
+         		zoom--;
+         		System.out.println("Zoom-- zoom: "+zoom);
+         	} else {
+         		j_rotation++;
+         	}  	
 
+        } else if (e.getY()<e.getComponent().getHeight()/3){
+        	if (key_control) {
+        		zoom++;
+        		System.out.println("Zoom-- zoom: "+zoom);
+        	} else {
+        		j_rotation--;
+        	}
+        }
+
+        // Zoom camera by updating eye on the forward direction
+        camera.updateCamera(eye.plus(camera.getForward().times((float)zoom/10)), poi, camera.getUp());
+        // Create a transformation for the Element using 2 rotations, respectively around Z axis and Y axis
+        Rotation rz = new Rotation((float)Math.PI*2*(float)i_rotation/NB_ROTATIONS, Vector3.Z_AXIS);
+        Rotation ry = new Rotation((float)Math.PI*2*(float)j_rotation/NB_ROTATIONS, Vector3.Y_AXIS);
+        tre.setTransformation(ry.times(rz));
+        
+        // Render the updated view after zooming camera and rotating Element
+		renderer.render();
      }
 
      public void mouseEntered(MouseEvent e) {
@@ -151,33 +195,23 @@ public class TestTreillisFractal implements MouseListener {
                      + e.getClickCount() + ")", e);
      }
 
-     void saySomething(String eventDescription, MouseEvent e) {
+     void saySomething(String eventDescription, InputEvent e) {
          System.out.println(eventDescription + " detected on "
                          + e.getComponent().getClass().getName()
                          + ".");
      }
 
 
-	/**
-	 * @param args
-	 */
 	public void run() {
 		
-		System.out.println("********* STARTING APPLICATION *********");
-
-//		Tracer.info = true;
-//		Tracer.function = true;
-
 		// Camera
 		//Vector4 eye = new Vector4(8,3,5,1);
-		Vector4 eye = new Vector4(6,0,3,1);
+		eye = new Vector4(6,0,3,1);
 		//Vector4 eye = new Vector4(16,6,12,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
-		Vector4 poi = new Vector4(0,0,1,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		poi = new Vector4(0,0,1.5f,1);
+		camera = new Camera(eye, poi, Vector4.Z_AXIS);
 				
-		//TestTreillisFractal test = new TestTreillisFractal();
-		
 		System.out.println("********* Creating World");
 		
 		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
@@ -202,23 +236,23 @@ public class TestTreillisFractal implements MouseListener {
 		// Fractal-type recursive generator of a Landscape
 		//
 		
-		int i = n; // Start from the largest dimension of the Treillis
+		int ix = n; // Start from the largest dimension of the Treillis
 		// Initialize the 4 corners
 		array[0][0] = (float)Math.random()*mult*size/2;
-		array[0][i] = (float)Math.random()*mult*size/2;
-		array[i][0] = (float)Math.random()*mult*size/2;
-		array[i][i] = (float)Math.random()*mult*size/2;
+		array[0][ix] = (float)Math.random()*mult*size/2;
+		array[ix][0] = (float)Math.random()*mult*size/2;
+		array[ix][ix] = (float)Math.random()*mult*size/2;
 		
 		// Recursion loop on i that will be divided by 2 at each iteration until it is equal to 1
-		while (i>1) {
+		while (ix>1) {
 			
-			float factor = (float)(mult*(i * size)/(n * 2)); // For each loop calculate the variation factor (should reduce at each Fractal iteration)
+			float factor = (float)(mult*(ix * size)/(n * 2)); // For each loop calculate the variation factor (should reduce at each Fractal iteration)
 			// Then at each stage let's loop on sub-squares of the main square
-			for (int j=0; j<n/i; j++) { // n/i will be 1 (i=n at first iteration), then 2 (i is divided by 2), 4, 8, 16...
-				for (int k=0; k<n/i; k++) {
+			for (int j=0; j<n/ix; j++) { // n/i will be 1 (i=n at first iteration), then 2 (i is divided by 2), 4, 8, 16...
+				for (int k=0; k<n/ix; k++) {
 					
 					// Let's calculate the average altitude of the center of the square as it will be used later
-					float center = (array[0+j*i][0+k*i] + array[0+j*i][i+k*i] + array[i+j*i][0+k*i] + array[i+j*i][i+k*i])/4;
+					float center = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix])/4;
 					
 					// Then use Fractal approach to calculate the center of the square and the middle of each segment of the squares
 					//
@@ -236,25 +270,35 @@ public class TestTreillisFractal implements MouseListener {
 					//
 					
 					// For each calculation, add a random value multiplied by the loop factor calculated above (hence proportional to the size of the square)
-					array[i/2+j*i][i/2+k*i] = center + (float)Math.random()*factor;
+					array[ix/2+j*ix][ix/2+k*ix] = center + (float)Math.random()*factor;
 					// Use average of other points : 2 Corners + Center of the square for the middle segments
-					array[i/2+j*i][0+k*i] = (array[0+j*i][0+k*i] + array[i+j*i][0+k*i] + center)/3 + (float)Math.random()*factor;;
-					array[0+j*i][i/2+k*i] = (array[0+j*i][0+k*i] + array[0+j*i][i+k*i] + center)/3 + (float)Math.random()*factor;;
-					array[i+j*i][i/2+k*i] = (array[i+j*i][0+k*i] + array[i+j*i][i+k*i] + center)/3 + (float)Math.random()*factor;;
-					array[i/2+j*i][i+k*i] = (array[0+j*i][i+k*i] + array[i+j*i][i+k*i] + center)/3 + (float)Math.random()*factor;;
+					array[ix/2+j*ix][0+k*ix] = (array[0+j*ix][0+k*ix] + array[ix+j*ix][0+k*ix] + center)/3 + (float)Math.random()*factor;;
+					array[0+j*ix][ix/2+k*ix] = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
+					array[ix+j*ix][ix/2+k*ix] = (array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
+					array[ix/2+j*ix][ix+k*ix] = (array[0+j*ix][ix+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
 				}
 			}
-			i/=2; // Divide i by 2 (i remains a power of 2)
+			ix/=2; // Divide i by 2 (i remains a power of 2)
 		}
 		
 		//
 		// End of Fractal generation
 		//
 		
+		float sea_level = 1.5f;
+		float array_land[][] = new float[n+1][n+1]; // Updated array with sea level
+		
+		for (int i=0; i<=n; i++ ) {
+			for (int j=0; j<=n; j++) {
+				array_land[i][j] = array[i][j] >= sea_level ? array[i][j] : sea_level ;
+			}
+		}
+
+		
 		// Create the Treillis
 		tre = null;
 		try {
-			tre = new Trellis(size, size, n, n, array, tex);
+			tre = new Trellis(size, size, n, n, array_land, tex);
 		} catch (WrongArraySizeException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -293,7 +337,7 @@ public class TestTreillisFractal implements MouseListener {
 		// Rendering context
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		//rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 
@@ -304,15 +348,6 @@ public class TestTreillisFractal implements MouseListener {
 		renderer.setView(view);
 		renderer.render();
 		
-		// Render loop
-//		System.out.println("********* Rendering...");
-//		int nb_images = 180;
-//		for (int l=0; l<=3*nb_images; l++) {
-//			Rotation r = new Rotation((float)Math.PI*2*(float)l/(float)nb_images, Vector3.Z_AXIS);
-//			tre.setTransformation(r);
-//			renderer.render();
-//		}
-
 		System.out.println("********* APPLICATION LAUNCHED *********");
 	}
 
@@ -324,7 +359,7 @@ public class TestTreillisFractal implements MouseListener {
 		System.out.println("********* STARTING APPLICATION *********");
 		TestTreillisFractal fractal = new TestTreillisFractal();
 		fractal.run();
-		System.out.println("********* ENDING APPLICATION *********");
+		System.out.println("********* APPLICATION is RUNNING *********");
 	}
 
 }
