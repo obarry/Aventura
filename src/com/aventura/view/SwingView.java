@@ -179,4 +179,16 @@ public class SwingView extends View {
 		backgraph.drawLine(x1,-y1,x2,-y2);
 	}
 
+	@Override
+	public void initView(View map) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Color getPixel(int x, int y) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
