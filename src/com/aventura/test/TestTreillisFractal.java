@@ -61,7 +61,10 @@ import com.aventura.view.View;
  * @since Nov 2023
  */
 
-public class TestTreillisFractal implements MouseListener, KeyListener {
+public class TestTreillisFractal implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
+	
+	// Frame
+	JFrame frame;
 	
 	// Camera
 	Vector4 eye;
@@ -80,13 +83,17 @@ public class TestTreillisFractal implements MouseListener, KeyListener {
 	int zoom = 0;
 	static int NB_ROTATIONS = 90;
 	
+	int mouse_click_X, mouse_click_Y;
+	int mouse_dragged_X = 0;
+	int mouse_dragged_Y = 0;
+	
 	// CTRL key + mouse flag
 	boolean key_control = false;
 
 	public View createView(GraphicContext context) {
 		
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Fractal generated Treillis");
+		frame = new JFrame("Test Fractal generated Treillis");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -112,8 +119,10 @@ public class TestTreillisFractal implements MouseListener, KeyListener {
 		
         //where initialization occurs:
         //Register for mouse events on blankArea and the panel.
-        frame.addMouseListener(this);
+        panel.addMouseListener(this);
         frame.addKeyListener(this);
+        panel.addMouseMotionListener(this);
+        panel.addMouseWheelListener(this);
         //panel.addMouseListener(this);
 		
 		return view;
@@ -138,61 +147,73 @@ public class TestTreillisFractal implements MouseListener, KeyListener {
 	    	//System.out.println("KEY CTRL released");
 	    }
 	}
-
 	
     public void mousePressed(MouseEvent e) {
         saySomething("Mouse pressed; X: " + e.getX()+" Y: " + e.getY() + " - ", e);
         
-        if (e.getX()>2*e.getComponent().getWidth()/3) {
-        	i_rotation++;
-        } else if (e.getX()<e.getComponent().getWidth()/3){
-        	i_rotation--;
-        }
-        
-        if (e.getY()>2*e.getComponent().getHeight()/3) {
-         	if (key_control) {
-         		zoom--;
-         		System.out.println("Zoom-- zoom: "+zoom);
-         	} else {
-         		j_rotation++;
-         	}  	
-
-        } else if (e.getY()<e.getComponent().getHeight()/3){
-        	if (key_control) {
+        mouse_click_X = e.getX();
+        mouse_click_Y = e.getY();
+      
+        if (key_control) {
+        	if (e.getY()>2*e.getComponent().getHeight()/3) {
+        		zoom--;
+        		System.out.println("Zoom-- zoom: "+zoom);
+        	} else if (e.getY()<e.getComponent().getHeight()/3){
         		zoom++;
         		System.out.println("Zoom-- zoom: "+zoom);
-        	} else {
-        		j_rotation--;
         	}
         }
+        
+//        if (e.getX()>2*e.getComponent().getWidth()/3) {
+//        	i_rotation++;
+//        } else if (e.getX()<e.getComponent().getWidth()/3){
+//        	i_rotation--;
+//        }
+//        
+//        if (e.getY()>2*e.getComponent().getHeight()/3) {
+//         	if (key_control) {
+//         		zoom--;
+//         		System.out.println("Zoom-- zoom: "+zoom);
+//         	} else {
+//         		j_rotation++;
+//         	}  	
+//
+//        } else if (e.getY()<e.getComponent().getHeight()/3){
+//        	if (key_control) {
+//        		zoom++;
+//        		System.out.println("Zoom-- zoom: "+zoom);
+//        	} else {
+//        		j_rotation--;
+//        	}
+//        }
 
         // Zoom camera by updating eye on the forward direction
         camera.updateCamera(eye.plus(camera.getForward().times((float)zoom/10)), poi, camera.getUp());
-        // Create a transformation for the Element using 2 rotations, respectively around Z axis and Y axis
-        Rotation rz = new Rotation((float)Math.PI*2*(float)i_rotation/NB_ROTATIONS, Vector3.Z_AXIS);
-        Rotation ry = new Rotation((float)Math.PI*2*(float)j_rotation/NB_ROTATIONS, Vector3.Y_AXIS);
-        tre.setTransformation(ry.times(rz));
+//        // Create a transformation for the Element using 2 rotations, respectively around Z axis and Y axis
+//        Rotation rz = new Rotation((float)Math.PI*2*(float)i_rotation/NB_ROTATIONS, Vector3.Z_AXIS);
+//        Rotation ry = new Rotation((float)Math.PI*2*(float)j_rotation/NB_ROTATIONS, Vector3.Y_AXIS);
+//        tre.setTransformation(ry.times(rz));
         
         // Render the updated view after zooming camera and rotating Element
 		renderer.render();
      }
 
      public void mouseEntered(MouseEvent e) {
-	    saySomething("Mouse entered", e);
+//	    saySomething("Mouse entered", e);
 	 }
 
 	public void mouseReleased(MouseEvent e) {
-        saySomething("Mouse released; # of clicks: "
-                     + e.getClickCount(), e);
+//        saySomething("Mouse released; # of clicks: "
+//                     + e.getClickCount(), e);
      }
 
      public void mouseExited(MouseEvent e) {
-        saySomething("Mouse exited", e);
+//        saySomething("Mouse exited", e);
      }
 
      public void mouseClicked(MouseEvent e) {
-        saySomething("Mouse clicked (# of clicks: "
-                     + e.getClickCount() + ")", e);
+//        saySomething("Mouse clicked (# of clicks: "
+//                     + e.getClickCount() + ")", e);
      }
 
      void saySomething(String eventDescription, InputEvent e) {
@@ -200,6 +221,39 @@ public class TestTreillisFractal implements MouseListener, KeyListener {
                          + e.getComponent().getClass().getName()
                          + ".");
      }
+
+ 	@Override
+ 	public void mouseDragged(MouseEvent e) {
+        //saySomething("Mouse dragged", e);
+        mouse_dragged_X += e.getX() - mouse_click_X;
+        mouse_dragged_Y += e.getY() - mouse_click_Y;
+        System.out.println("Drag X: " + mouse_dragged_X + " Drag Y: " + mouse_dragged_Y);
+        
+        Rotation rz = new Rotation((float)Math.PI*(float)mouse_dragged_X/frame.getWidth()/4, Vector3.Z_AXIS);
+        Rotation ry = new Rotation((float)Math.PI*(float)mouse_dragged_Y/frame.getHeight()/8, Vector3.Y_AXIS);
+        tre.setTransformation(ry.times(rz));
+        //tre.combineTransformation(ry.times(rz));
+
+        // Render the updated view after zooming camera and rotating Element
+		renderer.render();
+ 	}
+ 	
+
+ 	public void mouseMoved(MouseEvent e) {
+//        saySomething("Mouse moved", e);
+ 	}
+ 	
+
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		System.out.println("Mouse wheel moved: " + e.getWheelRotation());
+		// Increment or decrement zoom based on wheel rotation (+1 or -1)
+		zoom-=e.getWheelRotation();
+        // Zoom camera by updating eye on the forward direction
+        camera.updateCamera(eye.plus(camera.getForward().times((float)zoom/10)), poi, camera.getUp());
+        
+        // Render the updated view after zooming camera and rotating Element
+		renderer.render();
+	}
 
 
 	public void run() {
