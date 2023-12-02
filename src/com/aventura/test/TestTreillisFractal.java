@@ -61,6 +61,10 @@ import com.aventura.view.View;
  * @since Nov 2023
  */
 
+/**
+ * @author obarry
+ *
+ */
 public class TestTreillisFractal implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
 	
 	// Frame
@@ -90,6 +94,13 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	// CTRL key + mouse flag
 	boolean key_control = false;
 
+	/**
+	 * Create the view and associate all needed mouse and key listeners for user interaction with screen
+	 * The renderer will then be called each time Mouse generates a move to the view and a new updated view will be displayed
+	 * 
+	 * @param context the GraphicContext to be used to create the View
+	 * @return
+	 */
 	public View createView(GraphicContext context) {
 		
 		// Create the frame of the application 
@@ -123,114 +134,55 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
         frame.addKeyListener(this);
         panel.addMouseMotionListener(this);
         panel.addMouseWheelListener(this);
-        //panel.addMouseListener(this);
-		
+ 		
 		return view;
 	}
 	
 	public void keyTyped(KeyEvent e) {
-	    //saySomething("Key typed", e);
+		// Do nothing
 	}
 
 	public void keyPressed(KeyEvent e) {
-	    //saySomething("Key pressed", e);
 	    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
 	    	key_control = true;
-	    	//System.out.println("KEY CTRL pressed");
 	    }
 	}
  
 	public void keyReleased(KeyEvent e) {
-	    //saySomething("Mey released", e);
 	    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
 	    	key_control = false;
-	    	//System.out.println("KEY CTRL released");
 	    }
 	}
 	
-    public void mousePressed(MouseEvent e) {
-        saySomething("Mouse pressed; X: " + e.getX()+" Y: " + e.getY() + " - ", e);
-        
-        mouse_click_X = e.getX();
-        mouse_click_Y = e.getY();
-      
-        if (key_control) {
-        	if (e.getY()>2*e.getComponent().getHeight()/3) {
-        		zoom--;
-        		System.out.println("Zoom-- zoom: "+zoom);
-        	} else if (e.getY()<e.getComponent().getHeight()/3){
-        		zoom++;
-        		System.out.println("Zoom-- zoom: "+zoom);
-        	}
-        }
-        
-//        if (e.getX()>2*e.getComponent().getWidth()/3) {
-//        	i_rotation++;
-//        } else if (e.getX()<e.getComponent().getWidth()/3){
-//        	i_rotation--;
-//        }
-//        
-//        if (e.getY()>2*e.getComponent().getHeight()/3) {
-//         	if (key_control) {
-//         		zoom--;
-//         		System.out.println("Zoom-- zoom: "+zoom);
-//         	} else {
-//         		j_rotation++;
-//         	}  	
-//
-//        } else if (e.getY()<e.getComponent().getHeight()/3){
-//        	if (key_control) {
-//        		zoom++;
-//        		System.out.println("Zoom-- zoom: "+zoom);
-//        	} else {
-//        		j_rotation--;
-//        	}
-//        }
-
-        // Zoom camera by updating eye on the forward direction
-        camera.updateCamera(eye.plus(camera.getForward().times((float)zoom/10)), poi, camera.getUp());
-//        // Create a transformation for the Element using 2 rotations, respectively around Z axis and Y axis
-//        Rotation rz = new Rotation((float)Math.PI*2*(float)i_rotation/NB_ROTATIONS, Vector3.Z_AXIS);
-//        Rotation ry = new Rotation((float)Math.PI*2*(float)j_rotation/NB_ROTATIONS, Vector3.Y_AXIS);
-//        tre.setTransformation(ry.times(rz));
-        
-        // Render the updated view after zooming camera and rotating Element
-		renderer.render();
-     }
+	public void mousePressed(MouseEvent e) {
+		// Store the location when mouse is clicked, it will be used during mouse is dragged to calculate the x and y variations
+		// and rotate the Element accordingly
+		mouse_click_X = e.getX(); mouse_click_Y = e.getY();
+	}
 
      public void mouseEntered(MouseEvent e) {
-//	    saySomething("Mouse entered", e);
+    	 // Do nothing
 	 }
 
 	public void mouseReleased(MouseEvent e) {
-//        saySomething("Mouse released; # of clicks: "
-//                     + e.getClickCount(), e);
+		// Do nothing
      }
 
      public void mouseExited(MouseEvent e) {
-//        saySomething("Mouse exited", e);
+ 		// Do nothing
      }
 
      public void mouseClicked(MouseEvent e) {
-//        saySomething("Mouse clicked (# of clicks: "
-//                     + e.getClickCount() + ")", e);
+ 		// Do nothing
      }
 
-     void saySomething(String eventDescription, InputEvent e) {
-         System.out.println(eventDescription + " detected on "
-                         + e.getComponent().getClass().getName()
-                         + ".");
-     }
-
- 	@Override
  	public void mouseDragged(MouseEvent e) {
-        //saySomething("Mouse dragged", e);
         mouse_dragged_X += e.getX() - mouse_click_X;
         mouse_dragged_Y += e.getY() - mouse_click_Y;
-        System.out.println("Drag X: " + mouse_dragged_X + " Drag Y: " + mouse_dragged_Y);
+        //System.out.println("Drag X: " + mouse_dragged_X + " Drag Y: " + mouse_dragged_Y);
         
-        Rotation rz = new Rotation((float)Math.PI*(float)mouse_dragged_X/frame.getWidth()/4, Vector3.Z_AXIS);
-        Rotation ry = new Rotation((float)Math.PI*(float)mouse_dragged_Y/frame.getHeight()/8, Vector3.Y_AXIS);
+        Rotation rz = new Rotation((float)Math.PI*(float)mouse_dragged_X/frame.getWidth()/8, Vector3.Z_AXIS);
+        Rotation ry = new Rotation((float)Math.PI*(float)mouse_dragged_Y/frame.getHeight()/16, Vector3.Y_AXIS);
         tre.setTransformation(ry.times(rz));
         //tre.combineTransformation(ry.times(rz));
 
@@ -238,14 +190,12 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		renderer.render();
  	}
  	
-
  	public void mouseMoved(MouseEvent e) {
-//        saySomething("Mouse moved", e);
- 	}
- 	
+		// Do nothing
+ 	} 	
 
 	public void mouseWheelMoved(MouseWheelEvent e) {
-		System.out.println("Mouse wheel moved: " + e.getWheelRotation());
+		//System.out.println("Mouse wheel moved: " + e.getWheelRotation());
 		// Increment or decrement zoom based on wheel rotation (+1 or -1)
 		zoom-=e.getWheelRotation();
         // Zoom camera by updating eye on the forward direction
@@ -256,6 +206,11 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	}
 
 
+	/**
+	 * Create the World and Camera, generate a Treillis based on Fractal recursivity to create a Landscape
+	 * Create the Graphic Swing view by calling the createView method that will associate mouse Listners to the panel so that user can 
+	 * interact with the view and move it or zomm in it.
+	 */
 	public void run() {
 		
 		// Camera
