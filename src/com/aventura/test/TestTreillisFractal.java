@@ -90,6 +90,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	Trellis tre;
 	float size; // Size of the Treillis (square)
 	int n; // Nb of segments of the Treillis, should be a 2^n number
+	float array_land[][]; // Updated array with sea level
 
 	// Movement variables
 	int i_rotation = 0;
@@ -251,7 +252,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 
 		if (e.getSource() == e1) {
 			System.out.println("Meu Generate clicked");
-			float array_land[][] = generate(size, n);
+			generate(array_land, size, n);
 			try {
 				tre.updateTrellis(array_land);
 			} catch (WrongArraySizeException exc) {
@@ -271,7 +272,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	 * @param size the size of the trellis
 	 * @param n the number of segments (should be a power of 2)
 	 */
-	public float[][] generate(float size, int n) {
+	public void generate(float[][] array_land, float size, int n) {
 		
 		float array[][] = new float[n+1][n+1]; // Array to be used for the Treillis generation
 		
@@ -327,7 +328,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		//
 		
 		float sea_level = 1.5f;
-		float array_land[][] = new float[n+1][n+1]; // Updated array with sea level
+		//float array_land[][] = new float[n+1][n+1]; // Updated array with sea level
 		
 		for (int i=0; i<=n; i++ ) {
 			for (int j=0; j<=n; j++) {
@@ -335,7 +336,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 			}
 		}
 		
-		return array_land;
+		//return array_land;
 		
 	}
 
@@ -446,8 +447,8 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 //				array_land[i][j] = array[i][j] >= sea_level ? array[i][j] : sea_level ;
 //			}
 //		}
-
-		float array_land[][] = generate(size, n);
+		array_land = new float[n+1][n+1]; // Updated array with sea level
+		generate(array_land, size, n);
 		// Create the Treillis
 		tre = null;
 		try {
