@@ -55,6 +55,7 @@ public class Trellis extends Element {
 	protected RectangleMesh rectangleMesh;
 	protected int nx, ny;
 	protected float width, length;
+	protected Vector4 position;
 
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
@@ -72,7 +73,7 @@ public class Trellis extends Element {
 		this.length = length;
 		this.nx = nx;
 		this.ny = ny;
-		Vector4 position = new Vector4(-width/2,-length/2,0,0);
+		this.position = new Vector4(-width/2,-length/2,0,0);
 		rectangleMesh = new RectangleMesh(this, nx+1, ny+1);
 		initTrellis(position);
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
@@ -94,7 +95,7 @@ public class Trellis extends Element {
 		this.length = length;
 		this.nx = nx;
 		this.ny = ny;
-		Vector4 position = new Vector4(-width/2,-length/2,0,0);
+		this.position = new Vector4(-width/2,-length/2,0,0);
 		rectangleMesh = new RectangleMesh(this, nx+1, ny+1, tex);
 		initTrellis(position);
 	}
@@ -116,7 +117,7 @@ public class Trellis extends Element {
 		this.length = length;
 		this.nx = nx;
 		this.ny = ny;
-		Vector4 position = new Vector4(-width/2,-length/2,0,0);
+		this.position = new Vector4(-width/2,-length/2,0,0);
 		if ((array.length != nx+1) || (array[0].length != ny+1)) {
 			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
 		}
@@ -141,7 +142,7 @@ public class Trellis extends Element {
 		this.length = length;
 		this.nx = nx;
 		this.ny = ny;
-		Vector4 position = new Vector4(-width/2,-length/2,0,0);
+		this.position = new Vector4(-width/2,-length/2,0,0);
 		if ((array.length != nx+1) || (array[0].length != ny+1)) {
 			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
 		}
@@ -173,6 +174,15 @@ public class Trellis extends Element {
 		}
 	}
 	
+	public void updateTrellis(float [][] array) throws WrongArraySizeException {
+		// Create Vertices
+		for (int i=0; i<=nx; i++) {
+			for (int j=0; j<=ny; j++) {
+				rectangleMesh.getVertex(i, j).setPos(new Vector4(i*width/nx, j*length/ny, array[i][j], 1).plus(position));
+			}
+		}
+	}
+			
 	public int getNx() {
 		return nx;
 	}

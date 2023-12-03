@@ -6,6 +6,9 @@ import java.awt.Graphics;
 import java.awt.Toolkit;
 
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 import java.awt.event.*;
@@ -65,11 +68,13 @@ import com.aventura.view.View;
  * @author obarry
  *
  */
-public class TestTreillisFractal implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
+public class TestTreillisFractal implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener, ActionListener {
 	
 	// Frame
 	JFrame frame;
-	
+	JMenu menu, smenu;
+	JMenuItem e1, e2, e3, e4, e5, e6;
+
 	// Camera
 	Vector4 eye;
 	Vector4 poi;
@@ -78,9 +83,14 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	// Render engine
 	RenderEngine renderer;
 	
+	// World
+	World world;
+	
 	// Trellis element
 	Trellis tre;
-	
+	float size; // Size of the Treillis (square)
+	int n; // Nb of segments of the Treillis, should be a 2^n number
+
 	// Movement variables
 	int i_rotation = 0;
 	int j_rotation = 0;
@@ -107,6 +117,35 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		frame = new JFrame("Test Fractal generated Treillis");
 		// Set the size of the frame
 		frame.setSize(1000,600);
+		
+	    JMenuBar menubar = new JMenuBar();
+	    // Créer le menu
+	    menu = new JMenu("Run");
+	    // Créer le sous menu
+	    //smenu = new JMenu("Sous Menu");
+	    // Créer les éléments du menu et sous menu
+	    e1 = new JMenuItem("Generate");
+	    e1.addActionListener(this);
+	    //e2 = new JMenuItem("Element 2");
+	    //e3 = new JMenuItem("Element 3");
+	    //e4 = new JMenuItem("Element 4");
+	    //e5 = new JMenuItem("Element 5");
+	    //e6 = new JMenuItem("Element 6");
+	    // Ajouter les éléments au menu
+	    menu.add(e1); 
+	    //menu.add(e2); 
+	    //menu.add(e3);
+	    // Ajouter les éléments au sous menu
+	    //smenu.add(e4); 
+	    //smenu.add(e5);
+	    //smenu.add(e6);
+	    // Ajouter le sous menu au menu principale
+	    //menu.add(smenu);
+	    // Ajouter le menu au barre de menu
+	    menubar.add(menu);
+	    // Ajouter la barre de menu au frame
+	    frame.setJMenuBar(menubar);
+
 		
 		// Create the view to be displayed
 		SwingView view = new SwingView(context, frame);
@@ -156,7 +195,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	
 	public void mousePressed(MouseEvent e) {
 		// Store the location when mouse is clicked, it will be used during mouse is dragged to calculate the x and y variations
-		// and rotate the Element accordingly
+		// and rotate the Element accordingly3
 		mouse_click_X = e.getX(); mouse_click_Y = e.getY();
 	}
 
@@ -204,47 +243,40 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
         // Render the updated view after zooming camera and rotating Element
 		renderer.render();
 	}
+	
 
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
 
+		if (e.getSource() == e1) {
+			System.out.println("Meu Generate clicked");
+			float array_land[][] = generate(size, n);
+			try {
+				tre.updateTrellis(array_land);
+			} catch (WrongArraySizeException exc) {
+				// TODO Auto-generated catch block
+				exc.printStackTrace();
+			}
+			world.generate();
+			updateColorTrellis();
+			renderer.render();
+
+		} else {
+			System.out.println("Other Action Event : "+e);			
+		}
+	}
+	
 	/**
-	 * Create the World and Camera, generate a Treillis based on Fractal recursivity to create a Landscape
-	 * Create the Graphic Swing view by calling the createView method that will associate mouse Listners to the panel so that user can 
-	 * interact with the view and move it or zomm in it.
+	 * @param size the size of the trellis
+	 * @param n the number of segments (should be a power of 2)
 	 */
-	public void run() {
+	public float[][] generate(float size, int n) {
 		
-		// Camera
-		//Vector4 eye = new Vector4(8,3,5,1);
-		eye = new Vector4(6,0,3,1);
-		//Vector4 eye = new Vector4(16,6,12,1);
-		//Vector4 eye = new Vector4(3,2,2,1);
-		poi = new Vector4(0,0,1.5f,1);
-		camera = new Camera(eye, poi, Vector4.Z_AXIS);
-				
-		System.out.println("********* Creating World");
-		
-		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
-		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
-		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
-		//Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
-		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
-		Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
-		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
-		
-		// Create World
-		World world = new World();
-		
-		// Create and form the Treillis
-		float size = 4; // Size of the Treillis (square)
-		int n = 128; // Nb of segments of the Treillis, should be a 2^n number
 		float array[][] = new float[n+1][n+1]; // Array to be used for the Treillis generation
 		
 		float mult = 0.6f; // Global multiplication factor for altitudes used by the Fractal generator. If higher, the landscape will be more accidented, if lower it will be smoother
-		
-		//
-		// Fractal-type recursive generator of a Landscape
-		//
-		
+
 		int ix = n; // Start from the largest dimension of the Treillis
 		// Initialize the 4 corners
 		array[0][0] = (float)Math.random()*mult*size/2;
@@ -302,8 +334,120 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 				array_land[i][j] = array[i][j] >= sea_level ? array[i][j] : sea_level ;
 			}
 		}
-
 		
+		return array_land;
+		
+	}
+
+	protected void updateColorTrellis() {
+		float max_alt = tre.getMaxZ();
+		float min_alt = tre.getMinZ();
+		int t = 0;
+		for (t=0; t<tre.getTriangles().size(); t++) {
+			float avg_alt = (tre.getTriangle(t).getV1().getPos().getZ() + tre.getTriangle(t).getV2().getPos().getZ() + tre.getTriangle(t).getV3().getPos().getZ())/3;
+			tre.getTriangle(t).setColor(new Color((int)((avg_alt-min_alt)/(max_alt-min_alt)*200),(int)((avg_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-avg_alt)/(max_alt-min_alt)*200)));
+		}
+	}
+
+
+	/**
+	 * Create the World and Camera, generate a Treillis based on Fractal recursivity to create a Landscape
+	 * Create the Graphic Swing view by calling the createView method that will associate mouse Listners to the panel so that user can 
+	 * interact with the view and move it or zomm in it.
+	 */
+	public void run() {
+		
+		// Camera
+		//Vector4 eye = new Vector4(8,3,5,1);
+		eye = new Vector4(6,0,3,1);
+		//Vector4 eye = new Vector4(16,6,12,1);
+		//Vector4 eye = new Vector4(3,2,2,1);
+		poi = new Vector4(0,0,1.5f,1);
+		camera = new Camera(eye, poi, Vector4.Z_AXIS);
+				
+		System.out.println("********* Creating World");
+		
+		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
+		//Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
+		Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
+		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
+		
+		// Create World
+		world = new World();
+		
+		// Create and form the Treillis
+		size = 4; // Size of the Treillis (square)
+		n = 128; // Nb of segments of the Treillis, should be a 2^n number
+		//float array[][] = new float[n+1][n+1]; // Array to be used for the Treillis generation
+		
+//		float mult = 0.6f; // Global multiplication factor for altitudes used by the Fractal generator. If higher, the landscape will be more accidented, if lower it will be smoother
+//		
+//		//
+//		// Fractal-type recursive generator of a Landscape
+//		//
+//		
+//		int ix = n; // Start from the largest dimension of the Treillis
+//		// Initialize the 4 corners
+//		array[0][0] = (float)Math.random()*mult*size/2;
+//		array[0][ix] = (float)Math.random()*mult*size/2;
+//		array[ix][0] = (float)Math.random()*mult*size/2;
+//		array[ix][ix] = (float)Math.random()*mult*size/2;
+//		
+//		// Recursion loop on i that will be divided by 2 at each iteration until it is equal to 1
+//		while (ix>1) {
+//			
+//			float factor = (float)(mult*(ix * size)/(n * 2)); // For each loop calculate the variation factor (should reduce at each Fractal iteration)
+//			// Then at each stage let's loop on sub-squares of the main square
+//			for (int j=0; j<n/ix; j++) { // n/i will be 1 (i=n at first iteration), then 2 (i is divided by 2), 4, 8, 16...
+//				for (int k=0; k<n/ix; k++) {
+//					
+//					// Let's calculate the average altitude of the center of the square as it will be used later
+//					float center = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix])/4;
+//					
+//					// Then use Fractal approach to calculate the center of the square and the middle of each segment of the squares
+//					//
+//					// Co---M---Co
+//					// |    |    |
+//					// |    |    |
+//					// M---Cnt---M
+//					// |    |    |
+//					// |    |    |
+//					// Co---M---Co
+//					//
+//					// Co = Corners of the square
+//					// Cnt = Center of the square
+//					// M = Middle of each segment of the square
+//					//
+//					
+//					// For each calculation, add a random value multiplied by the loop factor calculated above (hence proportional to the size of the square)
+//					array[ix/2+j*ix][ix/2+k*ix] = center + (float)Math.random()*factor;
+//					// Use average of other points : 2 Corners + Center of the square for the middle segments
+//					array[ix/2+j*ix][0+k*ix] = (array[0+j*ix][0+k*ix] + array[ix+j*ix][0+k*ix] + center)/3 + (float)Math.random()*factor;;
+//					array[0+j*ix][ix/2+k*ix] = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
+//					array[ix+j*ix][ix/2+k*ix] = (array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
+//					array[ix/2+j*ix][ix+k*ix] = (array[0+j*ix][ix+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
+//				}
+//			}
+//			ix/=2; // Divide i by 2 (i remains a power of 2)
+//		}
+//		
+//		//
+//		// End of Fractal generation
+//		//
+//		
+//		float sea_level = 1.5f;
+//		float array_land[][] = new float[n+1][n+1]; // Updated array with sea level
+//		
+//		for (int i=0; i<=n; i++ ) {
+//			for (int j=0; j<=n; j++) {
+//				array_land[i][j] = array[i][j] >= sea_level ? array[i][j] : sea_level ;
+//			}
+//		}
+
+		float array_land[][] = generate(size, n);
 		// Create the Treillis
 		tre = null;
 		try {
@@ -323,13 +467,14 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		world.generate();
 		
 		// Then update Triangles as needed (Colors) to create effect on the Landscape
-		float max_alt = tre.getMaxZ();
-		float min_alt = tre.getMinZ();
-		int t = 0;
-		for (t=0; t<tre.getTriangles().size(); t++) {
-			float avg_alt = (tre.getTriangle(t).getV1().getPos().getZ() + tre.getTriangle(t).getV2().getPos().getZ() + tre.getTriangle(t).getV3().getPos().getZ())/3;
-			tre.getTriangle(t).setColor(new Color((int)((avg_alt-min_alt)/(max_alt-min_alt)*200),(int)((avg_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-avg_alt)/(max_alt-min_alt)*200)));
-		}
+		updateColorTrellis();
+//		float max_alt = tre.getMaxZ();
+//		float min_alt = tre.getMinZ();
+//		int t = 0;
+//		for (t=0; t<tre.getTriangles().size(); t++) {
+//			float avg_alt = (tre.getTriangle(t).getV1().getPos().getZ() + tre.getTriangle(t).getV2().getPos().getZ() + tre.getTriangle(t).getV3().getPos().getZ())/3;
+//			tre.getTriangle(t).setColor(new Color((int)((avg_alt-min_alt)/(max_alt-min_alt)*200),(int)((avg_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-avg_alt)/(max_alt-min_alt)*200)));
+//		}
 
 		// Lighting initialization
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
