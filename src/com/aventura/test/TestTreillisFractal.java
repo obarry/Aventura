@@ -246,12 +246,11 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	}
 	
 
-	@Override
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
 
 		if (e.getSource() == e1) {
-			System.out.println("Meu Generate clicked");
+			//System.out.println("Meu Generate clicked");
 			generate(array_land, size, n);
 			try {
 				tre.updateTrellis(array_land);
@@ -382,71 +381,6 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		// Create and form the Treillis
 		size = 4; // Size of the Treillis (square)
 		n = 128; // Nb of segments of the Treillis, should be a 2^n number
-		//float array[][] = new float[n+1][n+1]; // Array to be used for the Treillis generation
-		
-//		float mult = 0.6f; // Global multiplication factor for altitudes used by the Fractal generator. If higher, the landscape will be more accidented, if lower it will be smoother
-//		
-//		//
-//		// Fractal-type recursive generator of a Landscape
-//		//
-//		
-//		int ix = n; // Start from the largest dimension of the Treillis
-//		// Initialize the 4 corners
-//		array[0][0] = (float)Math.random()*mult*size/2;
-//		array[0][ix] = (float)Math.random()*mult*size/2;
-//		array[ix][0] = (float)Math.random()*mult*size/2;
-//		array[ix][ix] = (float)Math.random()*mult*size/2;
-//		
-//		// Recursion loop on i that will be divided by 2 at each iteration until it is equal to 1
-//		while (ix>1) {
-//			
-//			float factor = (float)(mult*(ix * size)/(n * 2)); // For each loop calculate the variation factor (should reduce at each Fractal iteration)
-//			// Then at each stage let's loop on sub-squares of the main square
-//			for (int j=0; j<n/ix; j++) { // n/i will be 1 (i=n at first iteration), then 2 (i is divided by 2), 4, 8, 16...
-//				for (int k=0; k<n/ix; k++) {
-//					
-//					// Let's calculate the average altitude of the center of the square as it will be used later
-//					float center = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix])/4;
-//					
-//					// Then use Fractal approach to calculate the center of the square and the middle of each segment of the squares
-//					//
-//					// Co---M---Co
-//					// |    |    |
-//					// |    |    |
-//					// M---Cnt---M
-//					// |    |    |
-//					// |    |    |
-//					// Co---M---Co
-//					//
-//					// Co = Corners of the square
-//					// Cnt = Center of the square
-//					// M = Middle of each segment of the square
-//					//
-//					
-//					// For each calculation, add a random value multiplied by the loop factor calculated above (hence proportional to the size of the square)
-//					array[ix/2+j*ix][ix/2+k*ix] = center + (float)Math.random()*factor;
-//					// Use average of other points : 2 Corners + Center of the square for the middle segments
-//					array[ix/2+j*ix][0+k*ix] = (array[0+j*ix][0+k*ix] + array[ix+j*ix][0+k*ix] + center)/3 + (float)Math.random()*factor;;
-//					array[0+j*ix][ix/2+k*ix] = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
-//					array[ix+j*ix][ix/2+k*ix] = (array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
-//					array[ix/2+j*ix][ix+k*ix] = (array[0+j*ix][ix+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
-//				}
-//			}
-//			ix/=2; // Divide i by 2 (i remains a power of 2)
-//		}
-//		
-//		//
-//		// End of Fractal generation
-//		//
-//		
-//		float sea_level = 1.5f;
-//		float array_land[][] = new float[n+1][n+1]; // Updated array with sea level
-//		
-//		for (int i=0; i<=n; i++ ) {
-//			for (int j=0; j<=n; j++) {
-//				array_land[i][j] = array[i][j] >= sea_level ? array[i][j] : sea_level ;
-//			}
-//		}
 		array_land = new float[n+1][n+1]; // Updated array with sea level
 		generate(array_land, size, n);
 		// Create the Treillis
@@ -469,13 +403,6 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		
 		// Then update Triangles as needed (Colors) to create effect on the Landscape
 		updateColorTrellis();
-//		float max_alt = tre.getMaxZ();
-//		float min_alt = tre.getMinZ();
-//		int t = 0;
-//		for (t=0; t<tre.getTriangles().size(); t++) {
-//			float avg_alt = (tre.getTriangle(t).getV1().getPos().getZ() + tre.getTriangle(t).getV2().getPos().getZ() + tre.getTriangle(t).getV3().getPos().getZ())/3;
-//			tre.getTriangle(t).setColor(new Color((int)((avg_alt-min_alt)/(max_alt-min_alt)*200),(int)((avg_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-avg_alt)/(max_alt-min_alt)*200)));
-//		}
 
 		// Lighting initialization
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
