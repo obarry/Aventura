@@ -251,7 +251,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 
 		if (e.getSource() == e1) {
 			//System.out.println("Meu Generate clicked");
-			generate(array_land, size, n);
+			createLandscape(array_land, size, n);
 			try {
 				tre.updateTrellis(array_land);
 			} catch (WrongArraySizeException exc) {
@@ -259,7 +259,8 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 				exc.printStackTrace();
 			}
 			world.generate();
-			updateColorTrellis();
+			System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles());
+			updateTrianglesColorTrellis();
 			renderer.render();
 
 		} else {
@@ -271,9 +272,9 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	 * @param size the size of the trellis
 	 * @param n the number of segments (should be a power of 2)
 	 */
-	public void generate(float[][] array_land, float size, int n) {
+	public void createLandscape(float[][] array_land, float size, int n) {
 		
-		float array[][] = new float[n+1][n+1]; // Array to be used for the Treillis generation
+		float array[][] = new float[n+1][n+1]; // Temporary array to be used for the Treillis generation
 		
 		float mult = 0.6f; // Global multiplication factor for altitudes used by the Fractal generator. If higher, the landscape will be more accidented, if lower it will be smoother
 
@@ -308,7 +309,6 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 					// Co = Corners of the square
 					// Cnt = Center of the square
 					// M = Middle of each segment of the square
-					//
 					
 					// For each calculation, add a random value multiplied by the loop factor calculated above (hence proportional to the size of the square)
 					array[ix/2+j*ix][ix/2+k*ix] = center + (float)Math.random()*factor;
@@ -335,11 +335,11 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 			}
 		}
 		
-		//return array_land;
-		
+		array = null; // We no longer need this one, the array_land has been updated appropriately
+	
 	}
 
-	protected void updateColorTrellis() {
+	protected void updateTrianglesColorTrellis() {
 		float max_alt = tre.getMaxZ();
 		float min_alt = tre.getMinZ();
 		int t = 0;
@@ -382,7 +382,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		size = 4; // Size of the Treillis (square)
 		n = 128; // Nb of segments of the Treillis, should be a 2^n number
 		array_land = new float[n+1][n+1]; // Updated array with sea level
-		generate(array_land, size, n);
+		createLandscape(array_land, size, n);
 		// Create the Treillis
 		tre = null;
 		try {
@@ -400,9 +400,10 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		// Generate World (including Triangles)
 		System.out.println("********* Calculating normals");
 		world.generate();
+		System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles());
 		
 		// Then update Triangles as needed (Colors) to create effect on the Landscape
-		updateColorTrellis();
+		updateTrianglesColorTrellis();
 
 		// Lighting initialization
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
@@ -410,7 +411,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		Lighting light = new Lighting(dl, al, false);
 		
 		// Graphic Context
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 0.8f, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		//GraphicContext gContext = new GraphicContext(8f, 4.5f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 125);
 		
 		// Create view
