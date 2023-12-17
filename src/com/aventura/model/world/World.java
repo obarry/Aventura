@@ -86,6 +86,13 @@ public class World {
 		}
 	}
 	
+	public void update() {
+		
+		for (int i=0; i<elements.size(); i++) {
+				elements.get(i).update();
+		}
+	}
+	
 	public void setColor(Color c) {
 		this.worldColor = c;
 	}

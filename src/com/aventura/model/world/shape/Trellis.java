@@ -150,9 +150,18 @@ public class Trellis extends Element {
 		initTrellis(position, array);
 	}
 	
-	public void createGeometry() {
-		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);		
+	public void generateVertices() {
+		// Nothing to do, all is already done by constructor
 	}
+	
+	public void generateTriangles() {
+		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);				
+	}
+
+	
+//	public void createGeometry() {
+//		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);		
+//	}
 
 	protected void initTrellis(Vector4 position) {
 				

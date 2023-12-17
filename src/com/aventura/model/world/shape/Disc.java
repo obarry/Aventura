@@ -67,11 +67,10 @@ public class Disc extends Element {
 		this.tex = t;
 	}
 
-	
 	/**
 	 * Creation of a Disc
 	 */	
-	public void createGeometry() {
+	public void generateVertices() {
 		
 		mesh = new CircularMesh(this,half_seg*2, tex); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
 		
@@ -92,11 +91,44 @@ public class Disc extends Element {
 			// Set the position of the corresponding vertex in the CircularMesh
 			mesh.getVertex(i).setPos(new Vector4(this.ray*cosa, this.ray*sina, 0, 1).plus(center));
 		}
+	}
+	
+	public void generateTriangles() {
 		
 		// Create Triangles
 		mesh.createTriangles(CircularMesh.MESH_CIRCULAR_CUT_TEXTURE);
-		
 	}
+
+	
+	/**
+	 * Creation of a Disc
+	 */	
+//	public void createGeometry() {
+//		
+//		mesh = new CircularMesh(this,half_seg*2, tex); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
+//		
+//		float alpha = (float)Math.PI/half_seg;
+//		
+//		// Create vertices
+//		
+//		// Create summits (same Vertex for all summits)
+//		Vector4 summit = new Vector4(0, 0, 0,  1);
+//		mesh.setCenter(summit);
+//		
+//		// Create the ring of vertices around the disc
+//		for (int i=0; i<half_seg*2; i++) {
+//			
+//			float cosa = (float) Math.cos(alpha*i);
+//			float sina = (float) Math.sin(alpha*i);
+//			
+//			// Set the position of the corresponding vertex in the CircularMesh
+//			mesh.getVertex(i).setPos(new Vector4(this.ray*cosa, this.ray*sina, 0, 1).plus(center));
+//		}
+//		
+//		// Create Triangles
+//		mesh.createTriangles(CircularMesh.MESH_CIRCULAR_CUT_TEXTURE);
+//		
+//	}
 	
 	@Override
 	public Element setFrontTexture(Texture tex) {

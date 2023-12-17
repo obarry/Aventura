@@ -119,7 +119,7 @@ import com.aventura.model.world.triangle.Triangle;
  * @since March 2016
  *
  */
-public class Element implements Transformable, Shape {
+public class Element implements Transformable, Shape, Generable {
 	
 	protected static final String ELEMENT_DEFAULT_NAME = "element";
 	protected String name;
@@ -434,7 +434,7 @@ public class Element implements Transformable, Shape {
 		//calculateSubNormals(); -> Now calculated through the recursive generate() method
 	}
 	
-	public void calculateSubNormals() {
+	protected void calculateSubNormals() {
 		if (subelements != null) {
 			for (int i=0; i<subelements.size(); i++) {
 				subelements.get(i).calculateNormals();
@@ -447,23 +447,57 @@ public class Element implements Transformable, Shape {
 	
 	public void generate() {
 
-		this.createGeometry();
+		//this.createGeometry();
+		this.generateVertices();
+		this.generateTriangles();
 		this.calculateNormals();
 		this.subGenerate();
 	}
 	
-	public void subGenerate() {
+	public void update() {
+		// Do same than generate except Vertices generation as they are assumed to be already existing (and likely modified)
+		this.generateTriangles();
+		this.calculateNormals();
+		this.subUpdate();
+		
+	}
+
+	@Override
+	public void generateVertices() {
+		// This method should be implemented in specific Element classes
+		// Nothing to do for a generic Element that could be used as group of Elements
+		
+	}
+
+	@Override
+	public void generateTriangles() {
+		// This method should be implemented in specific Element classes
+		// Nothing to do for a generic Element that could be used as group of Elements
+		
+	}
+
+
+	
+	protected void subGenerate() {
 		if (subelements != null) {
 			for (int i=0; i<subelements.size(); i++) {
 				subelements.get(i).generate();
 			}
 		}		
 	}
-	
-	public void createGeometry() {
-		// This method should be implemented in specific Element classes
-		// Nothing to do for a generic Element that could be used as group of Elements
+
+	protected void subUpdate() {
+		if (subelements != null) {
+			for (int i=0; i<subelements.size(); i++) {
+				subelements.get(i).update();
+			}
+		}		
 	}
+
+//	public void createGeometry() {
+//		// This method should be implemented in specific Element classes
+//		// Nothing to do for a generic Element that could be used as group of Elements
+//	}
 
 	
 	// *****************

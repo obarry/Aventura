@@ -258,7 +258,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 				// TODO Auto-generated catch block
 				exc.printStackTrace();
 			}
-			world.generate();
+			world.update();
 			System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles());
 			updateTrianglesColorTrellis();
 			renderer.render();

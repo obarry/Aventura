@@ -70,12 +70,24 @@ public class ClosedCylinder extends Cylinder {
 		this.addElement(bottom);
 		
 	}
-	
-	public void createGeometry() {
+
+	public void generateVertices() {
 		
 		// Rely on superclass to generate the cylinder
-		super.createGeometry();		
+		super.generateVertices();
 	}
+	
+	public void generateTriangles() {
+		
+		// Rely on superclass to generate the cylinder
+		super.generateTriangles();
+	}
+
+//	public void createGeometry() {
+//		
+//		// Rely on superclass to generate the cylinder
+//		super.createGeometry();		
+//	}
 	
 	@Override
 	public Element setTopTexture(Texture tex) {

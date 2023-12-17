@@ -84,7 +84,7 @@ public class Cylinder extends Element {
 		this.tex = tex;
 	}
 	
-	public void createGeometry() {
+	public void generateVertices() {
 		
 		// Create centers
 		this.top_center = new Vector4(0,0,height/2,0);
@@ -107,10 +107,42 @@ public class Cylinder extends Element {
 			rectangleMesh.getVertex(i,1).setPos(new Vector4(ray*cosa, ray*sina, height/2, 1));
 		}
 		
+	}
+	
+	public void generateTriangles() {
+		
 		// Create Triangles
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
-
+		
 	}
+	
+//	public void createGeometry() {
+//		
+//		// Create centers
+//		this.top_center = new Vector4(0,0,height/2,0);
+//		this.bottom_center = new Vector4(0,0,-height/2,0);
+//
+//		// Create mesh to wrap Cylinder
+//		rectangleMesh = new RectangleMesh(this, half_seg*2+1, 2, tex); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
+//		float alpha = (float)Math.PI/half_seg;
+//		
+//		// Create vertices of the mesh
+//		for (int i=0; i<=half_seg*2; i++) { // (n) * 2 + 1 steps -> [0, 2*PI]
+//			
+//			float sina = (float)Math.sin(alpha*i);
+//			float cosa = (float)Math.cos(alpha*i);
+//			
+//			// Bottom circle of the cylinder
+//			rectangleMesh.getVertex(i, 0).setPos(new Vector4(ray*cosa, ray*sina, -height/2, 1));
+//			
+//			// Top circle of the cylinder
+//			rectangleMesh.getVertex(i,1).setPos(new Vector4(ray*cosa, ray*sina, height/2, 1));
+//		}
+//		
+//		// Create Triangles
+//		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
+//
+//	}
 
 	@Override
 	public void calculateNormals() {
