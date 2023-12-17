@@ -455,6 +455,8 @@ public class Element implements Transformable, Shape, Generable {
 	}
 	
 	public void update() {
+		// Clear the previously created triangles before generating the new set.
+		triangles.clear();
 		// Do same than generate except Vertices generation as they are assumed to be already existing (and likely modified)
 		this.generateTriangles();
 		this.calculateNormals();
