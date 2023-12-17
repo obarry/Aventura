@@ -105,8 +105,8 @@ public class Pyramid extends Element {
 		this.z_dim = z_dim;
 	}
 
-	public void createGeometry() {
-
+	public void generateVertices() {
+		
 		vertices = new Vertex[2][2];
 
 		// Calculate dimensions
@@ -145,14 +145,66 @@ public class Pyramid extends Element {
 		front.setCol(this.front_col);
 		back.setCol(this.back_col);
 		
+	}
+	
+	public void generateTriangles() {
+		
 		// At last create Triangles of all meshes
 		left.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
 		right.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
 		front.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
 		back.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
 		bottom.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
-		
 	}
+	
+//	public void createGeometry() {
+//
+//		vertices = new Vertex[2][2];
+//
+//		// Calculate dimensions
+//		float xh = x_dim/2;
+//		float yh = y_dim/2;
+//		float zh = z_dim/2;
+//		
+//		// Build the Element: Create Vertices of the bottom of the Pyramid: 4 vertices
+//		vertices[0][0] = createVertex(new Vector4(-xh, -yh, -zh,  1));
+//		vertices[0][1] = createVertex(new Vector4(-xh,  yh, -zh,  1));
+//		vertices[1][1] = createVertex(new Vector4(xh, yh, -zh,  1));
+//		vertices[1][0] = createVertex(new Vector4(xh, -yh, -zh,  1));
+//		
+//		// Create summit
+//		summit = createVertex(new Vector4(0, 0, zh, 1));
+//		
+//		// Create RectangleMeshs for each face of the box to wrap each face into Textures
+//		// For this create 6 temporary Vertex arrays used to point on the box vertices of each face
+//		Vertex []   left_array  = new Vertex []   {vertices[0][0],vertices[1][0]};
+//		Vertex []   right_array = new Vertex []   {vertices[1][0],vertices[1][1]};
+//		Vertex []   front_array = new Vertex []   {vertices[1][1],vertices[0][1]};
+//		Vertex []   back_array  = new Vertex []   {vertices[0][1],vertices[0][0]};
+//		Vertex [][] base_array  = new Vertex [][] {{vertices[0][0],vertices[1][0]},{vertices[0][1],vertices[1][1]}};
+//		
+//		// Then create the Meshs
+//		left  = new FanMesh(this, left_array, summit, left_tex);
+//		right = new FanMesh(this, right_array, summit, right_tex);
+//		front = new FanMesh(this, front_array, summit, front_tex);
+//		back  = new FanMesh(this, back_array, summit, back_tex);
+//		bottom  = new RectangleMesh(this, base_array, bottom_tex);
+//		
+//		// Set color to each face
+//		bottom.setCol(this.bottom_col);
+//		left.setCol(this.left_col);
+//		right.setCol(this.right_col);
+//		front.setCol(this.front_col);
+//		back.setCol(this.back_col);
+//		
+//		// At last create Triangles of all meshes
+//		left.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
+//		right.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
+//		front.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
+//		back.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);
+//		bottom.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
+//		
+//	}
 
 	@Override
 	public Element setBottomTexture(Texture tex) {
