@@ -121,37 +121,7 @@ public class Cone extends Element {
 		mesh.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);	
 
 	}
-	
-	/**
-	 * Creation of the Cone
-	 * @param t the Texture to apply
-	 */	
-//	public void createGeometry() {
-//		
-//		mesh = new FanMesh(this,half_seg*2, tex); // (n) x 2 vertices on each circles + 1 duplicate Vertex for RectangleMesh / Texture
-//		
-//		float alpha = (float)Math.PI/half_seg;
-//		
-//		// Create vertices
-//		
-//		// Create summits (same Vertex for all summits)
-//		Vector4 summit = new Vector4(0, 0, height/2,  1);
-//		mesh.setSummit(summit);
-//		
-//		// Create bottom vertices
-//		for (int i=0; i<=half_seg*2; i++) {
-//			
-//			float sina = (float)Math.sin(alpha*i);
-//			float cosa = (float)Math.cos(alpha*i);
-//			
-//			// Bottom circle of the cylinder
-//			mesh.getVertex(i).setPos(new Vector4(ray*cosa, ray*sina, -height/2, 1).plus(center));
-//		}
-//		
-//		// Create Triangles
-//		mesh.createTriangles(FanMesh.MESH_ORIENTED_TRIANGLES);	
-//	}
-	
+		
 	@Override
 	public void calculateNormals() {
 		Vector4 n, u;

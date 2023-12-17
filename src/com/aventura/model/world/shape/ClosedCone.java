@@ -78,13 +78,6 @@ public class ClosedCone extends Cone {
 		// Rely on superclass to generate the cylinder
 		super.generateTriangles();
 	}
-	
-//	public void createGeometry() {
-//		
-//		// Rely on superclass to generate the cylinder
-//		super.createGeometry();		
-//	}
-	
 
 	@Override
 	public Element setBottomTexture(Texture tex) {

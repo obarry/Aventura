@@ -124,41 +124,6 @@ public class Torus extends Element {
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 	}
 
-//	public void createGeometry() {
-//		
-//		// Create Mesh
-//		// (half_seg x 2 + 1) vertices on each circles
-//		// and (half_circ x 2 + 1) circles
-//		// + 1 (duplicate Vertices) is needed for RectangleMesh / Texture overlay
-//		rectangleMesh = new RectangleMesh(this, half_circ*2+1, half_seg*2+1, tex);
-//		
-//		centers = new Vector4[half_circ*2+1];
-//		float alpha_circ = (float)Math.PI/half_circ;
-//		float alpha_seg = (float)Math.PI/half_seg;
-//		
-//		// Create vertices
-//		for (int i=0; i<=half_circ*2; i++) { // for all circles around the Z axis (2*half_circ + 1)
-//			
-//			float sina = (float)Math.sin(alpha_circ*i);
-//			float cosa = (float)Math.cos(alpha_circ*i);
-//			// Calculate center of the circle
-//			centers[i] = new Vector4(torus_ray*cosa, torus_ray*sina,0,1);
-//			
-//			for (int j=0; j<=half_seg*2; j++) { // each circle is made of 2*half_seg + 1 vertices 
-//				
-//				float sinb = (float)Math.sin(alpha_seg*j);
-//				float cosb = (float)Math.cos(alpha_seg*j);
-//
-//				// Each vertice
-//				rectangleMesh.getVertex(i, j).setPos(new Vector4((torus_ray+pipe_ray*cosb)*cosa, (torus_ray+pipe_ray*cosb)*sina, pipe_ray*sinb, 1));
-//			}
-//		}
-//		
-//		// Create Triangles
-//		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
-//		
-//	}
-
 	@Override
 	public void calculateNormals() {
 		Vector4 n;

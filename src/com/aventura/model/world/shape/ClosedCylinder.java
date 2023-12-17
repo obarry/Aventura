@@ -83,12 +83,6 @@ public class ClosedCylinder extends Cylinder {
 		super.generateTriangles();
 	}
 
-//	public void createGeometry() {
-//		
-//		// Rely on superclass to generate the cylinder
-//		super.createGeometry();		
-//	}
-	
 	@Override
 	public Element setTopTexture(Texture tex) {
 		this.top.setFrontTexture(tex);

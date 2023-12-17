@@ -190,54 +190,6 @@ public class ConeFrustum extends Element {
 		fullMesh.createTriangles();
 	}
 
-//	public void createGeometry() {
-//		
-//		//FullMesh of 1 stitch high and n stitches wide -> (n+1) x 2 vertices for top and bottom circles, n vertices for middle circle
-//		//  +-------+-------+ top
-//		//  | \   / | \   / |
-//		//  |   +   |   x   | middle
-//		//  | /   \ | /   \ |
-//		//  +-------+-------+ bottom
-//
-//		fullMesh = new FullMesh(this, half_seg*2, 1, tex);
-//		
-//		float alpha = (float)Math.PI/half_seg;
-//		float beta = alpha/2;
-//		
-//		// Create vertices
-//		
-//		// Create summits (same Vertex for all summits)
-//		summit = createVertex(new Vector4(0, 0, cone_height/2,  1).plus(center));
-//		
-//		// Create circle vertices
-//		float ray_top = ray*(cone_height - frustum_height)/cone_height;
-//		float ray_mid = ray*(cone_height - mid_height)/cone_height;
-//		
-//		for (int i=0; i<half_seg*2+1; i++) {
-//			
-//			float sina = (float)Math.sin(alpha*i);
-//			float cosa = (float)Math.cos(alpha*i);
-//			
-//			// Bottom circle of the cone
-//			fullMesh.getMainVertex(i, 0).setPos(new Vector4(ray*cosa, ray*sina, -cone_height/2, 1).plus(center));
-//			
-//			// Top circle of the cone
-//			fullMesh.getMainVertex(i, 1).setPos(new Vector4(ray_top*cosa, ray_top*sina, (frustum_height-(cone_height/2)), 1).plus(center));
-//		}
-//		
-//		for (int i=0; i<half_seg*2; i++) {
-//			
-//			float sinb = (float)Math.sin(alpha*i+beta);
-//			float cosb = (float)Math.cos(alpha*i+beta);
-//			
-//			// Middle circle of the cylinder
-//			fullMesh.getSecondaryVertex(i, 0).setPos(new Vector4(ray_mid*cosb, ray_mid*sinb, (mid_height-(cone_height/2)), 1).plus(center));
-//		}
-//		
-//		// Create Triangles
-//		fullMesh.createTriangles();
-//	}
-
 	@Override
 	public void calculateNormals() {
 		Vector4 u, n;

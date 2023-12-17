@@ -126,38 +126,6 @@ public class Sphere extends Element {
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
 	}
 	
-//	/**
-//	 * Create vertices and triangles of a Sphere based on provided parameters
-//	 * @param ray the ray of the Sphere
-//	 * @param half_seg is half the number of segments for 360 degrees
-//	 * @param center to translate the Sphere vertices by the Vector4 center
-//	 */
-//	public void createGeometry() {
-//		
-//		// Create mesh to wrap Cylinder
-//		rectangleMesh = new RectangleMesh(this, half_seg*2+1, half_seg+1, tex); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
-//		float alpha = (float)(Math.PI/half_seg);
-//		
-//		// Create Vertices
-//		for (int i=0; i<=half_seg*2; i++) {
-//			// South pole(s)-> there is as many south poles as meridians
-//			rectangleMesh.getVertex(i, 0).setPos(northPole);
-//			// Intermediate points between south and north
-//			for (int j=1; j<half_seg; j++) {
-//				float sina = (float)Math.sin(alpha*i);
-//				float cosa = (float)Math.cos(alpha*i);
-//				float sinb = (float)Math.sin(alpha*j);
-//				float cosb = (float)Math.cos(alpha*j);
-//				rectangleMesh.getVertex(i, j).setPos(new Vector4(ray*cosa*sinb, ray*sina*sinb, ray*cosb, 1));
-//			}
-//			// North pole-> there is as many north poles as meridians
-//			rectangleMesh.getVertex(i, half_seg).setPos(southPole);
-//		}
-//
-//		// Create Triangles
-//		rectangleMesh.createTriangles(RectangleMesh.MESH_ORIENTED_TRIANGLES);
-//	}
-
 	@Override
 	public void calculateNormals() {
 		

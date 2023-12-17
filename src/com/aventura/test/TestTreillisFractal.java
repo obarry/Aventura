@@ -259,7 +259,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 				exc.printStackTrace();
 			}
 			world.update();
-			System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles());
+			System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles()+" Number of vertices: " + tre.getNbVertices());
 			updateTrianglesColorTrellis();
 			renderer.render();
 
@@ -336,7 +336,17 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		}
 		
 		array = null; // We no longer need this one, the array_land has been updated appropriately
+		
+	}
 	
+	protected void updateVertexColorTrellis( ) {
+		float max_alt = tre.getMaxZ();
+		float min_alt = tre.getMinZ();
+		for (int v=0; v<tre.getVertices().size(); v++) {
+			float v_alt = tre.getVertex(v).getPos().getZ();
+			tre.getVertex(v).setColor(new Color((int)((v_alt-min_alt)/(max_alt-min_alt)*200),(int)((v_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-v_alt)/(max_alt-min_alt)*200)));
+		}
+		
 	}
 
 	protected void updateTrianglesColorTrellis() {
@@ -400,7 +410,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		// Generate World (including Triangles)
 		System.out.println("********* Calculating normals");
 		world.generate();
-		System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles());
+		System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles()+" Number of vertices: " + tre.getNbVertices());
 		
 		// Then update Triangles as needed (Colors) to create effect on the Landscape
 		updateTrianglesColorTrellis();
