@@ -258,6 +258,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 				// TODO Auto-generated catch block
 				exc.printStackTrace();
 			}
+			//updateVertexColorTrellis();
 			world.update();
 			System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles()+" Number of vertices: " + tre.getNbVertices());
 			updateTrianglesColorTrellis();
@@ -414,6 +415,8 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		
 		// Then update Triangles as needed (Colors) to create effect on the Landscape
 		updateTrianglesColorTrellis();
+//		updateVertexColorTrellis();
+//		world.update();
 
 		// Lighting initialization
 		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
@@ -430,7 +433,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		// Rendering context
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		//rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 

@@ -223,6 +223,14 @@ public class Rasterizer {
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
 		
+		Vertex v1, v2, v3;
+		v1 = t.getV1();
+		v2 = t.getV2();
+		v3 = t.getV3();
+		
+		// TODO use color at Vertex level if defined. This requires to manage 3 colors for a triangle in this case
+		
+		
 		// If no interpolation requested -> plain faces. Then:
 		// - calculate normal at Triangle level for shading
 		// - calculate shading color once for all triangle
@@ -247,27 +255,22 @@ public class Rasterizer {
 			viewer3.normalize();
 			
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			t.getV1().setShadedCol(computeDirectionalColor(surfCol, t.getV1().getWorldNormal(), t.isRectoVerso()));
-			t.getV2().setShadedCol(computeDirectionalColor(surfCol, t.getV2().getWorldNormal(), t.isRectoVerso()));
-			t.getV3().setShadedCol(computeDirectionalColor(surfCol, t.getV3().getWorldNormal(), t.isRectoVerso()));					
+			v1.setShadedCol(computeDirectionalColor(surfCol, v1.getWorldNormal(), t.isRectoVerso()));
+			v2.setShadedCol(computeDirectionalColor(surfCol, v2.getWorldNormal(), t.isRectoVerso()));
+			v3.setShadedCol(computeDirectionalColor(surfCol, v3.getWorldNormal(), t.isRectoVerso()));					
 
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
 			if (lighting.hasSpecular()) {
-				t.getV1().setSpecularCol(computeSpecularColor(t.getV1().getWorldNormal(), viewer1, specExp, specCol, t.isRectoVerso()));
-				t.getV2().setSpecularCol(computeSpecularColor(t.getV2().getWorldNormal(), viewer2, specExp, specCol, t.isRectoVerso()));
-				t.getV3().setSpecularCol(computeSpecularColor(t.getV3().getWorldNormal(), viewer3, specExp, specCol, t.isRectoVerso()));
+				v1.setSpecularCol(computeSpecularColor(v1.getWorldNormal(), viewer1, specExp, specCol, t.isRectoVerso()));
+				v2.setSpecularCol(computeSpecularColor(v2.getWorldNormal(), viewer2, specExp, specCol, t.isRectoVerso()));
+				v3.setSpecularCol(computeSpecularColor(v3.getWorldNormal(), viewer3, specExp, specCol, t.isRectoVerso()));
 			}
 		}
 
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
 	    // with v1 always down (thus having the highest possible Y)
 	    // then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
-		Vertex v1, v2, v3;
 		Vector4 vt1, vt2, vt3; // Same for Texture Vectors
-
-		v1 = t.getV1();
-		v2 = t.getV2();
-		v3 = t.getV3();
 		
 		vt1 = t.getTexVec1();
 		vt2 = t.getTexVec2();
