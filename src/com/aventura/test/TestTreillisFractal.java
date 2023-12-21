@@ -74,6 +74,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	JFrame frame;
 	JMenu menu, smenu;
 	JMenuItem e1, e2, e3, e4, e5, e6;
+	boolean texture_menu = false;
 
 	// Camera
 	Vector4 eye;
@@ -81,6 +82,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	Camera camera;
 	
 	// Render engine
+	RenderContext rContext;
 	RenderEngine renderer;
 	
 	// World
@@ -127,14 +129,15 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	    // Créer les éléments du menu et sous menu
 	    e1 = new JMenuItem("Generate");
 	    e1.addActionListener(this);
-	    //e2 = new JMenuItem("Element 2");
+	    e2 = new JMenuItem("Texture on");
+	    e2.addActionListener(this);
 	    //e3 = new JMenuItem("Element 3");
 	    //e4 = new JMenuItem("Element 4");
 	    //e5 = new JMenuItem("Element 5");
 	    //e6 = new JMenuItem("Element 6");
 	    // Ajouter les éléments au menu
 	    menu.add(e1); 
-	    //menu.add(e2); 
+	    menu.add(e2); 
 	    //menu.add(e3);
 	    // Ajouter les éléments au sous menu
 	    //smenu.add(e4); 
@@ -263,6 +266,19 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 			System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles()+" Number of vertices: " + tre.getNbVertices());
 			updateTrianglesColorTrellis();
 			renderer.render();
+		} else if (e.getSource() == e2) {
+
+			if (texture_menu) {
+				rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_DISABLED);
+				renderer.render();
+				e2.setText("Texture on");
+				texture_menu = false;
+			} else {
+				rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+				renderer.render();
+				e2.setText("Texture off");
+				texture_menu = true;
+			}
 
 		} else {
 			System.out.println("Other Action Event : "+e);			
@@ -431,9 +447,9 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 		View view = this.createView(gContext);
 
 		// Rendering context
-		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		//rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
+		rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_DISABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 
