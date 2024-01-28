@@ -237,7 +237,7 @@ public class Matrix4 {
 		this.array[2][c] = v.get(2);
 		this.array[3][c] = v.get(3);
 	}
-	
+		
 	/**
 	 * Compare this Matrix with another
 	 * @param B the other Matrix
@@ -247,23 +247,7 @@ public class Matrix4 {
 		
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
-				if (this.get(i,j) != B.get(i,j)) return false;
-			}
-		}
-		return true;
-	}
-	
-	/**
-	 * Compare this Matrix with another
-	 * @param B the other Matrix
-	 * @param epsilon a very small threshold value to allow rounding errors
-	 * @return true if all the elements of this Matrix are equals to the elements of B
-	 */
-	public boolean equalsEpsilon(Matrix4 B, float epsilon) {
-		
-		for (int i=0; i<Constants.SIZE_4; i++) {
-			for (int j=0; j<Constants.SIZE_4; j++) {
-				if (Math.abs(this.get(i,j) - B.get(i,j)) > epsilon) return false;
+				if (Math.abs(this.get(i,j) - B.get(i,j)) > Constants.EPSILON) return false;
 			}
 		}
 		return true;

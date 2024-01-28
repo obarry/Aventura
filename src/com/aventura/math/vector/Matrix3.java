@@ -208,22 +208,6 @@ public class Matrix3 {
 	 * @param B the other Matrix
 	 * @return true if all the elements of this Matrix are equals to the elements of B
 	 */
-//	public boolean equals(Matrix3 B) {
-//
-//		for (int i=0; i<Constants.SIZE_3; i++) {
-//			for (int j=0; j<Constants.SIZE_3; j++) {
-//				if (this.get(i,j) != B.get(i,j)) return false;
-//			}
-//		}
-//		return true;
-//
-//	}
-
-	/**
-	 * Compare this Matrix with another
-	 * @param B the other Matrix
-	 * @return true if all the elements of this Matrix are equals to the elements of B
-	 */
 	public boolean equals(Matrix3 B) {
 		
 		for (int i=0; i<Constants.SIZE_3; i++) {

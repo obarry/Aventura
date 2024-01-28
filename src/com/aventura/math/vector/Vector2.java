@@ -1,5 +1,7 @@
 package com.aventura.math.vector;
 
+import com.aventura.math.tools.MathTools;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -93,7 +95,7 @@ public class Vector2 {
 	}
 	
 	public static boolean equals(Vector2 v1, Vector2 v2) {
-		if (v1.x == v2.x && v1.y == v2.y)  return true; else return false;
+		return MathTools.equals(v1.x , v2.x) && MathTools.equals(v1.y , v2.y);
 	}
 	
 	/**

@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.aventura.math.Constants;
-
 public class TestMatrix4 {
 
 	@Test
@@ -353,7 +351,7 @@ public class TestMatrix4 {
 		try {
 			C = B.inverse(); // Inverse the inverse
 			System.out.println("C ="+C);
-			if (!A.equalsEpsilon(C, Constants.EPSILON)) fail("inverse(inverse(A)) does not equals A");
+			if (!A.equals(C)) fail("inverse(inverse(A)) does not equals A");
 		} catch (NotInvertibleMatrixException e) {
 			fail("Not invertible Matrix B");
 		}
@@ -392,7 +390,7 @@ public class TestMatrix4 {
 			System.out.println("B="+B);
 			Matrix4 C = B.times(A); // inverse(A).A = I
 			System.out.println("C ="+C);
-			if (!C.equalsEpsilon(Matrix4.IDENTITY, Constants.EPSILON)) fail("A.inverse(A) does not equals I");
+			if (!C.equals(Matrix4.IDENTITY)) fail("A.inverse(A) does not equals I");
 		} catch (NotInvertibleMatrixException e) {
 			fail("Not invertible Matrix");
 		}
