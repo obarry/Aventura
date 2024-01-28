@@ -36,7 +36,7 @@ public interface Constants {
 	public static final int Y_axis = 1;
 	public static final int Z_axis = 2;
 	
-	public static final float EPSILON = (float) 1.0E-6;
+	public static final float EPSILON = (float) 1.0E-4;
 	
 
 }

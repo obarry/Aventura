@@ -158,7 +158,7 @@ public class ModelView {
 		
 		// To test if the transformation Matrix is orthogonal, we can use the test Transpose(A).A = I (Identity Matrix) else it is not.
 		// Rounding errors in the calculation requires comparison with a margin of tolerance (Epsilon). Surprisingly the experience shows that 1.0E-4 is the lowest epsilon
-		if (model3.times(model3.transpose()).equalsEpsilon(Matrix3.IDENTITY, (float) 1.0E-4)) {
+		if (model3.times(model3.transpose()).equals(Matrix3.IDENTITY)) {
 			// No need to compute the inverse Matrix in this case, the transformation is orthogonal
 			model_normals = model;
 			if (Tracer.info) Tracer.traceInfo(this.getClass(),"Model normals matrix = Model matrix !!!");

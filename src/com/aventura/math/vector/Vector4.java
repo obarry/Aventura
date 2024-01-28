@@ -1,6 +1,7 @@
 package com.aventura.math.vector;
 
 import com.aventura.math.Constants;
+import com.aventura.math.tools.MathTools;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -326,7 +327,7 @@ public class Vector4 {
 	 * @return true if all the elements of this Vector4 are equals to the elements of V
 	 */
 	public boolean equals(Vector4 w) {
-		return this.x==w.x && this.y==w.y && this.z==w.z && this.w==w.w;
+		return MathTools.equals(this.x , w.x) && MathTools.equals(this.y , w.y) && MathTools.equals(this.z , w.z) && MathTools.equals(this.w, w.w);
 	}
 
 	/**
