@@ -1,4 +1,6 @@
-package com.aventura.math.vector;
+package com.aventura.math.tools;
+
+import com.aventura.math.Constants;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -24,32 +26,19 @@ package com.aventura.math.vector;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
-**/
-public class IndiceOutOfBoundException extends Vector3DException {
+ * 
+ * Generic Math Tool Box
+ * 
+ * @author Olivier BARRY
+ * @since January 2024
+ * 
+ */
 
-	public IndiceOutOfBoundException() {
-		// TODO Auto-generated constructor stub
-	}
-
-	public IndiceOutOfBoundException(String arg0) {
-		super(arg0);
-		// TODO Auto-generated constructor stub
-	}
-
-	public IndiceOutOfBoundException(Throwable arg0) {
-		super(arg0);
-		// TODO Auto-generated constructor stub
-	}
-
-	public IndiceOutOfBoundException(String arg0, Throwable arg1) {
-		super(arg0, arg1);
-		// TODO Auto-generated constructor stub
-	}
-
-	public IndiceOutOfBoundException(String arg0, Throwable arg1, boolean arg2,
-			boolean arg3) {
-		super(arg0, arg1, arg2, arg3);
-		// TODO Auto-generated constructor stub
+public class MathTools {
+	
+	public static boolean equals(float a, float b) {
+		
+		return Math.abs(a - b) <= Constants.EPSILON ? true : false;
 	}
 
 }
