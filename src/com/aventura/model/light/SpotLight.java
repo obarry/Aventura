@@ -93,7 +93,7 @@ public class SpotLight extends ShadowingLight {
 	}
 
 	@Override
-	public void initShadowing(GraphicContext graphicContext, Camera camera_view) {
+	public void initShadowing(GraphicContext graphicContext, Camera camera_view, int map_size) {
 		// TODO Auto-generated method stub
 		
 	}

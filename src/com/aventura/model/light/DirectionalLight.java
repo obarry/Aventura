@@ -114,8 +114,10 @@ public class DirectionalLight extends ShadowingLight {
 	}
 
 	@Override
-	public void initShadowing(GraphicContext graphicContext, Camera camera_view) {
+	public void initShadowing(GraphicContext graphicContext, Camera camera_view, int map_size) {
 		// TODO Auto-generated method stub
+		
+		map = new float[map_size][map_size]; // TODO to be replaced by MapView ?
 		
 		calculateCameraLight(graphicContext, camera_view, direction);
 		

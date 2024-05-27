@@ -37,11 +37,17 @@ import com.aventura.model.world.triangle.Triangle;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
+ * ShadowingLight is a type of light that can generate Shadow by opposite of other type of Lights e.g. Ambientlight.
+ * In this abstract class will be found all the necessary attributes and tools for Shadow generation as the Camera corresponding to the Light
+ * the ModelView projection for this Light (should be Orthographic for a DirectionalLight), the view frustrum and the Shadow Map itself.
+ *
  * @author Olivier BARRY
  * @since April 2022
  * 
  */
 public abstract class ShadowingLight extends Light {
+	
+	public static final int DEFAULT_SHADOW_MAP_DIMENSION = 200;
 	
 	// Fields related to Shadow generation
 	protected Camera camera_light;
@@ -55,9 +61,10 @@ public abstract class ShadowingLight extends Light {
 	protected Vector4 frustumCenter;
 	
 	// Shadow map
-	protected float[][] map; // TODO multiple maps if multiple lights
+	protected float[][] map; // TODO multiple maps if multiple lights (actually this is already a ShadowingLight attribute so if multiple light there will be multiple maps)
+	// TODO to be replaced by MapView class ?
 	
-	public abstract void initShadowing(GraphicContext graphicContext, Camera camera_view);
+	public abstract void initShadowing(GraphicContext graphicContext, Camera camera_view, int map_size);
 	
 	public void calculateCameraLight(GraphicContext graphicContext, Camera camera_view, Vector3 lightDirection) {
 		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the view frustrum

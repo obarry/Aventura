@@ -215,7 +215,7 @@ public class RenderEngine {
 			// TODO: loop on all Lights (all ShadowingLight, not only the DirectionalLight)
 			
 			// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
-			lighting.getDirectionalLight().initShadowing(graphicContext, camera);
+			lighting.getDirectionalLight().initShadowing(graphicContext, camera, view.getViewWidth());
 			
 			// Generate the shadow map
 			lighting.getDirectionalLight().generateShadowMap(world); // need to recurse on each Element
