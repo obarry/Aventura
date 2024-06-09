@@ -64,6 +64,11 @@ public abstract class ShadowingLight extends Light {
 	protected float[][] map; // TODO multiple maps if multiple lights (actually this is already a ShadowingLight attribute so if multiple light there will be multiple maps)
 	// TODO to be replaced by MapView class ?
 	
+	// Default constructor
+	public ShadowingLight() {
+		// Nothing to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
+	}
+	
 	public abstract void initShadowing(GraphicContext graphicContext, Camera camera_view, int map_size);
 	
 	public void calculateCameraLight(GraphicContext graphicContext, Camera camera_view, Vector3 lightDirection) {
@@ -81,6 +86,7 @@ public abstract class ShadowingLight extends Light {
 		
 		// TODO can we move out the Perspective class from the graphic context  ?
 		// In order to have something more generic and more consistent
+		// TODO strange to get Near and Far from graphicContext and Up from Camera_view. Clean-up required ?
 
 		// - The distance to the near plane
 		float near = graphicContext.getNear();
@@ -98,6 +104,7 @@ public abstract class ShadowingLight extends Light {
 		float half_height_far = half_eight_near * far/near; // height_far = height_near * far/near
 		float half_width_far = half_width_near * far/near; // width_far = width_near * far/near
 		
+		// TODO Calculating the view frustum should be a method from the View itself
 		// Calculate all 8 points, vertices of the View Frustum
 		frustum = new Vector4[2][4];
 		// TODO : later, this calculation could be done and points provided through methods in the "Frustum" class or any class
