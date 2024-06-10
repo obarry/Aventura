@@ -4,7 +4,7 @@ import java.awt.Color;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.engine.ModelView;
-import com.aventura.math.perspective.Orthographic;
+import com.aventura.math.projection.Orthographic;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;

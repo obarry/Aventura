@@ -1,6 +1,6 @@
-package com.aventura.math.perspective;
+package com.aventura.math.projection;
 
-import com.aventura.math.vector.Matrix4;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -26,44 +26,32 @@ import com.aventura.math.vector.Matrix4;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
- Abstract class for all Perspective Matrices
+ * 
+ * Frustum projection Matrix
  * 
  * @author Olivier BARRY
- * @since June 1016
- *
+ * @since June 2016
+ * 
  */
-public abstract class Perspective extends Matrix4 {
+public class Frustum extends Projection {
 	
-	float left = 0;
-	float right = 0;
-	float top = 0;
-	float bottom = 0;
-	float near = 0;
-	float far = 0;
-	
-	public float getLeft() {
-		return left;
+	public Frustum(float left, float right, float bottom, float top, float near, float far) {
+		
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Frustrum projection");
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Projection range: left: "+left+" right: "+right+" bottom: "+bottom+" top: "+top+" near: "+near+" far: "+far);						
+		
+		float[][] array = { { 2*near/(right-left)  , 0.0f                  , (right+left)/(right-left) , 0.0f                   },
+				 			{ 0.0f                 , 2*near/(top-bottom)   , (top+bottom)/(top-bottom) , 0.0f                   },
+				 			{ 0.0f                 , 0.0f                  , (near+far)/(near-far)     , 2*near*far/(near-far)  },
+				 			{ 0.0f                 , 0.0f                  , -1.0f                     , 0.0f                   } };
+		
+		try {
+			this.setArray(array);
+		} catch (Exception e) {
+			// Should never happen
+		}
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Frustrum matrix:\n"+ this);						
+
 	}
-	
-	public float getRight() {
-		return right;
-	}
-	
-	public float getTop() {
-		return top;
-	}
-	
-	public float getBottom() {
-		return bottom;
-	}
-	
-	public float getNear() {
-		return near;
-	}
-	
-	public float getFar() {
-		return far;
-	}
-	
+
 }

@@ -1,4 +1,4 @@
-package com.aventura.math.perspective;
+package com.aventura.math.projection;
 
 import com.aventura.tools.tracing.Tracer;
 
@@ -27,17 +27,17 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  
- * Orthographic Perspective Matrix
+ * Orthographic Projection Matrix
  * 
  * @author Olivier BARRY
  * @since June 2016
  * 
  */
-public class Orthographic extends Perspective {
+public class Orthographic extends Projection {
 	
 	public Orthographic(float left, float right, float bottom, float top, float near, float far) {
 		
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Orthographic perspective");
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Orthographic projection");
 		
 		float[][] array = { { 2/(right-left)       , 0.0f            ,  0.0f          , -(right+left)/(right-left) },
 				 			{ 0.0f                 , 2/(top-bottom)  ,  0.0f          , (bottom+top)/(bottom-top)  },

@@ -1,8 +1,8 @@
 package com.aventura.context;
 
-import com.aventura.math.perspective.Frustum;
-import com.aventura.math.perspective.Orthographic;
-import com.aventura.math.perspective.Perspective;
+import com.aventura.math.projection.Frustum;
+import com.aventura.math.projection.Orthographic;
+import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.tools.tracing.Tracer;
 
@@ -101,9 +101,10 @@ public class GraphicContext {
 	public static final String PERSPECTIVE_TYPE_FRUSTUM_STRING = "PERSPECTIVE_TYPE_FRUSTUM";
 	public static final String PERSPECTIVE_TYPE_ORTHOGRAPHIC_STRING = "PERSPECTIVE_TYPE_ORTHOGRAPHIC";
 		
-	// Perspective type
+	// Projection type
 	int perspective_type = 0; // uninitialized
 
+	// Perspective related attributes 
 	// Window & frustum
 	float width = 0;
 	float height = 0;
@@ -118,6 +119,7 @@ public class GraphicContext {
 	float near = 0;
 	float far = 0;
 
+	// ViewPort related attributes (pixel related)
 	// Pixel Per Unit
 	int ppu = 0;
 	int pixelWidth = 0; // Number of pixels on the X axis
@@ -340,8 +342,8 @@ public class GraphicContext {
 		return perspective_type;
 	}
 	
-	public Perspective getPerspective() {
-		return (Perspective)projection;
+	public Projection getPerspective() {
+		return (Projection)projection;
 	}
 		
 	public void setPPU(int ppu) {

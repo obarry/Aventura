@@ -2,7 +2,7 @@ package com.aventura.model.light;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.engine.ModelView;
-import com.aventura.math.perspective.Perspective;
+import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -51,7 +51,7 @@ public abstract class ShadowingLight extends Light {
 	
 	// Fields related to Shadow generation
 	protected Camera camera_light;
-	protected Perspective perspective_light;
+	protected Projection perspective_light;
 	
 	// ModelView matrix and vertices conversion tool for the calculation of the Shadow map
 	protected ModelView modelView;
@@ -84,7 +84,7 @@ public abstract class ShadowingLight extends Light {
 		// - The eye-point of interest (camera direction) normalized vector
 		Vector4 fwd = camera_view.getForward().normalize();
 		
-		// TODO can we move out the Perspective class from the graphic context  ?
+		// TODO can we move out the Projection class from the graphic context  ?
 		// In order to have something more generic and more consistent
 		// TODO strange to get Near and Far from graphicContext and Up from Camera_view. Clean-up required ?
 
