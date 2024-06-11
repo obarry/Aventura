@@ -4,6 +4,7 @@ import com.aventura.math.projection.Frustum;
 import com.aventura.math.projection.Orthographic;
 import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Matrix4;
+import com.aventura.model.perspective.Perspective;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -128,7 +129,10 @@ public class GraphicContext {
 	int pixelHalfHeight = 0;
 	
 	// Projection Matrix
-	Matrix4 projection;
+	Matrix4 projection; // TODO to be replaced by a new Perspective class that "contains" the projection matrix (package com.aventura.model.perspective)
+	
+	// Perspective
+	Perspective perspective; // link to the perspective that this GraphicContext is defining
 
 	// Width/Height ratio = 16/9
 	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5f,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100);
@@ -148,6 +152,8 @@ public class GraphicContext {
 	public GraphicContext(GraphicContext c) {
 		// To be used when creating manually GraphicContext by using setter/getters
 		this.perspective_type = c.perspective_type;
+			
+		
 		this.width = c.width;
 		this.height = c.height;
 		this.depth = c.depth;

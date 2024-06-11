@@ -104,7 +104,7 @@ public abstract class ShadowingLight extends Light {
 		float half_height_far = half_eight_near * far/near; // height_far = height_near * far/near
 		float half_width_far = half_width_near * far/near; // width_far = width_near * far/near
 		
-		// TODO Calculating the view frustum should be a method from the View itself
+		// TODO Calculating the view frustum should be a method from the Perspective itself
 		// Calculate all 8 points, vertices of the View Frustum
 		frustum = new Vector4[2][4];
 		// TODO : later, this calculation could be done and points provided through methods in the "Frustum" class or any class

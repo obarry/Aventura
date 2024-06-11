@@ -1,6 +1,7 @@
 package com.aventura.model.perspective;
 
 import com.aventura.math.projection.Frustum;
+import com.aventura.math.projection.Orthographic;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -41,5 +42,13 @@ public class FrustumPerspective extends Perspective {
 		this.projection = new Frustum(left , right, bottom, top, near, far);
 		
 	}
+	
+	public FrustumPerspective(float top, float bottom, float right, float left, float far, float near) {
+		super(top, bottom, right, left, far, near);
+		
+		this.projection = new Frustum(top , right, bottom, top, near, far);
+		
+	}
+
 
 }

@@ -33,6 +33,10 @@ import com.aventura.math.vector.Matrix4;
  * 
  */
 
+/**
+ * @author obarry
+ *
+ */
 public abstract class Perspective {
 	
 	// Window & frustum
@@ -53,7 +57,15 @@ public abstract class Perspective {
 	// Projection Matrix
 	Matrix4 projection;
 	
-	public Perspective (float width, float height, float depth, float dist) {
+	
+	/**
+	 * Create a perspective with the 4 eye related dimension factors
+	 * @param width
+	 * @param height
+	 * @param depth
+	 * @param dist
+	 */
+	public Perspective(float width, float height, float depth, float dist) {
 		
 		this.width = width;
 		this.height = height;
@@ -66,6 +78,31 @@ public abstract class Perspective {
 		top = height/2;
 		near = dist;
 		far = dist + depth;
+		
+	}
+	
+	/**
+	 * Create a perspective with the 6 frustum related dimensions
+	 * @param top
+	 * @param bottom
+	 * @param right
+	 * @param left
+	 * @param far
+	 * @param near
+	 */
+	public Perspective(float top, float bottom, float right, float left, float far, float near) {
+		
+		this.top = top;
+		this.bottom = bottom;
+		this.right = right;
+		this.left = left;
+		this.far = far;
+		this.near = near;
+		
+		width = right - left;
+		height = top - bottom;
+		depth = far - near;
+		dist = near;
 		
 	}
 	
