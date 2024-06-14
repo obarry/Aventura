@@ -172,6 +172,8 @@ public class TestAventura1 {
 		
 		GraphicContext context = GraphicContext.GRAPHIC_DEFAULT;
 		System.out.println(context);
+		System.out.println(context.getPerspective());
+		System.out.println(context.getPerspective().getProjection());
 		
 		View view = test.createView(context);
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);

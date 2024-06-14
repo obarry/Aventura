@@ -1,9 +1,7 @@
 package com.aventura.context;
 
-import com.aventura.math.projection.Frustum;
-import com.aventura.math.projection.Orthographic;
-import com.aventura.math.projection.Projection;
-import com.aventura.math.vector.Matrix4;
+import com.aventura.model.perspective.FrustumPerspective;
+import com.aventura.model.perspective.OrthographicPerspective;
 import com.aventura.model.perspective.Perspective;
 import com.aventura.tools.tracing.Tracer;
 
@@ -103,22 +101,8 @@ public class GraphicContext {
 	public static final String PERSPECTIVE_TYPE_ORTHOGRAPHIC_STRING = "PERSPECTIVE_TYPE_ORTHOGRAPHIC";
 		
 	// Projection type
-	int perspective_type = 0; // uninitialized
+	int p_type = 0; // uninitialized
 
-	// Perspective related attributes 
-	// Window & frustum
-	float width = 0;
-	float height = 0;
-	float depth = 0;
-	float dist = 0;
-	
-	// Other characteristics
-	float left = 0;
-	float right = 0;
-	float bottom = 0;
-	float top = 0;
-	float near = 0;
-	float far = 0;
 
 	// ViewPort related attributes (pixel related)
 	// Pixel Per Unit
@@ -129,7 +113,7 @@ public class GraphicContext {
 	int pixelHalfHeight = 0;
 	
 	// Projection Matrix
-	Matrix4 projection; // TODO to be replaced by a new Perspective class that "contains" the projection matrix (package com.aventura.model.perspective)
+	//Matrix4 projection; // TODO to be replaced by a new Perspective class that "contains" the projection matrix (package com.aventura.model.perspective)
 	
 	// Perspective
 	Perspective perspective; // link to the perspective that this GraphicContext is defining
@@ -151,29 +135,24 @@ public class GraphicContext {
 	 */
 	public GraphicContext(GraphicContext c) {
 		// To be used when creating manually GraphicContext by using setter/getters
-		this.perspective_type = c.perspective_type;
-			
-		
-		this.width = c.width;
-		this.height = c.height;
-		this.depth = c.depth;
-		this.dist = c.dist;
-		
+		this.p_type = c.p_type;
+					
 		this.pixelWidth = c.pixelWidth;
 		this.pixelHeight = c.pixelHeight;
 		this.pixelHalfWidth = c.pixelHalfWidth;
 		this.pixelHalfHeight = c.pixelHalfHeight;
-	
-		
-		this.left = -width/2;
-		this.right = width/2;
-		this.bottom = -height/2;
-		this.top = height/2;
-		this.near = dist;
-		this.far = dist + depth;
 
 		// Generate the perspective using the parameters of the other GraphicContext
-		createPerspective(perspective_type, left , right, bottom, top, near, far);
+		switch (p_type) {
+		case PERSPECTIVE_TYPE_FRUSTUM:
+			this.perspective = new FrustumPerspective(c.perspective);
+			break;
+		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+			this.perspective = new OrthographicPerspective(c.perspective);
+			break;
+		default:
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+p_type);
+		}
 	}
 	
 	/**
@@ -185,42 +164,22 @@ public class GraphicContext {
 	 * @param ppu
 	 */
 	public GraphicContext(float width, float height, float dist, float depth, int perspective, int ppu) {
-		this.width = width;
-		this.height = height;
-		this.dist = dist;
-		this.depth = depth;
-		this.perspective_type = perspective;
+
+		this.p_type = perspective;
 		this.ppu = ppu;
 
 		this.pixelWidth = (int)(width*ppu);
 		this.pixelHeight = (int)(height*ppu);
 		this.pixelHalfWidth = pixelWidth/2;
 		this.pixelHalfHeight = pixelHeight/2;
-
-		this.left = -width/2;
-		this.right = width/2;
-		this.bottom = -height/2;
-		this.top = height/2;
-		this.near = dist;
-		this.far = dist + depth;
 		
-		createPerspective(perspective, left , right, bottom, top, near, far);
+		//createPerspective(perspective, left , right, bottom, top, near, far);
+		createPerspective(perspective, width , height, dist, depth);
 	}
 	
 	public GraphicContext(float top, float bottom, float right, float left, float far, float near, int perspective, int ppu) {
 		
-		this.left = left;
-		this.right = right;
-		this.bottom = bottom;
-		this.top = top;
-		this.near = near;
-		this.far = far;
-
-		this.width = right - left;
-		this.height = top - bottom;
-		this.dist = near;
-		this.depth = far - near;
-		this.perspective_type = perspective;
+		this.p_type = perspective;
 		this.ppu = ppu;
 		
 		createPerspective(perspective, left , right, bottom, top, near, far);
@@ -237,45 +196,40 @@ public class GraphicContext {
 		}
 	}
 	
-	protected void createPerspective(int perspective, float left, float right, float bottom, float top, float near, float far) {
+	protected void createPerspective(int p_type, float width, float height, float dist, float depth) {
 		
-		switch (perspective) {
+		switch (p_type) {
 		case PERSPECTIVE_TYPE_FRUSTUM:
-			projection = new Frustum(left , right, bottom, top, near, far);
+			this.perspective = new FrustumPerspective(width , height, dist, depth);
 			break;
 		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
-			projection = new Orthographic(left , right, bottom, top, near, far);
+			this.perspective = new OrthographicPerspective(width , height, dist, depth);
 			break;
 		default:
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+perspective);
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+p_type);
 		}
 		
 	}
 	
-	public Matrix4 getProjectionMatrix() {
-		return projection;
+	protected void createPerspective(int p_type, float left, float right, float bottom, float top, float near, float far) {
+		
+		switch (p_type) {
+		case PERSPECTIVE_TYPE_FRUSTUM:
+			this.perspective = new FrustumPerspective(left , right, bottom, top, near, far);
+			break;
+		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+			this.perspective = new OrthographicPerspective(left , right, bottom, top, near, far);
+			break;
+		default:
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+p_type);
+		}
+		
 	}
-	
+		
 	public String toString() {
-		return "GraphicContext:\n* Perpective type: "+perspectiveString(perspective_type)+"\n* Width: "+width+"\n* Height: "+height+"\n* Dist: "+dist+"\n* Depth: "+depth+"\n* PPU: "+ppu+"\n* Pixel width: "+this.getPixelWidth()+"\n* Pixel height: "+this.getPixelHeight();
+		return "GraphicContext:\n* Perpective type: "+perspectiveString(p_type)+"\n* Width: "+perspective.getWidth()+"\n* Height: "+perspective.getHeight()+"\n* Dist: "+perspective.getDist()+"\n* Depth: "+perspective.getDepth()+"\n* PPU: "+ppu+"\n* Pixel width: "+pixelWidth+"\n* Pixel height: "+pixelHeight;
 	}
 	
-	public void setWidth(float width) {
-		this.width = width;
-	}
-	
-	public float getWidth() {
-		return width;
-	}
-	
-	public void setHeight(float height) {
-		this.height = height;
-	}
-
-	public float getHeight() {
-		return height;
-	}
-
 	public int getPixelWidth() {
 		return pixelWidth;
 	}
@@ -293,38 +247,22 @@ public class GraphicContext {
 		return pixelHalfHeight;
 	}
 
-	public void setDepth(float depth) {
-		this.depth = depth;
-	}
-	
-	public float getDepth() {
-		return depth;
-	}
-
-	public void setDist(float dist) {
-		this.dist = dist;
-	}
-	
-	public float getDist() {
-		return dist;
-	}
-	
 	/**
 	 * Define a (new) perspective with a new type then create (or recreate) it with this type
 	 * @param perspective the type of the perspective as defined in the list of constants
 	 */
-	public void setAndCreatePerspective(int perspective) {
-		this.perspective_type = perspective;
-		
-		float left = -width/2;
-		float right = width/2;
-		float bottom = -height/2;
-		float top = height/2;
-		float near = dist;
-		float far = dist + depth;
-		
-		createPerspective(perspective, left , right, bottom, top, near, far);
-	}
+//	public void setAndCreatePerspective(int perspective) {
+//		this.p_type = perspective;
+//		
+//		float left = -width/2;
+//		float right = width/2;
+//		float bottom = -height/2;
+//		float top = height/2;
+//		float near = dist;
+//		float far = dist + depth;
+//		
+//		createPerspective(perspective, left , right, bottom, top, near, far);
+//	}
 	
 	/**
 	 * Create the perspective using the parameters of the GraphicContext
@@ -332,24 +270,24 @@ public class GraphicContext {
 	 * - GraphicContext created from scratch (without using any constructor with parameters)
 	 * - After changing parameters of the GraphicContext, need a refresh of the perspective
 	 */
-	public void computePerspective() {
-		
-		float left = -width/2;
-		float right = width/2;
-		float bottom = -height/2;
-		float top = height/2;
-		float near = dist;
-		float far = dist + depth;
-		
-		createPerspective(perspective_type, left , right, bottom, top, near, far);
-	}
+//	public void computePerspective() {
+//		
+////		float left = -width/2;
+////		float right = width/2;
+////		float bottom = -height/2;
+////		float top = height/2;
+////		float near = dist;
+////		float far = dist + depth;
+//		
+//		createPerspective(p_type, perspective.getLeft() , perspective.getRight(), perspective.getBottom(), perspective.getTop(), perspective.getNear(), perspective.getFar());
+//	}
 	
 	public int getPerspectiveType() {
-		return perspective_type;
+		return p_type;
 	}
 	
-	public Projection getPerspective() {
-		return (Projection)projection;
+	public Perspective getPerspective() {
+		return perspective;
 	}
 		
 	public void setPPU(int ppu) {
@@ -360,53 +298,4 @@ public class GraphicContext {
 		return ppu;
 	}
 	
-	
-	public float getLeft() {
-		return left;
-	}
-
-	public void setLeft(float left) {
-		this.left = left;
-	}
-
-	public float getRight() {
-		return right;
-	}
-
-	public void setRight(float right) {
-		this.right = right;
-	}
-
-	public float getBottom() {
-		return bottom;
-	}
-
-	public void setBottom(float bottom) {
-		this.bottom = bottom;
-	}
-
-	public float getTop() {
-		return top;
-	}
-
-	public void setTop(float top) {
-		this.top = top;
-	}
-
-	public float getNear() {
-		return near;
-	}
-
-	public void setNear(float near) {
-		this.near = near;
-	}
-
-	public float getFar() {
-		return far;
-	}
-
-	public void setFar(float far) {
-		this.far = far;
-	}
-
 }

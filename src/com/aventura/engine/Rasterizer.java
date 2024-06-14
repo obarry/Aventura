@@ -104,7 +104,7 @@ public class Rasterizer {
 	 */
 	public void initZBuffer() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());
-		zBuffer_init = graphic.getFar();
+		zBuffer_init = graphic.getPerspective().getFar();
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "zBuffer init value: "+zBuffer_init);
 		
 		zBuf_width = 2*graphic.getPixelHalfWidth()+1;

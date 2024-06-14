@@ -244,7 +244,7 @@ public class TestMultiElementsTextureOrtho {
 		GraphicContext context = new GraphicContext(8, 6, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
 		//GraphicContext context = new GraphicContext(3.0f, 1.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 400);
 		View view = test.createView(context);
-		System.out.println(context.getPerspective());
+		System.out.println(context.getPerspective().getProjection());
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);

@@ -35,6 +35,10 @@ import com.aventura.tools.tracing.Tracer;
  */
 public class Frustum extends Projection {
 	
+	public Frustum(Projection p) {
+		super(p);
+	}
+	
 	public Frustum(float left, float right, float bottom, float top, float near, float far) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Frustrum projection");

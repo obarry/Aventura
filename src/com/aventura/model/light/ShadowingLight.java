@@ -37,7 +37,12 @@ import com.aventura.model.world.triangle.Triangle;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
- * ShadowingLight is a type of light that can generate Shadow by opposite of other type of Lights e.g. Ambientlight.
+ * ShadowingLight is a type of light that can generate Shadows by opposite of other type of Lights e.g. Ambientlight
+ * The method used for Light calculation is Shadow Mapping hence we will need to have a "Camera Light" that means a Camera corresponding to the Light direction and source
+ * For a Directional Light : only a direction, no source (all light rays are parallel in space), the projection should be an Orthographic projection
+ * For a Point Light or a Spot Light, a source and a direction is defined. The Camera is located at the source and pointing to the direction of light. A frustum projection
+ * is used for the projection.
+ * 
  * In this abstract class will be found all the necessary attributes and tools for Shadow generation as the Camera corresponding to the Light
  * the ModelView projection for this Light (should be Orthographic for a DirectionalLight), the view frustrum and the Shadow Map itself.
  *
@@ -89,15 +94,15 @@ public abstract class ShadowingLight extends Light {
 		// TODO strange to get Near and Far from graphicContext and Up from Camera_view. Clean-up required ?
 
 		// - The distance to the near plane
-		float near = graphicContext.getNear();
+		float near = graphicContext.getPerspective().getNear();
 		// - The distance to the far plane
-		float far = graphicContext.getFar();
+		float far = graphicContext.getPerspective().getFar();
 		// - The up vector and side vectors
 		Vector4 up = camera_view.getUp();
 		Vector4 side = fwd.times(up).normalize();
 		// - the half width and half eight of the near plane
-		float half_eight_near = graphicContext.getHeight()/2;
-		float half_width_near = graphicContext.getWidth()/2;
+		float half_eight_near = graphicContext.getPerspective().getHeight()/2;
+		float half_width_near = graphicContext.getPerspective().getWidth()/2;
 		
 		// - the half width and half eight of the far plane
 		// Calculate the width and height on far plane using Thales: knowing that width and height are defined on the near plane

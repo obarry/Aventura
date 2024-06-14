@@ -132,9 +132,9 @@ public class TestAventura3 {
 		Camera camera = test.createCamera();
 		
 		GraphicContext context = new GraphicContext(GraphicContext.GRAPHIC_DEFAULT);
-		context.setHeight(6);
-		context.setWidth(10);
-		context.computePerspective();
+		context.getPerspective().setHeight(6);
+		context.getPerspective().setWidth(10);
+		//context.computePerspective();
 		System.out.println(context);
 		
 		View view = test.createView(context);

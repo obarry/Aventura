@@ -1,5 +1,6 @@
 package com.aventura.model.perspective;
 
+import com.aventura.math.projection.Frustum;
 import com.aventura.math.projection.Orthographic;
 
 /**
@@ -35,6 +36,10 @@ import com.aventura.math.projection.Orthographic;
 
 public class OrthographicPerspective extends Perspective {
 	
+	public OrthographicPerspective(Perspective persp) {
+		super(persp);
+		this.projection = new Orthographic(persp.projection);
+	}
 	public OrthographicPerspective(float width, float height, float depth, float dist) {
 		super(width, height, depth, dist);
 		
@@ -45,8 +50,12 @@ public class OrthographicPerspective extends Perspective {
 	public OrthographicPerspective(float top, float bottom, float right, float left, float far, float near) {
 		super(top, bottom, right, left, far, near);
 		
-		this.projection = new Orthographic(top , right, bottom, top, near, far);
+		this.projection = new Orthographic(left , right, bottom, top, near, far);
 		
+	}
+
+	public void updateProjection() {
+		this.projection = new Orthographic(left , right, bottom, top, near, far);
 	}
 
 }

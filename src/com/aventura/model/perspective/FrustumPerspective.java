@@ -36,6 +36,11 @@ import com.aventura.math.projection.Orthographic;
 
 public class FrustumPerspective extends Perspective {
 	
+	public FrustumPerspective(Perspective persp) {
+		super(persp);
+		this.projection = new Frustum(persp.projection);
+	}
+	
 	public FrustumPerspective(float width, float height, float depth, float dist) {
 		super(width, height, depth, dist);
 		
@@ -48,6 +53,10 @@ public class FrustumPerspective extends Perspective {
 		
 		this.projection = new Frustum(top , right, bottom, top, near, far);
 		
+	}
+
+	public void updateProjection() {
+		this.projection = new Frustum(left , right, bottom, top, near, far);
 	}
 
 

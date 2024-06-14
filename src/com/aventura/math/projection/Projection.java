@@ -35,37 +35,45 @@ import com.aventura.math.vector.Matrix4;
  */
 public abstract class Projection extends Matrix4 {
 	
-	float left = 0;
-	float right = 0;
-	float top = 0;
-	float bottom = 0;
-	float near = 0;
-	float far = 0;
-	
-	
-	
-	public float getLeft() {
-		return left;
+	public Projection() {
+		// Nothing to do
 	}
 	
-	public float getRight() {
-		return right;
+	public Projection(Projection p) {
+		super(p);
 	}
 	
-	public float getTop() {
-		return top;
-	}
+//	float left = 0;
+//	float right = 0;
+//	float top = 0;
+//	float bottom = 0;
+//	float near = 0;
+//	float far = 0;
 	
-	public float getBottom() {
-		return bottom;
-	}
 	
-	public float getNear() {
-		return near;
-	}
 	
-	public float getFar() {
-		return far;
-	}
+//	public float getLeft() {
+//		return left;
+//	}
+//	
+//	public float getRight() {
+//		return right;
+//	}
+//	
+//	public float getTop() {
+//		return top;
+//	}
+//	
+//	public float getBottom() {
+//		return bottom;
+//	}
+//	
+//	public float getNear() {
+//		return near;
+//	}
+//	
+//	public float getFar() {
+//		return far;
+//	}
 	
 }

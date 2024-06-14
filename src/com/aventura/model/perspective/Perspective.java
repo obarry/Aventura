@@ -1,5 +1,6 @@
 package com.aventura.model.perspective;
 
+import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Matrix4;
 
 /**
@@ -27,6 +28,42 @@ import com.aventura.math.vector.Matrix4;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
+ * Frustum definition:
+ * ------------------
+ * 
+ *     X (or Y)
+ *        ^                       +
+ *        |     View          -   |
+ *        |     Plane     -       |
+ *        | (top)     -           |
+ *        | right +               |   ^
+ *        |   -   |    View       |   |  width
+ * Camera +-------+---------------+---+--------------------------> -Z
+ *            -   |   Frustum     |   | (height)
+ *          left  +               |   v
+ *        (bottom)    -           |
+ *                        -       |
+ *                            -   |
+ *                                +
+ *        0      near            far 
+ *        <-------><-------------->
+ *          dist        depth
+ * 
+ * The view is defined by:
+ *    width  = right - left
+ *    height = top - bottom
+ *    depth  = far - near
+ *    dist   = near - 0
+ *  
+ * Assuming a symetric view (bottom = -top and left = -right) centered on the origin 
+ *    top    = height/2
+ *    bottom = -height/2
+ *    right  = width/2
+ *    left   = -width/2
+ *    far    = dist + depth
+ *    near   = dist
+ * 
+ * ------------------------------------------------------------------------------ 
  *
  * @author Olivier BARRY
  * @since June 2024
@@ -55,8 +92,24 @@ public abstract class Perspective {
 
 	
 	// Projection Matrix
-	Matrix4 projection;
+	Projection projection;
 	
+	
+	public Perspective(Perspective p) {
+		
+		this.width = p.width;
+		this.height = p.height;
+		this.depth = p.depth;
+		this.dist = p.dist;
+		
+		this.top = p.top;
+		this.bottom = p.bottom;
+		this.right = p.right;
+		this.left = p.left;
+		this.far = p.far;
+		this.near = p.near;
+		
+	}
 	
 	/**
 	 * Create a perspective with the 4 eye related dimension factors
@@ -72,13 +125,9 @@ public abstract class Perspective {
 		this.depth = depth;
 		this.dist = dist;
 		
-		left = -width/2;
-		right = width/2;
-		bottom = -height/2;
-		top = height/2;
-		near = dist;
-		far = dist + depth;
-		
+		calculateTBRLFN();
+				
+		// The creation of the projection matrix is delegated to the subclasses (Perspective class is abstract)
 	}
 	
 	/**
@@ -99,6 +148,23 @@ public abstract class Perspective {
 		this.far = far;
 		this.near = near;
 		
+		calculateWHDD();
+		
+		// The creation of the projection matrix is delegated to the subclasses (Perspective class is abstract)
+	}
+	
+	private void calculateTBRLFN() {
+		
+		left = -width/2;
+		right = width/2;
+		bottom = -height/2;
+		top = height/2;
+		near = dist;
+		far = dist + depth;
+	}
+	
+	private void calculateWHDD() {
+		
 		width = right - left;
 		height = top - bottom;
 		depth = far - near;
@@ -106,20 +172,22 @@ public abstract class Perspective {
 		
 	}
 	
-	public float getLeft() {
-		return left;
+	public abstract void updateProjection();
+	
+	public Projection getProjection() {
+		return projection;
+	}
+	
+	// TBRLFN accessors
+	
+	public float getTop() {
+		return top;
 	}
 
-	public void setLeft(float left) {
-		this.left = left;
-	}
-
-	public float getRight() {
-		return right;
-	}
-
-	public void setRight(float right) {
-		this.right = right;
+	public void setTop(float top) {
+		this.top = top;
+		calculateWHDD();
+		updateProjection();
 	}
 
 	public float getBottom() {
@@ -128,22 +196,28 @@ public abstract class Perspective {
 
 	public void setBottom(float bottom) {
 		this.bottom = bottom;
+		calculateWHDD();
+		updateProjection();
 	}
 
-	public float getTop() {
-		return top;
+	public float getRight() {
+		return right;
 	}
 
-	public void setTop(float top) {
-		this.top = top;
+	public void setRight(float right) {
+		this.right = right;
+		calculateWHDD();
+		updateProjection();
 	}
 
-	public float getNear() {
-		return near;
+	public float getLeft() {
+		return left;
 	}
 
-	public void setNear(float near) {
-		this.near = near;
+	public void setLeft(float left) {
+		this.left = left;
+		calculateWHDD();
+		updateProjection();
 	}
 
 	public float getFar() {
@@ -152,10 +226,46 @@ public abstract class Perspective {
 
 	public void setFar(float far) {
 		this.far = far;
+		calculateWHDD();
+		updateProjection();
 	}
 
+	public float getNear() {
+		return near;
+	}
+
+	public void setNear(float near) {
+		this.near = near;
+		calculateWHDD();
+		updateProjection();
+	}
+	
+	// WHDD accessors
+
+	public void setWidth(float width) {
+		this.width = width;
+		calculateTBRLFN();
+		updateProjection();
+	}
+	
+	public float getWidth() {
+		return width;
+	}
+	
+	public void setHeight(float height) {
+		this.height = height;
+		calculateTBRLFN();
+		updateProjection();
+	}
+	
+	public float getHeight() {
+		return height;
+	}
+	
 	public void setDepth(float depth) {
 		this.depth = depth;
+		calculateTBRLFN();
+		updateProjection();
 	}
 	
 	public float getDepth() {
@@ -164,6 +274,8 @@ public abstract class Perspective {
 
 	public void setDist(float dist) {
 		this.dist = dist;
+		calculateTBRLFN();
+		updateProjection();
 	}
 	
 	public float getDist() {

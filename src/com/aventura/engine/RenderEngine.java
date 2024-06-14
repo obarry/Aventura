@@ -136,7 +136,7 @@ public class RenderEngine {
 		this.camera = camera;
 				
 		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
-		this.modelView = new ModelView(camera.getMatrix(), graphic.getProjectionMatrix());
+		this.modelView = new ModelView(camera.getMatrix(), graphic.getPerspective().getProjection());
 		
 		// Delegate rasterization tasks to a dedicated engine
 		// No shading in this constructor -> null
