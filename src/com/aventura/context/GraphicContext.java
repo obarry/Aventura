@@ -33,6 +33,10 @@ import com.aventura.tools.tracing.Tracer;
  * Evolutions :
  * ----------
  * 6-Oct-2023 : Proposal to rename GraphicContext into GeometryContext
+ * 15-Jun-2024 : Evolution by delegating all the Perspective management to a new Perspective class (and subclasses) in new package :
+ * com.aventura.model.perspective. It should allow to bring new services in this class to calculate the Frustum related informations
+ * required for example by the ShadowingLight class and related to identify the area where to cast shadows.
+ * As a consequence, the width, height, dist, depth, top, bottom, left, right, far, near information are now stored in Perspetive. 
  * -------------------------------------------------------------------
  * 
  * The GraphicContext is a parameter class containing all information allowing to display the world
@@ -112,9 +116,6 @@ public class GraphicContext {
 	int pixelHalfWidth = 0;
 	int pixelHalfHeight = 0;
 	
-	// Projection Matrix
-	//Matrix4 projection; // TODO to be replaced by a new Perspective class that "contains" the projection matrix (package com.aventura.model.perspective)
-	
 	// Perspective
 	Perspective perspective; // link to the perspective that this GraphicContext is defining
 
@@ -173,7 +174,6 @@ public class GraphicContext {
 		this.pixelHalfWidth = pixelWidth/2;
 		this.pixelHalfHeight = pixelHeight/2;
 		
-		//createPerspective(perspective, left , right, bottom, top, near, far);
 		createPerspective(perspective, width , height, dist, depth);
 	}
 	
@@ -246,41 +246,6 @@ public class GraphicContext {
 	public int getPixelHalfHeight() {
 		return pixelHalfHeight;
 	}
-
-	/**
-	 * Define a (new) perspective with a new type then create (or recreate) it with this type
-	 * @param perspective the type of the perspective as defined in the list of constants
-	 */
-//	public void setAndCreatePerspective(int perspective) {
-//		this.p_type = perspective;
-//		
-//		float left = -width/2;
-//		float right = width/2;
-//		float bottom = -height/2;
-//		float top = height/2;
-//		float near = dist;
-//		float far = dist + depth;
-//		
-//		createPerspective(perspective, left , right, bottom, top, near, far);
-//	}
-	
-	/**
-	 * Create the perspective using the parameters of the GraphicContext
-	 * To be used in case of :
-	 * - GraphicContext created from scratch (without using any constructor with parameters)
-	 * - After changing parameters of the GraphicContext, need a refresh of the perspective
-	 */
-//	public void computePerspective() {
-//		
-////		float left = -width/2;
-////		float right = width/2;
-////		float bottom = -height/2;
-////		float top = height/2;
-////		float near = dist;
-////		float far = dist + depth;
-//		
-//		createPerspective(p_type, perspective.getLeft() , perspective.getRight(), perspective.getBottom(), perspective.getTop(), perspective.getNear(), perspective.getFar());
-//	}
 	
 	public int getPerspectiveType() {
 		return p_type;
