@@ -41,8 +41,8 @@ public class FrustumPerspective extends Perspective {
 		this.projection = new Frustum(persp.projection);
 	}
 	
-	public FrustumPerspective(float width, float height, float depth, float dist) {
-		super(width, height, depth, dist);
+	public FrustumPerspective(float width, float height, float dist, float depth) {
+		super(width, height, dist, depth);
 		
 		this.projection = new Frustum(left , right, bottom, top, near, far);
 		

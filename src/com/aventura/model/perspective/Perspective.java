@@ -118,7 +118,7 @@ public abstract class Perspective {
 	 * @param depth
 	 * @param dist
 	 */
-	public Perspective(float width, float height, float depth, float dist) {
+	public Perspective(float width, float height, float dist, float depth) {
 		
 		this.width = width;
 		this.height = height;

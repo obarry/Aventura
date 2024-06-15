@@ -127,6 +127,7 @@ public class TestAventura8 {
 		TestAventura8 test = new TestAventura8();
 				
 		World world = test.createWorld();
+		System.out.println(world);
 		Lighting light = test.createLight();
 		Camera camera = test.createCamera();
 		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);

@@ -118,8 +118,8 @@ public class GraphicContext {
 	// Perspective
 	Perspective perspective; // link to the perspective that this GraphicContext is defining
 
-	// Width/Height ratio = 16/9
-	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5f,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100);
+	// A Default context that can then be modified using accessors
+	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5f,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100); // Width/Height ratio = 16/9
 
 	
 	/**

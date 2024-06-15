@@ -107,6 +107,8 @@ public class TestAventura2 {
 				b.setTransformation(trans);
 			}
 		}
+		
+		world.generate();
 
 		// World is created
 		return world;
@@ -132,6 +134,7 @@ public class TestAventura2 {
 		TestAventura2 test = new TestAventura2();
 				
 		World world = test.createWorld();
+		System.out.println(world);
 		Lighting light = test.createLight();
 		
 		Camera camera = test.createCamera();

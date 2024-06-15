@@ -68,7 +68,7 @@ import com.aventura.view.View;
  * @author obarry
  *
  */
-public class TestTreillisFractal implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener, ActionListener {
+public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener, ActionListener {
 	
 	// Frame
 	JFrame frame;
@@ -469,7 +469,7 @@ public class TestTreillisFractal implements MouseListener, MouseMotionListener, 
 	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
-		TestTreillisFractal fractal = new TestTreillisFractal();
+		TestTreillisFractal_MouseMoving fractal = new TestTreillisFractal_MouseMoving();
 		fractal.run();
 		System.out.println("********* APPLICATION is RUNNING *********");
 	}
