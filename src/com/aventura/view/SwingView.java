@@ -185,12 +185,20 @@ public class SwingView extends GUIView {
 		return null;
 	}
 
-	@Override
 	// Caution : MapView should be normalized (using the appropriate method) before the call
 	public void initView(MapView map) {
 		
-		//TODO implement the creation of the backbuffer with a normalized MapView
-		//backbuffer
+		// Take the min size of either the map or this view in width and height. That means that if map is larger than view, it will be cropped
+		int minX = map.width < backbuffer.getWidth() ? map.width : backbuffer.getWidth();
+		int minY = map.height < backbuffer.getHeight() ? map.height : backbuffer.getHeight();
+
+		// Loop on x and y on the window defined by the 2 mins
+		for (int x=0; x<minX; x++ ) {
+			for (int y=0; y<minY; y++) {		
+				Color c = new Color(map.get(x,y),  map.get(x,y),  map.get(x,y));
+				backbuffer.setRGB(x, y, c.getRGB());
+			}
+		}
 	}
 
 }
