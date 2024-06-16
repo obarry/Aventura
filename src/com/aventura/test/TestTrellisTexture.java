@@ -24,7 +24,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -56,17 +56,17 @@ import com.aventura.view.View;
 
 public class TestTrellisTexture {
 	
-	// View to be displayed
-	//private SwingView view;
+	// GUIView to be displayed
+	//private SwingView gUIView;
 
-	public View createView(GraphicContext context) {
+	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Trellis with Texture");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
-		// Create the view to be displayed
+		// Create the gUIView to be displayed
 		SwingView view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -154,7 +154,7 @@ public class TestTrellisTexture {
 		//GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		GraphicContext gContext = new GraphicContext(8f, 4.5f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 125);
 		
-		View view = test.createView(gContext);
+		GUIView gUIView = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
@@ -165,7 +165,7 @@ public class TestTrellisTexture {
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
-		renderer.setView(view);
+		renderer.setView(gUIView);
 		renderer.render();
 		
 		try {

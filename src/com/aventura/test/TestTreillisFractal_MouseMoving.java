@@ -28,7 +28,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -108,13 +108,13 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
 	boolean key_control = false;
 
 	/**
-	 * Create the view and associate all needed mouse and key listeners for user interaction with screen
-	 * The renderer will then be called each time Mouse generates a move to the view and a new updated view will be displayed
+	 * Create the gUIView and associate all needed mouse and key listeners for user interaction with screen
+	 * The renderer will then be called each time Mouse generates a move to the gUIView and a new updated gUIView will be displayed
 	 * 
-	 * @param context the GraphicContext to be used to create the View
+	 * @param context the GraphicContext to be used to create the GUIView
 	 * @return
 	 */
-	public View createView(GraphicContext context) {
+	public GUIView createView(GraphicContext context) {
 		
 		// Create the frame of the application 
 		frame = new JFrame("Test Fractal generated Treillis");
@@ -151,7 +151,7 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
 	    frame.setJMenuBar(menubar);
 
 		
-		// Create the view to be displayed
+		// Create the gUIView to be displayed
 		SwingView view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -229,7 +229,7 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
         tre.setTransformation(ry.times(rz));
         //tre.combineTransformation(ry.times(rz));
 
-        // Render the updated view after zooming camera and rotating Element
+        // Render the updated gUIView after zooming camera and rotating Element
 		renderer.render();
  	}
  	
@@ -244,7 +244,7 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
         // Zoom camera by updating eye on the forward direction
         camera.updateCamera(eye.plus(camera.getForward().times((float)zoom/10)), poi, camera.getUp());
         
-        // Render the updated view after zooming camera and rotating Element
+        // Render the updated gUIView after zooming camera and rotating Element
 		renderer.render();
 	}
 	
@@ -379,8 +379,8 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
 
 	/**
 	 * Create the World and Camera, generate a Treillis based on Fractal recursivity to create a Landscape
-	 * Create the Graphic Swing view by calling the createView method that will associate mouse Listners to the panel so that user can 
-	 * interact with the view and move it or zomm in it.
+	 * Create the Graphic Swing gUIView by calling the createView method that will associate mouse Listners to the panel so that user can 
+	 * interact with the gUIView and move it or zomm in it.
 	 */
 	public void run() {
 		
@@ -443,8 +443,8 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 0.8f, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		//GraphicContext gContext = new GraphicContext(8f, 4.5f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 125);
 		
-		// Create view
-		View view = this.createView(gContext);
+		// Create gUIView
+		GUIView gUIView = this.createView(gContext);
 
 		// Rendering context
 		//rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -455,9 +455,9 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
-		// Initialize Render Engine and render a first view
+		// Initialize Render Engine and render a first gUIView
 		renderer = new RenderEngine(world, light, camera, rContext, gContext);
-		renderer.setView(view);
+		renderer.setView(gUIView);
 		renderer.render();
 		
 		System.out.println("********* APPLICATION LAUNCHED *********");

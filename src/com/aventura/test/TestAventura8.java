@@ -19,7 +19,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -51,17 +51,17 @@ import com.aventura.view.View;
 
 public class TestAventura8 {
 	
-	// Create the view to be displayed
+	// Create the gUIView to be displayed
 	private SwingView view;
 	
-	public View createView(GraphicContext context) {
+	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Aventura 8");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
-		// Create the view to be displayed
+		// Create the gUIView to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -131,14 +131,14 @@ public class TestAventura8 {
 		Lighting light = test.createLight();
 		Camera camera = test.createCamera();
 		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		View view = test.createView(context);
+		GUIView gUIView = test.createView(context);
 		
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
-		renderer.setView(view);
+		renderer.setView(gUIView);
 		renderer.render();
 		
 		System.out.println("********* ENDING APPLICATION *********");

@@ -33,7 +33,7 @@ import com.aventura.model.world.shape.Pyramid;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -65,17 +65,17 @@ import com.aventura.view.View;
 
 public class TestMultiElementsTextureOrtho {
 	
-	// View to be displayed
+	// GUIView to be displayed
 	private SwingView view;
 	
-	public View createView(GraphicContext context) {
+	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Multi Elements with Texture");
 		// Set the size of the frame
 		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
-		// Create the view to be displayed
+		// Create the gUIView to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -131,8 +131,8 @@ public class TestMultiElementsTextureOrtho {
 	
 		// Camera
 		//Vector4 eye = new Vector4(10,6,3,1);
-		Vector4 eye = new Vector4(10,0,3,1); // Orthographic view
-		//Vector4 eye = new Vector4(4,0,1,1); // Frustum view
+		Vector4 eye = new Vector4(10,0,3,1); // Orthographic gUIView
+		//Vector4 eye = new Vector4(4,0,1,1); // Frustum gUIView
 		//Vector4 eye = new Vector4(10,0,0,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -243,7 +243,7 @@ public class TestMultiElementsTextureOrtho {
 
 		GraphicContext context = new GraphicContext(8, 6, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
 		//GraphicContext context = new GraphicContext(3.0f, 1.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 400);
-		View view = test.createView(context);
+		GUIView gUIView = test.createView(context);
 		System.out.println(context.getPerspective().getProjection());
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
@@ -253,7 +253,7 @@ public class TestMultiElementsTextureOrtho {
 		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
-		renderer.setView(view);
+		renderer.setView(gUIView);
 		renderer.render();
 		
 		System.out.println("********* Rendering...");

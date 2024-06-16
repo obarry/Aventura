@@ -36,7 +36,7 @@ import com.aventura.tools.tracing.Tracer;
 
 public class Camera {
 
-	protected LookAt lookAt; // LookAt matrix or camera view matrix
+	protected LookAt lookAt; // LookAt matrix or camera gUIView matrix
 	protected Vector4 eye; // Eye of the camera, this is a point
 	
 

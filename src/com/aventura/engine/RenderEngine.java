@@ -20,7 +20,7 @@ import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.shape.Segment;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -54,10 +54,10 @@ import com.aventura.view.View;
  * - The world information
  * - A camera
  * - Some lighting
- * - some display and graphics (called View)
+ * - some display and graphics (called GUIView)
  * - The 2 API contexts allowing to define all parameters before calling API methods
  * 		* a render context to provide information on how to render the world
- * 		* a graphic context to provide information on how to display the view
+ * 		* a graphic context to provide information on how to display the gUIView
  * 
  * 
  *                   				   				    	  				          +---------------------+					
@@ -73,7 +73,7 @@ import com.aventura.view.View;
  *     +---------------------+		  |						  |			+---------------------+		         |		|
  *     |      Lighting       | <------+						  |											     v		|
  *     +---------------------+		  |		+---------------------+										 +---------------------+
- *                ^                   |-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        View         |
+ *                ^                   |-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        GUIView         |
  *                |          		  |		+---------------------+ 									 +---------------------+
  *                |                   |                |
  *     			  |			          |        		   v		
@@ -81,7 +81,7 @@ import com.aventura.view.View;
  *     |       Camera        | <------+-----|      ModelView      |
  *	   +---------------------+		    	+---------------------+
  *
- *          	 Model								 Engine						Context(s)							 View
+ *          	 Model								 Engine						Context(s)							 GUIView
  *			com.aventura.model					com.aventura.engine			com.aventura.context				com.aventura.view
  * 
  * @author Olivier BARRY
@@ -105,8 +105,8 @@ public class RenderEngine {
 	private Lighting lighting;
 	private Camera camera;
 	
-	// View
-	private View view;
+	// GUIView
+	private GUIView gUIView;
 	
 	// ModelView modelView
 	private ModelView modelView;
@@ -135,7 +135,7 @@ public class RenderEngine {
 		this.lighting = lighting;
 		this.camera = camera;
 				
-		// Create ModelView matrix with for View (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
+		// Create ModelView matrix with for GUIView (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
 		this.modelView = new ModelView(camera.getMatrix(), graphic.getPerspective().getProjection());
 		
 		// Delegate rasterization tasks to a dedicated engine
@@ -144,8 +144,8 @@ public class RenderEngine {
 	}
 		
 
-	public void setView(View v) {
-		view = v;
+	public void setView(GUIView v) {
+		gUIView = v;
 		rasterizer.setView(v);
 	}
 	
@@ -157,7 +157,7 @@ public class RenderEngine {
 	 * - Full ModelView modelView into homogeneous coordinates
 	 * - Rasterization
 	 * It uses the parameters of GraphicContext and RenderContext:
-	 * - View information contained into GraphicContext
+	 * - GUIView information contained into GraphicContext
 	 * - Rendering information (e.g. rendering modes etc) contained into RenderContext
 	 * 
 	 * It assumes initialization is already done through ModelView object and various contexts
@@ -178,9 +178,9 @@ public class RenderEngine {
 		nbt_bf = 0;
 		nbe = 0;
 		
-		// Initialize backbuffer in the View
-		view.setBackgroundColor(world.getBackgroundColor());
-		view.initView();
+		// Initialize backbuffer in the GUIView
+		gUIView.setBackgroundColor(world.getBackgroundColor());
+		gUIView.initView();
 		
 		// zBuffer initialization (if applicable)
 		if (renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
@@ -192,14 +192,14 @@ public class RenderEngine {
 			
 			// To calculate the projection matrix (or matrices if several light sources) :
 			// - Need to define the bounding box in which the elements will used to calculate the shadow map
-			// 		* By default it could be a box containing just the view frustrum of the eye camera
+			// 		* By default it could be a box containing just the gUIView frustrum of the eye camera
 			// 		* But there is a risk that elements outside of this box could generate shadows inside the box
 			// 		* A costly solution could be to define a box containing all elements of the scene
 			// 		* Otherwise some algorithm could be used for later improvement
 			// - Then create the matrix
-			// 		* LookAt from light source (View matrix)
+			// 		* LookAt from light source (GUIView matrix)
 			//		* Orthographic projection Matrix
-			//		* View * Projection matrix
+			//		* GUIView * Projection matrix
 			//
 			// Mat4 viewMatrix = LookAt(lighting.mCameraPosition,
 			//							lighting.mCameraPosition + glm::normalize(directionalLight.mLightDirection),
@@ -215,7 +215,7 @@ public class RenderEngine {
 			// TODO: loop on all Lights (all ShadowingLight, not only the DirectionalLight)
 			
 			// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
-			lighting.getDirectionalLight().initShadowing(graphicContext, camera, view.getViewWidth());
+			lighting.getDirectionalLight().initShadowing(graphicContext, camera, gUIView.getViewWidth());
 			
 			// Generate the shadow map
 			lighting.getDirectionalLight().generateShadowMap(world); // need to recurse on each Element
@@ -227,7 +227,7 @@ public class RenderEngine {
 			render(e, null, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in GUIView Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
 
 		// Display the landmarks if enabled (RenderContext)
 		if (renderContext.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
@@ -244,7 +244,7 @@ public class RenderEngine {
 		}
 
 		// Switch back and front buffers and request GUI repaint
-		view.renderView();
+		gUIView.renderView();
 	}
 	
 	/**
@@ -271,7 +271,7 @@ public class RenderEngine {
 			model = matrix.times(e.getTransformation());
 		}
 		modelView.setModel(model);
-		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (view)
+		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (gUIView)
 		
 		// TODO NEW TO BE ADDED AND COMPUTED
 		// TRANSFORMATION OF ALL VERTICES OF THE ELEMENT
@@ -289,7 +289,7 @@ public class RenderEngine {
 			// Render triangle 
 			render(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor(), e.isClosed());
 			
-			// Count Triangles stats (total, all triangles whatever in or out view frustum)
+			// Count Triangles stats (total, all triangles whatever in or out gUIView frustum)
 			nbt++;
 		}
 	
@@ -318,7 +318,7 @@ public class RenderEngine {
 	 * @param se the specular exponent of the Element
 	 * @param sc the specular color of the Element
 	 * @param isClosedElement a boolean to indicate if the Element to which triangle belongs is closed or not (to activate backface culling or not) 
-	 * @return false if triangle is outside the View Frustum, else true
+	 * @return false if triangle is outside the GUIView Frustum, else true
 	 */
 	public void render(Triangle t, Color c, float se, Color sc, boolean isClosedElement) {
 		
@@ -332,8 +332,8 @@ public class RenderEngine {
 		boolean backfaceCulling = (renderContext.backfaceCulling == RenderContext.BACKFACE_CULLING_ENABLED) && isClosedElement;
 		
 		// Scissor test for the triangle
-		// If triangle is totally or partially in the View Frustum
-		// Then renderContext its fragments in the View
+		// If triangle is totally or partially in the GUIView Frustum
+		// Then renderContext its fragments in the GUIView
 		if (t.isInViewFrustum()) { // Render triangle
 			
 			// If triangle normal then transform triangle normal
@@ -346,7 +346,7 @@ public class RenderEngine {
 			if (backfaceCulling && isBackFace(t)) {
 
 				// Do not renderContext this triangle
-				// Count Triangles stats (out view frustum)
+				// Count Triangles stats (out gUIView frustum)
 				nbt_bf++;
 				nbt_out++;
 			
@@ -388,13 +388,13 @@ public class RenderEngine {
 				if (renderContext.displayNormals == RenderContext.DISPLAY_NORMALS_ENABLED) {
 					displayNormalVectors(t);
 				}
-				// Count Triangles stats (in view)
+				// Count Triangles stats (in gUIView)
 				nbt_in++;
 			}
 
 		} else {
 			// Do not renderContext this triangle
-			// Count Triangles stats (out view frustum)
+			// Count Triangles stats (out gUIView frustum)
 			nbt_out++;
 		}
 	}

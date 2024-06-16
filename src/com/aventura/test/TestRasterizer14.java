@@ -25,7 +25,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.view.SwingView;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -57,17 +57,17 @@ import com.aventura.view.View;
 
 public class TestRasterizer14 {
 	
-	// View to be displayed
+	// GUIView to be displayed
 	private SwingView view;
 
-	public View createView(GraphicContext context) {
+	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Rasterizer 14");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
-		// Create the view to be displayed
+		// Create the gUIView to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -193,7 +193,7 @@ public class TestRasterizer14 {
 		Lighting light = new Lighting(dl, al);
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		View view = test.createView(gContext);
+		GUIView gUIView = test.createView(gContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
@@ -204,7 +204,7 @@ public class TestRasterizer14 {
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
-		renderer.setView(view);
+		renderer.setView(gUIView);
 		renderer.render();
 
 		System.out.println("********* Rendering...");

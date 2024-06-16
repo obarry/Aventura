@@ -1,6 +1,7 @@
 package com.aventura.view;
 
 import java.awt.Color;
+import java.lang.reflect.Array;
 
 /**
 * ------------------------------------------------------------------------------ 
@@ -27,95 +28,106 @@ import java.awt.Color;
 * SOFTWARE.
 * ------------------------------------------------------------------------------
 * 
-* Mapiew is the a simple Map (square array of values, generally int) adapted to the View interface defined by the abstract class View
-* It allows to use the RenderEngine to use Rasterizer to generate in a simple Map while still using the usual View interface.
+* MapView is a simple Map (array of values, generally int) adapted to the GUIView interface defined by the abstract class GUIView
+* It allows to use the RenderEngine to use Rasterizer to generate in a simple Map while still using the usual GUIView interface.
 * It is e.g. used for Shadow mapping rendering but could be used for any purpose when a Map needs to be rendered.
 * 
 */
 
 public class MapView extends View {
 	
-	int[][] map;
-	Color drawingColor;
-	Color backgroundColor;
+	protected float[][] map;
 	
-	public MapView(int[][] map) {
+	public MapView(float[][] map) {
 		this.map = map;
-		width = map[1].length;
-		height = map.length;
 		
-		// Default colors
-		drawingColor = new Color(1);
-		backgroundColor = new Color(0);
+		this.width = map[1].length;
+		this.height = map.length;
+	}
+	
+	// Recopy constructor
+	public MapView(MapView view) {
+		this.width = view.width;
+		this.height = view.height;
+		
+		this.map = new float[width][height];
+		for (int i=0; i<width; i++) {
+			for (int j=0; j<height; j++) {
+				this.map[i][j] = view.get(i, j);
+			}
+		}
 	}
 	
 	public MapView(int width, int height) {
 		this.width = width;
 		this.height = height;
-		map = new int[width][height];
-
-		// Default colors
-		drawingColor = new Color(1);
-		backgroundColor = new Color(0);
+		
+		this.map = new float[width][height];
 	}
 	
-	@Override
 	public void initView() {
 		for (int i=0; i<width; i++) {
 			for (int j=0; j<height; j++) {
-				map[i][j] = backgroundColor.getRGB();
+				map[i][j] = 0;
 			}
 		}
-
-	}
-
-	@Override
-	public void renderView() {
-		// TODO Auto-generated method stub
-		// N/A for a MapView class (nothing to render) ?
 	}
 	
-	@Override
-	public void initView(View map) {
+	public void initView(float f) {
 		for (int i=0; i<width; i++) {
 			for (int j=0; j<height; j++) {
-				this.drawPixel(i, j, map.getPixel(i, j));
+				map[i][j] = f;
 			}
 		}
-	}
-
-	@Override
-	public Color getPixel(int x, int y) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setColor(Color c) {
-		drawingColor = c;
-	}
-
-	@Override
-	public void setBackgroundColor(Color c) {
-		backgroundColor = c;
-	}
-
-	@Override
-	public void drawPixel(int x, int y) {
-		// TODO Auto-generated method stub
-		map[x][y] = drawingColor.getRGB();
 
 	}
-
-	@Override
-	public void drawPixel(int x, int y, Color c) {
-		map[x][y] = c.getRGB();
+	
+	public float get(int x, int y) {
+		return map[x][y];
 	}
 
-	@Override
-	public void drawLine(int x1, int y1, int x2, int y2) {
-		// TODO Auto-generated method stub
-
+	public void set(int x, int y, float f) {
+		map[x][y] = f;
+	}
+	
+	public float[][] getMap() {
+		return map;
+	}
+	
+	public float getMax() {
+		float max = map[0][0];
+		
+		for (int i=0; i<width; i++) {
+			for (int j=0; j<height; j++) {
+				if (map[i][j] > max) max = map[i][j];
+				}
+		}
+		
+		return max;
+	}
+	
+	public float getMin() {
+		float min = map[0][0];
+		
+		for (int i=0; i<width; i++) {
+			for (int j=0; j<height; j++) {
+				if (map[i][j] < min) min = map[i][j];
+				}
+		}
+		
+		return min;
+	}
+	
+	// To normalize between 0 and 1 so that the map can be used for Colors
+	public void normalizeMap() {
+		float max = this.getMax();
+		float min = this.getMin();
+		
+		for (int i=0; i<width; i++) {
+			for (int j=0; j<height; j++) {
+				map[i][j] = (map[i][j]-min)/(max-min);
+			}
+		}
 	}
 
 }

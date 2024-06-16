@@ -42,23 +42,36 @@ import com.aventura.context.GraphicContext;
 * This class should be derived to create a display specific class (e.g. SWING or SWT or any display device)
 * 
 */
-public abstract class View {
+public abstract class GUIView extends View {
 	
-	protected int width;
-	protected int height;
-	
-	public View() {
+	public GUIView() {
 		// Do nothing
 	}
 	
-	public int getViewWidth() {
-		return width;
+	/**
+	 * Create the gUIView based on GraphicContext to get width and height information of the gUIView frustum
+	 * Indeed the GUIView is expected to match exactly these dimensions. 
+	 * 
+	 * @param context
+	 */
+	public GUIView(GraphicContext context) {
+		
+		// Both width and height are cast to (int) for the GUIView that is pixel based
+		width = context.getPixelWidth();
+		height = context.getPixelHeight();
 	}
+		
+	public abstract void initView(MapView map); // init back buffer with another map of MapView type
+
+	public abstract void renderView(); // swap back buffer to front buffer, ready to display once the GUI will refresh
 	
-	public int getViewHeight() {
-		return height;
-	}
+	public abstract void setColor(Color c); // Using java.awt.Color class
+	public abstract void setBackgroundColor(Color c); // Using java.awt.Color class
 	
-	public abstract void initView();
+	public abstract Color getPixel(int x, int y); // Return Color of the pixel
+	public abstract void drawPixel(int x, int y);
 	
+	public abstract void drawPixel(int x, int y, Color c);
+	public abstract void drawLine(int x1, int y1, int x2, int y2);
+
 }

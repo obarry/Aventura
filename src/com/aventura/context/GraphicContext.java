@@ -40,7 +40,7 @@ import com.aventura.tools.tracing.Tracer;
  * -------------------------------------------------------------------
  * 
  * The GraphicContext is a parameter class containing all information allowing to display the world
- * This is where the view frustum planes are defined and also where the rasterizing definition (pixel per unit)
+ * This is where the gUIView frustum planes are defined and also where the rasterizing definition (pixel per unit)
  * is also set.
  * At last this is where the projection Matrix is built and stored using the perspective parameters of the GraphicContext.
  * The resulting projection Matrix can be obtained using the corresponding getter.
@@ -53,11 +53,11 @@ import com.aventura.tools.tracing.Tracer;
  * 
  *     X (or Y)
  *        ^                       +
- *        |     View          -   |
+ *        |     GUIView          -   |
  *        |     Plane     -       |
  *        | (top)     -           |
  *        | right +               |   ^
- *        |   -   |    View       |   |  width
+ *        |   -   |    GUIView       |   |  width
  * Camera +-------+---------------+---+--------------------------> -Z
  *            -   |   Frustum     |   | (height)
  *          left  +               |   v
@@ -69,13 +69,13 @@ import com.aventura.tools.tracing.Tracer;
  *        <-------><-------------->
  *          dist        depth
  * 
- * The view is defined by:
+ * The gUIView is defined by:
  *    width  = right - left
  *    height = top - bottom
  *    depth  = far - near
  *    dist   = near - 0
  *  
- * Assuming a symetric view (bottom = -top and left = -right) centered on the origin 
+ * Assuming a symetric gUIView (bottom = -top and left = -right) centered on the origin 
  *    top    = height/2
  *    bottom = -height/2
  *    right  = width/2

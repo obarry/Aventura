@@ -135,10 +135,10 @@ public class DirectionalLight extends ShadowingLight {
 		 */
 
 		// Define the bounding box for the light camera
-		// For this let's transform the 8 vertices of the view frustrum in light coordinates
+		// For this let's transform the 8 vertices of the gUIView frustrum in light coordinates
 
-		// Calculate the left, right, bottom, top, near, far distances depending on the View's frustrum planes in the Light's coordinates
-		// For this let's use the corner's of the View Frustum and transform them into the Light camera coordinates using the camera_light
+		// Calculate the left, right, bottom, top, near, far distances depending on the GUIView's frustrum planes in the Light's coordinates
+		// For this let's use the corner's of the GUIView Frustum and transform them into the Light camera coordinates using the camera_light
 		// matrix
 		Vector4 frustumProj = new Vector4(); // The transformed frustum vertex in light coordinates
 		// And take the min and max in each dimension of these vertices in light coordinates
@@ -161,7 +161,7 @@ public class DirectionalLight extends ShadowingLight {
 		}
 		
 		/*
-		 * From: https://community.khronos.org/t/directional-light-and-shadow-mapping-view-projection-matrices/71386
+		 * From: https://community.khronos.org/t/directional-light-and-shadow-mapping-gUIView-projection-matrices/71386
 		 * 
 		 Think of light’s orthographic frustum as a bounding box that encloses all objects visible by the camera,
 		 plus objects not visible but potentially casting shadows. For the simplicity let’s disregard the latter.
@@ -169,12 +169,12 @@ public class DirectionalLight extends ShadowingLight {
 		 So to find this frustum:
 		 - find all objects that are inside the current camera frustum
 		 - find minimal aa bounding box that encloses them all
-		 - transform corners of that bounding box to the light’s space (using light’s view matrix)
+		 - transform corners of that bounding box to the light’s space (using light’s gUIView matrix)
 		 - find aa bounding box in light’s space of the transformed (now obb) bounding box
 		 - this aa bounding box is your directional light’s orthographic frustum.
 		 
-		 Note that actual translation component in light view matrix doesn’t really matter as you’ll only get different Z values
-		 for the frustum but the boundaries will be the same in world space. For the convenience, when building light view matrix,
+		 Note that actual translation component in light gUIView matrix doesn’t really matter as you’ll only get different Z values
+		 for the frustum but the boundaries will be the same in world space. For the convenience, when building light gUIView matrix,
 		 you can assume the light “position” is at the center of the bounding box enclosing all visible objects.
 		 */
 		

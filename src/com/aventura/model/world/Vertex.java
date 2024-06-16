@@ -194,9 +194,9 @@ public class Vertex {
 	}
 	
 	/**
-	 * Is true if the Vertex is in the View Frustum in homogeneous coordinates
+	 * Is true if the Vertex is in the GUIView Frustum in homogeneous coordinates
 	 * Assumes that the Vertex projection is done
-	 * @return true if Vertex is inside the View Frustum, else false
+	 * @return true if Vertex is inside the GUIView Frustum, else false
 	 */
 	public boolean isInViewFrustum() {
 		

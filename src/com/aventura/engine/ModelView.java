@@ -35,7 +35,7 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * This class represents and manages the transformations from model to view.
+ * This class represents and manages the transformations from model to gUIView.
  * 
  * Interesting explanations on this transformation can be found here:
  * http://www.opengl-tutorial.org/fr/beginners-tutorials/tutorial-3-matrices/
@@ -50,7 +50,7 @@ import com.aventura.tools.tracing.Tracer;
  *     |  World Coordinates  |
  *     +---------------------+
  *                |
- *                |   [View Matrix] 4x4 Transformation Matrix -> to transform the world into the camera coordinates
+ *                |   [GUIView Matrix] 4x4 Transformation Matrix -> to transform the world into the camera coordinates
  *                v
  *     +----------------------+
  *     |  Camera Coordinates  |
@@ -72,7 +72,7 @@ import com.aventura.tools.tracing.Tracer;
  *  
  *  The complete transformation, from model to homogeneous coordinates, is done through the following formula:
  *  
- *  	TransformedVector = [Projection Matrix] * [View Matrix] * [Model Matrix] * OriginalVector
+ *  	TransformedVector = [Projection Matrix] * [GUIView Matrix] * [Model Matrix] * OriginalVector
  *  
  *  Note that the Model Matrix is provided by the model itself.
  *  In Aventura model, it is at Element level and it may require to be multiplied recursively if the model contains sub-elements.
@@ -106,14 +106,14 @@ public class ModelView {
 	 * Generally the Camera Matrix and Projection Matrix do not change over time in static mode.
 	 * So we can safely create a ModelView object with these 2 matrices at initialization.
 	 * If one of these matrices change over time, the corresponding set methods should then be used. 
-	 * @param view the Camera Matrix4
+	 * @param gUIView the Camera Matrix4
 	 * @param projection the Matrix4 to transform into homogeneous coordinates
 	 */
 	public ModelView(Matrix4 view, Matrix4 projection) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ModelView(view, projection)");
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ModelView(gUIView, projection)");
 		this.view = view;
 		this.projection = projection;
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "View matrix:\n"+ view);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "GUIView matrix:\n"+ view);
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Projection matrix:\n"+ projection);
 	}
 	
@@ -126,15 +126,15 @@ public class ModelView {
 	}
 	
 	/**
-	 * Set the Camera transformation Matrix aka View Matrix to transform from World to Camera coordinates 
-	 * @param view the Camera
+	 * Set the Camera transformation Matrix aka GUIView Matrix to transform from World to Camera coordinates 
+	 * @param gUIView the Camera
 	 */
 	public void setView(Matrix4 view) {
 		this.view = view;
 	}
 	
 	/**
-	 * Get the "View" transformation Matrix and Eye related information 
+	 * Get the "GUIView" transformation Matrix and Eye related information 
 	 * @return the Camera
 	 */
 	public Matrix4 getView() {
@@ -190,7 +190,7 @@ public class ModelView {
 	}
 	/**
 	 *  The complete transformation, from model to homogeneous coordinates, is done through the following formula:
-	 * TransformedVector = [Projection Matrix] * [View Matrix] * [Model Matrix] * OriginalVector
+	 * TransformedVector = [Projection Matrix] * [GUIView Matrix] * [Model Matrix] * OriginalVector
 	 */
 	public void computeTransformation() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");

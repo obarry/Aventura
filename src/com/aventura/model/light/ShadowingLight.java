@@ -44,7 +44,7 @@ import com.aventura.model.world.triangle.Triangle;
  * is used for the projection.
  * 
  * In this abstract class will be found all the necessary attributes and tools for Shadow generation as the Camera corresponding to the Light
- * the ModelView projection for this Light (should be Orthographic for a DirectionalLight), the view frustrum and the Shadow Map itself.
+ * the ModelView projection for this Light (should be Orthographic for a DirectionalLight), the gUIView frustrum and the Shadow Map itself.
  *
  * @author Olivier BARRY
  * @since April 2022
@@ -61,7 +61,7 @@ public abstract class ShadowingLight extends Light {
 	// ModelView matrix and vertices conversion tool for the calculation of the Shadow map
 	protected ModelView modelView;
 
-	// View Frustum
+	// GUIView Frustum
 	protected Vector4[][] frustum;
 	protected Vector4 frustumCenter;
 	
@@ -77,9 +77,9 @@ public abstract class ShadowingLight extends Light {
 	public abstract void initShadowing(GraphicContext graphicContext, Camera camera_view, int map_size);
 	
 	public void calculateCameraLight(GraphicContext graphicContext, Camera camera_view, Vector3 lightDirection) {
-		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the view frustrum
+		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the gUIView frustrum
 		
-		// For this calculate the 8 points of the View frustum in World coordinates
+		// For this calculate the 8 points of the GUIView frustum in World coordinates
 		// - The 4 points of the near plane		
 		// - The 4 points of the fare plane
 		
@@ -109,11 +109,11 @@ public abstract class ShadowingLight extends Light {
 		float half_height_far = half_eight_near * far/near; // height_far = height_near * far/near
 		float half_width_far = half_width_near * far/near; // width_far = width_near * far/near
 		
-		// TODO Calculating the view frustum should be a method from the Perspective itself
-		// Calculate all 8 points, vertices of the View Frustum
+		// TODO Calculating the gUIView frustum should be a method from the Perspective itself
+		// Calculate all 8 points, vertices of the GUIView Frustum
 		frustum = new Vector4[2][4];
 		// TODO : later, this calculation could be done and points provided through methods in the "Frustum" class or any class
-		// directly related to the view Frustum
+		// directly related to the gUIView Frustum
 		// P11 = Eye + cam_dir*near + up*half_height_near + side*half_width_near
 		frustum[0][0] = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).plus(side.times(half_width_near));
 		// P12 = Eye + cam_dir*near + up*half_height_near - side*half_width_near
@@ -141,12 +141,12 @@ public abstract class ShadowingLight extends Light {
 		
 		// Build Camera light
 		// We need to calculate the camera light Eye
-		// In order to calculate the camera light "eye", we start form the PoI : the centre of the view frustum obtained before.
-		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the view frustum.
+		// In order to calculate the camera light "eye", we start form the PoI : the centre of the gUIView frustum obtained before.
+		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the gUIView frustum.
 		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
 		Vector4 light_eye = light_PoI.minus(light_dir.times(far-near));
 		
-		// Define camera and LookAt matrix using light eye and PoI defined as center of the view frustum and up vector of camera view
+		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView
 		camera_light = new Camera(light_eye, light_PoI, up);
 
 	}
@@ -178,7 +178,7 @@ public abstract class ShadowingLight extends Light {
 			model = matrix.times(e.getTransformation());
 		}
 		modelView.setModelWithoutNormals(model);
-		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (view)
+		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (gUIView)
 
 		// Calculate projection for all vertices of this Element
 		modelView.transformVerticesWithoutNormals(e); // Calculate prj_pos of each vertex
@@ -188,7 +188,7 @@ public abstract class ShadowingLight extends Light {
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			Triangle t = e.getTriangle(j);
 			// Scissor test for the triangle
-			// If triangle is totally or partially in the View Frustum
+			// If triangle is totally or partially in the GUIView Frustum
 			// Then shadowmap this triangle
 			if (t.isInViewFrustum()) {
 				

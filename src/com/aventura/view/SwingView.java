@@ -39,7 +39,7 @@ import com.aventura.tools.tracing.Tracer;
 * avoids calculating the same image each time the display should be rendered (e.g. window moved).
 * 
 *  The implementation of this class is SWING based and specific, but the public methods are generic
-*  and inherited from the abstract View class.
+*  and inherited from the abstract GUIView class.
 * 
 *       Warning! SWING Graphic coords on screen are as follows:
 *    
@@ -53,16 +53,16 @@ import com.aventura.tools.tracing.Tracer;
 *                      Y
 */
 
-public class SwingView extends View {
+public class SwingView extends GUIView {
 
-	// Swing component to which this View is associated. Used to pro-actively repaint when needed.
+	// Swing component to which this GUIView is associated. Used to pro-actively repaint when needed.
 	Component component = null;
 	
 	// buffer image #1 to be displayed
 	BufferedImage frontbuffer;
 	Graphics2D frontgraph;
 	
-	// back buffer image #2 to be used while creating the view
+	// back buffer image #2 to be used while creating the gUIView
 	BufferedImage backbuffer;
 	Graphics2D backgraph;
 	
@@ -91,7 +91,7 @@ public class SwingView extends View {
         // Translate origin of the graphic
 		frontgraph.translate(width/2, height/2);
 		
-		// Initialize the Component/JComponent to which this view is associated
+		// Initialize the Component/JComponent to which this gUIView is associated
 		component = comp;
 	}
 
@@ -127,7 +127,7 @@ public class SwingView extends View {
 	/**
 	 * This method should be called by the UI 'paint component' method to get the latest generated buffered image
 	 * In background, the back buffer is being built.
-	 * The 'paint component' method is triggered by the renderView() method that is called by render engine when view is computed.
+	 * The 'paint component' method is triggered by the renderView() method that is called by render engine when gUIView is computed.
 	 * @return the Front Buffer image
 	 */
 	public BufferedImage getImageView() {
@@ -180,15 +180,17 @@ public class SwingView extends View {
 	}
 
 	@Override
-	public void initView(View map) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public Color getPixel(int x, int y) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	// Caution : MapView should be normalized (using the appropriate method) before the call
+	public void initView(MapView map) {
+		
+		//TODO implement the creation of the backbuffer with a normalized MapView
+		//backbuffer
 	}
 
 }

@@ -29,7 +29,7 @@ public class Test1 {
 		// Add 1 single element to this World, all vertices and triangles will report to this element
 		element = world.createElement();
 
-		// Separately, create the point of view: a Camera
+		// Separately, create the point of gUIView: a Camera
 		Camera cam = new Camera();
 
 	}

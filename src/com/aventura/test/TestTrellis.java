@@ -17,7 +17,7 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -49,17 +49,17 @@ import com.aventura.view.View;
 
 public class TestTrellis {
 	
-	// Create the view to be displayed
+	// Create the gUIView to be displayed
 	private SwingView view;
 	
-	public View createView(GraphicContext context) {
+	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Trellis");
 		// Set the size of the frame
 		frame.setSize(1010,630);
 		
-		// Create the view to be displayed
+		// Create the gUIView to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -124,9 +124,9 @@ public class TestTrellis {
 		//context.computePerspective();
 		System.out.println(context);
 		
-		View view = test.createView(context);
+		GUIView gUIView = test.createView(context);
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
-		renderer.setView(view);
+		renderer.setView(gUIView);
 		renderer.render();
 		
 	}

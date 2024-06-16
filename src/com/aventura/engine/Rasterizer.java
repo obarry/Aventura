@@ -14,7 +14,7 @@ import com.aventura.model.world.shape.Segment;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.color.ColorTools;
 import com.aventura.tools.tracing.Tracer;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -43,7 +43,7 @@ import com.aventura.view.View;
  * 
  * This class provides rasterization services to the RenderEngine.
  * It takes charge of all the algorithms to produce pixels from triangles.
- * It requires access to the View in order to draw pixels.
+ * It requires access to the GUIView in order to draw pixels.
  * zBuffer is managed here.
  * It also behaves according to the provided parameters e.g. in the GraphicContext
  * 
@@ -57,7 +57,7 @@ public class Rasterizer {
 	
 	// References
 	protected GraphicContext graphic;
-	protected View view;
+	protected GUIView gUIView;
 	protected Lighting lighting;
 	protected Camera camera;
 	
@@ -66,15 +66,17 @@ public class Rasterizer {
 	private static Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
 	
 	// Z buffer
-	private float[][] zBuffer;
-	int zBuf_width, zBuf_height;
-	private float zBuffer_init = 0;
-	
+	private float[][] zBuffer = null;
+	int zBuf_width, zBuf_height;	
 	
 	// Pixel statistics
 	int rendered_pixels = 0;
 	int discarded_pixels = 0;
 	int not_rendered_pixels = 0;
+	
+	// Create locally some context variables exhaustively used during rasterization
+	int pixelHalfWidth = 0;
+	int pixelHalfHeight = 0;
 	
 	/**
 	 * Creation of Rasterizer without Lighting for tests.
@@ -82,6 +84,8 @@ public class Rasterizer {
 	 */
 	public Rasterizer(GraphicContext graphic) {
 		this.graphic = graphic;
+		pixelHalfWidth = graphic.getPixelHalfWidth();
+		pixelHalfHeight = graphic.getPixelHalfHeight();
 	}
 
 	/**
@@ -92,10 +96,12 @@ public class Rasterizer {
 		this.camera = camera;
 		this.graphic = graphic;
 		this.lighting = lighting;
+		pixelHalfWidth = graphic.getPixelHalfWidth();
+		pixelHalfHeight = graphic.getPixelHalfHeight();
 	}
 	
-	public void setView(View v) {
-		this.view = v;
+	public void setView(GUIView v) {
+		this.gUIView = v;
 	}
 	
 	/**
@@ -104,16 +110,19 @@ public class Rasterizer {
 	 */
 	public void initZBuffer() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());
-		zBuffer_init = graphic.getPerspective().getFar();
+		
+		// zBuffer is initialized with far value of the perspective
+		float zBuffer_init = graphic.getPerspective().getFar();
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "zBuffer init value: "+zBuffer_init);
 		
-		zBuf_width = 2*graphic.getPixelHalfWidth()+1;
-		zBuf_height = 2*graphic.getPixelHalfHeight()+1;
-		zBuffer = new float[zBuf_width][zBuf_height];
+		zBuf_width = 2*pixelHalfWidth+1;
+		zBuf_height = 2*pixelHalfHeight+1;
 		
-		// Initialization loop with initialization value ( 1 or -1 in homogeneous coordinates ?) that is the farest value for the view Frustum
-		// Any value closer will be drawn and the zBuffer in this place will be updated by new value
+		// Only create buffer if needed, otherwise reuse it, it will be reinitialized below
+		if (zBuffer == null) zBuffer = new float[zBuf_width][zBuf_height];
 
+		// Initialization loop with initialization value ( 1 or -1 in homogeneous coordinates ?) that is the farest value for the gUIView Frustum
+		// Any value closer will be drawn and the zBuffer in this place will be updated by new value
 		for (int i=0; i<zBuf_width; i++)  {
 			for (int j=0; j<zBuf_height; j++) {
 				zBuffer[i][j] = zBuffer_init;
@@ -127,30 +136,22 @@ public class Rasterizer {
 	
 	protected float xScreen(Vertex v) {
 		//return xScreen(v.getProjPos());
-		return v.getProjPos().get3DX()*graphic.getPixelHalfWidth();
+		return v.getProjPos().get3DX()*pixelHalfWidth;
 	}
 	
 	protected float yScreen(Vertex v) {
 		//return yScreen(v.getProjPos());
-		return v.getProjPos().get3DY()*graphic.getPixelHalfHeight();
+		return v.getProjPos().get3DY()*pixelHalfHeight;
 	}
 	
-//	protected float xScreen(Vector4 v) {
-//		return v.get3DX()*graphic.getPixelHalfWidth();
-//	}
-//	
-//	protected float yScreen(Vector4 v) {
-//		return v.get3DY()*graphic.getPixelHalfHeight();
-//	}
-	
 	// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
-	protected int getXzBuf(int x) {
-		return x + graphic.getPixelHalfWidth();
+	protected  int getXzBuf(int x) {
+		return x + pixelHalfWidth;
 	}
 
 	// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
 	protected int getYzBuf(int y) {
-		return y + graphic.getPixelHalfHeight();
+		return y + pixelHalfHeight;
 	}
 	
 	//
@@ -163,7 +164,7 @@ public class Rasterizer {
 	
 	public void drawTriangleLines(Triangle t, Color c) {
 		
-		view.setColor(c);
+		gUIView.setColor(c);
 		drawLine(t.getV1(), t.getV2());
 		drawLine(t.getV2(), t.getV3());
 		drawLine(t.getV3(), t.getV1());
@@ -185,12 +186,12 @@ public class Rasterizer {
 		x2 = (int)(xScreen(v2));
 		y2 = (int)(yScreen(v2));
 
-		view.drawLine(x1, y1, x2, y2);
+		gUIView.drawLine(x1, y1, x2, y2);
 	}
 
 	public void drawLine(Vertex v1, Vertex v2, Color c) {
 
-		view.setColor(c);
+		gUIView.setColor(c);
 		drawLine(v1, v2);
 	}
 	
@@ -541,7 +542,7 @@ public class Rasterizer {
 		// drawing a line from left (sx) to right (ex) 
 		for (int x = sx; x < ex; x++) {
 
-			// Eliminate pixels outside the view screen
+			// Eliminate pixels outside the gUIView screen
 			if (isInScreenX(x) && isInScreenY(y)) {
 				// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
 				int x_zBuf = getXzBuf(x);
@@ -556,7 +557,7 @@ public class Rasterizer {
 					float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
 					//float z=Tools.interpolate(z1,z2,gradient); // Used for debugging Orthographic projection
 
-					// zBuffer elimination at ealiest stage of computation (as soon as we know z)
+					// zBuffer elimination at earliest stage of computation (as soon as we know z)
 					if (z>zBuffer[getXzBuf(x)][getYzBuf(y)]) { // Discard pixel
 						discarded_pixels++;
 
@@ -678,11 +679,11 @@ public class Rasterizer {
 	 * @param c Color of the pixel
 	 */
 	protected void drawPoint(int x, int y, float z, Color c) {
-		// Eliminate pixels outside the view screen is done before calling this method for optimization
+		// Eliminate pixels outside the gUIView screen is done before calling this method for optimization
 		// So at this stage we only render pixel and update the zBuffer
 
-		// Draw pixel in the View
-		view.drawPixel(x,y,c);
+		// Draw pixel in the GUIView
+		gUIView.drawPixel(x,y,c);
 
 		// Update zBuffer of this pixel to the new z
 		zBuffer[getXzBuf(x)][getYzBuf(y)] = z;
@@ -692,12 +693,12 @@ public class Rasterizer {
 	}
 
 	protected boolean isInScreenX(int x) {
-		if (Math.abs(x)>graphic.getPixelHalfWidth()) return false;
+		if (Math.abs(x)>pixelHalfWidth) return false;
 		return true;
 	}
 
 	protected boolean isInScreenY(int y) {
-		if (Math.abs(y)>graphic.getPixelHalfHeight()) return false;
+		if (Math.abs(y)>pixelHalfHeight) return false;
 		return true;
 	}
 	
@@ -875,7 +876,7 @@ public class Rasterizer {
 	}
 
 	protected void allume_pixel(int x, int y) {
-		view.drawPixel(x, y);
+		gUIView.drawPixel(x, y);
 	}
 	
 	//

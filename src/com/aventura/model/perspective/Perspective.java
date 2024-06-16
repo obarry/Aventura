@@ -32,11 +32,11 @@ import com.aventura.math.projection.Projection;
  * 
  *     X (or Y)
  *        ^                       +
- *        |     View          -   |
+ *        |     GUIView          -   |
  *        |     Plane     -       |
  *        | (top)     -           |
  *        | right +               |   ^
- *        |   -   |    View       |   |  width
+ *        |   -   |    GUIView       |   |  width
  * Camera +-------+---------------+---+--------------------------> -Z
  *            -   |   Frustum     |   | (height)
  *          left  +               |   v
@@ -48,13 +48,13 @@ import com.aventura.math.projection.Projection;
  *        <-------><-------------->
  *          dist        depth
  * 
- * The view is defined by:
+ * The gUIView is defined by:
  *    width  = right - left
  *    height = top - bottom
  *    depth  = far - near
  *    dist   = near - 0
  *  
- * Assuming a symetric view (bottom = -top and left = -right) centered on the origin 
+ * Assuming a symetric gUIView (bottom = -top and left = -right) centered on the origin 
  *    top    = height/2
  *    bottom = -height/2
  *    right  = width/2

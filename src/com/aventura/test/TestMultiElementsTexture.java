@@ -33,7 +33,7 @@ import com.aventura.model.world.shape.Pyramid;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -65,17 +65,17 @@ import com.aventura.view.View;
 
 public class TestMultiElementsTexture {
 	
-	// View to be displayed
+	// GUIView to be displayed
 	private SwingView view;
 	
-	public View createView(GraphicContext context) {
+	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Multi Elements with Texture");
 		// Set the size of the frame
 		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
-		// Create the view to be displayed
+		// Create the gUIView to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -221,7 +221,7 @@ public class TestMultiElementsTexture {
 		Lighting lighting = new Lighting(dl, al, true);
 
 		GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
-		View view = test.createView(context);
+		GUIView gUIView = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
@@ -229,7 +229,7 @@ public class TestMultiElementsTexture {
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
-		renderer.setView(view);
+		renderer.setView(gUIView);
 		renderer.render();
 		
 		System.out.println("********* Rendering...");

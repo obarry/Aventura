@@ -23,7 +23,7 @@ import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Pyramid;
 import com.aventura.view.SwingView;
-import com.aventura.view.View;
+import com.aventura.view.GUIView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -55,17 +55,17 @@ import com.aventura.view.View;
 
 public class TestPyramidTextureAndColor {
 	
-	// View to be displayed
+	// GUIView to be displayed
 	private SwingView view;
 
-	public View createView(GraphicContext context) {
+	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Pyramid with Texture and Color");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
-		// Create the view to be displayed
+		// Create the gUIView to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -158,7 +158,7 @@ public class TestPyramidTextureAndColor {
 		Lighting light = new Lighting(dl, al, false);
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		View view = test.createView(gContext);
+		GUIView gUIView = test.createView(gContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
@@ -166,7 +166,7 @@ public class TestPyramidTextureAndColor {
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
-		renderer.setView(view);
+		renderer.setView(gUIView);
 		renderer.render();
 
 		System.out.println("********* Rendering...");
