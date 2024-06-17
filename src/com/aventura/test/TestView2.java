@@ -12,6 +12,7 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.view.MapView;
 
 /**
 * ------------------------------------------------------------------------------ 
@@ -38,10 +39,10 @@ import com.aventura.view.GUIView;
 * SOFTWARE.
 * ------------------------------------------------------------------------------
 * 
-* This class is a Test class to test the GUIView
+* This class is a Test class to test the MapView
 */
 
-public class TestView {
+public class TestView2 {
 	
 	// Create the gUIView to be displayed
 	private SwingView view;
@@ -82,54 +83,22 @@ public class TestView {
 		
 	public static void main(String[] args) {
 		
-		TestView test = new TestView();
-
-		GUIView gUIView = test.createView(GraphicContext.GRAPHIC_DEFAULT);
-
-		for (int i=0; i<20; i++) {
-
-			// Test of the gUIView
-			gUIView.initView();
-			gUIView.setColor(Color.WHITE);
-			gUIView.drawLine(-250, -100, 250, 100);
-			gUIView.drawLine(-250, 100, 250, -100);
-			gUIView.setColor(Color.RED);
-			gUIView.drawLine(-250, 0, 250, 0);
-			gUIView.setColor(Color.BLUE);
-			gUIView.drawLine(0, -100, 0, 100);
-			gUIView.setColor(Color.YELLOW);
-			gUIView.drawLine(-250, 50, 250, 75);
-			gUIView.drawLine(-250, -50, 250, -25);
-			gUIView.renderView();
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			// Test of the gUIView
-			gUIView.initView();
-			gUIView.setColor(Color.GREEN);
-			gUIView.drawLine(-250, -100, 250, 100);
-			gUIView.drawLine(-250, 100, 250, -100);
-			gUIView.setColor(Color.WHITE);
-			gUIView.drawLine(-250, 0, 250, 0);
-			gUIView.setColor(Color.BLUE);
-			gUIView.drawLine(0, -100, 0, 100);
-			gUIView.setColor(Color.CYAN);
-			gUIView.drawLine(50, -100, 75, 100);
-			gUIView.drawLine(-50, -100, -25, 100);
-			gUIView.renderView();
-			//test.frame.repaint();
-			
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		TestView2 test = new TestView2();
+		
+		int size_x = 750;
+		int size_y = 450;
+		
+		MapView mapView = new MapView(size_x,size_y);
+		for (int i=0; i<mapView.getViewWidth(); i++) {
+			for (int j=0; j<mapView.getViewHeight(); j++) {
+				mapView.set(i, j, (float)Math.random()*i*j/(size_x*size_y));
 			}
 		}
 
+		GUIView gUIView = test.createView(GraphicContext.GRAPHIC_DEFAULT);
+		gUIView.initView(mapView);
+		gUIView.renderView();
+		
 	}
 
 }

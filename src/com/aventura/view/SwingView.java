@@ -188,9 +188,20 @@ public class SwingView extends GUIView {
 	// Caution : MapView should be normalized (using the appropriate method) before the call
 	public void initView(MapView map) {
 		
+		// Initialize the back buffer
+		backbuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
+		backgraph = (Graphics2D)backbuffer.getGraphics();
+		// Fill image with background color pixels
+        backgraph.setColor(backgroundColor);
+        backgraph.fillRect(backbuffer.getMinX(), backbuffer.getMinY(), backbuffer.getWidth(), backbuffer.getHeight());
+
+        // Translate origin of the graphic
+		backgraph.translate(width/2, height/2);
+
+		// Fill the back buffer with the content of the map view
 		// Take the min size of either the map or this view in width and height. That means that if map is larger than view, it will be cropped
-		int minX = map.width < backbuffer.getWidth() ? map.width : backbuffer.getWidth();
-		int minY = map.height < backbuffer.getHeight() ? map.height : backbuffer.getHeight();
+		int minX = map.width < this.width ? map.width : this.width;
+		int minY = map.height < this.height ? map.height : this.height;
 
 		// Loop on x and y on the window defined by the 2 mins
 		for (int x=0; x<minX; x++ ) {
