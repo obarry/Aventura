@@ -1,15 +1,16 @@
 package com.aventura.model.light;
 
-import com.aventura.context.GraphicContext;
 import com.aventura.engine.ModelView;
 import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.Triangle;
+import com.aventura.view.MapView;
 
 
 /**
@@ -66,7 +67,7 @@ public abstract class ShadowingLight extends Light {
 	protected Vector4 frustumCenter;
 	
 	// Shadow map
-	protected float[][] map; // TODO multiple maps if multiple lights (actually this is already a ShadowingLight attribute so if multiple light there will be multiple maps)
+	protected MapView map; // TODO multiple maps if multiple lights (actually this is already a ShadowingLight attribute so if multiple light there will be multiple maps)
 	// TODO to be replaced by MapView class ?
 	
 	// Default constructor
@@ -74,9 +75,9 @@ public abstract class ShadowingLight extends Light {
 		// Nothing to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
 	}
 	
-	public abstract void initShadowing(GraphicContext graphicContext, Camera camera_view, int map_size);
+	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size);
 	
-	public void calculateCameraLight(GraphicContext graphicContext, Camera camera_view, Vector3 lightDirection) {
+	public void calculateCameraLight(Perspective perspective, Camera camera_view, Vector3 lightDirection) {
 		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the gUIView frustrum
 		
 		// For this calculate the 8 points of the GUIView frustum in World coordinates
@@ -94,15 +95,15 @@ public abstract class ShadowingLight extends Light {
 		// TODO strange to get Near and Far from graphicContext and Up from Camera_view. Clean-up required ?
 
 		// - The distance to the near plane
-		float near = graphicContext.getPerspective().getNear();
+		float near = perspective.getNear();
 		// - The distance to the far plane
-		float far = graphicContext.getPerspective().getFar();
+		float far = perspective.getFar();
 		// - The up vector and side vectors
 		Vector4 up = camera_view.getUp();
 		Vector4 side = fwd.times(up).normalize();
 		// - the half width and half eight of the near plane
-		float half_eight_near = graphicContext.getPerspective().getHeight()/2;
-		float half_width_near = graphicContext.getPerspective().getWidth()/2;
+		float half_eight_near = perspective.getHeight()/2;
+		float half_width_near = perspective.getWidth()/2;
 		
 		// - the half width and half eight of the far plane
 		// Calculate the width and height on far plane using Thales: knowing that width and height are defined on the near plane
@@ -216,7 +217,11 @@ public abstract class ShadowingLight extends Light {
 	}
 	
 	public float getMap(int x, int y) {
-		return map[x][y];
+		return map.get(x, y);
+	}
+	
+	public MapView getMap() {
+		return map;
 	}
 
 }

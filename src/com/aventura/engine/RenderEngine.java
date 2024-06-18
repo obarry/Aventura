@@ -215,7 +215,7 @@ public class RenderEngine {
 			// TODO: loop on all Lights (all ShadowingLight, not only the DirectionalLight)
 			
 			// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
-			lighting.getDirectionalLight().initShadowing(graphicContext, camera, gUIView.getViewWidth());
+			lighting.getDirectionalLight().initShadowing(graphicContext.getPerspective(), camera, gUIView.getViewWidth());
 			
 			// Generate the shadow map
 			lighting.getDirectionalLight().generateShadowMap(world); // need to recurse on each Element

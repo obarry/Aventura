@@ -2,12 +2,13 @@ package com.aventura.model.light;
 
 import java.awt.Color;
 
-import com.aventura.context.GraphicContext;
 import com.aventura.engine.ModelView;
 import com.aventura.math.projection.Orthographic;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
+import com.aventura.view.MapView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -114,12 +115,12 @@ public class DirectionalLight extends ShadowingLight {
 	}
 
 	@Override
-	public void initShadowing(GraphicContext graphicContext, Camera camera_view, int map_size) {
+	public void initShadowing(Perspective perspective, Camera camera_view, int map_size) {
 		// TODO Auto-generated method stub
 		
-		map = new float[map_size][map_size]; // TODO to be replaced by MapView ?
+		map = new MapView(map_size, map_size);
 		
-		calculateCameraLight(graphicContext, camera_view, direction);
+		calculateCameraLight(perspective, camera_view, direction);
 		
 		/*
 		 * Mat4 viewMatrix = LookAt(lighting.mCameraPosition,
