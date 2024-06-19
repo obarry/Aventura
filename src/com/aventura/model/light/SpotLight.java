@@ -2,10 +2,10 @@ package com.aventura.model.light;
 
 import java.awt.Color;
 
-import com.aventura.context.GraphicContext;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
 
 
 /**
@@ -93,7 +93,7 @@ public class SpotLight extends ShadowingLight {
 	}
 
 	@Override
-	public void initShadowing(GraphicContext graphicContext, Camera camera_view, int map_size) {
+	public void initShadowing(Perspective perspective, Camera camera_view, int map_size) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -49,23 +49,30 @@ import com.aventura.view.GUIView;
  * 
  * 
  * This class is the core rendering engine of the Aventura API
- * It provides the renderContext method
- * It needs to be initialized with proper:
- * - The world information
- * - A camera
- * - Some lighting
- * - some display and graphics (called GUIView)
- * - The 2 API contexts allowing to define all parameters before calling API methods
- * 		* a render context to provide information on how to render the world
- * 		* a graphic context to provide information on how to display the gUIView
+ * Once all is initialized it provides the render() method to render the scene
+ * The following needs to be initialized properly before rendering :
+ * - A world needs to be built, made of Elements possibly hierarchically, with a transformation (rotation, translation, scaling) link together
+ *   or simply positioned separately. Each Element is made of Triangles but several pre-built Elements are provided by the API.
+ *   Some Texture can be applied on Elements and Color can be set at different levels (Element, Triangle, etc.), once set, the lowest level primes
+ *   (e.g. if color is set at Triangle level, it supersedes the color defined at Element level). Colors and Textures will mix together at rendering time.
+ * - A camera positioned in the World to capture the scene
+ * - The lighting of the scene made of one or several Light of different types (Directional, Spot or Point light)
+ * - The shadowing system to eventually 
+ * - The ViewPort, with display and graphics capabilities (called GUIView) that can be adapted to different GUIs (so far only Java SWING is supported)
+ * - 2 Contexts allowing to define all parameters before calling API methodsand passed to the API before rendering. These contexts can be pre-built and
+ *   allow to render the same World differently e.g. with more or less time-consuming capabilities (texture, shading, shaodwing etc.) or different
+ *   Geometry (projection, view frustum, etc.) :
+ * 		* a Graphic or Geometry Context to provide information on how to show the world in the gUIView (perspective and projection, frustum, etc.)
+ * 		* a Render Context to provide information on how to render the world (Rasterization), including activation/deactivation of shading, shadowing,
+ *        textures, etc.
  * 
  * 
- *                   				   				    	  				          +---------------------+					
- *                	 				  				    	  + - - - - - - - - - - ->|   GraphicContext    |<------+
- *     						                   		    	  | 			          +---------------------+		|
- *															  |										^				|
- *															  |			+---------------------+		|				|
- *     +---------------------+								  +-------->|    RenderContext    |		|				|
+ *     +---------------------+		   				    	  				          +---------------------+					
+ *     |     Perspective     | <------+-----------------------+ - - - - - - - - - - ->|   GraphicContext    |<------+
+ *     +---------------------+        |        		    	  | 			          +---------------------+		|
+ *									  |						  |										^				|
+ *									  |						  |			+---------------------+		|				|
+ *     +---------------------+		  |						  +-------->|    RenderContext    |		|				|
  *     |        World        | <------+						  |			+---------------------+		|				|
  *     +---------------------+        |						  |			 		     |				|				|
  *                					  |						  |			+---------------------+		|				|
@@ -73,7 +80,7 @@ import com.aventura.view.GUIView;
  *     +---------------------+		  |						  |			+---------------------+		         |		|
  *     |      Lighting       | <------+						  |											     v		|
  *     +---------------------+		  |		+---------------------+										 +---------------------+
- *                ^                   |-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        GUIView         |
+ *                ^                   |-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        GUIView      |
  *                |          		  |		+---------------------+ 									 +---------------------+
  *                |                   |                |
  *     			  |			          |        		   v		
@@ -81,8 +88,8 @@ import com.aventura.view.GUIView;
  *     |       Camera        | <------+-----|      ModelView      |
  *	   +---------------------+		    	+---------------------+
  *
- *          	 Model								 Engine						Context(s)							 GUIView
- *			com.aventura.model					com.aventura.engine			com.aventura.context				com.aventura.view
+ *          	 Model								 Engine						Context(s)						 GUIView
+ *			com.aventura.model					com.aventura.engine			com.aventura.context			com.aventura.view
  * 
  * @author Olivier BARRY
  * @since May 2016
