@@ -97,7 +97,7 @@ import com.aventura.view.GUIView;
 
 public class RenderEngine {
 	
-	// Context's parameters
+	// API Contexts
 	private RenderContext renderContext;
 	private GraphicContext graphicContext;
 
@@ -350,53 +350,60 @@ public class RenderEngine {
 				modelView.transformNormal(t);
 			}
 			
-			if (backfaceCulling && isBackFace(t)) {
-
-				// Do not renderContext this triangle
-				// Count Triangles stats (out gUIView frustum)
-				nbt_bf++;
-				nbt_out++;
-			
-			} else { // Default case
-
-				switch (renderContext.renderingType) {
-				case RenderContext.RENDERING_TYPE_LINE:
-					rasterizer.drawTriangleLines(t, color);
-					break;
-				case RenderContext.RENDERING_TYPE_MONOCHROME:
-					//TODO To be implemented
-					//TODO To be renamed into NO_SHADING ?
-					// Render faces with only face (or default) color + plain lines to show the faces
-					// No shading
-					break;
-				case RenderContext.RENDERING_TYPE_PLAIN:
-					// Draw triangles with shading full face, no interpolation.
-					// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-					rasterizer.rasterizeTriangle(t, color,0, null, false, false, renderContext.shadowing == 1 ? true : false);
-					break;
-				case RenderContext.RENDERING_TYPE_INTERPOLATE:
-					// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-					if (renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED) {
-						rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false);
-					} else { // No Texture
-						rasterizer.rasterizeTriangle(t, color, se, sc, true, false, renderContext.shadowing == 1 ? true : false);
-					}
-					break;
-				default:
-					// Invalid rendering type
-					break;
-				}
-				
-				if (renderContext.renderingLines == RenderContext.RENDERING_LINES_ENABLED && renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
-					rasterizer.drawTriangleLines(t, color);				
-				}
-
-				// If DISPLAY_NORMALS is activated then renderContext normals
-				if (renderContext.displayNormals == RenderContext.DISPLAY_NORMALS_ENABLED) {
-					displayNormalVectors(t);
-				}
-				// Count Triangles stats (in gUIView)
+			// If RENDERING_TYPE_LINE then no backface culling
+			if (renderContext.renderingType == RenderContext.RENDERING_TYPE_LINE) {
+				rasterizer.drawTriangleLines(t, color);
 				nbt_in++;
+
+			} else {
+
+				// Let's immediately get rid of non visible faces (back faced triangles)
+				if (backfaceCulling && isBackFace(t)) {
+
+					// Do not renderContext this triangle
+					// Count Triangles stats (out gUIView frustum)
+					nbt_bf++;
+					nbt_out++;
+
+				} else { // Generic case
+
+					switch (renderContext.renderingType) {
+					case RenderContext.RENDERING_TYPE_MONOCHROME:
+						//TODO To be implemented
+						//TODO To be renamed into NO_SHADING ?
+						// Render faces with only face (or default) color + plain lines to show the faces
+						// No shading
+						break;
+					case RenderContext.RENDERING_TYPE_PLAIN:
+						// Draw triangles with shading full face, no interpolation.
+						// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
+						rasterizer.rasterizeTriangle(t, color,0, null, false, false, renderContext.shadowing == 1 ? true : false);
+						break;
+					case RenderContext.RENDERING_TYPE_INTERPOLATE:
+						// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
+						if (renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED) {
+							rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false);
+						} else { // No Texture
+							rasterizer.rasterizeTriangle(t, color, se, sc, true, false, renderContext.shadowing == 1 ? true : false);
+						}
+						break;
+					default:
+						// Invalid rendering type
+						break;
+					}
+
+					// Superimpose lines when enabled in the previous modes
+					if (renderContext.renderingLines == RenderContext.RENDERING_LINES_ENABLED && renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
+						rasterizer.drawTriangleLines(t, color);				
+					}
+
+					// If DISPLAY_NORMALS is activated then renderContext normals
+					if (renderContext.displayNormals == RenderContext.DISPLAY_NORMALS_ENABLED) {
+						displayNormalVectors(t);
+					}
+					// Count Triangles stats (in gUIView)
+					nbt_in++;
+				}
 			}
 
 		} else {

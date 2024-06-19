@@ -1,4 +1,4 @@
-package com.aventura.test;
+package com.aventura.demo;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -68,13 +68,14 @@ import com.aventura.view.GUIView;
  * @author obarry
  *
  */
-public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener, ActionListener {
+public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener, ActionListener {
 	
-	// Frame
+	// GUI Frame and Menus
 	JFrame frame;
-	JMenu menu, smenu;
-	JMenuItem e1, e2, e3, e4, e5, e6;
+	JMenu menu1, menu2;
+	JMenuItem m1e1, m1e2, m2e1, m2e2, m2e3;
 	boolean texture_menu = false;
+	boolean shading_menu = true;
 
 	// Camera
 	Vector4 eye;
@@ -117,37 +118,37 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
 	public GUIView createView(GraphicContext context) {
 		
 		// Create the frame of the application 
-		frame = new JFrame("Test Fractal generated Treillis");
+		frame = new JFrame("Fractal Landscape");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
+		// Create Menus and associate the menu items to appropriate listeners
 	    JMenuBar menubar = new JMenuBar();
-	    // Créer le menu
-	    menu = new JMenu("Run");
-	    // Créer le sous menu
-	    //smenu = new JMenu("Sous Menu");
-	    // Créer les éléments du menu et sous menu
-	    e1 = new JMenuItem("Generate");
-	    e1.addActionListener(this);
-	    e2 = new JMenuItem("Texture on");
-	    e2.addActionListener(this);
-	    //e3 = new JMenuItem("Element 3");
-	    //e4 = new JMenuItem("Element 4");
-	    //e5 = new JMenuItem("Element 5");
-	    //e6 = new JMenuItem("Element 6");
-	    // Ajouter les éléments au menu
-	    menu.add(e1); 
-	    menu.add(e2); 
-	    //menu.add(e3);
-	    // Ajouter les éléments au sous menu
-	    //smenu.add(e4); 
-	    //smenu.add(e5);
-	    //smenu.add(e6);
-	    // Ajouter le sous menu au menu principale
-	    //menu.add(smenu);
-	    // Ajouter le menu au barre de menu
-	    menubar.add(menu);
-	    // Ajouter la barre de menu au frame
+	    
+	    // Create menu1
+	    menu1 = new JMenu("Run");
+	    m1e1 = new JMenuItem("Generate");
+	    m1e1.addActionListener(this);
+	    m1e2 = new JMenuItem("Texture off");
+	    m1e2.addActionListener(this);
+	    menu1.add(m1e1); 
+	    menu1.add(m1e2); 
+	    menubar.add(menu1);
+	    
+	    // Create menu2
+	    menu2 = new JMenu("Rendering");
+	    m2e1 = new JMenuItem("Lines off");
+	    m2e1.addActionListener(this);
+	    m2e2 = new JMenuItem("Plain off");
+	    m2e2.addActionListener(this);
+	    m2e3 = new JMenuItem("Shading on");
+	    m2e3.addActionListener(this);
+	    menu2.add(m2e1);
+	    menu2.add(m2e2);
+	    menu2.add(m2e3);
+	    menubar.add(menu2);
+
+	    // Add menu bar to the frame
 	    frame.setJMenuBar(menubar);
 
 		
@@ -252,8 +253,7 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
 
-		if (e.getSource() == e1) {
-			//System.out.println("Meu Generate clicked");
+		if (e.getSource() == m1e1) { // Generate
 			createLandscape(array_land, size, n);
 			try {
 				tre.updateTrellis(array_land);
@@ -261,25 +261,52 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
 				// TODO Auto-generated catch block
 				exc.printStackTrace();
 			}
-			//updateVertexColorTrellis();
 			world.update();
 			System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles()+" Number of vertices: " + tre.getNbVertices());
 			updateTrianglesColorTrellis();
 			renderer.render();
-		} else if (e.getSource() == e2) {
-
-			if (texture_menu) {
-				rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_DISABLED);
-				renderer.render();
-				e2.setText("Texture on");
-				texture_menu = false;
+		} else if (e.getSource() == m1e2) { // Texture on/off (toggle)
+			
+			if (shading_menu) {
+				if (texture_menu) {
+					rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_DISABLED);
+					renderer.render();
+					m1e2.setText("Texture off");
+					texture_menu = false;
+				} else {
+					rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+					renderer.render();
+					m1e2.setText("Texture on");
+					texture_menu = true;
+				}
 			} else {
-				rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-				renderer.render();
-				e2.setText("Texture off");
-				texture_menu = true;
+				// no action
 			}
-
+		} else if (e.getSource() == m2e1) { // Rendering lines
+			rContext.setRenderingType(RenderContext.RENDERING_TYPE_LINE);
+			renderer.render();
+			m2e1.setText("Lines on");
+			m2e2.setText("Plain off");
+			m2e3.setText("Shading off");
+			m1e2.setEnabled(false);
+			shading_menu = false;
+		} else if (e.getSource() == m2e2) { // Rendering Plain
+			rContext.setRenderingType(RenderContext.RENDERING_TYPE_PLAIN);
+			renderer.render();
+			m2e1.setText("Lines off");
+			m2e2.setText("Plain on");
+			m2e3.setText("Shading off");
+			m1e2.setEnabled(false);
+			shading_menu = false;
+			
+		} else if (e.getSource() == m2e3) { // Rendering Shading
+			rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
+			renderer.render();
+			m2e1.setText("Lines off");
+			m2e2.setText("Plain off");
+			m2e3.setText("Shading on");
+			m1e2.setEnabled(true);
+			shading_menu = true;
 		} else {
 			System.out.println("Other Action Event : "+e);			
 		}
@@ -469,7 +496,7 @@ public class TestTreillisFractal_MouseMoving implements MouseListener, MouseMoti
 	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
-		TestTreillisFractal_MouseMoving fractal = new TestTreillisFractal_MouseMoving();
+		FractalLandscape_MouseMoving fractal = new FractalLandscape_MouseMoving();
 		fractal.run();
 		System.out.println("********* APPLICATION is RUNNING *********");
 	}
