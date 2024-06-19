@@ -94,7 +94,7 @@ public class TestAventura11 {
 		World world = new World();
 		Element e1, e2, e3;
 		
-		// e1 and e2  elements
+		// m1e1 and m1e2  elements
 		e1 = new Sphere(1.5f,12);
 		e1.setColor(Color.MAGENTA);
 		e2 = new Cube(2);
@@ -102,7 +102,7 @@ public class TestAventura11 {
 		e3 = new Trellis(3, 2, 5, 4);
 		e3.setColor(Color.DARK_GRAY);
 
-		// Translate Elements e1 and e2 respectively above and below main Element e:
+		// Translate Elements m1e1 and m1e2 respectively above and below main Element e:
 		Translation t1 = new Translation(new Vector3(0, 0, 2));
 		Translation t2 = new Translation(new Vector3(0, 0, -2));
 		//Rotation r3 = new Rotation(Math.PI/4,Vector3.X_AXIS);

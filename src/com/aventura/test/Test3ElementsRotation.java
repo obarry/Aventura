@@ -119,13 +119,13 @@ public class Test3ElementsRotation {
 		// e is the main Element
 		e = new Cylinder(2,0.5f,32);
 		e.setColor(Color.CYAN);
-		// e1 and e2 will be sub elements
+		// m1e1 and m1e2 will be sub elements
 		e1 = new Cone(2,1,32);
 		e1.setColor(Color.MAGENTA);
 		e2 = new Cube(2);
 		e2.setColor(Color.ORANGE);
 
-		// Translate Elements e1 and e2 respectively above and below main Element e:
+		// Translate Elements m1e1 and m1e2 respectively above and below main Element e:
 		Translation t1 = new Translation(new Vector3(0, 0, 2));
 		Translation t2 = new Translation(new Vector3(0, 0, -2));
 		e1.setTransformation(t1);
