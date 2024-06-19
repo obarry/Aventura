@@ -97,7 +97,7 @@ import com.aventura.view.GUIView;
 
 public class RenderEngine {
 	
-	// Context's parameters
+	// API Contexts
 	private RenderContext renderContext;
 	private GraphicContext graphicContext;
 
