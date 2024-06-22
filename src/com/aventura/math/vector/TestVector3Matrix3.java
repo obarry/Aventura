@@ -10,8 +10,8 @@ public class TestVector3Matrix3 {
 	public void testVectorMatrix_MatrixTimesVector() {
 		System.out.println("***** Test Vector3Matrix3 : testMatrixTimesVector *****");
 		
-		double[] array1 = new double[3];
-		double[][] array2 = new double[3][3];
+		float[] array1 = new float[3];
+		float[][] array2 = new float[3][3];
 		
 		for (int i=0; i<3; i++) {
 			array1[i] = i+1;
@@ -45,8 +45,6 @@ public class TestVector3Matrix3 {
 			
 		} catch (VectorArrayWrongSizeException e) {
 			fail("Vector V1 array is out of bound");
-		} catch (MatrixArrayWrongSizeException e) {
-		fail("Matrix3 A array is out of bound");
 		} catch (IndiceOutOfBoundException e) {
 			fail("V2 indice out of bound");		
 		}
@@ -56,7 +54,7 @@ public class TestVector3Matrix3 {
 	public void testVectorMatrix_MatrixGetVector() {
 		System.out.println("***** Test Vector3Matrix3 : testMatrixGetVector *****");
 		
-		double[][] array = new double[3][3];
+		float[][] array = new float[3][3];
 		
 		for (int i=0; i<3; i++) {
 			for (int j=0; j<3; j++) {
@@ -83,8 +81,6 @@ public class TestVector3Matrix3 {
 			System.out.println("V2="+V2);
 			if (!(V2.get(0) == 3.0 && V2.get(1) == 4.0 && V2.get(2) == 5.0)) fail("V2 does not equals to third column");
 			
-		} catch (MatrixArrayWrongSizeException e) {
-		fail("Matrix3 A array is out of bound");
 		} catch (IndiceOutOfBoundException e) {
 			fail("V2 indice out of bound");		
 		}

@@ -1,12 +1,12 @@
 package com.aventura.math.vector;
 
-import com.aventura.math.Constants;
+import com.aventura.math.tools.MathTools;
 
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,15 +33,15 @@ import com.aventura.math.Constants;
 **/
 public class Vector2 {
 	
-	protected double x;
-	protected double y;
+	protected float x;
+	protected float y;
 	
 	public Vector2() {
 		this.x = 0;
 		this.y = 0;
 	}
 	
-	public Vector2(double x, double y) {
+	public Vector2(float x, float y) {
 		this.x = x;
 		this.y = y;
 	}
@@ -52,33 +52,41 @@ public class Vector2 {
 	}
 
 	
-	public double getX() {
+	public float getX() {
 		return this.x;
 	}
 	
-	public double getY() {
+	public float getY() {
 		return this.y;
 	}
 	
-	public void setX(double x) {
+	public void setX(float x) {
 		this.x = x;
 	}
 	
-	public void setY(double y) {
+	public void setY(float y) {
 		this.y = y;
 	}
 	
-	public double length() {
-		return Math.sqrt(x*x+y*y);
+	public float length() {
+		return (float)Math.sqrt(x*x+y*y);
 	}
 	
-	public double dot(Vector2 w) {
+	public float dot(Vector2 w) {
 		return x*w.x+y*w.y;
 	}
 	
-	public void times(double d) {
+	public void timesEquals(float d) {
 		this.x = x*d;
 		this.y = y*d;
+	}
+	
+	public Vector2 times(float d) {
+		Vector2 r = new Vector2();
+		r.x = this.x*d;
+		r.y = this.y*d;
+
+		return r;
 	}
 	
 	public Vector2 equals() {
@@ -87,7 +95,16 @@ public class Vector2 {
 	}
 	
 	public static boolean equals(Vector2 v1, Vector2 v2) {
-		if (v1.x == v2.x && v1.y == v2.y)  return true; else return false;
+		return MathTools.equals(v1.x , v2.x) && MathTools.equals(v1.y , v2.y);
+	}
+	
+	/**
+	 * Vector2 addition V=V+W. This Vector2 (V) is modified and contains the result of the operation.
+	 * @param w the Vector2 to be added to this Vector2
+	 */
+	public void plusEquals(Vector2 w) {
+		this.x+=w.x;
+		this.y+=w.y;
 	}
 	
 	/**
@@ -100,7 +117,16 @@ public class Vector2 {
 		Vector2 s = new Vector2(x+w.x, y+w.y);
 		return s;
 	}
-	
+
+	/**
+	 * Vector2 subtraction V=V-W. This Vector2 (V) is modified and contains the result of the operation.
+	 * @param w the Vector2 to be subtracted to this Vector3
+	 */
+	public void minusEquals(Vector2 w) {
+		this.x-=w.x;
+		this.y-=w.y;
+	}
+
 	/**
 	 * return difference of V = this vector - W the provided vector
 	 * 
@@ -114,7 +140,7 @@ public class Vector2 {
 	
 	
 	public void normalize() {
-		double length = this.length();
+		float length = this.length();
 		this.x = x/length;
 		this.y = y/length;
 	}

@@ -4,12 +4,14 @@ import java.awt.Color;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
 
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +40,7 @@ import com.aventura.math.vector.Vector4;
  * 
  */
 
-public class PointLight extends Light {
+public class PointLight extends ShadowingLight {
 
 	@Override
 	public Vector3 getLightVector(Vector4 point) {
@@ -56,6 +58,42 @@ public class PointLight extends Light {
 	public Color getLightColor(Vector4 point) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void setLightVector(Vector3 light) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setIntensity(float intensity) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setLightColor(Color c) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Vector3 getLightNormalizedVector(Vector4 point) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setLightNormalizedVector(Vector3 light) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void initShadowing(Perspective perspective, Camera camera_view, int map_size) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

@@ -12,7 +12,7 @@ public class TestTranslation {
 
 	@Test
 	public void testTranslationVector3() {
-		System.out.println("***** Test Rotation : testTranslationVector3 *****");
+		System.out.println("***** Test Translation : testTranslationVector3 *****");
 		Vector3 v = new Vector3(1,2,3);
 		System.out.println("Vector v="+v);
 		Translation t = new Translation(v);
@@ -22,7 +22,7 @@ public class TestTranslation {
 	
 	@Test
 	public void testTranslationAddition() {
-		System.out.println("***** Test Rotation : testTranslationAddition *****");
+		System.out.println("***** Test Translation : testTranslationAddition *****");
 		Vector3 v1 = new Vector3(1,2,3);
 		System.out.println("Vector v1="+v1);
 		Vector3 v2 = new Vector3(3,2,1);

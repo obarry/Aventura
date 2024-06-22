@@ -4,7 +4,7 @@ package com.aventura.model.light;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,36 +30,39 @@ package com.aventura.model.light;
  * 
  */
 
-
 public class Lighting {
 	
 	protected AmbientLight ambient;
+	// Future evolution is to have multiple directional lights (and still 1 ambient light)
 	protected DirectionalLight directional;
-	//protected ArrayList<Light> directional; // There can be multiple sources of light
-	// TODO To clarify if an average vector makes sense by addition of different Vectors which can neutralize each others instead of cumulating
-//	protected Vector3 averageDirectionalLightVector = null;
+	// In case of multiple lights, the notion of specular reflection may be associated to each directional light (+ 1 general flag to activate/deactivate specular reflection)
+	protected boolean specularLight = false; // Default is no specular reflection
 	
 	public Lighting() {
-//		directional = new ArrayList<Light>();
 	}
 	
 	public Lighting(DirectionalLight directional) {
 		this.directional = directional;
-//		this.directional.add(directional);
-//		if (directional.getClass() == DirectionalLight.class) {
-//			// No matter the point, this is the same Vector
-//			averageDirectionalLightVector = directional.getLightVector(null).getVector3();
-//		}
+	}
+	
+	public Lighting(AmbientLight ambient) {
+		this.ambient = ambient;
 	}
 	
 	public Lighting(DirectionalLight directional, AmbientLight ambient) {
 		this.ambient = ambient;
 		this.directional = directional;
-//		this.directional.add(directional);
-//		if (directional.getClass() == DirectionalLight.class) {
-//			// No matter the point, this is the same Vector
-//			averageDirectionalLightVector = directional.getLightVector(null).getVector3();
-//		}
+	}
+	
+	public Lighting(DirectionalLight directional, boolean specularLight) {
+		this.directional = directional;
+		this.specularLight = specularLight;
+	}
+	
+	public Lighting(DirectionalLight directional, AmbientLight ambient, boolean specularLight) {
+		this.ambient = ambient;
+		this.directional = directional;
+		this.specularLight = specularLight;
 	}
 	
 	public boolean hasAmbient() {
@@ -70,44 +73,24 @@ public class Lighting {
 		return directional!=null ? true : false;
 	}
 	
-//	public void addLight(Light light) {
-//		directional.add(light);
-//		int n=0;
-//		Vector4 v = null;
-//		for (int i=0; i<directional.size(); i++) {
-//			if (directional.get(i).getClass() == DirectionalLight.class) {
-//				// No matter the point, this is the same Vector
-//				if (v==null) {
-//					v = new Vector4(directional.get(i).getLightVector(null));
-//				} else { 
-//					v.plusEquals(directional.get(i).getLightVector(null));
-//				}
-//				n++;
-//			}
-//		}
-//		// Average -> divide by number of vectors
-//		// TODO Should we divide?
-//		averageDirectionalLightVector = v.times(1/(double)n).getVector3();
-//	}
-	
-//	public Vector4[] getLightVectors(Vector4 point) {
-//		// Create a table of vector that is the result of all directional at this point
-//		Vector4[] lightVectors = new Vector4[directional.size()];
-//		for (int i=0; i<directional.size(); i++) {
-//				lightVectors[i]=directional.get(i).getLightVector(point);
-//		}
-//		return lightVectors;
-//	}
-	
-//	public Vector3 getAverageDirectionalLightVector() {
-//		return averageDirectionalLightVector;
-//	}
-	
+	public boolean hasSpecular() {
+		return specularLight;
+	}
+		
 	public AmbientLight getAmbientLight() {
 		return ambient;
+	}
+	
+	public void setAmbientLight(AmbientLight ambient) {
+		this.ambient = ambient;
 	}
 
 	public DirectionalLight getDirectionalLight() {
 		return directional;
 	}
+	
+	public void setDirectionalLight(DirectionalLight directional) {
+		this.directional = directional;
+	}
+	
 }

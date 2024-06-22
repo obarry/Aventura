@@ -7,7 +7,7 @@ import com.aventura.tools.tracing.Tracer;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ public class Scaling extends Matrix4 {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Scaling matrix:\n");
 	}
 	
-	public Scaling(double s) {
+	public Scaling(float s) {
 		super(Matrix4.IDENTITY);
 		this.array[0][0] = s;
 		this.array[1][1] = s;
@@ -50,7 +50,7 @@ public class Scaling extends Matrix4 {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Scaling matrix with parameter (s="+s+"):\n");
 	}
 
-	public Scaling(double a, double b, double c) {
+	public Scaling(float a, float b, float c) {
 		super(Matrix4.IDENTITY);
 		this.array[0][0] = a;
 		this.array[1][1] = b;

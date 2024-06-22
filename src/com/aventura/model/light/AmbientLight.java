@@ -10,7 +10,7 @@ import com.aventura.tools.color.ColorTools;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +62,34 @@ public class AmbientLight extends Light {
 	public Color getLightColor(Vector4 point) {
 		// TODO Auto-generated method stub
 		return ColorTools.multColor(lightColor, intensity);
+	}
+
+	@Override
+	public void setLightVector(Vector3 light) {
+		// No vector for Ambient light nothing to do
+		
+	}
+
+	@Override
+	public void setIntensity(float intensity) {
+		this.intensity = intensity;
+	}
+
+	@Override
+	public void setLightColor(Color c) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Vector3 getLightNormalizedVector(Vector4 point) {
+		// No direction by definition of Ambient Light
+		return new Vector3(Vector3.ZERO_VECTOR);
+	}
+
+	@Override
+	public void setLightNormalizedVector(Vector3 light) {
+		// No vector for Ambient light nothing to do		
 	}
 
 }

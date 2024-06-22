@@ -10,7 +10,7 @@ import com.aventura.math.vector.Vector3;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -58,6 +58,47 @@ public class Translation extends Matrix4 {
 	 */
 	public Translation(Vector4 v) {
 		super(Matrix4.IDENTITY);
+		createTranslation(v);
+	}
+	
+	/**
+	 * Creates a Translation Matrix from a Vector3
+	 * @param v the translation Vector
+	 */
+	public Translation(Vector3 v) {
+		super(Matrix4.IDENTITY);
+		createTranslation(v);
+	}
+	
+	/**
+	 * Creates a Translation Matrix from a direction (Vector4) and length
+	 * The last coordinate (w) of a Vector4 is ignored; hence if this is a Point (w=1) it is simply ignored and
+	 * considered as a Vector.
+	 * @param v the direction Vector
+	 * @param l the length
+	 */
+	public Translation(Vector4 direction, float length) {
+		super(Matrix4.IDENTITY);
+		Vector3 v = new Vector3(direction);
+		v.normalize();
+		v.timesEquals(length);
+		createTranslation(v);
+	}
+	
+	/**
+	 * Creates a Translation Matrix from a direction (Vector3) and length
+	 * @param v the direction Vector
+	 * @param l the length
+	 */
+	public Translation(Vector3 direction, float length) {
+		super(Matrix4.IDENTITY);
+		Vector3 v = new Vector3(direction);
+		v.normalize();
+		v.timesEquals(length);
+		createTranslation(v);
+	}
+	
+	protected void createTranslation(Vector4 v) {
 		try {
 			this.set(0, 3, v.getX());
 			this.set(1, 3, v.getY());
@@ -68,13 +109,8 @@ public class Translation extends Matrix4 {
 			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			
 		}
 	}
-	
-	/**
-	 * Creates a Translation Matrix from a Vector3
-	 * @param v the translation Vector
-	 */
-	public Translation(Vector3 v) {
-		super(Matrix4.IDENTITY);
+
+	protected void createTranslation(Vector3 v) {
 		try {
 			this.set(0, 3, v.getX());
 			this.set(1, 3, v.getY());
@@ -85,5 +121,6 @@ public class Translation extends Matrix4 {
 			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			
 		}
 	}
+
 	
 }

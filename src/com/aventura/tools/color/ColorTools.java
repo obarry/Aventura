@@ -8,7 +8,7 @@ import com.aventura.math.vector.Tools;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -116,7 +116,7 @@ public class ColorTools {
 	 * Addition of several Colors.
 	 * 
 	 * @param ctab an array containing a set of Colors to be added
-	 * @return a newly created Color that is the results of the addition of all Colors passed in array
+	 * @return a newly created Color that is the result of the addition of all Colors passed in array
 	 */
 	public static Color addColors(Color[] ctab) {
 
@@ -137,7 +137,7 @@ public class ColorTools {
 	 * Multiplication of several Colors.
 	 * 
 	 * @param ctab n array containing a set of Colors to be multiplied
-	 * @return a newly created Color that is the results of the multiplication of all Colors passed in array
+	 * @return a newly created Color that is the result of the multiplication of all Colors passed in array
 	 */
 	public static Color multColors(Color[] ctab) {
 		float r = 0;
@@ -191,6 +191,61 @@ public class ColorTools {
 		} else {
 			return c;
 		}
+	}
+	
+	/**
+	 * Calculate one Color by filtering linearly in 2 directions/axis with respective ratios
+	 * This requires 4 Color samples (2 on each directions/axis).
+	 * This is generally used for interpolating Color in a Texture plane
+	 * 
+	 * @param z11 First color sample on axis 1 (generally X)
+	 * @param z12 Second color sample on axis 1 (generally X)
+	 * @param z21 First color sample on axis 2 (generally Y)
+	 * @param z22 Second color sample on axis 2 (generally Y)
+	 * @param u_ratio Ratio of the first position on first axis (second position ratio is 1-u_ratio)
+	 * @param v_ratio Ratio of the first position on second axis (second position ratio is 1-v_ratio)
+	 * @return the interpolated Bi-linear filtered Color
+	 */
+	public static Color getBilinearFilteredColor(Color z11, Color z12, Color z21, Color z22, float u_ratio, float v_ratio) {
+		
+		// Components of the interpolated Color to calculate
+		float r, g, b;
+		
+		// Get components of each provided Colors
+		float[] z11_array = z11.getRGBColorComponents(null); 
+		float[] z12_array = z12.getRGBColorComponents(null); 
+		float[] z21_array = z21.getRGBColorComponents(null); 
+		float[] z22_array = z22.getRGBColorComponents(null);
+		
+		// Calculate interpolation of each component
+		r = getBilinearFilteredComponent(z11_array[0], z12_array[0], z21_array[0], z22_array[0], u_ratio, v_ratio);
+		g = getBilinearFilteredComponent(z11_array[1], z12_array[1], z21_array[1], z22_array[1], u_ratio, v_ratio);
+		b = getBilinearFilteredComponent(z11_array[2], z12_array[2], z21_array[2], z22_array[2], u_ratio, v_ratio);
+
+		// Combine components to create the new Color
+		return new Color(r, g, b);
+	}
+	
+	/**
+	 * Calculate one Bilinear filtered Color component
+	 * 
+	 * @param z11 First color sample on axis 1 (generally X)
+	 * @param z12 Second color sample on axis 1 (generally X)
+	 * @param z21 First color sample on axis 2 (generally Y)
+	 * @param z22 Second color sample on axis 2 (generally Y)
+	 * @param u_ratio Ratio of the first position on first axis (second position ratio is 1-u_ratio)
+	 * @param v_ratio Ratio of the first position on second axis (second position ratio is 1-v_ratio)
+	 * @return the interpolated Bi-linear filtered component
+	 */
+	protected static float getBilinearFilteredComponent(float z11, float z12, float z21, float z22, float u_ratio, float v_ratio) {
+		
+		float u_opposite = 1 - u_ratio;
+		float v_opposite = 1 - v_ratio;
+
+		// Calculate the interpolated value as per algorithm: f(x,y) = (1 - {x})((1 - {y})z11 + {y}z12) + {x}((1 - {y})z21 + {y}z22)
+		// https://en.wikipedia.org/wiki/Bilinear_filtering
+		float result = (z11*u_opposite+z21*u_ratio)*v_opposite+(z12*u_opposite+z22*u_ratio)*v_ratio;
+		return result;
 	}
 
 }

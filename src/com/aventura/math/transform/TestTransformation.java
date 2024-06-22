@@ -28,11 +28,11 @@ public class TestTransformation {
 	public void testTransformEquals() {
 		System.out.println("***** Test Transformation : testTransformEquals *****");
 		
-		Rotation r1 = new Rotation(Math.PI/3, Vector3.X_AXIS); 
+		Rotation r1 = new Rotation((float)Math.PI/3, Vector3.X_AXIS); 
 		System.out.println("Rotation: "+r1);
 		
 		
-		Vector3 v_translation = new Vector3(1.0, -1.0, 2.0);
+		Vector3 v_translation = new Vector3(1.0f, -1.0f, 2.0f);
 		Translation t1 = new Translation(v_translation);
 		System.out.println("Translation: "+t1);
 		
@@ -40,7 +40,7 @@ public class TestTransformation {
 		System.out.println("Scaling: "+h1);
 		
 		Transformation t = null; // TBD		
-		Vector4 v1 = new Vector4(1.0, -1.0, 1.0, 0.0);		
+		Vector4 v1 = new Vector4(1.0f, -1.0f, 1.0f, 0.0f);		
 		System.out.println("Vector v1: "+v1);
 
 		t = new Transformation(h1, r1, t1);
