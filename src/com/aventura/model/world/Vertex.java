@@ -7,7 +7,7 @@ import com.aventura.math.vector.*;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,18 +35,36 @@ import com.aventura.math.vector.*;
  */
 public class Vertex {
 	
-	// Geometry
+	//
+	// Static characteristics: Geometry and Physical characteristic
+	//
+	
+	// Original Geometry
 	protected Vector4 position = null; // Coordinates of the Vertex. Vector4 as this is a Point (not vector only) in space.
 	protected Vector3 normal = null; // Normal of this Vertex, this is context specific and can be kept null if normal at Triangle level
 	
 	// Physical characteristic
-	protected Vector2 texture = null; // Relative position of this Vertex in the texture plane
 	protected Color color = null; // color of this Vertex, if null the Element's color (or World's color) is used. Lowest level priority.
-	protected int material; // To be defined, a specific class may be needed for a complex material representation
-	
+	// TODO Material
+	//protected int material; // To be defined, a specific class may be needed for a complex material representation
+
 	// Reflectivity
 	// TODO
 		
+	//
+	// Dynamic characteristics: Projection and Shading
+	//
+	
+	// Projected or calculated Geometry
+	protected Vector4 wld_position = null; // Position of this Vertex in World reference (Model to World projection)
+	protected Vector4 prj_position = null; // Position of this Vertex in Homogeneous (clip) coordinates (Model to Clip projection)
+	protected Vector3 wld_normal = null; // Normal in World coordinates
+	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates - Not used - Removed 1/1/2022 - restored 11/7/2023
+	
+	// Lighting and Shading
+	protected Color shadedCol = null; // Gouraud's shading at this Vertex, calculated at Rasterization time
+	protected Color specularCol = null; // Gouraud's specular reflection at this Vertex, calculated at Rasterization time
+	
 	/**
 	 * Duplicate a Vertex, creating new Vectors for position and normal but keeping references for texture and color
 	 * @param v the Vertex to duplicate
@@ -54,13 +72,15 @@ public class Vertex {
 	public Vertex(Vertex v) {
 		this.position = (v.position != null) ? new Vector4(v.position) : null;
 		this.normal = (v.normal != null) ? new Vector3(v.normal) : null;
-		this.texture = v.texture;
 		this.color = v.getColor();
-		this.material = v.material;
+		//this.material = v.material; TODO
 	}
 	
+	public Vertex() {
+		// Empty Vertex to be used for generation of rectangleMesh of vertices
+	}
 	
-	public Vertex(double x, double y, double z) {
+	public Vertex(float x, float y, float z) {
 		position = new Vector4(x, y, z, 1);
 	}
 		
@@ -81,29 +101,62 @@ public class Vertex {
 
 	public Vertex(Vector4 p, Vector4 n) {
 		position = p;
-		normal = n.getVector3();
+		normal = n.V3();
 	}
 
 	public String toString() {
 		return "Position: "+position;
 	}
 	
-	public void setPosition(Vector4 p) {
+	public void setPos(Vector4 p) {
 		position = p;
 	}
 	
-	public Vector4 getPosition() {
+	public Vector4 getPos() {
 		return position;
+	}
+	
+	public void setWorldPos(Vector4 p) {
+		wld_position = p;
+	}
+	
+	public Vector4 getWorldPos() {
+		return wld_position;
+	}
+	
+	public void setProjPos(Vector4 p) {
+		prj_position = p;
+	}
+	
+	public Vector4 getProjPos() {
+		return prj_position;
+	}
+	
+	public void setNormal(Vector3 n) {
+		normal = n;
 	}
 	
 	public Vector3 getNormal() {
 		return normal;
 	}
-	
-	public Vector4 getNormalV4() {
-		return new Vector4(normal);
+		
+	public void setWorldNormal(Vector3 n) {
+		wld_normal = n;
 	}
 	
+	public Vector3 getWorldNormal() {
+		return wld_normal;
+	}
+	
+	// Not used - Removed 1/1/2022
+	// restored 11/7/2023
+	public void setProjNormal(Vector3 n) {
+		prj_normal = n;
+	}
+	public Vector3 getProjNormal() {
+		return prj_normal;
+	}
+			
 	public void setColor(Color c) {
 		this.color = c;
 	}
@@ -112,6 +165,22 @@ public class Vertex {
 		return color;
 	}
 	
+	public void setShadedCol(Color c) {
+		this.shadedCol = c;
+	}
+	
+	public Color getShadedCol() {
+		return shadedCol;
+	}
+		
+	public Color getSpecularCol() {
+		return specularCol;
+	}
+
+	public void setSpecularCol(Color specularCol) {
+		this.specularCol = specularCol;
+	}
+
 	/**
 	 * Calculate the normal from a set of vertices surrounding this Vertex
 	 * @param setOfVertices
@@ -123,9 +192,25 @@ public class Vertex {
 			// TODO
 		}
 	}
-
-	public void setNormal(Vector3 n) {
-		normal = n;
+	
+	/**
+	 * Is true if the Vertex is in the GUIView Frustum in homogeneous coordinates
+	 * Assumes that the Vertex projection is done
+	 * @return true if Vertex is inside the GUIView Frustum, else false
+	 */
+	public boolean isInViewFrustum() {
+		
+		// Get homogeneous coordinates of the Vertex
+		float x = prj_position.get3DX();
+		float y = prj_position.get3DY();
+		float z = prj_position.get3DZ();
+		
+		// Need all (homogeneous) coordinates to be within range [-1, 1]
+		if ((x<=1 && x>=-1) && (y<=1 && y>=-1) && (z<=1 && z>=-1))
+			return true;
+		else
+			return false;
 	}
+
 
 }

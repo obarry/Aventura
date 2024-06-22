@@ -1,18 +1,20 @@
 package com.aventura.engine;
 
+import com.aventura.math.vector.Matrix3;
 import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.NotInvertibleMatrixException;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Segment;
-import com.aventura.model.world.Triangle;
 import com.aventura.model.world.Vertex;
+import com.aventura.model.world.shape.Element;
+import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +35,7 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * This class represents and manages the transformations from model to view.
+ * This class represents and manages the transformations from model to gUIView.
  * 
  * Interesting explanations on this transformation can be found here:
  * http://www.opengl-tutorial.org/fr/beginners-tutorials/tutorial-3-matrices/
@@ -48,7 +50,7 @@ import com.aventura.tools.tracing.Tracer;
  *     |  World Coordinates  |
  *     +---------------------+
  *                |
- *                |   [View Matrix] 4x4 Transformation Matrix -> to transform the world into the camera coordinates
+ *                |   [GUIView Matrix] 4x4 Transformation Matrix -> to transform the world into the camera coordinates
  *                v
  *     +----------------------+
  *     |  Camera Coordinates  |
@@ -70,7 +72,7 @@ import com.aventura.tools.tracing.Tracer;
  *  
  *  The complete transformation, from model to homogeneous coordinates, is done through the following formula:
  *  
- *  	TransformedVector = [Projection Matrix] * [View Matrix] * [Model Matrix] * OriginalVector
+ *  	TransformedVector = [Projection Matrix] * [GUIView Matrix] * [Model Matrix] * OriginalVector
  *  
  *  Note that the Model Matrix is provided by the model itself.
  *  In Aventura model, it is at Element level and it may require to be multiplied recursively if the model contains sub-elements.
@@ -82,12 +84,15 @@ import com.aventura.tools.tracing.Tracer;
  */
 public class ModelView {
 	
-	Matrix4 projection;
-	Matrix4 view;
-	Matrix4 model;
+	// Transformation matrices
+	Matrix4 projection = null;
+	Matrix4 view = null;
+	Matrix4 model = null;
+	Matrix4 model_normals = null;
 	
 	// This matrix is the result of the multiplication of all Matrices
-	Matrix4 transformation;
+	Matrix4 full = null;
+	Matrix4 full_normals = null; // restored 11/7/2023
 	
 	/**
 	 * Default constructor.
@@ -101,16 +106,15 @@ public class ModelView {
 	 * Generally the Camera Matrix and Projection Matrix do not change over time in static mode.
 	 * So we can safely create a ModelView object with these 2 matrices at initialization.
 	 * If one of these matrices change over time, the corresponding set methods should then be used. 
-	 * @param view the Camera Matrix4
+	 * @param gUIView the Camera Matrix4
 	 * @param projection the Matrix4 to transform into homogeneous coordinates
 	 */
 	public ModelView(Matrix4 view, Matrix4 projection) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ModelView(view, projection)");
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ModelView(gUIView, projection)");
 		this.view = view;
 		this.projection = projection;
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "View matrix:\n"+ view);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "GUIView matrix:\n"+ view);
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Projection matrix:\n"+ projection);
-		
 	}
 	
 	/**
@@ -122,11 +126,19 @@ public class ModelView {
 	}
 	
 	/**
-	 * Set the Camera transformation aka View Matrix to transform from World to Camera coordinates 
-	 * @param view the Camera Matrix4
+	 * Set the Camera transformation Matrix aka GUIView Matrix to transform from World to Camera coordinates 
+	 * @param gUIView the Camera
 	 */
 	public void setView(Matrix4 view) {
 		this.view = view;
+	}
+	
+	/**
+	 * Get the "GUIView" transformation Matrix and Eye related information 
+	 * @return the Camera
+	 */
+	public Matrix4 getView() {
+		return this.view;
 	}
 	
 	/**
@@ -135,128 +147,153 @@ public class ModelView {
 	 */
 	public void setModel(Matrix4 model) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModel(model)");
+		// Vertices Model matrix
 		this.model = model;
+		
+		// Normals Model matrix :
+		// Use the Model matrix for orthogonal transformation (orthogonal transformations preserve lengths of vectors and angles between them)
+		// Use the inverse transpose matrix in case of non orthogonal transformation (e.g. non uniform scaling)
+		// Test of orthogonal transformation only need Matrix3 (not full Matrix 4 / homogeneous coordinate)
+		Matrix3 model3 = model.getMatrix3();
+		
+		// To test if the transformation Matrix is orthogonal, we can use the test Transpose(A).A = I (Identity Matrix) else it is not.
+		// Rounding errors in the calculation requires comparison with a margin of tolerance (Epsilon). Surprisingly the experience shows that 1.0E-4 is the lowest epsilon
+		if (model3.times(model3.transpose()).equals(Matrix3.IDENTITY)) {
+			// No need to compute the inverse Matrix in this case, the transformation is orthogonal
+			model_normals = model;
+			if (Tracer.info) Tracer.traceInfo(this.getClass(),"Model normals matrix = Model matrix !!!");
+		} else {
+			try {
+				model_normals = model.transpose().inverse();
+			} catch (NotInvertibleMatrixException e) {
+				// Should never happen but just in case use the model Matrix for normals transformation in this case
+				model_normals = model;
+				// And log the stack trace
+				e.printStackTrace();
+				if (Tracer.info) Tracer.traceInfo(this.getClass(),"Error in matrix inversion !!!");
+			}
+		}
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Matrix:\n"+ model);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Normals Matrix:\n"+ model_normals);
 	}
 		
 	/**
+	 * Set the model Matrix to transform from Model (Element in Aventura) coordinates into World coordinates
+	 * @param model the Model Matrix4
+	 */
+	public void setModelWithoutNormals(Matrix4 model) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModelWithoutNormals(model)");
+		// Vertices Model matrix
+		this.model = model;
+		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Matrix:\n"+ model);
+	}
+	/**
 	 *  The complete transformation, from model to homogeneous coordinates, is done through the following formula:
-	 * TransformedVector = [Projection Matrix] * [View Matrix] * [Model Matrix] * OriginalVector
+	 * TransformedVector = [Projection Matrix] * [GUIView Matrix] * [Model Matrix] * OriginalVector
 	 */
 	public void computeTransformation() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
-		transformation = projection.times(view.times(model));
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ transformation);
-	}
-	
-	/**
-	 * Return a new Segment containing (new) projected vertices
-	 * Relies on the transform method transforming vertices
-	 * 
-	 * @param l the Segment to transform
-	 * @return the new Segment
-	 */
-	public Segment modelToClip(Segment l) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform line: "+l);
+		full = projection.times(view.times(model));
 		
-		Segment transformed = new Segment();
-		
-		transformed.setV1(modelToClip(l.getV1()));
-		transformed.setV2(modelToClip(l.getV2()));
-		
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed line: "+ transformed);
-		
-		return transformed;
-	}
-	
-	/**
-	 * Return a new triangle containing (new) projected vertices
-	 * Relies on the transform method transforming vertices
-	 * 
-	 * @param t the triangle to transform
-	 * @return the new triangle
-	 */
-	public Triangle modelToClip(Triangle t) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "transform triangle: "+t);
-		
-		Triangle transformed = new Triangle();
-		
-		transformed.setV1(modelToClip(t.getV1()));
-		transformed.setV2(modelToClip(t.getV2()));
-		transformed.setV3(modelToClip(t.getV3()));
-		//if (t.getNormal()!=null) transformed.setNormal(transform(t.getNormal()));
-
-		
-		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "transformed triangle: "+ transformed);
-		
-		return transformed;
-	}
-	
-	/**
-	 * Return a new Vertex resulting from the ModelView transformation ("projection") of the provided Vertex
-	 * Do not modify the provided Vertex.
-	 * 
-	 * @param v the provided Vertex (left unchanged)
-	 * @return the new projected Vertex
-	 */
-	public Vertex modelToClip(Vertex v) {
-		// Create a new Vertex having its Vector4 position set to the resulting of the transformation of the provided Vertex's 
-		// Vector4 position by the transformation Matrix
-		Vertex transformed = new Vertex(transformation.times(v.getPosition()));
-		// Return the newly created Vertex (hence preserve the original Vertex of the Element)
-		return transformed;
-	}
-	
-	/**
-	 * Return a new Vector4 resulting from the ModelView transformation ("projection") of the provided Vector4
-	 * TransformedVector = [4x4 Transformation Matrix] * OriginalVector
-	 * 
-	 * @param v the Vector4 to be transformed 
-	 * @return a newly created Vector4 resulting from the transformation
-	 */
-	public Vector4 modelToClip(Vector4 v) {
-		return transformation.times(v);
-	}
-	
-	/**
-	 * Return a new Vector3 resulting from the ModelView transformation ("projection") of the provided Vector3
-	 * This methods calls the Vector4 transform(Vector4 v) methods
-	 * 
-	 * Caution: this method relies on Matrix4 / Vector4 computation hence creates new intermediate objects.
-	 * It is less effective in terms of performance and memory usage than the Vector4 transform method.
-	 * 
-	 * @param v the Vector3 to be transformed 
-	 * @return a newly created Vector3 resulting from the transformation
-	 */
-	public Vector3 modelToClip(Vector3 v) {
-		Vector4 v4 = v.getVector4();
-		return modelToClip(v4).getVector3();
-	}
-	
-	
-	public Triangle modelToWorld(Triangle t){
-		Triangle transformed = new Triangle(t);
-		
-		transformed.setV1(modelToWorld(t.getV1()));
-		transformed.setV2(modelToWorld(t.getV2()));
-		transformed.setV3(modelToWorld(t.getV3()));
-		if (t.getNormal() != null) {
-			transformed.setNormal(model.times(t.getNormal().getVector4()));
+		// Do not compute the transformation for normals if model_normals not initialized (not required e.g. shadow map calculation)
+		// restored 11/7/2023
+		if (model_normals != null) { 
+			full_normals = projection.times(view.times(model_normals));
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation normal matrix:\n"+ full_normals);
 		}
-		return transformed;
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation matrix:\n"+ full);
 	}
 	
-	public Vertex modelToWorld(Vertex v) {
-		Vertex transformed;
+	/**
+	 * Fully compute Vertex projections resulting from the ModelView transformation for both ModelToWorld and ModelToClip projections
+	 * Complete the provided Vertex with projection data but do not modify original position data
+	 * Calculate the normal projection (Vertex normal) taking care of using the normals Model matrix (in case of non uniform scaling)
+	 * and not the standard Model matrix.
+	 * 
+	 * @param v the provided Vertex
+	 */
+	public void transform(Vertex v) {
+		v.setProjPos(full.times(v.getPos()));
+		v.setWorldPos(model.times(v.getPos()));
 		if (v.getNormal() != null) {
-			transformed = new Vertex(model.times(v.getPosition()), model.times(v.getNormalV4()));
-		} else {
-			transformed = new Vertex(model.times(v.getPosition()));
+			v.setProjNormal(full_normals.times(v.getNormal().V4()).V3()); // Not used - Removed 1/1/2022 - restored 11/7/2023 
+			v.setWorldNormal(model_normals.times(v.getNormal().V4()).V3());
 		}
-		// Return the newly created Vertex (hence preserve the original Vertex of the Element)
-		return transformed;
 	}
 	
-
-
+	/**
+	 * Fully compute Vertex projections resulting from the ModelView transformation for both ModelToWorld and ModelToClip projections
+	 * Complete the provided Vertex with projection data but do not modify original position data
+	 * Calculate the normal projection (Vertex normal) taking care of using the normals Model matrix (in case of non uniform scaling)
+	 * and not the standard Model matrix.
+	 * 
+	 * @param v the provided Vertex
+	 */
+	public void transformWithoutNormals(Vertex v) {
+		v.setProjPos(full.times(v.getPos()));
+		v.setWorldPos(model.times(v.getPos())); // TBC if required for Shadow map and shadow casting calculation
+	}
+	
+	/**
+	 * Project Vertex using the projection resulting from the ModelView transformation for ModelToClip projection (full)
+	 * Return the resulting Vector4 without updating the Vertex (does not update Vertex's projection fields)
+	 * 
+	 * @param v the provided Vertex
+	 * @return the projected Vector4 without Vertex transformation
+	 */
+	public Vector4 project(Vertex v) {
+		return full.times(v.getPos());
+	}
+	
+	/**
+	 * Transform all vertices of an Element
+	 * 
+	 * @param e the Element
+	 */
+	public void transformVertices(Element e) {
+		for (int i=0; i<e.getNbVertices(); i++) {
+			transform(e.getVertex(i));
+		}
+	}
+	
+	/**
+	 * Transform all vertices of an Element without normal calculation (shadowing)
+	 * 
+	 * @param e the Element
+	 */
+	public void transformVerticesWithoutNormals(Element e) {
+		for (int i=0; i<e.getNbVertices(); i++) {
+			transformWithoutNormals(e.getVertex(i));
+		}
+	}
+	
+	/**
+	 * Transform the normal of a Triangle (in case of usage of Triangle normal instead of Vertex normal)
+	 * @param t
+	 */
+	public void transformNormal(Triangle t) {
+				
+		if (t.getNormal() != null) {
+			// t.setProjNormal(full_normals.times(t.getNormal().V4()).V3()); // restored 11/7/2023
+			t.setWorldNormal(model_normals.times(t.getNormal().V4()).V3());
+		} else {
+			// t.setProjNormal(null); // restored 11/7/2023
+			t.setWorldNormal(null);
+		}
+	}
+	
+	/**
+	 * Transform the normal of a Triangle (in case of usage of Triangle normal instead of Vertex normal)
+	 * @param t the Triangle
+	 * @return the triangle normal as Vector3
+	 */
+	public Vector3 calculateProjNormal(Triangle t) {
+				
+		if (t.getNormal() != null) {
+			return full_normals.times(t.getNormal().V4()).V3();
+		} else {
+			return null;
+		}
+	}
 }

@@ -5,7 +5,7 @@ package com.aventura.math.vector;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,14 +32,11 @@ package com.aventura.math.vector;
  * @since June 2016
  * 
  */
-/**
- * @author Olivier BARRY
- *
- */
+
 public class Tools {
 	
 	/**
-	 * Interpolate 2 Points A and B (or Vectors) with a parameter t (gradient)
+	 * Interpolate 2 Points4 A and B (or Vectors4) with a parameter t (gradient)
 	 * t = 0: returns A
 	 * t = 1: returns B
 	 * 0<t<1: returns the interpolated point between A and B
@@ -49,7 +46,7 @@ public class Tools {
 	 * @param t the interpolation parameter (gradient)
 	 * @return a Vector4 interpolated on the (AB) line
 	 */
-	public static Vector4 interpolate(Vector4 A, Vector4 B, double t) {
+	public static Vector4 interpolate(Vector4 A, Vector4 B, float t) {
 		
 		Vector4 P = new Vector4();
 		
@@ -57,6 +54,47 @@ public class Tools {
 		
 		return P;
 	}
+	
+	/**
+	 * Interpolate 2 Points3 A and B (or Vectors3) with a parameter t (gradient)
+	 * t = 0: returns A
+	 * t = 1: returns B
+	 * 0<t<1: returns the interpolated point between A and B
+	 * t<0 or t>1; returns the interpolated point beyond A or beyond B (on the (AB) line)
+	 * @param A the Vector3 point
+	 * @param B the Vector3 point
+	 * @param t the interpolation parameter (gradient)
+	 * @return a Vector3 interpolated on the (AB) line
+	 */
+	public static Vector3 interpolate(Vector3 A, Vector3 B, float t) {
+		
+		Vector3 P = new Vector3();
+		
+		P = A.times(1-t).plus(B.times(t));
+		
+		return P;
+	}
+	
+	/**
+	 * Interpolate 2 Points2 A and B (or Vectors2) with a parameter t (gradient)
+	 * t = 0: returns A
+	 * t = 1: returns B
+	 * 0<t<1: returns the interpolated point between A and B
+	 * t<0 or t>1; returns the interpolated point beyond A or beyond B (on the (AB) line)
+	 * @param A the Vector2 point
+	 * @param B the Vector2 point
+	 * @param t the interpolation parameter (gradient)
+	 * @return a Vector2 interpolated on the (AB) line
+	 */
+	public static Vector2 interpolate(Vector2 A, Vector2 B, double t) {
+		
+		Vector2 P = new Vector2();
+		
+		P = A.times((float)(1-t)).plus(B.times((float)t));
+		
+		return P;
+	}
+	
 	
 	/** Interpolate a scalar value with a parameter t (gradient) - Double version
 	 * t = 0: returns a
@@ -66,7 +104,7 @@ public class Tools {
 	 * @param a
 	 * @param b
 	 * @param t the gradient
-	 * @return double
+	 * @return float
 	 */
 	public static double interpolate(double a, double b, double t) {
 		return a*(1-t)+b*t;

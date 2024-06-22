@@ -8,7 +8,7 @@ import com.aventura.math.vector.Vector4;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,11 +45,21 @@ public abstract class Light {
 	// Get light vector (or null vector for ambient light) at a given point of world space
 	public abstract Vector3 getLightVector(Vector4 point);
 	
+	public abstract Vector3 getLightNormalizedVector(Vector4 point);
+	
+	public abstract void setLightVector(Vector3 light);
+	
+	public abstract void setLightNormalizedVector(Vector3 light);
+	
 	// Get intensity of light at a given point of world space
 	public abstract float getIntensity(Vector4 point);
+	
+	public abstract void setIntensity(float intensity);
 		
 	// Get color of light
 	public abstract Color getLightColor(Vector4 point);
+	
+	public abstract void setLightColor(Color c);
 
 	// Get color of light
 	public Color getBaseLightColor() {

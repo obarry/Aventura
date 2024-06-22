@@ -1,6 +1,5 @@
 package com.aventura.model.camera;
 
-import com.aventura.math.transform.LookAt;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.tools.tracing.Tracer;
@@ -9,7 +8,7 @@ import com.aventura.tools.tracing.Tracer;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2017 Olivier BARRY
+ * Copyright (c) 2016-2024 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,20 +36,24 @@ import com.aventura.tools.tracing.Tracer;
 
 public class Camera {
 
-	protected LookAt camera;
+	protected LookAt lookAt; // LookAt matrix or camera gUIView matrix
+	protected Vector4 eye; // Eye of the camera, this is a point
+	
 
 	public Camera() {
 		super();
 	}
 
-	public Camera(LookAt la) {
+	public Camera(LookAt la, Vector4 e) {
 		super();
-		camera = la;
+		eye =e;
+		lookAt = la;
 	}
 
-	public Camera(Matrix4 m) {
+	public Camera(Matrix4 m, Vector4 e) {
 		super();
-		camera = new LookAt(m);
+		eye = e;
+		lookAt = new LookAt(m);
 	}
 
 	/**
@@ -64,16 +67,46 @@ public class Camera {
 	public Camera(Vector4 e, Vector4 p, Vector4 u) {
 		super();
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating Camera");
-		camera = new LookAt(e,p,u);
+		eye = e;
+		lookAt = new LookAt(e,p,u);
 	}
 	
 	public void updateCamera(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Updating Camera");
-		camera.createLookAt(e, p, u);
+		eye = e;
+		lookAt.generateLookAt(e, p, u);
 	}
 
 	public Matrix4 getMatrix() {
-		return (Matrix4) camera;
+		return (Matrix4) lookAt;
+	}
+	
+	public Vector4 getEye() {
+		return eye;
+	}
+	
+	/**
+	 * Getter for Up Vector (no setter since it is calculated)
+	 * @return the Up Vector
+	 */
+	public Vector4 getUp() {
+		return lookAt.getUp();
+	}
+
+	/**
+	 * Getter for Side Vector (no setter since it is calculated)
+	 * @return the Side Vector
+	 */
+	public Vector4 getSide() {
+		return lookAt.getSide();
+	}
+
+	/**
+	 * Getter for Forward Vector (no setter since it is calculated)
+	 * @return the Forward Vector
+	 */
+	public Vector4 getForward() {
+		return lookAt.getForward();
 	}
 
 }
