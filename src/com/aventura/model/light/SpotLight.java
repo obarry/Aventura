@@ -36,13 +36,15 @@ import com.aventura.model.perspective.Perspective;
  * Spot Light is similar to Point Light but has a preferred direction of radiation.
  * The intensity of a spot light is attenuated over distance in the same way that it is for a point light
  * and is also attenuated by another factor called the spot light effect.
+ * 
+ * So it inherits from PointLight from an class standpoint
  *
  * @author Olivier BARRY
  * @since July 2016
  * 
  */
 
-public class SpotLight extends ShadowingLight {
+public class SpotLight extends PointLight {
 
 	@Override
 	public Vector3 getLightVector(Vector4 point) {
