@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.aventura.model.world.shape.Element;
 
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -80,16 +81,16 @@ public class Lighting {
 	}
 	
 	public boolean hasAmbient() {
-		return ambient!=null ? true : false;
+		return ambient != null ? true : false;
 	}
 	
 	public boolean hasDirectional() {
-		return directional!=null ? true : false;
+		return directional != null ? true : false;
 	}
 	
 	public boolean hasPoint() {
 		// true if ArrayList is not 0
-		return pointLights.size() != 0;
+		return pointLights != null ? (pointLights.size() > 0 ? true : false) : false;
 	}
 	
 	public boolean hasSpecular() {
@@ -113,6 +114,7 @@ public class Lighting {
 	}
 	
 	public void addPointLight(PointLight pointLight) {
+		if (this.pointLights == null) this.pointLights  = new ArrayList<PointLight>();
 		this.pointLights.add(pointLight);
 	}
 	

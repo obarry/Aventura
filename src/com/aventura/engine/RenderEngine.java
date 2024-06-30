@@ -585,7 +585,7 @@ public class RenderEngine {
 		// Set the Model Matrix to IDENTITY (no translation)
 		modelView.setModel(Matrix4.IDENTITY);
 		modelView.computeTransformation();
-		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVector(null));
+		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVectorAtPoint(null));
 		Vertex o = new Vertex(0,0,0);
 		modelView.transform(v);
 		modelView.transform(o);

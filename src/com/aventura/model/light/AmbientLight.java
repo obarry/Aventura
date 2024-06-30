@@ -47,7 +47,7 @@ public class AmbientLight extends Light {
 	}
 
 	@Override
-	public Vector3 getLightVector(Vector4 point) {
+	public Vector3 getLightVectorAtPoint(Vector4 point) {
 		// No direction by definition of Ambient Light
 		return new Vector3(Vector3.ZERO_VECTOR);
 	}
@@ -59,7 +59,7 @@ public class AmbientLight extends Light {
 	}
 
 	@Override
-	public Color getLightColor(Vector4 point) {
+	public Color getLightColorAtPoint(Vector4 point) {
 		// TODO Auto-generated method stub
 		return ColorTools.multColor(lightColor, intensity);
 	}
@@ -79,17 +79,6 @@ public class AmbientLight extends Light {
 	public void setLightColor(Color c) {
 		// TODO Auto-generated method stub
 		
-	}
-
-	@Override
-	public Vector3 getLightNormalizedVector(Vector4 point) {
-		// No direction by definition of Ambient Light
-		return new Vector3(Vector3.ZERO_VECTOR);
-	}
-
-	@Override
-	public void setLightNormalizedVector(Vector3 light) {
-		// No vector for Ambient light nothing to do		
 	}
 
 }

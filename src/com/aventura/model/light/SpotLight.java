@@ -46,8 +46,13 @@ import com.aventura.model.perspective.Perspective;
 
 public class SpotLight extends PointLight {
 
+	public SpotLight(Vector4 point, float max) {
+		super(point, max);
+		// TODO Auto-generated constructor stub
+	}
+
 	@Override
-	public Vector3 getLightVector(Vector4 point) {
+	public Vector3 getLightVectorAtPoint(Vector4 point) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -59,7 +64,7 @@ public class SpotLight extends PointLight {
 	}
 
 	@Override
-	public Color getLightColor(Vector4 point) {
+	public Color getLightColorAtPoint(Vector4 point) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -78,18 +83,6 @@ public class SpotLight extends PointLight {
 
 	@Override
 	public void setLightColor(Color c) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public Vector3 getLightNormalizedVector(Vector4 point) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setLightNormalizedVector(Vector3 light) {
 		// TODO Auto-generated method stub
 		
 	}

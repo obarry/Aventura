@@ -125,21 +125,24 @@ public class Test3ElementsRotation {
 		e2 = new Cube(2);
 		e2.setColor(Color.ORANGE);
 
-		// Translate Elements m1e1 and m1e2 respectively above and below main Element e:
-		Translation t1 = new Translation(new Vector3(0, 0, 2));
-		Translation t2 = new Translation(new Vector3(0, 0, -2));
-		e1.setTransformation(t1);
-		e2.setTransformation(t2);
 		
 		// Add subelements to Element
 		e.addElement(e1);
 		e.addElement(e2);
-
+		
 		// Add Element to the world
 		world.addElement(e);
 		
 		// Calculate normals
 		world.generate();
+		
+		System.out.println(e);
+		System.out.println(e1);
+		System.out.println(e2);
+		
+//		for (int i=0; i<world.getNbElements(); i++) {
+//			System.out.println(world.getElement(i));
+//		}
 
 		Lighting light = test.createLight();
 		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);

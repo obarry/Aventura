@@ -121,8 +121,11 @@ import com.aventura.model.world.triangle.Triangle;
  */
 public class Element implements Transformable, Shape, Generable {
 	
+	private static int ID = 1; // Single ID to identify any Element. Is incremented.
+	
 	protected static final String ELEMENT_DEFAULT_NAME = "element";
 	protected String name;
+	protected int id;
 	
 	protected ArrayList<Element> subelements; // To create a hierarchy of elements - not necessarily used
 	protected ArrayList<Triangle> triangles;  // Triangles related to this element
@@ -144,7 +147,7 @@ public class Element implements Transformable, Shape, Generable {
 	 * @param isClosed a boolean indicated if Element is closed (true) or not (false)
 	 */
 	public Element() {
-		super();
+		id = ID++;
 		this.name = ELEMENT_DEFAULT_NAME;
 		triangles = new ArrayList<Triangle>();
 		vertices = new ArrayList<Vertex>();
@@ -157,7 +160,7 @@ public class Element implements Transformable, Shape, Generable {
 	 * @param isClosed a boolean indicated if Element is closed (true) or not (false)
 	 */
 	public Element(String name) {
-		super();
+		id = ID++;
 		this.name = name;
 		triangles = new ArrayList<Triangle>();
 		vertices = new ArrayList<Vertex>();
@@ -170,7 +173,7 @@ public class Element implements Transformable, Shape, Generable {
 	 * @param isClosed a boolean indicated if Element is closed (true) or not (false)
 	 */
 	public Element(boolean isClosed) {
-		super();
+		id = ID++;
 		this.name = ELEMENT_DEFAULT_NAME;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
@@ -184,7 +187,7 @@ public class Element implements Transformable, Shape, Generable {
 	 * @param isClosed a boolean indicated if Element is closed (true) or not (false)
 	 */
 	public Element(String name, boolean isClosed) {
-		super();
+		id = ID++;
 		this.name = name;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
@@ -399,9 +402,14 @@ public class Element implements Transformable, Shape, Generable {
 		this.name = name;
 	}
 
+	public int getId() {
+		return id;
+	}
+
 	public String toString() {
 		String element = "Element\n";
-		element += "* Name: "+name + "\n";
+		element += "* Name: " + name + "\n";
+		element += "* Id: " + id + "\n";
 		element += "* Triangles: " + getNbTriangles() + "\n";
 		element += "* Vertices: " + getNbVertices() + "\n";
 		element += "* Element color: " + getColor() + "\n";

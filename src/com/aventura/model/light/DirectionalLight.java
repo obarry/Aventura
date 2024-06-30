@@ -48,34 +48,37 @@ import com.aventura.view.MapView;
 public class DirectionalLight extends ShadowingLight {
 	
 	protected Vector3 direction;
-	protected Vector3 normalized_direction;
+	//protected Vector3 normalized_direction;
 	
+	/**
+	 * Create Directional Light using direction as vector of the light
+	 * The intensity of the light will be extrapolate from the norm of the provided direction vector
+	 * @param direction
+	 */
 	public DirectionalLight(Vector3 direction) {
-		super();
-		this.direction = direction;
-		this.normalized_direction = new Vector3(direction).normalize();
-		this.intensity = direction.length();
+		super(direction.length());
+		this.direction = new Vector3(direction).normalize();
 	}
 	
+	/**
+	 * Create Directional Light using direction as vector of the light and separated scalar for intensity
+	 * @param direction
+	 * @param intensity
+	 */
 	public DirectionalLight(Vector3 direction, float intensity) {
-		super();
-		this.normalized_direction = new Vector3(direction).normalize();
-		this.intensity = intensity;
-		this.direction = this.normalized_direction.times(intensity);
+		super(intensity);
+		this.direction = new Vector3(direction).normalize();
 	}
 
+	/**
+	 * The returned vector is normalized
+	 */
 	@Override
-	public Vector3 getLightVector(Vector4 point) {
+	public Vector3 getLightVectorAtPoint(Vector4 point) {
 		// Same direction vector in all world space by definition of Directional Light
 		return this.direction;
 	}
 	
-	@Override
-	public Vector3 getLightNormalizedVector(Vector4 point) {
-		// TODO Auto-generated method stub
-		return this.normalized_direction;
-	}
-
 	@Override
 	public float getIntensity(Vector4 point) {
 		// Same intensity in any point of world space as Directional light have infinite range
@@ -83,29 +86,20 @@ public class DirectionalLight extends ShadowingLight {
 	}
 
 	@Override
-	public Color getLightColor(Vector4 point) {
+	public Color getLightColorAtPoint(Vector4 point) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setLightVector(Vector3 light) {
-		this.direction = light;
-		this.normalized_direction = new Vector3(light).normalize();
 		this.intensity = light.length();
-	}
-
-	@Override
-	public void setLightNormalizedVector(Vector3 light) {
-		// TODO Auto-generated method stub
-		this.normalized_direction = light.normalize();
-		this.direction = this.normalized_direction.times(intensity);
+		this.direction = new Vector3(light).normalize();
 	}
 
 	@Override
 	public void setIntensity(float intensity) {
 		this.intensity = intensity;
-		this.direction = this.normalized_direction.times(intensity);
 	}
 
 	@Override
