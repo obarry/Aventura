@@ -753,9 +753,9 @@ public class Rasterizer {
 				if (rectoVerso) dotNL = Math.abs(dotNL);
 				if (dotNL > 0) {
 					// Multiply the base col by the Directional Light color
-					c = dir_light.getLightColor();
+					c = ColorTools.multColors(baseCol, dir_light.getLightColor());
 					// Multiply the color by this dot product -> this is an attenuation
-					c = ColorTools.multColor(c, dotNL);
+					c = ColorTools.multColor(baseCol, dotNL);
 				}
 			}
 
@@ -770,7 +770,7 @@ public class Rasterizer {
 					dotNL = pointLights.get(i).getLightVectorAtPoint(point).dot(normal.normalize());
 					if (rectoVerso) dotNL = Math.abs(dotNL);
 					if (dotNL > 0) {
-						Color col = pointLights.get(i).getLightColor();
+						Color col = ColorTools.multColors(baseCol, pointLights.get(i).getLightColor());
 						// Multiply the color by the new dotNL
 						col = ColorTools.multColor(col, dotNL);
 						// Add this attenuated Color to all other Lights at this point
