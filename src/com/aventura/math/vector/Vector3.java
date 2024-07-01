@@ -99,6 +99,19 @@ public class Vector3 {
 		// Ignore latest coordinate
 		count();
 	}
+	
+	/**
+	 * Create a Vector ab from 2 points a and b
+	 * @param a first point (Vector4)
+	 * @param b second point (Vector4)
+	 */
+	public Vector3(Vector4 a, Vector4 b) {
+		this.x = b.x - a.x;
+		this.y = b.y - a.y;
+		this.z = b.z - a.z;
+		// Ignore latest coordinates of the 2 Vector4 as we are creating a Vector3 and anyway the 2 Vectors are supposed to be points (w = 1) so neutralizes eachother
+		count();
+	}
 
 	public Vector3(int r, Matrix3 A) {
 		this.x = A.get(r, 0);

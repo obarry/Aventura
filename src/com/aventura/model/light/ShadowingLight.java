@@ -75,6 +75,10 @@ public abstract class ShadowingLight extends Light {
 		// Nothing to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
 	}
 	
+	public ShadowingLight(float intensity) {
+		this.intensity = intensity;
+	}
+	
 	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size);
 	
 	public void calculateCameraLight(Perspective perspective, Camera camera_view, Vector3 lightDirection) {

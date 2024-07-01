@@ -1,5 +1,10 @@
 package com.aventura.model.light;
 
+import java.util.ArrayList;
+
+import com.aventura.model.world.shape.Element;
+
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -25,6 +30,12 @@ package com.aventura.model.light;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
+ * Central management of all Lighting
+ * Specific registration of any Light should be done there. This will allow Rasterizer to go through all lights when required.
+ * It also will help the shadowing to calculate the ShadowMaps associated to each Light
+ * 
+ * Future evolution: Lights should also be part of the World as they should be integrated with the rendering (Point Lights or Spot Lights)
+ *
  * @author Olivier BARRY
  * @since July 2016
  * 
@@ -32,9 +43,13 @@ package com.aventura.model.light;
 
 public class Lighting {
 	
+	// One single AmbientLight
 	protected AmbientLight ambient;
-	// Future evolution is to have multiple directional lights (and still 1 ambient light)
+	// One Directional light in first approach. Future evolution is to support multiple directional lights
 	protected DirectionalLight directional;
+	// Multiple Point Lights (includes Point and Spot Lights since the 2nd one is a sub-classs of the first one).
+	protected ArrayList<PointLight> pointLights;
+	
 	// In case of multiple lights, the notion of specular reflection may be associated to each directional light (+ 1 general flag to activate/deactivate specular reflection)
 	protected boolean specularLight = false; // Default is no specular reflection
 	
@@ -66,11 +81,16 @@ public class Lighting {
 	}
 	
 	public boolean hasAmbient() {
-		return ambient!=null ? true : false;
+		return ambient != null ? true : false;
 	}
 	
 	public boolean hasDirectional() {
-		return directional!=null ? true : false;
+		return directional != null ? true : false;
+	}
+	
+	public boolean hasPoint() {
+		// true if ArrayList is not 0
+		return pointLights != null ? (pointLights.size() > 0 ? true : false) : false;
 	}
 	
 	public boolean hasSpecular() {
@@ -93,4 +113,13 @@ public class Lighting {
 		this.directional = directional;
 	}
 	
+	public void addPointLight(PointLight pointLight) {
+		if (this.pointLights == null) this.pointLights  = new ArrayList<PointLight>();
+		this.pointLights.add(pointLight);
+	}
+	
+	public ArrayList<PointLight> getPointLights() {
+		return pointLights;
+	}
+
 }

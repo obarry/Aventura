@@ -1,13 +1,16 @@
 package com.aventura.engine;
 
 import java.awt.Color;
+import java.util.ArrayList;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.light.PointLight;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.shape.Segment;
@@ -237,7 +240,7 @@ public class Rasterizer {
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 normal = t.getWorldNormal();
-			shadedCol = computeDirectionalColor(surfCol, normal, t.isRectoVerso());			
+			shadedCol = computeShadedColor(surfCol, t.getCenter().getPos(), normal, t.isRectoVerso());
 			//TODO Specular reflection with plain faces.
 			
 		} else {
@@ -256,9 +259,9 @@ public class Rasterizer {
 			viewer3.normalize();
 			
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			v1.setShadedCol(computeDirectionalColor(surfCol, v1.getWorldNormal(), t.isRectoVerso()));
-			v2.setShadedCol(computeDirectionalColor(surfCol, v2.getWorldNormal(), t.isRectoVerso()));
-			v3.setShadedCol(computeDirectionalColor(surfCol, v3.getWorldNormal(), t.isRectoVerso()));					
+			v1.setShadedCol(computeShadedColor(surfCol, v1.getPos(), v1.getWorldNormal(), t.isRectoVerso()));
+			v2.setShadedCol(computeShadedColor(surfCol, v2.getPos(), v2.getWorldNormal(), t.isRectoVerso()));
+			v3.setShadedCol(computeShadedColor(surfCol, v3.getPos(), v3.getWorldNormal(), t.isRectoVerso()));					
 
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
 			if (lighting.hasSpecular()) {
@@ -711,7 +714,7 @@ public class Rasterizer {
 	protected Color computeAmbientColor(Color baseCol) {
 
 		if (lighting != null && lighting.hasAmbient()) {
-			return ColorTools.multColors(lighting.getAmbientLight().getLightColor(null), baseCol);
+			return ColorTools.multColors(lighting.getAmbientLight().getLightColorAtPoint(null), baseCol);
 		} else {
 			// Default color
 			return DARK_SHADING_COLOR; // Ambient light
@@ -722,45 +725,71 @@ public class Rasterizer {
 	 * This method calculates the Color for a given normal and a base color of the surface of the Element resulting from Directional light
 	 * @param baseCol of the surface in this area
 	 * @param normal of the surface in this area
-	 * @return the Directional light at point
+	 * @return the resulting color from Directional light
 	 */
-	protected Color computeDirectionalColor(Color baseCol, Vector3 normal, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+	protected Color computeShadedColor(Color baseCol, Vector4 point, Vector3 normal, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 
 		// Table of colors to be mixed
-		Color c;
+		Color c; // resulting color
 		
-		// Default color
-		c = DARK_SHADING_COLOR; // Directional light
+		// Initialize to DARK
+		c = DARK_SHADING_COLOR;
 
 		if (lighting != null) { // If lighting exists
 
-			// Primary shading: Diffuse Reflection
+			// Primary shading: Diffuse Reflection (computed in computeAmbientColor method)
 			
 			float dotNL = 0;
 
 			// Directional light
 			if (lighting.hasDirectional()) {
 
-				//TODO Multiple directional colors -> loop
-
+				//As of now only 1 Directional Light
+				DirectionalLight dir_light = lighting.getDirectionalLight();
+				
 				// Compute the dot product
-				dotNL = lighting.getDirectionalLight().getLightVector(null).dot(normal.normalize());
+				// Normal is normalized so the dotNL result is in the range [0,1]
+				dotNL = dir_light.getLightVectorAtPoint(null).dot(normal.normalize());
 				if (rectoVerso) dotNL = Math.abs(dotNL);
 				if (dotNL > 0) {
-					// Directional Light
+					// Multiply the base col by the Directional Light color
+					c = ColorTools.multColors(baseCol, dir_light.getLightColor());
+					// Multiply the color by this dot product -> this is an attenuation
 					c = ColorTools.multColor(baseCol, dotNL);
 				}
 			}
+
+			// Point lights : multiple Point Lights
+			if (lighting.hasPoint()) {
+
+				ArrayList<PointLight> pointLights = lighting.getPointLights();
+				
+				for (int i=0; i<pointLights.size(); i++) {
+					
+					// Compute the dot product of this Light's vector at current point and the normal vector
+					dotNL = pointLights.get(i).getLightVectorAtPoint(point).dot(normal.normalize());
+					if (rectoVerso) dotNL = Math.abs(dotNL);
+					if (dotNL > 0) {
+						Color col = ColorTools.multColors(baseCol, pointLights.get(i).getLightColor());
+						// Multiply the color by the new dotNL
+						col = ColorTools.multColor(col, dotNL);
+						// Add this attenuated Color to all other Lights at this point
+						c = ColorTools.addColors(c, col);
+					}
+				}
+			}
+
 		} else { // If no lighting, return base color
 			return baseCol;
 		}
 
 		return c;
 	}
+	
 
 	/**
 	 * @param normal the normal vector
-	 * @param viewer normized vector
+	 * @param viewer normalized vector
 	 * @param e specular exponent
 	 * @param sc specular color
 	 * @param rectoVerso true if this triangle can be seen back side
@@ -775,8 +804,8 @@ public class Rasterizer {
 		if (e>0) { // If e=0 this is considered as no specular reflection
 			// R: Reflection vector, L: Light vector, N: Normal vector on the surface. R+L=N+N => R = 2N-L
 			// Calculate reflection vector R = 2N-L and normalize it
-			float dotNL = lighting.getDirectionalLight().getLightNormalizedVector(null).dot(normal.normalize());
-			Vector3 r = (normal.times(2*dotNL)).minus(lighting.getDirectionalLight().getLightNormalizedVector(null)); 
+			float dotNL = lighting.getDirectionalLight().getLightVectorAtPoint(null).dot(normal.normalize());
+			Vector3 r = (normal.times(2*dotNL)).minus(lighting.getDirectionalLight().getLightVectorAtPoint(null)); 
 
 			float dotRV = r.dot(viewer);
 			if (rectoVerso)

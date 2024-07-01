@@ -20,11 +20,12 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.light.PointLight;
+import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Cone;
+import com.aventura.model.world.shape.Box;
 import com.aventura.model.world.shape.Cube;
-import com.aventura.model.world.shape.Cylinder;
-import com.aventura.model.world.shape.Element;
+import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
 
@@ -53,18 +54,18 @@ import com.aventura.view.GUIView;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  * 
- * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
+ * This class is a Test class for Rasterizer
  */
 
-public class Test3ElementsRotation {
+public class TestLighting1 {
 	
 	// GUIView to be displayed
 	private SwingView view;
-	
+
 	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test 3 Elements Rotation");
+		JFrame frame = new JFrame("Test Lighting");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -90,83 +91,70 @@ public class Test3ElementsRotation {
 		
 		return view;
 	}
-	
-	public Lighting createLight() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,2,3));
-		AmbientLight al = new AmbientLight(0.1f);
-		Lighting lighting = new Lighting(dl, al);
-		return lighting;
-	}
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-
+		
 		System.out.println("********* STARTING APPLICATION *********");
-
+		
 		// Camera
-		Vector4 eye = new Vector4(14,8,4,1);
+		Vector4 eye = new Vector4(8,-5,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		Test3ElementsRotation test = new Test3ElementsRotation();
+		TestLighting1 test = new TestLighting1();
 		
-		// Create a new World
+		System.out.println("********* Creating World");
+		
+		Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		//Texture tex2 = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
+		
 		World world = new World();
-		Element e, e1, e2;
-		
-		// e is the main Element
-		e = new Cylinder(2,0.5f,32);
-		e.setColor(Color.CYAN);
-		// m1e1 and m1e2 will be sub elements
-		e1 = new Cone(2,1,32);
-		e1.setColor(Color.MAGENTA);
-		e2 = new Cube(2);
-		e2.setColor(Color.ORANGE);
+		Trellis trellis = new Trellis(8, 8, 20, 20, tex2);
+		Cube cube = new Cube(1,tex1);
+		// cube.setColor(new Color(200,50,50));
+		// Translate cube on top of trellis
+		Translation t1 = new Translation(new Vector3(0, 0, 0.5f));
+		cube.setTransformation(t1);
 
+		world.addElement(trellis);
+		world.addElement(cube);
 		
-		// Add subelements to Element
-		e.addElement(e1);
-		e.addElement(e2);
-		
-		// Add Element to the world
-		world.addElement(e);
-		
-		// Calculate normals
+		System.out.println("********* Calculating normals");
 		world.generate();
+		System.out.println(world);
+
+		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
+		AmbientLight al = new AmbientLight(0.05f);
+		PointLight pl = new PointLight(new Vector4(-2,-2,1,1),8);
+		//Lighting light = new Lighting(dl, al);
+		Lighting light = new Lighting(al);
+		light.addPointLight(pl);
 		
-		System.out.println(e);
-		System.out.println(e1);
-		System.out.println(e2);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GUIView gUIView = test.createView(gContext);
+
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		
-//		for (int i=0; i<world.getNbElements(); i++) {
-//			System.out.println(world.getElement(i));
-//		}
-
-		Lighting light = test.createLight();
-		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		GUIView gUIView = test.createView(context);
-
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
-
-		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(gUIView);
 		renderer.render();
-		
-		Rotation r;
-		
-		System.out.println("********* Rendering...");
-		int nb_images = 180;
-		for (int i=0; i<=3*nb_images; i++) {
-			r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
-			e.setTransformation(r);
-			renderer.render();
-		}
-		
+
+//		System.out.println("********* Rendering...");
+//		int nb_images = 180;
+//		for (int i=0; i<=3*nb_images; i++) {
+//			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+//			trellis.setTransformation(r);
+//			cube.combineTransformation(r);
+//			renderer.render();
+//		}
+
 		System.out.println("********* ENDING APPLICATION *********");
-
 	}
-
 }

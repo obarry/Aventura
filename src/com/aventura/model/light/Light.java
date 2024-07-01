@@ -37,32 +37,32 @@ import com.aventura.math.vector.Vector4;
 public abstract class Light {
 	
 	public static Color DEFAULT_LIGHT_COLOR = Color.WHITE;
+	public static float DEFAULT_LIGHT_INTENSITY = 1;
 	
 	protected Color lightColor = DEFAULT_LIGHT_COLOR;
-	protected float intensity;
+	protected float intensity = DEFAULT_LIGHT_INTENSITY;
 
 	
 	// Get light vector (or null vector for ambient light) at a given point of world space
-	public abstract Vector3 getLightVector(Vector4 point);
+	public abstract Vector3 getLightVectorAtPoint(Vector4 point);
 	
-	public abstract Vector3 getLightNormalizedVector(Vector4 point);
-	
-	public abstract void setLightVector(Vector3 light);
-	
-	public abstract void setLightNormalizedVector(Vector3 light);
-	
+	// Get color of light at a given point
+	public abstract Color getLightColorAtPoint(Vector4 point);
+
 	// Get intensity of light at a given point of world space
 	public abstract float getIntensity(Vector4 point);
-	
-	public abstract void setIntensity(float intensity);
-		
-	// Get color of light
-	public abstract Color getLightColor(Vector4 point);
-	
+
+	// Set this Light's direction (Directional Light)
+	public abstract void setLightVector(Vector3 light);
+
+	// Set this Light's color
 	public abstract void setLightColor(Color c);
 
+	// Set this Light's intensity
+	public abstract void setIntensity(float intensity);		
+
 	// Get color of light
-	public Color getBaseLightColor() {
+	public Color getLightColor() {
 		return lightColor;
 	}
 

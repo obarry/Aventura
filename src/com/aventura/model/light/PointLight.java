@@ -41,11 +41,40 @@ import com.aventura.model.perspective.Perspective;
  */
 
 public class PointLight extends ShadowingLight {
+	
+	Vector4 light_point; // The light source
+	float max_distance; // The max distance were this light is generating light
+	
+	public PointLight(Vector4 point, float max) {
+		super();
+		this.light_point = point;
+		this.max_distance = max;
+	}
+	
+	public PointLight(Vector4 point, float max, float intensity) {
+		super(intensity);
+		this.light_point = point;
+		this.max_distance = max;
+	}
 
+	/**
+	 * The return vector will hold the intensity information in its norm
+	 */
 	@Override
-	public Vector3 getLightVector(Vector4 point) {
-		// TODO Auto-generated method stub
-		return null;
+	public Vector3 getLightVectorAtPoint(Vector4 point) {
+		// Return the NON-normalized vector from light source to point so that it contains
+		Vector3 light_dir = new Vector3(point, this.light_point);
+		float distance = light_dir.length();
+		light_dir.normalize();
+		light_dir.timesEquals(attenuationFunc(distance));
+		return light_dir;
+	}
+	
+	protected float attenuationFunc(float distance) {
+		// First implementation of attenuation as linear law
+		float attenuation = max_distance - distance;
+		// Clamp to 0 if negative and return normalized attenuation between [0, 1]
+		return attenuation >= 0 ? attenuation/max_distance : 0;
 	}
 
 	@Override
@@ -55,7 +84,7 @@ public class PointLight extends ShadowingLight {
 	}
 
 	@Override
-	public Color getLightColor(Vector4 point) {
+	public Color getLightColorAtPoint(Vector4 point) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -74,18 +103,6 @@ public class PointLight extends ShadowingLight {
 
 	@Override
 	public void setLightColor(Color c) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public Vector3 getLightNormalizedVector(Vector4 point) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setLightNormalizedVector(Vector3 light) {
 		// TODO Auto-generated method stub
 		
 	}
