@@ -105,6 +105,21 @@ public class Vector4 {
 		this.w = 0;
 		count();
 	}
+	
+	/**
+	 * Create a Vector ab from 2 points a and b
+	 * The w coordinate will necessarily be 0 if a and b are points (w = 1).
+	 * @param a first point (Vector4)
+	 * @param b second point (Vector4)
+	 */
+	public Vector4(Vector4 a, Vector4 b) {
+		this.x = b.x - a.x;
+		this.y = b.y - a.y;
+		this.z = b.z - a.z;
+		this.w = b.w - a.w; // Keep it generic although it is expected to be 0
+		count();
+	}
+
 
 	public Vector4(int r, Matrix4 A) {
 		this.x = A.get(r, 0);

@@ -63,7 +63,7 @@ public class PointLight extends ShadowingLight {
 	@Override
 	public Vector3 getLightVectorAtPoint(Vector4 point) {
 		// Return the NON-normalized vector from light source to point so that it contains
-		Vector3 light_dir = new Vector3(point.minus(this.light_point));
+		Vector3 light_dir = new Vector3(point, this.light_point);
 		float distance = light_dir.length();
 		light_dir.normalize();
 		light_dir.timesEquals(attenuationFunc(distance));
