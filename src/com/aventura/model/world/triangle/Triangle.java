@@ -206,6 +206,10 @@ public class Triangle {
 		return c;
 	}
 	
+	public Vector4 getCenterWorldPos() {
+		return (v1.getWorldPos().plus(v2.getWorldPos()).plus(v3.getWorldPos())).times((float)1/3);
+	}
+	
 	/**
 	 * Set the first Vertex of this Triangle
 	 */
