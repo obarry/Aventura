@@ -21,6 +21,7 @@ import com.aventura.model.world.shape.Segment;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.GUIView;
+import com.aventura.view.MapView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -157,7 +158,7 @@ public class RenderEngine {
 	}
 	
 	/**
-	 * This method will do the computation. No args.
+	 * This method will do the computation. No args. But it now returns (new feature) the zBuffer MapView used for rendering / rasterization.
 	 * 
 	 * It processes all triangles of the World, Element by Element.
 	 * For each Element it takes all Triangles one by one and renderContext them.
@@ -175,8 +176,9 @@ public class RenderEngine {
 	 * But this method will also recalculate each time the full ModelView modelView Matrix including the Camera so any change
 	 * will be taken into account.
 	 * 
+	 * @return the zBuffer in form of a MapView that can be easily displayed in GUI.
 	 */
-	public void render() {
+	public MapView render() {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Start rendering...");
 		nbt = 0;
@@ -190,8 +192,9 @@ public class RenderEngine {
 		gUIView.initView();
 		
 		// zBuffer initialization (if applicable)
+		MapView zBuffer = null;
 		if (renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
-			rasterizer.initZBuffer();
+			zBuffer = rasterizer.initZBuffer();
 		}
 		
 		// Shadowing initialization and Shadow map(s) calculation
@@ -252,6 +255,8 @@ public class RenderEngine {
 
 		// Switch back and front buffers and request GUI repaint
 		gUIView.renderView();
+		
+		return zBuffer;
 	}
 	
 	/**
