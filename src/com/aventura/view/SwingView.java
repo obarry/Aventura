@@ -137,7 +137,7 @@ public class SwingView extends GUIView {
 	@Override
 	public void setColor(Color c) {
 		// TODO Auto-generated method stub
-		backgraph.setColor(c);		
+		backgraph.setColor(c);
 	}
 	
 	public void setBackgroundColor(Color c) {
@@ -149,6 +149,19 @@ public class SwingView extends GUIView {
 		drawSwingLine(x,y,x,y);
 	}
 
+	/**
+	 * This method convert from coordinates with Y axis up to Y axis down (SWING)
+	 * 
+	 *   ^ Y			  +------> X
+	 *   |				  |
+	 *   |			-->   |  (SWING coordinates)
+	 *   |				  |
+	 *   +------> X       v Y
+	 * 
+	 * @param x
+	 * @param y (Y axis up)
+	 * @param c the Color of the pixel to draw
+	 */
 	public void drawPixel(int x, int y, Color c) {
 		//System.out.println("x: "+x+"y: "+y);
 		if (x>=-width/2 && x<width/2 && y<=height/2 && y>-height/2) backbuffer.setRGB(x+width/2, -y+height/2, c.getRGB());
@@ -207,7 +220,8 @@ public class SwingView extends GUIView {
 		for (int x=0; x<minX; x++ ) {
 			for (int y=0; y<minY; y++) {		
 				Color c = new Color(map.get(x,y),  map.get(x,y),  map.get(x,y));
-				backbuffer.setRGB(x, y, c.getRGB());
+				//drawPixel(x, y, c);
+				backbuffer.setRGB(x, minY-y-1, c.getRGB());
 			}
 		}
 	}

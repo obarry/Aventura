@@ -18,6 +18,7 @@ import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.color.ColorTools;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.GUIView;
+import com.aventura.view.MapView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -69,7 +70,7 @@ public class Rasterizer {
 	private static Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
 	
 	// Z buffer
-	private float[][] zBuffer = null;
+	private MapView zBuffer = null;
 	int zBuf_width, zBuf_height;	
 	
 	// Pixel statistics
@@ -93,7 +94,9 @@ public class Rasterizer {
 
 	/**
 	 * Creation of Rasterizer with requested references for run time.
-	 * @param graphic
+	 * @param camera : a pointer to the Camera created offline by user
+	 * @param graphic : a pointer to the GraphicContext created offline by user
+	 * @param lighting : a pointer to the Lighting system created offline by user
 	 */
 	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting) {
 		this.camera = camera;
@@ -102,7 +105,7 @@ public class Rasterizer {
 		pixelHalfWidth = graphic.getPixelHalfWidth();
 		pixelHalfHeight = graphic.getPixelHalfHeight();
 	}
-	
+		
 	public void setView(GUIView v) {
 		this.gUIView = v;
 	}
@@ -111,7 +114,7 @@ public class Rasterizer {
 	 * Initialize zBuffer by creating the table. This method is deported from the constructor in order to use it only when necessary.
 	 * It is not needed in case of line rendering.
 	 */
-	public void initZBuffer() {
+	public MapView initZBuffer() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());
 		
 		// zBuffer is initialized with far value of the perspective
@@ -122,15 +125,17 @@ public class Rasterizer {
 		zBuf_height = 2*pixelHalfHeight+1;
 		
 		// Only create buffer if needed, otherwise reuse it, it will be reinitialized below
-		if (zBuffer == null) zBuffer = new float[zBuf_width][zBuf_height];
+		//if (zBuffer == null) zBuffer = new float[zBuf_width][zBuf_height];
+		if (zBuffer == null) zBuffer = new MapView(zBuf_width, zBuf_height);
 
 		// Initialization loop with initialization value ( 1 or -1 in homogeneous coordinates ?) that is the farest value for the gUIView Frustum
 		// Any value closer will be drawn and the zBuffer in this place will be updated by new value
 		for (int i=0; i<zBuf_width; i++)  {
 			for (int j=0; j<zBuf_height; j++) {
-				zBuffer[i][j] = zBuffer_init;
+				zBuffer.set(i, j, zBuffer_init);
 			}
 		}
+		return zBuffer;
 	}
 	
 	//
@@ -561,7 +566,7 @@ public class Rasterizer {
 					//float z=Tools.interpolate(z1,z2,gradient); // Used for debugging Orthographic projection
 
 					// zBuffer elimination at earliest stage of computation (as soon as we know z)
-					if (z>zBuffer[getXzBuf(x)][getYzBuf(y)]) { // Discard pixel
+					if (z>zBuffer.get(getXzBuf(x), getYzBuf(y))) { // Discard pixel
 						discarded_pixels++;
 
 					} else { // Compute colors and draw pixel
@@ -689,7 +694,7 @@ public class Rasterizer {
 		gUIView.drawPixel(x,y,c);
 
 		// Update zBuffer of this pixel to the new z
-		zBuffer[getXzBuf(x)][getYzBuf(y)] = z;
+		zBuffer.set(getXzBuf(x), getYzBuf(y), z);
 
 		// Increment counter of rendered pixels
 		rendered_pixels++;

@@ -1,3 +1,4 @@
+
 package com.aventura.test;
 
 import java.awt.Dimension;
@@ -11,13 +12,11 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
-import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.PointLight;
 import com.aventura.model.texture.Texture;
@@ -27,6 +26,7 @@ import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.view.MapView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -56,7 +56,7 @@ import com.aventura.view.GUIView;
  * This class is a Test class for Rasterizer
  */
 
-public class TestLighting1 {
+public class TestMapViewForZBuffer {
 	
 	// GUIView to be displayed
 	private SwingView view;
@@ -103,7 +103,7 @@ public class TestLighting1 {
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestLighting1 test = new TestLighting1();
+		TestMapViewForZBuffer test = new TestMapViewForZBuffer();
 		
 		System.out.println("********* Creating World");
 		
@@ -143,21 +143,17 @@ public class TestLighting1 {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(gUIView);
-		renderer.render();
+		MapView mapView = renderer.render();
 
-		System.out.println("********* Rendering...");
-		int nb_images = 180;
-		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
-			trellis.setTransformation(r);
-			cube.setTransformation(r.times(t1));
-			sphere.setTransformation(r.times(t2));
-			renderer.render();
-		}
+		//GUIView gUIView = test.createView(GraphicContext.GRAPHIC_DEFAULT);
+		mapView.removeFar(gContext.getPerspective().getFar());
+		mapView.normalizeMap();
+		gUIView.initView(mapView);
+		gUIView.renderView();
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}
