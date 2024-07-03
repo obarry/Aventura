@@ -1,7 +1,5 @@
 package com.aventura.view;
 
-import java.awt.Color;
-import java.lang.reflect.Array;
 
 /**
 * ------------------------------------------------------------------------------ 
@@ -126,6 +124,16 @@ public class MapView extends View {
 		for (int i=0; i<width; i++) {
 			for (int j=0; j<height; j++) {
 				map[i][j] = (map[i][j]-min)/(max-min);
+			}
+		}
+	}
+	
+	// To normalize between 0 and 1 so that the map can be used for Colors
+	public void removeFar(float far) {
+
+		for (int i=0; i<width; i++) {
+			for (int j=0; j<height; j++) {
+				if (map[i][j] >= far) map[i][j] =0;
 			}
 		}
 	}
