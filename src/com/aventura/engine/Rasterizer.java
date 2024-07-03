@@ -240,7 +240,7 @@ public class Rasterizer {
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 normal = t.getWorldNormal();
-			shadedCol = computeShadedColor(surfCol, t.getCenter().getPos(), normal, t.isRectoVerso());
+			shadedCol = computeShadedColor(surfCol, t.getCenterWorldPos(), normal, t.isRectoVerso());
 			//TODO Specular reflection with plain faces.
 			
 		} else {
@@ -259,9 +259,9 @@ public class Rasterizer {
 			viewer3.normalize();
 			
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			v1.setShadedCol(computeShadedColor(surfCol, v1.getPos(), v1.getWorldNormal(), t.isRectoVerso()));
-			v2.setShadedCol(computeShadedColor(surfCol, v2.getPos(), v2.getWorldNormal(), t.isRectoVerso()));
-			v3.setShadedCol(computeShadedColor(surfCol, v3.getPos(), v3.getWorldNormal(), t.isRectoVerso()));					
+			v1.setShadedCol(computeShadedColor(surfCol, v1.getWorldPos(), v1.getWorldNormal(), t.isRectoVerso()));
+			v2.setShadedCol(computeShadedColor(surfCol, v2.getWorldPos(), v2.getWorldNormal(), t.isRectoVerso()));
+			v3.setShadedCol(computeShadedColor(surfCol, v3.getWorldPos(), v3.getWorldNormal(), t.isRectoVerso()));					
 
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
 			if (lighting.hasSpecular()) {

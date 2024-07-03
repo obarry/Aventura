@@ -25,6 +25,7 @@ import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Box;
 import com.aventura.model.world.shape.Cube;
+import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
@@ -109,19 +110,23 @@ public class TestLighting1 {
 		System.out.println("********* Creating World");
 		
 		Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
-		//Texture tex2 = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		Texture tex3 = new Texture("resources/texture/texture_blueground_204x204.jpg");
 		Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
 		Trellis trellis = new Trellis(8, 8, 20, 20, tex2);
-		Cube cube = new Cube(1,tex1);
+		Cube cube = new Cube(1, tex1);
+		Sphere sphere = new Sphere (0.5f ,10 , tex3);
 		// cube.setColor(new Color(200,50,50));
 		// Translate cube on top of trellis
-		Translation t1 = new Translation(new Vector3(0, 0, 0.5f));
+		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
+		Translation t2 = new Translation(new Vector3(-1.5f, 0, 0.5f));
 		cube.setTransformation(t1);
+		sphere.setTransformation(t2);
 
 		world.addElement(trellis);
 		world.addElement(cube);
+		world.addElement(sphere);
 		
 		System.out.println("********* Calculating normals");
 		world.generate();
@@ -129,7 +134,7 @@ public class TestLighting1 {
 
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.05f);
-		PointLight pl = new PointLight(new Vector4(-2,-2,1,1),8);
+		PointLight pl = new PointLight(new Vector4(3,3,1.2f,1),8);
 		//Lighting light = new Lighting(dl, al);
 		Lighting light = new Lighting(al);
 		light.addPointLight(pl);
@@ -146,14 +151,15 @@ public class TestLighting1 {
 		renderer.setView(gUIView);
 		renderer.render();
 
-//		System.out.println("********* Rendering...");
-//		int nb_images = 180;
-//		for (int i=0; i<=3*nb_images; i++) {
-//			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
-//			trellis.setTransformation(r);
-//			cube.combineTransformation(r);
-//			renderer.render();
-//		}
+		System.out.println("********* Rendering...");
+		int nb_images = 180;
+		for (int i=0; i<=3*nb_images; i++) {
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+			trellis.setTransformation(r);
+			cube.setTransformation(r.times(t1));
+			sphere.setTransformation(r.times(t2));
+			renderer.render();
+		}
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}
