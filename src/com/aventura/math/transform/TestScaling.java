@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import com.aventura.math.vector.Matrix3;
-import com.aventura.math.vector.MatrixArrayWrongSizeException;
 
 public class TestScaling {
 

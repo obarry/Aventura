@@ -1,9 +1,5 @@
 package com.aventura.view;
 
-import java.awt.Color;
-
-import com.aventura.context.GraphicContext;
-
 /**
 * ------------------------------------------------------------------------------ 
 * MIT License
