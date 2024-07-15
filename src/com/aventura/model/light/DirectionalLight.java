@@ -48,7 +48,7 @@ import com.aventura.view.MapView;
 public class DirectionalLight extends ShadowingLight {
 	
 	protected Vector3 direction;
-	//protected Vector3 normalized_direction;
+	protected Vector3 light_vector; // = -direction
 	
 	/**
 	 * Create Directional Light using direction as vector of the light
@@ -58,6 +58,7 @@ public class DirectionalLight extends ShadowingLight {
 	public DirectionalLight(Vector3 direction) {
 		super(direction.length());
 		this.direction = new Vector3(direction).normalize();
+		this.light_vector = this.direction.times(-1);
 	}
 	
 	/**
@@ -68,6 +69,7 @@ public class DirectionalLight extends ShadowingLight {
 	public DirectionalLight(Vector3 direction, float intensity) {
 		super(intensity);
 		this.direction = new Vector3(direction).normalize();
+		this.light_vector = this.direction.times(-1);
 	}
 
 	/**
@@ -76,7 +78,7 @@ public class DirectionalLight extends ShadowingLight {
 	@Override
 	public Vector3 getLightVectorAtPoint(Vector4 point) {
 		// Same direction vector in all world space by definition of Directional Light
-		return this.direction;
+		return this.light_vector;
 	}
 	
 	@Override
@@ -94,7 +96,8 @@ public class DirectionalLight extends ShadowingLight {
 	@Override
 	public void setLightVector(Vector3 light) {
 		this.intensity = light.length();
-		this.direction = new Vector3(light).normalize();
+		this.light_vector = new Vector3(light).normalize();
+		this.direction = this.light_vector.times(-1);
 	}
 
 	@Override

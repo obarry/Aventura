@@ -109,11 +109,7 @@ public class LookAt extends Matrix4 {
 	public LookAt(Vector3 e, Vector3 p, Vector3 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector3");
 		
-		Vector4 e4 = new Vector4(e);
-		Vector4 p4 = new Vector4(p);
-		Vector4 u4 = new Vector4(u);
-		
-		generateLookAt(e4, p4, u4);												
+		generateLookAt(e.V4(), p.V4(), u.V4());												
 	}
 	
 	/**

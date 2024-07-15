@@ -152,7 +152,7 @@ public class TestMultiElements {
 	}
 
 	public Lighting createLight() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,0.8f,0.5f));
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-0.8f,-0.5f));
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting lighting = new Lighting(dl, al);
 		return lighting;

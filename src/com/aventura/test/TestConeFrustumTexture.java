@@ -135,7 +135,7 @@ public class TestConeFrustumTexture {
 		System.out.println(cone);
 		System.out.println("********* Calculating normals");
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, true);
 		

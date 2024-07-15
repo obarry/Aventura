@@ -462,7 +462,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 //		world.update();
 
 		// Lighting initialization
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, false);
 		

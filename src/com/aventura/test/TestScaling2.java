@@ -12,15 +12,17 @@ import javax.swing.WindowConstants;
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
+import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Scaling;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.world.Vertex;
+import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Element;
-import com.aventura.model.world.triangle.Triangle;
+import com.aventura.model.world.shape.Sphere;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
 
@@ -49,20 +51,20 @@ import com.aventura.view.GUIView;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  * 
- * This class is a Test class for Rasterizer
+ * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestRasterizer5 {
-
+public class TestScaling2 {
+	
 	// GUIView to be displayed
 	private SwingView view;
 
 	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Rasterizer 5");
+		JFrame frame = new JFrame("Test Scaling");
 		// Set the size of the frame
-		frame.setSize(1000,600);
+		frame.setSize(1500,900);
 		
 		// Create the gUIView to be displayed
 		view = new SwingView(context, frame);
@@ -87,82 +89,87 @@ public class TestRasterizer5 {
 		return view;
 	}
 
+	/**
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
-		
-		//Tracer.info = true;
-		//Tracer.function = true;
 
 		// Camera
-		Vector4 eye = new Vector4(8,3,2,1);
+		//Vector4 eye = new Vector4(-4,-8,5,1);
+		//Vector4 eye = new Vector4(16,6,12,1);
+		Vector4 eye = new Vector4(6,12,16,1);
+		//Vector4 eye = new Vector4(3,2,2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestRasterizer5 test = new TestRasterizer5();
+		TestScaling2 test = new TestScaling2();
 		
 		System.out.println("********* Creating World");
+		
+		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
+		//Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
+		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
+		//Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
+		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
+		//Texture tex = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
+		//Texture tex = new Texture("resources/texture/texture_old_leather_box_800x610.jpg");
+		//Texture tex = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
+		//Texture tex = new Texture("resources/texture/texture_stone1_1700x1133.jpg");
+		//Texture tex = new Texture("resources/texture/texture_rock_stone_400x450.jpg");
+		Texture tex = new Texture("resources/texture/texture_barnwood_576x358.jpg");
+		
+		// Create World
 		World world = new World();
-		Element e = new Element();
-		Vertex v1 = new Vertex(new Vector4(1,0,0,1));
-		Vertex v2 = new Vertex(new Vector4(0,1,0,1));
-		Vertex v3 = new Vertex(new Vector4(0,0,1,1));
-		e.addVertex(v1);
-		e.addVertex(v2);
-		e.addVertex(v3);		
-		Triangle t1 = new Triangle(v1, v2, v3);
-		t1.setColor(Color.ORANGE);
-		e.addTriangle(t1);
 		
-		Vertex v4 = new Vertex(new Vector4(0,0,0,1));
-		Vertex v5 = new Vertex(new Vector4(1,1,1,1));
-		Vertex v6 = new Vertex(new Vector4(1,1,0,1));
-		e.addVertex(v4);
-		e.addVertex(v5);
-		e.addVertex(v6);		
-		Triangle t2 = new Triangle(v4, v5, v6);
-		t2.setColor(Color.MAGENTA);
-		e.addTriangle(t2);
+		//Box elm = new Box(3,2,1.5f, tex);
+		//Sphere elm = new Sphere(2f,32, tex);
+		Sphere elm = new Sphere(0.7f,32, tex);
+		//elm.setColor(new Color(100,200,255));
+		elm.setSpecularExp(8);
+		world.addElement(elm);
+		world.setBackgroundColor(new Color(20,10,5));
 		
-		Vertex v7 = new Vertex(new Vector4(0,0,0,1));
-		Vertex v8 = new Vertex(new Vector4(0,2,0.5f,1));
-		Vertex v9 = new Vertex(new Vector4(2,0,0.5f,1));
-		e.addVertex(v7);
-		e.addVertex(v8);
-		e.addVertex(v9);		
-		Triangle t3 = new Triangle(v7, v8, v9);
-		t3.setColor(Color.GREEN);
-		e.addTriangle(t3);
-				
-		world.addElement(e);
-		
-		System.out.println("********* Calculating normals");
+		System.out.println("********* Generating World");		
 		world.generate();
+		System.out.println(world);
+		System.out.println(elm);
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-3,0));
-		Lighting light = new Lighting(dl);
+		//DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,0,1f), 0.8f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0,-1f), 0.8f);
+		AmbientLight al = new AmbientLight(0.2f);
+		Lighting light = new Lighting(dl, al, true);
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		GUIView gUIView = test.createView(gContext);
 
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		rContext.setRenderingType(RenderContext.RENDERING_TYPE_PLAIN);
-		
+		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
+
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
 		renderer.setView(gUIView);
 		renderer.render();
 
-		int nb_images = 360;
-		for (int i=0; i<=7*nb_images; i++) {
-			float a = (float)Math.PI*2*(float)i/(float)nb_images;
-			eye = new Vector4(8*(float)Math.cos(a),8*(float)Math.sin(a),2,1);
-			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		System.out.println("********* Rendering...");
+		int nb_images = 90;
+		//Scaling s = new Scaling(2,2,1);
+		for (int i=0; i<=3*nb_images; i++) {
+			Rotation r1 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
+			Rotation r2 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+			Scaling s = new Scaling(1+(float)i/180,1+(float)i/180,1);
+			elm.setTransformation(r1.times(r2.times(s)));
+			//elm.setTransformation(r1.times(r2));
+			//elm.combineTransformation(s);
 			renderer.render();
 		}
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}
-
 }

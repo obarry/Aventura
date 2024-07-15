@@ -132,7 +132,7 @@ public class TestTorusTexture {
 		System.out.println("********* Generating World");
 		world.generate();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,1,1),1.0f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-1,-1),1.0f);
 		AmbientLight al = new AmbientLight(0.1f);
 		Lighting light = new Lighting(dl, al, true);
 		

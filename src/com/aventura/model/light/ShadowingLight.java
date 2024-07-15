@@ -67,8 +67,7 @@ public abstract class ShadowingLight extends Light {
 	protected Vector4 frustumCenter;
 	
 	// Shadow map
-	protected MapView map; // TODO multiple maps if multiple lights (actually this is already a ShadowingLight attribute so if multiple light there will be multiple maps)
-	// TODO to be replaced by MapView class ?
+	protected MapView map; // As an attribute of the (Shadowing)Light, there will be multiple maps if multiple lights
 	
 	// Default constructor
 	public ShadowingLight() {
