@@ -128,7 +128,7 @@ public class TestSphereTexture2 {
 		world.generate();
 		
 		System.out.println("********* Creating light");
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,0), 1.0f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,0), 1.0f);
 		AmbientLight al = new AmbientLight(0.05f);
 		Lighting light = new Lighting(dl, al, true);
 		

@@ -216,7 +216,7 @@ public class TestMultiElementsTexture {
 
 		// Create lighting
 		System.out.println("********* Creating Lighting");
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-0.5f,0.5f), 0.7f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,0.5f,-0.5f), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 

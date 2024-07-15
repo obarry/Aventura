@@ -13,7 +13,7 @@ import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
-import com.aventura.math.transform.Translation;
+
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -92,7 +92,7 @@ public class Test3ElementsRotation {
 	}
 	
 	public Lighting createLight() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,2,3));
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-2,-3));
 		AmbientLight al = new AmbientLight(0.1f);
 		Lighting lighting = new Lighting(dl, al);
 		return lighting;

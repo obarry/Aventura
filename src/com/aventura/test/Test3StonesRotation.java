@@ -143,7 +143,7 @@ public class Test3StonesRotation {
 		System.out.println(elm3);
 		
 		// Create some lighting
-		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,0,1f), 0.8f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0,-1f), 0.8f);
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, false);
 		

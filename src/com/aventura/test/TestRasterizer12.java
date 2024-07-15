@@ -136,7 +136,7 @@ public class TestRasterizer12 {
 		box.getTriangle(10).setTexture(tex1, new Vector4(0,0,0,1), new Vector4(0,1,0,1), new Vector4(1,1,0,1));
 		box.getTriangle(11).setTexture(tex1, new Vector4(1,1,0,1), new Vector4(1,0,0,1), new Vector4(0,0,0,1));
 
-		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0.5f,1));
+		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,-0.5f,-1));
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al);
 		

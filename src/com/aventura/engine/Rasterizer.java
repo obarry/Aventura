@@ -753,7 +753,7 @@ public class Rasterizer {
 				DirectionalLight dir_light = lighting.getDirectionalLight();
 				
 				// Compute the dot product
-				// Normal is normalized so the dotNL result is in the range [0,1]
+				// Normal is normalized so the dotNL result is in the range [-1,1]
 				dotNL = dir_light.getLightVectorAtPoint(null).dot(normal.normalize());
 				if (rectoVerso) dotNL = Math.abs(dotNL);
 				if (dotNL > 0) {

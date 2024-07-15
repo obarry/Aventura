@@ -2,8 +2,6 @@ package com.aventura.model.light;
 
 import java.util.ArrayList;
 
-import com.aventura.model.world.shape.Element;
-
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -30,11 +28,18 @@ import com.aventura.model.world.shape.Element;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
- * Central management of all Lighting
- * Specific registration of any Light should be done there. This will allow Rasterizer to go through all lights when required.
- * It also will help the shadowing to calculate the ShadowMaps associated to each Light
+ * Central system and management of all Lighting in Aventura
  * 
- * Future evolution: Lights should also be part of the World as they should be integrated with the rendering (Point Lights or Spot Lights)
+ * The lighting system is centralizing all Lights of a scene. Multiple lighting systems are required to render multiple scenes.
+ * The Lighting (system) can have one or several lights with the following restrictions (current implementation):
+ * - One (or no) Ambient Light for the whole scene
+ * - One (or no) Directional Light for the whole scene (future possible evolution with multiple Directional lights)
+ * - Multiple (or no) Point Lights (either pure Point Lights or Spot Lights that are specific Point Lights)
+ * 
+ * All created Lights should be registered here. This is where Rasterizer will find information about all light sources.
+ * This is also where the shadowing (when shadoows are activated) will find the list of Lights to calculate the associated ShadowMaps
+ * 
+ * Future evolution: Lights should also be part of the "extended" World as they may need to be rendered as well if part of the scene (Point Lights or Spot Lights)
  *
  * @author Olivier BARRY
  * @since July 2016

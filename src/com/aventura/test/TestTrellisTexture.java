@@ -147,7 +147,7 @@ public class TestTrellisTexture {
 		System.out.println("********* Calculating normals");
 		world.generate();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,1), 0.7f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, false);
 		

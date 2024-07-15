@@ -111,7 +111,7 @@ public abstract class Perspective {
 	}
 	
 	/**
-	 * Create a perspective with the 4 eye related dimension factors
+	 * Create a perspective with the 4 eye-related dimension factors
 	 * @param width
 	 * @param height
 	 * @param depth

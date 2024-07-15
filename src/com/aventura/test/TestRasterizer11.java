@@ -117,7 +117,7 @@ public class TestRasterizer11 {
 		pyr.getTriangle(2).setColor(Color.PINK);
 		pyr.getTriangle(3).setColor(Color.GRAY);
 
-		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0.5f,1));
+		DirectionalLight dl = new DirectionalLight(new Vector3(-0.5f,-0.5f,-1));
 		AmbientLight al = new AmbientLight(0.1f);
 		Lighting light = new Lighting(dl, al);
 		
