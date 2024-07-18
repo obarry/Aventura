@@ -101,6 +101,10 @@ public class Lighting {
 	public boolean hasSpecular() {
 		return specularLight;
 	}
+	 
+	public void setSpecularLight(boolean specularLight) {
+		this.specularLight = specularLight;		
+	}
 		
 	public AmbientLight getAmbientLight() {
 		return ambient;

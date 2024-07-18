@@ -20,6 +20,7 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.light.PointLight;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Sphere;
@@ -54,7 +55,7 @@ import com.aventura.view.GUIView;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestScaling {
+public class TestLightingSpecular {
 	
 	// GUIView to be displayed
 	private SwingView view;
@@ -62,7 +63,7 @@ public class TestScaling {
 	public GUIView createView(GraphicContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Scaling");
+		JFrame frame = new JFrame("Test Lighting Specular");
 		// Set the size of the frame
 		frame.setSize(1500,900);
 		
@@ -99,12 +100,12 @@ public class TestScaling {
 		// Camera
 		//Vector4 eye = new Vector4(-4,-8,5,1);
 		//Vector4 eye = new Vector4(16,6,12,1);
-		Vector4 eye = new Vector4(6,12,16,1);
+		Vector4 eye = new Vector4(8,8,8,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestScaling test = new TestScaling();
+		TestLightingSpecular test = new TestLightingSpecular();
 		
 		System.out.println("********* Creating World");
 		
@@ -138,10 +139,13 @@ public class TestScaling {
 		System.out.println(world);
 		System.out.println(elm);
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0,-1f), 0.8f);
+		//DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0,-1f), 0.8f);
+		PointLight pl = new PointLight(new Vector4(8,10,12,1), 50);
 		AmbientLight al = new AmbientLight(0.2f);
-		Lighting light = new Lighting(dl, al);
+		//Lighting light = new Lighting(dl, al, true);
+		Lighting light = new Lighting(al);
 		light.setSpecularLight(true);
+		light.addPointLight(pl);
 		
 		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
 		GUIView gUIView = test.createView(gContext);
