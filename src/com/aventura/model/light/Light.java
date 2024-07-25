@@ -65,5 +65,7 @@ public abstract class Light {
 	public Color getLightColor() {
 		return lightColor;
 	}
+	
+	
 
 }

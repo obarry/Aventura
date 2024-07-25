@@ -60,9 +60,11 @@ public class PointLight extends ShadowingLight {
 	/**
 	 * The return vector will hold the intensity information in its norm
 	 */
+	// TODO not needed to get intensity through the light vector in case of specular calculation for Point Lights (that need the normalized vector separately from the intensity)
+	// TODO need to revisit the API and harmonize here for both DirectionalLight and PointLight in adequation with Rasterizer
 	@Override
 	public Vector3 getLightVectorAtPoint(Vector4 point) {
-		// Return the NON-normalized vector from light source to point so that it contains
+		// Return the NON-normalized vector from light source to point so that it contains intensity
 		Vector3 light_dir = new Vector3(point, this.light_point);
 		float distance = light_dir.length();
 		light_dir.normalize();
@@ -80,7 +82,10 @@ public class PointLight extends ShadowingLight {
 	@Override
 	public float getIntensity(Vector4 point) {
 		// TODO Auto-generated method stub
-		return 0;
+		Vector3 light_dir = new Vector3(point, this.light_point);
+		float distance = light_dir.length();
+		
+		return attenuationFunc(distance);
 	}
 
 	@Override

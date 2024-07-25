@@ -270,9 +270,9 @@ public class Rasterizer {
 
 			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
 			if (lighting.hasSpecular()) {
-				v1.setSpecularCol(computeSpecularColor(v1.getWorldNormal(), viewer1, specExp, specCol, t.isRectoVerso()));
-				v2.setSpecularCol(computeSpecularColor(v2.getWorldNormal(), viewer2, specExp, specCol, t.isRectoVerso()));
-				v3.setSpecularCol(computeSpecularColor(v3.getWorldNormal(), viewer3, specExp, specCol, t.isRectoVerso()));
+				v1.setSpecularCol(computeSpecularColor(v1.getWorldNormal(), viewer1, v1.getWorldPos(), specExp, specCol, t.isRectoVerso()));
+				v2.setSpecularCol(computeSpecularColor(v2.getWorldNormal(), viewer2, v2.getWorldPos(), specExp, specCol, t.isRectoVerso()));
+				v3.setSpecularCol(computeSpecularColor(v3.getWorldNormal(), viewer3, v3.getWorldPos(), specExp, specCol, t.isRectoVerso()));
 			}
 		}
 
@@ -729,7 +729,9 @@ public class Rasterizer {
 	/**
 	 * This method calculates the Color for a given normal and a base color of the surface of the Element resulting from Directional light
 	 * @param baseCol of the surface in this area
+	 * @param point the Vertex position where to calculate the specular reflection
 	 * @param normal of the surface in this area
+	 * @param rectoVerso if both sides of the triangle can be illuminated (normally false for "closed" elements like Box or Sphere)
 	 * @return the resulting color from Directional light
 	 */
 	protected Color computeShadedColor(Color baseCol, Vector4 point, Vector3 normal, boolean rectoVerso) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
@@ -795,35 +797,72 @@ public class Rasterizer {
 	/**
 	 * @param normal the normal vector
 	 * @param viewer normalized vector
+	 * @param point the Vertex position where to calculate the specular reflection
 	 * @param e specular exponent
 	 * @param sc specular color
 	 * @param rectoVerso true if this triangle can be seen back side
 	 * @return the specular color
 	 */
-	protected Color computeSpecularColor(Vector3 normal, Vector3 viewer, float e, Color sc, boolean rectoVerso) {
+	protected Color computeSpecularColor(Vector3 normal, Vector3 viewer, Vector4 point, float e, Color sc, boolean rectoVerso) {
 
 		Color c = DARK_SHADING_COLOR; // Specular reflection from Directional light
 		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
 
 		// Secondary Shading: Specular reflection (from Directional light)
 		if (e>0) { // If e=0 this is considered as no specular reflection
-			// R: Reflection vector, L: Light vector, N: Normal vector on the surface. R+L=N+N => R = 2N-L
-			// Calculate reflection vector R = 2N-L and normalize it
-			float dotNL = lighting.getDirectionalLight().getLightVectorAtPoint(null).dot(normal.normalize());
-			Vector3 r = (normal.times(2*dotNL)).minus(lighting.getDirectionalLight().getLightVectorAtPoint(null)); 
 
-			float dotRV = r.dot(viewer);
-			if (rectoVerso)
-				dotRV = Math.abs(dotRV);
-			else
-				if (dotRV <0) dotRV = 0; // Clamped to 0 if negative
-			// Compute the dot product
-			//TODO Problem here: the following calculation creates abrupt specular (but it seems normal situation with Gouraud's shading
-			if (dotNL > 0) {
-				float specular = (float) Math.pow(dotRV, e);
-				float intensity = lighting.getDirectionalLight().getIntensity(null);
-				c = ColorTools.multColor(spc, specular*intensity);
+			// Specular reflection algorithm for 1 Light
+			// R: Reflection vector, L: Light vector, N: Normal vector on the surface. R+L=N+N => R = 2N-L
+			// This has to be applied to each Light source (having a light vector so except Ambient)
+
+			// Directional light
+			if (lighting.hasDirectional()) {
+				
+				// Calculate reflection vector R = 2N-L and normalize it
+				float dotNL = lighting.getDirectionalLight().getLightVectorAtPoint(null).dot(normal.normalize());
+				Vector3 r = (normal.times(2*dotNL)).minus(lighting.getDirectionalLight().getLightVectorAtPoint(null)); 
+
+				float dotRV = r.dot(viewer);
+				if (rectoVerso)
+					dotRV = Math.abs(dotRV);
+				else
+					if (dotRV <0) dotRV = 0; // Clamped to 0 if negative
+				// Compute the dot product
+				//TODO Problem here: the following calculation creates abrupt specular (but it seems normal situation with Gouraud's shading
+				if (dotNL > 0 && dotRV >0) {
+					float specular = (float) Math.pow(dotRV, e);
+					float intensity = lighting.getDirectionalLight().getIntensity(null);
+					c = ColorTools.multColor(spc, specular*intensity);
+				}
 			}
+
+			// Point lights : multiple Point Lights
+			if (lighting.hasPoint()) {
+				
+				ArrayList<PointLight> pointLights = lighting.getPointLights();
+				
+				for (int i=0; i<pointLights.size(); i++) {
+					// Calculate reflection vector R = 2N-L and normalize it
+					Vector3 lightVector = pointLights.get(i).getLightVectorAtPoint(point).normalize();
+					float dotNL = lightVector.dot(normal.normalize());
+					Vector3 r = (normal.times(2*dotNL)).minus(pointLights.get(i).getLightVectorAtPoint(point)); 
+				
+					float dotRV = r.dot(viewer);
+					if (rectoVerso)
+						dotRV = Math.abs(dotRV);
+					else
+						if (dotRV <0) dotRV = 0; // Clamped to 0 if negative
+		
+					if (dotNL > 0 && dotRV >0) {
+						float specular = (float) Math.pow(dotRV, e);
+						float intensity = pointLights.get(i).getIntensity(point);
+						Color col = ColorTools.multColor(spc, specular*intensity);
+						//System.out.println("Point light specular color calculation. Specular: " + specular + " Intensity: "+ intensity);
+						c = ColorTools.addColors(c, col);
+					}
+				}
+			}
+			
 		}
 		return c;
 	}
