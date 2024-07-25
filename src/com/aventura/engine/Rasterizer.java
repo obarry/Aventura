@@ -829,7 +829,7 @@ public class Rasterizer {
 					if (dotRV <0) dotRV = 0; // Clamped to 0 if negative
 				// Compute the dot product
 				//TODO Problem here: the following calculation creates abrupt specular (but it seems normal situation with Gouraud's shading
-				if (dotNL > 0) {
+				if (dotNL > 0 && dotRV >0) {
 					float specular = (float) Math.pow(dotRV, e);
 					float intensity = lighting.getDirectionalLight().getIntensity(null);
 					c = ColorTools.multColor(spc, specular*intensity);
@@ -843,7 +843,8 @@ public class Rasterizer {
 				
 				for (int i=0; i<pointLights.size(); i++) {
 					// Calculate reflection vector R = 2N-L and normalize it
-					float dotNL = pointLights.get(i).getLightVectorAtPoint(point).dot(normal.normalize());
+					Vector3 lightVector = pointLights.get(i).getLightVectorAtPoint(point).normalize();
+					float dotNL = lightVector.dot(normal.normalize());
 					Vector3 r = (normal.times(2*dotNL)).minus(pointLights.get(i).getLightVectorAtPoint(point)); 
 				
 					float dotRV = r.dot(viewer);
@@ -852,10 +853,11 @@ public class Rasterizer {
 					else
 						if (dotRV <0) dotRV = 0; // Clamped to 0 if negative
 		
-					if (dotNL > 0) {
+					if (dotNL > 0 && dotRV >0) {
 						float specular = (float) Math.pow(dotRV, e);
 						float intensity = pointLights.get(i).getIntensity(point);
 						Color col = ColorTools.multColor(spc, specular*intensity);
+						//System.out.println("Point light specular color calculation. Specular: " + specular + " Intensity: "+ intensity);
 						c = ColorTools.addColors(c, col);
 					}
 				}

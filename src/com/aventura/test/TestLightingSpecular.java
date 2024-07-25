@@ -130,7 +130,7 @@ public class TestLightingSpecular {
 		//Sphere elm = new Sphere(2f,32, tex);
 		Sphere elm = new Sphere(0.7f,32, tex);
 		//elm.setColor(new Color(100,200,255));
-		elm.setSpecularExp(8);
+		elm.setSpecularExp(10);
 		world.addElement(elm);
 		world.setBackgroundColor(new Color(20,10,5));
 		
@@ -139,11 +139,11 @@ public class TestLightingSpecular {
 		System.out.println(world);
 		System.out.println(elm);
 		
-		//DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0,-1f), 0.8f);
-		PointLight pl = new PointLight(new Vector4(8,10,12,1), 50);
+		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0,-1), 0.8f);
+		PointLight pl = new PointLight(new Vector4(1,10,2,1), 15);
 		AmbientLight al = new AmbientLight(0.2f);
-		//Lighting light = new Lighting(dl, al, true);
-		Lighting light = new Lighting(al);
+		Lighting light = new Lighting(dl, al);
+		//Lighting light = new Lighting(al);
 		light.setSpecularLight(true);
 		light.addPointLight(pl);
 		
