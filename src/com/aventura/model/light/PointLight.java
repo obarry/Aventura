@@ -33,7 +33,11 @@ import com.aventura.model.perspective.Perspective;
  * ------------------------------------------------------------------------------
  *
  * Point Light source is one that radiates light equally in every direction from a single point in space.
- * The intensity of light naturally decreases with distance according to the inverse square law.
+ * 
+ * For a Point Light, the intensity is a parameter of the light source and it is a general multiplication factor.
+ * Otherwise the intensity of light naturally decreases with distance according to defined law.
+ * The most physically representative intensity decrease could be the inverse square law. But for the sake of visibility of the Point light
+ * we will use a linear law in this implementation. 
  *
  * @author Olivier BARRY
  * @since July 2016
@@ -44,9 +48,10 @@ public class PointLight extends ShadowingLight {
 	
 	Vector4 light_point; // The light source
 	float max_distance; // The max distance were this light is generating light
+	// Intensity : for the PointLight, the intensity is a parameter of the light source.
 	
 	public PointLight(Vector4 point, float max) {
-		super();
+		super(); // Intensity is default value (1.0, no multiplication factor)
 		this.light_point = point;
 		this.max_distance = max;
 	}
@@ -58,20 +63,23 @@ public class PointLight extends ShadowingLight {
 	}
 
 	/**
-	 * The return vector will hold the intensity information in its norm
+	 * Return the normalized "light vector" at a given point
 	 */
-	// TODO not needed to get intensity through the light vector in case of specular calculation for Point Lights (that need the normalized vector separately from the intensity)
-	// TODO need to revisit the API and harmonize here for both DirectionalLight and PointLight in adequation with Rasterizer
 	@Override
 	public Vector3 getLightVectorAtPoint(Vector4 point) {
-		// Return the NON-normalized vector from light source to point so that it contains intensity
 		Vector3 light_dir = new Vector3(point, this.light_point);
-		float distance = light_dir.length();
-		light_dir.normalize();
-		light_dir.timesEquals(attenuationFunc(distance));
-		return light_dir;
+//		float distance = light_dir.length();
+//		light_dir.normalize();
+//		light_dir.timesEquals(attenuationFunc(distance));
+//		return light_dir;
+		return light_dir.normalize();
 	}
 	
+	/**
+	 * This is the function implementing the intensity decreasing with distance law
+	 * @param distance
+	 * @return the attenuation factor
+	 */
 	protected float attenuationFunc(float distance) {
 		// First implementation of attenuation as linear law
 		float attenuation = max_distance - distance;
@@ -85,7 +93,7 @@ public class PointLight extends ShadowingLight {
 		Vector3 light_dir = new Vector3(point, this.light_point);
 		float distance = light_dir.length();
 		
-		return attenuationFunc(distance);
+		return attenuationFunc(distance) * intensity; // The intensity factor is used here
 	}
 
 	@Override
@@ -96,20 +104,13 @@ public class PointLight extends ShadowingLight {
 
 	@Override
 	public void setLightVector(Vector3 light) {
-		// TODO Auto-generated method stub
+		// N/A for a Point Light (no light vector, only a point where the light is located)
 		
 	}
 
 	@Override
 	public void setIntensity(float intensity) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setLightColor(Color c) {
-		// TODO Auto-generated method stub
-		
+		this.intensity = intensity;
 	}
 
 	@Override

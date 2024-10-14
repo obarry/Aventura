@@ -56,9 +56,9 @@ public class DirectionalLight extends ShadowingLight {
 	 * @param direction
 	 */
 	public DirectionalLight(Vector3 direction) {
-		super(direction.length());
-		this.direction = new Vector3(direction).normalize();
-		this.light_vector = this.direction.times(-1);
+		super(direction.length()); // Intensity is taken from the norm of the direction vector
+		this.direction = new Vector3(direction).normalize(); // direction vector is normalized
+		this.light_vector = this.direction.times(-1); // light vector (the opposite) is normalized
 	}
 	
 	/**
@@ -68,8 +68,8 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, float intensity) {
 		super(intensity);
-		this.direction = new Vector3(direction).normalize();
-		this.light_vector = this.direction.times(-1);
+		this.direction = new Vector3(direction).normalize(); // direction vector is normalized
+		this.light_vector = this.direction.times(-1); // light vector (the opposite) is normalized
 	}
 
 	/**
@@ -103,12 +103,6 @@ public class DirectionalLight extends ShadowingLight {
 	@Override
 	public void setIntensity(float intensity) {
 		this.intensity = intensity;
-	}
-
-	@Override
-	public void setLightColor(Color c) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override

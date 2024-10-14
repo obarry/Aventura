@@ -55,9 +55,6 @@ public abstract class Light {
 	// Set this Light's direction (Directional Light)
 	public abstract void setLightVector(Vector3 light);
 
-	// Set this Light's color
-	public abstract void setLightColor(Color c);
-
 	// Set this Light's intensity
 	public abstract void setIntensity(float intensity);		
 
@@ -66,6 +63,10 @@ public abstract class Light {
 		return lightColor;
 	}
 	
-	
+	// Set this Light's color
+	public void setLightColor(Color c) {
+		this.lightColor = c;	
+	}
+
 
 }

@@ -330,17 +330,47 @@ public class Rasterizer {
 		}
 		
 		// Shadows
-		Vector4 vs1 = null, vs2 = null, vs3 = null;
+		Vector4 vs1_d = null, vs2_d = null, vs3_d = null;
+		Vector4[] vs1_p = null, vs2_p = null, vs3_p = null;
 		
-		if (shadows) { // then do the needeed calculation to know if the element is in shadow or not
+		//
+		// TODO SHADOWS : THIS SHOULD BE DONE BEFORE REORDERING THE 3 VERTICES SO THAT THIS IS MATCHING !!!
+		//
+		if (shadows) { // then do the needed calculation to know if the element is in shadow or not
+			
+			// For shadows we use same approach than Textures : at triangle level (here) : do a projection each of the 3 vertices in (each) light coordinates
+			// Then, at pixel level ( when rasterizing the scan lines) : interpolate the position in light coordinates and then get the shadow map value using the
+			// interpolated coordinates in light coordinates. Interpolation should also have depth correction.
+			
+			// Directional light - (one single Directional light for instance) TODO in next evolution: multiple Directional Lights
 
-			// For each light - TODO in next evolution (one single light for instance)
 			// For each of the 3 Vertices
 			// Get the World position
 			// translate in Light coordinates using the matrix in Shadowing class
-			vs1 = lighting.getDirectionalLight().getModelView().project(v1);
-			vs2 = lighting.getDirectionalLight().getModelView().project(v2);
-			vs3 = lighting.getDirectionalLight().getModelView().project(v3);
+			vs1_d = lighting.getDirectionalLight().getModelView().project(v1);
+			vs2_d = lighting.getDirectionalLight().getModelView().project(v2);
+			vs3_d = lighting.getDirectionalLight().getModelView().project(v3);
+
+			// For each Point light
+			int nb_pl = lighting.getPointLights().size();
+			
+			if (nb_pl >0) {
+				
+				vs1_p = new Vector4[nb_pl];
+				vs2_p = new Vector4[nb_pl];
+				vs3_p = new Vector4[nb_pl];
+
+				// For each of the 3 Vertices
+				// Get the World position
+				// translate in Light coordinates using the matrix in Shadowing class
+				for (int i=0; i<nb_pl; i++) {
+					vs1_p[i] = lighting.getDirectionalLight().getModelView().project(v1);
+					vs2_p[i] = lighting.getDirectionalLight().getModelView().project(v2);
+					vs3_p[i] = lighting.getDirectionalLight().getModelView().project(v3);
+				}
+
+			}
+			
 			// Get the depth of the vertices in Light coordinates
 			// Prepare the 3 depths to be interpolated in the rasterizeScanLine method
 		}
@@ -379,9 +409,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1, vs3, vs1, vs2);
+	                rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs3_d, vs1_d, vs2_d, vs1_p, vs3_p, vs1_p, vs2_p);
 	            } else {
-	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1, vs3, vs2, vs3);
+	                rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs3_d, vs2_d, vs3_d, vs1_p, vs3_p, vs2_p, vs3_p);
 	            }
 	        }
 
@@ -402,9 +432,9 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
 	            if (y < yScreen(v2)) {
-	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1, vs2, vs1, vs3);
+	                rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs2_d, vs1_d, vs3_d, vs1_p, vs2_p, vs1_p, vs3_p);
 	            } else {
-	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs2, vs3, vs1, vs3);
+	                rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs2_d, vs3_d, vs1_d, vs3_d, vs2_p, vs3_p, vs1_p, vs3_p);
 	            }
 	        }
 	    }
@@ -429,10 +459,14 @@ public class Rasterizer {
 			boolean texture, 		// Flag for texture calculation (true) or not (false)
 			int tex_orientation,	// Flag for isotropic, vertical or horizontal texture interpolation
 			boolean shadows,		// Flag for shadowing enabled (true) or disabled (false)
-			Vector4 vsa,			// Projected position in light coordinates of Vertex A
-			Vector4 vsb,			// Projected position in light coordinates of Vertex B
-			Vector4 vsc,			// Projected position in light coordinates of Vertex C
-			Vector4 vsd)   {		// Projected position in light coordinates of Vertex D
+			Vector4 vsa_d,			// Projected position in Directional light coordinates of Vertex A
+			Vector4 vsb_d,			// Projected position in Directional light coordinates of Vertex B
+			Vector4 vsc_d,			// Projected position in Directional light coordinates of Vertex C
+			Vector4 vsd_d,			// Projected position in Directional light coordinates of Vertex D
+			Vector4[] vsa_p,		// Array of projected position in Point light coordinates of Vertex A
+			Vector4[] vsb_p,		// Array of projected position in Point light coordinates of Vertex B
+			Vector4[] vsc_p,		// Array of projected position in Point light coordinates of Vertex C
+			Vector4[] vsd_p)   {	// Array of projected position in Point light coordinates of Vertex D
 
 		// Thanks to current Y, we can compute the gradient to compute others values like
 		// the starting X (sx) and ending X (ex) to draw between
@@ -506,10 +540,10 @@ public class Rasterizer {
 			// TODO
 			// For each light
 			// Get the depth of the vertices in Light coordinates
-			float zsa = vsa.getW();
-			float zsb = vsb.getW();
-			float zsc = vsc.getW();
-			float zsd = vsd.getW();
+			float zsa = vsa_d.getW();
+			float zsb = vsb_d.getW();
+			float zsc = vsc_d.getW();
+			float zsd = vsd_d.getW();
 			
 			// Interpolate across the 2 segments using gradients
 			// Starting Z & ending Z
@@ -615,7 +649,7 @@ public class Rasterizer {
 						
 						// Shadowing
 						if (shadows) { // then do the needful to know if the element is in shadow or not
-							// TODO
+							// TODO Work in Progress - To Be Completed
 							// For each light
 							int xs = 0, ys = 0; // projected position for shadow map
 							// Interpolate across the 2 segments using gradient
@@ -659,6 +693,7 @@ public class Rasterizer {
 								cc = ColorTools.addColors(ambientCol,csh);
 							}
 						}
+						// TODO also add the shadowing color
 
 						// Draw the point with calculated Combined Color
 						drawPoint(x, y, z, cc);

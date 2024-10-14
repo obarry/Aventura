@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import com.aventura.math.vector.Matrix4;
 import com.aventura.model.world.shape.Element;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -125,6 +126,31 @@ public class World {
 		return elements.size();
 	}
 	
+	public int getNbElements(Element e) {
+		int nb = 0;
+		
+			// Do a recursive call for SubElements
+			if (!e.isLeaf()) {
+				for (int i=0; i<e.getSubElements().size(); i++) {
+					// Recursive call
+					nb+=getNbElements(e.getSubElements().get(i));
+				}
+			} else { // Leaf
+				nb+=1;			
+			}
+		return nb;
+	}
+	
+	int getNbAllElements() {
+		int nb =0;
+		
+		for (int i=0; i<elements.size(); i++) {
+			nb++; // the Element of the list
+			nb+=getNbElements(getElement(i)); // the SubElements of the Element of the list (all SubElement recursively)
+		}
+		return nb;
+	}
+	
 	public int getNbTriangles() {
 		int n = 0;
 		for (int i=0; i<elements.size(); i++) {
@@ -132,6 +158,32 @@ public class World {
 		}
 		return n;
 	}
+
+	public int getNbTriangles(Element e) {
+		int nb = 0;
+
+		// Do a recursive call for SubElements
+		if (!e.isLeaf()) {
+			for (int i=0; i<e.getSubElements().size(); i++) {
+				// Recursive call
+				nb+=getNbTriangles(e.getSubElements().get(i));
+			}
+		} else { // Leaf
+			nb+=e.getNbTriangles();			
+		}
+		return nb;
+	}
+
+	int getNbAllTriangles() {
+		int nb =0;
+		
+		for (int i=0; i<elements.size(); i++) {
+			nb+=getNbTriangles(); // Triangles of the Element of the list
+			nb+=getNbTriangles(getElement(i)); // Triangles of the SubElements of the Element of the list (all SubElement recursively)
+		}
+		return nb;
+	}
+
 	
 	public int getNbVertices() {
 		int n = 0;
@@ -140,6 +192,33 @@ public class World {
 		}
 		return n;
 	}
+	
+	public int getNbVertices(Element e) {
+		int nb = 0;
+
+		// Do a recursive call for SubElements
+		if (!e.isLeaf()) {
+			for (int i=0; i<e.getSubElements().size(); i++) {
+				// Recursive call
+				nb+=getNbVertices(e.getSubElements().get(i));
+			}
+		} else { // Leaf
+			nb+=e.getNbVertices();			
+		}
+		return nb;
+	}
+	
+	public int getNbAllVertices() {
+		int nb =0;
+		
+		for (int i=0; i<elements.size(); i++) {
+			nb+=getNbVertices(); // Vertices of the Element of the list
+			nb+=getNbVertices(getElement(i)); // Vertices of the SubElements of the Element of the list (all SubElement recursively)
+		}
+		return nb;
+	}
+	
+	
 	
 	public float getMaxX() {
 		float max = elements.get(0).getMaxX();
@@ -206,9 +285,12 @@ public class World {
 	public String toString() {
 		String world = "World\n";
 		world += "* Name: "+name + "\n";
-		world += "* Elements: " + getNbElements() + "\n";
-		world += "* Triangles: " + getNbTriangles() + "\n";
-		world += "* Vertices: " + getNbVertices() + "\n";
+		world += "* Direct Elements: " + getNbElements() + "\n";
+		world += "* All Elements: " + getNbAllElements() + "\n";
+		world += "* Direct Element's Triangles: " + getNbTriangles() + "\n";
+		world += "* All Triangles: " + getNbAllTriangles() + "\n";
+		world += "* Direct Element's Vertices: " + getNbVertices() + "\n";
+		world += "* All Vertices: " + getNbAllVertices() + "\n";
 		world += "* Background color: " + getBackgroundColor() + "\n";
 		world += "* World color: " + getColor() + "\n";
 		return world;

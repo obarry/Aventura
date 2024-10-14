@@ -13,7 +13,7 @@ import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
-
+import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -124,9 +124,14 @@ public class Test3ElementsRotation {
 		e1.setColor(Color.MAGENTA);
 		e2 = new Cube(2);
 		e2.setColor(Color.ORANGE);
-
 		
-		// Add subelements to Element
+		// Translate Elements e1 and e2 respectively above and below main Element e:
+		Translation t1 = new Translation(new Vector3(0, 0, 2));
+		Translation t2 = new Translation(new Vector3(0, 0, -2));
+		e1.setTransformation(t1);
+		e2.setTransformation(t2);
+
+//		// Add subelements to Element
 		e.addElement(e1);
 		e.addElement(e2);
 		
@@ -143,6 +148,7 @@ public class Test3ElementsRotation {
 //		for (int i=0; i<world.getNbElements(); i++) {
 //			System.out.println(world.getElement(i));
 //		}
+		System.out.println(world);
 
 		Lighting light = test.createLight();
 		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
