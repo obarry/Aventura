@@ -114,11 +114,11 @@ public class Matrix3 {
 	@Override
 	public String toString() {
 		String s = "[";
-		for (int i=0; i<Constants.SIZE_3-1; i++) {
-			s = s + Arrays.toString(array[i]);
-			s = s+"\n";
+		s = s + Arrays.toString(array[0]) + "\n";
+		for (int i=1; i<Constants.SIZE_3-1; i++) {
+			s = s + " " + Arrays.toString(array[i]) + "\n";
 		}
-		s = s + Arrays.toString(array[Constants.SIZE_3-1])+"]";
+		s = s + " " + Arrays.toString(array[Constants.SIZE_3-1])+"]";
 		return s;
 	}
 
