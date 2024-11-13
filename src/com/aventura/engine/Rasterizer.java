@@ -59,6 +59,29 @@ import com.aventura.view.MapView;
 
 public class Rasterizer {
 	
+	// --------------------------------------------------------------------------------------------------------------------
+	// Parameter classes (structures) to be used as parameters for rasterizing scan lines
+	// For each triangle, the structures will be constructed with appropriate parameters then passed to rasterizeScanLine
+	// --------------------------------------------------------------------------------------------------------------------
+	//
+	
+	protected class VertexLightParam {
+		public Color shadedColor;
+		public Vector4 vl; // Projected position in light coordinates of Vertex
+		public Vector4 vm; // Shadow Map vector (position in Shadow Map)
+		public MapView map; // Shadow map of this Light
+	}
+	
+	protected class VertexParam {
+		public Vertex v; // Vertex
+		public Vector4 vt; // Texture vector
+		public VertexLightParam [] lp; // one parameter for each light (except ambient)
+	}
+	
+	// End Parameter classes definition
+	// --------------------------------------------------------------------------------------------------------------------
+
+	
 	// References
 	protected GraphicContext graphic;
 	protected GUIView gUIView;
@@ -79,19 +102,10 @@ public class Rasterizer {
 	int not_rendered_pixels = 0;
 	
 	// Create locally some context variables exhaustively used during rasterization
+	// TODO Be cautious here : if GraphicContext has changed between 2 calls to previously created Rasterizer, these 2 variables won't be refreshed accordingly -> potential bug
 	int pixelHalfWidth = 0;
 	int pixelHalfHeight = 0;
 	
-	/**
-	 * Creation of Rasterizer without Lighting for tests.
-	 * @param graphic
-	 */
-	public Rasterizer(GraphicContext graphic) {
-		this.graphic = graphic;
-		pixelHalfWidth = graphic.getPixelHalfWidth();
-		pixelHalfHeight = graphic.getPixelHalfHeight();
-	}
-
 	/**
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param camera : a pointer to the Camera created offline by user
@@ -104,6 +118,7 @@ public class Rasterizer {
 		this.lighting = lighting;
 		pixelHalfWidth = graphic.getPixelHalfWidth();
 		pixelHalfHeight = graphic.getPixelHalfHeight();
+		// TODO Be cautious here : if GraphicContext has changed between 2 calls to previously created Rasterizer, the 2 above variables won't be refreshed accordingly -> potential bug
 	}
 		
 	public void setView(GUIView v) {
@@ -121,8 +136,8 @@ public class Rasterizer {
 		float zBuffer_init = graphic.getPerspective().getFar();
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "zBuffer init value: "+zBuffer_init);
 		
-		zBuf_width = 2*pixelHalfWidth+1;
-		zBuf_height = 2*pixelHalfHeight+1;
+		zBuf_width  = 2 * pixelHalfWidth  + 1;
+		zBuf_height = 2 * pixelHalfHeight + 1;
 		
 		// Only create buffer if needed, otherwise reuse it, it will be reinitialized below
 		//if (zBuffer == null) zBuffer = new float[zBuf_width][zBuf_height];
@@ -132,7 +147,7 @@ public class Rasterizer {
 		// Any value closer will be drawn and the zBuffer in this place will be updated by new value
 		for (int i=0; i<zBuf_width; i++)  {
 			for (int j=0; j<zBuf_height; j++) {
-				zBuffer.set(i, j, zBuffer_init);
+				zBuffer.set(i, j, zBuffer_init); // Far value of the perspective
 			}
 		}
 		return zBuffer;
@@ -141,7 +156,7 @@ public class Rasterizer {
 	//
 	// A few tools, some methods to simplify method calls
 	//
-	
+	// TODO Shouldn't this transformation be handled through the projection matrix to avoid additional computation for each pixel ?
 	protected float xScreen(Vertex v) {
 		//return xScreen(v.getProjPos());
 		return v.getProjPos().get3DX()*pixelHalfWidth;
@@ -152,6 +167,7 @@ public class Rasterizer {
 		return v.getProjPos().get3DY()*pixelHalfHeight;
 	}
 	
+
 	// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
 	protected  int getXzBuf(int x) {
 		return x + pixelHalfWidth;
@@ -220,7 +236,14 @@ public class Rasterizer {
 	 * @param texture a boolean to indicate if texture processing is activated (true) or not (false)
 	 * @param shadows a boolean to indicate if shadowing is enabled (true) or not (false)
 	 **/
-	public void rasterizeTriangle(Triangle t, Color surfCol, float specExp, Color specCol, boolean interpolate, boolean texture, boolean shadows) {
+	public void rasterizeTriangle(
+			Triangle t,
+			Color surfCol,
+			float specExp,
+			Color specCol,
+			boolean interpolate,
+			boolean texture,
+			boolean shadows) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+surfCol);
 		
@@ -492,8 +515,8 @@ public class Rasterizer {
 		// To avoid gradient effect on x axis for small y variations (flat slopes) -> "cap" the sx and ex to x min and max of the triangle 
 		int smin = (int)Math.min(xa,xb);
 		int emax = (int)Math.max(xc, xd);
-		if (sx<smin) sx=(int)smin;
-		if (ex>emax) ex=(int)emax;
+		if (sx<smin) sx=smin;
+		if (ex>emax) ex=emax;
 
 		// Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
 		// TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
@@ -572,8 +595,8 @@ public class Rasterizer {
 		Vector4 vt2 = null;
 		Vector4 vt = null;
 		if (texture && t!=null) {
-			vt1 = Tools.interpolate(vta.times((float)1/za), vtb.times((float)1/zb), gradient1);
-			vt2 = Tools.interpolate(vtc.times((float)1/zc), vtd.times((float)1/zd), gradient2);
+			vt1 = Tools.interpolate(vta.times(1/za), vtb.times(1/zb), gradient1);
+			vt2 = Tools.interpolate(vtc.times(1/zc), vtd.times(1/zd), gradient2);
 		}
 
 		Color csh = null; // Shaded color

@@ -45,7 +45,7 @@ public class TestRasterizer1 {
 		
 		System.out.println("GraphicContext: "+graphic);
 		
-		Rasterizer rasterizer = new Rasterizer(graphic);
+		Rasterizer rasterizer = new Rasterizer(null, graphic, null);
 		
 		rasterizer.initZBuffer();
 
