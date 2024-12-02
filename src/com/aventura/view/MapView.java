@@ -1,5 +1,9 @@
 package com.aventura.view;
 
+import java.awt.Color;
+
+import com.aventura.tools.color.ColorTools;
+import com.aventura.tools.tracing.Tracer;
 
 /**
 * ------------------------------------------------------------------------------ 
@@ -128,7 +132,7 @@ public class MapView extends View {
 		}
 	}
 	
-	// To normalize between 0 and 1 so that the map can be used for Colors
+	// To zero values beyond far (e.g. for Zbuffering)
 	public void removeFar(float far) {
 
 		for (int i=0; i<width; i++) {
@@ -137,5 +141,67 @@ public class MapView extends View {
 			}
 		}
 	}
+	
+	// TODO This is same algorithm than Texture bilinear filtering although using only floats. But this may be factored together. To be thought.
+	/**
+	 * Calculate the bilinear interpolated Value of this Map at coordinates <s,t> with 0 <= s <= 1 and 0 <= t <= 1
+	 * @param s
+	 * @param t
+	 * @return
+	 */
+	public float getInterpolation(float s, float t) {
+
+		// Calculate the coordinates within the texture (-0.5 as per bressenham)
+		float u = s * this.width - 0.5f;
+		float v = t * this.height - 0.5f;
+
+		// Calculate the integer value of u and v
+		int x0 = (int) Math.floor(u);
+		int y0 = (int) Math.floor(v);
+		int x1 = x0 + 1;
+		int y1 = y0 + 1;
+		
+		// Calculate the frac value of u and v (their respective complement to 1 will be computed in the getBilinearFilteredColor method directly)
+		float u_ratio = (float)u - x0;
+		float v_ratio = (float)v - y0;
+		
+		if (x0<0) x0 = 0;
+		if (y0<0) y0 = 0;
+		if (x0>=this.width)  x0 = this.width - 1;
+		if (y0>=this.height) y0 = this.height - 1;
+		if (x1<0) x1 = 0;
+		if (y1<0) y1 = 0;
+		if (x1>=this.width)  x1 = this.width - 1;
+		if (y1>=this.height) y1 = this.height - 1;
+
+		// Calculate the interpolated value as per Bilinear Filtering algorithm
+		return getBilinearFilteredComponent(map[x0][y0], map[x0][y1], map[x1][y0], map[x1][y1], u_ratio, v_ratio);
+
+	}
+
+	// TODO this method below is the copy of the protected method in ColorTools -> could be factored in other place (common tools)
+	// as this is more generic and not specific to Color
+	/**
+	 * Calculate one Bilinear filtered Color component
+	 * 
+	 * @param z11 First color sample on axis 1 (generally X)
+	 * @param z12 Second color sample on axis 1 (generally X)
+	 * @param z21 First color sample on axis 2 (generally Y)
+	 * @param z22 Second color sample on axis 2 (generally Y)
+	 * @param u_ratio Ratio of the first position on first axis (second position ratio is 1-u_ratio)
+	 * @param v_ratio Ratio of the first position on second axis (second position ratio is 1-v_ratio)
+	 * @return the interpolated Bi-linear filtered component
+	 */
+	protected static float getBilinearFilteredComponent(float z11, float z12, float z21, float z22, float u_ratio, float v_ratio) {
+		
+		float u_opposite = 1 - u_ratio;
+		float v_opposite = 1 - v_ratio;
+
+		// Calculate the interpolated value as per algorithm: f(x,y) = (1 - {x})((1 - {y})z11 + {y}z12) + {x}((1 - {y})z21 + {y}z22)
+		// https://en.wikipedia.org/wiki/Bilinear_filtering
+		float result = (z11*u_opposite+z21*u_ratio)*v_opposite+(z12*u_opposite+z22*u_ratio)*v_ratio;
+		return result;
+	}
+
 
 }
