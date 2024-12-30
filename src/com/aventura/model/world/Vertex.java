@@ -62,8 +62,8 @@ public class Vertex {
 	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates - Not used - Removed 1/1/2022 - restored 11/7/2023
 	
 	// Lighting and Shading
-	protected Color shadedCol = null; // Gouraud's shading at this Vertex, calculated at Rasterization time
-	protected Color specularCol = null; // Gouraud's specular reflection at this Vertex, calculated at Rasterization time
+	//protected Color shadedCol = null; // Gouraud's shading at this Vertex, calculated at Rasterization time
+	//protected Color specularCol = null; // Gouraud's specular reflection at this Vertex, calculated at Rasterization time
 	
 	/**
 	 * Duplicate a Vertex, creating new Vectors for position and normal but keeping references for texture and color
@@ -165,21 +165,21 @@ public class Vertex {
 		return color;
 	}
 	
-	public void setShadedCol(Color c) {
-		this.shadedCol = c;
-	}
-	
-	public Color getShadedCol() {
-		return shadedCol;
-	}
-		
-	public Color getSpecularCol() {
-		return specularCol;
-	}
-
-	public void setSpecularCol(Color specularCol) {
-		this.specularCol = specularCol;
-	}
+//	public void setShadedCol(Color c) {
+//		this.shadedCol = c;
+//	}
+//	
+//	public Color getShadedCol() {
+//		return shadedCol;
+//	}
+//		
+//	public Color getSpecularCol() {
+//		return specularCol;
+//	}
+//
+//	public void setSpecularCol(Color specularCol) {
+//		this.specularCol = specularCol;
+//	}
 
 	/**
 	 * Calculate the normal from a set of vertices surrounding this Vertex

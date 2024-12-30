@@ -35,6 +35,10 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
+ * This class provides functionalites to load a texture file and then provide interpolated color using normalized coordinates
+ * It is possible to load the bitmap file horizontally or vertically (just exchanging what is width and height, this is like portrait and landscape for pictures)
+ * but also to "reverse" the bitmap (left/right) which is important for file having a "direction" (e.g. text written etc.) and how it is supposed to be used.
+ * 
  * @author Olivier BARRY
  * @since April 2017
  */
