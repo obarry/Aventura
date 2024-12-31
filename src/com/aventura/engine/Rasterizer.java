@@ -282,86 +282,93 @@ public class Rasterizer {
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
 		
+		// Let's define 3 VertexParam "containers" for the 3 Vertices of the triangle to be rendered and start building them with Vertex and Texture vectors
+		// They will be used as parameters to be passed to rasterizeScanLight function containing a structure set of data
+		VertexParam vp1, vp2, vp3;
+		vp1 = new VertexParam(t.getV1(), t.getTexVec1());
+		vp2 = new VertexParam(t.getV2(), t.getTexVec2());
+		vp3 = new VertexParam(t.getV3(), t.getTexVec3());
+		
 	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
 	    // with v1 always down (thus having the highest possible Y)
 	    // then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
-		Vertex v1, v2, v3;
-		v1 = t.getV1();
-		v2 = t.getV2();
-		v3 = t.getV3();
+
 		// TODO use color at Vertex level if defined. This requires to manage 3 colors for a triangle in this case
 		
-		Vector4 vt1, vt2, vt3; // Same for Texture Vectors
-		
-		vt1 = t.getTexVec1();
-		vt2 = t.getTexVec2();
-		vt3 = t.getTexVec3();
-
-		if (v2.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p2 lower than p1
-			if (v3.getProjPos().get3DY()<v2.getProjPos().get3DY()) { // p3 lower than p2
-				v1 = t.getV3();
+		if (vp2.v.getProjPos().get3DY()<vp1.v.getProjPos().get3DY()) { // p2 lower than p1
+			if (vp3.v.getProjPos().get3DY()<vp2.v.getProjPos().get3DY()) { // p3 lower than p2
+				vp1.v = t.getV3();
 				// No change for p2
-				v3 = t.getV1();
-				vt1 = t.getTexVec3();
-				vt3 = t.getTexVec1();
+				vp3.v = t.getV1();
+				vp1.t = t.getTexVec3();
+				vp3.t = t.getTexVec1();
 			} else { // p2 lower or equal than p3
-				if (v3.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p3 lower than p1
-					v1 = t.getV2();
-					v2 = t.getV3();
-					v3 = t.getV1();
-					vt1 = t.getTexVec2();
-					vt2 = t.getTexVec3();
-					vt3 = t.getTexVec1();
+				if (vp3.v.getProjPos().get3DY()<vp1.v.getProjPos().get3DY()) { // p3 lower than p1
+					vp1.v = t.getV2();
+					vp2.v = t.getV3();
+					vp3.v = t.getV1();
+					vp1.t = t.getTexVec2();
+					vp2.t = t.getTexVec3();
+					vp3.t = t.getTexVec1();
 				} else { // p1 higher or equal than p3
-					v1 = t.getV2();
-					v2 = t.getV1();
+					vp1.v = t.getV2();
+					vp2.v = t.getV1();
 					// No change for p3
-					vt1 = t.getTexVec2();
-					vt2 = t.getTexVec1();
+					vp1.t = t.getTexVec2();
+					vp2.t = t.getTexVec1();
 				}
 			}
 		} else { // p1 lower than p2
-			if (v3.getProjPos().get3DY()<v1.getProjPos().get3DY()) { // p3 lower than p1
-				v1 = t.getV3();
-				v2 = t.getV1();
-				v3 = t.getV2();
-				vt1 = t.getTexVec3();
-				vt2 = t.getTexVec1();
-				vt3 = t.getTexVec2();
+			if (vp3.v.getProjPos().get3DY()<vp1.v.getProjPos().get3DY()) { // p3 lower than p1
+				vp1.v = t.getV3();
+				vp2.v = t.getV1();
+				vp3.v = t.getV2();
+				vp1.t = t.getTexVec3();
+				vp2.t = t.getTexVec1();
+				vp3.t = t.getTexVec2();
 			} else { // p1 lower than p3
-				if (v3.getProjPos().get3DY()<v2.getProjPos().get3DY()) { // p3 lower than p2
+				if (vp3.v.getProjPos().get3DY()<vp2.v.getProjPos().get3DY()) { // p3 lower than p2
 					// No change for p1
-					v2 = t.getV3();
-					v3 = t.getV2();
-					vt2 = t.getTexVec3();
-					vt3 = t.getTexVec2();
+					vp2.v = t.getV3();
+					vp3.v = t.getV2();
+					vp2.t = t.getTexVec3();
+					vp3.t = t.getTexVec2();
 				} else {
 					// Else keep p1, p2 and p3 as defined
 				}
 			}
 		}
 		
-		// Initialize 3 VertexParam structures containing n VertexParamLight structures, one for each light
-		// This will be used as parameters to be passed to rasterizeScanLight function
+		// Initialize n VertexParamLight structures, one for each light, for each VertexParam "container" previously created
 		ArrayList<PointLight> pointLights = lighting.getPointLights();
-		int nb_pl = pointLights.size();
-		VertexParam vp1, vp2, vp3;
-		vp1 = new VertexParam(v1, vt1);
-		vp2 = new VertexParam(v2, vt2);
-		vp3 = new VertexParam(v3, vt3);
-		VertexLightParam [] vlp1 = new VertexLightParam[nb_pl];
-		VertexLightParam [] vlp2 = new VertexLightParam[nb_pl];
-		VertexLightParam [] vlp3 = new VertexLightParam[nb_pl];
-		// For each Light
-		for (int i=0; i<nb_pl; i++) {
-			vlp1[i] = new VertexLightParam();
-			vlp2[i] = new VertexLightParam();
-			vlp3[i] = new VertexLightParam();	
+		int nb_pl; // Number of Point Lights
+		
+		if (pointLights != null) {
+			
+			nb_pl = pointLights.size();
+			
+			VertexLightParam [] vlp1 = new VertexLightParam[nb_pl];
+			VertexLightParam [] vlp2 = new VertexLightParam[nb_pl];
+			VertexLightParam [] vlp3 = new VertexLightParam[nb_pl];
+			
+			// For each Light
+			for (int i=0; i<nb_pl; i++) {
+				vlp1[i] = new VertexLightParam();
+				vlp2[i] = new VertexLightParam();
+				vlp3[i] = new VertexLightParam();	
+			}
+			vp1.l = vlp1;
+			vp2.l = vlp2;
+			vp3.l = vlp3;
+		} else {
+			
+			nb_pl = 0;
+			
+			vp1.l = null;
+			vp2.l = null;
+			vp3.l = null;
 		}
-		vp1.l = vlp1;
-		vp2.l = vlp2;
-		vp3.l = vlp3;
-		// End initialize VertexParam structures
+
 		
 		// If no interpolation requested -> plain faces. Then:
 		// - calculate normal at Triangle level for shading
@@ -386,30 +393,17 @@ public class Rasterizer {
 			viewer2.normalize();
 			viewer3.normalize();
 			
-			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			//v1.setShadedCol(computeShadedColor(surfCol, v1.getWorldPos(), v1.getWorldNormal(), t.isRectoVerso()));
-			//v2.setShadedCol(computeShadedColor(surfCol, v2.getWorldPos(), v2.getWorldNormal(), t.isRectoVerso()));
-			//v3.setShadedCol(computeShadedColor(surfCol, v3.getWorldPos(), v3.getWorldNormal(), t.isRectoVerso()));		
-
-			// Calculate the 3 colors of the 3 vertices based on their respective normals and direction of the viewer
-			//if (lighting.hasSpecular()) {
-			//	v1.setSpecularCol(computeSpecularColor(v1.getWorldNormal(), viewer1, v1.getWorldPos(), specExp, specCol, t.isRectoVerso()));
-			//	v2.setSpecularCol(computeSpecularColor(v2.getWorldNormal(), viewer2, v2.getWorldPos(), specExp, specCol, t.isRectoVerso()));
-			//	v3.setSpecularCol(computeSpecularColor(v3.getWorldNormal(), viewer3, v3.getWorldPos(), specExp, specCol, t.isRectoVerso()));
-			//}
-
 			// For each Light
 			for (int i=0; i<nb_pl; i++) {
-				vlp1[i].shadedColor = computeShadedColor(surfCol, v1.getWorldPos(), v1.getWorldNormal(), t.isRectoVerso(), pointLights.get(i));
-				vlp2[i].shadedColor = computeShadedColor(surfCol, v2.getWorldPos(), v2.getWorldNormal(), t.isRectoVerso(), pointLights.get(i));
-				vlp3[i].shadedColor = computeShadedColor(surfCol, v3.getWorldPos(), v3.getWorldNormal(), t.isRectoVerso(), pointLights.get(i));	
+				vp1.l[i].shadedColor = computeShadedColor(surfCol, vp1.v.getWorldPos(), vp1.v.getWorldNormal(), t.isRectoVerso(), pointLights.get(i));
+				vp2.l[i].shadedColor = computeShadedColor(surfCol, vp2.v.getWorldPos(), vp2.v.getWorldNormal(), t.isRectoVerso(), pointLights.get(i));
+				vp3.l[i].shadedColor = computeShadedColor(surfCol, vp3.v.getWorldPos(), vp3.v.getWorldNormal(), t.isRectoVerso(), pointLights.get(i));	
 
 				if (lighting.hasSpecular()) {
-					vlp1[i].specularColor = computeSpecularColor(v1.getWorldNormal(), viewer1, v1.getWorldPos(), specExp, specCol, t.isRectoVerso(), pointLights.get(i));
-					vlp2[i].specularColor = computeSpecularColor(v2.getWorldNormal(), viewer2, v2.getWorldPos(), specExp, specCol, t.isRectoVerso(), pointLights.get(i));
-					vlp3[i].specularColor = computeSpecularColor(v3.getWorldNormal(), viewer3, v3.getWorldPos(), specExp, specCol, t.isRectoVerso(), pointLights.get(i));
+					vp1.l[i].specularColor = computeSpecularColor(vp1.v.getWorldNormal(), viewer1, vp1.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), pointLights.get(i));
+					vp2.l[i].specularColor = computeSpecularColor(vp2.v.getWorldNormal(), viewer2, vp2.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), pointLights.get(i));
+					vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), pointLights.get(i));
 				}
-
 			}
 
 		}
@@ -450,9 +444,9 @@ public class Rasterizer {
 				// Get the World position
 				// translate in Light coordinates using the matrix in Shadowing class
 				for (int i=0; i<nb_pl; i++) {
-					vs1_p[i] = lighting.getDirectionalLight().getModelView().project(v1);
-					vs2_p[i] = lighting.getDirectionalLight().getModelView().project(v2);
-					vs3_p[i] = lighting.getDirectionalLight().getModelView().project(v3);
+					vs1_p[i] = lighting.getDirectionalLight().getModelView().project(vp1.v);
+					vs2_p[i] = lighting.getDirectionalLight().getModelView().project(vp2.v);
+					vs3_p[i] = lighting.getDirectionalLight().getModelView().project(vp3.v);
 				}
 
 			}
@@ -466,14 +460,14 @@ public class Rasterizer {
 
 	    // http://en.wikipedia.org/wiki/Slope
 	    // Computing invert slopes
-	    if (yScreen(v2) - yScreen(v1) > 0) {
-	        dP1P2 = (xScreen(v2)-xScreen(v1))/(yScreen(v2)-yScreen(v1));
+	    if (yScreen(vp2.v) - yScreen(vp1.v) > 0) {
+	        dP1P2 = (xScreen(vp2.v)-xScreen(vp1.v))/(yScreen(vp2.v)-yScreen(vp1.v));
 	    } else { // horizontal segment, infinite invert slope
 	        dP1P2 = Float.MAX_VALUE;
 	    }
 	    
-	    if (yScreen(v3) - yScreen(v1) > 0) {
-	        dP1P3 = (xScreen(v3)-xScreen(v1))/(yScreen(v3)-yScreen(v1));
+	    if (yScreen(vp3.v) - yScreen(vp1.v) > 0) {
+	        dP1P3 = (xScreen(vp3.v)-xScreen(vp1.v))/(yScreen(vp3.v)-yScreen(vp1.v));
 	    } else { // horizontal segment, infinite invert slope
 	    	dP1P3 = Float.MAX_VALUE;
 	    }
@@ -493,12 +487,12 @@ public class Rasterizer {
 			// +
 		    // P1
 	    	
-	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
-	            if (y < yScreen(v2)) {
-	            	rasterizeScanLine_new(y, vp1, vp3, vp1, vp2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
+	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
+	            if (y < yScreen(vp2.v)) {
+	            	rasterizeScanLine(y, vp1, vp3, vp1, vp2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
 	                //rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs3_d, vs1_d, vs2_d, vs1_p, vs3_p, vs1_p, vs2_p);
 	            } else {
-	                rasterizeScanLine_new(y, vp1, vp3, vp2, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
+	                rasterizeScanLine(y, vp1, vp3, vp2, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
 	                //rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs3_d, vs2_d, vs3_d, vs1_p, vs3_p, vs2_p, vs3_p);
 	            }
 	        }
@@ -518,12 +512,12 @@ public class Rasterizer {
 			//        +
 		    //       P1
 	    	
-	        for (int y = (int)yScreen(v1); y <= (int)yScreen(v3); y++) {
-	            if (y < yScreen(v2)) {
-	                rasterizeScanLine_new(y, vp1, vp2, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
+	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
+	            if (y < yScreen(vp2.v)) {
+	                rasterizeScanLine(y, vp1, vp2, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
 	                //rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs2_d, vs1_d, vs3_d, vs1_p, vs2_p, vs1_p, vs3_p);
 	            } else {
-	                rasterizeScanLine_new(y, vp2, vp3, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
+	                rasterizeScanLine(y, vp2, vp3, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
 	                //rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs2_d, vs3_d, vs1_d, vs3_d, vs2_p, vs3_p, vs1_p, vs3_p);
 	            }
 	        }
@@ -532,279 +526,7 @@ public class Rasterizer {
 	}
 	
 
-//	protected void rasterizeScanLine(
-//			int y,					// ordinate of the scan line
-//			Vertex va,				// Vertex A of first segment: AB
-//			Vertex vb,				// Vertex B of first segment: AB
-//			Vertex vc,				// Vertex C of second segment: CD
-//			Vertex vd,				// Vertex D of second segment: CD
-//			Vector4 vta,			// Texture Vector of Vertex A
-//			Vector4 vtb,			// Texture Vector of Vertex B
-//			Vector4 vtc,			// Texture Vector of Vertex C
-//			Vector4 vtd,			// Texture Vector of Vertex D
-//			Texture t,				// Texture object for this triangle
-//			Color shadedCol,		// Shaded color if Normal at triangle level (else should be null)
-//			Color ambientCol,		// Ambient color (independent of the position in space)
-//			boolean interpolate,	// Flag for interpolation (true) or not (false)
-//			boolean texture, 		// Flag for texture calculation (true) or not (false)
-//			int tex_orientation,	// Flag for isotropic, vertical or horizontal texture interpolation
-//			boolean shadows,		// Flag for shadowing enabled (true) or disabled (false)
-//			Vector4 vsa_d,			// Projected position in Directional light coordinates of Vertex A
-//			Vector4 vsb_d,			// Projected position in Directional light coordinates of Vertex B
-//			Vector4 vsc_d,			// Projected position in Directional light coordinates of Vertex C
-//			Vector4 vsd_d,			// Projected position in Directional light coordinates of Vertex D
-//			Vector4[] vsa_p,		// Array of projected position in Point light coordinates of Vertex A
-//			Vector4[] vsb_p,		// Array of projected position in Point light coordinates of Vertex B
-//			Vector4[] vsc_p,		// Array of projected position in Point light coordinates of Vertex C
-//			Vector4[] vsd_p) {		// Array of projected position in Point light coordinates of Vertex D
-//
-//		// Thanks to current Y, we can compute the gradient to compute others values like
-//		// the starting X (sx) and ending X (ex) to draw between
-//		// if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
-//		float ya = yScreen(va);
-//		float yb = yScreen(vb);
-//		float yc = yScreen(vc);
-//		float yd = yScreen(vd);
-//
-//		float xa = xScreen(va);
-//		float xb = xScreen(vb);
-//		float xc = xScreen(vc);
-//		float xd = xScreen(vd);
-//
-//		// Gradient 1 is the gradient on VA VB segment
-//		float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
-//		// Gradient 2 is the gradient on VC VD segment
-//		float gradient2 = yc != yd ? (y - yc) / (yd - yc) : 1;
-//		
-//		int sx = (int)Tools.interpolate(xa, xb, gradient1);
-//		int ex = (int)Tools.interpolate(xc, xd, gradient2);
-//
-//		// To avoid gradient effect on x axis for small y variations (flat slopes) -> "cap" the sx and ex to x min and max of the triangle 
-//		int smin = (int)Math.min(xa,xb);
-//		int emax = (int)Math.max(xc, xd);
-//		if (sx<smin) sx=smin;
-//		if (ex>emax) ex=emax;
-//
-//		// Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
-//		// TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
-//		
-//		float z1 = 0, z2 = 0, za = 0, zb = 0, zc = 0, zd = 0;
-//
-//
-//		switch (graphic.getPerspectiveType()) {
-//
-//		case GraphicContext.PERSPECTIVE_TYPE_FRUSTUM :
-//			// Vertices z
-//			za = va.getProjPos().getW();
-//			zb = vb.getProjPos().getW();
-//			zc = vc.getProjPos().getW();
-//			zd = vd.getProjPos().getW();
-//
-//			// Starting Z & ending Z
-//			z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
-//			z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
-//			
-//			break;
-//
-//		case GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
-//			// Orthographic projection -> don't use W but use rather Z instead
-//			za = va.getProjPos().getZ();
-//			zb = vb.getProjPos().getZ();
-//			zc = vc.getProjPos().getZ();
-//			zd = vd.getProjPos().getZ();
-//			
-//			// Starting Z & ending Z
-//			z1 = Tools.interpolate(za, zb, gradient1);
-//			z2 = Tools.interpolate(zc, zd, gradient2);
-//			
-//			break;
-//
-//		default :
-//			// Not implemented
-//			// TODO raise an UnimplementedException
-//		}
-//
-//		// Shadows
-//		float zs1 = 0, zs2 = 0;
-//		if (shadows) { // then do the needeed calculation to know if the element is in shadow or not
-//			// TODO
-//			// For each light
-//			// Get the depth of the vertices in Light coordinates
-//			float zsa = vsa_d.getW();
-//			float zsb = vsb_d.getW();
-//			float zsc = vsc_d.getW();
-//			float zsd = vsd_d.getW();
-//			
-//			// Interpolate across the 2 segments using gradients
-//			// Starting Z & ending Z
-//			zs1 = 1/Tools.interpolate(1/zsa, 1/zsb, gradient1);
-//			zs2 = 1/Tools.interpolate(1/zsc, 1/zsd, gradient2);			
-//		}
-//
-//
-//		// Gouraud's shading (Vertex calculation and interpolation across triangle)
-//		// Starting Colors & ending Colors for Shaded color and Specular color
-//		Color ishc1 = null, ishc2 = null; // Shaded
-//		Color ispc1 = null, ispc2 = null; // Specular
-//		if (interpolate) {
-//			// Shaded color
-//			ishc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getShadedCol(),1/za), ColorTools.multColor(vb.getShadedCol(),1/zb), gradient1);
-//			ishc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getShadedCol(),1/zc), ColorTools.multColor(vd.getShadedCol(),1/zd), gradient2);
-//			// Specular color
-//			if (lighting.hasSpecular()) {
-//				ispc1 = ColorTools.interpolateColors(ColorTools.multColor(va.getSpecularCol(),1/za), ColorTools.multColor(vb.getSpecularCol(),1/zb), gradient1);
-//				ispc2 = ColorTools.interpolateColors(ColorTools.multColor(vc.getSpecularCol(),1/zc), ColorTools.multColor(vd.getSpecularCol(),1/zd), gradient2);
-//			}
-//		}
-//
-//		// Starting Texture & ending Texture coordinates
-//		Vector4 vt1 = null;
-//		Vector4 vt2 = null;
-//		Vector4 vt = null;
-//		if (texture && t!=null) {
-//			vt1 = Tools.interpolate(vta.times(1/za), vtb.times(1/zb), gradient1);
-//			vt2 = Tools.interpolate(vtc.times(1/zc), vtd.times(1/zd), gradient2);
-//		}
-//
-//		Color csh = null; // Shaded color
-//		Color csp = null; // Specular color
-//		Color ctx = null; // Texture color
-//		Color cc; // Combined color to be drawn, result of the lighting and shading calculation
-//
-//		// drawing a line from left (sx) to right (ex) 
-//		for (int x = sx; x < ex; x++) {
-//
-//			// Eliminate pixels outside the gUIView screen
-//			if (isInScreenX(x) && isInScreenY(y)) {
-//				// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
-//				int x_zBuf = getXzBuf(x);
-//				int y_zBuf = getYzBuf(y);
-//
-//				// Protect against out of bounds (should not happen)
-//				if (x_zBuf>=0 && x_zBuf<zBuf_width && y_zBuf>=0 && y_zBuf<zBuf_height) {
-//
-//					cc = null;
-//
-//					float gradient = (float)(x-sx)/(float)(ex-sx);
-//					float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
-//					//float z=Tools.interpolate(z1,z2,gradient); // Used for debugging Orthographic projection
-//
-//					// zBuffer elimination at earliest stage of computation (as soon as we know z)
-//					if (z>zBuffer.get(getXzBuf(x), getYzBuf(y))) { // Discard pixel
-//						discarded_pixels++;
-//
-//					} else { // Compute colors and draw pixel
-//
-//						// If interpolation
-//						if (interpolate) {
-//							// Color interpolation
-//							csh = ColorTools.multColor(ColorTools.interpolateColors(ishc1, ishc2, gradient),z); // Shaded color
-//							if (lighting.hasSpecular()) {
-//								csp = ColorTools.multColor(ColorTools.interpolateColors(ispc1, ispc2, gradient),z); // Specular color
-//							} else {
-//								csp = DARK_SHADING_COLOR; // No specular
-//							}
-//						} else { // Else csh is the base color passed in arguments and csp won't be used
-//							csh = shadedCol; // Shaded color passed in argument
-//							// TODO specular color to be implemented
-//						}
-//
-//						// Texture interpolation
-//						if (texture && t!=null) {
-//
-//							vt = Tools.interpolate(vt1, vt2, gradient).times(z);
-//							try {
-//								// Projective Texture mapping using the fourth coordinate
-//								// By default W of the texture vector is 1 but if not this will help to take account of the potential geometric distortion of the texture
-//								switch (tex_orientation) {
-//								case Triangle.TEXTURE_ISOTROPIC: // Default for a triangle
-//									ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
-//									break;
-//								case Triangle.TEXTURE_VERTICAL:
-//									ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
-//									break;
-//								case Triangle.TEXTURE_HORIZONTAL:
-//									ctx = t.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
-//									break;
-//								default:
-//									// Should never happen
-//									if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid Texture orientation for this triangle: "+tex_orientation);
-//								}
-//							} catch (Exception e) {
-//								// TODO Auto-generated catch block
-//								e.printStackTrace();
-//							}
-//
-//						} // End Texture interpolation
-//						
-//						// Shadowing
-//						if (shadows) { // then do the needful to know if the element is in shadow or not
-//							// TODO Work in Progress - To Be Completed
-//							// For each light
-//							int xs = 0, ys = 0; // projected position for shadow map
-//							// Interpolate across the 2 segments using gradient
-//							float zs = 1/Tools.interpolate(1/zs1, 1/zs2, gradient);
-//							// Calculate xs and ys by
-//							// - projection using the Light coordinates matrix
-//							// - tranform from [-1.1] coordinates to [0,1] by multiplying the projection matrix appropriately
-//							// - transformation in integer indices of the size of the shadow map
-//							if (zs<lighting.getDirectionalLight().getMap(xs,ys)) {
-//								
-//							} else {
-//								// in shadow
-//							}
-//						
-//							// Is there a needed correction using W coordinate ?
-//							// Get the depth from the depth map using texture mapping interpolation technique
-//							// Compare the 2 depths and if depth of the fragment is deeper than depth map
-//							// then this fragment is in shadow and the corresponding shadow light should be 0
-//							// else this fragment is in the light and shadow light should be 1
-//							
-//						}
-//
-//						// Combine colors with the following formula
-//						// Color K = DTA + CDT + S = DT(A+C) + S : WRONG old calculation 
-//						// Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
-//						// ctx = T, csh  = C, ambientCol = A, csp = S
-//						// D: diffuse color, T: texture, A: Ambient color, C: color of the light source at point, S: Specular color
-//						//TODO need to decouple the Ambient light from the shaded color calculation. This is easy as Ambient light do not need any interpolation
-//						// This will allow to calculate the CS (shaded*specular) color
-//
-//						if (texture && t!=null) {
-//							if (lighting.hasSpecular() && csp != null) {
-//								cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
-//							} else {
-//								cc = ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh));
-//							}
-//						} else {
-//							if (lighting.hasSpecular() && csp != null) {
-//								cc = ColorTools.addColors(ambientCol,ColorTools.addColors(csh, csp));	
-//							} else {
-//								cc = ColorTools.addColors(ambientCol,csh);
-//							}
-//						}
-//						// TODO also add the shadowing color
-//
-//						// Draw the point with calculated Combined Color
-//						drawPoint(x, y, z, cc);
-//					} 
-//
-//				} else { // Out of zBuffer range (should not happen)
-//					not_rendered_pixels++;	    		
-//					if (x_zBuf<0 || x_zBuf>=zBuf_width) {
-//						if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value while drawing points: "+x_zBuf);
-//					}
-//					if (y_zBuf<0 || y_zBuf>=zBuf_height) {
-//						if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_y value while drawing points: "+y_zBuf);
-//					}
-//				}
-//			} else { // Out of screen
-//				not_rendered_pixels++;
-//			}
-//		}
-//	}
-
-	protected void rasterizeScanLine_new(
+	protected void rasterizeScanLine(
 			int 		y,				// Ordinate of the scan line
 			VertexParam vpa,			// VertexParam of Vertex A of first segment: AB
 			VertexParam vpb,			// VertexParam of Vertex B of first segment: AB
