@@ -11,6 +11,7 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.PointLight;
+import com.aventura.model.light.ShadowingLight;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.shape.Segment;
@@ -340,19 +341,19 @@ public class Rasterizer {
 		}
 		
 		// Initialize n VertexParamLight structures, one for each light, for each VertexParam "container" previously created
-		ArrayList<PointLight> pointLights = lighting.getPointLights();
-		int nb_pl; // Number of Point Lights
+		ArrayList<ShadowingLight> shadowingLights = lighting.getShadowingLights();
+		int nb_sl; // Number of Shadowing Lights
 		
-		if (pointLights != null) {
+		if (lighting.hasShadowing()) {
 			
-			nb_pl = pointLights.size();
+			nb_sl = shadowingLights.size();
 			
-			VertexLightParam [] vlp1 = new VertexLightParam[nb_pl];
-			VertexLightParam [] vlp2 = new VertexLightParam[nb_pl];
-			VertexLightParam [] vlp3 = new VertexLightParam[nb_pl];
+			VertexLightParam [] vlp1 = new VertexLightParam[nb_sl];
+			VertexLightParam [] vlp2 = new VertexLightParam[nb_sl];
+			VertexLightParam [] vlp3 = new VertexLightParam[nb_sl];
 			
 			// For each Light
-			for (int i=0; i<nb_pl; i++) {
+			for (int i=0; i<nb_sl; i++) {
 				vlp1[i] = new VertexLightParam();
 				vlp2[i] = new VertexLightParam();
 				vlp3[i] = new VertexLightParam();	
@@ -362,7 +363,7 @@ public class Rasterizer {
 			vp3.l = vlp3;
 		} else {
 			
-			nb_pl = 0;
+			nb_sl = 0;
 			
 			vp1.l = null;
 			vp2.l = null;
@@ -394,15 +395,15 @@ public class Rasterizer {
 			viewer3.normalize();
 			
 			// For each Light
-			for (int i=0; i<nb_pl; i++) {
-				vp1.l[i].shadedColor = computeShadedColor(surfCol, vp1.v.getWorldPos(), vp1.v.getWorldNormal(), t.isRectoVerso(), pointLights.get(i));
-				vp2.l[i].shadedColor = computeShadedColor(surfCol, vp2.v.getWorldPos(), vp2.v.getWorldNormal(), t.isRectoVerso(), pointLights.get(i));
-				vp3.l[i].shadedColor = computeShadedColor(surfCol, vp3.v.getWorldPos(), vp3.v.getWorldNormal(), t.isRectoVerso(), pointLights.get(i));	
+			for (int i=0; i<nb_sl; i++) {
+				vp1.l[i].shadedColor = computeShadedColor(surfCol, vp1.v.getWorldPos(), vp1.v.getWorldNormal(), t.isRectoVerso(), shadowingLights.get(i));
+				vp2.l[i].shadedColor = computeShadedColor(surfCol, vp2.v.getWorldPos(), vp2.v.getWorldNormal(), t.isRectoVerso(), shadowingLights.get(i));
+				vp3.l[i].shadedColor = computeShadedColor(surfCol, vp3.v.getWorldPos(), vp3.v.getWorldNormal(), t.isRectoVerso(), shadowingLights.get(i));	
 
 				if (lighting.hasSpecular()) {
-					vp1.l[i].specularColor = computeSpecularColor(vp1.v.getWorldNormal(), viewer1, vp1.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), pointLights.get(i));
-					vp2.l[i].specularColor = computeSpecularColor(vp2.v.getWorldNormal(), viewer2, vp2.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), pointLights.get(i));
-					vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), pointLights.get(i));
+					vp1.l[i].specularColor = computeSpecularColor(vp1.v.getWorldNormal(), viewer1, vp1.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), shadowingLights.get(i));
+					vp2.l[i].specularColor = computeSpecularColor(vp2.v.getWorldNormal(), viewer2, vp2.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), shadowingLights.get(i));
+					vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), shadowingLights.get(i));
 				}
 			}
 
@@ -434,16 +435,16 @@ public class Rasterizer {
 			// For each Point light
 			//int nb_pl = lighting.getPointLights().size();
 			
-			if (nb_pl >0) {
+			if (nb_sl >0) {
 				
-				vs1_p = new Vector4[nb_pl];
-				vs2_p = new Vector4[nb_pl];
-				vs3_p = new Vector4[nb_pl];
+				vs1_p = new Vector4[nb_sl];
+				vs2_p = new Vector4[nb_sl];
+				vs3_p = new Vector4[nb_sl];
 
 				// For each of the 3 Vertices
 				// Get the World position
 				// translate in Light coordinates using the matrix in Shadowing class
-				for (int i=0; i<nb_pl; i++) {
+				for (int i=0; i<nb_sl; i++) {
 					vs1_p[i] = lighting.getDirectionalLight().getModelView().project(vp1.v);
 					vs2_p[i] = lighting.getDirectionalLight().getModelView().project(vp2.v);
 					vs3_p[i] = lighting.getDirectionalLight().getModelView().project(vp3.v);
@@ -489,10 +490,10 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
 	            if (y < yScreen(vp2.v)) {
-	            	rasterizeScanLine(y, vp1, vp3, vp1, vp2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
+	            	rasterizeScanLine(y, vp1, vp3, vp1, vp2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
 	                //rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs3_d, vs1_d, vs2_d, vs1_p, vs3_p, vs1_p, vs2_p);
 	            } else {
-	                rasterizeScanLine(y, vp1, vp3, vp2, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
+	                rasterizeScanLine(y, vp1, vp3, vp2, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
 	                //rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs3_d, vs2_d, vs3_d, vs1_p, vs3_p, vs2_p, vs3_p);
 	            }
 	        }
@@ -514,10 +515,10 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
 	            if (y < yScreen(vp2.v)) {
-	                rasterizeScanLine(y, vp1, vp2, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
+	                rasterizeScanLine(y, vp1, vp2, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
 	                //rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs2_d, vs1_d, vs3_d, vs1_p, vs2_p, vs1_p, vs3_p);
 	            } else {
-	                rasterizeScanLine(y, vp2, vp3, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_pl);
+	                rasterizeScanLine(y, vp2, vp3, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
 	                //rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs2_d, vs3_d, vs1_d, vs3_d, vs2_p, vs3_p, vs1_p, vs3_p);
 	            }
 	        }
@@ -686,7 +687,7 @@ public class Rasterizer {
 				vt2 = Tools.interpolate(vpc.t.times(1/zc), vpd.t.times(1/zd), gradient2);
 			}
 
-			Color csh = null; // Shaded color
+			Color csh = shadedCol; // Shaded color initialized by the shadedCol passed in argument by default
 			Color csp = null; // Specular color
 			Color ctx = null; // Texture color
 			Color cc; // Combined color to be drawn, result of the lighting and shading calculation
@@ -743,7 +744,8 @@ public class Rasterizer {
 								}
 
 							} // End Texture interpolation
-
+														
+							// Otherwise it is overwritten by th
 							// For each light
 							for (int i=0; i<nb_lights; i++) {
 
@@ -758,7 +760,7 @@ public class Rasterizer {
 										csp = DARK_SHADING_COLOR; // No specular
 									}
 								} else { // Else csh is the base color passed in arguments and csp won't be used
-									csh = shadedCol; // Shaded color passed in argument
+									//csh = shadedCol; // Shaded color passed in argument
 									// TODO specular color to be implemented
 								}
 
@@ -814,11 +816,14 @@ public class Rasterizer {
 							} // End for each Light
 
 
-							// Calculation of picel's color based on each color element
+							// Calculation of pixel's color based on each color element
 							if (texture && t!=null) {
 								if (lighting.hasSpecular() && csp != null) {
 									cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
 								} else {
+									if (csh == null) {
+										System.out.println("Pas bon");
+									}
 									cc = ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh));
 								}
 							} else {
@@ -908,7 +913,7 @@ public class Rasterizer {
 	 * @param rectoVerso if both sides of the triangle can be illuminated (normally false for "closed" elements like Box or Sphere)
 	 * @return the resulting color from Directional light
 	 */
-	protected Color computeShadedColor(Color baseCol, Vector4 point, Vector3 normal, boolean rectoVerso, PointLight p) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
+	protected Color computeShadedColor(Color baseCol, Vector4 point, Vector3 normal, boolean rectoVerso, ShadowingLight sl) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
 
 		// Table of colors to be mixed
 		Color c; // resulting color
@@ -940,20 +945,20 @@ public class Rasterizer {
 				}
 			}
 
-			// Point light
-			if (p != null) {
+			// Shadowing light (Point or Directional Lights)
+			if (lighting.hasShadowing() && sl != null) {
 
 				// Compute the dot product of this Light's vector at current point and the normal vector
-				dotNL = p.getLightVectorAtPoint(point).dot(normal.normalize());
+				dotNL = sl.getLightVectorAtPoint(point).dot(normal.normalize());
 				if (rectoVerso) dotNL = Math.abs(dotNL);
 				if (dotNL > 0) {
-					Color col = ColorTools.multColors(baseCol, p.getLightColor());
+					Color col = ColorTools.multColors(baseCol, sl.getLightColor());
 					// Multiply the color by the new dotNL
 					col = ColorTools.multColor(col, dotNL);
 					// Add this attenuated Color to all other Lights at this point
 					c = ColorTools.addColors(c, col);
 				}
-			}
+			} 
 
 		} else { // If no lighting, return base color
 			return baseCol;
@@ -972,7 +977,7 @@ public class Rasterizer {
 	 * @param rectoVerso true if this triangle can be seen back side
 	 * @return the specular color
 	 */
-	protected Color computeSpecularColor(Vector3 normal, Vector3 viewer, Vector4 point, float e, Color sc, boolean rectoVerso, PointLight p) {
+	protected Color computeSpecularColor(Vector3 normal, Vector3 viewer, Vector4 point, float e, Color sc, boolean rectoVerso, ShadowingLight sl) {
 
 		Color c = DARK_SHADING_COLOR; // Specular reflection from Directional light
 		Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;
@@ -1005,13 +1010,13 @@ public class Rasterizer {
 				}
 			}
 
-			// Point light
-			if (p != null) {
+			// Shadowing light (Point or Directional Lights)
+			if (lighting.hasShadowing() && sl != null) {
 
 				// Calculate reflection vector R = 2N-L and normalize it
-				Vector3 lightVector = p.getLightVectorAtPoint(point).normalize();
+				Vector3 lightVector = sl.getLightVectorAtPoint(point).normalize();
 				float dotNL = lightVector.dot(normal.normalize());
-				Vector3 r = (normal.times(2*dotNL)).minus(p.getLightVectorAtPoint(point)); 
+				Vector3 r = (normal.times(2*dotNL)).minus(sl.getLightVectorAtPoint(point)); 
 
 				float dotRV = r.dot(viewer);
 				if (rectoVerso)
@@ -1021,7 +1026,7 @@ public class Rasterizer {
 
 				if (dotNL > 0 && dotRV >0) {
 					float specular = (float) Math.pow(dotRV, e);
-					float intensity = p.getIntensity(point);
+					float intensity = sl.getIntensity(point);
 					Color col = ColorTools.multColor(spc, specular*intensity);
 					//System.out.println("Point light specular color calculation. Specular: " + specular + " Intensity: "+ intensity);
 					c = ColorTools.addColors(c, col);

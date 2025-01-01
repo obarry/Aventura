@@ -54,6 +54,9 @@ public class Lighting {
 	protected DirectionalLight directional;
 	// Multiple Point Lights (includes Point and Spot Lights since the 2nd one is a sub-classs of the first one).
 	protected ArrayList<PointLight> pointLights;
+	// All point lights and directional lights are shadowing lights, let's have a list of them (used by Rasterizer)
+	protected ArrayList<ShadowingLight> shadowingLights;
+
 	
 	// In case of multiple lights, the notion of specular reflection may be associated to each directional light (+ 1 general flag to activate/deactivate specular reflection)
 	protected boolean specularLight = false; // Default is no specular reflection
@@ -62,7 +65,9 @@ public class Lighting {
 	}
 	
 	public Lighting(DirectionalLight directional) {
+		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
 		this.directional = directional;
+		this.shadowingLights.add(directional);
 	}
 	
 	public Lighting(AmbientLight ambient) {
@@ -70,18 +75,24 @@ public class Lighting {
 	}
 	
 	public Lighting(DirectionalLight directional, AmbientLight ambient) {
+		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
 		this.ambient = ambient;
 		this.directional = directional;
+		this.shadowingLights.add(directional);
 	}
 	
 	public Lighting(DirectionalLight directional, boolean specularLight) {
+		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
 		this.directional = directional;
+		this.shadowingLights.add(directional);
 		this.specularLight = specularLight;
 	}
 	
 	public Lighting(DirectionalLight directional, AmbientLight ambient, boolean specularLight) {
+		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
 		this.ambient = ambient;
 		this.directional = directional;
+		this.shadowingLights.add(directional);
 		this.specularLight = specularLight;
 	}
 	
@@ -96,6 +107,11 @@ public class Lighting {
 	public boolean hasPoint() {
 		// true if ArrayList is not 0
 		return pointLights != null ? (pointLights.size() > 0 ? true : false) : false;
+	}
+	
+	public boolean hasShadowing() {
+		// true if ArrayList is not 0
+		return shadowingLights != null ? (shadowingLights.size() > 0 ? true : false) : false;		
 	}
 	
 	public boolean hasSpecular() {
@@ -124,11 +140,17 @@ public class Lighting {
 	
 	public void addPointLight(PointLight pointLight) {
 		if (this.pointLights == null) this.pointLights  = new ArrayList<PointLight>();
+		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
 		this.pointLights.add(pointLight);
+		this.shadowingLights.add(pointLight);
 	}
 	
 	public ArrayList<PointLight> getPointLights() {
 		return pointLights;
+	}
+	
+	public ArrayList<ShadowingLight> getShadowingLights() {
+		return shadowingLights;
 	}
 
 }

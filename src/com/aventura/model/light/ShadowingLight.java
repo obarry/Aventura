@@ -39,6 +39,7 @@ import com.aventura.view.MapView;
  * ------------------------------------------------------------------------------
  *
  * ShadowingLight is a type of light that can generate Shadows by opposite of other type of Lights e.g. Ambientlight
+ * It is also this type of light that can generate "Shaded" light on the surface of World's Elements.
  * The method used for Light calculation is Shadow Mapping hence we will need to have a "Camera Light" that means a Camera corresponding to the Light direction and source
  * For a Directional Light : only a direction, no source (all light rays are parallel in space), the projection should be an Orthographic projection
  * For a Point Light or a Spot Light, a source and a direction is defined. The Camera is located at the source and pointing to the direction of light. A frustum projection
