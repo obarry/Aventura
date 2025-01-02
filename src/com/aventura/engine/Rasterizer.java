@@ -8,9 +8,7 @@ import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
-import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.light.PointLight;
 import com.aventura.model.light.ShadowingLight;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Vertex;
@@ -69,6 +67,7 @@ public class Rasterizer {
 	protected class VertexLightParam {
 		public Color shadedColor;
 		public Color specularColor;
+		// Shadowing parameters
 		public Vector4 vl; // Projected position in light coordinates of Vertex
 		public Vector4 vm; // Shadow Map vector (position in Shadow Map)
 		public MapView map; // Shadow map of this Light
@@ -283,59 +282,56 @@ public class Rasterizer {
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
 		
-		// Let's define 3 VertexParam "containers" for the 3 Vertices of the triangle to be rendered and start building them with Vertex and Texture vectors
+		// Let's create 3 VertexParam "containers", one for each of the 3 Vertices of the triangle to be rendered and start building them with Vertex and Texture vectors
 		// They will be used as parameters to be passed to rasterizeScanLight function containing a structure set of data
-		VertexParam vp1, vp2, vp3;
-		vp1 = new VertexParam(t.getV1(), t.getTexVec1());
-		vp2 = new VertexParam(t.getV2(), t.getTexVec2());
-		vp3 = new VertexParam(t.getV3(), t.getTexVec3());
+		VertexParam vpa, vpb, vpc;
+		vpa = new VertexParam(t.getV1(), t.getTexVec1());
+		vpb = new VertexParam(t.getV2(), t.getTexVec2());
+		vpc = new VertexParam(t.getV3(), t.getTexVec3());
 		
-	    // Lets define v1, v2, v3 in order to always have this order on screen v1, v2 & v3 in screen coordinates
+	    // Lets order them to always have this order on screen v1, v2 & v3 in screen coordinates
 	    // with v1 always down (thus having the highest possible Y)
 	    // then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
-
+		VertexParam vp1, vp2, vp3; // Ordered Vertex containers
+		
 		// TODO use color at Vertex level if defined. This requires to manage 3 colors for a triangle in this case
 		
-		if (vp2.v.getProjPos().get3DY()<vp1.v.getProjPos().get3DY()) { // p2 lower than p1
-			if (vp3.v.getProjPos().get3DY()<vp2.v.getProjPos().get3DY()) { // p3 lower than p2
-				vp1.v = t.getV3();
-				// No change for p2
-				vp3.v = t.getV1();
-				vp1.t = t.getTexVec3();
-				vp3.t = t.getTexVec1();
+		if (vpb.v.getProjPos().get3DY()<vpa.v.getProjPos().get3DY()) { // p2 lower than p1
+			if (vpc.v.getProjPos().get3DY()<vpb.v.getProjPos().get3DY()) { // p3 lower than p2
+				vp1 = vpc;
+				vp2 = vpb;
+				vp3 = vpa;
+				
 			} else { // p2 lower or equal than p3
-				if (vp3.v.getProjPos().get3DY()<vp1.v.getProjPos().get3DY()) { // p3 lower than p1
-					vp1.v = t.getV2();
-					vp2.v = t.getV3();
-					vp3.v = t.getV1();
-					vp1.t = t.getTexVec2();
-					vp2.t = t.getTexVec3();
-					vp3.t = t.getTexVec1();
+				if (vpc.v.getProjPos().get3DY()<vpa.v.getProjPos().get3DY()) { // p3 lower than p1
+					vp1 = vpb;
+					vp2 = vpc;
+					vp3 = vpa;
+					
 				} else { // p1 higher or equal than p3
-					vp1.v = t.getV2();
-					vp2.v = t.getV1();
-					// No change for p3
-					vp1.t = t.getTexVec2();
-					vp2.t = t.getTexVec1();
+					vp1 = vpb;
+					vp2 = vpa;
+					vp3 = vpc;
+					
 				}
 			}
 		} else { // p1 lower than p2
-			if (vp3.v.getProjPos().get3DY()<vp1.v.getProjPos().get3DY()) { // p3 lower than p1
-				vp1.v = t.getV3();
-				vp2.v = t.getV1();
-				vp3.v = t.getV2();
-				vp1.t = t.getTexVec3();
-				vp2.t = t.getTexVec1();
-				vp3.t = t.getTexVec2();
+			if (vpc.v.getProjPos().get3DY()<vpa.v.getProjPos().get3DY()) { // p3 lower than p1
+				vp1 = vpc;
+				vp2 = vpa;
+				vp3 = vpb;
+				
 			} else { // p1 lower than p3
-				if (vp3.v.getProjPos().get3DY()<vp2.v.getProjPos().get3DY()) { // p3 lower than p2
-					// No change for p1
-					vp2.v = t.getV3();
-					vp3.v = t.getV2();
-					vp2.t = t.getTexVec3();
-					vp3.t = t.getTexVec2();
+				if (vpc.v.getProjPos().get3DY()<vpb.v.getProjPos().get3DY()) { // p3 lower than p2
+					vp1 = vpa;
+					vp2 = vpc;
+					vp3 = vpb;
+					
 				} else {
-					// Else keep p1, p2 and p3 as defined
+					vp1 = vpa;
+					vp2 = vpb;
+					vp3 = vpc;
+					
 				}
 			}
 		}
@@ -344,6 +340,7 @@ public class Rasterizer {
 		ArrayList<ShadowingLight> shadowingLights = lighting.getShadowingLights();
 		int nb_sl; // Number of Shadowing Lights
 		
+		// If there are Directional or Point Lights
 		if (lighting.hasShadowing()) {
 			
 			nb_sl = shadowingLights.size();
@@ -821,9 +818,6 @@ public class Rasterizer {
 								if (lighting.hasSpecular() && csp != null) {
 									cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
 								} else {
-									if (csh == null) {
-										System.out.println("Pas bon");
-									}
 									cc = ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh));
 								}
 							} else {
@@ -917,49 +911,21 @@ public class Rasterizer {
 
 		// Table of colors to be mixed
 		Color c; // resulting color
-		
+
 		// Initialize to DARK
 		c = DARK_SHADING_COLOR;
 
-		if (lighting != null) { // If lighting exists
+		// Shadowing light (Point or Directional Lights)
+		if (lighting != null && lighting.hasShadowing() && sl != null) { // If lighting exists
 
-			// Primary shading: Diffuse Reflection (computed in computeAmbientColor method)
-			
-			float dotNL = 0;
-
-			// Directional light
-			if (lighting.hasDirectional()) {
-
-				//As of now only 1 Directional Light
-				DirectionalLight dir_light = lighting.getDirectionalLight();
-				
-				// Compute the dot product
-				// Normal is normalized so the dotNL result is in the range [-1,1]
-				dotNL = dir_light.getLightVectorAtPoint(null).dot(normal.normalize());
-				if (rectoVerso) dotNL = Math.abs(dotNL);
-				if (dotNL > 0) {
-					// Multiply the base col by the Directional Light color
-					c = ColorTools.multColors(baseCol, dir_light.getLightColor());
-					// Multiply the color by this dot product -> this is an attenuation
-					c = ColorTools.multColor(baseCol, dotNL);
-				}
+			// Compute the dot product of this Light's vector at current point and the normal vector
+			float dotNL = sl.getLightVectorAtPoint(point).dot(normal.normalize());
+			if (rectoVerso) dotNL = Math.abs(dotNL);
+			if (dotNL > 0) {
+				c = ColorTools.multColors(baseCol, sl.getLightColor());
+				// Multiply the color by the new dotNL
+				c = ColorTools.multColor(c, dotNL);
 			}
-
-			// Shadowing light (Point or Directional Lights)
-			if (lighting.hasShadowing() && sl != null) {
-
-				// Compute the dot product of this Light's vector at current point and the normal vector
-				dotNL = sl.getLightVectorAtPoint(point).dot(normal.normalize());
-				if (rectoVerso) dotNL = Math.abs(dotNL);
-				if (dotNL > 0) {
-					Color col = ColorTools.multColors(baseCol, sl.getLightColor());
-					// Multiply the color by the new dotNL
-					col = ColorTools.multColor(col, dotNL);
-					// Add this attenuated Color to all other Lights at this point
-					c = ColorTools.addColors(c, col);
-				}
-			} 
-
 		} else { // If no lighting, return base color
 			return baseCol;
 		}
@@ -989,29 +955,8 @@ public class Rasterizer {
 			// R: Reflection vector, L: Light vector, N: Normal vector on the surface. R+L=N+N => R = 2N-L
 			// This has to be applied to each Light source (having a light vector so except Ambient)
 
-			// Directional light
-			if (lighting.hasDirectional()) {
-				
-				// Calculate reflection vector R = 2N-L and normalize it
-				float dotNL = lighting.getDirectionalLight().getLightVectorAtPoint(null).dot(normal.normalize());
-				Vector3 r = (normal.times(2*dotNL)).minus(lighting.getDirectionalLight().getLightVectorAtPoint(null)); 
-
-				float dotRV = r.dot(viewer);
-				if (rectoVerso)
-					dotRV = Math.abs(dotRV);
-				else
-					if (dotRV <0) dotRV = 0; // Clamped to 0 if negative
-				// Compute the dot product
-				//TODO Problem here: the following calculation creates abrupt specular (but it seems normal situation with Gouraud's shading
-				if (dotNL > 0 && dotRV >0) {
-					float specular = (float) Math.pow(dotRV, e);
-					float intensity = lighting.getDirectionalLight().getIntensity(null);
-					c = ColorTools.multColor(spc, specular*intensity);
-				}
-			}
-
 			// Shadowing light (Point or Directional Lights)
-			if (lighting.hasShadowing() && sl != null) {
+			if (lighting != null && lighting.hasShadowing() && sl != null) {
 
 				// Calculate reflection vector R = 2N-L and normalize it
 				Vector3 lightVector = sl.getLightVectorAtPoint(point).normalize();
@@ -1027,13 +972,11 @@ public class Rasterizer {
 				if (dotNL > 0 && dotRV >0) {
 					float specular = (float) Math.pow(dotRV, e);
 					float intensity = sl.getIntensity(point);
-					Color col = ColorTools.multColor(spc, specular*intensity);
-					//System.out.println("Point light specular color calculation. Specular: " + specular + " Intensity: "+ intensity);
-					c = ColorTools.addColors(c, col);
+					c = ColorTools.multColor(spc, specular*intensity);
 				}
 			}
-			
 		}
+		
 		return c;
 	}
 	
