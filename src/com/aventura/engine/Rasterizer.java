@@ -373,9 +373,19 @@ public class Rasterizer {
 		// - calculate shading color once for all triangle
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 normal = t.getWorldNormal();
-			shadedCol = computeShadedColor(surfCol, t.getCenterWorldPos(), normal, t.isRectoVerso(), null);
+
+			if (lighting.hasShadowing()) {
+				Color[] cols = new Color[nb_sl];
+				// For each Light
+				for (int i=0; i<nb_sl; i++) {
+					cols[i] = computeShadedColor(surfCol, t.getCenterWorldPos(), normal, t.isRectoVerso(), shadowingLights.get(i));
+				}
+				shadedCol = ColorTools.addColors(cols);
+			} else {
+				shadedCol = surfCol;
+			}
 			//TODO Specular reflection with plain faces.
-			
+
 		} else {
 
 			// TODO Optimization: pre-calculate the viewer vectors and shaded colors to each Vertex before in 1 row
@@ -405,7 +415,7 @@ public class Rasterizer {
 			}
 
 		}
-
+		
 		
 		// Shadows
 		//Vector4 vs1_d = null, vs2_d = null, vs3_d = null;
@@ -473,50 +483,46 @@ public class Rasterizer {
 	    if (dP1P2 > dP1P3) {
 	    	
 		    // First case where triangle is like that:
-		    // P3
-		    // +
-		    // |\
-		    // | \
-		    // |  \
-		    // |   + P2
-		    // |  /
-		    // | /
-		    // |/
-			// +
-		    // P1
+		    //   P3
+		    //   +
+		    //   | \
+		    //   |   \
+		    //   |     \
+		    //   |       + P2
+		    //   |     /
+		    //   |   /
+		    //   | /
+			//   +
+		    //   P1
 	    	
 	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
 	            if (y < yScreen(vp2.v)) {
 	            	rasterizeScanLine(y, vp1, vp3, vp1, vp2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
-	                //rasterizeScanLine(y, v1, v3, v1, v2, vt1, vt3, vt1, vt2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs3_d, vs1_d, vs2_d, vs1_p, vs3_p, vs1_p, vs2_p);
 	            } else {
 	                rasterizeScanLine(y, vp1, vp3, vp2, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
-	                //rasterizeScanLine(y, v1, v3, v2, v3, vt1, vt3, vt2, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs3_d, vs2_d, vs3_d, vs1_p, vs3_p, vs2_p, vs3_p);
 	            }
 	        }
 
 	    } else {
 	    	
 		    // Second case where triangle is like that:
-		    //       P3
-		    //        +
-		    //       /| 
-		    //      / |
-		    //     /  |
-		    // P2 +   | 
-		    //     \  |
-		    //      \ |
-		    //       \|
-			//        +
-		    //       P1
+		    //             P3
+		    //             +
+		    //           / | 
+		    //         /   |
+		    //       /     |
+		    //  P2 +       | 
+		    //       \     |
+		    //         \   |
+		    //           \ |
+			//             +
+		    //             P1
 	    	
 	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
 	            if (y < yScreen(vp2.v)) {
 	                rasterizeScanLine(y, vp1, vp2, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
-	                //rasterizeScanLine(y, v1, v2, v1, v3, vt1, vt2, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs1_d, vs2_d, vs1_d, vs3_d, vs1_p, vs2_p, vs1_p, vs3_p);
 	            } else {
 	                rasterizeScanLine(y, vp2, vp3, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
-	                //rasterizeScanLine(y, v2, v3, v1, v3, vt2, vt3, vt1, vt3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, vs2_d, vs3_d, vs1_d, vs3_d, vs2_p, vs3_p, vs1_p, vs3_p);
 	            }
 	        }
 	    }
@@ -812,8 +818,10 @@ public class Rasterizer {
 
 							} // End for each Light
 
-
+							// ---------------------------------------------------------
+							// ---- Color combination
 							// Calculation of pixel's color based on each color element
+							// ---------------------------------------------------------
 							if (texture && t!=null) {
 								if (lighting.hasSpecular() && csp != null) {
 									cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
@@ -827,9 +835,12 @@ public class Rasterizer {
 									cc = ColorTools.addColors(ambientCol,csh);
 								}
 							}
-							// TODO also add the shadowing color
+							// TODO also combine with shadowing color (should be a multiplication as the shadow would "dark" the color
 
+							// ----------------------------------------------
+							// ---- Pixel drawing
 							// Draw the point with calculated Combined Color
+							// ----------------------------------------------
 							drawPoint(x, y, z, cc);
 						} 
 
@@ -905,6 +916,7 @@ public class Rasterizer {
 	 * @param point the Vertex position where to calculate the specular reflection
 	 * @param normal of the surface in this area
 	 * @param rectoVerso if both sides of the triangle can be illuminated (normally false for "closed" elements like Box or Sphere)
+	 * @param sl the ShadowingLight to be used for calculation
 	 * @return the resulting color from Directional light
 	 */
 	protected Color computeShadedColor(Color baseCol, Vector4 point, Vector3 normal, boolean rectoVerso, ShadowingLight sl) { // Should evolve to get the coordinates of the Vertex or surface for light type that depends on the location
@@ -941,6 +953,7 @@ public class Rasterizer {
 	 * @param e specular exponent
 	 * @param sc specular color
 	 * @param rectoVerso true if this triangle can be seen back side
+	 * @param sl the ShadowingLight to be used for calculation
 	 * @return the specular color
 	 */
 	protected Color computeSpecularColor(Vector3 normal, Vector3 viewer, Vector4 point, float e, Color sc, boolean rectoVerso, ShadowingLight sl) {
