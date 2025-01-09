@@ -345,19 +345,17 @@ public class Rasterizer {
 			
 			nb_sl = shadowingLights.size();
 			
-			VertexLightParam [] vlp1 = new VertexLightParam[nb_sl];
-			VertexLightParam [] vlp2 = new VertexLightParam[nb_sl];
-			VertexLightParam [] vlp3 = new VertexLightParam[nb_sl];
+			vp1.l = new VertexLightParam[nb_sl];
+			vp2.l = new VertexLightParam[nb_sl];
+			vp3.l = new VertexLightParam[nb_sl];
 			
 			// For each Light
 			for (int i=0; i<nb_sl; i++) {
-				vlp1[i] = new VertexLightParam();
-				vlp2[i] = new VertexLightParam();
-				vlp3[i] = new VertexLightParam();	
+				vp1.l[i] = new VertexLightParam();
+				vp2.l[i] = new VertexLightParam();
+				vp3.l[i] = new VertexLightParam();	
 			}
-			vp1.l = vlp1;
-			vp2.l = vlp2;
-			vp3.l = vlp3;
+			
 		} else {
 			
 			nb_sl = 0;
@@ -413,12 +411,10 @@ public class Rasterizer {
 					vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), shadowingLights.get(i));
 				}
 			}
-
 		}
 		
-		
+
 		// Shadows
-		//Vector4 vs1_d = null, vs2_d = null, vs3_d = null;
 		Vector4[] vs1_p = null, vs2_p = null, vs3_p = null;
 		
 		//
@@ -456,7 +452,6 @@ public class Rasterizer {
 					vs2_p[i] = lighting.getDirectionalLight().getModelView().project(vp2.v);
 					vs3_p[i] = lighting.getDirectionalLight().getModelView().project(vp3.v);
 				}
-
 			}
 			
 			// Get the depth of the vertices in Light coordinates
@@ -497,9 +492,35 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
 	            if (y < yScreen(vp2.v)) {
-	            	rasterizeScanLine(y, vp1, vp3, vp1, vp2, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
+	            	rasterizeScanLine(
+	            			y,
+	            			vp1,
+	            			vp3,
+	            			vp1,
+	            			vp2,
+	            			t.getTexture(),
+	            			shadedCol,
+	            			ambientCol,
+	            			interpolate && !t.isTriangleNormal(),
+	            			texture,
+	            			t.getTextureOrientation(),
+	            			shadows,
+	            			nb_sl);
 	            } else {
-	                rasterizeScanLine(y, vp1, vp3, vp2, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
+	                rasterizeScanLine(
+	                		y,
+	                		vp1,
+	                		vp3,
+	                		vp2,
+	                		vp3,
+	                		t.getTexture(),
+	                		shadedCol,
+	                		ambientCol,
+	                		interpolate && !t.isTriangleNormal(),
+	                		texture,
+	                		t.getTextureOrientation(),
+	                		shadows,
+	                		nb_sl);
 	            }
 	        }
 
@@ -520,12 +541,39 @@ public class Rasterizer {
 	    	
 	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
 	            if (y < yScreen(vp2.v)) {
-	                rasterizeScanLine(y, vp1, vp2, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
+	                rasterizeScanLine(
+	                		y,
+	                		vp1,
+	                		vp2,
+	                		vp1,
+	                		vp3,
+	                		t.getTexture(),
+	                		shadedCol,
+	                		ambientCol,
+	                		interpolate && !t.isTriangleNormal(),
+	                		texture,
+	                		t.getTextureOrientation(),
+	                		shadows,
+	                		nb_sl);
 	            } else {
-	                rasterizeScanLine(y, vp2, vp3, vp1, vp3, t.getTexture(), shadedCol, ambientCol, interpolate && !t.isTriangleNormal(), texture, t.getTextureOrientation(), shadows, nb_sl);
+	                rasterizeScanLine(
+	                		y,
+	                		vp2,
+	                		vp3,
+	                		vp1,
+	                		vp3,
+	                		t.getTexture(),
+	                		shadedCol,
+	                		ambientCol,
+	                		interpolate && !t.isTriangleNormal(),
+	                		texture,
+	                		t.getTextureOrientation(),
+	                		shadows,
+	                		nb_sl);
 	            }
 	        }
 	    }
+	    
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Discarded lines: "+discarded_lines);
 	}
 	

@@ -112,7 +112,7 @@ public class TestLighting2 {
 		Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
-		Trellis trellis = new Trellis(8, 8, 20, 20, tex2);
+		Trellis trellis = new Trellis(8, 8, 5, 5, tex2);
 		Cube cube = new Cube(1, tex1);
 		Sphere sphere = new Sphere (0.5f ,10 , tex3);
 		// cube.setColor(new Color(200,50,50));
