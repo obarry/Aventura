@@ -587,7 +587,7 @@ public class Rasterizer {
 			Texture 	t,				// Texture object for this triangle
 			Color 		shadedCol,		// Shaded color if Normal at triangle level (else should be null)
 			Color 		ambientCol,		// Ambient color (independent of the position in space)
-			boolean 	interpolate,	// Flag for interpolation (true) or not (false)
+			boolean 	interpolate,	// Flag for interpolation (true) or not (false), also for normal at triangle level (false)
 			boolean 	texture, 		// Flag for texture calculation (true) or not (false)
 			int 		tex_orientation,// Flag for isotropic, vertical or horizontal texture interpolation
 			boolean 	shadows,		// Flag for shadowing enabled (true) or disabled (false)
@@ -718,7 +718,7 @@ public class Rasterizer {
 						ispc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].specularColor,1/zc), ColorTools.multColor(vpd.l[i].specularColor,1/zd), gradient2);
 					}
 				} // End for each Light
-			}
+			} // Else (!interpolate) : do nothing (no interpolation or normal at triangle level)
 
 			// Shadows
 			//		float zs1 = 0, zs2 = 0;
@@ -738,8 +738,8 @@ public class Rasterizer {
 				vt2 = Tools.interpolate(vpc.t.times(1/zc), vpd.t.times(1/zd), gradient2);
 			}
 
-			Color csh = shadedCol; // Shaded color initialized by the shadedCol passed in argument by default
-			Color csp = null; // Specular color
+			//Color csh = shadedCol; // shadedCol is null in all cases except if normal at triangle level (see rasterizeTriangle method)
+			Color csp = DARK_SHADING_COLOR; // Specular color
 			Color ctx = null; // Texture color
 			Color cc; // Combined color to be drawn, result of the lighting and shading calculation
 
@@ -796,25 +796,43 @@ public class Rasterizer {
 
 							} // End Texture interpolation
 														
-							// Otherwise it is overwritten by th
-							// For each light
+							// Combine colors with the following formula
+							// Color K = DTA + SUM(Ci(DT + Si)) = DTA + SUM(CiDT) + SUM(CiSi)
+							// D: diffuse color, T: texture, A: Ambient color, Ci: color of the Light(i) source at point, Si: Specular color of the Light(i)
+							// ctx = T, csh_l[i]  = Ci, ambientCol = A, csp_l[i] = Si
+
+
+							// Table of Colors for each light : Ci x D x T and Ci x Si respectively that will be combined later							
+							Color[] c_CiDT = new Color[nb_lights];
+							Color[] c_CiSi = new Color[nb_lights];
+							
+							Color csh_l = null; // shaded color for the light
+							Color csp_l = null; // specular color for the light
+							Color csd_l = null; // shadow color for the light
+							
 							for (int i=0; i<nb_lights; i++) {
 
 								// Calculate the shaded color for this Light - Gouraud's shading
 								// If interpolation
 								if (interpolate) {
 									// Color interpolation
-									csh = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color
+									csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
 									if (lighting.hasSpecular()) {
-										csp = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color
+										csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light
+										
 									} else {
-										csp = DARK_SHADING_COLOR; // No specular
+										csp_l = DARK_SHADING_COLOR; // No specular
 									}
+									if (texture && t!=null) {
+										c_CiDT[i] = ColorTools.multColors(csh_l, ctx);
+									} else {
+										c_CiDT[i] = csh_l;
+									}
+									c_CiSi[i] = ColorTools.multColors(csh_l, csp_l);
 								} else { // Else csh is the base color passed in arguments and csp won't be used
 									//csh = shadedCol; // Shaded color passed in argument
 									// TODO specular color to be implemented
 								}
-
 
 								// Shadowing
 								// TODO
@@ -866,24 +884,56 @@ public class Rasterizer {
 
 							} // End for each Light
 
+							Color c_DTA = null;
+							Color c_CiDT_sum = null;
+							Color c_CiSi_sum = null;
+
+							if (texture && t!=null) {
+								c_DTA = ColorTools.multColors(ctx, ambientCol);
+							} else {
+								c_DTA = ambientCol;
+							}
+							if (interpolate) {
+								c_CiDT_sum = ColorTools.addColors(c_CiDT);
+								c_CiSi_sum = ColorTools.addColors(c_CiSi);
+								if (lighting.hasSpecular() && csp != null) {
+									cc = ColorTools.addColors(c_DTA, ColorTools.addColors(c_CiDT_sum, c_CiSi_sum));
+								} else {
+									cc = ColorTools.addColors(c_DTA, c_CiDT_sum);
+								}
+							} else { // no interpolation or normal at triangle level
+								if (texture) {
+									if (lighting.hasSpecular() && csp != null) {
+										cc = ColorTools.addColors(c_DTA,ColorTools.multColors(ctx, shadedCol)); // Need to implement Specular color when no interpolation or normal at triangle level
+									} else {
+										cc = ColorTools.addColors(c_DTA, ColorTools.multColors(ctx, shadedCol));
+									}
+								} else {
+									cc = ColorTools.addColors(c_DTA, shadedCol);
+								}
+
+							}
+
+							// TODO also combine with shadowing color (should be a multiplication as the shadow would "dark" the color)
+
 							// ---------------------------------------------------------
 							// ---- Color combination
 							// Calculation of pixel's color based on each color element
 							// ---------------------------------------------------------
-							if (texture && t!=null) {
-								if (lighting.hasSpecular() && csp != null) {
-									cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
-								} else {
-									cc = ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh));
-								}
-							} else {
-								if (lighting.hasSpecular() && csp != null) {
-									cc = ColorTools.addColors(ambientCol,ColorTools.addColors(csh, csp));	
-								} else {
-									cc = ColorTools.addColors(ambientCol,csh);
-								}
-							}
-							// TODO also combine with shadowing color (should be a multiplication as the shadow would "dark" the color
+							//							if (texture && t!=null) {
+							//								if (lighting.hasSpecular() && csp != null) {
+							//									cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
+							//								} else {
+							//									cc = ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh));
+							//								}
+							//							} else {
+							//								if (lighting.hasSpecular() && csp != null) {
+							//									cc = ColorTools.addColors(ambientCol,ColorTools.addColors(csh, csp));	
+							//								} else {
+							//									cc = ColorTools.addColors(ambientCol,csh);
+							//								}
+							//							}
+
 
 							// ----------------------------------------------
 							// ---- Pixel drawing
