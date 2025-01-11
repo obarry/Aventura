@@ -431,13 +431,8 @@ public class Rasterizer {
 			// For each of the 3 Vertices
 			// Get the World position
 			// translate in Light coordinates using the matrix in Shadowing class
-//			vs1_d = lighting.getDirectionalLight().getModelView().project(v1);
-//			vs2_d = lighting.getDirectionalLight().getModelView().project(v2);
-//			vs3_d = lighting.getDirectionalLight().getModelView().project(v3);
-
-			// For each Point light
-			//int nb_pl = lighting.getPointLights().size();
 			
+			// For each Point light
 			if (nb_sl >0) {
 				
 				vs1_p = new Vector4[nb_sl];
@@ -721,7 +716,7 @@ public class Rasterizer {
 			} // Else (!interpolate) : do nothing (no interpolation or normal at triangle level)
 
 			// Shadows
-			//		float zs1 = 0, zs2 = 0;
+			// float zs1 = 0, zs2 = 0;
 			if (shadows) { // then do the needed calculation to know if the element is in shadow or not
 				// Any calculation before scanning the line ?
 			}
@@ -795,13 +790,19 @@ public class Rasterizer {
 								}
 
 							} // End Texture interpolation
-														
+												
+							// --------------------------
+							// ---- Color Combination ---
+							// --------------------------
+							
 							// Combine colors with the following formula
-							// Color K = DTA + SUM(Ci(DT + Si)) = DTA + SUM(CiDT) + SUM(CiSi)
+							// One Light : Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
+							// Multiple Lights : Color K = DTA + SUM(Ci(DT + Si)) = DTA + SUM(CiDT) + SUM(CiSi)
 							// D: diffuse color, T: texture, A: Ambient color, Ci: color of the Light(i) source at point, Si: Specular color of the Light(i)
-							// ctx = T, csh_l[i]  = Ci, ambientCol = A, csp_l[i] = Si
-
-
+							// Old : ctx = T, csh_l[i]  = Ci, ambientCol = A, csp_l[i] = Si
+							
+							// Combine the multiple Light's Colors
+							// ------------------------------------
 							// Table of Colors for each light : Ci x D x T and Ci x Si respectively that will be combined later							
 							Color[] c_CiDT = new Color[nb_lights];
 							Color[] c_CiSi = new Color[nb_lights];
@@ -874,36 +875,39 @@ public class Rasterizer {
 									//							zs2 = 1/Tools.interpolate(1/zsc, 1/zsd, gradient2);			
 								}
 
-								// Combine colors with the following formula
-								// Color K = DTA + CDT + S = DT(A+C) + S : WRONG old calculation 
-								// Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
-								// ctx = T, csh  = C, ambientCol = A, csp = S
-								// D: diffuse color, T: texture, A: Ambient color, C: color of the light source at point, S: Specular color
-								//TODO need to decouple the Ambient light from the shaded color calculation. This is easy as Ambient light do not need any interpolation
-								// This will allow to calculate the CS (shaded*specular) color
 
 							} // End for each Light
 
+							// Combine each element of the formula to get one Color
+							// ----------------------------------------------------
+							// Multiple Lights : Color K = DTA + SUM(CiDT) + SUM(CiSi)
+							
 							Color c_DTA = null;
 							Color c_CiDT_sum = null;
 							Color c_CiSi_sum = null;
 
+							// DTA calculation
 							if (texture && t!=null) {
 								c_DTA = ColorTools.multColors(ctx, ambientCol);
 							} else {
 								c_DTA = ambientCol;
 							}
+							
+							// SUM(CiDT) and SUM(CiSi) calculation, then sum the total
 							if (interpolate) {
-								c_CiDT_sum = ColorTools.addColors(c_CiDT);
-								c_CiSi_sum = ColorTools.addColors(c_CiSi);
+								c_CiDT_sum = ColorTools.addColors(c_CiDT); // Add all CiDT elements together
+								c_CiSi_sum = ColorTools.addColors(c_CiSi); // Add all CiSi elements together
+								
+								// Sum the total
 								if (lighting.hasSpecular() && csp != null) {
+									// General case with all type of light (shaded and specular)
 									cc = ColorTools.addColors(c_DTA, ColorTools.addColors(c_CiDT_sum, c_CiSi_sum));
-								} else {
+								} else { // No Specular light, formula is simplified
 									cc = ColorTools.addColors(c_DTA, c_CiDT_sum);
 								}
 							} else { // no interpolation or normal at triangle level
-								if (texture) {
-									if (lighting.hasSpecular() && csp != null) {
+								if (texture) { 
+									if (lighting.hasSpecular() && csp != null) { // TODO implement the specular light calculation in case of no interpolation or normal at tirangle level
 										cc = ColorTools.addColors(c_DTA,ColorTools.multColors(ctx, shadedCol)); // Need to implement Specular color when no interpolation or normal at triangle level
 									} else {
 										cc = ColorTools.addColors(c_DTA, ColorTools.multColors(ctx, shadedCol));
@@ -914,29 +918,8 @@ public class Rasterizer {
 
 							}
 
-							// TODO also combine with shadowing color (should be a multiplication as the shadow would "dark" the color)
-
-							// ---------------------------------------------------------
-							// ---- Color combination
-							// Calculation of pixel's color based on each color element
-							// ---------------------------------------------------------
-							//							if (texture && t!=null) {
-							//								if (lighting.hasSpecular() && csp != null) {
-							//									cc = ColorTools.addColors(ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh)), ColorTools.multColors(csh,csp));
-							//								} else {
-							//									cc = ColorTools.multColors(ctx, ColorTools.addColors(ambientCol, csh));
-							//								}
-							//							} else {
-							//								if (lighting.hasSpecular() && csp != null) {
-							//									cc = ColorTools.addColors(ambientCol,ColorTools.addColors(csh, csp));	
-							//								} else {
-							//									cc = ColorTools.addColors(ambientCol,csh);
-							//								}
-							//							}
-
-
 							// ----------------------------------------------
-							// ---- Pixel drawing
+							// Pixel drawing
 							// Draw the point with calculated Combined Color
 							// ----------------------------------------------
 							drawPoint(x, y, z, cc);
