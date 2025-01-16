@@ -142,7 +142,7 @@ public class MapView extends View {
 		}
 	}
 	
-	// TODO This is same algorithm than Texture bilinear filtering although using only floats. But this may be factored together. To be thought.
+	// TODO This is same algorithm than Texture bilinear filtering although using only floats. But this may be factored together. To be investigated : Design Pattern ?
 	/**
 	 * Calculate the bilinear interpolated Value of this Map at coordinates <s,t> with 0 <= s <= 1 and 0 <= t <= 1
 	 * @param s

@@ -57,13 +57,13 @@ import com.aventura.view.MapView;
  */
 
 public class Rasterizer {
-	
+
 	// --------------------------------------------------------------------------------------------------------------------
 	// Parameter classes (structures) to be used as parameters for rasterizing scan lines
 	// For each triangle, the structures will be constructed with appropriate parameters then passed to rasterizeScanLine
 	// --------------------------------------------------------------------------------------------------------------------
 	//
-	
+
 	protected class VertexLightParam {
 		public Color shadedColor;
 		public Color specularColor;
@@ -71,10 +71,10 @@ public class Rasterizer {
 		public Vector4 vl; // Projected position in light coordinates of Vertex
 		public Vector4 vm; // Shadow Map vector (position in Shadow Map)
 		public MapView map; // Shadow map of this Light
-		
+
 		public VertexLightParam() {
 		}
-		
+
 		public VertexLightParam(Color shaded, Color specular, Vector4 vl, Vector4 vm, MapView m) {
 			this.shadedColor = shaded;
 			this.specularColor = specular;
@@ -83,56 +83,56 @@ public class Rasterizer {
 			this.map = m;
 		}
 	}
-	
+
 	protected class VertexParam {
 		public Vertex v; // Vertex
 		public Vector4 t; // Texture vector
 		public VertexLightParam [] l; // one parameter for each light (except ambient)
-		
+
 		public VertexParam() {
 		}
-		
+
 		public VertexParam(Vertex v, Vector4 t) {
 			this.v = v;
 			this.t = t;
 		}
-		
+
 		public VertexParam(Vertex v, Vector4 t, VertexLightParam[] l) {
 			this.v = v;
 			this.t = t;
 			this.l = l;
 		}
 	}
-	
+
 	// End Parameter classes definition
 	// --------------------------------------------------------------------------------------------------------------------
 
-	
+
 	// References
 	protected GraphicContext graphic;
 	protected GUIView gUIView;
 	protected Lighting lighting;
 	protected Camera camera;
-	
+
 	// Static data
 	private static Color DARK_SHADING_COLOR = Color.BLACK;
 	private static Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
-	
+
 	// Z buffer
 	private MapView zBuffer = null;
 	int zBuf_width, zBuf_height;	
-	
+
 	// Pixel statistics
 	int rendered_pixels = 0;
 	int discarded_pixels = 0;
 	int not_rendered_pixels = 0;
 	int discarded_lines = 0;
-	
+
 	// Create locally some context variables exhaustively used during rasterization
 	// TODO Be cautious here : if GraphicContext has changed between 2 calls to previously created Rasterizer, these 2 variables won't be refreshed accordingly -> potential bug
 	int pixelHalfWidth = 0;
 	int pixelHalfHeight = 0;
-	
+
 	/**
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param camera : a pointer to the Camera created offline by user
@@ -147,25 +147,25 @@ public class Rasterizer {
 		pixelHalfHeight = graphic.getPixelHalfHeight();
 		// TODO Be cautious here : if GraphicContext has changed between 2 calls to previously created Rasterizer, the 2 above variables won't be refreshed accordingly -> potential bug
 	}
-		
+
 	public void setView(GUIView v) {
 		this.gUIView = v;
 	}
-	
+
 	/**
 	 * Initialize zBuffer by creating the table. This method is deported from the constructor in order to use it only when necessary.
 	 * It is not needed in case of line rendering.
 	 */
 	public MapView initZBuffer() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());
-		
+
 		// zBuffer is initialized with far value of the perspective
 		float zBuffer_init = graphic.getPerspective().getFar();
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "zBuffer init value: "+zBuffer_init);
-		
+
 		zBuf_width  = 2 * pixelHalfWidth  + 1;
 		zBuf_height = 2 * pixelHalfHeight + 1;
-		
+
 		// Only create buffer if needed, otherwise reuse it, it will be reinitialized below
 		//if (zBuffer == null) zBuffer = new float[zBuf_width][zBuf_height];
 		if (zBuffer == null) zBuffer = new MapView(zBuf_width, zBuf_height);
@@ -179,7 +179,7 @@ public class Rasterizer {
 		}
 		return zBuffer;
 	}
-	
+
 	//
 	// A few tools, some methods to simplify method calls
 	//
@@ -188,12 +188,12 @@ public class Rasterizer {
 		//return xScreen(v.getProjPos());
 		return v.getProjPos().get3DX()*pixelHalfWidth;
 	}
-	
+
 	protected float yScreen(Vertex v) {
 		//return yScreen(v.getProjPos());
 		return v.getProjPos().get3DY()*pixelHalfHeight;
 	}
-	
+
 
 	// Z buffer is [0, width][0, height] while screen is centered to origin -> need translation
 	protected  int getXzBuf(int x) {
@@ -204,7 +204,7 @@ public class Rasterizer {
 	protected int getYzBuf(int y) {
 		return y + pixelHalfHeight;
 	}
-	
+
 	//
 	// End few tools
 	//
@@ -212,23 +212,23 @@ public class Rasterizer {
 	// 
 	// Method for Segment only Rendering
 	//
-	
+
 	public void drawTriangleLines(Triangle t, Color c) {
-		
+
 		gUIView.setColor(c);
 		drawLine(t.getV1(), t.getV2());
 		drawLine(t.getV2(), t.getV3());
 		drawLine(t.getV3(), t.getV1());
 	}
-	
+
 	public void drawLine(Segment l) {
 		drawLine(l.getV1(), l.getV2());
 	}
-	
+
 	public void drawLine(Segment l, Color c) {
 		drawLine(l.getV1(), l.getV2(), c);
 	}
-	
+
 	public void drawLine(Vertex v1, Vertex v2) {
 
 		int x1, y1, x2, y2;	
@@ -245,11 +245,11 @@ public class Rasterizer {
 		gUIView.setColor(c);
 		drawLine(v1, v2);
 	}
-	
+
 	//
 	// End methods for Segment only Rendering
 	//
-	
+
 	/**
 	 * Triangle rasterization and zBuffering
 	 * Inspired from:
@@ -271,9 +271,9 @@ public class Rasterizer {
 			boolean interpolate,
 			boolean texture,
 			boolean shadows) {
-		
+
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+surfCol);
-		
+
 		Color shadedCol = null;
 		Color ambientCol = computeAmbientColor(surfCol); // Let's compute Ambient color once per triangle (not needed at each line or pixel)
 
@@ -281,38 +281,38 @@ public class Rasterizer {
 		rendered_pixels = 0;
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
-		
+
 		// Let's create 3 VertexParam "containers", one for each of the 3 Vertices of the triangle to be rendered and start building them with Vertex and Texture vectors
 		// They will be used as parameters to be passed to rasterizeScanLight function containing a structure set of data
 		VertexParam vpa, vpb, vpc;
 		vpa = new VertexParam(t.getV1(), t.getTexVec1());
 		vpb = new VertexParam(t.getV2(), t.getTexVec2());
 		vpc = new VertexParam(t.getV3(), t.getTexVec3());
-		
-	    // Lets order them to always have this order on screen v1, v2 & v3 in screen coordinates
-	    // with v1 always down (thus having the highest possible Y)
-	    // then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
+
+		// Lets order them to always have this order on screen v1, v2 & v3 in screen coordinates
+		// with v1 always down (thus having the highest possible Y)
+		// then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
 		VertexParam vp1, vp2, vp3; // Ordered Vertex containers
-		
+
 		// TODO use color at Vertex level if defined. This requires to manage 3 colors for a triangle in this case
-		
+
 		if (vpb.v.getProjPos().get3DY()<vpa.v.getProjPos().get3DY()) { // p2 lower than p1
 			if (vpc.v.getProjPos().get3DY()<vpb.v.getProjPos().get3DY()) { // p3 lower than p2
 				vp1 = vpc;
 				vp2 = vpb;
 				vp3 = vpa;
-				
+
 			} else { // p2 lower or equal than p3
 				if (vpc.v.getProjPos().get3DY()<vpa.v.getProjPos().get3DY()) { // p3 lower than p1
 					vp1 = vpb;
 					vp2 = vpc;
 					vp3 = vpa;
-					
+
 				} else { // p1 higher or equal than p3
 					vp1 = vpb;
 					vp2 = vpa;
 					vp3 = vpc;
-					
+
 				}
 			}
 		} else { // p1 lower than p2
@@ -320,52 +320,52 @@ public class Rasterizer {
 				vp1 = vpc;
 				vp2 = vpa;
 				vp3 = vpb;
-				
+
 			} else { // p1 lower than p3
 				if (vpc.v.getProjPos().get3DY()<vpb.v.getProjPos().get3DY()) { // p3 lower than p2
 					vp1 = vpa;
 					vp2 = vpc;
 					vp3 = vpb;
-					
+
 				} else {
 					vp1 = vpa;
 					vp2 = vpb;
 					vp3 = vpc;
-					
+
 				}
 			}
 		}
-		
+
 		// Initialize n VertexParamLight structures, one for each light, for each VertexParam "container" previously created
 		ArrayList<ShadowingLight> shadowingLights = lighting.getShadowingLights();
 		int nb_sl; // Number of Shadowing Lights
-		
+
 		// If there are Directional or Point Lights
 		if (lighting.hasShadowing()) {
-			
+
 			nb_sl = shadowingLights.size();
-			
+
 			vp1.l = new VertexLightParam[nb_sl];
 			vp2.l = new VertexLightParam[nb_sl];
 			vp3.l = new VertexLightParam[nb_sl];
-			
+
 			// For each Light
 			for (int i=0; i<nb_sl; i++) {
 				vp1.l[i] = new VertexLightParam();
 				vp2.l[i] = new VertexLightParam();
 				vp3.l[i] = new VertexLightParam();	
 			}
-			
+
 		} else {
-			
+
 			nb_sl = 0;
-			
+
 			vp1.l = null;
 			vp2.l = null;
 			vp3.l = null;
 		}
 
-		
+
 		// If no interpolation requested -> plain faces. Then:
 		// - calculate normal at Triangle level for shading
 		// - calculate shading color once for all triangle
@@ -394,184 +394,205 @@ public class Rasterizer {
 			viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).V3();
 			viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).V3();
 			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).V3();
-			
+
 			viewer1.normalize();
 			viewer2.normalize();
 			viewer3.normalize();
-			
+
 			// For each Light
 			for (int i=0; i<nb_sl; i++) {
-				vp1.l[i].shadedColor = computeShadedColor(surfCol, vp1.v.getWorldPos(), vp1.v.getWorldNormal(), t.isRectoVerso(), shadowingLights.get(i));
-				vp2.l[i].shadedColor = computeShadedColor(surfCol, vp2.v.getWorldPos(), vp2.v.getWorldNormal(), t.isRectoVerso(), shadowingLights.get(i));
-				vp3.l[i].shadedColor = computeShadedColor(surfCol, vp3.v.getWorldPos(), vp3.v.getWorldNormal(), t.isRectoVerso(), shadowingLights.get(i));	
+
+				ShadowingLight sl = shadowingLights.get(i); // Used several times
+
+				vp1.l[i].shadedColor = computeShadedColor(surfCol, vp1.v.getWorldPos(), vp1.v.getWorldNormal(), t.isRectoVerso(), sl);
+				vp2.l[i].shadedColor = computeShadedColor(surfCol, vp2.v.getWorldPos(), vp2.v.getWorldNormal(), t.isRectoVerso(), sl);
+				vp3.l[i].shadedColor = computeShadedColor(surfCol, vp3.v.getWorldPos(), vp3.v.getWorldNormal(), t.isRectoVerso(), sl);	
 
 				if (lighting.hasSpecular()) {
-					vp1.l[i].specularColor = computeSpecularColor(vp1.v.getWorldNormal(), viewer1, vp1.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), shadowingLights.get(i));
-					vp2.l[i].specularColor = computeSpecularColor(vp2.v.getWorldNormal(), viewer2, vp2.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), shadowingLights.get(i));
-					vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), shadowingLights.get(i));
+					vp1.l[i].specularColor = computeSpecularColor(vp1.v.getWorldNormal(), viewer1, vp1.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
+					vp2.l[i].specularColor = computeSpecularColor(vp2.v.getWorldNormal(), viewer2, vp2.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
+					vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
+				}
+
+				if (shadows) {
+					// Transform the World position of the Vertex in this Light's coordinates
+					vp1.l[i].vl = sl.getModelView().project(vp1.v);
+					vp2.l[i].vl = sl.getModelView().project(vp2.v);
+					vp3.l[i].vl = sl.getModelView().project(vp3.v);
+
+					// Position vector in the Shadow map (homogeneous coordinates)
+					// TODO Check if really both vl and vm are needed or only one of them should be passed to rasterizeScanLine
+					vp1.l[i].vm = null; // TBD
+					vp1.l[i].vm = null; // TBD
+					vp1.l[i].vm = null; // TBD
+
+					// Provide the link to Shadow Map for this Light
+					vp1.l[i].map = sl.getMap();
+					vp2.l[i].map = sl.getMap();
+					vp3.l[i].map = sl.getMap();
 				}
 			}
 		}
-		
+
 
 		// Shadows
-		Vector4[] vs1_p = null, vs2_p = null, vs3_p = null;
-		
+		//Vector4[] vs1_p = null, vs2_p = null, vs3_p = null;
+
 		//
 		// TODO SHADOWS : THIS SHOULD BE DONE BEFORE REORDERING THE 3 VERTICES SO THAT THIS IS MATCHING !!!
 		//
-		if (shadows) { // then do the needed calculation to know if the element is in shadow or not
-			
-			// For shadows we use same approach than Textures : at triangle level (here) : do a projection each of the 3 vertices in (each) light coordinates
-			// Then, at pixel level ( when rasterizing the scan lines) : interpolate the position in light coordinates and then get the shadow map value using the
-			// interpolated coordinates in light coordinates. Interpolation should also have depth correction.
-			
-			// Directional light - (one single Directional light for instance) TODO in next evolution: multiple Directional Lights
+		//		if (shadows) { // then do the needed calculation to know if the element is in shadow or not
+		//
+		//			// For shadows we use same approach than Textures : at triangle level (here) : do a projection each of the 3 vertices in (each) light coordinates
+		//			// Then, at pixel level ( when rasterizing the scan lines) : interpolate the position in light coordinates and then get the shadow map value using the
+		//			// interpolated coordinates in light coordinates. Interpolation should also have depth correction.
+		//
+		//			// Directional light - (one single Directional light for instance) TODO in next evolution: multiple Directional Lights
+		//
+		//			// For each of the 3 Vertices
+		//			// Get the World position
+		//			// translate in Light coordinates using the matrix in Shadowing class
+		//
+		//			// For each Point light
+		//			if (nb_sl >0) {
+		//
+		//				vs1_p = new Vector4[nb_sl];
+		//				vs2_p = new Vector4[nb_sl];
+		//				vs3_p = new Vector4[nb_sl];
+		//
+		//				// For each of the 3 Vertices
+		//				// Get the World position
+		//				// translate in Light coordinates using the matrix in Shadowing class
+		//				for (int i=0; i<nb_sl; i++) {
+		//					vs1_p[i] = lighting.getDirectionalLight().getModelView().project(vp1.v);
+		//					vs2_p[i] = lighting.getDirectionalLight().getModelView().project(vp2.v);
+		//					vs3_p[i] = lighting.getDirectionalLight().getModelView().project(vp3.v);
+		//				}
+		//			}
+		//
+		//			// Get the depth of the vertices in Light coordinates
+		//			// Prepare the 3 depths to be interpolated in the rasterizeScanLine method
+		//		}
 
-			// For each of the 3 Vertices
-			// Get the World position
-			// translate in Light coordinates using the matrix in Shadowing class
-			
-			// For each Point light
-			if (nb_sl >0) {
-				
-				vs1_p = new Vector4[nb_sl];
-				vs2_p = new Vector4[nb_sl];
-				vs3_p = new Vector4[nb_sl];
+		// Slopes
+		float dP1P2, dP1P3;
 
-				// For each of the 3 Vertices
-				// Get the World position
-				// translate in Light coordinates using the matrix in Shadowing class
-				for (int i=0; i<nb_sl; i++) {
-					vs1_p[i] = lighting.getDirectionalLight().getModelView().project(vp1.v);
-					vs2_p[i] = lighting.getDirectionalLight().getModelView().project(vp2.v);
-					vs3_p[i] = lighting.getDirectionalLight().getModelView().project(vp3.v);
+		// http://en.wikipedia.org/wiki/Slope
+		// Computing invert slopes
+		if (yScreen(vp2.v) - yScreen(vp1.v) > 0) {
+			dP1P2 = (xScreen(vp2.v)-xScreen(vp1.v))/(yScreen(vp2.v)-yScreen(vp1.v));
+		} else { // horizontal segment, infinite invert slope
+			dP1P2 = Float.MAX_VALUE;
+		}
+
+		if (yScreen(vp3.v) - yScreen(vp1.v) > 0) {
+			dP1P3 = (xScreen(vp3.v)-xScreen(vp1.v))/(yScreen(vp3.v)-yScreen(vp1.v));
+		} else { // horizontal segment, infinite invert slope
+			dP1P3 = Float.MAX_VALUE;
+		}
+
+		if (dP1P2 > dP1P3) {
+
+			// First case where triangle is like that:
+			//   P3
+			//   +
+			//   | \
+			//   |   \
+			//   |     \
+			//   |       + P2
+			//   |     /
+			//   |   /
+			//   | /
+			//   +
+			//   P1
+
+			for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
+				if (y < yScreen(vp2.v)) {
+					rasterizeScanLine(
+							y,
+							vp1,
+							vp3,
+							vp1,
+							vp2,
+							t.getTexture(),
+							shadedCol,
+							ambientCol,
+							interpolate && !t.isTriangleNormal(),
+							texture,
+							t.getTextureOrientation(),
+							shadows,
+							nb_sl);
+				} else {
+					rasterizeScanLine(
+							y,
+							vp1,
+							vp3,
+							vp2,
+							vp3,
+							t.getTexture(),
+							shadedCol,
+							ambientCol,
+							interpolate && !t.isTriangleNormal(),
+							texture,
+							t.getTextureOrientation(),
+							shadows,
+							nb_sl);
 				}
 			}
-			
-			// Get the depth of the vertices in Light coordinates
-			// Prepare the 3 depths to be interpolated in the rasterizeScanLine method
-		}
-		
-	    // Slopes
-	    float dP1P2, dP1P3;
 
-	    // http://en.wikipedia.org/wiki/Slope
-	    // Computing invert slopes
-	    if (yScreen(vp2.v) - yScreen(vp1.v) > 0) {
-	        dP1P2 = (xScreen(vp2.v)-xScreen(vp1.v))/(yScreen(vp2.v)-yScreen(vp1.v));
-	    } else { // horizontal segment, infinite invert slope
-	        dP1P2 = Float.MAX_VALUE;
-	    }
-	    
-	    if (yScreen(vp3.v) - yScreen(vp1.v) > 0) {
-	        dP1P3 = (xScreen(vp3.v)-xScreen(vp1.v))/(yScreen(vp3.v)-yScreen(vp1.v));
-	    } else { // horizontal segment, infinite invert slope
-	    	dP1P3 = Float.MAX_VALUE;
-	    }
+		} else {
 
-	    if (dP1P2 > dP1P3) {
-	    	
-		    // First case where triangle is like that:
-		    //   P3
-		    //   +
-		    //   | \
-		    //   |   \
-		    //   |     \
-		    //   |       + P2
-		    //   |     /
-		    //   |   /
-		    //   | /
-			//   +
-		    //   P1
-	    	
-	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
-	            if (y < yScreen(vp2.v)) {
-	            	rasterizeScanLine(
-	            			y,
-	            			vp1,
-	            			vp3,
-	            			vp1,
-	            			vp2,
-	            			t.getTexture(),
-	            			shadedCol,
-	            			ambientCol,
-	            			interpolate && !t.isTriangleNormal(),
-	            			texture,
-	            			t.getTextureOrientation(),
-	            			shadows,
-	            			nb_sl);
-	            } else {
-	                rasterizeScanLine(
-	                		y,
-	                		vp1,
-	                		vp3,
-	                		vp2,
-	                		vp3,
-	                		t.getTexture(),
-	                		shadedCol,
-	                		ambientCol,
-	                		interpolate && !t.isTriangleNormal(),
-	                		texture,
-	                		t.getTextureOrientation(),
-	                		shadows,
-	                		nb_sl);
-	            }
-	        }
-
-	    } else {
-	    	
-		    // Second case where triangle is like that:
-		    //             P3
-		    //             +
-		    //           / | 
-		    //         /   |
-		    //       /     |
-		    //  P2 +       | 
-		    //       \     |
-		    //         \   |
-		    //           \ |
+			// Second case where triangle is like that:
+			//             P3
 			//             +
-		    //             P1
-	    	
-	        for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
-	            if (y < yScreen(vp2.v)) {
-	                rasterizeScanLine(
-	                		y,
-	                		vp1,
-	                		vp2,
-	                		vp1,
-	                		vp3,
-	                		t.getTexture(),
-	                		shadedCol,
-	                		ambientCol,
-	                		interpolate && !t.isTriangleNormal(),
-	                		texture,
-	                		t.getTextureOrientation(),
-	                		shadows,
-	                		nb_sl);
-	            } else {
-	                rasterizeScanLine(
-	                		y,
-	                		vp2,
-	                		vp3,
-	                		vp1,
-	                		vp3,
-	                		t.getTexture(),
-	                		shadedCol,
-	                		ambientCol,
-	                		interpolate && !t.isTriangleNormal(),
-	                		texture,
-	                		t.getTextureOrientation(),
-	                		shadows,
-	                		nb_sl);
-	            }
-	        }
-	    }
-	    
+			//           / | 
+			//         /   |
+			//       /     |
+			//  P2 +       | 
+			//       \     |
+			//         \   |
+			//           \ |
+			//             +
+			//             P1
+
+			for (int y = (int)yScreen(vp1.v); y <= (int)yScreen(vp3.v); y++) {
+				if (y < yScreen(vp2.v)) {
+					rasterizeScanLine(
+							y,
+							vp1,
+							vp2,
+							vp1,
+							vp3,
+							t.getTexture(),
+							shadedCol,
+							ambientCol,
+							interpolate && !t.isTriangleNormal(),
+							texture,
+							t.getTextureOrientation(),
+							shadows,
+							nb_sl);
+				} else {
+					rasterizeScanLine(
+							y,
+							vp2,
+							vp3,
+							vp1,
+							vp3,
+							t.getTexture(),
+							shadedCol,
+							ambientCol,
+							interpolate && !t.isTriangleNormal(),
+							texture,
+							t.getTextureOrientation(),
+							shadows,
+							nb_sl);
+				}
+			}
+		}
+
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Discarded lines: "+discarded_lines);
 	}
-	
+
 
 	protected void rasterizeScanLine(
 			int 		y,				// Ordinate of the scan line
@@ -616,7 +637,7 @@ public class Rasterizer {
 		//
 		// Draw pixel with resulting color
 
-		
+
 		if (isInScreenY(y)) { // Eliminate immediately lines of pixels outside the gUIView screen
 
 			// Thanks to current Y, we can compute the gradient to compute others values like
@@ -693,7 +714,7 @@ public class Rasterizer {
 			// Arrays of specular colors for each light to be interpolated
 			Color [] ispc1 = null;
 			Color [] ispc2 = null;
-			
+
 			if (interpolate) {
 
 				ishc1 = new Color [nb_lights];
@@ -760,7 +781,7 @@ public class Rasterizer {
 						if (z>zBuffer.get(getXzBuf(x), getYzBuf(y))) { // Discard pixel
 							discarded_pixels++;
 							// Exit here
-							
+
 						} else { // General case : compute colors and draw pixel
 
 							// Texture interpolation
@@ -790,27 +811,27 @@ public class Rasterizer {
 								}
 
 							} // End Texture interpolation
-												
+
 							// --------------------------
 							// ---- Color Combination ---
 							// --------------------------
-							
+
 							// Combine colors with the following formula
 							// One Light : Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
 							// Multiple Lights : Color K = DTA + SUM(Ci(DT + Si)) = DTA + SUM(CiDT) + SUM(CiSi)
 							// D: diffuse color, T: texture, A: Ambient color, Ci: color of the Light(i) source at point, Si: Specular color of the Light(i)
 							// Old : ctx = T, csh_l[i]  = Ci, ambientCol = A, csp_l[i] = Si
-							
+
 							// Combine the multiple Light's Colors
 							// ------------------------------------
 							// Table of Colors for each light : Ci x D x T and Ci x Si respectively that will be combined later							
 							Color[] c_CiDT = new Color[nb_lights];
 							Color[] c_CiSi = new Color[nb_lights];
-							
+
 							Color csh_l = null; // shaded color for the light
 							Color csp_l = null; // specular color for the light
 							Color csd_l = null; // shadow color for the light
-							
+
 							for (int i=0; i<nb_lights; i++) {
 
 								// Calculate the shaded color for this Light - Gouraud's shading
@@ -820,7 +841,7 @@ public class Rasterizer {
 									csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
 									if (lighting.hasSpecular()) {
 										csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light
-										
+
 									} else {
 										csp_l = DARK_SHADING_COLOR; // No specular
 									}
@@ -881,7 +902,7 @@ public class Rasterizer {
 							// Combine each element of the formula to get one Color
 							// ----------------------------------------------------
 							// Multiple Lights : Color K = DTA + SUM(CiDT) + SUM(CiSi)
-							
+
 							Color c_DTA = null;
 							Color c_CiDT_sum = null;
 							Color c_CiSi_sum = null;
@@ -892,12 +913,12 @@ public class Rasterizer {
 							} else {
 								c_DTA = ambientCol;
 							}
-							
+
 							// SUM(CiDT) and SUM(CiSi) calculation, then sum the total
 							if (interpolate) {
 								c_CiDT_sum = ColorTools.addColors(c_CiDT); // Add all CiDT elements together
 								c_CiSi_sum = ColorTools.addColors(c_CiSi); // Add all CiSi elements together
-								
+
 								// Sum the total
 								if (lighting.hasSpecular() && csp != null) {
 									// General case with all type of light (shaded and specular)
@@ -974,7 +995,7 @@ public class Rasterizer {
 		if (Math.abs(y)>pixelHalfHeight) return false;
 		return true;
 	}
-	
+
 	/**
 	 * This method return the Color resulting from Ambient light
 	 * It is agnostic to any position in space as per definition of Ambient light
@@ -1025,7 +1046,7 @@ public class Rasterizer {
 
 		return c;
 	}
-	
+
 
 	/**
 	 * @param normal the normal vector
@@ -1070,10 +1091,10 @@ public class Rasterizer {
 				}
 			}
 		}
-		
+
 		return c;
 	}
-	
+
 
 	//
 	// **** BRESSENHAM ***
@@ -1089,9 +1110,9 @@ public class Rasterizer {
 		yinc = (dy>0) ? 1 : -1;
 		dx = Math.abs(dx);
 		dy = Math.abs(dy);
-		
+
 		allume_pixel(x,y);
-		
+
 		if (dx>dy) {
 			cumul = dx/2;
 			for (i=1; i<=dx; i++) {
@@ -1127,9 +1148,9 @@ public class Rasterizer {
 		yinc = (short) ((dy>0) ? 1 : -1);
 		dx = (short) Math.abs(dx);
 		dy = (short) Math.abs(dy);
-		
+
 		allume_pixel(x,y);
-		
+
 		if (dx>dy) {
 			cumul = (short) (dx/2);
 			for (i=1; i<=dx; i++) {
@@ -1158,7 +1179,7 @@ public class Rasterizer {
 	protected void allume_pixel(int x, int y) {
 		gUIView.drawPixel(x, y);
 	}
-	
+
 	//
 	// **** END BRESSENHAM ***
 	//

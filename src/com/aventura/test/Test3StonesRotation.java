@@ -153,6 +153,7 @@ public class Test3StonesRotation {
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
