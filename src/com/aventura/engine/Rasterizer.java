@@ -69,17 +69,17 @@ public class Rasterizer {
 		public Color specularColor;
 		// Shadowing parameters
 		public Vector4 vl; // Projected position in light coordinates of Vertex
-		public Vector4 vm; // Shadow Map vector (position in Shadow Map)
+		//public Vector4 vm; // Shadow Map vector (position in Shadow Map)
 		public MapView map; // Shadow map of this Light
 
 		public VertexLightParam() {
 		}
 
 		public VertexLightParam(Color shaded, Color specular, Vector4 vl, Vector4 vm, MapView m) {
-			this.shadedColor = shaded;
-			this.specularColor = specular;
-			this.vl = vl;
-			this.vm = vm;
+			this.shadedColor = shaded; // Shaded color of the light at Vertex position (calculated with normal)
+			this.specularColor = specular; // Specular color of the light at Vertex position
+			this.vl = vl; // 
+			//this.vm = vm;
 			this.map = m;
 		}
 	}
@@ -422,9 +422,9 @@ public class Rasterizer {
 
 					// Position vector in the Shadow map (homogeneous coordinates)
 					// TODO Check if really both vl and vm are needed or only one of them should be passed to rasterizeScanLine
-					vp1.l[i].vm = null; // TBD
-					vp1.l[i].vm = null; // TBD
-					vp1.l[i].vm = null; // TBD
+					//vp1.l[i].vm = null; // TBD
+					//vp1.l[i].vm = null; // TBD
+					//vp1.l[i].vm = null; // TBD
 
 					// Provide the link to Shadow Map for this Light
 					vp1.l[i].map = sl.getMap();
@@ -715,16 +715,26 @@ public class Rasterizer {
 			Color [] ispc1 = null;
 			Color [] ispc2 = null;
 
-			if (interpolate) {
+			// Light vectors at begining and end of the segment to interpolate
+			Vector4 [] vl1 = null;
+			Vector4 [] vl2 = null;
 
+			if (interpolate) {
 				ishc1 = new Color [nb_lights];
 				ishc2 = new Color [nb_lights];
 				ispc1 = new Color [nb_lights];
 				ispc2 = new Color [nb_lights];
+			}
 
-				// For each Light
-				for (int i=0; i<nb_lights; i++) {
+			if (shadows) {
+				vl1 = new Vector4 [nb_lights];
+				vl2 = new Vector4 [nb_lights];
+			}
 
+			// For each Light
+			for (int i=0; i<nb_lights; i++) {
+				
+				if (interpolate) {
 					// Shaded color
 					ishc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].shadedColor,1/za), ColorTools.multColor(vpb.l[i].shadedColor,1/zb), gradient1);
 					ishc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].shadedColor,1/zc), ColorTools.multColor(vpd.l[i].shadedColor,1/zd), gradient2);
@@ -733,15 +743,15 @@ public class Rasterizer {
 						ispc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].specularColor,1/za), ColorTools.multColor(vpb.l[i].specularColor,1/zb), gradient1);
 						ispc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].specularColor,1/zc), ColorTools.multColor(vpd.l[i].specularColor,1/zd), gradient2);
 					}
-				} // End for each Light
-			} // Else (!interpolate) : do nothing (no interpolation or normal at triangle level)
-
-			// Shadows
-			// float zs1 = 0, zs2 = 0;
-			if (shadows) { // then do the needed calculation to know if the element is in shadow or not
-				// Any calculation before scanning the line ?
-			}
-
+				} // Else (!interpolate) : do nothing (no interpolation or normal at triangle level)
+				
+				if (shadows) {
+					// Interpolate on each [VA, VB] and [VC, VD] segments for each Light
+					vl1[i] = Tools.interpolate(vpa.l[i].vl.times(1/za), vpb.l[i].vl.times(1/zb), gradient1);
+					vl2[i] = Tools.interpolate(vpc.l[i].vl.times(1/zc), vpd.l[i].vl.times(1/zd), gradient2);	
+				}
+			} // End for each Light
+			
 			//
 			// If texture enabled, calculate Texture vectors at beginning and end of the scan line
 			//
@@ -754,7 +764,7 @@ public class Rasterizer {
 				vt2 = Tools.interpolate(vpc.t.times(1/zc), vpd.t.times(1/zd), gradient2);
 			}
 
-			//Color csh = shadedCol; // shadedCol is null in all cases except if normal at triangle level (see rasterizeTriangle method)
+			// Resulting colors
 			Color csp = DARK_SHADING_COLOR; // Specular color
 			Color ctx = null; // Texture color
 			Color cc; // Combined color to be drawn, result of the lighting and shading calculation
@@ -830,37 +840,15 @@ public class Rasterizer {
 
 							Color csh_l = null; // shaded color for the light
 							Color csp_l = null; // specular color for the light
-							Color csd_l = null; // shadow color for the light
 
 							for (int i=0; i<nb_lights; i++) {
-
-								// Calculate the shaded color for this Light - Gouraud's shading
-								// If interpolation
-								if (interpolate) {
-									// Color interpolation
-									csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
-									if (lighting.hasSpecular()) {
-										csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light
-
-									} else {
-										csp_l = DARK_SHADING_COLOR; // No specular
-									}
-									if (texture && t!=null) {
-										c_CiDT[i] = ColorTools.multColors(csh_l, ctx);
-									} else {
-										c_CiDT[i] = csh_l;
-									}
-									c_CiSi[i] = ColorTools.multColors(csh_l, csp_l);
-								} else { // Else csh is the base color passed in arguments and csp won't be used
-									//csh = shadedCol; // Shaded color passed in argument
-									// TODO specular color to be implemented
-								}
-
-								// Shadowing
-								// TODO
-								// Get the Map vector for each light
+								
+								float shadowCoef = 1;
 
 								if (shadows) { // then do the needful to know if the element is in shadow or not
+									Vector4 vl = Tools.interpolate(vl1[i], vl2[i], gradient).times(z);
+									shadowCoef = vpa.l[i].map.getInterpolation(vl.getX()/vl.getW(), vl.getY()/vl.getW());
+									
 									// TODO Work in Progress - To Be Completed
 									// For each light
 									//							int xs = 0, ys = 0; // projected position for shadow map
@@ -896,7 +884,34 @@ public class Rasterizer {
 									//							zs2 = 1/Tools.interpolate(1/zsc, 1/zsd, gradient2);			
 								}
 
+								// Calculate the shaded color for this Light - Gouraud's shading
+								// If interpolation
+								if (interpolate) {
+									// Color interpolation
+									csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
+									if (lighting.hasSpecular()) {
+										csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light
 
+									} else {
+										csp_l = DARK_SHADING_COLOR; // No specular
+									}
+									if (shadows) {
+										csh_l = ColorTools.multColor(csh_l,  shadowCoef);
+										if (lighting.hasSpecular()) {
+											csp_l = ColorTools.multColor(csp_l,  shadowCoef);
+										}
+									}
+									if (texture && t!=null) {
+										c_CiDT[i] = ColorTools.multColors(csh_l, ctx);
+									} else {
+										c_CiDT[i] = csh_l;
+									}
+									c_CiSi[i] = ColorTools.multColors(csh_l, csp_l);
+								} else { // Else csh is the base color passed in arguments and csp won't be used
+									//csh = shadedCol; // Shaded color passed in argument
+									// TODO specular color to be implemented
+								}
+								
 							} // End for each Light
 
 							// Combine each element of the formula to get one Color

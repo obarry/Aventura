@@ -155,6 +155,7 @@ public class TestMapViewForZBuffer {
 		String str = sc.nextLine();
 		sc.close();
 
+		System.out.println("Now rendering normalized map...");
 		//GUIView gUIView = test.createView(GraphicContext.GRAPHIC_DEFAULT);
 		mapView.removeFar(gContext.getPerspective().getFar());
 		mapView.normalizeMap();
