@@ -2,7 +2,7 @@ package com.aventura.model.light;
 
 import java.awt.Color;
 
-import com.aventura.engine.ModelView;
+import com.aventura.engine.ModelViewProjection;
 import com.aventura.math.projection.Orthographic;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -174,8 +174,8 @@ public class DirectionalLight extends ShadowingLight {
 		// Orthographic(float left, float right, float bottom, float top, float near, float far)
 		perspective_light = new Orthographic(minX, maxX, minY, maxY, minZ, maxZ);
 
-		// Create the orthographic projection matrix
-		modelView = new ModelView(camera_light.getMatrix(), perspective_light);
+		// Create the MVP using this orthographic projection matrix
+		modelViewProjection = new ModelViewProjection(camera_light.getMatrix(), perspective_light);
 		
 	}
 

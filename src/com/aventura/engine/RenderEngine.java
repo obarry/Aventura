@@ -1,6 +1,7 @@
 package com.aventura.engine;
 
 import java.awt.Color;
+import java.util.ArrayList;
 
 import com.aventura.context.GraphicContext;
 import com.aventura.context.RenderContext;
@@ -12,6 +13,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.light.ShadowingLight;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
@@ -86,7 +88,7 @@ import com.aventura.view.MapView;
  *                |                   |                |
  *     			  |			          |        		   v		
  *     +---------------------+ 		  |     +---------------------+
- *     |       Camera        | <------+-----|      ModelView      |
+ *     |       Camera        | <------+-----|      ModelViewProjection      |
  *	   +---------------------+		    	+---------------------+
  *
  *          	 Model								 Engine						Context(s)						 GUIView
@@ -116,8 +118,8 @@ public class RenderEngine {
 	// GUIView
 	private GUIView gUIView;
 	
-	// ModelView modelView
-	private ModelView modelView;
+	// ModelViewProjection modelViewProjection
+	private ModelViewProjection modelViewProjection;
 	
 	// Rasterizer
 	private Rasterizer rasterizer;
@@ -143,8 +145,8 @@ public class RenderEngine {
 		this.lighting = lighting;
 		this.camera = camera;
 				
-		// Create ModelView matrix with for GUIView (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
-		this.modelView = new ModelView(camera.getMatrix(), graphic.getPerspective().getProjection());
+		// Create ModelViewProjection matrix with for GUIView (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
+		this.modelViewProjection = new ModelViewProjection(camera.getMatrix(), graphic.getPerspective().getProjection());
 		
 		// Delegate rasterization tasks to a dedicated engine
 		// No shading in this constructor -> null
@@ -162,18 +164,18 @@ public class RenderEngine {
 	 * 
 	 * It processes all triangles of the World, Element by Element.
 	 * For each Element it takes all Triangles one by one and renderContext them.
-	 * - Full ModelView modelView into homogeneous coordinates
+	 * - Full ModelViewProjection modelViewProjection into homogeneous coordinates
 	 * - Rasterization
 	 * It uses the parameters of GraphicContext and RenderContext:
 	 * - GUIView information contained into GraphicContext
 	 * - Rendering information (e.g. rendering modes etc) contained into RenderContext
 	 * 
-	 * It assumes initialization is already done through ModelView object and various contexts
+	 * It assumes initialization is already done through ModelViewProjection object and various contexts
 	 * - Projection matrix
 	 * - Screen and display area
 	 * - etc.
 	 * 
-	 * But this method will also recalculate each time the full ModelView modelView Matrix including the Camera so any change
+	 * But this method will also recalculate each time the full ModelViewProjection modelViewProjection Matrix including the Camera so any change
 	 * will be taken into account.
 	 * 
 	 * @return the zBuffer in form of a MapView that can be easily displayed in GUI.
@@ -201,8 +203,8 @@ public class RenderEngine {
 		if (renderContext.shadowing == RenderContext.SHADOWING_ENABLED) {
 			
 			// To calculate the projection matrix (or matrices if several light sources) :
-			// - Need to define the bounding box in which the elements will used to calculate the shadow map
-			// 		* By default it could be a box containing just the gUIView frustrum of the eye camera
+			// - Need to define the bounding box in which the elements will be used to calculate the shadow map
+			// 		* By default it could be a box containing just the gUIView frustum of the eye camera
 			// 		* But there is a risk that elements outside of this box could generate shadows inside the box
 			// 		* A costly solution could be to define a box containing all elements of the scene
 			// 		* Otherwise some algorithm could be used for later improvement
@@ -219,18 +221,26 @@ public class RenderEngine {
 			//											lighting.mCameraPosition.y - 25.0f, lighting.mCameraPosition.y + 25.0f,
 			// 											lighting.mCameraPosition.z + 25.0f, lighting.mCameraPosition.z - 25.0f)
 			//					* viewMatrix;
-			// Goal is to try to rely on ModelView class for part of the calculation and later use the methods of this class for
+			// Goal is to try to rely on ModelViewProjection class for part of the calculation and later use the methods of this class for
 			// vertices transformation that will be used before rasterization and generation of the Shadow map
-			
-			// TODO: loop on all Lights (all ShadowingLight, not only the DirectionalLight)
-			
-			// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
-			lighting.getDirectionalLight().initShadowing(graphicContext.getPerspective(), camera, gUIView.getViewWidth());
-			
-			// Generate the shadow map
-			lighting.getDirectionalLight().generateShadowMap(world); // need to recurse on each Element
+
+
+			if (lighting.hasShadowing()) { // If there are Shadowing lights
+				
+				ArrayList<ShadowingLight> shadowingLights = lighting.getShadowingLights();
+				
+				for (int i = 0; i < shadowingLights.size(); i++) { // Loop on all Shadowing lights
+
+					// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
+					shadowingLights.get(i).initShadowing(graphicContext.getPerspective(), camera, gUIView.getViewWidth());
+					
+					// Generate the shadow map
+					// TODO optimization : build a world2 containing only the Elements that can cast shadows by using bouncing algorithm then generate shadow map for this world2
+					shadowingLights.get(i).generateShadowMap(world); // need to recurse on each Element
+				}
+			}
 		}
-		
+
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
@@ -274,7 +284,7 @@ public class RenderEngine {
 		Color col = c;
 		if (e.getColor() != null) col = e.getColor();
 		
-		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
+		// Update ModelViewProjection matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
 		Matrix4 model = null;
 		if (matrix == null) {
@@ -282,8 +292,8 @@ public class RenderEngine {
 		} else {
 			model = matrix.times(e.getTransformation());
 		}
-		modelView.setModel(model);
-		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (gUIView)
+		modelViewProjection.setModel(model);
+		modelViewProjection.initTransformation(); // Compute the whole ModelViewProjection modelViewProjection matrix including Camera (gUIView)
 		
 		// TODO NEW TO BE ADDED AND COMPUTED
 		// TRANSFORMATION OF ALL VERTICES OF THE ELEMENT
@@ -293,7 +303,7 @@ public class RenderEngine {
 		// THIS REQUIRES TO IMPLEMENT LIST OF VERTICES AT ELEMENT LEVEL
 		
 		// Calculate projection for all vertices of this Element
-		modelView.transformVertices(e);
+		modelViewProjection.transformVertices(e);
 				
 		// Process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
@@ -323,7 +333,7 @@ public class RenderEngine {
 	 * This method will calculate transformed triangle (which consists in transforming each vertex) then it delegates
 	 * the low level rasterization of the triangle to the Rasterizer, using appropriate methods based on the type of
 	 * rendering that is expected (lines, plain faces, interpolation, etc.). 
-	 * Pre-requisite: This assumes that the initialization of ModelView modelView is already done
+	 * Pre-requisite: This assumes that the initialization of ModelViewProjection modelViewProjection is already done
 	 * 
 	 * @param to the triangle to render
 	 * @param c the color of the Element, can be overridden if color defined (not null) at Triangle level
@@ -352,7 +362,7 @@ public class RenderEngine {
 			if (renderContext.renderingType != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal() || backfaceCulling) {
 				// Calculate normal if not calculated
 				if (t.getNormal()==null) t.calculateNormal();
-				modelView.transformNormal(t);
+				modelViewProjection.transformNormal(t);
 			}
 			
 			// If RENDERING_TYPE_LINE then no backface culling
@@ -436,13 +446,13 @@ public class RenderEngine {
 					return t.getWorldNormal().dot(ey)>0;
 				case GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
 					// Need only to test the normal in homogeneous coordinate has a non-null positive Z component (hence pointing behind camera)
-					return modelView.calculateProjNormal(t).getZ()>0;
+					return modelViewProjection.calculateProjNormal(t).getZ()>0;
 				default:
 					// Should never happen
 					break;
 				}
 				// Should never happen
-				return modelView.calculateProjNormal(t).getZ()>0;
+				return modelViewProjection.calculateProjNormal(t).getZ()>0;
 			} else {
 				switch (graphicContext.getPerspectiveType()) {
 				case GraphicContext.PERSPECTIVE_TYPE_FRUSTUM:
@@ -462,25 +472,25 @@ public class RenderEngine {
 		} catch (Exception e) { // If no Vertex normals, then use Triangle normal with same test
 			//Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
 			//return t.getWorldNormal().dot(ey)>0;
-			return modelView.calculateProjNormal(t).getZ()>0;
+			return modelViewProjection.calculateProjNormal(t).getZ()>0;
 		}
 	}
 	
 
 	public void displayLandMarkLines() {
 		// Set the Model Matrix to IDENTITY (no translation)
-		modelView.setModel(Matrix4.IDENTITY);
-		modelView.computeTransformation();
+		modelViewProjection.setModel(Matrix4.IDENTITY);
+		modelViewProjection.initTransformation();
 
 		// Create Vertices to draw unit segments
 		Vertex o = new Vertex(0,0,0);
 		Vertex x = new Vertex(1,0,0);
 		Vertex y = new Vertex(0,1,0);
 		Vertex z = new Vertex(0,0,1);
-		modelView.transform(o);
-		modelView.transform(x);
-		modelView.transform(y);
-		modelView.transform(z);
+		modelViewProjection.transform(o);
+		modelViewProjection.transform(x);
+		modelViewProjection.transform(y);
+		modelViewProjection.transform(z);
 		// Create 3 unit segments
 		Segment lx = new Segment(o, x);
 		Segment ly = new Segment(o, y);
@@ -550,8 +560,8 @@ public class RenderEngine {
 			// In this case the vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = t.getCenter();
 			Vertex n = new Vertex(c.getPos().plus(t.getNormal())); // Before transformation -> using position and normals not yet transformed
-			modelView.transform(c);
-			modelView.transform(n);
+			modelViewProjection.transform(c);
+			modelViewProjection.transform(n);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
 			Segment s = new Segment(c, n);
@@ -570,9 +580,9 @@ public class RenderEngine {
 			n1 = new Vertex(p1.getPos().plus(p1.getNormal())); // Before transformation -> using position and normals not yet transformed
 			n2 = new Vertex(p2.getPos().plus(p2.getNormal())); // Before transformation -> using position and normals not yet transformed
 			n3 = new Vertex(p3.getPos().plus(p3.getNormal())); // Before transformation -> using position and normals not yet transformed
-			modelView.transform(n1);
-			modelView.transform(n2);
-			modelView.transform(n3);
+			modelViewProjection.transform(n1);
+			modelViewProjection.transform(n2);
+			modelViewProjection.transform(n3);
 			
 			// Create 3 segments corresponding to normal vectors
 			Segment l1 = new Segment(p1, n1);
@@ -588,12 +598,12 @@ public class RenderEngine {
 		
 	public void displayLight() {
 		// Set the Model Matrix to IDENTITY (no translation)
-		modelView.setModel(Matrix4.IDENTITY);
-		modelView.computeTransformation();
+		modelViewProjection.setModel(Matrix4.IDENTITY);
+		modelViewProjection.initTransformation();
 		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVectorAtPoint(null));
 		Vertex o = new Vertex(0,0,0);
-		modelView.transform(v);
-		modelView.transform(o);
+		modelViewProjection.transform(v);
+		modelViewProjection.transform(o);
 		Segment s = new Segment(o, v);
 		rasterizer.drawLine(s, renderContext.lightVectorsColor);
 	}

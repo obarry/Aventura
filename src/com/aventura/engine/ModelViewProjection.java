@@ -35,7 +35,7 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
- * This class represents and manages the transformations from model to gUIView.
+ * This class represents and manages the transformations from model to gUIView then to project Vertex into homogeneous coordinates
  * 
  * Interesting explanations on this transformation can be found here:
  * http://www.opengl-tutorial.org/fr/beginners-tutorials/tutorial-3-matrices/
@@ -75,14 +75,14 @@ import com.aventura.tools.tracing.Tracer;
  *  	TransformedVector = [Projection Matrix] * [GUIView Matrix] * [Model Matrix] * OriginalVector
  *  
  *  Note that the Model Matrix is provided by the model itself.
- *  In Aventura model, it is at Element level and it may require to be multiplied recursively if the model contains sub-elements.
+ *  In Aventura world architecture made of Elements, the Model Matrix is at Element level and may require to be multiplied recursively if the model contains sub-elements.
  *  See Element class description.
  *  
  * @author Olivier BARRY
  * @since May 2016
  * 
  */
-public class ModelView {
+public class ModelViewProjection {
 	
 	// Transformation matrices
 	Matrix4 projection = null;
@@ -98,19 +98,19 @@ public class ModelView {
 	 * Default constructor.
 	 * Do nothing.
 	 */
-	public ModelView() {
+	public ModelViewProjection() {
 		
 	}
 	
 	/**
 	 * Generally the Camera Matrix and Projection Matrix do not change over time in static mode.
-	 * So we can safely create a ModelView object with these 2 matrices at initialization.
+	 * So we can safely create a ModelViewProjection object with these 2 matrices at initialization.
 	 * If one of these matrices change over time, the corresponding set methods should then be used. 
 	 * @param gUIView the Camera Matrix4
 	 * @param projection the Matrix4 to transform into homogeneous coordinates
 	 */
-	public ModelView(Matrix4 view, Matrix4 projection) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ModelView(gUIView, projection)");
+	public ModelViewProjection(Matrix4 view, Matrix4 projection) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ModelViewProjection(gUIView, projection)");
 		this.view = view;
 		this.projection = projection;
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "GUIView matrix:\n"+ view);
@@ -189,11 +189,15 @@ public class ModelView {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Matrix:\n"+ model);
 	}
 	/**
-	 *  The complete transformation, from model to homogeneous coordinates, is done through the following formula:
+	 * The complete transformation, from model to homogeneous coordinates, is done through the following formula:
 	 * TransformedVector = [Projection Matrix] * [GUIView Matrix] * [Model Matrix] * OriginalVector
+	 * 
+	 * This method calculates the MVP matrix (or recalculates when needed due to any change in one of the matrices) 
 	 */
-	public void computeTransformation() {
+	public void initTransformation() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
+		
+		// Calculate the full matrix = MVP matrix transformation
 		full = projection.times(view.times(model));
 		
 		// Do not compute the transformation for normals if model_normals not initialized (not required e.g. shadow map calculation)
@@ -206,7 +210,7 @@ public class ModelView {
 	}
 	
 	/**
-	 * Fully compute Vertex projections resulting from the ModelView transformation for both ModelToWorld and ModelToClip projections
+	 * Fully compute Vertex projections resulting from the ModelViewProjection transformation for both ModelToWorld and ModelToClip projections
 	 * Complete the provided Vertex with projection data but do not modify original position data
 	 * Calculate the normal projection (Vertex normal) taking care of using the normals Model matrix (in case of non uniform scaling)
 	 * and not the standard Model matrix.
@@ -223,7 +227,7 @@ public class ModelView {
 	}
 	
 	/**
-	 * Fully compute Vertex projections resulting from the ModelView transformation for both ModelToWorld and ModelToClip projections
+	 * Fully compute Vertex projections resulting from the ModelViewProjection transformation for both ModelToWorld and ModelToClip projections
 	 * Complete the provided Vertex with projection data but do not modify original position data
 	 * Calculate the normal projection (Vertex normal) taking care of using the normals Model matrix (in case of non uniform scaling)
 	 * and not the standard Model matrix.
@@ -236,7 +240,7 @@ public class ModelView {
 	}
 	
 	/**
-	 * Project Vertex using the projection resulting from the ModelView transformation for ModelToClip projection (full)
+	 * Project Vertex using the projection resulting from the ModelViewProjection transformation for ModelToClip projection (full)
 	 * Return the resulting Vector4 without updating the Vertex (does not update Vertex's projection fields)
 	 * 
 	 * @param v the provided Vertex

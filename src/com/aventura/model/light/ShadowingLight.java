@@ -1,6 +1,6 @@
 package com.aventura.model.light;
 
-import com.aventura.engine.ModelView;
+import com.aventura.engine.ModelViewProjection;
 import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
@@ -46,7 +46,7 @@ import com.aventura.view.MapView;
  * is used for the projection.
  * 
  * In this abstract class will be found all the necessary attributes and tools for Shadow generation as the Camera corresponding to the Light
- * the ModelView projection for this Light (should be Orthographic for a DirectionalLight), the gUIView frustrum and the Shadow Map itself.
+ * the ModelViewProjection projection for this Light (should be Orthographic for a DirectionalLight), the gUIView frustrum and the Shadow Map itself.
  *
  * @author Olivier BARRY
  * @since April 2022
@@ -60,8 +60,8 @@ public abstract class ShadowingLight extends Light {
 	protected Camera camera_light;
 	protected Projection perspective_light;
 	
-	// ModelView matrix and vertices conversion tool for the calculation of the Shadow map
-	protected ModelView modelView;
+	// ModelViewProjection matrix and vertices conversion tool for the calculation of the Shadow map
+	protected ModelViewProjection modelViewProjection;
 
 	// GUIView Frustum
 	protected Vector4[][] frustum;
@@ -174,7 +174,7 @@ public abstract class ShadowingLight extends Light {
 
 	protected void generateShadowMap(Element e, Matrix4 matrix) {
 		
-		// Update ModelView matrix for this Element (Element <-> Model) by combining the one from this Element
+		// Update ModelViewProjection matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
 		Matrix4 model = null;
 		if (matrix == null) {
@@ -182,13 +182,13 @@ public abstract class ShadowingLight extends Light {
 		} else {
 			model = matrix.times(e.getTransformation());
 		}
-		modelView.setModelWithoutNormals(model);
-		modelView.computeTransformation(); // Compute the whole ModelView modelView matrix including Camera (gUIView)
+		modelViewProjection.setModelWithoutNormals(model);
+		modelViewProjection.initTransformation(); // Compute the whole ModelViewProjection modelViewProjection matrix including Camera (gUIView)
 
 		// Calculate projection for all vertices of this Element
-		modelView.transformVerticesWithoutNormals(e); // Calculate prj_pos of each vertex
-		// TODO Verify that modelView.transformVertices does not calculate normals (not needed here) projection
-				
+		modelViewProjection.transformVerticesWithoutNormals(e); // Calculate prj_pos of each vertex
+		// TODO Verify that modelViewProjection.transformVertices does not calculate normals (not needed here) projection
+
 		// Process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			Triangle t = e.getTriangle(j);
@@ -206,7 +206,7 @@ public abstract class ShadowingLight extends Light {
 				
 			}
 		}
-	
+
 		// Do a recursive call for SubElements
 		if (!e.isLeaf()) {
 			for (int i=0; i<e.getSubElements().size(); i++) {
@@ -216,8 +216,8 @@ public abstract class ShadowingLight extends Light {
 		}
 	}
 
-	public ModelView getModelView() {
-		return modelView;
+	public ModelViewProjection getModelView() {
+		return modelViewProjection;
 	}
 	
 	public float getMap(int x, int y) {
