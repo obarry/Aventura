@@ -57,8 +57,9 @@ public class Vertex {
 	
 	// Projected or calculated Geometry
 	protected Vector4 wld_position = null; // Position of this Vertex in World reference (Model to World projection)
-	protected Vector4 prj_position = null; // Position of this Vertex in Homogeneous (clip) coordinates (Model to Clip projection)
 	protected Vector3 wld_normal = null; // Normal in World coordinates
+	
+	protected Vector4 prj_position = null; // Position of this Vertex in Homogeneous (clip) coordinates (Model to Clip projection)
 	protected Vector3 prj_normal = null; // Normal in Homogeneous (clip) coordinates - Not used - Removed 1/1/2022 - restored 11/7/2023
 	
 	// Lighting and Shading

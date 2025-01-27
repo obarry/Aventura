@@ -135,9 +135,10 @@ public class World {
 					// Recursive call
 					nb+=getNbElements(e.getSubElements().get(i));
 				}
-			} else { // Leaf
-				nb+=1;			
 			}
+//			} else { // Leaf
+//				nb+=1;			
+//			}
 		return nb;
 	}
 	
@@ -152,11 +153,11 @@ public class World {
 	}
 	
 	public int getNbTriangles() {
-		int n = 0;
+		int nb = 0;
 		for (int i=0; i<elements.size(); i++) {
-			n = n + elements.get(i).getNbTriangles();
+			nb += elements.get(i).getNbTriangles();
 		}
-		return n;
+		return nb;
 	}
 
 	public int getNbTriangles(Element e) {
@@ -166,31 +167,31 @@ public class World {
 		if (!e.isLeaf()) {
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
-				nb+=getNbTriangles(e.getSubElements().get(i));
+				nb += getNbTriangles(e.getSubElements().get(i));
 			}
-		} else { // Leaf
-			nb+=e.getNbTriangles();			
 		}
+//		} else { // Leaf
+//			nb+=e.getNbTriangles();			
+//		}
 		return nb;
 	}
 
 	int getNbAllTriangles() {
 		int nb =0;
-		
+		nb+=getNbTriangles(); // Triangles of the Element of the list
 		for (int i=0; i<elements.size(); i++) {
-			nb+=getNbTriangles(); // Triangles of the Element of the list
-			nb+=getNbTriangles(getElement(i)); // Triangles of the SubElements of the Element of the list (all SubElement recursively)
+			nb += getNbTriangles(getElement(i)); // Triangles of the SubElements of the Element of the list (all SubElement recursively)
 		}
 		return nb;
 	}
 
 	
 	public int getNbVertices() {
-		int n = 0;
+		int nb = 0;
 		for (int i=0; i<elements.size(); i++) {
-			n = n + elements.get(i).getNbVertices();
+			nb += elements.get(i).getNbVertices();
 		}
-		return n;
+		return nb;
 	}
 	
 	public int getNbVertices(Element e) {
@@ -200,19 +201,20 @@ public class World {
 		if (!e.isLeaf()) {
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
-				nb+=getNbVertices(e.getSubElements().get(i));
+				nb += getNbVertices(e.getSubElements().get(i));
 			}
-		} else { // Leaf
-			nb+=e.getNbVertices();			
 		}
+//		} else { // Leaf
+//			nb+=e.getNbVertices();			
+//		}
 		return nb;
 	}
 	
 	public int getNbAllVertices() {
 		int nb =0;
+		nb+=getNbVertices(); // Vertices of the Element of the list
 		
 		for (int i=0; i<elements.size(); i++) {
-			nb+=getNbVertices(); // Vertices of the Element of the list
 			nb+=getNbVertices(getElement(i)); // Vertices of the SubElements of the Element of the list (all SubElement recursively)
 		}
 		return nb;
