@@ -1,6 +1,6 @@
 package com.aventura.test;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.Rasterizer;
 import com.aventura.tools.tracing.Tracer;
 
@@ -41,9 +41,9 @@ public class TestRasterizer1 {
 		Tracer.info = true;
 		Tracer.function = true;
 		
-		GraphicContext graphic = GraphicContext.GRAPHIC_DEFAULT;
+		PerspectiveContext graphic = PerspectiveContext.PERSPECTIVE_DEFAULT;
 		
-		System.out.println("GraphicContext: "+graphic);
+		System.out.println("PerspectiveContext: "+graphic);
 		
 		Rasterizer rasterizer = new Rasterizer(null, graphic, null);
 		

@@ -3,7 +3,7 @@ package com.aventura.engine;
 import java.awt.Color;
 import java.util.ArrayList;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -48,7 +48,7 @@ import com.aventura.view.MapView;
  * It takes charge of all the algorithms to produce pixels from triangles.
  * It requires access to the GUIView in order to draw pixels.
  * zBuffer is managed here.
- * It also behaves according to the provided parameters e.g. in the GraphicContext
+ * It also behaves according to the provided parameters e.g. in the PerspectiveContext
  * 
  * 
  * @author Olivier BARRY
@@ -109,7 +109,7 @@ public class Rasterizer {
 
 
 	// References
-	protected GraphicContext graphic;
+	protected PerspectiveContext graphic;
 	protected GUIView gUIView;
 	protected Lighting lighting;
 	protected Camera camera;
@@ -129,23 +129,23 @@ public class Rasterizer {
 	int discarded_lines = 0;
 
 	// Create locally some context variables exhaustively used during rasterization
-	// TODO Be cautious here : if GraphicContext has changed between 2 calls to previously created Rasterizer, these 2 variables won't be refreshed accordingly -> potential bug
+	// TODO Be cautious here : if PerspectiveContext has changed between 2 calls to previously created Rasterizer, these 2 variables won't be refreshed accordingly -> potential bug
 	int pixelHalfWidth = 0;
 	int pixelHalfHeight = 0;
 
 	/**
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param camera : a pointer to the Camera created offline by user
-	 * @param graphic : a pointer to the GraphicContext created offline by user
+	 * @param graphic : a pointer to the PerspectiveContext created offline by user
 	 * @param lighting : a pointer to the Lighting system created offline by user
 	 */
-	public Rasterizer(Camera camera, GraphicContext graphic, Lighting lighting) {
+	public Rasterizer(Camera camera, PerspectiveContext graphic, Lighting lighting) {
 		this.camera = camera;
 		this.graphic = graphic;
 		this.lighting = lighting;
 		pixelHalfWidth = graphic.getPixelHalfWidth();
 		pixelHalfHeight = graphic.getPixelHalfHeight();
-		// TODO Be cautious here : if GraphicContext has changed between 2 calls to previously created Rasterizer, the 2 above variables won't be refreshed accordingly -> potential bug
+		// TODO Be cautious here : if PerspectiveContext has changed between 2 calls to previously created Rasterizer, the 2 above variables won't be refreshed accordingly -> potential bug
 	}
 
 	public void setView(GUIView v) {
@@ -675,7 +675,7 @@ public class Rasterizer {
 
 			switch (graphic.getPerspectiveType()) {
 
-			case GraphicContext.PERSPECTIVE_TYPE_FRUSTUM :
+			case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
 				// Vertices z
 				za = vpa.v.getProjPos().getW();
 				zb = vpb.v.getProjPos().getW();
@@ -688,7 +688,7 @@ public class Rasterizer {
 
 				break;
 
-			case GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+			case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
 				// Orthographic projection -> don't use W but use rather Z instead
 				za = vpa.v.getProjPos().getZ();
 				zb = vpb.v.getProjPos().getZ();

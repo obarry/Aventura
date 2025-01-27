@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
@@ -58,7 +58,7 @@ public class TestSphereTexture {
 	// GUIView to be displayed
 	private SwingView view;
 
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Sphere Texture");
@@ -150,8 +150,8 @@ public class TestSphereTexture {
 		AmbientLight al = new AmbientLight(0.05f);
 		Lighting light = new Lighting(dl, al, true);
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
-		GUIView gUIView = test.createView(gContext);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
+		GUIView gUIView = test.createView(pContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
@@ -162,7 +162,7 @@ public class TestSphereTexture {
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
-		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
 		renderer.render();
 

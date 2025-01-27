@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
@@ -66,7 +66,7 @@ public class TestMultiElementsTextureOrtho {
 	// GUIView to be displayed
 	private SwingView view;
 	
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Multi Elements with Texture");
@@ -239,8 +239,8 @@ public class TestMultiElementsTextureOrtho {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		GraphicContext context = new GraphicContext(8, 6, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
-		//GraphicContext context = new GraphicContext(3.0f, 1.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 400);
+		PerspectiveContext context = new PerspectiveContext(8, 6, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
+		//PerspectiveContext context = new PerspectiveContext(3.0f, 1.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 400);
 		GUIView gUIView = test.createView(context);
 		System.out.println(context.getPerspective().getProjection());
 

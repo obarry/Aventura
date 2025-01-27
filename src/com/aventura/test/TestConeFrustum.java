@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector3;
@@ -56,7 +56,7 @@ public class TestConeFrustum {
 	// GUIView to be displayed
 	private SwingView view;
 
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Cone Frustum");
@@ -117,15 +117,15 @@ public class TestConeFrustum {
 		Lighting light = new Lighting(dl, al);
 		
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.4512f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		GUIView gUIView = test.createView(gContext);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.4512f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GUIView gUIView = test.createView(pContext);
 
 //		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
 //		rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
 		
-		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
 		renderer.render();
 

@@ -32,21 +32,21 @@ import com.aventura.tools.tracing.Tracer;
  * 
  * Evolutions :
  * ----------
- * 6-Oct-2023 : Proposal to rename GraphicContext into GeometryContext
+ * 6-Oct-2023 : Proposal to rename GraphicContext into GeometryContext - DONE 27-Jan-2025 renamed into PerspectiveContext (more appropriate)
  * 15-Jun-2024 : Evolution by delegating all the Perspective management to a new Perspective class (and subclasses) in new package :
  * com.aventura.model.perspective. It should allow to bring new services in this class to calculate the Frustum related informations
  * required for example by the ShadowingLight class and related to identify the area where to cast shadows.
  * As a consequence, the width, height, dist, depth, top, bottom, left, right, far, near information are now stored in Perspetive. 
  * -------------------------------------------------------------------
  * 
- * The GraphicContext is a parameter class containing all information allowing to display the world
+ * The PerspectiveContext is a parameter class containing all information allowing to display the world
  * This is where the gUIView frustum planes are defined and also where the rasterizing definition (pixel per unit)
  * is also set.
- * At last this is where the projection Matrix is built and stored using the perspective parameters of the GraphicContext.
+ * At last this is where the projection Matrix is built and stored using the perspective parameters of the PerspectiveContext.
  * The resulting projection Matrix can be obtained using the corresponding getter.
  * 
- * The GraphicContext is passed as a parameter of the RenderEngine before asking him to render the World
- * As a "parameter" object, the application using Aventura API can prepare several GraphicContext and switch from one to another
+ * The PerspectiveContext is passed as a parameter of the RenderEngine before asking him to render the World
+ * As a "parameter" object, the application using Aventura API can prepare several PerspectiveContext and switch from one to another
  * 
  * Frustum definition:
  * ------------------
@@ -96,7 +96,7 @@ import com.aventura.tools.tracing.Tracer;
  * @since May 2016
  *
  */
-public class GraphicContext {
+public class PerspectiveContext {
 	
 	public static final int PERSPECTIVE_TYPE_FRUSTUM = 1;
 	public static final int PERSPECTIVE_TYPE_ORTHOGRAPHIC = 2;
@@ -117,25 +117,25 @@ public class GraphicContext {
 	int pixelHalfHeight = 0;
 	
 	// Perspective
-	Perspective perspective; // link to the perspective that this GraphicContext is defining
+	Perspective perspective; // link to the perspective that this PerspectiveContext is defining
 
 	// A Default context that can then be modified using accessors
-	public static GraphicContext GRAPHIC_DEFAULT = new GraphicContext(8,4.5f,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100); // Width/Height ratio = 16/9
+	public static PerspectiveContext PERSPECTIVE_DEFAULT = new PerspectiveContext(8,4.5f,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100); // Width/Height ratio = 16/9
 
 	
 	/**
 	 * Empty constructor
 	 */
-	public GraphicContext() {
-		// To be used when creating manually GraphicContext by using setter/getters
+	public PerspectiveContext() {
+		// To be used when creating manually PerspectiveContext by using setter/getters
 	}
 	
 	/**
-	 * Duplicate GraphicContext(e.g. to start from default and update it)
-	 * @param c the GraphicContext to duplicate
+	 * Duplicate PerspectiveContext(e.g. to start from default and update it)
+	 * @param c the PerspectiveContext to duplicate
 	 */
-	public GraphicContext(GraphicContext c) {
-		// To be used when creating manually GraphicContext by using setter/getters
+	public PerspectiveContext(PerspectiveContext c) {
+		// To be used when creating manually PerspectiveContext by using setter/getters
 		this.p_type = c.p_type;
 					
 		this.pixelWidth = c.pixelWidth;
@@ -143,7 +143,7 @@ public class GraphicContext {
 		this.pixelHalfWidth = c.pixelHalfWidth;
 		this.pixelHalfHeight = c.pixelHalfHeight;
 
-		// Generate the perspective using the parameters of the other GraphicContext
+		// Generate the perspective using the parameters of the other PerspectiveContext
 		switch (p_type) {
 		case PERSPECTIVE_TYPE_FRUSTUM:
 			this.perspective = new FrustumPerspective(c.perspective);
@@ -164,7 +164,7 @@ public class GraphicContext {
 	 * @param perspective
 	 * @param ppu
 	 */
-	public GraphicContext(float width, float height, float dist, float depth, int perspective, int ppu) {
+	public PerspectiveContext(float width, float height, float dist, float depth, int perspective, int ppu) {
 
 		this.p_type = perspective;
 		this.ppu = ppu;
@@ -177,7 +177,7 @@ public class GraphicContext {
 		createPerspective(perspective, width , height, dist, depth);
 	}
 	
-	public GraphicContext(float top, float bottom, float right, float left, float far, float near, int perspective, int ppu) {
+	public PerspectiveContext(float top, float bottom, float right, float left, float far, float near, int perspective, int ppu) {
 		
 		this.p_type = perspective;
 		this.ppu = ppu;
@@ -227,7 +227,7 @@ public class GraphicContext {
 	}
 		
 	public String toString() {
-		return "GraphicContext:\n* Perpective type: "+perspectiveString(p_type)+"\n* Width: "+perspective.getWidth()+"\n* Height: "+perspective.getHeight()+"\n* Dist: "+perspective.getDist()+"\n* Depth: "+perspective.getDepth()+"\n* PPU: "+ppu+"\n* Pixel width: "+pixelWidth+"\n* Pixel height: "+pixelHeight;
+		return "PerspectiveContext:\n* Perpective type: "+perspectiveString(p_type)+"\n* Width: "+perspective.getWidth()+"\n* Height: "+perspective.getHeight()+"\n* Dist: "+perspective.getDist()+"\n* Depth: "+perspective.getDepth()+"\n* PPU: "+ppu+"\n* Pixel width: "+pixelWidth+"\n* Pixel height: "+pixelHeight;
 	}
 	
 	public int getPixelWidth() {

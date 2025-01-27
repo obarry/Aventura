@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
 
@@ -47,7 +47,7 @@ public class TestView {
 	private SwingView view;
 	JFrame frame;
 	
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		frame = new JFrame("Test Aventura");
@@ -84,7 +84,7 @@ public class TestView {
 		
 		TestView test = new TestView();
 
-		GUIView gUIView = test.createView(GraphicContext.GRAPHIC_DEFAULT);
+		GUIView gUIView = test.createView(PerspectiveContext.PERSPECTIVE_DEFAULT);
 
 		for (int i=0; i<20; i++) {
 

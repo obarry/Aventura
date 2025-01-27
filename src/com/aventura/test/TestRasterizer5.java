@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector3;
@@ -57,7 +57,7 @@ public class TestRasterizer5 {
 	// GUIView to be displayed
 	private SwingView view;
 
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Rasterizer 5");
@@ -142,14 +142,14 @@ public class TestRasterizer5 {
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-3,0));
 		Lighting light = new Lighting(dl);
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		GUIView gUIView = test.createView(gContext);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		rContext.setRenderingType(RenderContext.RENDERING_TYPE_PLAIN);
 		
-		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
 		renderer.render();
 

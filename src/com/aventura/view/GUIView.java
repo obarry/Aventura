@@ -2,7 +2,7 @@ package com.aventura.view;
 
 import java.awt.Color;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 
 /**
 * ------------------------------------------------------------------------------ 
@@ -49,12 +49,12 @@ public abstract class GUIView extends View {
 	}
 	
 	/**
-	 * Create the gUIView based on GraphicContext to get width and height information of the gUIView frustum
+	 * Create the gUIView based on PerspectiveContext to get width and height information of the gUIView frustum
 	 * Indeed the GUIView is expected to match exactly these dimensions. 
 	 * 
 	 * @param context
 	 */
-	public GUIView(GraphicContext context) {
+	public GUIView(PerspectiveContext context) {
 		
 		// Both width and height are cast to (int) for the GUIView that is pixel based
 		width = context.getPixelWidth();

@@ -5,7 +5,7 @@ import java.awt.Graphics2D;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -70,7 +70,7 @@ public class SwingView extends GUIView {
 	Color backgroundColor = null;
 	
 	
-	public SwingView(GraphicContext context) {
+	public SwingView(PerspectiveContext context) {
 		super(context);
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView. Width: "+width+", Height: "+height);
 
@@ -81,7 +81,7 @@ public class SwingView extends GUIView {
 		frontgraph.translate(width/2, height/2);
 	}
 
-	public SwingView(GraphicContext context, Component comp) {
+	public SwingView(PerspectiveContext context, Component comp) {
 		super(context);
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView with Swing Component. Width: "+width+", Height: "+height);
 
