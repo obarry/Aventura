@@ -45,21 +45,23 @@ import com.aventura.tools.tracing.Tracer;
  *     +---------------------+
  *                |
  *                |   [Model Matrix] 4x4 Transformation Matrix -> to transform an element into the World coordinates
+ *                |   The Model matrix changes at each Element so the full Matrix needs to be recomputed.
  *                v
  *     +---------------------+
  *     |  World Coordinates  |
  *     +---------------------+
  *                |
- *                |   [GUIView Matrix] 4x4 Transformation Matrix -> to transform the world into the camera coordinates
+ *                |   [Lookat Matrix] 4x4 Transformation Matrix -> to transform the world into the camera coordinates
  *                v
  *     +----------------------+
  *     |  Camera Coordinates  |
  *     +----------------------+
  *                |
  *                |   [Projection Matrix] 4x4 Transformation Matrix -> to transform any point or vector into homogeneous coordinates
+ *                |   or Clip Coordinates, each coordinate being in range [-1, 1]
  *                v
  *   +--------------------------+
- *   | Homogeneous Coordinates  | or Clip Coordinates, each coordinate being in range [-1, 1]
+ *   | Homogeneous Coordinates  | 
  *   +--------------------------+
  * 
  *  It provides all needed services to the RenderEngine to compute these transformations for each Vertex of the model.
@@ -103,9 +105,9 @@ public class ModelViewProjection {
 	}
 	
 	/**
-	 * Generally the Camera Matrix and Projection Matrix do not change over time in static mode.
-	 * So we can safely create a ModelViewProjection object with these 2 matrices at initialization.
-	 * If one of these matrices change over time, the corresponding set methods should then be used. 
+	 * During the rendering operation, Camera Matrix and Projection Matrix are constant, only the Model Matrix will change for each Element.
+	 * So we can safely create a ModelViewProjection object with these 2 matrices at initialization, they will not have to be updated.
+	 * Then the Model matrix will be provided before any calculation / rendering of Vertices each time a new Element needs to be processed.
 	 * @param gUIView the Camera Matrix4
 	 * @param projection the Matrix4 to transform into homogeneous coordinates
 	 */
@@ -118,30 +120,6 @@ public class ModelViewProjection {
 	}
 	
 	/**
-	 * Set the Projection Matrix into homogeneous coordinates
-	 * @param projection the Matrix4 to transform into homogeneous coordinates
-	 */
-	public void setProjection(Matrix4 projection) {
-		this.projection = projection;
-	}
-	
-	/**
-	 * Set the Camera transformation Matrix aka GUIView Matrix to transform from World to Camera coordinates 
-	 * @param gUIView the Camera
-	 */
-	public void setView(Matrix4 view) {
-		this.view = view;
-	}
-	
-	/**
-	 * Get the "GUIView" transformation Matrix and Eye related information 
-	 * @return the Camera
-	 */
-	public Matrix4 getView() {
-		return this.view;
-	}
-	
-	/**
 	 * Set the model Matrix to transform from Model (Element in Aventura) coordinates into World coordinates
 	 * @param model the Model Matrix4
 	 */
@@ -149,7 +127,9 @@ public class ModelViewProjection {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModel(model)");
 		// Vertices Model matrix
 		this.model = model;
+	}
 		
+	public void calculateNormals() {
 		// Normals Model matrix :
 		// Use the Model matrix for orthogonal transformation (orthogonal transformations preserve lengths of vectors and angles between them)
 		// Use the inverse transpose matrix in case of non orthogonal transformation (e.g. non uniform scaling)
@@ -178,23 +158,12 @@ public class ModelViewProjection {
 	}
 		
 	/**
-	 * Set the model Matrix to transform from Model (Element in Aventura) coordinates into World coordinates
-	 * @param model the Model Matrix4
-	 */
-	public void setModelWithoutNormals(Matrix4 model) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModelWithoutNormals(model)");
-		// Vertices Model matrix
-		this.model = model;
-		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model Matrix:\n"+ model);
-	}
-	/**
 	 * The complete transformation, from model to homogeneous coordinates, is done through the following formula:
 	 * TransformedVector = [Projection Matrix] * [GUIView Matrix] * [Model Matrix] * OriginalVector
 	 * 
 	 * This method calculates the MVP matrix (or recalculates when needed due to any change in one of the matrices) 
 	 */
-	public void initTransformation() {
+	public void calculateMVPMatrix() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeTransformation()");
 		
 		// Calculate the full matrix = MVP matrix transformation
@@ -216,30 +185,24 @@ public class ModelViewProjection {
 	 * and not the standard Model matrix.
 	 * 
 	 * @param v the provided Vertex
+	 * @param normals boolean should be true if normals should be calculated, false otherwise (Shadowing)
 	 */
-	public void transform(Vertex v) {
+	public void transform(Vertex v, boolean normals) {
+		// Calculate the coordinates in Clip space (full transformation) and store results in Vertex's related field
 		v.setProjPos(full.times(v.getPos()));
+		// Also calculate only the coordinates of the Vertex in World coordinates for geometry calculation (e.g. bounding boxes etc.)
 		v.setWorldPos(model.times(v.getPos()));
-		if (v.getNormal() != null) {
-			v.setProjNormal(full_normals.times(v.getNormal().V4()).V3()); // Not used - Removed 1/1/2022 - restored 11/7/2023 
-			v.setWorldNormal(model_normals.times(v.getNormal().V4()).V3());
+		if (normals) {
+			// Calculate Normals
+			if (v.getNormal() != null) {
+				v.setProjNormal(full_normals.times(v.getNormal().V4()).V3()); // Not used - Removed 1/1/2022 - restored 11/7/2023 
+				v.setWorldNormal(model_normals.times(v.getNormal().V4()).V3());
+			}
 		}
 	}
-	
+		
 	/**
-	 * Fully compute Vertex projections resulting from the ModelViewProjection transformation for both ModelToWorld and ModelToClip projections
-	 * Complete the provided Vertex with projection data but do not modify original position data
-	 * Calculate the normal projection (Vertex normal) taking care of using the normals Model matrix (in case of non uniform scaling)
-	 * and not the standard Model matrix.
-	 * 
-	 * @param v the provided Vertex
-	 */
-	public void transformWithoutNormals(Vertex v) {
-		v.setProjPos(full.times(v.getPos()));
-		v.setWorldPos(model.times(v.getPos())); // TBC if required for Shadow map and shadow casting calculation
-	}
-	
-	/**
+	 * Used for an offline projection of a Vertex, e.g. in context of Shadowing in Light's coordinates
 	 * Project Vertex using the projection resulting from the ModelViewProjection transformation for ModelToClip projection (full)
 	 * Return the resulting Vector4 without updating the Vertex (does not update Vertex's projection fields)
 	 * 
@@ -254,24 +217,15 @@ public class ModelViewProjection {
 	 * Transform all vertices of an Element
 	 * 
 	 * @param e the Element
+	 * @param normals boolean should be true if normals should be calculated, false otherwise (Shadowing)
 	 */
-	public void transformVertices(Element e) {
+	public void transformElement(Element e, boolean normals) {
+		// Loop on all vertices of the Element and transform each of them
 		for (int i=0; i<e.getNbVertices(); i++) {
-			transform(e.getVertex(i));
+			transform(e.getVertex(i), normals);
 		}
 	}
-	
-	/**
-	 * Transform all vertices of an Element without normal calculation (shadowing)
-	 * 
-	 * @param e the Element
-	 */
-	public void transformVerticesWithoutNormals(Element e) {
-		for (int i=0; i<e.getNbVertices(); i++) {
-			transformWithoutNormals(e.getVertex(i));
-		}
-	}
-	
+		
 	/**
 	 * Transform the normal of a Triangle (in case of usage of Triangle normal instead of Vertex normal)
 	 * @param t
@@ -292,7 +246,7 @@ public class ModelViewProjection {
 	 * @param t the Triangle
 	 * @return the triangle normal as Vector3
 	 */
-	public Vector3 calculateProjNormal(Triangle t) {
+	public Vector3 projectNormal(Triangle t) {
 				
 		if (t.getNormal() != null) {
 			return full_normals.times(t.getNormal().V4()).V3();

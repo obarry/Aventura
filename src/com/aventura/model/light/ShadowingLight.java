@@ -182,11 +182,11 @@ public abstract class ShadowingLight extends Light {
 		} else {
 			model = matrix.times(e.getTransformation());
 		}
-		modelViewProjection.setModelWithoutNormals(model);
-		modelViewProjection.initTransformation(); // Compute the whole ModelViewProjection modelViewProjection matrix including Camera (gUIView)
+		modelViewProjection.setModel(model);
+		modelViewProjection.calculateMVPMatrix(); // Compute the whole ModelViewProjection modelViewProjection matrix including Camera (gUIView)
 
 		// Calculate projection for all vertices of this Element
-		modelViewProjection.transformVerticesWithoutNormals(e); // Calculate prj_pos of each vertex
+		modelViewProjection.transformElement(e, false); // Calculate prj_pos of each vertex
 		// TODO Verify that modelViewProjection.transformVertices does not calculate normals (not needed here) projection
 
 		// Process each Triangle

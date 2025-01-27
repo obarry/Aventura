@@ -82,14 +82,14 @@ import com.aventura.view.MapView;
  *                   				  |						  +-------->|      Rasterizer     |-----+--------+		|
  *     +---------------------+		  |						  |			+---------------------+		         |		|
  *     |      Lighting       | <------+						  |											     v		|
- *     +---------------------+		  |		+---------------------+										 +---------------------+
- *                ^                   |-----|    RenderEngine     |- - - - - - - - - - - - - - - - - - ->|        GUIView      |
- *                |          		  |		+---------------------+ 									 +---------------------+
- *                |                   |                |
- *     			  |			          |        		   v		
- *     +---------------------+ 		  |     +---------------------+
+ *     +---------------------+		  |		     +---------------------+								+---------------------+
+ *                ^                   |----------|    RenderEngine     |- - - - - - - - - - - - - - - ->|        GUIView      |
+ *                |          		  |		     +---------------------+ 								+---------------------+
+ *                |                   |                     |
+ *     			  |			          |        		        v		
+ *     +---------------------+ 		  |     +-------------------------------+
  *     |       Camera        | <------+-----|      ModelViewProjection      |
- *	   +---------------------+		    	+---------------------+
+ *	   +---------------------+		    	+-------------------------------+
  *
  *          	 Model								 Engine						Context(s)						 GUIView
  *			com.aventura.model					com.aventura.engine			com.aventura.context			com.aventura.view
@@ -293,17 +293,9 @@ public class RenderEngine {
 			model = matrix.times(e.getTransformation());
 		}
 		modelViewProjection.setModel(model);
-		modelViewProjection.initTransformation(); // Compute the whole ModelViewProjection modelViewProjection matrix including Camera (gUIView)
-		
-		// TODO NEW TO BE ADDED AND COMPUTED
-		// TRANSFORMATION OF ALL VERTICES OF THE ELEMENT
-		// PRIOR TO TRIANGLE RENDERING
-		// NOW THE TRANSFORMATION IS AT VERTEX LEVEL AND NEEDS TO BE PROCESSED BEFORE RENDERING
-		// THIS IS MORE OPTIMAL AS VERTICES BELONGING TO SEVERAL TRIANGLES ARE ONLY PROJECTED ONCE
-		// THIS REQUIRES TO IMPLEMENT LIST OF VERTICES AT ELEMENT LEVEL
-		
-		// Calculate projection for all vertices of this Element
-		modelViewProjection.transformVertices(e);
+		modelViewProjection.calculateNormals();
+		modelViewProjection.calculateMVPMatrix(); // Compute the whole ModelViewProjection matrix including Model matrix (Element to World transformation)		
+		modelViewProjection.transformElement(e, true); // Calculate projection for all vertices of this Element with normals calculation
 				
 		// Process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
@@ -446,13 +438,13 @@ public class RenderEngine {
 					return t.getWorldNormal().dot(ey)>0;
 				case GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
 					// Need only to test the normal in homogeneous coordinate has a non-null positive Z component (hence pointing behind camera)
-					return modelViewProjection.calculateProjNormal(t).getZ()>0;
+					return modelViewProjection.projectNormal(t).getZ()>0;
 				default:
 					// Should never happen
 					break;
 				}
 				// Should never happen
-				return modelViewProjection.calculateProjNormal(t).getZ()>0;
+				return modelViewProjection.projectNormal(t).getZ()>0;
 			} else {
 				switch (graphicContext.getPerspectiveType()) {
 				case GraphicContext.PERSPECTIVE_TYPE_FRUSTUM:
@@ -472,7 +464,7 @@ public class RenderEngine {
 		} catch (Exception e) { // If no Vertex normals, then use Triangle normal with same test
 			//Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
 			//return t.getWorldNormal().dot(ey)>0;
-			return modelViewProjection.calculateProjNormal(t).getZ()>0;
+			return modelViewProjection.projectNormal(t).getZ()>0;
 		}
 	}
 	
@@ -480,17 +472,18 @@ public class RenderEngine {
 	public void displayLandMarkLines() {
 		// Set the Model Matrix to IDENTITY (no translation)
 		modelViewProjection.setModel(Matrix4.IDENTITY);
-		modelViewProjection.initTransformation();
+		modelViewProjection.calculateNormals();
+		modelViewProjection.calculateMVPMatrix();
 
 		// Create Vertices to draw unit segments
 		Vertex o = new Vertex(0,0,0);
 		Vertex x = new Vertex(1,0,0);
 		Vertex y = new Vertex(0,1,0);
 		Vertex z = new Vertex(0,0,1);
-		modelViewProjection.transform(o);
-		modelViewProjection.transform(x);
-		modelViewProjection.transform(y);
-		modelViewProjection.transform(z);
+		modelViewProjection.transform(o, true);
+		modelViewProjection.transform(x, true);
+		modelViewProjection.transform(y, true);
+		modelViewProjection.transform(z, true);
 		// Create 3 unit segments
 		Segment lx = new Segment(o, x);
 		Segment ly = new Segment(o, y);
@@ -560,8 +553,8 @@ public class RenderEngine {
 			// In this case the vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = t.getCenter();
 			Vertex n = new Vertex(c.getPos().plus(t.getNormal())); // Before transformation -> using position and normals not yet transformed
-			modelViewProjection.transform(c);
-			modelViewProjection.transform(n);
+			modelViewProjection.transform(c, true);
+			modelViewProjection.transform(n, true);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
 			Segment s = new Segment(c, n);
@@ -580,9 +573,9 @@ public class RenderEngine {
 			n1 = new Vertex(p1.getPos().plus(p1.getNormal())); // Before transformation -> using position and normals not yet transformed
 			n2 = new Vertex(p2.getPos().plus(p2.getNormal())); // Before transformation -> using position and normals not yet transformed
 			n3 = new Vertex(p3.getPos().plus(p3.getNormal())); // Before transformation -> using position and normals not yet transformed
-			modelViewProjection.transform(n1);
-			modelViewProjection.transform(n2);
-			modelViewProjection.transform(n3);
+			modelViewProjection.transform(n1, true);
+			modelViewProjection.transform(n2, true);
+			modelViewProjection.transform(n3, true);
 			
 			// Create 3 segments corresponding to normal vectors
 			Segment l1 = new Segment(p1, n1);
@@ -599,11 +592,12 @@ public class RenderEngine {
 	public void displayLight() {
 		// Set the Model Matrix to IDENTITY (no translation)
 		modelViewProjection.setModel(Matrix4.IDENTITY);
-		modelViewProjection.initTransformation();
+		modelViewProjection.calculateNormals();
+		modelViewProjection.calculateMVPMatrix();
 		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVectorAtPoint(null));
 		Vertex o = new Vertex(0,0,0);
-		modelViewProjection.transform(v);
-		modelViewProjection.transform(o);
+		modelViewProjection.transform(v, true);
+		modelViewProjection.transform(o, true);
 		Segment s = new Segment(o, v);
 		rasterizer.drawLine(s, renderContext.lightVectorsColor);
 	}
