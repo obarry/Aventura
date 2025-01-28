@@ -53,11 +53,11 @@ import com.aventura.tools.tracing.Tracer;
  * 
  *     X (or Y)
  *        ^                       +
- *        |     GUIView          -   |
+ *        |     GUIView       -   |
  *        |     Plane     -       |
  *        | (top)     -           |
  *        | right +               |   ^
- *        |   -   |    GUIView       |   |  width
+ *        |   -   |   GUIView     |   |  width
  * Camera +-------+---------------+---+--------------------------> -Z
  *            -   |   Frustum     |   | (height)
  *          left  +               |   v

@@ -32,11 +32,11 @@ import com.aventura.math.projection.Projection;
  * 
  *     X (or Y)
  *        ^                       +
- *        |     GUIView          -   |
+ *        |     GUIView       -   |
  *        |     Plane     -       |
  *        | (top)     -           |
  *        | right +               |   ^
- *        |   -   |    GUIView       |   |  width
+ *        |   -   |    GUIView    |   |  width
  * Camera +-------+---------------+---+--------------------------> -Z
  *            -   |   Frustum     |   | (height)
  *          left  +               |   v
@@ -69,10 +69,6 @@ import com.aventura.math.projection.Projection;
  * 
  */
 
-/**
- * @author obarry
- *
- */
 public abstract class Perspective {
 	
 	// Window & frustum

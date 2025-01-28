@@ -40,7 +40,7 @@ public class BoundingBox4 {
 	float minX, minY, minZ;
 	float maxX, maxY, maxZ;
 	
-	BoundingBox4() {
+	public BoundingBox4() {
 		boxPoints = new Vector4[2][4];
 		for (int i=0; i<2; i++) {
 			for (int j=0; j<4; j++) {
@@ -55,7 +55,7 @@ public class BoundingBox4 {
 	 * to axis coordinates using max an min coordinates of the set of points.
 	 * @param arrayOfPoints
 	 */
-	BoundingBox4(Vector4[] arrayOfPoints) {
+	public BoundingBox4(Vector4[] arrayOfPoints) {
 		
 		// Initialize min an max coordinates to the first point's coordinates
 		minX = maxX = arrayOfPoints[0].getX();

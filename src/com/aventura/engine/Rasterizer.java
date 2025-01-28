@@ -69,7 +69,6 @@ public class Rasterizer {
 		public Color specularColor;
 		// Shadowing parameters
 		public Vector4 vl; // Projected position in light coordinates of Vertex
-		//public Vector4 vm; // Shadow Map vector (position in Shadow Map)
 		public MapView map; // Shadow map of this Light
 
 		public VertexLightParam() {
@@ -79,7 +78,6 @@ public class Rasterizer {
 			this.shadedColor = shaded; // Shaded color of the light at Vertex position (calculated with normal)
 			this.specularColor = specular; // Specular color of the light at Vertex position
 			this.vl = vl; // 
-			//this.vm = vm;
 			this.map = m;
 		}
 	}
@@ -167,7 +165,6 @@ public class Rasterizer {
 		zBuf_height = 2 * pixelHalfHeight + 1;
 
 		// Only create buffer if needed, otherwise reuse it, it will be reinitialized below
-		//if (zBuffer == null) zBuffer = new float[zBuf_width][zBuf_height];
 		if (zBuffer == null) zBuffer = new MapView(zBuf_width, zBuf_height);
 
 		// Initialization loop with initialization value ( 1 or -1 in homogeneous coordinates ?) that is the farest value for the gUIView Frustum
@@ -185,12 +182,10 @@ public class Rasterizer {
 	//
 	// TODO Shouldn't this transformation be handled through the projection matrix to avoid additional computation for each pixel ?
 	protected float xScreen(Vertex v) {
-		//return xScreen(v.getProjPos());
 		return v.getProjPos().get3DX()*pixelHalfWidth;
 	}
 
 	protected float yScreen(Vertex v) {
-		//return yScreen(v.getProjPos());
 		return v.getProjPos().get3DY()*pixelHalfHeight;
 	}
 
@@ -436,8 +431,6 @@ public class Rasterizer {
 
 
 		// Shadows
-		//Vector4[] vs1_p = null, vs2_p = null, vs3_p = null;
-
 		//
 		// TODO SHADOWS : THIS SHOULD BE DONE BEFORE REORDERING THE 3 VERTICES SO THAT THIS IS MATCHING !!!
 		//
