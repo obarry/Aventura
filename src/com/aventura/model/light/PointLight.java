@@ -6,6 +6,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
+import com.aventura.model.world.World;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -62,6 +63,18 @@ public class PointLight extends ShadowingLight {
 		this.max_distance = max;
 	}
 
+	public PointLight(Vector4 point, float max, World world) {
+		super(world); // Intensity is default value (1.0, no multiplication factor)
+		this.light_point = point;
+		this.max_distance = max;
+	}
+	
+	public PointLight(Vector4 point, float max, float intensity, World world) {
+		super(intensity, world);
+		this.light_point = point;
+		this.max_distance = max;
+	}
+
 	/**
 	 * Return the normalized "light vector" at a given point
 	 */
@@ -111,6 +124,12 @@ public class PointLight extends ShadowingLight {
 	@Override
 	public void setIntensity(float intensity) {
 		this.intensity = intensity;
+	}
+
+	@Override
+	public void initShadowing(Perspective perspective, Camera camera_view, int map_size, World world) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override

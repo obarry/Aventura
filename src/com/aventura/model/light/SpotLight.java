@@ -6,6 +6,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
+import com.aventura.model.world.World;
 
 
 /**
@@ -48,6 +49,11 @@ public class SpotLight extends PointLight {
 
 	public SpotLight(Vector4 point, float max) {
 		super(point, max);
+		// TODO Auto-generated constructor stub
+	}
+
+	public SpotLight(Vector4 point, float max, World world) {
+		super(point, max, world);
 		// TODO Auto-generated constructor stub
 	}
 

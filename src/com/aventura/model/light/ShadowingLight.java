@@ -67,19 +67,35 @@ public abstract class ShadowingLight extends Light {
 	protected Vector4[][] frustum;
 	protected Vector4 frustumCenter;
 	
+	// World that can cast shadows with that Light, only needed starting ShadowingLight in the class hierarchy
+	World world = null;
+	
 	// Shadow map
 	protected MapView map; // As an attribute of the (Shadowing)Light, there will be multiple maps if multiple lights
 	
 	// Default constructor
 	public ShadowingLight() {
-		// Nothing to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
+		// Nothing else to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
 	}
 	
 	public ShadowingLight(float intensity) {
 		this.intensity = intensity;
 	}
+
+	// Default constructor
+	public ShadowingLight(World world) {
+		this.world = world;
+		// Nothing else to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
+	}
+	
+	public ShadowingLight(float intensity, World world) {
+		this.intensity = intensity;
+		this.world = world;
+	}
 	
 	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size);
+	
+	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size, World world);
 	
 	public abstract void calculateCameraLight(Perspective perspective, Camera camera_view, Vector3 lightDirection); 
 	
