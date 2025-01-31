@@ -54,7 +54,16 @@ import com.aventura.view.MapView;
  */
 public abstract class ShadowingLight extends Light {
 	
+	// Default Shadow Map dimension (Shadow Map is Square)
 	public static final int DEFAULT_SHADOW_MAP_DIMENSION = 200;
+	
+	// Parameter for Shadow Mapping "box" definition (used for Light's camera and perspective calculation)
+	public static final int SHADOWING_BOX_VIEWFRUSTUM = 1; // Use the View Frustum to calculate the "box" for this Light's view - Is DEFAULT
+	public static final int SHADOWING_BOX_WORLD = 2; // Use the World's max dimensions to calculate the Light's view box
+	public static final int SHADOWING_BOX_ELEMENT = 3; // Use any Element's max dimensions to calculate the Light's view box
+	public static final int SHADOWING_BOX_SPECIFIC = 4; // Use a specific box to calculate the Light's view box
+
+	protected int shadowingBox_type = SHADOWING_BOX_VIEWFRUSTUM; // Is Default
 	
 	// Fields related to Shadow generation
 	protected Camera camera_light;
@@ -77,15 +86,53 @@ public abstract class ShadowingLight extends Light {
 	public ShadowingLight() {
 		// Nothing else to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
 	}
-	
+		
+	/**
+	 * Default constructor with intensity
+	 * @param intensity
+	 */
 	public ShadowingLight(float intensity) {
 		this.intensity = intensity;
 	}
 
-	// Default constructor
-	public ShadowingLight(World world) {
+	/**
+	 * Constructor with specification of the ShodowingBox type (see constants)
+	 * @param shadowingBox_type
+	 */
+	public ShadowingLight(int shadowingBox_type) {
+		this.shadowingBox_type = shadowingBox_type;
+	}
+	
+	/**
+	 * Constructor + Link to the World : to be used when ShadowingBox is of type SHADOWING_BOX_WORLD
+	 * @param shadowingBox_type
+	 * @param world the World to be used as shadowing box to calculate the shadow map and its perspective
+	 */
+	public ShadowingLight(int shadowingBox_type, World world) {
+		this.shadowingBox_type = shadowingBox_type;
 		this.world = world;
-		// Nothing else to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
+	}
+
+	/**
+	 * Generic constructor with specification of the ShodowingBox type (see constants) and intensity of the Light
+	 * @param shadowingBox_type
+	 * @param intensity
+	 */
+	public ShadowingLight(int shadowingBox_type, float intensity) {
+		this.shadowingBox_type = shadowingBox_type;
+		this.intensity = intensity;
+	}
+	
+	/**
+	 * Generic Constructor + Link to the World : to be used when ShadowingBox is of type SHADOWING_BOX_WORLD
+	 * @param shadowingBox_type
+	 * @param intensity
+	 * @param world the World to be used as shadowing box to calculate the shadow map and its perspective
+	 */
+	public ShadowingLight(int shadowingBox_type, float intensity, World world) {
+		this.shadowingBox_type = shadowingBox_type;
+		this.intensity = intensity;
+		this.world = world;
 	}
 	
 	public ShadowingLight(float intensity, World world) {

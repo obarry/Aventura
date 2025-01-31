@@ -160,12 +160,13 @@ public class TestMultiElementsInterpolate {
 			}
 		}
 		
+		// Calculate normals
+		world.generate();
+		
 		System.out.println(world);
 		for (int i=0; i<world.getNbElements(); i++)
 			System.out.println(world.getElement(i));
 
-		// Calculate normals
-		world.generate();
 
 		// Create lighting
 		System.out.println("********* Creating Lighting");

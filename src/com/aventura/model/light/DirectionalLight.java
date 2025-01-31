@@ -10,6 +10,7 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
 import com.aventura.model.world.World;
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.MapView;
 
 /**
@@ -49,7 +50,7 @@ import com.aventura.view.MapView;
 
 public class DirectionalLight extends ShadowingLight {
 	
-	protected Vector3 direction;
+	//protected Vector3 direction;
 	protected Vector3 light_vector; // = -direction
 	
 	/**
@@ -59,8 +60,8 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction) {
 		super(direction.length()); // Intensity is taken from the norm of the direction vector
-		this.direction = new Vector3(direction).normalize(); // direction vector is normalized
-		this.light_vector = this.direction.times(-1); // light vector (the opposite) is normalized
+		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
+		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
 	
 	/**
@@ -70,8 +71,8 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, float intensity) {
 		super(intensity);
-		this.direction = new Vector3(direction).normalize(); // direction vector is normalized
-		this.light_vector = this.direction.times(-1); // light vector (the opposite) is normalized
+		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
+		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
 
 	/**
@@ -81,8 +82,8 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, World world) {
 		super(direction.length(), world); // Intensity is taken from the norm of the direction vector
-		this.direction = new Vector3(direction).normalize(); // direction vector is normalized
-		this.light_vector = this.direction.times(-1); // light vector (the opposite) is normalized
+		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
+		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
 	
 	/**
@@ -92,8 +93,8 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, float intensity, World world) {
 		super(intensity, world);
-		this.direction = new Vector3(direction).normalize(); // direction vector is normalized
-		this.light_vector = this.direction.times(-1); // light vector (the opposite) is normalized
+		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
+		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
 
 	/**
@@ -121,7 +122,7 @@ public class DirectionalLight extends ShadowingLight {
 	public void setLightVector(Vector3 light) {
 		this.intensity = light.length();
 		this.light_vector = new Vector3(light).normalize();
-		this.direction = this.light_vector.times(-1);
+		//this.direction = this.light_vector.times(-1);
 	}
 
 	@Override
@@ -137,11 +138,10 @@ public class DirectionalLight extends ShadowingLight {
 
 	@Override
 	public void initShadowing(Perspective perspective, Camera camera_view, int map_size) {
-		// TODO Auto-generated method stub
-		
+
 		map = new MapView(map_size, map_size);
 		
-		calculateCameraLight(perspective, camera_view, direction);
+		calculateCameraLight(perspective, camera_view, light_vector.times(-1));
 		
 		/*
 		 * Mat4 viewMatrix = LookAt(lighting.mCameraPosition,
@@ -155,26 +155,59 @@ public class DirectionalLight extends ShadowingLight {
 		 * 											lighting.mCameraPosition.z + 25.0f,
 		 * 											lighting.mCameraPosition.z - 25.0f) * viewMatrix;
 		 */
+		BoundingBox4 box = null;
+		switch (this.shadowingBox_type) {
+		
+		case SHADOWING_BOX_VIEWFRUSTUM:
+			
+			// Define the bounding box for the light camera using the View Frustum (Camera of the scene)
+			// For this let's use the 8 corner's of the View Frustum and transform them into the Light camera coordinates using the camera_light matrix
+			Vector4 [] frustumProj = new Vector4[8]; // Create an array of Vectors that will contain all 4 vertices of the view Frustum projected in Light's coordinates
+			// And take the min and max in each dimension of these vertices in light coordinates
+			int k =0;
+			for (int i=0; i<2; i++) {
+				for (int j= 0; j<4; j++) {
+					frustumProj[k] = camera_light.getMatrix().times(frustum[i][j]);
+					k++;
+				}
+			}
+			
+			// The create the bounding box around the 8 vertices of the view Frustum (in Light's coordinates)
+			box = new BoundingBox4(frustumProj);
+			
 
-		// Define the bounding box for the light camera
-		// For this create the min and max of the World (in World coordinates)	
-		Vector4 [] worldBox = new Vector4[8];
-		worldBox[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMinZ(), 1);
-		worldBox[0] = new Vector4(world.getMaxX(), world.getMinY(), world.getMinZ(), 1);
-		worldBox[0] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMinZ(), 1);
-		worldBox[0] = new Vector4(world.getMinX(), world.getMaxY(), world.getMinZ(), 1);
-		worldBox[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMaxZ(), 1);
-		worldBox[0] = new Vector4(world.getMaxX(), world.getMinY(), world.getMaxZ(), 1);
-		worldBox[0] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMaxZ(), 1);
-		worldBox[0] = new Vector4(world.getMinX(), world.getMaxY(), world.getMaxZ(), 1);
-		
-		// Then transform the Points into Light's coordinates using the camera_light matrix
-		for (int i=0; i<8; i++) {
-			worldBox[i] = camera_light.getMatrix().times(worldBox[i]);
+			break;
+		case SHADOWING_BOX_WORLD:
+			// Define the bounding box for the light camera
+			// For this create the min and max of the World (in World coordinates)	
+			Vector4 [] worldBox = new Vector4[8];
+			worldBox[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMinZ(), 1);
+			worldBox[0] = new Vector4(world.getMaxX(), world.getMinY(), world.getMinZ(), 1);
+			worldBox[0] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMinZ(), 1);
+			worldBox[0] = new Vector4(world.getMinX(), world.getMaxY(), world.getMinZ(), 1);
+			worldBox[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMaxZ(), 1);
+			worldBox[0] = new Vector4(world.getMaxX(), world.getMinY(), world.getMaxZ(), 1);
+			worldBox[0] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMaxZ(), 1);
+			worldBox[0] = new Vector4(world.getMinX(), world.getMaxY(), world.getMaxZ(), 1);
+			
+			// Then transform the Points into Light's coordinates using the camera_light matrix
+			for (int i=0; i<8; i++) {
+				worldBox[i] = camera_light.getMatrix().times(worldBox[i]);
+			}
+			
+			// Create the bounding box around the 8 vertices of the World "box" (in Light's coordinates)
+			box = new BoundingBox4(worldBox);
+			break;
+		case SHADOWING_BOX_ELEMENT: // Not implemented yet
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_ELEMENT");
+			break;
+		case SHADOWING_BOX_SPECIFIC: // Not implemented yet
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_SPECIFIC");
+			break;
+		default:
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Unknown Shadowing Box Type: " + this.shadowingBox_type);
+			break;
 		}
-		
-		// Create the bounding box around the 8 vertices of the view Frustum (in Light's coordinates)
-		BoundingBox4 box = new BoundingBox4(worldBox);
 		
 		/*
 		 * From: https://community.khronos.org/t/directional-light-and-shadow-mapping-gUIView-projection-matrices/71386

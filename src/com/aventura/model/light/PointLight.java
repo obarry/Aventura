@@ -63,14 +63,20 @@ public class PointLight extends ShadowingLight {
 		this.max_distance = max;
 	}
 
-	public PointLight(Vector4 point, float max, World world) {
-		super(world); // Intensity is default value (1.0, no multiplication factor)
+	public PointLight(int shadowingBox_type, Vector4 point, float max, float intensity) {
+		super(shadowingBox_type, intensity);
+		this.light_point = point;
+		this.max_distance = max;
+	}
+
+	public PointLight(int shadowingBox_type, World world, Vector4 point, float max) {
+		super(shadowingBox_type, world); // Intensity is default value (1.0, no multiplication factor)
 		this.light_point = point;
 		this.max_distance = max;
 	}
 	
-	public PointLight(Vector4 point, float max, float intensity, World world) {
-		super(intensity, world);
+	public PointLight(int shadowingBox_type, World world, float intensity, Vector4 point, float max) {
+		super(shadowingBox_type, intensity, world);
 		this.light_point = point;
 		this.max_distance = max;
 	}

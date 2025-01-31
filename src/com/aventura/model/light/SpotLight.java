@@ -38,7 +38,7 @@ import com.aventura.model.world.World;
  * The intensity of a spot light is attenuated over distance in the same way that it is for a point light
  * and is also attenuated by another factor called the spot light effect.
  * 
- * So it inherits from PointLight from an class standpoint
+ * So it inherits from PointLight from a class standpoint
  *
  * @author Olivier BARRY
  * @since July 2016
@@ -52,8 +52,8 @@ public class SpotLight extends PointLight {
 		// TODO Auto-generated constructor stub
 	}
 
-	public SpotLight(Vector4 point, float max, World world) {
-		super(point, max, world);
+	public SpotLight(int shadowingBox_type, World world, Vector4 point, float max) {
+		super(shadowingBox_type, world, point, max);
 		// TODO Auto-generated constructor stub
 	}
 
