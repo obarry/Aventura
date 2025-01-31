@@ -13,7 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 import java.awt.event.*;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
@@ -112,10 +112,10 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	 * Create the gUIView and associate all needed mouse and key listeners for user interaction with screen
 	 * The renderer will then be called each time Mouse generates a move to the gUIView and a new updated gUIView will be displayed
 	 * 
-	 * @param context the GraphicContext to be used to create the GUIView
+	 * @param context the PerspectiveContext to be used to create the GUIView
 	 * @return
 	 */
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 		
 		// Create the frame of the application 
 		frame = new JFrame("Fractal Landscape");
@@ -467,11 +467,11 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		Lighting light = new Lighting(dl, al, false);
 		
 		// Graphic Context
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 0.8f, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		//GraphicContext gContext = new GraphicContext(8f, 4.5f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 125);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		//PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 125);
 		
 		// Create gUIView
-		GUIView gUIView = this.createView(gContext);
+		GUIView gUIView = this.createView(pContext);
 
 		// Rendering context
 		//rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -483,7 +483,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
 		
 		// Initialize Render Engine and render a first gUIView
-		renderer = new RenderEngine(world, light, camera, rContext, gContext);
+		renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
 		renderer.render();
 		

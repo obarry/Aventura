@@ -29,7 +29,7 @@ import java.awt.Color;
  * 
  * 
  * The RenderContext describes the information and parameters to be used by the RenderEngine to render the World properly
- * This is all parameters not directly related to the World, the Lighting or the Camera nor the Display that is defined in GraphicContext
+ * This is all parameters not directly related to the World, the Lighting or the Camera nor the Display that is defined in PerspectiveContext
  * It can be to force the rendering to be plain or lines, to use or not textures, etc...
  * 
  * The RenderContext is passed as a parameter of the RenderEngine before asking him to render the World 
@@ -39,7 +39,7 @@ import java.awt.Color;
  * 
  * Future Evolution :
  * - The RenderContext should remain as independent as possible on the display and windowing technology (e.g. Swing or SWT). Another
- * class (GraphicContext) should handle these specifics.
+ * class (PerspectiveContext) should handle these specifics.
  * - The RenderContext could also be used to define a parameter to trigger between using or not HW graphic acceleration
  * 
  * @author Olivier BARRY
@@ -123,7 +123,7 @@ public class RenderContext {
 	 * Empty constructor
 	 */
 	public RenderContext() {
-		// To be used when creating manually GraphicContext by using setter/getters
+		// To be used when creating manually PerspectiveContext by using setter/getters
 	}
 	
 	/**

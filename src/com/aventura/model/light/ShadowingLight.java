@@ -54,7 +54,16 @@ import com.aventura.view.MapView;
  */
 public abstract class ShadowingLight extends Light {
 	
+	// Default Shadow Map dimension (Shadow Map is Square)
 	public static final int DEFAULT_SHADOW_MAP_DIMENSION = 200;
+	
+	// Parameter for Shadow Mapping "box" definition (used for Light's camera and perspective calculation)
+	public static final int SHADOWING_BOX_VIEWFRUSTUM = 1; // Use the View Frustum to calculate the "box" for this Light's view - Is DEFAULT
+	public static final int SHADOWING_BOX_WORLD = 2; // Use the World's max dimensions to calculate the Light's view box
+	public static final int SHADOWING_BOX_ELEMENT = 3; // Use any Element's max dimensions to calculate the Light's view box
+	public static final int SHADOWING_BOX_SPECIFIC = 4; // Use a specific box to calculate the Light's view box
+
+	protected int shadowingBox_type = SHADOWING_BOX_VIEWFRUSTUM; // Is Default
 	
 	// Fields related to Shadow generation
 	protected Camera camera_light;
@@ -67,94 +76,75 @@ public abstract class ShadowingLight extends Light {
 	protected Vector4[][] frustum;
 	protected Vector4 frustumCenter;
 	
+	// World that can cast shadows with that Light, only needed starting ShadowingLight in the class hierarchy
+	World world = null;
+	
 	// Shadow map
 	protected MapView map; // As an attribute of the (Shadowing)Light, there will be multiple maps if multiple lights
 	
 	// Default constructor
 	public ShadowingLight() {
-		// Nothing to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
+		// Nothing else to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
 	}
-	
+		
+	/**
+	 * Default constructor with intensity
+	 * @param intensity
+	 */
 	public ShadowingLight(float intensity) {
 		this.intensity = intensity;
+	}
+
+	/**
+	 * Constructor with specification of the ShodowingBox type (see constants)
+	 * @param shadowingBox_type
+	 */
+	public ShadowingLight(int shadowingBox_type) {
+		this.shadowingBox_type = shadowingBox_type;
+	}
+	
+	/**
+	 * Constructor + Link to the World : to be used when ShadowingBox is of type SHADOWING_BOX_WORLD
+	 * @param shadowingBox_type
+	 * @param world the World to be used as shadowing box to calculate the shadow map and its perspective
+	 */
+	public ShadowingLight(int shadowingBox_type, World world) {
+		this.shadowingBox_type = shadowingBox_type;
+		this.world = world;
+	}
+
+	/**
+	 * Generic constructor with specification of the ShodowingBox type (see constants) and intensity of the Light
+	 * @param shadowingBox_type
+	 * @param intensity
+	 */
+	public ShadowingLight(int shadowingBox_type, float intensity) {
+		this.shadowingBox_type = shadowingBox_type;
+		this.intensity = intensity;
+	}
+	
+	/**
+	 * Generic Constructor + Link to the World : to be used when ShadowingBox is of type SHADOWING_BOX_WORLD
+	 * @param shadowingBox_type
+	 * @param intensity
+	 * @param world the World to be used as shadowing box to calculate the shadow map and its perspective
+	 */
+	public ShadowingLight(int shadowingBox_type, float intensity, World world) {
+		this.shadowingBox_type = shadowingBox_type;
+		this.intensity = intensity;
+		this.world = world;
+	}
+	
+	public ShadowingLight(float intensity, World world) {
+		this.intensity = intensity;
+		this.world = world;
 	}
 	
 	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size);
 	
-	public void calculateCameraLight(Perspective perspective, Camera camera_view, Vector3 lightDirection) {
-		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the gUIView frustrum
-		
-		// For this calculate the 8 points of the GUIView frustum in World coordinates
-		// - The 4 points of the near plane		
-		// - The 4 points of the fare plane
-		
-		// To calculate the 8 vertices we need:
-		// - The eye position
-		Vector4 eye = camera_view.getEye();
-		// - The eye-point of interest (camera direction) normalized vector
-		Vector4 fwd = camera_view.getForward().normalize();
-		
-		// TODO can we move out the Projection class from the graphic context  ?
-		// In order to have something more generic and more consistent
-		// TODO strange to get Near and Far from graphicContext and Up from Camera_view. Clean-up required ?
-
-		// - The distance to the near plane
-		float near = perspective.getNear();
-		// - The distance to the far plane
-		float far = perspective.getFar();
-		// - The up vector and side vectors
-		Vector4 up = camera_view.getUp();
-		Vector4 side = fwd.times(up).normalize();
-		// - the half width and half eight of the near plane
-		float half_eight_near = perspective.getHeight()/2;
-		float half_width_near = perspective.getWidth()/2;
-		
-		// - the half width and half eight of the far plane
-		// Calculate the width and height on far plane using Thales: knowing that width and height are defined on the near plane
-		float half_height_far = half_eight_near * far/near; // height_far = height_near * far/near
-		float half_width_far = half_width_near * far/near; // width_far = width_near * far/near
-		
-		// TODO Calculating the gUIView frustum should be a method from the Perspective itself
-		// Calculate all 8 points, vertices of the GUIView Frustum
-		frustum = new Vector4[2][4];
-		// TODO : later, this calculation could be done and points provided through methods in the "Frustum" class or any class
-		// directly related to the gUIView Frustum
-		// P11 = Eye + cam_dir*near + up*half_height_near + side*half_width_near
-		frustum[0][0] = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).plus(side.times(half_width_near));
-		// P12 = Eye + cam_dir*near + up*half_height_near - side*half_width_near
-		frustum[0][1] = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).minus(side.times(half_width_near));
-		// P13 = Eye + cam_dir*near - up*half_height_near - side*half_width_near
-		frustum[0][2] = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).minus(side.times(half_width_near));
-		// P14 = Eye + cam_dir*near - up*half_height_near + side*half_width_near
-		frustum[0][3] = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).plus(side.times(half_width_near));
-		//
-		// P21 = Eye + cam_dir*far + up*half_height_far + side*half_width_far
-		frustum[1][0] = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).plus(side.times(half_width_far));
-		// P22 = Eye + cam_dir*far + up*half_height_far - side*half_width_far
-		frustum[1][1] = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).minus(side.times(half_width_far));
-		// P23 = Eye + cam_dir*far - up*half_height_far - side*half_width_far
-		frustum[1][2] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).minus(side.times(half_width_far));
-		// P24 = Eye + cam_dir*far - up*half_height_far + side*half_width_far
-		frustum[1][3] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).plus(side.times(half_width_far));
-		
-		// Then the center of this Frustrum is (P11+P12+P13+P14 + P21+P22+P23+P24)/8
-		// We take it as PoI for the Camera light
-		Vector4 light_PoI = (frustum[0][0].plus(frustum[0][1]).plus(frustum[0][2]).plus(frustum[0][3]).plus(frustum[1][0]).plus(frustum[1][1]).plus(frustum[1][2]).plus(frustum[1][3])).times(1/8);
-		
-		//Vector4 light_dir = lighting.getDirectionalLight().getLightVector(null).V4();
-		Vector4 light_dir = lightDirection.V4();
-		
-		// Build Camera light
-		// We need to calculate the camera light Eye
-		// In order to calculate the camera light "eye", we start form the PoI : the centre of the gUIView frustum obtained before.
-		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the gUIView frustum.
-		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
-		Vector4 light_eye = light_PoI.minus(light_dir.times(far-near));
-		
-		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView
-		camera_light = new Camera(light_eye, light_PoI, up);
-
-	}
+	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size, World world);
+	
+	public abstract void calculateCameraLight(Perspective perspective, Camera camera_view, Vector3 lightDirection); 
 	
 	/**
 	 * This method will generate the shadow map for the elements of the world passed in parameter with the camera light previously

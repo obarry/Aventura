@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Translation;
@@ -64,7 +64,7 @@ public class TestMultiElements {
 	// GUIView to be displayed
 	private SwingView view;
 	
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Multi Elements");
@@ -175,7 +175,7 @@ public class TestMultiElements {
 				
 		World world = test.createWorld();
 		Lighting light = test.createLight();
-		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		GUIView gUIView = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);

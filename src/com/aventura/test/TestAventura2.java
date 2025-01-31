@@ -8,7 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
@@ -57,7 +57,7 @@ public class TestAventura2 {
 	// Create the gUIView to be displayed
 	private SwingView view;
 	
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Aventura 2");
@@ -139,7 +139,7 @@ public class TestAventura2 {
 		
 		Camera camera = test.createCamera();
 		
-		GraphicContext context = new GraphicContext(GraphicContext.GRAPHIC_DEFAULT);
+		PerspectiveContext context = new PerspectiveContext(PerspectiveContext.PERSPECTIVE_DEFAULT);
 		context.getPerspective().setHeight(6);
 		context.getPerspective().setWidth(10);
 		//context.computePerspective();

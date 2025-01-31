@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
@@ -59,7 +59,7 @@ public class TestScaling2 {
 	// GUIView to be displayed
 	private SwingView view;
 
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Scaling");
@@ -143,8 +143,8 @@ public class TestScaling2 {
 		AmbientLight al = new AmbientLight(0.2f);
 		Lighting light = new Lighting(dl, al, true);
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 1000, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
-		GUIView gUIView = test.createView(gContext);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 1000, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250+625);
+		GUIView gUIView = test.createView(pContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
@@ -153,7 +153,7 @@ public class TestScaling2 {
 		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
 
-		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
 		renderer.render();
 

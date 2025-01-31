@@ -3,7 +3,7 @@ package com.aventura.engine;
 import java.awt.Color;
 import java.util.ArrayList;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.math.transform.NotARotationException;
 import com.aventura.math.transform.Rotation;
@@ -71,7 +71,7 @@ import com.aventura.view.MapView;
  * 
  * 
  *     +---------------------+		   				    	  				          +---------------------+					
- *     |     Perspective     | <------+-----------------------+ - - - - - - - - - - ->|   GraphicContext    |<------+
+ *     |     Perspective     | <------+-----------------------+ - - - - - - - - - - ->|   PerspectiveContext    |<------+
  *     +---------------------+        |        		    	  | 			          +---------------------+		|
  *									  |						  |										^				|
  *									  |						  |			+---------------------+		|				|
@@ -102,7 +102,7 @@ public class RenderEngine {
 	
 	// API Contexts
 	private RenderContext renderContext;
-	private GraphicContext graphicContext;
+	private PerspectiveContext perspectiveContext;
 
 	// Statistics
 	private int nbt = 0; // Number of triangles processed
@@ -127,7 +127,7 @@ public class RenderEngine {
 	/**
 	 * Create a Rendering Engine with required dependencies and context
 	 * There should be a Rendering Engine for a single World, a single (consolidated) Lighting, a single Camera
-	 * The parameters for the rendering and the display are respectively passed into the RenderContext and the GraphicContext
+	 * The parameters for the rendering and the display are respectively passed into the RenderContext and the PerspectiveContext
 	 * 
 	 * Rendering a World on different Views e.g. with several Cameras will require multiple RenderEngine instances
 	 * 
@@ -136,11 +136,11 @@ public class RenderEngine {
 	 * @param lighting the directional lighting the world
 	 * @param camera the camera watching the world
 	 * @param renderContext the renderContext context containing parameters to renderContext the scene
-	 * @param graphicContext the graphicContext context to contain parameters to display the scene
+	 * @param perspectiveContext the perspectiveContext context to contain parameters to display the scene
 	 */
-	public RenderEngine(World world, Lighting lighting, Camera camera, RenderContext render, GraphicContext graphic) {
+	public RenderEngine(World world, Lighting lighting, Camera camera, RenderContext render, PerspectiveContext graphic) {
 		this.renderContext = render;
-		this.graphicContext = graphic;
+		this.perspectiveContext = graphic;
 		this.world = world;
 		this.lighting = lighting;
 		this.camera = camera;
@@ -166,8 +166,8 @@ public class RenderEngine {
 	 * For each Element it takes all Triangles one by one and renderContext them.
 	 * - Full ModelViewProjection modelViewProjection into homogeneous coordinates
 	 * - Rasterization
-	 * It uses the parameters of GraphicContext and RenderContext:
-	 * - GUIView information contained into GraphicContext
+	 * It uses the parameters of PerspectiveContext and RenderContext:
+	 * - GUIView information contained into PerspectiveContext
 	 * - Rendering information (e.g. rendering modes etc) contained into RenderContext
 	 * 
 	 * It assumes initialization is already done through ModelViewProjection object and various contexts
@@ -232,7 +232,7 @@ public class RenderEngine {
 				for (int i = 0; i < shadowingLights.size(); i++) { // Loop on all Shadowing lights
 
 					// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
-					shadowingLights.get(i).initShadowing(graphicContext.getPerspective(), camera, gUIView.getViewWidth());
+					shadowingLights.get(i).initShadowing(perspectiveContext.getPerspective(), camera, gUIView.getViewWidth());
 					
 					// Generate the shadow map
 					// TODO optimization : build a world2 containing only the Elements that can cast shadows by using bouncing algorithm then generate shadow map for this world2
@@ -292,12 +292,14 @@ public class RenderEngine {
 		} else {
 			model = matrix.times(e.getTransformation());
 		}
-		modelViewProjection.setModel(model);
-		modelViewProjection.calculateNormals();
-		modelViewProjection.calculateMVPMatrix(); // Compute the whole ModelViewProjection matrix including Model matrix (Element to World transformation)		
-		modelViewProjection.transformElement(e, true); // Calculate projection for all vertices of this Element with normals calculation
+		
+		modelViewProjection.setModel(model); // Set the Model matrix (Element to World)
+		modelViewProjection.calculateNormalMatrix(); // Calculate the Normal matrix
+		modelViewProjection.calculateMVPMatrix(); // Compute the whole ModelViewProjection matrix including Model matrix (Element to World transformation)
+		// Then transform the Element with this MVP matrix
+		modelViewProjection.transformElement(e, true); // Calculate projection for all vertices of this Element with normals calculation (and recursively for SubElements)
 				
-		// Process each Triangle
+		// Now all vertices of this Element are "transformed" into Clip coordinates, then process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			
 			// Render triangle 
@@ -307,7 +309,7 @@ public class RenderEngine {
 			nbt++;
 		}
 	
-		// Do a recursive call for SubElements
+		// Do this recursively for all SubElements
 		if (!e.isLeaf()) {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has "+e.getSubElements().size()+" sub element(s).");
 			for (int i=0; i<e.getSubElements().size(); i++) {
@@ -431,12 +433,12 @@ public class RenderEngine {
 		try {
 
 			if (t.isTriangleNormal()) {
-				switch (graphicContext.getPerspectiveType()) {
-				case GraphicContext.PERSPECTIVE_TYPE_FRUSTUM:
+				switch (perspectiveContext.getPerspectiveType()) {
+				case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM:
 					// Take any vertex of the triangle -> same result as a triangle is a plan
 					Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
 					return t.getWorldNormal().dot(ey)>0;
-				case GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+				case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
 					// Need only to test the normal in homogeneous coordinate has a non-null positive Z component (hence pointing behind camera)
 					return modelViewProjection.projectNormal(t).getZ()>0;
 				default:
@@ -446,11 +448,11 @@ public class RenderEngine {
 				// Should never happen
 				return modelViewProjection.projectNormal(t).getZ()>0;
 			} else {
-				switch (graphicContext.getPerspectiveType()) {
-				case GraphicContext.PERSPECTIVE_TYPE_FRUSTUM:
+				switch (perspectiveContext.getPerspectiveType()) {
+				case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM:
 					// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
 					return t.getV1().getWorldNormal().dot(t.getV1().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV2().getWorldNormal().dot(t.getV2().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV3().getWorldNormal().dot(t.getV3().getWorldPos().minus(camera.getEye()).V3())>0;
-				case GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+				case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
 					return t.getV1().getProjNormal().getZ() > 0 && t.getV2().getProjNormal().getZ() > 0 && t.getV3().getProjNormal().getZ() > 0;				
 
 				default:
@@ -472,7 +474,7 @@ public class RenderEngine {
 	public void displayLandMarkLines() {
 		// Set the Model Matrix to IDENTITY (no translation)
 		modelViewProjection.setModel(Matrix4.IDENTITY);
-		modelViewProjection.calculateNormals();
+		modelViewProjection.calculateNormalMatrix();
 		modelViewProjection.calculateMVPMatrix();
 
 		// Create Vertices to draw unit segments
@@ -592,7 +594,7 @@ public class RenderEngine {
 	public void displayLight() {
 		// Set the Model Matrix to IDENTITY (no translation)
 		modelViewProjection.setModel(Matrix4.IDENTITY);
-		modelViewProjection.calculateNormals();
+		modelViewProjection.calculateNormalMatrix();
 		modelViewProjection.calculateMVPMatrix();
 		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVectorAtPoint(null));
 		Vertex o = new Vertex(0,0,0);

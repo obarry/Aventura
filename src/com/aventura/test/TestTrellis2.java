@@ -8,7 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector4;
@@ -53,7 +53,7 @@ public class TestTrellis2 {
 	// Create the gUIView to be displayed
 	private SwingView view;
 	
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Trellis 2");
@@ -129,7 +129,7 @@ public class TestTrellis2 {
 		Camera camera = test.createCamera();
 		
 		System.out.println("********* CREATING GRAPHIC CONTEXT");
-		GraphicContext context = new GraphicContext(0.8f, 0.45f, 1, 10, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 10, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		System.out.println(context);
 		
 		System.out.println("********* CREATING VIEW");

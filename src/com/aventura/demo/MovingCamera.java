@@ -8,7 +8,7 @@ import java.awt.Toolkit;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
@@ -73,11 +73,11 @@ public class MovingCamera {
 	private static RenderEngine renderer;
 	
 	// This method will create a basic Swing gUIView
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		KeyFrame frame = new KeyFrame(this, "MovingCamera");
-		// Set the size of the frame based on GraphicContext
+		// Set the size of the frame based on PerspectiveContext
 		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
 		// Create the gUIView to be displayed
@@ -260,7 +260,7 @@ public class MovingCamera {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		GraphicContext context = new GraphicContext(1.5f, 0.9f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		PerspectiveContext context = new PerspectiveContext(1.5f, 0.9f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
 		GUIView gUIView = appli.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);

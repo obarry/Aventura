@@ -129,7 +129,7 @@ public class ModelViewProjection {
 		this.model = model;
 	}
 		
-	public void calculateNormals() {
+	public void calculateNormalMatrix() {
 		// Normals Model matrix :
 		// Use the Model matrix for orthogonal transformation (orthogonal transformations preserve lengths of vectors and angles between them)
 		// Use the inverse transpose matrix in case of non orthogonal transformation (e.g. non uniform scaling)

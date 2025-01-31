@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
@@ -59,7 +59,7 @@ public class TestTorusTexture {
 	// GUIView to be displayed
 	private SwingView view;
 
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Torus Texture");
@@ -135,8 +135,8 @@ public class TestTorusTexture {
 		AmbientLight al = new AmbientLight(0.1f);
 		Lighting light = new Lighting(dl, al, true);
 		
-		GraphicContext gContext = new GraphicContext(1.2f, 0.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
-		GUIView gUIView = test.createView(gContext);
+		PerspectiveContext pContext = new PerspectiveContext(1.2f, 0.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		GUIView gUIView = test.createView(pContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
@@ -146,7 +146,7 @@ public class TestTorusTexture {
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		
-		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
 		renderer.render();
 

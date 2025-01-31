@@ -9,7 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
@@ -66,7 +66,7 @@ public class TestMultiElementsTextureOrtho {
 	// GUIView to be displayed
 	private SwingView view;
 	
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Multi Elements with Texture");
@@ -109,11 +109,11 @@ public class TestMultiElementsTextureOrtho {
 
 		System.out.println("********* STARTING APPLICATION *********");
 
-		Texture texbricks = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		//Texture texbricks = new Texture("resources/texture/texture_bricks_204x204.jpg");
 		//Texture texblue = new Texture("resources/texture/texture_blueground_204x204.jpg");
 		//Texture texwood = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
-		Texture texdamier = new Texture("resources/texture/texture_damier_600x591.gif");
-		Texture texgrass = new Texture("resources/texture/texture_grass_900x600.jpg");
+		//Texture texdamier = new Texture("resources/texture/texture_damier_600x591.gif");
+		//Texture texgrass = new Texture("resources/texture/texture_grass_900x600.jpg");
 		//Texture texstone = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
 		//Texture texsnow = new Texture("resources/texture/texture_snow_590x590.jpg");
 		//Texture texmetal = new Texture("resources/texture/texture_metal_mesh_463x463.jpg");
@@ -121,11 +121,11 @@ public class TestMultiElementsTextureOrtho {
 		Texture texmetalplate = new Texture("resources/texture/texture_metal_plate_626x626.jpg");
 		//Texture texstone1 = new Texture("resources/texture/texture_stone1_1700x1133.jpg");
 		//Texture texrock = new Texture("resources/texture/texture_rock_stone_400x450.jpg");
-		Texture texcremedemarron = new Texture("resources/texture/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
+		//Texture texcremedemarron = new Texture("resources/texture/texture_sticker_cremedemarrons_351x201.jpg", Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
 		//Texture texearth = new Texture("resources/texture/texture_earthtruecolor_nasa_big_2048x1024.jpg");
 		//Texture texmoon = new Texture("resources/texture/texture_moon_2048x1024.jpg");
-		Texture texfoot = new Texture("resources/texture/texture_football_320x160.jpg");
-		Texture texcarpet = new Texture("resources/texture/texture_carpet_600x600.jpg");
+		//Texture texfoot = new Texture("resources/texture/texture_football_320x160.jpg");
+		//Texture texcarpet = new Texture("resources/texture/texture_carpet_600x600.jpg");
 	
 		// Camera
 		//Vector4 eye = new Vector4(10,6,3,1);
@@ -239,8 +239,8 @@ public class TestMultiElementsTextureOrtho {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		GraphicContext context = new GraphicContext(8, 6, 1, 100, GraphicContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
-		//GraphicContext context = new GraphicContext(3.0f, 1.8f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 400);
+		PerspectiveContext context = new PerspectiveContext(8, 6, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
+		//PerspectiveContext context = new PerspectiveContext(3.0f, 1.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 400);
 		GUIView gUIView = test.createView(context);
 		System.out.println(context.getPerspective().getProjection());
 

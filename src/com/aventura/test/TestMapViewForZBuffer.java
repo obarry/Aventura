@@ -10,7 +10,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.GraphicContext;
+import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Translation;
@@ -62,7 +62,7 @@ public class TestMapViewForZBuffer {
 	// GUIView to be displayed
 	private SwingView view;
 
-	public GUIView createView(GraphicContext context) {
+	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Lighting");
@@ -138,15 +138,15 @@ public class TestMapViewForZBuffer {
 		Lighting light = new Lighting(al);
 		light.addPointLight(pl);
 		
-		GraphicContext gContext = new GraphicContext(0.8f, 0.45f, 1, 100, GraphicContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		GUIView gUIView = test.createView(gContext);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		
-		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, gContext);
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
 		MapView mapView = renderer.render();
 		
@@ -156,8 +156,8 @@ public class TestMapViewForZBuffer {
 		sc.close();
 
 		System.out.println("Now rendering normalized map...");
-		//GUIView gUIView = test.createView(GraphicContext.GRAPHIC_DEFAULT);
-		mapView.removeFar(gContext.getPerspective().getFar());
+		//GUIView gUIView = test.createView(PerspectiveContext.PERSPECTIVE_DEFAULT);
+		mapView.removeFar(pContext.getPerspective().getFar());
 		mapView.normalizeMap();
 		gUIView.initView(mapView);
 		gUIView.renderView();
