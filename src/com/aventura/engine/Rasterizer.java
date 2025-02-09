@@ -90,6 +90,10 @@ public class Rasterizer {
 		public VertexParam() {
 		}
 
+		public VertexParam(Vertex v) {
+			this.v = v;
+		}
+
 		public VertexParam(Vertex v, Vector4 t) {
 			this.v = v;
 			this.t = t;
@@ -265,25 +269,36 @@ public class Rasterizer {
 			Color specCol,
 			boolean interpolate,
 			boolean texture,
-			boolean shadows) {
+			boolean shadows,
+			boolean shadowmap) {
 
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+surfCol);
-
-		Color shadedCol = null;
-		Color ambientCol = computeAmbientColor(surfCol); // Let's compute Ambient color once per triangle (not needed at each line or pixel)
 
 		// Init pixel stats
 		rendered_pixels = 0;
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
 
-		// Let's create 3 VertexParam "containers", one for each of the 3 Vertices of the triangle to be rendered and start building them with Vertex and Texture vectors
-		// They will be used as parameters to be passed to rasterizeScanLight function containing a structure set of data
-		VertexParam vpa, vpb, vpc;
-		vpa = new VertexParam(t.getV1(), t.getTexVec1());
-		vpb = new VertexParam(t.getV2(), t.getTexVec2());
-		vpc = new VertexParam(t.getV3(), t.getTexVec3());
+		Color shadedCol = null;
+		Color ambientCol = null; // Let's compute Ambient color once per triangle (not needed at each line or pixel)
+		VertexParam vpa, vpb, vpc = null;
+		int nb_sl = 0; // Number of Shadowing Lights, obtained later if not rasterizing only a Shadow Map
 
+		if (shadowmap) { // Rasterize a Shadowmap
+			vpa = new VertexParam(t.getV1());
+			vpb = new VertexParam(t.getV2());
+			vpc = new VertexParam(t.getV3());
+
+		} else { // Generic case
+			ambientCol = computeAmbientColor(surfCol); // Let's compute Ambient color once per triangle (not needed at each line or pixel)
+
+			// Let's create 3 VertexParam "containers", one for each of the 3 Vertices of the triangle to be rendered and start building them with Vertex and Texture vectors
+			// They will be used as parameters to be passed to rasterizeScanLight function containing a structure set of data
+			vpa = new VertexParam(t.getV1(), t.getTexVec1());
+			vpb = new VertexParam(t.getV2(), t.getTexVec2());
+			vpc = new VertexParam(t.getV3(), t.getTexVec3());
+		} 
+		
 		// Lets order them to always have this order on screen v1, v2 & v3 in screen coordinates
 		// with v1 always down (thus having the highest possible Y)
 		// then v2 between v1 & v3 (or same level if v2 and v3 on same ordinate)	
@@ -331,104 +346,105 @@ public class Rasterizer {
 			}
 		}
 
-		// Initialize n VertexParamLight structures, one for each light, for each VertexParam "container" previously created
-		ArrayList<ShadowingLight> shadowingLights = lighting.getShadowingLights();
-		int nb_sl; // Number of Shadowing Lights
+		if (!shadowmap) {
+			// Initialize n VertexParamLight structures, one for each light, for each VertexParam "container" previously created
+			ArrayList<ShadowingLight> shadowingLights = lighting.getShadowingLights();
+			//int nb_sl; // Number of Shadowing Lights
 
-		// If there are Directional or Point Lights
-		if (lighting.hasShadowing()) {
-
-			nb_sl = shadowingLights.size();
-
-			vp1.l = new VertexLightParam[nb_sl];
-			vp2.l = new VertexLightParam[nb_sl];
-			vp3.l = new VertexLightParam[nb_sl];
-
-			// For each Light
-			for (int i=0; i<nb_sl; i++) {
-				vp1.l[i] = new VertexLightParam();
-				vp2.l[i] = new VertexLightParam();
-				vp3.l[i] = new VertexLightParam();	
-			}
-
-		} else {
-
-			nb_sl = 0;
-
-			vp1.l = null;
-			vp2.l = null;
-			vp3.l = null;
-		}
-
-
-		// If no interpolation requested -> plain faces. Then:
-		// - calculate normal at Triangle level for shading
-		// - calculate shading color once for all triangle
-		if (!interpolate || t.isTriangleNormal()) {
-			Vector3 normal = t.getWorldNormal();
-
+			// If there are Directional or Point Lights
 			if (lighting.hasShadowing()) {
-				Color[] cols = new Color[nb_sl];
+
+				nb_sl = shadowingLights.size();
+
+				vp1.l = new VertexLightParam[nb_sl];
+				vp2.l = new VertexLightParam[nb_sl];
+				vp3.l = new VertexLightParam[nb_sl];
+
 				// For each Light
 				for (int i=0; i<nb_sl; i++) {
-					cols[i] = computeShadedColor(surfCol, t.getCenterWorldPos(), normal, t.isRectoVerso(), shadowingLights.get(i));
+					vp1.l[i] = new VertexLightParam();
+					vp2.l[i] = new VertexLightParam();
+					vp3.l[i] = new VertexLightParam();	
 				}
-				shadedCol = ColorTools.addColors(cols);
+
 			} else {
-				shadedCol = surfCol;
+
+				nb_sl = 0;
+
+				vp1.l = null;
+				vp2.l = null;
+				vp3.l = null;
 			}
-			//TODO Specular reflection with plain faces.
 
-		} else {
 
-			// TODO Optimization: pre-calculate the viewer vectors and shaded colors to each Vertex before in 1 row
-			// This will avoid to do the same calculation for a Vertex shared by several triangles (which is the general case)
+			// If no interpolation requested -> plain faces. Then:
+			// - calculate normal at Triangle level for shading
+			// - calculate shading color once for all triangle
+			if (!interpolate || t.isTriangleNormal()) {
+				Vector3 normal = t.getWorldNormal();
 
-			// Calculate viewer vectors
-			Vector3 viewer1, viewer2, viewer3;
-			viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).V3();
-			viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).V3();
-			viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).V3();
-
-			viewer1.normalize();
-			viewer2.normalize();
-			viewer3.normalize();
-
-			// For each Light
-			for (int i=0; i<nb_sl; i++) {
-
-				ShadowingLight sl = shadowingLights.get(i); // Used several times
-
-				vp1.l[i].shadedColor = computeShadedColor(surfCol, vp1.v.getWorldPos(), vp1.v.getWorldNormal(), t.isRectoVerso(), sl);
-				vp2.l[i].shadedColor = computeShadedColor(surfCol, vp2.v.getWorldPos(), vp2.v.getWorldNormal(), t.isRectoVerso(), sl);
-				vp3.l[i].shadedColor = computeShadedColor(surfCol, vp3.v.getWorldPos(), vp3.v.getWorldNormal(), t.isRectoVerso(), sl);	
-
-				if (lighting.hasSpecular()) {
-					vp1.l[i].specularColor = computeSpecularColor(vp1.v.getWorldNormal(), viewer1, vp1.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
-					vp2.l[i].specularColor = computeSpecularColor(vp2.v.getWorldNormal(), viewer2, vp2.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
-					vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
+				if (lighting.hasShadowing()) {
+					Color[] cols = new Color[nb_sl];
+					// For each Light
+					for (int i=0; i<nb_sl; i++) {
+						cols[i] = computeShadedColor(surfCol, t.getCenterWorldPos(), normal, t.isRectoVerso(), shadowingLights.get(i));
+					}
+					shadedCol = ColorTools.addColors(cols);
+				} else {
+					shadedCol = surfCol;
 				}
+				//TODO Specular reflection with plain faces.
 
-				if (shadows) {
-					// Transform the World position of the Vertex in this Light's coordinates
-					vp1.l[i].vl = sl.getModelView().project(vp1.v);
-					vp2.l[i].vl = sl.getModelView().project(vp2.v);
-					vp3.l[i].vl = sl.getModelView().project(vp3.v);
+			} else {
 
-					// Position vector in the Shadow map (homogeneous coordinates)
-					// TODO Check if really both vl and vm are needed or only one of them should be passed to rasterizeScanLine
-					//vp1.l[i].vm = null; // TBD
-					//vp1.l[i].vm = null; // TBD
-					//vp1.l[i].vm = null; // TBD
+				// TODO Optimization: pre-calculate the viewer vectors and shaded colors to each Vertex before in 1 row
+				// This will avoid to do the same calculation for a Vertex shared by several triangles (which is the general case)
 
-					// Provide the link to Shadow Map for this Light
-					vp1.l[i].map = sl.getMap();
-					vp2.l[i].map = sl.getMap();
-					vp3.l[i].map = sl.getMap();
+				// Calculate viewer vectors
+				Vector3 viewer1, viewer2, viewer3;
+				viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).V3();
+				viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).V3();
+				viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).V3();
+
+				viewer1.normalize();
+				viewer2.normalize();
+				viewer3.normalize();
+
+				// For each Light
+				for (int i=0; i<nb_sl; i++) {
+
+					ShadowingLight sl = shadowingLights.get(i); // Used several times
+
+					vp1.l[i].shadedColor = computeShadedColor(surfCol, vp1.v.getWorldPos(), vp1.v.getWorldNormal(), t.isRectoVerso(), sl);
+					vp2.l[i].shadedColor = computeShadedColor(surfCol, vp2.v.getWorldPos(), vp2.v.getWorldNormal(), t.isRectoVerso(), sl);
+					vp3.l[i].shadedColor = computeShadedColor(surfCol, vp3.v.getWorldPos(), vp3.v.getWorldNormal(), t.isRectoVerso(), sl);	
+
+					if (lighting.hasSpecular()) {
+						vp1.l[i].specularColor = computeSpecularColor(vp1.v.getWorldNormal(), viewer1, vp1.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
+						vp2.l[i].specularColor = computeSpecularColor(vp2.v.getWorldNormal(), viewer2, vp2.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
+						vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
+					}
+
+					if (shadows) {
+						// Transform the World position of the Vertex in this Light's coordinates
+						vp1.l[i].vl = sl.getModelView().project(vp1.v);
+						vp2.l[i].vl = sl.getModelView().project(vp2.v);
+						vp3.l[i].vl = sl.getModelView().project(vp3.v);
+
+						// Position vector in the Shadow map (homogeneous coordinates)
+						// TODO Check if really both vl and vm are needed or only one of them should be passed to rasterizeScanLine
+						//vp1.l[i].vm = null; // TBD
+						//vp1.l[i].vm = null; // TBD
+						//vp1.l[i].vm = null; // TBD
+
+						// Provide the link to Shadow Map for this Light
+						vp1.l[i].map = sl.getMap();
+						vp2.l[i].map = sl.getMap();
+						vp3.l[i].map = sl.getMap();
+					}
 				}
 			}
 		}
-
 
 		// Shadows
 		//
@@ -466,6 +482,7 @@ public class Rasterizer {
 		//			// Get the depth of the vertices in Light coordinates
 		//			// Prepare the 3 depths to be interpolated in the rasterizeScanLine method
 		//		}
+
 
 		// Slopes
 		float dP1P2, dP1P3;

@@ -1,10 +1,5 @@
 package com.aventura.view;
 
-import java.awt.Color;
-
-import com.aventura.tools.color.ColorTools;
-import com.aventura.tools.tracing.Tracer;
-
 /**
 * ------------------------------------------------------------------------------ 
 * MIT License

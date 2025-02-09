@@ -386,14 +386,14 @@ public class RenderEngine {
 					case RenderContext.RENDERING_TYPE_PLAIN:
 						// Draw triangles with shading full face, no interpolation.
 						// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-						rasterizer.rasterizeTriangle(t, color,0, null, false, false, renderContext.shadowing == 1 ? true : false);
+						rasterizer.rasterizeTriangle(t, color,0, null, false, false, renderContext.shadowing == 1 ? true : false, false);
 						break;
 					case RenderContext.RENDERING_TYPE_INTERPOLATE:
 						// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
 						if (renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED) {
-							rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false);
+							rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false, false);
 						} else { // No Texture
-							rasterizer.rasterizeTriangle(t, color, se, sc, true, false, renderContext.shadowing == 1 ? true : false);
+							rasterizer.rasterizeTriangle(t, color, se, sc, true, false, renderContext.shadowing == 1 ? true : false, false);
 						}
 						break;
 					default:
