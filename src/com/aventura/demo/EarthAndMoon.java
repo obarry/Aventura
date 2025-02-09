@@ -1,4 +1,4 @@
-package com.aventura.test;
+package com.aventura.demo;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -53,7 +53,7 @@ import com.aventura.view.GUIView;
  * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
  */
 
-public class TestSphereTexture2 {
+public class EarthAndMoon {
 	
 	// GUIView to be displayed
 	private SwingView view;
@@ -61,7 +61,7 @@ public class TestSphereTexture2 {
 	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Sphere Texture 2");
+		JFrame frame = new JFrame("Earth and Moon");
 		// Set the size of the frame
 		frame.setSize(1500,880);
 		
@@ -100,15 +100,12 @@ public class TestSphereTexture2 {
 		Vector4 poi = new Vector4(0,0,-4,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestSphereTexture2 test = new TestSphereTexture2();
+		EarthAndMoon test = new EarthAndMoon();
 		
 		System.out.println("********* Creating World");
 		
 		Texture texearth = new Texture("resources/texture/texture_earthtruecolor_nasa_big_2048x1024.jpg");
 		Texture texmoon = new Texture("resources/texture/texture_moon_2048x1024.jpg");
-		//Texture tex = new Texture("resources/texture/texture_jupiter_2048x1024.jpg");
-		//Texture tex = new Texture("resources/texture/texture_mars_2048x1024.jpg");
-		//Texture tex = new Texture("resources/texture/texture_neptune_2048x1024.jpg");
 		
 		// Create World
 		World world = new World();
