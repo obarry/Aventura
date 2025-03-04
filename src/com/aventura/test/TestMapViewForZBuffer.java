@@ -152,7 +152,7 @@ public class TestMapViewForZBuffer {
 		
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Please type return...");
-		String str = sc.nextLine();
+		sc.nextLine();
 		sc.close();
 
 		System.out.println("Now rendering normalized map...");

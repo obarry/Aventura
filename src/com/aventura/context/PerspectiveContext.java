@@ -179,6 +179,12 @@ public class PerspectiveContext {
 	
 	public PerspectiveContext(float top, float bottom, float right, float left, float far, float near, int perspective, int ppu) {
 		
+		this.pixelWidth = (int)((right-left)*ppu);
+		this.pixelHeight = (int)((top-bottom)*ppu);
+		this.pixelHalfWidth = pixelWidth/2;
+		this.pixelHalfHeight = pixelHeight/2;
+		
+		
 		this.p_type = perspective;
 		this.ppu = ppu;
 		

@@ -111,7 +111,7 @@ public class Rasterizer {
 
 
 	// References
-	protected PerspectiveContext graphic;
+	protected PerspectiveContext perspectiveCtx;
 	protected GUIView gUIView;
 	protected Lighting lighting;
 	protected Camera camera;
@@ -122,7 +122,7 @@ public class Rasterizer {
 
 	// Z buffer
 	private MapView zBuffer = null;
-	int zBuf_width, zBuf_height;	
+	int zBuf_width, zBuf_height;
 
 	// Pixel statistics
 	int rendered_pixels = 0;
@@ -138,16 +138,25 @@ public class Rasterizer {
 	/**
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param camera : a pointer to the Camera created offline by user
-	 * @param graphic : a pointer to the PerspectiveContext created offline by user
+	 * @param perspectiveCtx : a pointer to the PerspectiveContext created offline by user
 	 * @param lighting : a pointer to the Lighting system created offline by user
 	 */
 	public Rasterizer(Camera camera, PerspectiveContext graphic, Lighting lighting) {
 		this.camera = camera;
-		this.graphic = graphic;
+		this.perspectiveCtx = graphic;
 		this.lighting = lighting;
 		pixelHalfWidth = graphic.getPixelHalfWidth();
 		pixelHalfHeight = graphic.getPixelHalfHeight();
 		// TODO Be cautious here : if PerspectiveContext has changed between 2 calls to previously created Rasterizer, the 2 above variables won't be refreshed accordingly -> potential bug
+	}
+
+	/**
+	 * Creation of minimal Rasterizer for shadow map rendering
+	 */
+	public Rasterizer(Camera camera) {
+		this.camera = camera;
+		this.perspectiveCtx = null;
+		this.lighting = null;
 	}
 
 	public void setView(GUIView v) {
@@ -155,18 +164,27 @@ public class Rasterizer {
 	}
 
 	/**
-	 * Initialize zBuffer by creating the table. This method is deported from the constructor in order to use it only when necessary.
-	 * It is not needed in case of line rendering.
+	 * Initialize zBuffer using the pixelHalfWidth and pixelHalfHeight values from the Constructor
 	 */
 	public MapView initZBuffer() {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());
 
-		// zBuffer is initialized with far value of the perspective
-		float zBuffer_init = graphic.getPerspective().getFar();
+		return initZBuffer(2 * pixelHalfWidth  + 1, 2 * pixelHalfHeight + 1);
+	}
+	
+	/**
+	 * Initialize zBuffer by creating the table. This method is deported from the constructor in order to use it only when necessary.
+	 * It is not needed in case of line rendering.
+	 * @param zBuf_width the width of the zBuffer to create
+	 * @param zBuf_height the height of the zBuffer to create
+	 */
+	public MapView initZBuffer(int width, int height) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+perspectiveCtx.getPixelWidth()+" Height: "+perspectiveCtx.getPixelHeight());
+
+		this.zBuf_width = width;
+		this.zBuf_height = height;
+		// zBuffer is initialized with far value of the perspectiveCtx
+		float zBuffer_init = perspectiveCtx.getPerspective().getFar();
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "zBuffer init value: "+zBuffer_init);
-
-		zBuf_width  = 2 * pixelHalfWidth  + 1;
-		zBuf_height = 2 * pixelHalfHeight + 1;
 
 		// Only create buffer if needed, otherwise reuse it, it will be reinitialized below
 		if (zBuffer == null) zBuffer = new MapView(zBuf_width, zBuf_height);
@@ -175,11 +193,12 @@ public class Rasterizer {
 		// Any value closer will be drawn and the zBuffer in this place will be updated by new value
 		for (int i=0; i<zBuf_width; i++)  {
 			for (int j=0; j<zBuf_height; j++) {
-				zBuffer.set(i, j, zBuffer_init); // Far value of the perspective
+				zBuffer.set(i, j, zBuffer_init); // Far value of the perspectiveCtx
 			}
 		}
 		return zBuffer;
 	}
+
 
 	//
 	// A few tools, some methods to simplify method calls
@@ -427,26 +446,27 @@ public class Rasterizer {
 						vp2.l[i].specularColor = computeSpecularColor(vp2.v.getWorldNormal(), viewer2, vp2.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
 						vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
 					}
-
-					if (shadows) {
-						// Transform the World position of the Vertex in this Light's coordinates
-						vp1.l[i].vl = sl.getModelView().project(vp1.v);
-						vp2.l[i].vl = sl.getModelView().project(vp2.v);
-						vp3.l[i].vl = sl.getModelView().project(vp3.v);
-
-						// Position vector in the Shadow map (homogeneous coordinates)
-						// TODO Check if really both vl and vm are needed or only one of them should be passed to rasterizeScanLine
-						//vp1.l[i].vm = null; // TBD
-						//vp1.l[i].vm = null; // TBD
-						//vp1.l[i].vm = null; // TBD
-
-						// Provide the link to Shadow Map for this Light
-						vp1.l[i].map = sl.getMap();
-						vp2.l[i].map = sl.getMap();
-						vp3.l[i].map = sl.getMap();
-					}
 				}
 			}
+
+			if (shadows) {
+				// For each Light
+				for (int i=0; i<nb_sl; i++) {
+
+					ShadowingLight sl = shadowingLights.get(i); // Used several times
+
+					// Transform the World position of the Vertex in this Light's coordinates
+					vp1.l[i].vl = sl.getModelView().project(vp1.v);
+					vp2.l[i].vl = sl.getModelView().project(vp2.v);
+					vp3.l[i].vl = sl.getModelView().project(vp3.v);
+
+					// Provide the link to Shadow Map for this Light
+					vp1.l[i].map = sl.getMap();
+					vp2.l[i].map = sl.getMap();
+					vp3.l[i].map = sl.getMap();
+				}
+			}
+
 		}
 
 		// Shadows
@@ -692,7 +712,7 @@ public class Rasterizer {
 			float z1 = 0, z2 = 0, za = 0, zb = 0, zc = 0, zd = 0;
 
 
-			switch (graphic.getPerspectiveType()) {
+			switch (perspectiveCtx.getPerspectiveType()) {
 
 			case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
 				// Vertices z
@@ -737,57 +757,61 @@ public class Rasterizer {
 			// Light vectors at begining and end of the segment to interpolate
 			Vector4 [] vl1 = null;
 			Vector4 [] vl2 = null;
-
-			if (interpolate) {
-				ishc1 = new Color [nb_lights];
-				ishc2 = new Color [nb_lights];
-				ispc1 = new Color [nb_lights];
-				ispc2 = new Color [nb_lights];
-			}
-
-			if (shadows) {
-				vl1 = new Vector4 [nb_lights];
-				vl2 = new Vector4 [nb_lights];
-			}
-
-			// For each Light
-			for (int i=0; i<nb_lights; i++) {
-				
-				if (interpolate) {
-					// Shaded color
-					ishc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].shadedColor,1/za), ColorTools.multColor(vpb.l[i].shadedColor,1/zb), gradient1);
-					ishc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].shadedColor,1/zc), ColorTools.multColor(vpd.l[i].shadedColor,1/zd), gradient2);
-					// Specular color
-					if (lighting.hasSpecular()) {
-						ispc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].specularColor,1/za), ColorTools.multColor(vpb.l[i].specularColor,1/zb), gradient1);
-						ispc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].specularColor,1/zc), ColorTools.multColor(vpd.l[i].specularColor,1/zd), gradient2);
-					}
-				} // Else (!interpolate) : do nothing (no interpolation or normal at triangle level)
-				
-				if (shadows) {
-					// Interpolate on each [VA, VB] and [VC, VD] segments for each Light
-					vl1[i] = Tools.interpolate(vpa.l[i].vl.times(1/za), vpb.l[i].vl.times(1/zb), gradient1);
-					vl2[i] = Tools.interpolate(vpc.l[i].vl.times(1/zc), vpd.l[i].vl.times(1/zd), gradient2);	
-				}
-			} // End for each Light
 			
-			//
-			// If texture enabled, calculate Texture vectors at beginning and end of the scan line
-			//
 			// Starting Texture & ending Texture coordinates
 			Vector4 vt1 = null;
 			Vector4 vt2 = null;
 			Vector4 vt = null;
-			if (texture && t!=null) {
-				vt1 = Tools.interpolate(vpa.t.times(1/za), vpb.t.times(1/zb), gradient1);
-				vt2 = Tools.interpolate(vpc.t.times(1/zc), vpd.t.times(1/zd), gradient2);
-			}
 
+			if (!shadowmap) {
+
+				if (interpolate) {
+					ishc1 = new Color [nb_lights];
+					ishc2 = new Color [nb_lights];
+					ispc1 = new Color [nb_lights];
+					ispc2 = new Color [nb_lights];
+				}
+
+				if (shadows) {
+					vl1 = new Vector4 [nb_lights];
+					vl2 = new Vector4 [nb_lights];
+				}
+
+				// For each Light
+				for (int i=0; i<nb_lights; i++) {
+
+					if (interpolate) {
+						// Shaded color
+						ishc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].shadedColor,1/za), ColorTools.multColor(vpb.l[i].shadedColor,1/zb), gradient1);
+						ishc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].shadedColor,1/zc), ColorTools.multColor(vpd.l[i].shadedColor,1/zd), gradient2);
+						// Specular color
+						if (lighting.hasSpecular()) {
+							ispc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].specularColor,1/za), ColorTools.multColor(vpb.l[i].specularColor,1/zb), gradient1);
+							ispc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].specularColor,1/zc), ColorTools.multColor(vpd.l[i].specularColor,1/zd), gradient2);
+						}
+					} // Else (!interpolate) : do nothing (no interpolation or normal at triangle level)
+
+					if (shadows) {
+						// Interpolate on each [VA, VB] and [VC, VD] segments for each Light
+						vl1[i] = Tools.interpolate(vpa.l[i].vl.times(1/za), vpb.l[i].vl.times(1/zb), gradient1);
+						vl2[i] = Tools.interpolate(vpc.l[i].vl.times(1/zc), vpd.l[i].vl.times(1/zd), gradient2);	
+					}
+				} // End for each Light
+
+				//
+				// If texture enabled, calculate Texture vectors at beginning and end of the scan line
+				//
+				if (texture && t!=null) {
+					vt1 = Tools.interpolate(vpa.t.times(1/za), vpb.t.times(1/zb), gradient1);
+					vt2 = Tools.interpolate(vpc.t.times(1/zc), vpd.t.times(1/zd), gradient2);
+				}
+			}
 			// Resulting colors
 			Color csp = DARK_SHADING_COLOR; // Specular color
 			Color ctx = null; // Texture color
 			Color cc; // Combined color to be drawn, result of the lighting and shading calculation
-
+			
+			
 			// drawing a line from left (sx) to right (ex) 
 			for (int x = sx; x < ex; x++) {
 
