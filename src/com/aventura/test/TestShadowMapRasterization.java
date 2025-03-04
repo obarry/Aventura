@@ -19,7 +19,7 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.Lighting;
-import com.aventura.model.light.PointLight;
+import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cube;
@@ -54,10 +54,10 @@ import com.aventura.view.MapView;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  * 
- * This class is a Test class for Rasterizer
+ * This class is a Test class for Rasterization of a Shadow Map (inherited from TestmMapViewForZBuffer)
  */
 
-public class TestMapViewForZBuffer {
+public class TestShadowMapRasterization {
 	
 	// GUIView to be displayed
 	private SwingView view;
@@ -104,7 +104,7 @@ public class TestMapViewForZBuffer {
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 				
-		TestMapViewForZBuffer test = new TestMapViewForZBuffer();
+		TestShadowMapRasterization test = new TestShadowMapRasterization();
 		
 		System.out.println("********* Creating World");
 		
@@ -133,34 +133,41 @@ public class TestMapViewForZBuffer {
 
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.05f);
-		PointLight pl = new PointLight(new Vector4(3,3,1.2f,1),8);
-		//Lighting light = new Lighting(dl, al);
-		Lighting light = new Lighting(al);
-		light.addPointLight(pl);
+		DirectionalLight dl = new DirectionalLight(new Vector3(3,3,-3));
+		Lighting light = new Lighting(dl, al);
+		//Lighting light = new Lighting(al);
+		//light.setDirectionalLight(dl);
 		
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
-		MapView mapView = renderer.render();
+		renderer.render();
 		
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Please type return...");
-		sc.nextLine();
+		sc.nextLine(); // Block until return is typed
 		sc.close();
-
-		System.out.println("Now rendering normalized map...");
-		//GUIView gUIView = test.createView(PerspectiveContext.PERSPECTIVE_DEFAULT);
-		mapView.removeFar(pContext.getPerspective().getFar());
-		mapView.normalizeMap();
-		gUIView.initView(mapView);
-		gUIView.renderView();
+		
+		// Now rendering the shadow map for the Directional Light
+		MapView mapView = dl.getMap();
+		
+		if (mapView != null) {
+			System.out.println("Now rendering shadow map...");
+			mapView.removeFar(pContext.getPerspective().getFar());
+			mapView.normalizeMap();
+			gUIView.initView(mapView);
+			gUIView.renderView();
+		} else {
+			System.out.println("No shadow map to display.\n");
+		}
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}

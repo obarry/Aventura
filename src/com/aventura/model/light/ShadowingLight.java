@@ -1,6 +1,8 @@
 package com.aventura.model.light;
 
+import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.ModelViewProjection;
+import com.aventura.engine.Rasterizer;
 import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
@@ -66,8 +68,9 @@ public abstract class ShadowingLight extends Light {
 	protected int shadowingBox_type = SHADOWING_BOX_VIEWFRUSTUM; // Is Default
 	
 	// Fields related to Shadow generation
-	protected Camera camera_light;
-	protected Projection perspective_light;
+	protected Camera camera_light; // The corresponding "camera" from Light View's perspective
+	protected PerspectiveContext perspectiveCtx_light; // The perspective from the light to generate the shadow map
+	protected Rasterizer rasterizer_light; // An instance of rasterizer dedicated to this light to generate the shadow map
 	
 	// ModelViewProjection matrix and vertices conversion tool for the calculation of the Shadow map
 	protected ModelViewProjection modelViewProjection;
@@ -80,6 +83,7 @@ public abstract class ShadowingLight extends Light {
 	World world = null;
 	
 	// Shadow map
+	int map_size = 0;
 	protected MapView map; // As an attribute of the (Shadowing)Light, there will be multiple maps if multiple lights
 	
 	// Default constructor
@@ -179,6 +183,8 @@ public abstract class ShadowingLight extends Light {
 		modelViewProjection.transformElement(e, false); // Calculate prj_pos of each vertex
 		// TODO Verify that modelViewProjection.transformVertices does not calculate normals (not needed here) projection
 
+		map = rasterizer_light.initZBuffer(map_size, map_size); // ShadowMap is square
+
 		// Process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			Triangle t = e.getTriangle(j);
@@ -187,12 +193,8 @@ public abstract class ShadowingLight extends Light {
 			// Then shadowmap this triangle
 			if (t.isInViewFrustum()) {
 				
-				// TBD
-				// Use Rasterizer with a dedicated algorithm for Shadow Map generation (simpler than full rasterization) but trying to reuse the
-				// common parts.
-				// "Strategy" design pattern could be used with a generic interface implementing different rasterization strategies (to be passed
-				// in parameter of the generic method) and still keeping only one RasterizeTriangle method. E.g. :
-				//     rasterizer.rasterizeTriangle(triangle, rasterizationStrategy);
+				// Simplified rasterization : only last parameter is true to indicate this is a shadow map
+				rasterizer_light.rasterizeTriangle(t, null, 0, null, false, false, false, true); 
 				
 			}
 		}

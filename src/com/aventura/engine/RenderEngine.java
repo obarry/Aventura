@@ -132,25 +132,25 @@ public class RenderEngine {
 	 * Rendering a World on different Views e.g. with several Cameras will require multiple RenderEngine instances
 	 * 
 	 * 
-	 * @param world the world to renderContext
-	 * @param lighting the directional lighting the world
-	 * @param camera the camera watching the world
-	 * @param renderContext the renderContext context containing parameters to renderContext the scene
-	 * @param perspectiveContext the perspectiveContext context to contain parameters to display the scene
+	 * @param world the World to renderContext
+	 * @param lighting the lighting system to illuminate this world
+	 * @param camera the Camera watching the world, actually the eye of the viewer
+	 * @param renderCtx the RenderContext containing parameters to render the scene
+	 * @param perspectiveCtx the PerspectiveContext context to contain parameters to display the scene
 	 */
-	public RenderEngine(World world, Lighting lighting, Camera camera, RenderContext render, PerspectiveContext graphic) {
-		this.renderContext = render;
-		this.perspectiveContext = graphic;
+	public RenderEngine(World world, Lighting lighting, Camera camera, RenderContext renderCtx, PerspectiveContext perspectiveCtx) {
+		this.renderContext = renderCtx;
+		this.perspectiveContext = perspectiveCtx;
 		this.world = world;
 		this.lighting = lighting;
 		this.camera = camera;
 				
 		// Create ModelViewProjection matrix with for GUIView (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
-		this.modelViewProjection = new ModelViewProjection(camera.getMatrix(), graphic.getPerspective().getProjection());
+		this.modelViewProjection = new ModelViewProjection(camera.getMatrix(), perspectiveCtx.getPerspective().getProjection());
 		
 		// Delegate rasterization tasks to a dedicated engine
 		// No shading in this constructor -> null
-		this.rasterizer = new Rasterizer(camera, graphic, lighting);
+		this.rasterizer = new Rasterizer(camera, perspectiveCtx, lighting);
 	}
 		
 

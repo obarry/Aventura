@@ -2,7 +2,9 @@ package com.aventura.model.light;
 
 import java.awt.Color;
 
+import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.ModelViewProjection;
+import com.aventura.engine.Rasterizer;
 import com.aventura.math.projection.Orthographic;
 import com.aventura.math.tools.BoundingBox4;
 import com.aventura.math.vector.Vector3;
@@ -11,7 +13,6 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
 import com.aventura.model.world.World;
 import com.aventura.tools.tracing.Tracer;
-import com.aventura.view.MapView;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -131,17 +132,19 @@ public class DirectionalLight extends ShadowingLight {
 	}
 	
 	@Override
-	public void initShadowing(Perspective perspective, Camera camera_view, int map_size, World world) {
+	public void initShadowing(Perspective perspectiveWorld, Camera camera_view, int map_size, World world) {
 		this.world = world;
-		initShadowing( perspective, camera_view, map_size);
+		initShadowing(perspectiveWorld, camera_view, map_size);
 	}
 
 	@Override
-	public void initShadowing(Perspective perspective, Camera camera_view, int map_size) {
+	public void initShadowing(Perspective perspectiveWorld, Camera camera_view, int map_size) {
 
-		map = new MapView(map_size, map_size);
+		// map = new MapView(map_size, map_size);
+		this.map_size = map_size;
 		
-		calculateCameraLight(perspective, camera_view, light_vector.times(-1));
+		calculateCameraLight(perspectiveWorld, camera_view, light_vector.times(-1));
+		//calculateCameraLight(perspectiveWorld, camera_view, light_vector);
 		
 		/*
 		 * Mat4 viewMatrix = LookAt(lighting.mCameraPosition,
@@ -229,14 +232,18 @@ public class DirectionalLight extends ShadowingLight {
 		
 		// At last initialize the Orthographic projection
 		// Orthographic(float left, float right, float bottom, float top, float near, float far)
-		perspective_light = new Orthographic(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ());
+		
+		// TODO PPU calculation is NOT EFAULT_SHADOW_MAP_DIMENSION
+		perspectiveCtx_light = new PerspectiveContext(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
+		//perspective_light = new Orthographic(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ());
+		rasterizer_light = new Rasterizer(camera_light, perspectiveCtx_light, null);
 
 		// Create the MVP using this orthographic projection matrix
-		modelViewProjection = new ModelViewProjection(camera_light.getMatrix(), perspective_light);
+		modelViewProjection = new ModelViewProjection(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
 		
 	}
 
-	public void calculateCameraLight(Perspective perspective, Camera camera_view, Vector3 lightDirection) {
+	public void calculateCameraLight(Perspective perspectiveWorld, Camera camera_view, Vector3 lightDirection) {
 		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the gUIView frustum
 		
 		// For this calculate the 8 points of the GUIView frustum in World coordinates
@@ -249,20 +256,20 @@ public class DirectionalLight extends ShadowingLight {
 		// - The eye-point of interest (camera direction) normalized vector
 		Vector4 fwd = camera_view.getForward().normalize();
 		
-		// TODO can we move out the Projection class from the graphic context  ?
+		// TODO can we move out the Projection class from the perspective context  ?
 		// In order to have something more generic and more consistent
 		// TODO strange to get Near and Far from graphicContext and Up from Camera_view. Clean-up required ?
 
 		// - The distance to the near plane
-		float near = perspective.getNear();
+		float near = perspectiveWorld.getNear();
 		// - The distance to the far plane
-		float far = perspective.getFar();
+		float far = perspectiveWorld.getFar();
 		// - The up vector and side vectors
 		Vector4 up = camera_view.getUp();
 		Vector4 side = fwd.times(up).normalize();
 		// - the half width and half eight of the near plane
-		float half_eight_near = perspective.getHeight()/2;
-		float half_width_near = perspective.getWidth()/2;
+		float half_eight_near = perspectiveWorld.getHeight()/2;
+		float half_width_near = perspectiveWorld.getWidth()/2;
 		
 		// - the half width and half eight of the far plane
 		// Calculate the width and height on far plane using Thales: knowing that width and height are defined on the near plane

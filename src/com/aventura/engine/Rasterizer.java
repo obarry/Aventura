@@ -111,7 +111,7 @@ public class Rasterizer {
 
 
 	// References
-	protected PerspectiveContext graphic;
+	protected PerspectiveContext perspectiveCtx;
 	protected GUIView gUIView;
 	protected Lighting lighting;
 	protected Camera camera;
@@ -122,7 +122,7 @@ public class Rasterizer {
 
 	// Z buffer
 	private MapView zBuffer = null;
-	int zBuf_width, zBuf_height;	
+	int zBuf_width, zBuf_height;
 
 	// Pixel statistics
 	int rendered_pixels = 0;
@@ -138,16 +138,25 @@ public class Rasterizer {
 	/**
 	 * Creation of Rasterizer with requested references for run time.
 	 * @param camera : a pointer to the Camera created offline by user
-	 * @param graphic : a pointer to the PerspectiveContext created offline by user
+	 * @param perspectiveCtx : a pointer to the PerspectiveContext created offline by user
 	 * @param lighting : a pointer to the Lighting system created offline by user
 	 */
 	public Rasterizer(Camera camera, PerspectiveContext graphic, Lighting lighting) {
 		this.camera = camera;
-		this.graphic = graphic;
+		this.perspectiveCtx = graphic;
 		this.lighting = lighting;
 		pixelHalfWidth = graphic.getPixelHalfWidth();
 		pixelHalfHeight = graphic.getPixelHalfHeight();
 		// TODO Be cautious here : if PerspectiveContext has changed between 2 calls to previously created Rasterizer, the 2 above variables won't be refreshed accordingly -> potential bug
+	}
+
+	/**
+	 * Creation of minimal Rasterizer for shadow map rendering
+	 */
+	public Rasterizer(Camera camera) {
+		this.camera = camera;
+		this.perspectiveCtx = null;
+		this.lighting = null;
 	}
 
 	public void setView(GUIView v) {
@@ -155,18 +164,27 @@ public class Rasterizer {
 	}
 
 	/**
-	 * Initialize zBuffer by creating the table. This method is deported from the constructor in order to use it only when necessary.
-	 * It is not needed in case of line rendering.
+	 * Initialize zBuffer using the pixelHalfWidth and pixelHalfHeight values from the Constructor
 	 */
 	public MapView initZBuffer() {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+graphic.getPixelWidth()+" Height: "+graphic.getPixelHeight());
 
-		// zBuffer is initialized with far value of the perspective
-		float zBuffer_init = graphic.getPerspective().getFar();
+		return initZBuffer(2 * pixelHalfWidth  + 1, 2 * pixelHalfHeight + 1);
+	}
+	
+	/**
+	 * Initialize zBuffer by creating the table. This method is deported from the constructor in order to use it only when necessary.
+	 * It is not needed in case of line rendering.
+	 * @param zBuf_width the width of the zBuffer to create
+	 * @param zBuf_height the height of the zBuffer to create
+	 */
+	public MapView initZBuffer(int width, int height) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+perspectiveCtx.getPixelWidth()+" Height: "+perspectiveCtx.getPixelHeight());
+
+		this.zBuf_width = width;
+		this.zBuf_height = height;
+		// zBuffer is initialized with far value of the perspectiveCtx
+		float zBuffer_init = perspectiveCtx.getPerspective().getFar();
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "zBuffer init value: "+zBuffer_init);
-
-		zBuf_width  = 2 * pixelHalfWidth  + 1;
-		zBuf_height = 2 * pixelHalfHeight + 1;
 
 		// Only create buffer if needed, otherwise reuse it, it will be reinitialized below
 		if (zBuffer == null) zBuffer = new MapView(zBuf_width, zBuf_height);
@@ -175,11 +193,12 @@ public class Rasterizer {
 		// Any value closer will be drawn and the zBuffer in this place will be updated by new value
 		for (int i=0; i<zBuf_width; i++)  {
 			for (int j=0; j<zBuf_height; j++) {
-				zBuffer.set(i, j, zBuffer_init); // Far value of the perspective
+				zBuffer.set(i, j, zBuffer_init); // Far value of the perspectiveCtx
 			}
 		}
 		return zBuffer;
 	}
+
 
 	//
 	// A few tools, some methods to simplify method calls
@@ -261,6 +280,9 @@ public class Rasterizer {
 	 * @param interpolate a boolean to indicate if interpolation of colors is activated (true) or not (false)
 	 * @param texture a boolean to indicate if texture processing is activated (true) or not (false)
 	 * @param shadows a boolean to indicate if shadowing is enabled (true) or not (false)
+	 * @param shadowmap a boolean to indicate whether this is a rasterization only for a shadow map (true) or not (false). Rasterizing a shadow map
+	 * involves a simplified algorithm.
+	 * 
 	 **/
 	public void rasterizeTriangle(
 			Triangle t,
@@ -424,26 +446,27 @@ public class Rasterizer {
 						vp2.l[i].specularColor = computeSpecularColor(vp2.v.getWorldNormal(), viewer2, vp2.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
 						vp3.l[i].specularColor = computeSpecularColor(vp3.v.getWorldNormal(), viewer3, vp3.v.getWorldPos(), specExp, specCol, t.isRectoVerso(), sl);
 					}
-
-					if (shadows) {
-						// Transform the World position of the Vertex in this Light's coordinates
-						vp1.l[i].vl = sl.getModelView().project(vp1.v);
-						vp2.l[i].vl = sl.getModelView().project(vp2.v);
-						vp3.l[i].vl = sl.getModelView().project(vp3.v);
-
-						// Position vector in the Shadow map (homogeneous coordinates)
-						// TODO Check if really both vl and vm are needed or only one of them should be passed to rasterizeScanLine
-						//vp1.l[i].vm = null; // TBD
-						//vp1.l[i].vm = null; // TBD
-						//vp1.l[i].vm = null; // TBD
-
-						// Provide the link to Shadow Map for this Light
-						vp1.l[i].map = sl.getMap();
-						vp2.l[i].map = sl.getMap();
-						vp3.l[i].map = sl.getMap();
-					}
 				}
 			}
+
+			if (shadows) {
+				// For each Light
+				for (int i=0; i<nb_sl; i++) {
+
+					ShadowingLight sl = shadowingLights.get(i); // Used several times
+
+					// Transform the World position of the Vertex in this Light's coordinates
+					vp1.l[i].vl = sl.getModelView().project(vp1.v);
+					vp2.l[i].vl = sl.getModelView().project(vp2.v);
+					vp3.l[i].vl = sl.getModelView().project(vp3.v);
+
+					// Provide the link to Shadow Map for this Light
+					vp1.l[i].map = sl.getMap();
+					vp2.l[i].map = sl.getMap();
+					vp3.l[i].map = sl.getMap();
+				}
+			}
+
 		}
 
 		// Shadows
@@ -531,7 +554,8 @@ public class Rasterizer {
 							texture,
 							t.getTextureOrientation(),
 							shadows,
-							nb_sl);
+							nb_sl,
+							shadowmap);
 				} else {
 					rasterizeScanLine(
 							y,
@@ -546,7 +570,8 @@ public class Rasterizer {
 							texture,
 							t.getTextureOrientation(),
 							shadows,
-							nb_sl);
+							nb_sl,
+							shadowmap);
 				}
 			}
 
@@ -580,7 +605,8 @@ public class Rasterizer {
 							texture,
 							t.getTextureOrientation(),
 							shadows,
-							nb_sl);
+							nb_sl,
+							shadowmap);
 				} else {
 					rasterizeScanLine(
 							y,
@@ -595,7 +621,8 @@ public class Rasterizer {
 							texture,
 							t.getTextureOrientation(),
 							shadows,
-							nb_sl);
+							nb_sl,
+							shadowmap);
 				}
 			}
 		}
@@ -617,7 +644,9 @@ public class Rasterizer {
 			boolean 	texture, 		// Flag for texture calculation (true) or not (false)
 			int 		tex_orientation,// Flag for isotropic, vertical or horizontal texture interpolation
 			boolean 	shadows,		// Flag for shadowing enabled (true) or disabled (false)
-			int 		nb_lights) {	// Number of Lights (except ambient)
+			int 		nb_lights,		// Number of Lights (except ambient)
+			boolean 	shadowmap) {	// Flag for shadow map rasterization (true) or full rasterization (false)
+
 
 		// ***************************************************
 		//     Global Rasterization of Scan Line Algorithm
@@ -683,7 +712,7 @@ public class Rasterizer {
 			float z1 = 0, z2 = 0, za = 0, zb = 0, zc = 0, zd = 0;
 
 
-			switch (graphic.getPerspectiveType()) {
+			switch (perspectiveCtx.getPerspectiveType()) {
 
 			case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
 				// Vertices z
@@ -728,57 +757,61 @@ public class Rasterizer {
 			// Light vectors at begining and end of the segment to interpolate
 			Vector4 [] vl1 = null;
 			Vector4 [] vl2 = null;
-
-			if (interpolate) {
-				ishc1 = new Color [nb_lights];
-				ishc2 = new Color [nb_lights];
-				ispc1 = new Color [nb_lights];
-				ispc2 = new Color [nb_lights];
-			}
-
-			if (shadows) {
-				vl1 = new Vector4 [nb_lights];
-				vl2 = new Vector4 [nb_lights];
-			}
-
-			// For each Light
-			for (int i=0; i<nb_lights; i++) {
-				
-				if (interpolate) {
-					// Shaded color
-					ishc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].shadedColor,1/za), ColorTools.multColor(vpb.l[i].shadedColor,1/zb), gradient1);
-					ishc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].shadedColor,1/zc), ColorTools.multColor(vpd.l[i].shadedColor,1/zd), gradient2);
-					// Specular color
-					if (lighting.hasSpecular()) {
-						ispc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].specularColor,1/za), ColorTools.multColor(vpb.l[i].specularColor,1/zb), gradient1);
-						ispc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].specularColor,1/zc), ColorTools.multColor(vpd.l[i].specularColor,1/zd), gradient2);
-					}
-				} // Else (!interpolate) : do nothing (no interpolation or normal at triangle level)
-				
-				if (shadows) {
-					// Interpolate on each [VA, VB] and [VC, VD] segments for each Light
-					vl1[i] = Tools.interpolate(vpa.l[i].vl.times(1/za), vpb.l[i].vl.times(1/zb), gradient1);
-					vl2[i] = Tools.interpolate(vpc.l[i].vl.times(1/zc), vpd.l[i].vl.times(1/zd), gradient2);	
-				}
-			} // End for each Light
 			
-			//
-			// If texture enabled, calculate Texture vectors at beginning and end of the scan line
-			//
 			// Starting Texture & ending Texture coordinates
 			Vector4 vt1 = null;
 			Vector4 vt2 = null;
 			Vector4 vt = null;
-			if (texture && t!=null) {
-				vt1 = Tools.interpolate(vpa.t.times(1/za), vpb.t.times(1/zb), gradient1);
-				vt2 = Tools.interpolate(vpc.t.times(1/zc), vpd.t.times(1/zd), gradient2);
-			}
 
+			if (!shadowmap) {
+
+				if (interpolate) {
+					ishc1 = new Color [nb_lights];
+					ishc2 = new Color [nb_lights];
+					ispc1 = new Color [nb_lights];
+					ispc2 = new Color [nb_lights];
+				}
+
+				if (shadows) {
+					vl1 = new Vector4 [nb_lights];
+					vl2 = new Vector4 [nb_lights];
+				}
+
+				// For each Light
+				for (int i=0; i<nb_lights; i++) {
+
+					if (interpolate) {
+						// Shaded color
+						ishc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].shadedColor,1/za), ColorTools.multColor(vpb.l[i].shadedColor,1/zb), gradient1);
+						ishc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].shadedColor,1/zc), ColorTools.multColor(vpd.l[i].shadedColor,1/zd), gradient2);
+						// Specular color
+						if (lighting.hasSpecular()) {
+							ispc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].specularColor,1/za), ColorTools.multColor(vpb.l[i].specularColor,1/zb), gradient1);
+							ispc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].specularColor,1/zc), ColorTools.multColor(vpd.l[i].specularColor,1/zd), gradient2);
+						}
+					} // Else (!interpolate) : do nothing (no interpolation or normal at triangle level)
+
+					if (shadows) {
+						// Interpolate on each [VA, VB] and [VC, VD] segments for each Light
+						vl1[i] = Tools.interpolate(vpa.l[i].vl.times(1/za), vpb.l[i].vl.times(1/zb), gradient1);
+						vl2[i] = Tools.interpolate(vpc.l[i].vl.times(1/zc), vpd.l[i].vl.times(1/zd), gradient2);	
+					}
+				} // End for each Light
+
+				//
+				// If texture enabled, calculate Texture vectors at beginning and end of the scan line
+				//
+				if (texture && t!=null) {
+					vt1 = Tools.interpolate(vpa.t.times(1/za), vpb.t.times(1/zb), gradient1);
+					vt2 = Tools.interpolate(vpc.t.times(1/zc), vpd.t.times(1/zd), gradient2);
+				}
+			}
 			// Resulting colors
 			Color csp = DARK_SHADING_COLOR; // Specular color
 			Color ctx = null; // Texture color
 			Color cc; // Combined color to be drawn, result of the lighting and shading calculation
-
+			
+			
 			// drawing a line from left (sx) to right (ex) 
 			for (int x = sx; x < ex; x++) {
 
@@ -791,12 +824,11 @@ public class Rasterizer {
 					// Protect against out of bounds (should not happen)
 					if (x_zBuf>=0 && x_zBuf<zBuf_width && y_zBuf>=0 && y_zBuf<zBuf_height) {
 
-						cc = null;
-
 						// Interpolation gradient on scan line from sx (0) to ex (1)
 						float gradient = (float)(x-sx)/(float)(ex-sx);
 						// Calculate z using 1/z interpolation
 						float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
+
 						// zBuffer elimination at earliest stage of computation (as soon as we know z)
 						if (z>zBuffer.get(getXzBuf(x), getYzBuf(y))) { // Discard pixel
 							discarded_pixels++;
@@ -804,171 +836,182 @@ public class Rasterizer {
 
 						} else { // General case : compute colors and draw pixel
 
-							// Texture interpolation
-							if (texture && t!=null) {
 
-								vt = Tools.interpolate(vt1, vt2, gradient).times(z);
-								try {
-									// Projective Texture mapping using the fourth coordinate
-									// By default W of the texture vector is 1 but if not this will help to take account of the potential geometric distortion of the texture
-									switch (tex_orientation) {
-									case Triangle.TEXTURE_ISOTROPIC: // Default for a triangle
-										ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
-										break;
-									case Triangle.TEXTURE_VERTICAL:
-										ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
-										break;
-									case Triangle.TEXTURE_HORIZONTAL:
-										ctx = t.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
-										break;
-									default:
-										// Should never happen
-										if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid Texture orientation for this triangle: "+tex_orientation);
-									}
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-
-							} // End Texture interpolation
-
-							// --------------------------
-							// ---- Color Combination ---
-							// --------------------------
-
-							// Combine colors with the following formula
-							// One Light : Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
-							// Multiple Lights : Color K = DTA + SUM(Ci(DT + Si)) = DTA + SUM(CiDT) + SUM(CiSi)
-							// D: diffuse color, T: texture, A: Ambient color, Ci: color of the Light(i) source at point, Si: Specular color of the Light(i)
-							// Old : ctx = T, csh_l[i]  = Ci, ambientCol = A, csp_l[i] = Si
-
-							// Combine the multiple Light's Colors
-							// ------------------------------------
-							// Table of Colors for each light : Ci x D x T and Ci x Si respectively that will be combined later							
-							Color[] c_CiDT = new Color[nb_lights];
-							Color[] c_CiSi = new Color[nb_lights];
-
-							Color csh_l = null; // shaded color for the light
-							Color csp_l = null; // specular color for the light
-
-							for (int i=0; i<nb_lights; i++) {
+							if (!shadowmap) { // General rasterization case, not a shadow map rasterization
 								
-								float shadowCoef = 1;
+								cc = null;
 
-								if (shadows) { // then do the needful to know if the element is in shadow or not
-									Vector4 vl = Tools.interpolate(vl1[i], vl2[i], gradient).times(z);
-									shadowCoef = vpa.l[i].map.getInterpolation(vl.getX()/vl.getW(), vl.getY()/vl.getW());
-									
-									// TODO Work in Progress - To Be Completed
-									// For each light
-									//							int xs = 0, ys = 0; // projected position for shadow map
-									// Interpolate across the 2 segments using gradient
-									//							float zs = 1/Tools.interpolate(1/zs1, 1/zs2, gradient);
-									// Calculate xs and ys by
-									// - projection using the Light coordinates matrix
-									// - tranform from [-1.1] coordinates to [0,1] by multiplying the projection matrix appropriately
-									// - transformation in integer indices of the size of the shadow map
-									//							if (zs<lighting.getDirectionalLight().getMap(xs,ys)) {
+								// Texture interpolation
+								if (texture && t!=null) {
 
-									//							} else {
-									// in shadow
-									//							}
-
-									// Is there a needed correction using W coordinate ?
-									// Get the depth from the depth map using texture mapping interpolation technique
-									// Compare the 2 depths and if depth of the fragment is deeper than depth map
-									// then this fragment is in shadow and the corresponding shadow light should be 0
-									// else this fragment is in the light and shadow light should be 1
-
-									// TODO
-									// For each light
-									// Get the depth of the vertices in Light coordinates
-									//							float zsa = vsa_d.getW();
-									//							float zsb = vsb_d.getW();
-									//							float zsc = vsc_d.getW();
-									//							float zsd = vsd_d.getW();
-
-									// Interpolate across the 2 segments using gradients
-									// Starting Z & ending Z
-									//							zs1 = 1/Tools.interpolate(1/zsa, 1/zsb, gradient1);
-									//							zs2 = 1/Tools.interpolate(1/zsc, 1/zsd, gradient2);			
-								}
-
-								// Calculate the shaded color for this Light - Gouraud's shading
-								// If interpolation
-								if (interpolate) {
-									// Color interpolation
-									csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
-									if (lighting.hasSpecular()) {
-										csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light
-
-									} else {
-										csp_l = DARK_SHADING_COLOR; // No specular
-									}
-									if (shadows) {
-										csh_l = ColorTools.multColor(csh_l,  shadowCoef);
-										if (lighting.hasSpecular()) {
-											csp_l = ColorTools.multColor(csp_l,  shadowCoef);
+									vt = Tools.interpolate(vt1, vt2, gradient).times(z);
+									try {
+										// Projective Texture mapping using the fourth coordinate
+										// By default W of the texture vector is 1 but if not this will help to take account of the potential geometric distortion of the texture
+										switch (tex_orientation) {
+										case Triangle.TEXTURE_ISOTROPIC: // Default for a triangle
+											ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
+											break;
+										case Triangle.TEXTURE_VERTICAL:
+											ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
+											break;
+										case Triangle.TEXTURE_HORIZONTAL:
+											ctx = t.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
+											break;
+										default:
+											// Should never happen
+											if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid Texture orientation for this triangle: "+tex_orientation);
 										}
+									} catch (Exception e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
 									}
-									if (texture && t!=null) {
-										c_CiDT[i] = ColorTools.multColors(csh_l, ctx);
-									} else {
-										c_CiDT[i] = csh_l;
+
+								} // End Texture interpolation
+
+								// --------------------------
+								// ---- Color Combination ---
+								// --------------------------
+
+								// Combine colors with the following formula
+								// One Light : Color K = DTA + C(DT + S) = DTA + DTC + SC = DT(A+C) + SC
+								// Multiple Lights : Color K = DTA + SUM(Ci(DT + Si)) = DTA + SUM(CiDT) + SUM(CiSi)
+								// D: diffuse color, T: texture, A: Ambient color, Ci: color of the Light(i) source at point, Si: Specular color of the Light(i)
+								// Old : ctx = T, csh_l[i]  = Ci, ambientCol = A, csp_l[i] = Si
+
+								// Combine the multiple Light's Colors
+								// ------------------------------------
+								// Table of Colors for each light : Ci x D x T and Ci x Si respectively that will be combined later							
+								Color[] c_CiDT = new Color[nb_lights];
+								Color[] c_CiSi = new Color[nb_lights];
+
+								Color csh_l = null; // shaded color for the light
+								Color csp_l = null; // specular color for the light
+
+								for (int i=0; i<nb_lights; i++) {
+
+									float shadowCoef = 1;
+
+									if (shadows) { // then do the needful to know if the element is in shadow or not
+										Vector4 vl = Tools.interpolate(vl1[i], vl2[i], gradient).times(z);
+										shadowCoef = vpa.l[i].map.getInterpolation(vl.getX()/vl.getW(), vl.getY()/vl.getW());
+
+										// TODO Work in Progress - To Be Completed
+										// For each light
+										//							int xs = 0, ys = 0; // projected position for shadow map
+										// Interpolate across the 2 segments using gradient
+										//							float zs = 1/Tools.interpolate(1/zs1, 1/zs2, gradient);
+										// Calculate xs and ys by
+										// - projection using the Light coordinates matrix
+										// - tranform from [-1.1] coordinates to [0,1] by multiplying the projection matrix appropriately
+										// - transformation in integer indices of the size of the shadow map
+										//							if (zs<lighting.getDirectionalLight().getMap(xs,ys)) {
+
+										//							} else {
+										// in shadow
+										//							}
+
+										// Is there a needed correction using W coordinate ?
+										// Get the depth from the depth map using texture mapping interpolation technique
+										// Compare the 2 depths and if depth of the fragment is deeper than depth map
+										// then this fragment is in shadow and the corresponding shadow light should be 0
+										// else this fragment is in the light and shadow light should be 1
+
+										// TODO
+										// For each light
+										// Get the depth of the vertices in Light coordinates
+										//							float zsa = vsa_d.getW();
+										//							float zsb = vsb_d.getW();
+										//							float zsc = vsc_d.getW();
+										//							float zsd = vsd_d.getW();
+
+										// Interpolate across the 2 segments using gradients
+										// Starting Z & ending Z
+										//							zs1 = 1/Tools.interpolate(1/zsa, 1/zsb, gradient1);
+										//							zs2 = 1/Tools.interpolate(1/zsc, 1/zsd, gradient2);			
 									}
-									c_CiSi[i] = ColorTools.multColors(csh_l, csp_l);
-								} else { // Else csh is the base color passed in arguments and csp won't be used
-									//csh = shadedCol; // Shaded color passed in argument
-									// TODO specular color to be implemented
-								}
-								
-							} // End for each Light
 
-							// Combine each element of the formula to get one Color
-							// ----------------------------------------------------
-							// Multiple Lights : Color K = DTA + SUM(CiDT) + SUM(CiSi)
+									// Calculate the shaded color for this Light - Gouraud's shading
+									// If interpolation
+									if (interpolate) {
+										// Color interpolation
+										csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
+										if (lighting.hasSpecular()) {
+											csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light
 
-							Color c_DTA = null;
-							Color c_CiDT_sum = null;
-							Color c_CiSi_sum = null;
-
-							// DTA calculation
-							if (texture && t!=null) {
-								c_DTA = ColorTools.multColors(ctx, ambientCol);
-							} else {
-								c_DTA = ambientCol;
-							}
-
-							// SUM(CiDT) and SUM(CiSi) calculation, then sum the total
-							if (interpolate) {
-								c_CiDT_sum = ColorTools.addColors(c_CiDT); // Add all CiDT elements together
-								c_CiSi_sum = ColorTools.addColors(c_CiSi); // Add all CiSi elements together
-
-								// Sum the total
-								if (lighting.hasSpecular() && csp != null) {
-									// General case with all type of light (shaded and specular)
-									cc = ColorTools.addColors(c_DTA, ColorTools.addColors(c_CiDT_sum, c_CiSi_sum));
-								} else { // No Specular light, formula is simplified
-									cc = ColorTools.addColors(c_DTA, c_CiDT_sum);
-								}
-							} else { // no interpolation or normal at triangle level
-								if (texture) { 
-									if (lighting.hasSpecular() && csp != null) { // TODO implement the specular light calculation in case of no interpolation or normal at tirangle level
-										cc = ColorTools.addColors(c_DTA,ColorTools.multColors(ctx, shadedCol)); // Need to implement Specular color when no interpolation or normal at triangle level
-									} else {
-										cc = ColorTools.addColors(c_DTA, ColorTools.multColors(ctx, shadedCol));
+										} else {
+											csp_l = DARK_SHADING_COLOR; // No specular
+										}
+										if (shadows) {
+											csh_l = ColorTools.multColor(csh_l,  shadowCoef);
+											if (lighting.hasSpecular()) {
+												csp_l = ColorTools.multColor(csp_l,  shadowCoef);
+											}
+										}
+										if (texture && t!=null) {
+											c_CiDT[i] = ColorTools.multColors(csh_l, ctx);
+										} else {
+											c_CiDT[i] = csh_l;
+										}
+										c_CiSi[i] = ColorTools.multColors(csh_l, csp_l);
+									} else { // Else csh is the base color passed in arguments and csp won't be used
+										//csh = shadedCol; // Shaded color passed in argument
+										// TODO specular color to be implemented
 									}
+
+								} // End for each Light
+
+								// Combine each element of the formula to get one Color
+								// ----------------------------------------------------
+								// Multiple Lights : Color K = DTA + SUM(CiDT) + SUM(CiSi)
+
+								Color c_DTA = null;
+								Color c_CiDT_sum = null;
+								Color c_CiSi_sum = null;
+
+								// DTA calculation
+								if (texture && t!=null) {
+									c_DTA = ColorTools.multColors(ctx, ambientCol);
 								} else {
-									cc = ColorTools.addColors(c_DTA, shadedCol);
+									c_DTA = ambientCol;
 								}
 
-							}
+								// SUM(CiDT) and SUM(CiSi) calculation, then sum the total
+								if (interpolate) {
+									c_CiDT_sum = ColorTools.addColors(c_CiDT); // Add all CiDT elements together
+									c_CiSi_sum = ColorTools.addColors(c_CiSi); // Add all CiSi elements together
 
-							// ----------------------------------------------
-							// Pixel drawing
-							// Draw the point with calculated Combined Color
-							// ----------------------------------------------
-							drawPoint(x, y, z, cc);
+									// Sum the total
+									if (lighting.hasSpecular() && csp != null) {
+										// General case with all type of light (shaded and specular)
+										cc = ColorTools.addColors(c_DTA, ColorTools.addColors(c_CiDT_sum, c_CiSi_sum));
+									} else { // No Specular light, formula is simplified
+										cc = ColorTools.addColors(c_DTA, c_CiDT_sum);
+									}
+								} else { // no interpolation or normal at triangle level
+									if (texture) { 
+										if (lighting.hasSpecular() && csp != null) { // TODO implement the specular light calculation in case of no interpolation or normal at tirangle level
+											cc = ColorTools.addColors(c_DTA,ColorTools.multColors(ctx, shadedCol)); // Need to implement Specular color when no interpolation or normal at triangle level
+										} else {
+											cc = ColorTools.addColors(c_DTA, ColorTools.multColors(ctx, shadedCol));
+										}
+									} else {
+										cc = ColorTools.addColors(c_DTA, shadedCol);
+									}
+
+								}
+
+								// ----------------------------------------------
+								// Pixel drawing
+								// Draw the point with calculated Combined Color
+								// ----------------------------------------------
+								drawPoint(x, y, z, cc);
+
+							} else { // Shadow map rasterization
+								
+								drawMap(x, y, z); // Only update the zBuffer that will become the shadow map at the end of the rasterization
+
+							}
 						} 
 
 					} else { // Out of zBuffer range (should not happen)
@@ -1005,6 +1048,22 @@ public class Rasterizer {
 		gUIView.drawPixel(x,y,c);
 
 		// Update zBuffer of this pixel to the new z
+		zBuffer.set(getXzBuf(x), getYzBuf(y), z);
+
+		// Increment counter of rendered pixels
+		rendered_pixels++;
+	}
+
+	/**
+	 * Draw point with zBuffer management
+	 * @param x X screen coordinate (origin is in the center of the screen)
+	 * @param y Y screen coordinate (origin is in the center of the screen)
+	 * @param z Z homogeneous coordinate for Z buffering
+	 * @param c Color of the pixel
+	 */
+	protected void drawMap(int x, int y, float z) {
+
+		// Drawing the map means only updating zBuffer of this pixel to the new z
 		zBuffer.set(getXzBuf(x), getYzBuf(y), z);
 
 		// Increment counter of rendered pixels
