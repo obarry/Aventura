@@ -143,7 +143,7 @@ public class DirectionalLight extends ShadowingLight {
 		// map = new MapView(map_size, map_size);
 		this.map_size = map_size;
 		
-		calculateCameraLight(perspectiveWorld, camera_view, light_vector.times(-1));
+		calculateCameraLight(perspectiveWorld, camera_view);
 		//calculateCameraLight(perspectiveWorld, camera_view, light_vector);
 		
 		/*
@@ -243,7 +243,7 @@ public class DirectionalLight extends ShadowingLight {
 		
 	}
 
-	public void calculateCameraLight(Perspective perspectiveWorld, Camera camera_view, Vector3 lightDirection) {
+	public void calculateCameraLight(Perspective perspectiveWorld, Camera camera_view) {
 		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the gUIView frustum
 		
 		// For this calculate the 8 points of the GUIView frustum in World coordinates
@@ -299,12 +299,13 @@ public class DirectionalLight extends ShadowingLight {
 		// P24 = Eye + cam_dir*far - up*half_height_far + side*half_width_far
 		frustum[1][3] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).plus(side.times(half_width_far));
 		
-		// Then the center of this Frustrum is (P11+P12+P13+P14 + P21+P22+P23+P24)/8
+		// Then the center of this Frustum is (P11+P12+P13+P14 + P21+P22+P23+P24)/8
 		// We take it as PoI for the Camera light
 		Vector4 light_PoI = (frustum[0][0].plus(frustum[0][1]).plus(frustum[0][2]).plus(frustum[0][3]).plus(frustum[1][0]).plus(frustum[1][1]).plus(frustum[1][2]).plus(frustum[1][3])).times(1/8);
+		light_PoI.setPoint();
 		
 		//Vector4 light_dir = lighting.getDirectionalLight().getLightVector(null).V4();
-		Vector4 light_dir = lightDirection.V4();
+		Vector4 light_dir = this.light_vector.times(-1).V4();
 		
 		// Build Camera light
 		// We need to calculate the camera light Eye
@@ -318,4 +319,7 @@ public class DirectionalLight extends ShadowingLight {
 
 	}
 	
+	public String toString() {
+		return "Directional Light with light vector (= -direction of the light) : " + this.light_vector;
+	}
 }

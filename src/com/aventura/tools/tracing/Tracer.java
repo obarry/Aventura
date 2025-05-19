@@ -25,7 +25,7 @@ public class Tracer {
     public static boolean state     = true;
 	public static boolean object    = false;
 	public static boolean stats     = true;
-	public static boolean debug     = true;
+	public static boolean debug     = false;
     
     // For output to file
     public static boolean isfile = false;

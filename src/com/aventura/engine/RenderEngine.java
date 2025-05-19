@@ -226,10 +226,13 @@ public class RenderEngine {
 
 
 			if (lighting.hasShadowing()) { // If there are Shadowing lights
+				if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendering: lighting has shadowing - Generating Shadow Maps ***");
 				
 				ArrayList<ShadowingLight> shadowingLights = lighting.getShadowingLights();
+				if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendering: lighting has shadowing. Number of shadowing lights: "+shadowingLights.size());
 				
 				for (int i = 0; i < shadowingLights.size(); i++) { // Loop on all Shadowing lights
+					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Shadowing Light #" + i + " : "+shadowingLights.get(i));
 
 					// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
 					shadowingLights.get(i).initShadowing(perspectiveContext.getPerspective(), camera, gUIView.getViewWidth());
@@ -238,6 +241,7 @@ public class RenderEngine {
 					// TODO optimization : build a world2 containing only the Elements that can cast shadows by using bouncing algorithm then generate shadow map for this world2
 					shadowingLights.get(i).generateShadowMap(world); // need to recurse on each Element
 				}
+				if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendering: End Generating Shadow Maps ***");
 			}
 		}
 

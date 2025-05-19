@@ -132,6 +132,7 @@ public class Element implements Transformable, Shape, Generable {
 	protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
 	
 	protected Matrix4 transform;  // Element to World Transformation Matrix (Model Matrix)
+	boolean hasTransformation = false; // To know if the Element is genuine (default) or transformed
 	
 	// Colors and specular reflection characteristics
 	protected Color elementColor = null; // Color of the element unless specified at Triangle or Vertex level (lowest level priority)
@@ -330,15 +331,13 @@ public class Element implements Transformable, Shape, Generable {
 	@Override
 	public void setTransformation(Matrix4 transformation) {
 		this.transform = transformation;
-		//this.calculateNormals();
+		this.hasTransformation = true;
 	}
 
 	@Override
 	public void combineTransformation(Matrix4 transformation) {
-		// TODO Auto-generated method stub
-		//this.transform.timesEquals(transformation);
 		this.transform = transformation.times(this.transform);
-		//this.calculateNormals();
+		this.hasTransformation = true;
 	}
 
 	@Override
@@ -414,7 +413,9 @@ public class Element implements Transformable, Shape, Generable {
 		element += "* Vertices: " + getNbVertices() + "\n";
 		element += "* Element color: " + getColor() + "\n";
 		element += "* Specular color: " + getSpecularColor() + "\n";
-		element += "* Specular exponent: " + getSpecularExp() + "\n";		
+		element += "* Specular exponent: " + getSpecularExp() + "\n";
+		element += "* Has transformation: " + (hasTransformation ? "yes" : "no");
+		if (hasTransformation) element += "\n* Transformation matrix: \n" + getTransformation();
 		return element;
 		//return "Element name: "+name+"\nTriangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nElement color: "+elementColor+"\nSpecular color: "+specularColor+" Specular exponent: "+specularExponent;		
 	}

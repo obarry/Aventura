@@ -145,7 +145,7 @@ public class PointLight extends ShadowingLight {
 	}
 
 	@Override
-	public void calculateCameraLight(Perspective perspective, Camera camera_view, Vector3 lightDirection) {
+	public void calculateCameraLight(Perspective perspective, Camera camera_view) {
 		// TODO Auto-generated method stub
 		
 	}

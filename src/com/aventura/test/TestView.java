@@ -84,7 +84,7 @@ public class TestView {
 		
 		TestView test = new TestView();
 
-		GUIView gUIView = test.createView(PerspectiveContext.PERSPECTIVE_DEFAULT);
+		GUIView gUIView = test.createView(new PerspectiveContext());
 
 		for (int i=0; i<20; i++) {
 

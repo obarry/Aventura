@@ -94,7 +94,7 @@ public class TestView2 {
 			}
 		}
 
-		GUIView gUIView = test.createView(PerspectiveContext.PERSPECTIVE_DEFAULT);
+		GUIView gUIView = test.createView(new PerspectiveContext());
 		gUIView.initView(mapView);
 		gUIView.renderView();
 		

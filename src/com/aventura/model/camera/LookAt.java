@@ -95,8 +95,14 @@ public class LookAt extends Matrix4 {
 	 */
 	public LookAt(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector4");
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "e: "+e);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "p: "+p);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "u: "+u);
 	
-		generateLookAt(e, p, u);												
+		generateLookAt(e, p, u);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n" +this);
+
+
 	}
 
 	/**
@@ -108,8 +114,12 @@ public class LookAt extends Matrix4 {
 	 */
 	public LookAt(Vector3 e, Vector3 p, Vector3 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(e, p, u) with Vector3");
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "e: "+e);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "p: "+p);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "u: "+u);
 		
-		generateLookAt(e.V4(), p.V4(), u.V4());												
+		generateLookAt(e.V4(), p.V4(), u.V4());										
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n" +this);
 	}
 	
 	/**
@@ -120,8 +130,11 @@ public class LookAt extends Matrix4 {
 	 */
 	public LookAt(Vector4 f, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "LookAt(f, u) with Vector4");
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "f: "+f);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "u: "+u);
 		
 		generateLookAt(f, u);												
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n" +this);
 	}
 	
 	/**
@@ -161,7 +174,7 @@ public class LookAt extends Matrix4 {
 		} catch (Exception exc) {
 			// Should never happen
 		}
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);						
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);						
 	}
 
 	/**
@@ -191,7 +204,7 @@ public class LookAt extends Matrix4 {
 		} catch (Exception exc) {
 			// Should never happen
 		}
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);						
+		//if (Tracer.info) Tracer.traceInfo(this.getClass(), "LookAt matrix:\n"+ this);						
 	}
 	
 	/**

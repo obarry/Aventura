@@ -120,14 +120,17 @@ public class PerspectiveContext {
 	Perspective perspective; // link to the perspective that this PerspectiveContext is defining
 
 	// A Default context that can then be modified using accessors
-	public static PerspectiveContext PERSPECTIVE_DEFAULT = new PerspectiveContext(8,4.5f,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100); // Width/Height ratio = 16/9
+	// Now replaced by empty constructor
+	//public static PerspectiveContext PERSPECTIVE_DEFAULT = new PerspectiveContext(8,4.5f,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100); // Width/Height ratio = 16/9
 
 	
 	/**
-	 * Empty constructor
+	 * Empty constructor -> Default Perspective
 	 */
 	public PerspectiveContext() {
 		// To be used when creating manually PerspectiveContext by using setter/getters
+		this.ppu = 100;
+		createPerspective(PERSPECTIVE_TYPE_FRUSTUM, 8,4.5f,10,1000); // Width/Height ratio = 16/9
 	}
 	
 	/**
@@ -165,6 +168,7 @@ public class PerspectiveContext {
 	 * @param ppu
 	 */
 	public PerspectiveContext(float width, float height, float dist, float depth, int perspective, int ppu) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: width: "+width+" height:"+height+" dist: "+dist+" depth: "+depth+" ppu: "+ppu+" type: "+getTypeString(perspective));
 
 		this.p_type = perspective;
 		this.ppu = ppu;
@@ -178,6 +182,7 @@ public class PerspectiveContext {
 	}
 	
 	public PerspectiveContext(float top, float bottom, float right, float left, float far, float near, int perspective, int ppu) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: top: "+top+" bottom: "+bottom+" right: "+right+" left: "+left+" far: "+far+" near: "+near+" ppu: "+ppu+" type: "+getTypeString(perspective));
 		
 		this.pixelWidth = (int)((right-left)*ppu);
 		this.pixelHeight = (int)((top-bottom)*ppu);
@@ -203,6 +208,7 @@ public class PerspectiveContext {
 	}
 	
 	protected void createPerspective(int p_type, float width, float height, float dist, float depth) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: width: "+width+" height:"+height+" dist: "+dist+" depth: "+depth+" ppu: "+ppu);
 		
 		switch (p_type) {
 		case PERSPECTIVE_TYPE_FRUSTUM:
@@ -218,6 +224,7 @@ public class PerspectiveContext {
 	}
 	
 	protected void createPerspective(int p_type, float left, float right, float bottom, float top, float near, float far) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: top: "+top+" bottom: "+bottom+" right: "+right+" left: "+left+" far: "+far+" near: "+near+" ppu: "+ppu);
 		
 		switch (p_type) {
 		case PERSPECTIVE_TYPE_FRUSTUM:
@@ -267,6 +274,18 @@ public class PerspectiveContext {
 	
 	public int getPPU() {
 		return ppu;
+	}
+	
+	public String getTypeString(int p_type) {
+		switch (p_type) {
+		case PERSPECTIVE_TYPE_FRUSTUM:
+			return "PERSPECTIVE_TYPE_FRUSTUM";
+		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+			return "PERSPECTIVE_TYPE_ORTHOGRAPHIC";
+		default:
+			return "WRONG perspective type";
+		}
+
 	}
 	
 }
