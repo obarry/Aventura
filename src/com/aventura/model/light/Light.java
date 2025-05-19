@@ -36,9 +36,12 @@ import com.aventura.math.vector.Vector4;
 
 public abstract class Light {
 	
+	// Default Constants
 	public static Color DEFAULT_LIGHT_COLOR = Color.WHITE;
 	public static float DEFAULT_LIGHT_INTENSITY = 1;
 	
+	// Light generic attributes (more attributes in derivated classes)
+	// E.g. light direction is not generic since some lights are omni-directional (e.g. PointLight) but have other attributes as the origin of the light source
 	protected Color lightColor = DEFAULT_LIGHT_COLOR;
 	protected float intensity = DEFAULT_LIGHT_INTENSITY;
 

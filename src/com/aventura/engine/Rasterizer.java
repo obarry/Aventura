@@ -294,7 +294,7 @@ public class Rasterizer {
 			boolean shadows,
 			boolean shadowmap) {
 
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Rasterize triangle. Color: "+surfCol);
+		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterize triangle. Color: "+surfCol);
 
 		// Init pixel stats
 		rendered_pixels = 0;
@@ -627,7 +627,7 @@ public class Rasterizer {
 			}
 		}
 
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Discarded lines: "+discarded_lines);
+		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Discarded lines: "+discarded_lines);
 	}
 
 

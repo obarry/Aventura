@@ -41,7 +41,8 @@ public class TestRasterizer1 {
 		Tracer.info = true;
 		Tracer.function = true;
 		
-		PerspectiveContext graphic = PerspectiveContext.PERSPECTIVE_DEFAULT;
+		//PerspectiveContext graphic = PerspectiveContext.PERSPECTIVE_DEFAULT;
+		PerspectiveContext graphic = new PerspectiveContext();
 		
 		System.out.println("PerspectiveContext: "+graphic);
 		

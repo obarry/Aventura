@@ -148,7 +148,7 @@ public abstract class ShadowingLight extends Light {
 	
 	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size, World world);
 	
-	public abstract void calculateCameraLight(Perspective perspective, Camera camera_view, Vector3 lightDirection); 
+	public abstract void calculateCameraLight(Perspective perspective, Camera camera_view); 
 	
 	/**
 	 * This method will generate the shadow map for the elements of the world passed in parameter with the camera light previously

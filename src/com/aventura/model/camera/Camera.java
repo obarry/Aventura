@@ -41,17 +41,14 @@ public class Camera {
 	
 
 	public Camera() {
-		super();
 	}
 
 	public Camera(LookAt la, Vector4 e) {
-		super();
 		eye =e;
 		lookAt = la;
 	}
 
 	public Camera(Matrix4 m, Vector4 e) {
-		super();
 		eye = e;
 		lookAt = new LookAt(m);
 	}
@@ -65,14 +62,13 @@ public class Camera {
 	 * @param u the Up vector for the World to leverage for the Camera
 	 */
 	public Camera(Vector4 e, Vector4 p, Vector4 u) {
-		super();
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating Camera");
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating Camera with vectors e: "+e+" p: "+p+" u: "+u);
 		eye = e;
 		lookAt = new LookAt(e,p,u);
 	}
 	
 	public void updateCamera(Vector4 e, Vector4 p, Vector4 u) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Updating Camera");
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Updating Camera with vectors e: "+e+" p: "+p+" u: "+u);
 		eye = e;
 		lookAt.generateLookAt(e, p, u);
 	}

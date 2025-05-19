@@ -170,7 +170,8 @@ public class TestAventura1 {
 		
 		Camera camera = test.createCamera();
 		
-		PerspectiveContext context = PerspectiveContext.PERSPECTIVE_DEFAULT;
+		//PerspectiveContext context = PerspectiveContext.PERSPECTIVE_DEFAULT;
+		PerspectiveContext context = new PerspectiveContext();
 		System.out.println(context);
 		System.out.println(context.getPerspective());
 		System.out.println(context.getPerspective().getProjection());

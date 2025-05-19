@@ -558,5 +558,20 @@ public class Vector4 {
 	public Vector3 V3() {
 		return new Vector3(this);
 	}
+	
+	public boolean isVector() {
+		return w == 0 ? true : false;
+	}
 
+	public boolean isPoint() {
+		return w != 0 ? true : false;
+	}
+	
+	public void setVector() {
+		this.w = 0;
+	}
+	
+	public void setPoint() {
+		this.w = 1;
+	}
 }
