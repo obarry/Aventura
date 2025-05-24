@@ -1,5 +1,8 @@
 package com.aventura.math.tools;
 
+import java.util.Arrays;
+
+import com.aventura.math.Constants;
 import com.aventura.math.vector.Vector4;
 
 /**
@@ -138,4 +141,16 @@ public class BoundingBox4 {
 	public Vector4 getP24() {
 		return boxPoints[1][3];
 	}
+	
+	public String toString() {
+		String s = "";
+
+		for (int i = 0; i<2; i++) {
+			for (int j = 0; j<4; j++) {
+				s = s + "boxPoint [" + i + "," + j + "] = " + boxPoints[i][j] + "\n";
+			}
+		}
+		return s;
+	}
+
 }

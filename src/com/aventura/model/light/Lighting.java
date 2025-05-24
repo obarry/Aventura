@@ -2,6 +2,8 @@ package com.aventura.model.light;
 
 import java.util.ArrayList;
 
+import com.aventura.tools.tracing.Tracer;
+
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -62,19 +64,23 @@ public class Lighting {
 	protected boolean specularLight = false; // Default is no specular reflection
 	
 	public Lighting() {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System without any Light.");
 	}
 	
 	public Lighting(DirectionalLight directional) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System with Directional Light : " + directional);
 		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
 		this.directional = directional;
 		this.shadowingLights.add(directional);
 	}
 	
 	public Lighting(AmbientLight ambient) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System with Ambient Light : " + ambient);
 		this.ambient = ambient;
 	}
 	
 	public Lighting(DirectionalLight directional, AmbientLight ambient) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System with Directional Light : " + directional + " and Ambient Light : " + ambient);
 		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
 		this.ambient = ambient;
 		this.directional = directional;
@@ -82,6 +88,7 @@ public class Lighting {
 	}
 	
 	public Lighting(DirectionalLight directional, boolean specularLight) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System with Directional Light : " + directional + "Specular " + (specularLight ? "enabled" : "disabled"));
 		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
 		this.directional = directional;
 		this.shadowingLights.add(directional);
@@ -89,6 +96,7 @@ public class Lighting {
 	}
 	
 	public Lighting(DirectionalLight directional, AmbientLight ambient, boolean specularLight) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System with Ambient Light : " + ambient + "Specular " + (specularLight ? "enabled" : "disabled"));
 		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
 		this.ambient = ambient;
 		this.directional = directional;

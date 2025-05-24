@@ -61,6 +61,7 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction) {
 		super(direction.length()); // Intensity is taken from the norm of the direction vector
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction);
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
@@ -72,6 +73,7 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, float intensity) {
 		super(intensity);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " Intensity : " + intensity);
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
@@ -83,6 +85,7 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, World world) {
 		super(direction.length(), world); // Intensity is taken from the norm of the direction vector
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " + World");
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
@@ -94,6 +97,7 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, float intensity, World world) {
 		super(intensity, world);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " Intensity : " + intensity + " + World");
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
@@ -139,6 +143,7 @@ public class DirectionalLight extends ShadowingLight {
 
 	@Override
 	public void initShadowing(Perspective perspectiveWorld, Camera camera_view, int map_size) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "initShadowing");
 
 		// map = new MapView(map_size, map_size);
 		this.map_size = map_size;
@@ -159,6 +164,8 @@ public class DirectionalLight extends ShadowingLight {
 		 * 											lighting.mCameraPosition.z - 25.0f) * viewMatrix;
 		 */
 		BoundingBox4 box = null;
+		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Creating Bounding Box. ShadowingBox type : " + toStringShadowingBoxType(this.shadowingBox_type));
 		switch (this.shadowingBox_type) {
 		
 		case SHADOWING_BOX_VIEWFRUSTUM:
@@ -178,8 +185,8 @@ public class DirectionalLight extends ShadowingLight {
 			// The create the bounding box around the 8 vertices of the view Frustum (in Light's coordinates)
 			box = new BoundingBox4(frustumProj);
 			
-
 			break;
+			
 		case SHADOWING_BOX_WORLD:
 			// Define the bounding box for the light camera
 			// For this create the min and max of the World (in World coordinates)	
@@ -201,17 +208,22 @@ public class DirectionalLight extends ShadowingLight {
 			// Create the bounding box around the 8 vertices of the World "box" (in Light's coordinates)
 			box = new BoundingBox4(worldBox);
 			break;
+			
 		case SHADOWING_BOX_ELEMENT: // Not implemented yet
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_ELEMENT");
 			break;
+			
 		case SHADOWING_BOX_SPECIFIC: // Not implemented yet
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_SPECIFIC");
 			break;
+			
 		default:
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Unknown Shadowing Box Type: " + this.shadowingBox_type);
 			break;
 		}
 		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Bounding Box : \n" + box);
+	
 		/*
 		 * From: https://community.khronos.org/t/directional-light-and-shadow-mapping-gUIView-projection-matrices/71386
 		 * 
@@ -244,6 +256,7 @@ public class DirectionalLight extends ShadowingLight {
 	}
 
 	public void calculateCameraLight(Perspective perspectiveWorld, Camera camera_view) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "calculateCameraLight");
 		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the gUIView frustum
 		
 		// For this calculate the 8 points of the GUIView frustum in World coordinates
@@ -299,6 +312,15 @@ public class DirectionalLight extends ShadowingLight {
 		// P24 = Eye + cam_dir*far - up*half_height_far + side*half_width_far
 		frustum[1][3] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).plus(side.times(half_width_far));
 		
+		String s = "";
+		for (int i = 0; i<2; i++) {
+			for (int j = 0; j<4; j++) {
+				s = s + "frustum [" + i + "," + j + "] = " + frustum[i][j] + "\n";
+			}
+		}
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Frustum : \n"+s);
+		
+
 		// Then the center of this Frustum is (P11+P12+P13+P14 + P21+P22+P23+P24)/8
 		// We take it as PoI for the Camera light
 		Vector4 light_PoI = (frustum[0][0].plus(frustum[0][1]).plus(frustum[0][2]).plus(frustum[0][3]).plus(frustum[1][0]).plus(frustum[1][1]).plus(frustum[1][2]).plus(frustum[1][3])).times(1/8);
