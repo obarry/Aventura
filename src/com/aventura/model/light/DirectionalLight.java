@@ -245,13 +245,13 @@ public class DirectionalLight extends ShadowingLight {
 		// At last initialize the Orthographic projection
 		// Orthographic(float left, float right, float bottom, float top, float near, float far)
 		
-		// TODO PPU calculation is NOT EFAULT_SHADOW_MAP_DIMENSION
-		perspectiveCtx_light = new PerspectiveContext(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
+		// TODO PPU calculation is NOT DEFAULT_SHADOW_MAP_DIMENSION
+		perspectiveCtx_light = new PerspectiveContext(box.getMaxY(), box.getMinY(), box.getMaxX(), box.getMinX(), box.getMaxZ(), box.getMinZ(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
 		//perspective_light = new Orthographic(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ());
 		rasterizer_light = new Rasterizer(camera_light, perspectiveCtx_light, null);
 
 		// Create the MVP using this orthographic projection matrix
-		modelViewProjection = new ModelViewProjection(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
+		mvp_light = new ModelViewProjection(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
 		
 	}
 

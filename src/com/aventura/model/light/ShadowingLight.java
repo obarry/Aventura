@@ -72,9 +72,7 @@ public abstract class ShadowingLight extends Light {
 	protected Camera camera_light; // The corresponding "camera" from Light View's perspective
 	protected PerspectiveContext perspectiveCtx_light; // The perspective from the light to generate the shadow map
 	protected Rasterizer rasterizer_light; // An instance of rasterizer dedicated to this light to generate the shadow map
-	
-	// ModelViewProjection matrix and vertices conversion tool for the calculation of the Shadow map
-	protected ModelViewProjection modelViewProjection;
+	protected ModelViewProjection mvp_light; // ModelViewProjection matrix and vertices conversion tool for the calculation of the Shadow map
 
 	// GUIView Frustum
 	protected Vector4[][] frustum;
@@ -183,12 +181,12 @@ public abstract class ShadowingLight extends Light {
 		} else {
 			model = matrix.times(e.getTransformation());
 		}
-		modelViewProjection.setModel(model);
-		modelViewProjection.calculateMVPMatrix(); // Compute the whole ModelViewProjection modelViewProjection matrix including Camera (gUIView)
+		mvp_light.setModel(model);
+		mvp_light.calculateMVPMatrix(); // Compute the whole ModelViewProjection mvp_light matrix including Camera (gUIView)
 
 		// Calculate projection for all vertices of this Element
-		modelViewProjection.transformElement(e, false); // Calculate prj_pos of each vertex
-		// TODO Verify that modelViewProjection.transformVertices does not calculate normals (not needed here) projection
+		mvp_light.transformElement(e, false); // Calculate prj_pos of each vertex
+		// TODO Verify that mvp_light.transformVertices does not calculate normals (not needed here) projection
 
 		map = rasterizer_light.initZBuffer(map_size, map_size); // ShadowMap is square
 
@@ -216,7 +214,7 @@ public abstract class ShadowingLight extends Light {
 	}
 
 	public ModelViewProjection getModelView() {
-		return modelViewProjection;
+		return mvp_light;
 	}
 	
 	public float getMap(int x, int y) {
