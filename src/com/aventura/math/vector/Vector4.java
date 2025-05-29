@@ -571,7 +571,11 @@ public class Vector4 {
 		this.w = 0;
 	}
 	
-	public void setPoint() {
+	public void point() {
 		this.w = 1;
+	}
+	
+	public void vector() {
+		this.w = 0;
 	}
 }

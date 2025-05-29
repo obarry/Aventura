@@ -12,6 +12,7 @@ import com.aventura.model.perspective.Perspective;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.Triangle;
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.MapView;
 
 
@@ -71,13 +72,11 @@ public abstract class ShadowingLight extends Light {
 	protected Camera camera_light; // The corresponding "camera" from Light View's perspective
 	protected PerspectiveContext perspectiveCtx_light; // The perspective from the light to generate the shadow map
 	protected Rasterizer rasterizer_light; // An instance of rasterizer dedicated to this light to generate the shadow map
-	
-	// ModelViewProjection matrix and vertices conversion tool for the calculation of the Shadow map
-	protected ModelViewProjection modelViewProjection;
+	protected ModelViewProjection mvp_light; // ModelViewProjection matrix and vertices conversion tool for the calculation of the Shadow map
 
 	// GUIView Frustum
-	protected Vector4[][] frustum;
-	protected Vector4 frustumCenter;
+	//protected Vector4[][] frustum;
+	//protected Vector4 frustumCenter;
 	
 	// World that can cast shadows with that Light, only needed starting ShadowingLight in the class hierarchy
 	World world = null;
@@ -88,6 +87,7 @@ public abstract class ShadowingLight extends Light {
 	
 	// Default constructor
 	public ShadowingLight() {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating ShadowingLight without any parameters.");
 		// Nothing else to do here, most of the initialization is done by initShadowing, triggered when needed by RenderEngine (only when shadowing is activated)
 	}
 		
@@ -96,6 +96,7 @@ public abstract class ShadowingLight extends Light {
 	 * @param intensity
 	 */
 	public ShadowingLight(float intensity) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating ShadowingLight. Intensity : " + intensity);
 		this.intensity = intensity;
 	}
 
@@ -104,6 +105,7 @@ public abstract class ShadowingLight extends Light {
 	 * @param shadowingBox_type
 	 */
 	public ShadowingLight(int shadowingBox_type) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating ShadowingLight. ShadowingBox type : "+toStringShadowingBoxType(shadowingBox_type));
 		this.shadowingBox_type = shadowingBox_type;
 	}
 	
@@ -113,6 +115,7 @@ public abstract class ShadowingLight extends Light {
 	 * @param world the World to be used as shadowing box to calculate the shadow map and its perspective
 	 */
 	public ShadowingLight(int shadowingBox_type, World world) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating ShadowingLight. ShadowingBox type : "+toStringShadowingBoxType(shadowingBox_type) + " + World");
 		this.shadowingBox_type = shadowingBox_type;
 		this.world = world;
 	}
@@ -123,6 +126,7 @@ public abstract class ShadowingLight extends Light {
 	 * @param intensity
 	 */
 	public ShadowingLight(int shadowingBox_type, float intensity) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating ShadowingLight. ShadowingBox type : "+toStringShadowingBoxType(shadowingBox_type) + " Intensity : " + intensity);
 		this.shadowingBox_type = shadowingBox_type;
 		this.intensity = intensity;
 	}
@@ -134,6 +138,7 @@ public abstract class ShadowingLight extends Light {
 	 * @param world the World to be used as shadowing box to calculate the shadow map and its perspective
 	 */
 	public ShadowingLight(int shadowingBox_type, float intensity, World world) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating ShadowingLight. ShadowingBox type : " + toStringShadowingBoxType(shadowingBox_type)+" Intensity : " + intensity + " + World");
 		this.shadowingBox_type = shadowingBox_type;
 		this.intensity = intensity;
 		this.world = world;
@@ -176,12 +181,12 @@ public abstract class ShadowingLight extends Light {
 		} else {
 			model = matrix.times(e.getTransformation());
 		}
-		modelViewProjection.setModel(model);
-		modelViewProjection.calculateMVPMatrix(); // Compute the whole ModelViewProjection modelViewProjection matrix including Camera (gUIView)
+		mvp_light.setModel(model);
+		mvp_light.calculateMVPMatrix(); // Compute the whole ModelViewProjection mvp_light matrix including Camera (gUIView)
 
 		// Calculate projection for all vertices of this Element
-		modelViewProjection.transformElement(e, false); // Calculate prj_pos of each vertex
-		// TODO Verify that modelViewProjection.transformVertices does not calculate normals (not needed here) projection
+		mvp_light.transformElement(e, false); // Calculate prj_pos of each vertex
+		// TODO Verify that mvp_light.transformVertices does not calculate normals (not needed here) projection
 
 		map = rasterizer_light.initZBuffer(map_size, map_size); // ShadowMap is square
 
@@ -209,7 +214,7 @@ public abstract class ShadowingLight extends Light {
 	}
 
 	public ModelViewProjection getModelView() {
-		return modelViewProjection;
+		return mvp_light;
 	}
 	
 	public float getMap(int x, int y) {
@@ -218,6 +223,30 @@ public abstract class ShadowingLight extends Light {
 	
 	public MapView getMap() {
 		return map;
+	}
+	
+	public String toStringShadowingBoxType(int shadowingBoxType) {
+
+		String shadowingBoxType_string;
+
+		switch (shadowingBoxType) {
+		case SHADOWING_BOX_VIEWFRUSTUM:
+			shadowingBoxType_string = "SHADOWING_BOX_VIEWFRUSTUM";
+			break;
+		case SHADOWING_BOX_WORLD:
+			shadowingBoxType_string = "SHADOWING_BOX_WORLD";
+			break;
+		case SHADOWING_BOX_ELEMENT:
+			shadowingBoxType_string = "SHADOWING_BOX_ELEMENT";
+			break;
+		case SHADOWING_BOX_SPECIFIC:
+			shadowingBoxType_string = "SHADOWING_BOX_SPECIFIC";
+			break;
+		default:
+			shadowingBoxType_string = "UNKNOWON SHADOWING BOX TYPE";
+		}
+
+		return shadowingBoxType_string;
 	}
 
 }

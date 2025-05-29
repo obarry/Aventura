@@ -149,7 +149,7 @@ public class Element implements Transformable, Shape, Generable {
 	 */
 	public Element() {
 		id = ID++;
-		this.name = ELEMENT_DEFAULT_NAME;
+		this.name = ELEMENT_DEFAULT_NAME + id;
 		triangles = new ArrayList<Triangle>();
 		vertices = new ArrayList<Vertex>();
 		transform = Matrix4.IDENTITY; // By default
@@ -162,7 +162,7 @@ public class Element implements Transformable, Shape, Generable {
 	 */
 	public Element(String name) {
 		id = ID++;
-		this.name = name;
+		this.name = name + id;
 		triangles = new ArrayList<Triangle>();
 		vertices = new ArrayList<Vertex>();
 		transform = Matrix4.IDENTITY; // By default
@@ -175,7 +175,7 @@ public class Element implements Transformable, Shape, Generable {
 	 */
 	public Element(boolean isClosed) {
 		id = ID++;
-		this.name = ELEMENT_DEFAULT_NAME;
+		this.name = ELEMENT_DEFAULT_NAME + id;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
 		this.transform = Matrix4.IDENTITY; // By default
@@ -189,7 +189,7 @@ public class Element implements Transformable, Shape, Generable {
 	 */
 	public Element(String name, boolean isClosed) {
 		id = ID++;
-		this.name = name;
+		this.name = name + id;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
 		this.transform = Matrix4.IDENTITY; // By default

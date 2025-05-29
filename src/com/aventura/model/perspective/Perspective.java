@@ -1,6 +1,8 @@
 package com.aventura.model.perspective;
 
 import com.aventura.math.projection.Projection;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -148,6 +150,8 @@ public abstract class Perspective {
 		// The creation of the projection matrix is delegated to the subclasses (Perspective class is abstract)
 	}
 	
+	public abstract Vector4[][] getFrustumFromEye(Camera camera);
+		
 	private void calculateTBRLFN() {
 		
 		left = -width/2;

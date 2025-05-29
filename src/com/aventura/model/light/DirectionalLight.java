@@ -5,8 +5,9 @@ import java.awt.Color;
 import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.ModelViewProjection;
 import com.aventura.engine.Rasterizer;
-import com.aventura.math.projection.Orthographic;
+import com.aventura.math.projection.OrthographicProjection;
 import com.aventura.math.tools.BoundingBox4;
+import com.aventura.math.vector.GeometryTools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -61,6 +62,7 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction) {
 		super(direction.length()); // Intensity is taken from the norm of the direction vector
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction);
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
@@ -72,6 +74,7 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, float intensity) {
 		super(intensity);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " Intensity : " + intensity);
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
@@ -83,6 +86,7 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, World world) {
 		super(direction.length(), world); // Intensity is taken from the norm of the direction vector
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " + World");
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
@@ -94,6 +98,7 @@ public class DirectionalLight extends ShadowingLight {
 	 */
 	public DirectionalLight(Vector3 direction, float intensity, World world) {
 		super(intensity, world);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " Intensity : " + intensity + " + World");
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
@@ -139,6 +144,7 @@ public class DirectionalLight extends ShadowingLight {
 
 	@Override
 	public void initShadowing(Perspective perspectiveWorld, Camera camera_view, int map_size) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "initShadowing");
 
 		// map = new MapView(map_size, map_size);
 		this.map_size = map_size;
@@ -159,12 +165,15 @@ public class DirectionalLight extends ShadowingLight {
 		 * 											lighting.mCameraPosition.z - 25.0f) * viewMatrix;
 		 */
 		BoundingBox4 box = null;
+		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Creating Bounding Box. ShadowingBox type : " + toStringShadowingBoxType(this.shadowingBox_type));
 		switch (this.shadowingBox_type) {
 		
 		case SHADOWING_BOX_VIEWFRUSTUM:
 			
 			// Define the bounding box for the light camera using the View Frustum (Camera of the scene)
 			// For this let's use the 8 corner's of the View Frustum and transform them into the Light camera coordinates using the camera_light matrix
+			Vector4[][] frustum = perspectiveWorld.getFrustumFromEye(camera_view);
 			Vector4 [] frustumProj = new Vector4[8]; // Create an array of Vectors that will contain all 4 vertices of the view Frustum projected in Light's coordinates
 			// And take the min and max in each dimension of these vertices in light coordinates
 			int k =0;
@@ -178,8 +187,8 @@ public class DirectionalLight extends ShadowingLight {
 			// The create the bounding box around the 8 vertices of the view Frustum (in Light's coordinates)
 			box = new BoundingBox4(frustumProj);
 			
-
 			break;
+			
 		case SHADOWING_BOX_WORLD:
 			// Define the bounding box for the light camera
 			// For this create the min and max of the World (in World coordinates)	
@@ -201,17 +210,22 @@ public class DirectionalLight extends ShadowingLight {
 			// Create the bounding box around the 8 vertices of the World "box" (in Light's coordinates)
 			box = new BoundingBox4(worldBox);
 			break;
+			
 		case SHADOWING_BOX_ELEMENT: // Not implemented yet
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_ELEMENT");
 			break;
+			
 		case SHADOWING_BOX_SPECIFIC: // Not implemented yet
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_SPECIFIC");
 			break;
+			
 		default:
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Unknown Shadowing Box Type: " + this.shadowingBox_type);
 			break;
 		}
 		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Bounding Box : \n" + box);
+	
 		/*
 		 * From: https://community.khronos.org/t/directional-light-and-shadow-mapping-gUIView-projection-matrices/71386
 		 * 
@@ -233,89 +247,37 @@ public class DirectionalLight extends ShadowingLight {
 		// At last initialize the Orthographic projection
 		// Orthographic(float left, float right, float bottom, float top, float near, float far)
 		
-		// TODO PPU calculation is NOT EFAULT_SHADOW_MAP_DIMENSION
-		perspectiveCtx_light = new PerspectiveContext(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
+		// TODO PPU calculation is NOT DEFAULT_SHADOW_MAP_DIMENSION
+		perspectiveCtx_light = new PerspectiveContext(box.getMaxY(), box.getMinY(), box.getMaxX(), box.getMinX(), box.getMaxZ(), box.getMinZ(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
 		//perspective_light = new Orthographic(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ());
 		rasterizer_light = new Rasterizer(camera_light, perspectiveCtx_light, null);
 
 		// Create the MVP using this orthographic projection matrix
-		modelViewProjection = new ModelViewProjection(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
+		mvp_light = new ModelViewProjection(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
 		
 	}
 
 	public void calculateCameraLight(Perspective perspectiveWorld, Camera camera_view) {
-		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the gUIView frustum
-		
-		// For this calculate the 8 points of the GUIView frustum in World coordinates
-		// - The 4 points of the near plane		
-		// - The 4 points of the fare plane
-		
-		// To calculate the 8 vertices we need:
-		// - The eye position
-		Vector4 eye = camera_view.getEye();
-		// - The eye-point of interest (camera direction) normalized vector
-		Vector4 fwd = camera_view.getForward().normalize();
-		
-		// TODO can we move out the Projection class from the perspective context  ?
-		// In order to have something more generic and more consistent
-		// TODO strange to get Near and Far from graphicContext and Up from Camera_view. Clean-up required ?
-
-		// - The distance to the near plane
-		float near = perspectiveWorld.getNear();
-		// - The distance to the far plane
-		float far = perspectiveWorld.getFar();
-		// - The up vector and side vectors
-		Vector4 up = camera_view.getUp();
-		Vector4 side = fwd.times(up).normalize();
-		// - the half width and half eight of the near plane
-		float half_eight_near = perspectiveWorld.getHeight()/2;
-		float half_width_near = perspectiveWorld.getWidth()/2;
-		
-		// - the half width and half eight of the far plane
-		// Calculate the width and height on far plane using Thales: knowing that width and height are defined on the near plane
-		float half_height_far = half_eight_near * far/near; // height_far = height_near * far/near
-		float half_width_far = half_width_near * far/near; // width_far = width_near * far/near
-		
-		// TODO Calculating the gUIView frustum should be a method from the Perspective itself
-		// Calculate all 8 points, vertices of the GUIView Frustum
-		frustum = new Vector4[2][4];
-		// TODO : later, this calculation could be done and points provided through methods in the "Frustum" class or any class
-		// directly related to the gUIView Frustum
-		// P11 = Eye + cam_dir*near + up*half_height_near + side*half_width_near
-		frustum[0][0] = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).plus(side.times(half_width_near));
-		// P12 = Eye + cam_dir*near + up*half_height_near - side*half_width_near
-		frustum[0][1] = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).minus(side.times(half_width_near));
-		// P13 = Eye + cam_dir*near - up*half_height_near - side*half_width_near
-		frustum[0][2] = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).minus(side.times(half_width_near));
-		// P14 = Eye + cam_dir*near - up*half_height_near + side*half_width_near
-		frustum[0][3] = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).plus(side.times(half_width_near));
-		//
-		// P21 = Eye + cam_dir*far + up*half_height_far + side*half_width_far
-		frustum[1][0] = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).plus(side.times(half_width_far));
-		// P22 = Eye + cam_dir*far + up*half_height_far - side*half_width_far
-		frustum[1][1] = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).minus(side.times(half_width_far));
-		// P23 = Eye + cam_dir*far - up*half_height_far - side*half_width_far
-		frustum[1][2] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).minus(side.times(half_width_far));
-		// P24 = Eye + cam_dir*far - up*half_height_far + side*half_width_far
-		frustum[1][3] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).plus(side.times(half_width_far));
-		
-		// Then the center of this Frustum is (P11+P12+P13+P14 + P21+P22+P23+P24)/8
-		// We take it as PoI for the Camera light
-		Vector4 light_PoI = (frustum[0][0].plus(frustum[0][1]).plus(frustum[0][2]).plus(frustum[0][3]).plus(frustum[1][0]).plus(frustum[1][1]).plus(frustum[1][2]).plus(frustum[1][3])).times(1/8);
-		light_PoI.setPoint();
-		
-		//Vector4 light_dir = lighting.getDirectionalLight().getLightVector(null).V4();
-		Vector4 light_dir = this.light_vector.times(-1).V4();
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "calculateCameraLight");
 		
 		// Build Camera light
 		// We need to calculate the camera light Eye
 		// In order to calculate the camera light "eye", we start form the PoI : the centre of the gUIView frustum obtained before.
 		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the gUIView frustum.
 		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
-		Vector4 light_eye = light_PoI.minus(light_dir.times(far-near));
+
+		// Calculate the center of Frustum (geometrical center of the 8 points)
+		Vector4 light_PoI = GeometryTools.center(perspectiveWorld.getFrustumFromEye(camera_view));		
+		Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector
+		Vector4 light_eye = light_PoI.minus(light_dir.times(perspectiveWorld.getFar()-perspectiveWorld.getNear()));
 		
-		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView
-		camera_light = new Camera(light_eye, light_PoI, up);
+		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView -> NO !!!!!
+		
+		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
+		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
+		//camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
+		camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS);
+		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 
 	}
 	

@@ -35,13 +35,11 @@ public class Cube extends Box {
 	protected static final String CUBE_DEFAULT_NAME = "cube";
 	
 	public Cube(float length) {
-		super(length, length, length);
-		this.setName(CUBE_DEFAULT_NAME);
+		super(length, length, length, CUBE_DEFAULT_NAME);
 	}
 	
 	public Cube(float length, Texture t) {
-		super(length, length, length, t);
-		this.setName(CUBE_DEFAULT_NAME);
+		super(length, length, length, t, CUBE_DEFAULT_NAME);
 	}
 	
 }

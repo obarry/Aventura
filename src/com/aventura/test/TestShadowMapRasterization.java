@@ -133,10 +133,13 @@ public class TestShadowMapRasterization {
 		System.out.println("********* Calculating normals");
 		world.generate();
 		System.out.println(world);
+		System.out.println(trellis);
+		System.out.println(cube);
+		System.out.println(sphere);
 
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.05f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(3,3,-3));
+		DirectionalLight dl = new DirectionalLight(new Vector3(3,3,0));
 		Lighting light = new Lighting(dl, al);
 		//Lighting light = new Lighting(al);
 		//light.setDirectionalLight(dl);
