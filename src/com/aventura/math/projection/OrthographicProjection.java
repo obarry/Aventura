@@ -33,13 +33,13 @@ import com.aventura.tools.tracing.Tracer;
  * @since June 2016
  * 
  */
-public class Orthographic extends Projection {
+public class OrthographicProjection extends Projection {
 	
-	public Orthographic(Projection p) {
+	public OrthographicProjection(Projection p) {
 		super(p);
 	}
 	
-	public Orthographic(float left, float right, float bottom, float top, float near, float far) {
+	public OrthographicProjection(float left, float right, float bottom, float top, float near, float far) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Orthographic projection");
 		

@@ -1,6 +1,8 @@
 package com.aventura.model.perspective;
 
-import com.aventura.math.projection.Orthographic;
+import com.aventura.math.projection.OrthographicProjection;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -37,24 +39,29 @@ public class OrthographicPerspective extends Perspective {
 	
 	public OrthographicPerspective(Perspective persp) {
 		super(persp);
-		this.projection = new Orthographic(persp.projection);
+		this.projection = new OrthographicProjection(persp.projection);
 	}
 	public OrthographicPerspective(float width, float height, float dist, float depth) {
 		super(width, height, dist, depth);
 		
-		this.projection = new Orthographic(left , right, bottom, top, near, far);
+		this.projection = new OrthographicProjection(left , right, bottom, top, near, far);
 		
 	}
 
 	public OrthographicPerspective(float top, float bottom, float right, float left, float far, float near) {
 		super(top, bottom, right, left, far, near);
 		
-		this.projection = new Orthographic(left , right, bottom, top, near, far);
+		this.projection = new OrthographicProjection(left , right, bottom, top, near, far);
 		
 	}
 
 	public void updateProjection() {
-		this.projection = new Orthographic(left , right, bottom, top, near, far);
+		this.projection = new OrthographicProjection(left , right, bottom, top, near, far);
+	}
+	@Override
+	public Vector4[][] getFrustumFromEye(Camera camera) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

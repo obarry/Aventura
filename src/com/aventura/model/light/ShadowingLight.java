@@ -75,8 +75,8 @@ public abstract class ShadowingLight extends Light {
 	protected ModelViewProjection mvp_light; // ModelViewProjection matrix and vertices conversion tool for the calculation of the Shadow map
 
 	// GUIView Frustum
-	protected Vector4[][] frustum;
-	protected Vector4 frustumCenter;
+	//protected Vector4[][] frustum;
+	//protected Vector4 frustumCenter;
 	
 	// World that can cast shadows with that Light, only needed starting ShadowingLight in the class hierarchy
 	World world = null;

@@ -5,7 +5,7 @@ import java.awt.Color;
 import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.ModelViewProjection;
 import com.aventura.engine.Rasterizer;
-import com.aventura.math.projection.Orthographic;
+import com.aventura.math.projection.OrthographicProjection;
 import com.aventura.math.tools.BoundingBox4;
 import com.aventura.math.vector.GeometryTools;
 import com.aventura.math.vector.Vector3;
@@ -173,6 +173,7 @@ public class DirectionalLight extends ShadowingLight {
 			
 			// Define the bounding box for the light camera using the View Frustum (Camera of the scene)
 			// For this let's use the 8 corner's of the View Frustum and transform them into the Light camera coordinates using the camera_light matrix
+			Vector4[][] frustum = perspectiveWorld.getFrustumFromEye(camera_view);
 			Vector4 [] frustumProj = new Vector4[8]; // Create an array of Vectors that will contain all 4 vertices of the view Frustum projected in Light's coordinates
 			// And take the min and max in each dimension of these vertices in light coordinates
 			int k =0;
@@ -258,90 +259,23 @@ public class DirectionalLight extends ShadowingLight {
 
 	public void calculateCameraLight(Perspective perspectiveWorld, Camera camera_view) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "calculateCameraLight");
-		// Calculate the camera position so that if it has the direction of light, it is targeting the middle of the gUIView frustum
-		
-		// For this calculate the 8 points of the GUIView frustum in World coordinates
-		// - The 4 points of the near plane		
-		// - The 4 points of the fare plane
-		
-		// To calculate the 8 vertices we need:
-		// - The eye position
-		Vector4 eye = camera_view.getEye();
-		// - The eye-point of interest (camera direction) normalized vector
-		Vector4 fwd = camera_view.getForward().normalize();
-		
-		// TODO can we move out the Projection class from the perspective context  ?
-		// In order to have something more generic and more consistent
-		// TODO strange to get Near and Far from graphicContext and Up from Camera_view. Clean-up required ?
-
-		// - The distance to the near plane
-		float near = perspectiveWorld.getNear();
-		// - The distance to the far plane
-		float far = perspectiveWorld.getFar();
-		// - The up vector and side vectors
-		Vector4 up = camera_view.getUp();
-		Vector4 side = fwd.times(up).normalize();
-		// - the half width and half eight of the near plane
-		float half_eight_near = perspectiveWorld.getHeight()/2;
-		float half_width_near = perspectiveWorld.getWidth()/2;
-		
-		// - the half width and half eight of the far plane
-		// Calculate the width and height on far plane using Thales: knowing that width and height are defined on the near plane
-		float half_height_far = half_eight_near * far/near; // height_far = height_near * far/near
-		float half_width_far = half_width_near * far/near; // width_far = width_near * far/near
-		
-		// TODO Calculating the gUIView frustum should be a method from the Perspective itself
-		// Calculate all 8 points, vertices of the GUIView Frustum
-		frustum = new Vector4[2][4];
-		// TODO : later, this calculation could be done and points provided through methods in the "Frustum" class or any class
-		// directly related to the gUIView Frustum
-		// P11 = Eye + cam_dir*near + up*half_height_near + side*half_width_near
-		frustum[0][0] = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).plus(side.times(half_width_near));
-		// P12 = Eye + cam_dir*near + up*half_height_near - side*half_width_near
-		frustum[0][1] = eye.plus(fwd.times(near)).plus(up.times(half_eight_near)).minus(side.times(half_width_near));
-		// P13 = Eye + cam_dir*near - up*half_height_near - side*half_width_near
-		frustum[0][2] = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).minus(side.times(half_width_near));
-		// P14 = Eye + cam_dir*near - up*half_height_near + side*half_width_near
-		frustum[0][3] = eye.plus(fwd.times(near)).minus(up.times(half_eight_near)).plus(side.times(half_width_near));
-		//
-		// P21 = Eye + cam_dir*far + up*half_height_far + side*half_width_far
-		frustum[1][0] = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).plus(side.times(half_width_far));
-		// P22 = Eye + cam_dir*far + up*half_height_far - side*half_width_far
-		frustum[1][1] = eye.plus(fwd.times(far)).plus(up.times(half_height_far)).minus(side.times(half_width_far));
-		// P23 = Eye + cam_dir*far - up*half_height_far - side*half_width_far
-		frustum[1][2] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).minus(side.times(half_width_far));
-		// P24 = Eye + cam_dir*far - up*half_height_far + side*half_width_far
-		frustum[1][3] = eye.plus(fwd.times(far)).minus(up.times(half_height_far)).plus(side.times(half_width_far));
-		
-		String s = "";
-		for (int i = 0; i<2; i++) {
-			for (int j = 0; j<4; j++) {
-				s = s + "frustum [" + i + "," + j + "] = " + frustum[i][j] + "\n";
-			}
-		}
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Frustum : \n"+s);
-		
-
-		// Then the center of this Frustum is (P11+P12+P13+P14 + P21+P22+P23+P24)/8
-		// We take it as PoI for the Camera light
-		//Vector4 light_PoI = (frustum[0][0].plus(frustum[0][1]).plus(frustum[0][2]).plus(frustum[0][3]).plus(frustum[1][0]).plus(frustum[1][1]).plus(frustum[1][2]).plus(frustum[1][3])).times(1/8);
-		Vector4 light_PoI = GeometryTools.center(frustum);
-		
-		//Vector4 light_dir = lighting.getDirectionalLight().getLightVector(null).V4();
-		Vector4 light_dir = this.light_vector.times(-1).V4();
 		
 		// Build Camera light
 		// We need to calculate the camera light Eye
 		// In order to calculate the camera light "eye", we start form the PoI : the centre of the gUIView frustum obtained before.
 		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the gUIView frustum.
 		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
-		Vector4 light_eye = light_PoI.minus(light_dir.times(far-near));
+
+		// Calculate the center of Frustum (geometrical center of the 8 points)
+		Vector4 light_PoI = GeometryTools.center(perspectiveWorld.getFrustumFromEye(camera_view));		
+		Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector
+		Vector4 light_eye = light_PoI.minus(light_dir.times(perspectiveWorld.getFar()-perspectiveWorld.getNear()));
 		
 		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView -> NO !!!!!
 		
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
-		camera_light = new Camera(light_eye, light_PoI, up);
+		camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 
 	}
