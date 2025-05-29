@@ -7,6 +7,7 @@ import com.aventura.engine.ModelViewProjection;
 import com.aventura.engine.Rasterizer;
 import com.aventura.math.projection.Orthographic;
 import com.aventura.math.tools.BoundingBox4;
+import com.aventura.math.vector.GeometryTools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -323,8 +324,8 @@ public class DirectionalLight extends ShadowingLight {
 
 		// Then the center of this Frustum is (P11+P12+P13+P14 + P21+P22+P23+P24)/8
 		// We take it as PoI for the Camera light
-		Vector4 light_PoI = (frustum[0][0].plus(frustum[0][1]).plus(frustum[0][2]).plus(frustum[0][3]).plus(frustum[1][0]).plus(frustum[1][1]).plus(frustum[1][2]).plus(frustum[1][3])).times(1/8);
-		light_PoI.setPoint();
+		//Vector4 light_PoI = (frustum[0][0].plus(frustum[0][1]).plus(frustum[0][2]).plus(frustum[0][3]).plus(frustum[1][0]).plus(frustum[1][1]).plus(frustum[1][2]).plus(frustum[1][3])).times(1/8);
+		Vector4 light_PoI = GeometryTools.center(frustum);
 		
 		//Vector4 light_dir = lighting.getDirectionalLight().getLightVector(null).V4();
 		Vector4 light_dir = this.light_vector.times(-1).V4();
@@ -336,8 +337,12 @@ public class DirectionalLight extends ShadowingLight {
 		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
 		Vector4 light_eye = light_PoI.minus(light_dir.times(far-near));
 		
-		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView
+		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView -> NO !!!!!
+		
+		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
+		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
 		camera_light = new Camera(light_eye, light_PoI, up);
+		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 
 	}
 	

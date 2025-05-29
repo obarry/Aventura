@@ -62,6 +62,22 @@ public class Box extends Element {
 	}
 	
 	/**
+	 * Create a box aligned on axis. Need to be rotated for a different orientation.
+	 * 
+	 * @param x_dim dimension of the box on x axis
+	 * @param y_dim dimension of the box on y axis
+	 * @param z_dim dimension of the box on z axis
+	 */
+	public Box(float x_dim, float y_dim, float z_dim, String name) {
+		super(name, true); // A Box is a closed Element
+		subelements = null;
+		this.x_dim = x_dim;
+		this.y_dim = y_dim;
+		this.z_dim = z_dim;
+	}
+	
+
+	/**
 	 * Create a box aligned on axis with unique texture applied to all faces
 	 * 
 	 * @param x_dim dimension of the box on x axis
@@ -70,6 +86,27 @@ public class Box extends Element {
 	 */
 	public Box(float x_dim, float y_dim, float z_dim, Texture tex) {
 		super(BOX_DEFAULT_NAME, true); // A Box is a closed Element
+		subelements = null;
+		this.x_dim = x_dim;
+		this.y_dim = y_dim;
+		this.z_dim = z_dim;
+		this.bottom_tex = tex;
+		this.top_tex = tex;
+		this.left_tex = tex;
+		this.right_tex = tex;
+		this.front_tex = tex;
+		this.back_tex = tex;
+	}
+	
+	/**
+	 * Create a box aligned on axis with unique texture applied to all faces
+	 * 
+	 * @param x_dim dimension of the box on x axis
+	 * @param y_dim dimension of the box on y axis
+	 * @param z_dim dimension of the box on z axis
+	 */
+	public Box(float x_dim, float y_dim, float z_dim, Texture tex, String name) {
+		super(name, true); // A Box is a closed Element
 		subelements = null;
 		this.x_dim = x_dim;
 		this.y_dim = y_dim;
