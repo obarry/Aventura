@@ -275,7 +275,8 @@ public class DirectionalLight extends ShadowingLight {
 		
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
-		camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
+		//camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
+		camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS);
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 
 	}
