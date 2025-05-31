@@ -66,7 +66,8 @@ public abstract class ShadowingLight extends Light {
 	public static final int SHADOWING_BOX_ELEMENT = 3; // Use any Element's max dimensions to calculate the Light's view box
 	public static final int SHADOWING_BOX_SPECIFIC = 4; // Use a specific box to calculate the Light's view box
 
-	protected int shadowingBox_type = SHADOWING_BOX_VIEWFRUSTUM; // Is Default
+	//protected int shadowingBox_type = SHADOWING_BOX_VIEWFRUSTUM; // Is Default
+	protected int shadowingBox_type = SHADOWING_BOX_WORLD; // Is Default
 	
 	// Fields related to Shadow generation
 	protected Camera camera_light; // The corresponding "camera" from Light View's perspective

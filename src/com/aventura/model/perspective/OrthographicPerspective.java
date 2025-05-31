@@ -48,7 +48,7 @@ public class OrthographicPerspective extends Perspective {
 		
 	}
 
-	public OrthographicPerspective(float top, float bottom, float right, float left, float far, float near) {
+	public OrthographicPerspective(float left, float right, float bottom, float top, float near, float far) {
 		super(top, bottom, right, left, far, near);
 		
 		this.projection = new OrthographicProjection(left , right, bottom, top, near, far);

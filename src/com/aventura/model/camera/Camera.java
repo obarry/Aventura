@@ -67,6 +67,19 @@ public class Camera {
 		lookAt = new LookAt(e,p,u);
 	}
 	
+	/**
+	 * 
+	 * Construction of Camera's LookAt Matrix based on Vector4 only (fwd and up)
+	 * Useful for Camera light
+	 * 
+	 * @param f the fwd vector
+	 * @param u the Up vector for the World to leverage for the Camera
+	 */
+	public Camera(Vector4 f, Vector4 u) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating Camera with vectors f: "+ f +" u: "+u);
+		lookAt = new LookAt(f,u);
+	}
+
 	public void updateCamera(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Updating Camera with vectors e: "+e+" p: "+p+" u: "+u);
 		eye = e;
