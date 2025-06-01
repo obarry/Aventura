@@ -164,51 +164,41 @@ public class DirectionalLight extends ShadowingLight {
 		 * 											lighting.mCameraPosition.z + 25.0f,
 		 * 											lighting.mCameraPosition.z - 25.0f) * viewMatrix;
 		 */
-		BoundingBox4 box = null;
+
+		Vector4 [] box_world = null;
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Creating Bounding Box. ShadowingBox type : " + toStringShadowingBoxType(this.shadowingBox_type));
 		switch (this.shadowingBox_type) {
 		
 		case SHADOWING_BOX_VIEWFRUSTUM:
-			
 			// Define the bounding box for the light camera using the View Frustum (Camera of the scene)
 			// For this let's use the 8 corner's of the View Frustum and transform them into the Light camera coordinates using the camera_light matrix
 			Vector4[][] frustum = perspectiveWorld.getFrustumFromEye(camera_view);
-			Vector4 [] frustumProj = new Vector4[8]; // Create an array of Vectors that will contain all 4 vertices of the view Frustum projected in Light's coordinates
+			box_world = new Vector4[8]; // Create an array of Vectors that will contain all 4 vertices of the view Frustum projected in Light's coordinates
 			// And take the min and max in each dimension of these vertices in light coordinates
 			int k =0;
 			for (int i=0; i<2; i++) {
 				for (int j= 0; j<4; j++) {
-					frustumProj[k] = camera_light.getMatrix().times(frustum[i][j]);
+					box_world[k] = camera_light.getMatrix().times(frustum[i][j]);
 					k++;
 				}
-			}
-			
-			// The create the bounding box around the 8 vertices of the view Frustum (in Light's coordinates)
-			box = new BoundingBox4(frustumProj);
-			
+			}					
 			break;
 			
 		case SHADOWING_BOX_WORLD:
 			// Define the bounding box for the light camera
+			box_world = new Vector4[8];
+			
 			// For this create the min and max of the World (in World coordinates)	
-			Vector4 [] worldBox = new Vector4[8];
-			worldBox[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMinZ(), 1);
-			worldBox[0] = new Vector4(world.getMaxX(), world.getMinY(), world.getMinZ(), 1);
-			worldBox[0] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMinZ(), 1);
-			worldBox[0] = new Vector4(world.getMinX(), world.getMaxY(), world.getMinZ(), 1);
-			worldBox[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMaxZ(), 1);
-			worldBox[0] = new Vector4(world.getMaxX(), world.getMinY(), world.getMaxZ(), 1);
-			worldBox[0] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMaxZ(), 1);
-			worldBox[0] = new Vector4(world.getMinX(), world.getMaxY(), world.getMaxZ(), 1);
+			box_world[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMinZ(), 1);
+			box_world[1] = new Vector4(world.getMaxX(), world.getMinY(), world.getMinZ(), 1);
+			box_world[2] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMinZ(), 1);
+			box_world[3] = new Vector4(world.getMinX(), world.getMaxY(), world.getMinZ(), 1);
+			box_world[4] = new Vector4(world.getMinX(), world.getMinY(), world.getMaxZ(), 1);
+			box_world[5] = new Vector4(world.getMaxX(), world.getMinY(), world.getMaxZ(), 1);
+			box_world[6] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMaxZ(), 1);
+			box_world[7] = new Vector4(world.getMinX(), world.getMaxY(), world.getMaxZ(), 1);
 			
-			// Then transform the Points into Light's coordinates using the camera_light matrix
-			for (int i=0; i<8; i++) {
-				worldBox[i] = camera_light.getMatrix().times(worldBox[i]);
-			}
-			
-			// Create the bounding box around the 8 vertices of the World "box" (in Light's coordinates)
-			box = new BoundingBox4(worldBox);
 			break;
 			
 		case SHADOWING_BOX_ELEMENT: // Not implemented yet
@@ -224,6 +214,9 @@ public class DirectionalLight extends ShadowingLight {
 			break;
 		}
 		
+		// Create the bounding box around the 8 vertices of the World "box" (in Light's coordinates)
+		BoundingBox4 box = new BoundingBox4(box_world);
+
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Bounding Box : \n" + box);
 	
 		/*
@@ -267,16 +260,17 @@ public class DirectionalLight extends ShadowingLight {
 		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
 
 		// Calculate the center of Frustum (geometrical center of the 8 points)
-		Vector4 light_PoI = GeometryTools.center(perspectiveWorld.getFrustumFromEye(camera_view));		
-		Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector
-		Vector4 light_eye = light_PoI.minus(light_dir.times(perspectiveWorld.getFar()-perspectiveWorld.getNear()));
+		//Vector4 light_PoI = GeometryTools.center(perspectiveWorld.getFrustumFromEye(camera_view));		
+		//Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector
+		//Vector4 light_eye = light_PoI.minus(light_dir.times(perspectiveWorld.getFar()-perspectiveWorld.getNear()));
 		
 		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView -> NO !!!!!
 		
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
 		//camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
-		camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS);
+		//camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS);
+		camera_light = new Camera(this.light_vector.times(-1).V4(), Vector4.Z_AXIS);
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 
 	}
