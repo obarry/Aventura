@@ -103,10 +103,16 @@ public class TestShadowMapRasterization {
 		Tracer.function = true;
 		
 		// Camera
-		Vector4 eye = new Vector4(0,-5,1,1);
+		//Vector4 eye = new Vector4(0,-5,1,1);
+		//Vector4 poi = new Vector4(0,0,0,1);
+		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+
+		// Camera similar to Light
+		Vector4 eye = new Vector4(-1,0,0,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
-				
+
+		
 		TestShadowMapRasterization test = new TestShadowMapRasterization();
 		
 		System.out.println("********* Creating World");
@@ -144,7 +150,8 @@ public class TestShadowMapRasterization {
 		//Lighting light = new Lighting(al);
 		//light.setDirectionalLight(dl);
 		
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		//PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 1250);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);

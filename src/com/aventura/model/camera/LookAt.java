@@ -195,6 +195,10 @@ public class LookAt extends Matrix4 {
 		s =  (f.times(u)).normalize();
 		up = (s.times(f)).normalize();
 
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Calculated fwd: "+ f);						
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Calculated side: "+ s);								
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Calculated up: "+ up);						
+
 		// Construct array of Reorientation Matrix
 		float[][] array = { {  s.getX(),  s.getY(),  s.getZ(), 0.0f },
 							{ up.getX(), up.getY(), up.getZ(), 0.0f },

@@ -20,11 +20,11 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.world.Element;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
 import com.aventura.model.world.shape.Cube;
 import com.aventura.model.world.shape.Cylinder;
-import com.aventura.model.world.shape.Element;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
 

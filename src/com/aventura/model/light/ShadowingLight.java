@@ -9,8 +9,8 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
+import com.aventura.model.world.Element;
 import com.aventura.model.world.World;
-import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.MapView;
@@ -154,7 +154,7 @@ public abstract class ShadowingLight extends Light {
 	
 	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size, World world);
 	
-	public abstract void calculateCameraLight(Perspective perspective, Camera camera_view); 
+	//public abstract void calculateCameraLight(Perspective perspective, Camera camera_view); 
 	
 	/**
 	 * This method will generate the shadow map for the elements of the world passed in parameter with the camera light previously

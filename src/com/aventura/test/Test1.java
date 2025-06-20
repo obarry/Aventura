@@ -3,7 +3,6 @@ package com.aventura.test;
 import com.aventura.math.vector.*;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.world.*;
-import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.triangle.Triangle;
 
 public class Test1 {

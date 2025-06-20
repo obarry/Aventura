@@ -138,6 +138,8 @@ public abstract class Perspective {
 	 */
 	public Perspective(float top, float bottom, float right, float left, float far, float near) {
 		
+		// Caution : not verified : top > botttom, right > left, far > near >=0
+		
 		this.top = top;
 		this.bottom = bottom;
 		this.right = right;
@@ -153,6 +155,8 @@ public abstract class Perspective {
 	public abstract Vector4[][] getFrustumFromEye(Camera camera);
 		
 	private void calculateTBRLFN() {
+		
+		// Assuming that width, height, dist and depth are positive values
 		
 		left = -width/2;
 		right = width/2;
@@ -279,6 +283,24 @@ public abstract class Perspective {
 	
 	public float getDist() {
 		return dist;
+	}
+	
+	public String toString() {
+		
+		String p = "";
+
+		p += "*** Height: " + height + "\n";
+		p += "*** Width : " + width + "\n";
+		p += "*** Depth : " + depth + "\n";
+		p += "*** Dist  : " + dist + "\n";
+		p += "*** Left  : " + left + "\n";
+		p += "*** Right : " + right + "\n";
+		p += "*** Bottom: " + bottom + "\n";
+		p += "*** Top   : " + top + "\n";
+		p += "*** Near  : " + near + "\n";
+		p += "*** Far   : " + far + "\n";
+
+		return p;
 	}
 
 
