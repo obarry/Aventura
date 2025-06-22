@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.math.vector.Matrix4;
-import com.aventura.model.world.shape.Element;
+import com.aventura.math.vector.Vector4;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -220,7 +220,37 @@ public class World {
 		return nb;
 	}
 	
+	/**
+	 * @return the max distance from origin of all vertices in the World
+	 */
+	public float getMaxDistance() {
+		float max = 0;
+		float dist = 0;
+		for (int i=0; i<elements.size(); i++) {
+			for (int j=0; j<elements.get(i).vertices.size(); j++) {
+				dist = elements.get(i).vertices.get(j).position.length();
+				max = dist > max ? dist : max;
+			}
+		}
+		return max;
+	}
 	
+	/**
+	 * @return the max distance from Point p of all vertices  in the World
+	 */
+	public float getMaxDistance(Vector4 p) {
+		float max = 0;
+		float dist = 0;
+		if (p.isVector()) p.point();
+		for (int i=0; i<elements.size(); i++) {
+			for (int j=0; j<elements.get(i).vertices.size(); j++) {
+				dist = elements.get(i).vertices.get(j).position.minus(p).length();
+				max = dist > max ? dist : max;
+			}
+		}
+		return max;
+	}
+
 	
 	public float getMaxX() {
 		float max = elements.get(0).getMaxX();

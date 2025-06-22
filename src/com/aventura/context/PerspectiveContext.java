@@ -189,7 +189,6 @@ public class PerspectiveContext {
 		this.pixelHalfWidth = pixelWidth/2;
 		this.pixelHalfHeight = pixelHeight/2;
 		
-		
 		this.p_type = perspective;
 		this.ppu = ppu;
 		
@@ -221,6 +220,7 @@ public class PerspectiveContext {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+p_type);
 		}
 		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Created perspective : \n" + this.perspective);	
 	}
 	
 	protected void createPerspective(int p_type, float left, float right, float bottom, float top, float near, float far) {
@@ -236,7 +236,8 @@ public class PerspectiveContext {
 		default:
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+p_type);
 		}
-		
+
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Created perspective : \n" + this.perspective);
 	}
 		
 	public String toString() {

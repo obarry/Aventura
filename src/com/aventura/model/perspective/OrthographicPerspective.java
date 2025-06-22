@@ -63,5 +63,13 @@ public class OrthographicPerspective extends Perspective {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	public String toString() {
+		String p = "***** Orthographic Perspective *****\n";
+		p += super.toString();
+		p += "************************************\n";
+				
+		return p;
+	}
 
 }

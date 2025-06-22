@@ -94,7 +94,7 @@ public class SpotLight extends PointLight {
 	}
 
 	@Override
-	public void initShadowing(Perspective perspective, Camera camera_view, int map_size) {
+	public void initShadowing(Perspective perspective, Camera camera_view) {
 		// TODO Auto-generated method stub
 		
 	}

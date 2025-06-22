@@ -137,20 +137,36 @@ public class DirectionalLight extends ShadowingLight {
 	}
 	
 	@Override
-	public void initShadowing(Perspective perspectiveWorld, Camera camera_view, int map_size, World world) {
+	public void initShadowing(Perspective perspectiveWorld, Camera camera_view, World world) {
 		this.world = world;
-		initShadowing(perspectiveWorld, camera_view, map_size);
+		initShadowing(perspectiveWorld, camera_view);
 	}
 
 	@Override
-	public void initShadowing(Perspective perspectiveWorld, Camera camera_view, int map_size) {
+	public void initShadowing(Perspective perspectiveWorld, Camera camera_view) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "initShadowing");
 
 		// map = new MapView(map_size, map_size);
-		this.map_size = map_size;
+		//this.map_size = map_size; 
+
+		// Build Camera light
+		// We need to calculate the camera light Eye
+		// In order to calculate the camera light "eye", we start form the PoI : the centre of the gUIView frustum obtained before.
+		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the gUIView frustum.
+		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
+
+		Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Calculate Camera Light: Light direction: " + light_dir);
 		
-		calculateCameraLight(perspectiveWorld, camera_view);
-		//calculateCameraLight(perspectiveWorld, camera_view, light_vector);
+		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
+		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
+		//camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
+		//camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS);
+		
+		// Create Camera light without eye position at this stage, only the 3 directions of the Camera are defined
+		camera_light = new Camera(light_dir, Vector4.Z_AXIS);
+		
+		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 		
 		/*
 		 * Mat4 viewMatrix = LookAt(lighting.mCameraPosition,
@@ -188,17 +204,27 @@ public class DirectionalLight extends ShadowingLight {
 		case SHADOWING_BOX_WORLD:
 			// Define the bounding box for the light camera
 			box_world = new Vector4[8];
+			float max = world.getMaxDistance();
+			float min = -max;
+			box_world[0] = new Vector4(min, min, min, 1);
+			box_world[1] = new Vector4(max, min, min, 1);
+			box_world[2] = new Vector4(max, max, min, 1);
+			box_world[3] = new Vector4(min, max, min, 1);
+			box_world[4] = new Vector4(min, min, max, 1);
+			box_world[5] = new Vector4(max, min, max, 1);
+			box_world[6] = new Vector4(max, max, max, 1);
+			box_world[7] = new Vector4(min, max, max, 1);
 			
 			// For this create the min and max of the World (in World coordinates)	
-			box_world[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMinZ(), 1);
-			box_world[1] = new Vector4(world.getMaxX(), world.getMinY(), world.getMinZ(), 1);
-			box_world[2] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMinZ(), 1);
-			box_world[3] = new Vector4(world.getMinX(), world.getMaxY(), world.getMinZ(), 1);
-			box_world[4] = new Vector4(world.getMinX(), world.getMinY(), world.getMaxZ(), 1);
-			box_world[5] = new Vector4(world.getMaxX(), world.getMinY(), world.getMaxZ(), 1);
-			box_world[6] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMaxZ(), 1);
-			box_world[7] = new Vector4(world.getMinX(), world.getMaxY(), world.getMaxZ(), 1);
-			
+//			box_world[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMinZ(), 1);
+//			box_world[1] = new Vector4(world.getMaxX(), world.getMinY(), world.getMinZ(), 1);
+//			box_world[2] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMinZ(), 1);
+//			box_world[3] = new Vector4(world.getMinX(), world.getMaxY(), world.getMinZ(), 1);
+//			box_world[4] = new Vector4(world.getMinX(), world.getMinY(), world.getMaxZ(), 1);
+//			box_world[5] = new Vector4(world.getMaxX(), world.getMinY(), world.getMaxZ(), 1);
+//			box_world[6] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMaxZ(), 1);
+//			box_world[7] = new Vector4(world.getMinX(), world.getMaxY(), world.getMaxZ(), 1);
+
 			break;
 			
 		case SHADOWING_BOX_ELEMENT: // Not implemented yet
@@ -237,20 +263,37 @@ public class DirectionalLight extends ShadowingLight {
 		 you can assume the light “position” is at the center of the bounding box enclosing all visible objects.
 		 */
 		
+		// Calculate the center of Frustum (geometrical center of the 8 points)
+		Vector4 light_PoI = new Vector4(0,0,0,0); // FOR TESTING PURPOSE
+		//Vector4 light_PoI = GeometryTools.center(perspectiveWorld.getFrustumFromEye(camera_view));		
+		//Vector4 light_eye = light_PoI.minus(light_dir.times(perspectiveWorld.getFar()-perspectiveWorld.getNear()));
+		Vector4 light_eye = light_PoI.minus(light_dir).times(3f); // FOR TESTING PURPOSE
+
+		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView -> NO !!!!!
+		camera_light.updateCamera(light_eye);
+
+		
 		// At last initialize the Orthographic projection
 		// Orthographic(float left, float right, float bottom, float top, float near, float far)
 		
 		// TODO PPU calculation is NOT DEFAULT_SHADOW_MAP_DIMENSION
-		perspectiveCtx_light = new PerspectiveContext(box.getMaxY(), box.getMinY(), box.getMaxX(), box.getMinX(), box.getMaxZ(), box.getMinZ(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
+		perspectiveCtx_light = new PerspectiveContext(box.getMaxY(), box.getMinY(), box.getMaxX(), box.getMinX(), box.getMaxZ()-box.getMinZ(), light_eye.length(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
+		map_size = perspectiveCtx_light.getPixelWidth();
+		if (perspectiveCtx_light.getPixelWidth() != perspectiveCtx_light.getPixelHeight()) {
+			// Should never happen
+			if (Tracer.error) Tracer.traceError(this.getClass(), "perspectiveLight pixel width: " + perspectiveCtx_light.getPixelWidth() + " is different than pixel height: " + perspectiveCtx_light.getPixelHeight());			
+		}
 		//perspective_light = new Orthographic(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ());
-		rasterizer_light = new Rasterizer(camera_light, perspectiveCtx_light, null);
+		
+		rasterizer_light = new Rasterizer(camera_light, perspectiveCtx_light);
 
 		// Create the MVP using this orthographic projection matrix
 		mvp_light = new ModelViewProjection(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
 		
 	}
 
-	public void calculateCameraLight(Perspective perspectiveWorld, Camera camera_view) {
+	//public void calculateCameraLight(Perspective perspectiveWorld, Camera camera_view) {
+	public void calculateCameraLight() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "calculateCameraLight");
 		
 		// Build Camera light
@@ -260,17 +303,19 @@ public class DirectionalLight extends ShadowingLight {
 		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
 
 		// Calculate the center of Frustum (geometrical center of the 8 points)
+		Vector4 light_PoI = new Vector4(0,0,0,0); // FOR TESTING PURPOSE
 		//Vector4 light_PoI = GeometryTools.center(perspectiveWorld.getFrustumFromEye(camera_view));		
-		//Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector
+		Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector
 		//Vector4 light_eye = light_PoI.minus(light_dir.times(perspectiveWorld.getFar()-perspectiveWorld.getNear()));
+		Vector4 light_eye = light_PoI.minus(light_dir).times(3f); // FOR TESTING PURPOSE
 		
 		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView -> NO !!!!!
 		
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
 		//camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
-		//camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS);
-		camera_light = new Camera(this.light_vector.times(-1).V4(), Vector4.Z_AXIS);
+		camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS);
+		//camera_light = new Camera(this.light_vector.times(-1).V4(), Vector4.Z_AXIS);
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 
 	}

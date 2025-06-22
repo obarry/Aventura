@@ -2,6 +2,7 @@ package com.aventura.model.world.shape;
 
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.triangle.RectangleMesh;
 

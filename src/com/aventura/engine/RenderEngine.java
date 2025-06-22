@@ -14,11 +14,11 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowingLight;
+import com.aventura.model.world.Element;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
 import com.aventura.model.world.shape.Cylinder;
-import com.aventura.model.world.shape.Element;
 import com.aventura.model.world.shape.Segment;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
@@ -235,7 +235,7 @@ public class RenderEngine {
 					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Shadowing Light #" + i + " : "+shadowingLights.get(i));
 
 					// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
-					shadowingLights.get(i).initShadowing(perspectiveContext.getPerspective(), camera, gUIView.getViewWidth(), world);
+					shadowingLights.get(i).initShadowing(perspectiveContext.getPerspective(), camera, world);
 					
 					// Generate the shadow map
 					// TODO optimization : build a world2 containing only the Elements that can cast shadows by using bouncing algorithm then generate shadow map for this world2

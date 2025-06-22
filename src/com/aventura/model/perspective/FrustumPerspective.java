@@ -112,6 +112,13 @@ public class FrustumPerspective extends Perspective {
 
 		return frustum;
 	}
-
+	
+	public String toString() {
+		String p = "***** Frustum Perspective *****\n";
+		p += super.toString();
+		p += "*******************************\n";
+				
+		return p;
+	}
 
 }
