@@ -178,7 +178,7 @@ public class Rasterizer {
 	 * @param zBuf_height the height of the zBuffer to create
 	 */
 	public MapView initZBuffer(int width, int height) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: "+perspectiveCtx.getPixelWidth()+" Height: "+perspectiveCtx.getPixelHeight());
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: " + width + " Height: " + height);
 
 		this.zBuf_width = width;
 		this.zBuf_height = height;
