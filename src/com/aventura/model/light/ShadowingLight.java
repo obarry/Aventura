@@ -150,9 +150,9 @@ public abstract class ShadowingLight extends Light {
 		this.world = world;
 	}
 	
-	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size);
+	public abstract void initShadowing(Perspective perspective, Camera camera_view);
 	
-	public abstract void initShadowing(Perspective perspective, Camera camera_view, int map_size, World world);
+	public abstract void initShadowing(Perspective perspective, Camera camera_view, World world);
 	
 	//public abstract void calculateCameraLight(Perspective perspective, Camera camera_view); 
 	

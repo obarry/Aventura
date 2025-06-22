@@ -235,7 +235,7 @@ public class RenderEngine {
 					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Shadowing Light #" + i + " : "+shadowingLights.get(i));
 
 					// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
-					shadowingLights.get(i).initShadowing(perspectiveContext.getPerspective(), camera, gUIView.getViewWidth(), world);
+					shadowingLights.get(i).initShadowing(perspectiveContext.getPerspective(), camera, world);
 					
 					// Generate the shadow map
 					// TODO optimization : build a world2 containing only the Elements that can cast shadows by using bouncing algorithm then generate shadow map for this world2

@@ -189,7 +189,6 @@ public class PerspectiveContext {
 		this.pixelHalfWidth = pixelWidth/2;
 		this.pixelHalfHeight = pixelHeight/2;
 		
-		
 		this.p_type = perspective;
 		this.ppu = ppu;
 		

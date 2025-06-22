@@ -59,7 +59,7 @@ import com.aventura.tools.tracing.Tracer;
  * 
  * Note that with (f, up, s) we just built an orthonormal basis
  * 
- * 4) construction of a Rotation Matrix representing a reorientation into our newly constructed orthonormal basis
+ * 4) construction of a Rotation Matrix representing a re-orientation into our newly constructed orthonormal basis
  * 
  * 			/  s.x  s.y  s.z  0.0 \
  * 		R = | up.x up.y up.z  0.0 |
@@ -147,7 +147,7 @@ public class LookAt extends Matrix4 {
 	public void generateLookAt(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "createLookAt(e, p, u)");
 		
-		// The transformation matrix for the camera is based on a reorientation + a translation (eye - origin) 
+		// The transformation matrix for the camera is based on a re-orientation + a translation (eye - origin) 
 
 		// Build forward, up and side Vectors
 		f =  (p.minus(e)).normalize();
@@ -164,7 +164,7 @@ public class LookAt extends Matrix4 {
 							{ -f.getX(), -f.getY(), -f.getZ(), 0.0f },
 							{  0.0f    ,  0.0f    ,  0.0f    , 1.0f } };
 
-		// Build reorientation Matrix
+		// Build re-orientation Matrix
 		Matrix4 orientation = new Matrix4(array);
 
 		// Prepare translation Vector
@@ -172,7 +172,7 @@ public class LookAt extends Matrix4 {
 		// Build the translation Matrix
 		Matrix4 translation = new Translation(em);
 
-		// Then combine the reorientation with the translation. Translation first then Reorientation.
+		// Then combine the re-orientation with the translation. Translation first then Re-orientation.
 		try {
 			this.setArray(orientation.times(translation).getArray());
 		} catch (Exception exc) {
@@ -205,12 +205,34 @@ public class LookAt extends Matrix4 {
 							{ -f.getX(), -f.getY(), -f.getZ(), 0.0f },
 							{  0.0f    ,  0.0f    ,  0.0f    , 1.0f } };
 
-		// Then combine the reorientation with the translation. Translation first then Reorientation.
+		// Then combine the reorientation with the translation. Translation first then Re-orientation.
 		try {
 			this.setArray(array);
 		} catch (Exception exc) {
 			// Should never happen
 		}
+	}
+	
+	/**
+	 * Add a translation to the LookAt matrix afterward e.g. if the eye is not known at construction time (Shadowing Light matrix)
+	 * @param e the point where to translate, generally the eye position in order to translate the LookAt at this point
+	 */
+	public void addTranslation(Vector4 e) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "addTranslation(e)");
+		// Prepare translation Vector
+		Vector4 em = e.times(-1); 
+		// Build the translation Matrix
+		Matrix4 translation = new Translation(em);
+
+		// Then combine the reorientation with the translation. Translation first then Re-orientation.
+		try {
+			Matrix4 lookAt = new Matrix4(this);
+			this.setArray(lookAt.times(translation).getArray());
+		} catch (Exception exc) {
+			// Should never happen
+		}
+		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "updated LookAt matrix:\n" +this);
 	}
 	
 	/**

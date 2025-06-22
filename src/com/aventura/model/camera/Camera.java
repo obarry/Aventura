@@ -44,13 +44,13 @@ public class Camera {
 	}
 
 	public Camera(LookAt la, Vector4 e) {
-		eye =e;
-		lookAt = la;
+		this.eye =e;
+		this.lookAt = la;
 	}
 
 	public Camera(Matrix4 m, Vector4 e) {
-		eye = e;
-		lookAt = new LookAt(m);
+		this.eye = e;
+		this.lookAt = new LookAt(m);
 	}
 
 	/**
@@ -63,8 +63,8 @@ public class Camera {
 	 */
 	public Camera(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating Camera with vectors e: "+e+" p: "+p+" u: "+u);
-		eye = e;
-		lookAt = new LookAt(e,p,u);
+		this.eye = e;
+		this.lookAt = new LookAt(e,p,u);
 	}
 	
 	/**
@@ -77,17 +77,33 @@ public class Camera {
 	 */
 	public Camera(Vector4 f, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating Camera with vectors f: "+ f +" u: "+u);
-		lookAt = new LookAt(f,u);
+		this.eye = null;
+		this.lookAt = new LookAt(f,u);
 	}
 
 	public void updateCamera(Vector4 e, Vector4 p, Vector4 u) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Updating Camera with vectors e: "+e+" p: "+p+" u: "+u);
-		eye = e;
-		lookAt.generateLookAt(e, p, u);
+		this.eye = e;
+		this.lookAt.generateLookAt(e, p, u);
+	}
+
+	/**
+	 * Update / add an Eye to the Camera and set the according translation to the LookAt matrix
+	 * Usefull for Shadowing light (the Eye is not defined at begining of the process)
+	 * @param e the point where to translate (generally the Eye of the Camera)
+	 */
+	public void updateCamera(Vector4 e) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Updating Camera with vectors e: "+e);
+		this.eye = e;
+		this.lookAt.addTranslation(e);
 	}
 
 	public Matrix4 getMatrix() {
 		return (Matrix4) lookAt;
+	}
+	
+	public void setEye(Vector4 e) {
+		this.eye = e;
 	}
 	
 	public Vector4 getEye() {

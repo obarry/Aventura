@@ -133,13 +133,13 @@ public class PointLight extends ShadowingLight {
 	}
 
 	@Override
-	public void initShadowing(Perspective perspective, Camera camera_view, int map_size, World world) {
+	public void initShadowing(Perspective perspective, Camera camera_view, World world) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void initShadowing(Perspective perspective, Camera camera_view, int map_size) {
+	public void initShadowing(Perspective perspective, Camera camera_view) {
 		// TODO Auto-generated method stub
 		
 	}

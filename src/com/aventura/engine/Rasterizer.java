@@ -153,9 +153,9 @@ public class Rasterizer {
 	/**
 	 * Creation of minimal Rasterizer for shadow map rendering
 	 */
-	public Rasterizer(Camera camera) {
+	public Rasterizer(Camera camera, PerspectiveContext graphic) {
 		this.camera = camera;
-		this.perspectiveCtx = null;
+		this.perspectiveCtx = graphic;
 		this.lighting = null;
 	}
 
@@ -1017,10 +1017,10 @@ public class Rasterizer {
 					} else { // Out of zBuffer range (should not happen)
 						not_rendered_pixels++;	    		
 						if (x_zBuf<0 || x_zBuf>=zBuf_width) {
-							if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value while drawing points: "+x_zBuf);
+							if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value: " + x_zBuf + " while drawing points. zBuf_width: " + zBuf_width);
 						}
 						if (y_zBuf<0 || y_zBuf>=zBuf_height) {
-							if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_y value while drawing points: "+y_zBuf);
+							if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_y value: " + y_zBuf + " while drawing points. zBuf_height: " + zBuf_height);
 						}
 					}
 				} else { // Out of screen
