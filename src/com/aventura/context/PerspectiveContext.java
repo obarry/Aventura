@@ -207,7 +207,7 @@ public class PerspectiveContext {
 	}
 	
 	protected void createPerspective(int p_type, float width, float height, float dist, float depth) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: width: "+width+" height:"+height+" dist: "+dist+" depth: "+depth+" ppu: "+ppu);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: width: "+width+" height: "+height+" dist: "+dist+" depth: "+depth);
 		
 		switch (p_type) {
 		case PERSPECTIVE_TYPE_FRUSTUM:
@@ -224,7 +224,7 @@ public class PerspectiveContext {
 	}
 	
 	protected void createPerspective(int p_type, float left, float right, float bottom, float top, float near, float far) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: top: "+top+" bottom: "+bottom+" right: "+right+" left: "+left+" far: "+far+" near: "+near+" ppu: "+ppu);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: top: "+top+" bottom: "+bottom+" right: "+right+" left: "+left+" far: "+far+" near: "+near);
 		
 		switch (p_type) {
 		case PERSPECTIVE_TYPE_FRUSTUM:

@@ -101,6 +101,7 @@ public class TestShadowMapRasterization {
 		System.out.println("********* STARTING APPLICATION *********");
 		Tracer.info = true;
 		Tracer.function = true;
+		Tracer.debug = true;
 		
 		// Camera
 		//Vector4 eye = new Vector4(0,-5,1,1);
@@ -123,8 +124,10 @@ public class TestShadowMapRasterization {
 		
 		World world = new World();
 		Trellis trellis = new Trellis(8, 8, 20, 20, tex2);
-		Cube cube = new Cube(1, tex1);
-		Sphere sphere = new Sphere (0.5f ,10 , tex3);
+		//Cube cube = new Cube(1, tex1);
+		Cube cube = new Cube(1);
+		//Sphere sphere = new Sphere (0.5f ,10 , tex3);
+		Sphere sphere = new Sphere (0.5f ,10);
 		// cube.setColor(new Color(200,50,50));
 		// Translate cube on top of trellis
 		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
@@ -151,11 +154,11 @@ public class TestShadowMapRasterization {
 		//light.setDirectionalLight(dl);
 		
 		//PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(6.4f, 3.6f, 0.1f, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 156);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+		//rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);

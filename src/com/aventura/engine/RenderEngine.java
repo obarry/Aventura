@@ -151,6 +151,7 @@ public class RenderEngine {
 		// Delegate rasterization tasks to a dedicated engine
 		// No shading in this constructor -> null
 		this.rasterizer = new Rasterizer(camera, perspectiveCtx, lighting);
+		//this.rasterizer = new Rasterizer(camera, perspectiveCtx); // TESTING RASTERIZATION OF SHADOW MAP - TO BE REMOVED
 	}
 		
 
@@ -390,14 +391,17 @@ public class RenderEngine {
 					case RenderContext.RENDERING_TYPE_PLAIN:
 						// Draw triangles with shading full face, no interpolation.
 						// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-						rasterizer.rasterizeTriangle(t, color,0, null, false, false, renderContext.shadowing == 1 ? true : false, false);
+						rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false, false);
+						//rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false, true); // TESTING RASTERIZATION OF SHADOW MAP - TO BE REMOVED
 						break;
 					case RenderContext.RENDERING_TYPE_INTERPOLATE:
 						// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
 						if (renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED) {
 							rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false, false);
+							//rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false, true); // TESTING RASTERIZATION OF SHADOW MAP - TO BE REMOVED
 						} else { // No Texture
 							rasterizer.rasterizeTriangle(t, color, se, sc, true, false, renderContext.shadowing == 1 ? true : false, false);
+							//rasterizer.rasterizeTriangle(t, color, se, sc, true, false, renderContext.shadowing == 1 ? true : false, true); // TESTING RASTERIZATION OF SHADOW MAP - TO BE REMOVED
 						}
 						break;
 					default:

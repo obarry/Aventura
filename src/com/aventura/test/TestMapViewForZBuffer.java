@@ -25,6 +25,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cube;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
+import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
 import com.aventura.view.MapView;
@@ -98,6 +99,9 @@ public class TestMapViewForZBuffer {
 	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
+		Tracer.info = true;
+		Tracer.function = true;
+		Tracer.debug = true;
 		
 		// Camera
 		Vector4 eye = new Vector4(8,-5,5,1);
