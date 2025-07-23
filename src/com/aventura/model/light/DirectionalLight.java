@@ -277,7 +277,8 @@ public class DirectionalLight extends ShadowingLight {
 		// Orthographic(float left, float right, float bottom, float top, float near, float far)
 		
 		// TODO PPU calculation is NOT DEFAULT_SHADOW_MAP_DIMENSION
-		perspectiveCtx_light = new PerspectiveContext(box.getMaxY(), box.getMinY(), box.getMaxX(), box.getMinX(), box.getMaxZ()-box.getMinZ(), light_eye.length(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
+		//perspectiveCtx_light = new PerspectiveContext(box.getMaxY(), box.getMinY(), box.getMaxX(), box.getMinX(), box.getMaxZ()-box.getMinZ(), light_eye.length(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
+		perspectiveCtx_light = new PerspectiveContext(6.4f, 3.6f, 0.1f, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 156);
 		map_size = perspectiveCtx_light.getPixelWidth();
 		if (perspectiveCtx_light.getPixelWidth() != perspectiveCtx_light.getPixelHeight()) {
 			// Should never happen

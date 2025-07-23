@@ -210,7 +210,7 @@ public class Trellis extends Element {
 	}
 	
 	public String toString() {
-		return super.toString()+"\nwidth: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+"\nV[0,0]="+rectangleMesh.getVertex(0,0)+"\nV[nx,0]="+rectangleMesh.getVertex(nx,0)+"\nV[0,ny]="+rectangleMesh.getVertex(0,ny)+"\nV[nx,ny]="+rectangleMesh.getVertex(nx,ny);
+		return super.toString()+"\n* width: "+width+", length: "+length+", nx: "+nx+", ny: "+ny+"\n* V[0,0]="+rectangleMesh.getVertex(0,0)+"\n* V[nx,0]="+rectangleMesh.getVertex(nx,0)+"\n* V[0,ny]="+rectangleMesh.getVertex(0,ny)+"\n* V[nx,ny]="+rectangleMesh.getVertex(nx,ny);
 	}
 
 	@Override

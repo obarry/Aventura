@@ -119,8 +119,8 @@ public abstract class Perspective {
 		
 		this.width = width;
 		this.height = height;
-		this.depth = depth;
 		this.dist = dist;
+		this.depth = depth;
 		
 		calculateTBRLFN();
 				

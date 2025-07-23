@@ -128,7 +128,9 @@ public class Rasterizer {
 	int rendered_pixels = 0;
 	int discarded_pixels = 0;
 	int not_rendered_pixels = 0;
+	int outOfBounds_pixels = 0;
 	int discarded_lines = 0;
+	int rasterized_lines = 0;
 
 	// Create locally some context variables exhaustively used during rasterization
 	// TODO Be cautious here : if PerspectiveContext has changed between 2 calls to previously created Rasterizer, these 2 variables won't be refreshed accordingly -> potential bug
@@ -157,6 +159,8 @@ public class Rasterizer {
 		this.camera = camera;
 		this.perspectiveCtx = graphic;
 		this.lighting = null;
+		pixelHalfWidth = graphic.getPixelHalfWidth();
+		pixelHalfHeight = graphic.getPixelHalfHeight();
 	}
 
 	public void setView(GUIView v) {
@@ -300,6 +304,8 @@ public class Rasterizer {
 		rendered_pixels = 0;
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
+		outOfBounds_pixels = 0;
+		rasterized_lines = 0;
 
 		Color shadedCol = null;
 		Color ambientCol = null; // Let's compute Ambient color once per triangle (not needed at each line or pixel)
@@ -368,7 +374,7 @@ public class Rasterizer {
 			}
 		}
 
-		if (!shadowmap) {
+		if (!shadowmap) { // Generic case (not rendering a shadow map)
 			// Initialize n VertexParamLight structures, one for each light, for each VertexParam "container" previously created
 			ArrayList<ShadowingLight> shadowingLights = lighting.getShadowingLights();
 			//int nb_sl; // Number of Shadowing Lights
@@ -424,6 +430,7 @@ public class Rasterizer {
 
 				// Calculate viewer vectors
 				Vector3 viewer1, viewer2, viewer3;
+				// TODO TO BE VERIFIED : Viewers vectors are calculated on triangle's V1, V2, V3 Vertices then used below for VP1, VP2 VP3 that might be in different order... PROBLEM ?
 				viewer1 = camera.getEye().minus(t.getV1().getWorldPos()).V3();
 				viewer2 = camera.getEye().minus(t.getV2().getWorldPos()).V3();
 				viewer3 = camera.getEye().minus(t.getV3().getWorldPos()).V3();
@@ -627,7 +634,7 @@ public class Rasterizer {
 			}
 		}
 
-		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Discarded lines: "+discarded_lines);
+		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Out of bounds pixels: "+outOfBounds_pixels+". Rasterized lines: "+rasterized_lines+". Discarded lines: "+discarded_lines);
 	}
 
 
@@ -678,7 +685,8 @@ public class Rasterizer {
 
 
 		if (isInScreenY(y)) { // Eliminate immediately lines of pixels outside the gUIView screen
-
+			rasterized_lines++;
+			
 			// Thanks to current Y, we can compute the gradient to compute others values like
 			// the starting X (sx) and ending X (ex) to draw between
 			// if pa.Y == pb.Y or pc.Y == pd.Y, gradient is forced to 1
@@ -691,6 +699,7 @@ public class Rasterizer {
 			float xb = xScreen(vpb.v);
 			float xc = xScreen(vpc.v);
 			float xd = xScreen(vpd.v);
+			if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterizing Scan Line for y = " + y + ". xa: " + xa + " ya: " + ya + " xb: " + xb + " yb: " + yb + " xc: " + xc + " yc: " + yc + " xd: " + xd + " yd: " + yd);
 
 			// Gradient 1 is the gradient on VA VB segment
 			float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
@@ -812,7 +821,8 @@ public class Rasterizer {
 			Color cc; // Combined color to be drawn, result of the lighting and shading calculation
 			
 			
-			// drawing a line from left (sx) to right (ex) 
+			// drawing a line from left (sx) to right (ex)
+			if (sx == ex) if (Tracer.debug) Tracer.traceDebug(this.getClass(), "sx = ex, no pixels drawn on rasterized scan line");
 			for (int x = sx; x < ex; x++) {
 
 				// Eliminate pixels outside the gUIView screen (in y dimension, the lines outside GUIView have already been eliminated earlier)
@@ -976,6 +986,8 @@ public class Rasterizer {
 									c_DTA = ambientCol;
 								}
 
+								if (c_DTA == null) c_DTA = DARK_SHADING_COLOR;
+
 								// SUM(CiDT) and SUM(CiSi) calculation, then sum the total
 								if (interpolate) {
 									c_CiDT_sum = ColorTools.addColors(c_CiDT); // Add all CiDT elements together
@@ -989,7 +1001,7 @@ public class Rasterizer {
 										cc = ColorTools.addColors(c_DTA, c_CiDT_sum);
 									}
 								} else { // no interpolation or normal at triangle level
-									if (texture) { 
+									if (texture && t!=null) { 
 										if (lighting.hasSpecular() && csp != null) { // TODO implement the specular light calculation in case of no interpolation or normal at tirangle level
 											cc = ColorTools.addColors(c_DTA,ColorTools.multColors(ctx, shadedCol)); // Need to implement Specular color when no interpolation or normal at triangle level
 										} else {
@@ -1015,7 +1027,7 @@ public class Rasterizer {
 						} 
 
 					} else { // Out of zBuffer range (should not happen)
-						not_rendered_pixels++;	    		
+						outOfBounds_pixels++;;	    		
 						if (x_zBuf<0 || x_zBuf>=zBuf_width) {
 							if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid zBuffer_x value: " + x_zBuf + " while drawing points. zBuf_width: " + zBuf_width);
 						}
@@ -1055,7 +1067,7 @@ public class Rasterizer {
 	}
 
 	/**
-	 * Draw point with zBuffer management
+	 * Draw Map only (zBuffer)
 	 * @param x X screen coordinate (origin is in the center of the screen)
 	 * @param y Y screen coordinate (origin is in the center of the screen)
 	 * @param z Z homogeneous coordinate for Z buffering

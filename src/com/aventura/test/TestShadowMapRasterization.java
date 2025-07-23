@@ -66,7 +66,7 @@ public class TestShadowMapRasterization {
 	public GUIView createView(PerspectiveContext context) {
 
 		// Create the frame of the application 
-		JFrame frame = new JFrame("Test Lighting");
+		JFrame frame = new JFrame("Test Shadow Map Rasterization");
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
@@ -101,16 +101,17 @@ public class TestShadowMapRasterization {
 		System.out.println("********* STARTING APPLICATION *********");
 		Tracer.info = true;
 		Tracer.function = true;
+		Tracer.debug = true;
 		
 		// Camera
-		//Vector4 eye = new Vector4(0,-5,1,1);
-		//Vector4 poi = new Vector4(0,0,0,1);
-		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
-
-		// Camera similar to Light
-		Vector4 eye = new Vector4(-1,0,0,1);
+		Vector4 eye = new Vector4(-8,-5,10,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+
+		// Camera similar to Light
+		//Vector4 eye = new Vector4(-1,0,0,1);
+		//Vector4 poi = new Vector4(0,0,0,1);
+		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 
 		
 		TestShadowMapRasterization test = new TestShadowMapRasterization();
@@ -124,34 +125,36 @@ public class TestShadowMapRasterization {
 		World world = new World();
 		Trellis trellis = new Trellis(8, 8, 20, 20, tex2);
 		Cube cube = new Cube(1, tex1);
-		Sphere sphere = new Sphere (0.5f ,10 , tex3);
+		//Cube cube = new Cube(1);
+		//Sphere sphere = new Sphere (0.5f ,10 , tex3);
+		//Sphere sphere = new Sphere (0.5f ,10);
 		// cube.setColor(new Color(200,50,50));
 		// Translate cube on top of trellis
 		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
-		Translation t2 = new Translation(new Vector3(-1.5f, 0, 0.5f));
+		//Translation t2 = new Translation(new Vector3(-1.5f, 0, 0.5f));
 		cube.setTransformation(t1);
-		sphere.setTransformation(t2);
+		//sphere.setTransformation(t2);
 
 		world.addElement(trellis);
 		world.addElement(cube);
-		world.addElement(sphere);
+		//world.addElement(sphere);
 		
 		System.out.println("********* Calculating normals");
 		world.generate();
 		System.out.println(world);
 		System.out.println(trellis);
 		System.out.println(cube);
-		System.out.println(sphere);
+		//System.out.println(sphere);
 
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.25f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(3,0,0));
+		DirectionalLight dl = new DirectionalLight(new Vector3(3,0,-1));
 		Lighting light = new Lighting(dl, al);
 		//Lighting light = new Lighting(al);
 		//light.setDirectionalLight(dl);
 		
-		//PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		//PerspectiveContext pContext = new PerspectiveContext(6.4f, 3.6f, 0.1f, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 156);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
