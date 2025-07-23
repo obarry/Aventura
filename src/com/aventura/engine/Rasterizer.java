@@ -986,6 +986,8 @@ public class Rasterizer {
 									c_DTA = ambientCol;
 								}
 
+								if (c_DTA == null) c_DTA = DARK_SHADING_COLOR;
+
 								// SUM(CiDT) and SUM(CiSi) calculation, then sum the total
 								if (interpolate) {
 									c_CiDT_sum = ColorTools.addColors(c_CiDT); // Add all CiDT elements together
@@ -999,7 +1001,7 @@ public class Rasterizer {
 										cc = ColorTools.addColors(c_DTA, c_CiDT_sum);
 									}
 								} else { // no interpolation or normal at triangle level
-									if (texture) { 
+									if (texture && t!=null) { 
 										if (lighting.hasSpecular() && csp != null) { // TODO implement the specular light calculation in case of no interpolation or normal at tirangle level
 											cc = ColorTools.addColors(c_DTA,ColorTools.multColors(ctx, shadedCol)); // Need to implement Specular color when no interpolation or normal at triangle level
 										} else {
