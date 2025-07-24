@@ -14,7 +14,7 @@ import com.aventura.tools.tracing.Tracer;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016-2024 Olivier BARRY
+ * Copyright (c) 2016-2025 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -187,7 +187,7 @@ public class ModelViewProjection {
 	 * @param v the provided Vertex
 	 * @param normals boolean should be true if normals should be calculated, false otherwise (Shadowing)
 	 */
-	public void transform(Vertex v, boolean normals) {
+	public void transformVertex(Vertex v, boolean normals) {
 		// Calculate the coordinates in Clip space (full transformation) and store results in Vertex's related field
 		v.setProjPos(full.times(v.getPos()));
 		// Also calculate only the coordinates of the Vertex in World coordinates for geometry calculation (e.g. bounding boxes etc.)
@@ -209,7 +209,7 @@ public class ModelViewProjection {
 	 * @param v the provided Vertex
 	 * @return the projected Vector4 without Vertex transformation
 	 */
-	public Vector4 project(Vertex v) {
+	public Vector4 projectVertex(Vertex v) {
 		return full.times(v.getPos());
 	}
 	
@@ -222,7 +222,7 @@ public class ModelViewProjection {
 	public void transformElement(Element e, boolean normals) {
 		// Loop on all vertices of the Element and transform each of them
 		for (int i=0; i<e.getNbVertices(); i++) {
-			transform(e.getVertex(i), normals);
+			transformVertex(e.getVertex(i), normals);
 		}
 	}
 		
