@@ -29,7 +29,7 @@ import com.aventura.view.MapView;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016-2024 Olivier BARRY
+ * Copyright (c) 2016-2025 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -490,10 +490,10 @@ public class RenderEngine {
 		Vertex x = new Vertex(1,0,0);
 		Vertex y = new Vertex(0,1,0);
 		Vertex z = new Vertex(0,0,1);
-		modelViewProjection.transform(o, true);
-		modelViewProjection.transform(x, true);
-		modelViewProjection.transform(y, true);
-		modelViewProjection.transform(z, true);
+		modelViewProjection.transformVertex(o, true);
+		modelViewProjection.transformVertex(x, true);
+		modelViewProjection.transformVertex(y, true);
+		modelViewProjection.transformVertex(z, true);
 		// Create 3 unit segments
 		Segment lx = new Segment(o, x);
 		Segment ly = new Segment(o, y);
@@ -563,8 +563,8 @@ public class RenderEngine {
 			// In this case the vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = t.getCenter();
 			Vertex n = new Vertex(c.getPos().plus(t.getNormal())); // Before transformation -> using position and normals not yet transformed
-			modelViewProjection.transform(c, true);
-			modelViewProjection.transform(n, true);
+			modelViewProjection.transformVertex(c, true);
+			modelViewProjection.transformVertex(n, true);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
 			Segment s = new Segment(c, n);
@@ -583,9 +583,9 @@ public class RenderEngine {
 			n1 = new Vertex(p1.getPos().plus(p1.getNormal())); // Before transformation -> using position and normals not yet transformed
 			n2 = new Vertex(p2.getPos().plus(p2.getNormal())); // Before transformation -> using position and normals not yet transformed
 			n3 = new Vertex(p3.getPos().plus(p3.getNormal())); // Before transformation -> using position and normals not yet transformed
-			modelViewProjection.transform(n1, true);
-			modelViewProjection.transform(n2, true);
-			modelViewProjection.transform(n3, true);
+			modelViewProjection.transformVertex(n1, true);
+			modelViewProjection.transformVertex(n2, true);
+			modelViewProjection.transformVertex(n3, true);
 			
 			// Create 3 segments corresponding to normal vectors
 			Segment l1 = new Segment(p1, n1);
@@ -606,8 +606,8 @@ public class RenderEngine {
 		modelViewProjection.calculateMVPMatrix();
 		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVectorAtPoint(null));
 		Vertex o = new Vertex(0,0,0);
-		modelViewProjection.transform(v, true);
-		modelViewProjection.transform(o, true);
+		modelViewProjection.transformVertex(v, true);
+		modelViewProjection.transformVertex(o, true);
 		Segment s = new Segment(o, v);
 		rasterizer.drawLine(s, renderContext.lightVectorsColor);
 	}

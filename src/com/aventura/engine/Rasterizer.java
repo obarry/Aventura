@@ -23,7 +23,7 @@ import com.aventura.view.MapView;
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
- * Copyright (c) 2016-2024 Olivier BARRY
+ * Copyright (c) 2016-2025 Olivier BARRY
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -463,9 +463,9 @@ public class Rasterizer {
 					ShadowingLight sl = shadowingLights.get(i); // Used several times
 
 					// Transform the World position of the Vertex in this Light's coordinates
-					vp1.l[i].vl = sl.getModelView().project(vp1.v);
-					vp2.l[i].vl = sl.getModelView().project(vp2.v);
-					vp3.l[i].vl = sl.getModelView().project(vp3.v);
+					vp1.l[i].vl = sl.getModelView().projectVertex(vp1.v);
+					vp2.l[i].vl = sl.getModelView().projectVertex(vp2.v);
+					vp3.l[i].vl = sl.getModelView().projectVertex(vp3.v);
 
 					// Provide the link to Shadow Map for this Light
 					vp1.l[i].map = sl.getMap();
@@ -644,7 +644,7 @@ public class Rasterizer {
 			VertexParam vpb,			// VertexParam of Vertex B of first segment: AB
 			VertexParam vpc,			// VertexParam of Vertex C of second segment: CD
 			VertexParam vpd,			// VertexParam of Vertex D of second segment: CD
-			Texture 	t,				// Texture object for this triangle
+			Texture 	tex,			// Texture object for this triangle
 			Color 		shadedCol,		// Shaded color if Normal at triangle level (else should be null)
 			Color 		ambientCol,		// Ambient color (independent of the position in space)
 			boolean 	interpolate,	// Flag for interpolation (true) or not (false), also for normal at triangle level (false)
@@ -810,7 +810,7 @@ public class Rasterizer {
 				//
 				// If texture enabled, calculate Texture vectors at beginning and end of the scan line
 				//
-				if (texture && t!=null) {
+				if (texture && tex!=null) {
 					vt1 = Tools.interpolate(vpa.t.times(1/za), vpb.t.times(1/zb), gradient1);
 					vt2 = Tools.interpolate(vpc.t.times(1/zc), vpd.t.times(1/zd), gradient2);
 				}
@@ -852,7 +852,7 @@ public class Rasterizer {
 								cc = null;
 
 								// Texture interpolation
-								if (texture && t!=null) {
+								if (texture && tex!=null) {
 
 									vt = Tools.interpolate(vt1, vt2, gradient).times(z);
 									try {
@@ -860,13 +860,13 @@ public class Rasterizer {
 										// By default W of the texture vector is 1 but if not this will help to take account of the potential geometric distortion of the texture
 										switch (tex_orientation) {
 										case Triangle.TEXTURE_ISOTROPIC: // Default for a triangle
-											ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
+											ctx = tex.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY()/vt.getW());
 											break;
 										case Triangle.TEXTURE_VERTICAL:
-											ctx = t.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
+											ctx = tex.getInterpolatedColor(vt.getX()/vt.getW(), vt.getY());
 											break;
 										case Triangle.TEXTURE_HORIZONTAL:
-											ctx = t.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
+											ctx = tex.getInterpolatedColor(vt.getX(), vt.getY()/vt.getW());
 											break;
 										default:
 											// Should never happen
@@ -948,25 +948,32 @@ public class Rasterizer {
 										csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
 										if (lighting.hasSpecular()) {
 											csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light
-
 										} else {
 											csp_l = DARK_SHADING_COLOR; // No specular
 										}
-										if (shadows) {
-											csh_l = ColorTools.multColor(csh_l,  shadowCoef);
-											if (lighting.hasSpecular()) {
-												csp_l = ColorTools.multColor(csp_l,  shadowCoef);
-											}
+									} else {  // no interpolation or normal at triangle level
+										// In this case csh is the base color passed in arguments and csp won't be used
+										csh_l = shadedCol; // Shaded color passed in argument
+										csp_l = DARK_SHADING_COLOR; // No specular
+
+										// TODO specular color to be implemented in case of normal at triangle level
+									}
+									
+									if (shadows) {
+										csh_l = ColorTools.multColor(csh_l,  shadowCoef);
+										if (lighting.hasSpecular()) {
+											csp_l = ColorTools.multColor(csp_l,  shadowCoef);
 										}
-										if (texture && t!=null) {
-											c_CiDT[i] = ColorTools.multColors(csh_l, ctx);
-										} else {
-											c_CiDT[i] = csh_l;
-										}
+									}
+
+									if (texture && tex!=null) {
+										c_CiDT[i] = ColorTools.multColors(csh_l, ctx);
+									} else {
+										c_CiDT[i] = csh_l;
+									}
+
+									if (lighting.hasSpecular()) {
 										c_CiSi[i] = ColorTools.multColors(csh_l, csp_l);
-									} else { // Else csh is the base color passed in arguments and csp won't be used
-										//csh = shadedCol; // Shaded color passed in argument
-										// TODO specular color to be implemented
 									}
 
 								} // End for each Light
@@ -980,39 +987,27 @@ public class Rasterizer {
 								Color c_CiSi_sum = null;
 
 								// DTA calculation
-								if (texture && t!=null) {
+								if (texture && tex != null && ambientCol != null) {
 									c_DTA = ColorTools.multColors(ctx, ambientCol);
-								} else {
+								} else if (ambientCol != null) {
 									c_DTA = ambientCol;
+								} else {
+									c_DTA = DARK_SHADING_COLOR; // In case there is no ambient color
 								}
-
-								if (c_DTA == null) c_DTA = DARK_SHADING_COLOR;
 
 								// SUM(CiDT) and SUM(CiSi) calculation, then sum the total
-								if (interpolate) {
-									c_CiDT_sum = ColorTools.addColors(c_CiDT); // Add all CiDT elements together
-									c_CiSi_sum = ColorTools.addColors(c_CiSi); // Add all CiSi elements together
+								//if (interpolate) {
+								c_CiDT_sum = ColorTools.addColors(c_CiDT); // Add all CiDT elements together
+								if (lighting.hasSpecular()) c_CiSi_sum = ColorTools.addColors(c_CiSi); // Add all CiSi elements together
 
-									// Sum the total
-									if (lighting.hasSpecular() && csp != null) {
-										// General case with all type of light (shaded and specular)
-										cc = ColorTools.addColors(c_DTA, ColorTools.addColors(c_CiDT_sum, c_CiSi_sum));
-									} else { // No Specular light, formula is simplified
-										cc = ColorTools.addColors(c_DTA, c_CiDT_sum);
-									}
-								} else { // no interpolation or normal at triangle level
-									if (texture && t!=null) { 
-										if (lighting.hasSpecular() && csp != null) { // TODO implement the specular light calculation in case of no interpolation or normal at tirangle level
-											cc = ColorTools.addColors(c_DTA,ColorTools.multColors(ctx, shadedCol)); // Need to implement Specular color when no interpolation or normal at triangle level
-										} else {
-											cc = ColorTools.addColors(c_DTA, ColorTools.multColors(ctx, shadedCol));
-										}
-									} else {
-										cc = ColorTools.addColors(c_DTA, shadedCol);
-									}
-
+								// Sum the total
+								if (lighting.hasSpecular() && csp != null) {
+									// General case with all type of light (shaded and specular)
+									cc = ColorTools.addColors(c_DTA, ColorTools.addColors(c_CiDT_sum, c_CiSi_sum));
+								} else { // No Specular light, formula is simplified
+									cc = ColorTools.addColors(c_DTA, c_CiDT_sum);
 								}
-
+								
 								// ----------------------------------------------
 								// Pixel drawing
 								// Draw the point with calculated Combined Color
