@@ -148,7 +148,7 @@ public class TestShadowMapRasterization {
 
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.25f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(3,0,-1));
+		DirectionalLight dl = new DirectionalLight(new Vector3(3,3,-3));
 		Lighting light = new Lighting(dl, al);
 		//Lighting light = new Lighting(al);
 		//light.setDirectionalLight(dl);
