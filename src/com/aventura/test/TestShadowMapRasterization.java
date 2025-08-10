@@ -68,7 +68,7 @@ public class TestShadowMapRasterization {
 		// Create the frame of the application 
 		JFrame frame = new JFrame("Test Shadow Map Rasterization");
 		// Set the size of the frame
-		frame.setSize(1000,600);
+		frame.setSize(1000,1000);
 		
 		// Create the gUIView to be displayed
 		view = new SwingView(context, frame);
@@ -101,10 +101,10 @@ public class TestShadowMapRasterization {
 		System.out.println("********* STARTING APPLICATION *********");
 		Tracer.info = true;
 		Tracer.function = true;
-		Tracer.debug = true;
+		//Tracer.debug = true;
 		
 		// Camera
-		Vector4 eye = new Vector4(-8,-5,10,1);
+		Vector4 eye = new Vector4(-8,3,15,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 
@@ -126,29 +126,29 @@ public class TestShadowMapRasterization {
 		Trellis trellis = new Trellis(8, 8, 20, 20, tex2);
 		Cube cube = new Cube(1, tex1);
 		//Cube cube = new Cube(1);
-		//Sphere sphere = new Sphere (0.5f ,10 , tex3);
+		Sphere sphere = new Sphere (0.5f ,10 , tex3);
 		//Sphere sphere = new Sphere (0.5f ,10);
 		// cube.setColor(new Color(200,50,50));
 		// Translate cube on top of trellis
 		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
-		//Translation t2 = new Translation(new Vector3(-1.5f, 0, 0.5f));
+		Translation t2 = new Translation(new Vector3(-1.5f, 0, 0.5f));
 		cube.setTransformation(t1);
-		//sphere.setTransformation(t2);
+		sphere.setTransformation(t2);
 
 		world.addElement(trellis);
 		world.addElement(cube);
-		//world.addElement(sphere);
+		world.addElement(sphere);
 		
 		System.out.println("********* Calculating normals");
 		world.generate();
 		System.out.println(world);
 		System.out.println(trellis);
 		System.out.println(cube);
-		//System.out.println(sphere);
+		System.out.println(sphere);
 
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.25f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(3,0,-1));
+		DirectionalLight dl = new DirectionalLight(new Vector3(10,20,-10));
 		Lighting light = new Lighting(dl, al);
 		//Lighting light = new Lighting(al);
 		//light.setDirectionalLight(dl);
@@ -161,7 +161,7 @@ public class TestShadowMapRasterization {
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
@@ -179,6 +179,7 @@ public class TestShadowMapRasterization {
 			System.out.println("Now rendering shadow map...");
 			mapView.removeFar(pContext.getPerspective().getFar());
 			mapView.normalizeMap();
+			gUIView.setDimensions(mapView.getViewWidth(), mapView.getViewHeight());
 			gUIView.initView(mapView);
 			gUIView.renderView();
 		} else {

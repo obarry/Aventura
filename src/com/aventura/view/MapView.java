@@ -70,6 +70,19 @@ public class MapView extends View {
 		}
 	}
 	
+	@Override
+	public void initView(int width, int height) {
+		this.width = width;
+		this.height = height;
+		
+		
+		for (int i=0; i<width; i++) {
+			for (int j=0; j<height; j++) {
+				map[i][j] = 0;
+			}
+		}
+	}
+
 	public void initView(float f) {
 		for (int i=0; i<width; i++) {
 			for (int j=0; j<height; j++) {
@@ -197,6 +210,5 @@ public class MapView extends View {
 		float result = (z11*u_opposite+z21*u_ratio)*v_opposite+(z12*u_opposite+z22*u_ratio)*v_ratio;
 		return result;
 	}
-
 
 }

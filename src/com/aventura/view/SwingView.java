@@ -66,30 +66,36 @@ public class SwingView extends GUIView {
 	BufferedImage backbuffer;
 	Graphics2D backgraph;
 	
-	// Color
-	Color backgroundColor = null;
-	
 	
 	public SwingView(PerspectiveContext context) {
 		super(context);
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView. Width: "+width+", Height: "+height);
+		
+		initFront();
+	}
 
-		frontbuffer = new BufferedImage(width , height, BufferedImage.TYPE_INT_RGB);
-		frontgraph = (Graphics2D)frontbuffer.getGraphics();
-	
-        // Translate origin of the graphic
-		frontgraph.translate(width/2, height/2);
+	public SwingView(int width, int height) {
+		super(width, height);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView. Width: "+width+", Height: "+height);
+
+		initFront();
 	}
 
 	public SwingView(PerspectiveContext context, Component comp) {
 		super(context);
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView with Swing Component. Width: "+width+", Height: "+height);
 
-		frontbuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		frontgraph = (Graphics2D)frontbuffer.getGraphics();
-	
-        // Translate origin of the graphic
-		frontgraph.translate(width/2, height/2);
+		initFront();
+		
+		// Initialize the Component/JComponent to which this gUIView is associated
+		component = comp;
+	}
+
+	public SwingView(int width, int height, Component comp) {
+		super(width, height);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView with Swing Component. Width: "+width+", Height: "+height);
+
+		initFront();
 		
 		// Initialize the Component/JComponent to which this gUIView is associated
 		component = comp;
@@ -98,7 +104,29 @@ public class SwingView extends GUIView {
 	@Override
 	public void initView() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Initializing SwingView");
-
+		
+		initBack();
+	}
+	
+	@Override
+	public void initView(int width, int height) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Initializing SwingView");
+		
+		this.width  = width;
+		this.height = height;
+		
+		initBack();
+	}
+	
+	protected void initFront() {
+		frontbuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		frontgraph = (Graphics2D)frontbuffer.getGraphics();
+	
+        // Translate origin of the graphic
+		frontgraph.translate(width/2, height/2);
+	}
+	
+	protected void initBack() {
 		// Reinitialize the back buffer image #2 - need to define color of the back as per Graphic context definition
 		backbuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
 		backgraph = (Graphics2D)backbuffer.getGraphics();
@@ -108,7 +136,7 @@ public class SwingView extends GUIView {
 
 
         // Translate origin of the graphic
-		backgraph.translate(width/2, height/2);
+		backgraph.translate(width/2, height/2);		
 	}
 
 
@@ -163,7 +191,6 @@ public class SwingView extends GUIView {
 	 * @param c the Color of the pixel to draw
 	 */
 	public void drawPixel(int x, int y, Color c) {
-		//System.out.println("x: "+x+"y: "+y);
 		if (x>=-width/2 && x<width/2 && y<=height/2 && y>-height/2) backbuffer.setRGB(x+width/2, -y+height/2, c.getRGB());
 	}
 	
@@ -201,16 +228,8 @@ public class SwingView extends GUIView {
 	// Caution : MapView should be normalized (using the appropriate method) before the call
 	public void initView(MapView map) {
 		
-		// Initialize the back buffer
-		backbuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
-		backgraph = (Graphics2D)backbuffer.getGraphics();
-		// Fill image with background color pixels
-        backgraph.setColor(backgroundColor);
-        backgraph.fillRect(backbuffer.getMinX(), backbuffer.getMinY(), backbuffer.getWidth(), backbuffer.getHeight());
-
-        // Translate origin of the graphic
-		backgraph.translate(width/2, height/2);
-
+		initBack();
+		
 		// Fill the back buffer with the content of the map view
 		// Take the min size of either the map or this view in width and height. That means that if map is larger than view, it will be cropped
 		int minX = map.width < this.width ? map.width : this.width;

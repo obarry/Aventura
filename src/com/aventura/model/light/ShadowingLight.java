@@ -165,6 +165,9 @@ public abstract class ShadowingLight extends Light {
 	 */
 	public void generateShadowMap(World world) {
 	
+		// Get the map from the Rasterizer while initializing it
+		map = rasterizer_light.initZBuffer(map_size, map_size); // ShadowMap is square
+
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
@@ -182,16 +185,14 @@ public abstract class ShadowingLight extends Light {
 		} else {
 			model = matrix.times(e.getTransformation());
 		}
+		
 		mvp_light.setModel(model);
 		mvp_light.calculateMVPMatrix(); // Compute the whole ModelViewProjection mvp_light matrix including Camera (gUIView)
 
 		// Calculate projection for all vertices of this Element
-		mvp_light.transformElement(e, false); // Calculate prj_pos of each vertex
-		// TODO Verify that mvp_light.transformVertices does not calculate normals (not needed here) projection
+		mvp_light.transformElement(e, false); // Calculate prj_pos of each vertex of this Element
 
-		map = rasterizer_light.initZBuffer(map_size, map_size); // ShadowMap is square
-
-		// Process each Triangle
+		// Process each Triangle (this will update the map)
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			Triangle t = e.getTriangle(j);
 			// Scissor test for the triangle
@@ -201,7 +202,6 @@ public abstract class ShadowingLight extends Light {
 				
 				// Simplified rasterization : only last parameter is true to indicate this is a shadow map
 				rasterizer_light.rasterizeTriangle(t, null, 0, null, false, false, false, true); 
-				
 			}
 		}
 

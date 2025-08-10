@@ -278,7 +278,7 @@ public class DirectionalLight extends ShadowingLight {
 		
 		// TODO PPU calculation is NOT DEFAULT_SHADOW_MAP_DIMENSION
 		//perspectiveCtx_light = new PerspectiveContext(box.getMaxY(), box.getMinY(), box.getMaxX(), box.getMinX(), box.getMaxZ()-box.getMinZ(), light_eye.length(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
-		perspectiveCtx_light = new PerspectiveContext(6.4f, 3.6f, 0.1f, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 156);
+		perspectiveCtx_light = new PerspectiveContext(6.4f, 6.4f, 0.1f, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 156);
 		map_size = perspectiveCtx_light.getPixelWidth();
 		if (perspectiveCtx_light.getPixelWidth() != perspectiveCtx_light.getPixelHeight()) {
 			// Should never happen
@@ -299,7 +299,7 @@ public class DirectionalLight extends ShadowingLight {
 		
 		// Build Camera light
 		// We need to calculate the camera light Eye
-		// In order to calculate the camera light "eye", we start form the PoI : the centre of the gUIView frustum obtained before.
+		// In order to calculate the camera light "eye", we start from the PoI : the centre of the gUIView frustum obtained before.
 		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the gUIView frustum.
 		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
 
@@ -308,14 +308,14 @@ public class DirectionalLight extends ShadowingLight {
 		//Vector4 light_PoI = GeometryTools.center(perspectiveWorld.getFrustumFromEye(camera_view));		
 		Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector
 		//Vector4 light_eye = light_PoI.minus(light_dir.times(perspectiveWorld.getFar()-perspectiveWorld.getNear()));
-		Vector4 light_eye = light_PoI.minus(light_dir).times(3f); // FOR TESTING PURPOSE
+		Vector4 light_eye = light_PoI.minus(light_dir).times(10f); // FOR TESTING PURPOSE
 		
 		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView -> NO !!!!!
 		
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
 		//camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
-		camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS);
+		camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS); // This assumes that Light vector is not parallel to Z_AXIS TODO manage this case
 		//camera_light = new Camera(this.light_vector.times(-1).V4(), Vector4.Z_AXIS);
 		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
 
