@@ -44,6 +44,12 @@ import com.aventura.context.PerspectiveContext;
 */
 public abstract class GUIView extends View {
 	
+	// Static data
+	public static Color DEFAULT_BACKGROUND_COLOR = Color.BLACK;
+	
+	// Color
+	protected Color backgroundColor = null;
+	
 	public GUIView() {
 		// Do nothing
 	}
@@ -57,8 +63,17 @@ public abstract class GUIView extends View {
 	public GUIView(PerspectiveContext context) {
 		
 		// Both width and height are cast to (int) for the GUIView that is pixel based
-		width = context.getPixelWidth();
-		height = context.getPixelHeight();
+		this.width  = context.getPixelWidth();
+		this.height = context.getPixelHeight();
+		
+	}
+	
+	public GUIView(int width, int height) {
+		
+		// Both width and height are cast to (int) for the GUIView that is pixel based
+		this.width  = width;
+		this.height = height;
+		
 	}
 		
 	public abstract void initView(MapView map); // init back buffer with another map of MapView type

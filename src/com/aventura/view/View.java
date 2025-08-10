@@ -55,6 +55,12 @@ public abstract class View {
 		return height;
 	}
 	
-	public abstract void initView();
+	public void setDimensions(int width, int height) {
+		this.width  = width;
+		this.height = height;
+	}
 	
+	public abstract void initView();
+	public abstract void initView(int width, int height); // change dimensions and initView
+
 }
