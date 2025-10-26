@@ -277,15 +277,14 @@ public class Rasterizer {
 	 * Inspired from:
 	 * https://www.davrous.com/2013/06/21/tutorial-part-4-learning-how-to-write-a-3d-software-engine-in-c-ts-or-js-rasterization-z-buffering/
 	 * 
-	 * @param t the triangle to render
-	 * @param surfCol the base surface color of the triangle, may be inherited from the element or world (default)
-	 * @param specExp the specular exponent of the Element
-	 * @param specCol the specular color of the Element
-	 * @param interpolate a boolean to indicate if interpolation of colors is activated (true) or not (false)
-	 * @param texture a boolean to indicate if texture processing is activated (true) or not (false)
-	 * @param shadows a boolean to indicate if shadowing is enabled (true) or not (false)
-	 * @param shadowmap a boolean to indicate whether this is a rasterization only for a shadow map (true) or not (false). Rasterizing a shadow map
-	 * involves a simplified algorithm.
+	 * @param t				the triangle to render
+	 * @param surfCol		the base surface color of the triangle, may be inherited from the element or world (default)
+	 * @param specExp		the specular exponent of the Element
+	 * @param specCol		the specular color of the Element
+	 * @param interpolate	a boolean to indicate if interpolation of colors is activated (true) or not (false)
+	 * @param texture		a boolean to indicate if texture processing is activated (true) or not (false)
+	 * @param shadows		a boolean to indicate if shadowing is enabled (true) or not (false)
+	 * @param shadowmap		a boolean to indicate whether this is a rasterization only for a shadow map (true) or not (false). Rasterizing a shadow map involves a simplified algorithm.
 	 * 
 	 **/
 	public void rasterizeTriangle(
@@ -377,7 +376,6 @@ public class Rasterizer {
 		if (!shadowmap) { // Generic case (not rendering a shadow map)
 			// Initialize n VertexParamLight structures, one for each light, for each VertexParam "container" previously created
 			ArrayList<ShadowingLight> shadowingLights = lighting.getShadowingLights();
-			//int nb_sl; // Number of Shadowing Lights
 
 			// If there are Directional or Point Lights
 			if (lighting.hasShadowing()) {
@@ -425,7 +423,7 @@ public class Rasterizer {
 
 			} else {
 
-				// TODO Optimization: pre-calculate the viewer vectors and shaded colors to each Vertex before in 1 row
+				// TODO Potential optimization: pre-calculate the viewer vectors and shaded colors to each Vertex before in 1 row - May not be optimal TBC
 				// This will avoid to do the same calculation for a Vertex shared by several triangles (which is the general case)
 
 				// Calculate viewer vectors
@@ -638,21 +636,52 @@ public class Rasterizer {
 	}
 
 
+	/**
+	 * Rasterization of an horizontal "scan line" of pixels.
+	 * The scan line is at ordinate y and will start x from segment AB to segment CD
+	 * 
+	 *  Y
+	 *  ^	            A		C
+	 *  |	            +		+
+	 *  |	          / 		 \
+	 *	|	        /   		  \
+	 *	+ y	      /----------------\	Scan Line
+	 *	|		/					\
+	 * 	|	 B +					 + D
+	 *	|
+	 * 	+---------+----------------+-------------> X
+	 * 			  xAB			   xCD
+	 * 
+	 * @param y					Ordinate of the scan line
+	 * @param vpa				VertexParam of Vertex A of first segment: AB
+	 * @param vpb				VertexParam of Vertex B of first segment: AB
+	 * @param vpc				VertexParam of Vertex C of second segment: CD
+	 * @param vpd				VertexParam of Vertex D of second segment: CD
+	 * @param tex				Texture object for this triangle
+	 * @param shadedCol			Shaded color if Normal at triangle level (else should be null)
+	 * @param ambientCol		Ambient color (independent of the position in space)
+	 * @param interpolate		Flag for interpolation (true) or not (false), also for normal at triangle level (false)
+	 * @param texture			Flag for texture calculation (true) or not (false)
+	 * @param tex_orientation	Flag for isotropic, vertical or horizontal texture interpolation
+	 * @param shadows			Flag for shadowing enabled (true) or disabled (false)
+	 * @param nb_lights			Number of Lights (except ambient)
+	 * @param shadowmap			Flag for shadow map rasterization (true) or full rasterization (false)
+	 */
 	protected void rasterizeScanLine(
-			int 		y,				// Ordinate of the scan line
-			VertexParam vpa,			// VertexParam of Vertex A of first segment: AB
-			VertexParam vpb,			// VertexParam of Vertex B of first segment: AB
-			VertexParam vpc,			// VertexParam of Vertex C of second segment: CD
-			VertexParam vpd,			// VertexParam of Vertex D of second segment: CD
-			Texture 	tex,			// Texture object for this triangle
-			Color 		shadedCol,		// Shaded color if Normal at triangle level (else should be null)
-			Color 		ambientCol,		// Ambient color (independent of the position in space)
-			boolean 	interpolate,	// Flag for interpolation (true) or not (false), also for normal at triangle level (false)
-			boolean 	texture, 		// Flag for texture calculation (true) or not (false)
-			int 		tex_orientation,// Flag for isotropic, vertical or horizontal texture interpolation
-			boolean 	shadows,		// Flag for shadowing enabled (true) or disabled (false)
-			int 		nb_lights,		// Number of Lights (except ambient)
-			boolean 	shadowmap) {	// Flag for shadow map rasterization (true) or full rasterization (false)
+			int 		y,
+			VertexParam vpa,
+			VertexParam vpb,
+			VertexParam vpc,
+			VertexParam vpd,
+			Texture 	tex,
+			Color 		shadedCol,
+			Color 		ambientCol,
+			boolean 	interpolate,
+			boolean 	texture,
+			int 		tex_orientation,
+			boolean 	shadows,
+			int 		nb_lights,
+			boolean 	shadowmap) {
 
 
 		// ***************************************************

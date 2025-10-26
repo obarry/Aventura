@@ -104,7 +104,7 @@ public class TestShadowMapRasterization {
 		//Tracer.debug = true;
 		
 		// Camera
-		Vector4 eye = new Vector4(-8,3,15,1);
+		Vector4 eye = new Vector4(-8,-2,12,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
 
@@ -148,7 +148,7 @@ public class TestShadowMapRasterization {
 
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.25f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(10,20,-10));
+		DirectionalLight dl = new DirectionalLight(new Vector3(0.1f,0.1f,-1));
 		Lighting light = new Lighting(dl, al);
 		//Lighting light = new Lighting(al);
 		//light.setDirectionalLight(dl);
