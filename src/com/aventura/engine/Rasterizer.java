@@ -131,6 +131,10 @@ public class Rasterizer {
 	int outOfBounds_pixels = 0;
 	int discarded_lines = 0;
 	int rasterized_lines = 0;
+	int lines_with_no_pixel = 0;
+	int rendered_triangles = 0;
+	int triangles_with_lines = 0;
+	int triangles_with_pixels = 0;
 
 	// Create locally some context variables exhaustively used during rasterization
 	// TODO Be cautious here : if PerspectiveContext has changed between 2 calls to previously created Rasterizer, these 2 variables won't be refreshed accordingly -> potential bug
@@ -305,6 +309,7 @@ public class Rasterizer {
 		not_rendered_pixels = 0;
 		outOfBounds_pixels = 0;
 		rasterized_lines = 0;
+		lines_with_no_pixel = 0;
 
 		Color shadedCol = null;
 		Color ambientCol = null; // Let's compute Ambient color once per triangle (not needed at each line or pixel)
@@ -631,8 +636,15 @@ public class Rasterizer {
 				}
 			}
 		}
+		
+		// Global stats for Rasterizer
+		rendered_triangles++;
+		if (rasterized_lines >0) triangles_with_lines++;
+		if (rendered_pixels > 0) triangles_with_pixels++;
 
 		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Out of bounds pixels: "+outOfBounds_pixels+". Rasterized lines: "+rasterized_lines+". Discarded lines: "+discarded_lines);
+		if (rendered_pixels == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "No pixels rendered for this triangle : discarded: " + discarded_pixels + ", not rendered: " + not_rendered_pixels + ", out of bound: " + outOfBounds_pixels + " Lines : rasterized: " + rasterized_lines + ", discarded: " + discarded_lines + " with no pixels: " + lines_with_no_pixel);
+
 	}
 
 
@@ -851,7 +863,11 @@ public class Rasterizer {
 			
 			
 			// drawing a line from left (sx) to right (ex)
-			if (sx == ex) if (Tracer.debug) Tracer.traceDebug(this.getClass(), "sx = ex, no pixels drawn on rasterized scan line");
+			if (sx == ex) {
+				lines_with_no_pixel++;
+				if (Tracer.debug) Tracer.traceDebug(this.getClass(), "sx = ex, no pixels drawn on rasterized scan line");
+			}
+			
 			for (int x = sx; x < ex; x++) {
 
 				// Eliminate pixels outside the gUIView screen (in y dimension, the lines outside GUIView have already been eliminated earlier)
@@ -1213,6 +1229,11 @@ public class Rasterizer {
 		}
 
 		return c;
+	}
+
+	public String renderStats() {		
+		return "Rasterizer - Triangles: rendered: "+rendered_triangles+", rendered with lines: "+triangles_with_lines+", rendered with pixels: "+triangles_with_pixels;
+
 	}
 
 

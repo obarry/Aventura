@@ -58,7 +58,7 @@ public class DirectionalLight extends ShadowingLight {
 	/**
 	 * Create Directional Light using direction as vector of the light
 	 * The intensity of the light will be extrapolate from the norm of the provided direction vector
-	 * @param direction
+	 * @param direction is where the light comes from (vector from viewer to light source)
 	 */
 	public DirectionalLight(Vector3 direction) {
 		super(direction.length()); // Intensity is taken from the norm of the direction vector
@@ -69,7 +69,7 @@ public class DirectionalLight extends ShadowingLight {
 	
 	/**
 	 * Create Directional Light using direction as vector of the light and separated scalar for intensity
-	 * @param direction
+	 * @param direction is where the light comes from (vector from viewer to light source)
 	 * @param intensity
 	 */
 	public DirectionalLight(Vector3 direction, float intensity) {
@@ -82,7 +82,7 @@ public class DirectionalLight extends ShadowingLight {
 	/**
 	 * Create Directional Light using direction as vector of the light
 	 * The intensity of the light will be extrapolate from the norm of the provided direction vector
-	 * @param direction
+	 * @param direction is where the light comes from (vector from viewer to light source)
 	 */
 	public DirectionalLight(Vector3 direction, World world) {
 		super(direction.length(), world); // Intensity is taken from the norm of the direction vector
@@ -93,7 +93,7 @@ public class DirectionalLight extends ShadowingLight {
 	
 	/**
 	 * Create Directional Light using direction as vector of the light and separated scalar for intensity
-	 * @param direction
+	 * @param direction is where the light comes from (vector from viewer to light source)
 	 * @param intensity
 	 */
 	public DirectionalLight(Vector3 direction, float intensity, World world) {
