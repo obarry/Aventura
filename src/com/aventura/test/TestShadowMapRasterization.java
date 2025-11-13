@@ -120,33 +120,33 @@ public class TestShadowMapRasterization {
 		
 		System.out.println("********* Creating World");
 		
-		//Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
-		//Texture tex3 = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		Texture tex3 = new Texture("resources/texture/texture_blueground_204x204.jpg");
 		Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
 		Trellis trellis = new Trellis(8, 8, 10, 10, tex2);
-		//Cube cube = new Cube(1, tex1);
+		Cube cube = new Cube(1, tex1);
 		//Cube cube = new Cube(1);
-		//Sphere sphere = new Sphere (0.5f ,10 , tex3);
+		Sphere sphere = new Sphere (0.5f ,10 , tex3);
 		//Sphere sphere = new Sphere (0.5f ,10);
 		// cube.setColor(new Color(200,50,50));
 		// Translate cube on top of trellis
-		//Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
-		//Translation t2 = new Translation(new Vector3(-1.5f, 0, 0.5f));
-		//cube.setTransformation(t1);
-		//sphere.setTransformation(t2);
+		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
+		Translation t2 = new Translation(new Vector3(-1.5f, 0, 0.5f));
+		cube.setTransformation(t1);
+		sphere.setTransformation(t2);
 
 		world.addElement(trellis);
-		//world.addElement(cube);
-		//world.addElement(sphere);
+		world.addElement(cube);
+		world.addElement(sphere);
 		
 		System.out.println("********* Calculating normals");
 		world.generate();
 		System.out.println(world);
 		System.out.println(trellis);
-		//System.out.println(cube);
-		//System.out.println(sphere);
+		System.out.println(cube);
+		System.out.println(sphere);
 
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.25f);
@@ -166,7 +166,7 @@ public class TestShadowMapRasterization {
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
 		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
+		//rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
