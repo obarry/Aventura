@@ -240,7 +240,7 @@ public class RenderContext {
 	public String toString() {
 		String renderContext = "Render Context:\n";
 		
-		renderContext += "* Rendering type: ";
+		renderContext += "* Rendering type:        ";
 		switch (getRenderingType()) {
 		case RENDERING_TYPE_LINE:
 			renderContext += "LINE";
@@ -257,7 +257,7 @@ public class RenderContext {
 		}
 		renderContext += "\n";
 		
-		renderContext += "* Rendering lines: ";
+		renderContext += "* Rendering lines:       ";
 		switch (getRenderingLines()) {
 		case RENDERING_LINES_DISABLED:
 			renderContext += "DISABLED";
@@ -268,7 +268,7 @@ public class RenderContext {
 		}
 		renderContext += "\n";
 		
-		renderContext += "* Display landmark: ";
+		renderContext += "* Display landmark:      ";
 		switch (getDisplayLandmark()) {
 		case DISPLAY_LANDMARK_DISABLED:
 			renderContext += "DISABLED";
@@ -279,7 +279,7 @@ public class RenderContext {
 		}
 		renderContext += "\n";
 
-		renderContext += "* Display normals: ";
+		renderContext += "* Display normals:       ";
 		switch (getDisplayNormals()) {
 		case DISPLAY_NORMALS_DISABLED:
 			renderContext += "DISABLED";
@@ -301,7 +301,7 @@ public class RenderContext {
 		}
 		renderContext += "\n";
 
-		renderContext += "* Backface culling: ";
+		renderContext += "* Backface culling:      ";
 		switch (getBackFaceCulling()) {
 		case BACKFACE_CULLING_DISABLED:
 			renderContext += "DISABLED";
@@ -312,7 +312,7 @@ public class RenderContext {
 		}
 		renderContext += "\n";
 
-		renderContext += "* Texture processing: ";
+		renderContext += "* Texture processing:    ";
 		switch (getTextureProcessing()) {
 		case TEXTURE_PROCESSING_DISABLED:
 			renderContext += "DISABLED";
@@ -323,7 +323,7 @@ public class RenderContext {
 		}
 		renderContext += "\n";
 
-		renderContext += "* Shadowing: ";
+		renderContext += "* Shadowing:             ";
 		switch (getShadowing()) {
 		case SHADOWING_DISABLED:
 			renderContext += "DISABLED";

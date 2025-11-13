@@ -129,8 +129,15 @@ public class Rasterizer {
 	int discarded_pixels = 0;
 	int not_rendered_pixels = 0;
 	int outOfBounds_pixels = 0;
+	int calculated_pixels = 0;
+	int processed_pixels = 0;
 	int discarded_lines = 0;
 	int rasterized_lines = 0;
+	int lines_with_no_pixel = 0;
+	int reversed_lines = 0;
+	int rendered_triangles = 0;
+	int triangles_with_lines = 0;
+	int triangles_with_pixels = 0;
 
 	// Create locally some context variables exhaustively used during rasterization
 	// TODO Be cautious here : if PerspectiveContext has changed between 2 calls to previously created Rasterizer, these 2 variables won't be refreshed accordingly -> potential bug
@@ -304,7 +311,11 @@ public class Rasterizer {
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
 		outOfBounds_pixels = 0;
+		calculated_pixels = 0;
+		processed_pixels = 0;
 		rasterized_lines = 0;
+		lines_with_no_pixel = 0;
+		reversed_lines = 0;
 
 		Color shadedCol = null;
 		Color ambientCol = null; // Let's compute Ambient color once per triangle (not needed at each line or pixel)
@@ -512,7 +523,7 @@ public class Rasterizer {
 		//		}
 
 
-		// Slopes
+		// Invert slopes
 		float dP1P2, dP1P3;
 
 		// http://en.wikipedia.org/wiki/Slope
@@ -631,8 +642,15 @@ public class Rasterizer {
 				}
 			}
 		}
+		
+		// Global stats for Rasterizer
+		rendered_triangles++;
+		if (rasterized_lines >0) triangles_with_lines++;
+		if (rendered_pixels > 0) triangles_with_pixels++;
 
 		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Out of bounds pixels: "+outOfBounds_pixels+". Rasterized lines: "+rasterized_lines+". Discarded lines: "+discarded_lines);
+		if (rendered_pixels == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "No pixels rendered for this triangle : discarded: " + discarded_pixels + ", not rendered: " + not_rendered_pixels + ", out of bound: " + outOfBounds_pixels + ", calculated: " + calculated_pixels + ", processed: " + processed_pixels + " Lines : rasterized: " + rasterized_lines + ", discarded: " + discarded_lines + " with no pixels: " + lines_with_no_pixel + ", reversed: " + reversed_lines);
+
 	}
 
 
@@ -641,13 +659,13 @@ public class Rasterizer {
 	 * The scan line is at ordinate y and will start x from segment AB to segment CD
 	 * 
 	 *  Y
-	 *  ^	            A		C
+	 *  ^	            B		D
 	 *  |	            +		+
 	 *  |	          / 		 \
 	 *	|	        /   		  \
 	 *	+ y	      /----------------\	Scan Line
 	 *	|		/					\
-	 * 	|	 B +					 + D
+	 * 	|	 A +					 + C
 	 *	|
 	 * 	+---------+----------------+-------------> X
 	 * 			  xAB			   xCD
@@ -734,15 +752,35 @@ public class Rasterizer {
 			float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
 			// Gradient 2 is the gradient on VC VD segment
 			float gradient2 = yc != yd ? (y - yc) / (yd - yc) : 1;
+			
+			int sx, ex, smin, smax, emin, emax;
+			
+			//if ((xa+xb) <= (xc+xd)) {
 
-			int sx = (int)Tools.interpolate(xa, xb, gradient1);
-			int ex = (int)Tools.interpolate(xc, xd, gradient2);
+			sx = (int)Tools.interpolate(xa, xb, gradient1);
+			ex = (int)Tools.interpolate(xc, xd, gradient2);
 
 			// To avoid gradient effect on x axis for small y variations (flat slopes) -> "cap" the sx and ex to x min and max of the triangle 
-			int smin = (int)Math.min(xa, xb);
-			int emax = (int)Math.max(xc, xd);
-			if (sx<smin) sx=smin;
-			if (ex>emax) ex=emax;
+			smin = (int)Math.min(xa, xb);
+			smax = (int)Math.max(xa, xb);
+			emin = (int)Math.min(xc, xd);
+			emax = (int)Math.max(xc, xd);
+
+			//} else {
+				
+			//	sx = (int)Tools.interpolate(xc, xd, gradient2);
+			//	ex = (int)Tools.interpolate(xa, xb, gradient1);
+
+				// To avoid gradient effect on x axis for small y variations (flat slopes) -> "cap" the sx and ex to x min and max of the triangle 
+			//	smin = (int)Math.min(xc, xd);
+			//	emax = (int)Math.max(xa, xb);
+
+			//}
+			
+			if (sx < smin) sx = smin;
+			if (sx > smax) sx = smax;
+			if (ex < emin) ex = emin;
+			if (ex > emax) ex = emax;
 
 			// Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
 			// TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
@@ -851,8 +889,18 @@ public class Rasterizer {
 			
 			
 			// drawing a line from left (sx) to right (ex)
-			if (sx == ex) if (Tracer.debug) Tracer.traceDebug(this.getClass(), "sx = ex, no pixels drawn on rasterized scan line");
-			for (int x = sx; x < ex; x++) {
+			if (sx == ex) {
+				lines_with_no_pixel++;
+				if (Tracer.debug) Tracer.traceDebug(this.getClass(), "sx = ex, no pixels drawn on rasterized scan line");
+			}
+			
+			// To loop from real min to real max
+			int startx = Math.min(sx,  ex);
+			int endx = Math.max(sx, ex);
+			
+			for (int x = startx; x < endx; x++) {
+				
+				processed_pixels++;
 
 				// Eliminate pixels outside the gUIView screen (in y dimension, the lines outside GUIView have already been eliminated earlier)
 				if (isInScreenX(x)) {
@@ -877,6 +925,8 @@ public class Rasterizer {
 
 
 							if (!shadowmap) { // General rasterization case, not a shadow map rasterization
+								
+								calculated_pixels++;
 								
 								cc = null;
 
@@ -1213,6 +1263,11 @@ public class Rasterizer {
 		}
 
 		return c;
+	}
+
+	public String renderStats() {		
+		return "Rasterizer - Triangles: rendered: "+rendered_triangles+", rendered with lines: "+triangles_with_lines+", rendered with pixels: "+triangles_with_pixels;
+
 	}
 
 

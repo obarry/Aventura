@@ -235,7 +235,7 @@ public class RenderEngine {
 				for (int i = 0; i < shadowingLights.size(); i++) { // Loop on all Shadowing lights
 					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Shadowing Light #" + i + " : "+shadowingLights.get(i));
 
-					// Initiate the Shading by calculating the light(s) camera/projection matrix(ces)
+					// Initiate the Shadowing by calculating the light(s) camera/projection matrix(ces)
 					shadowingLights.get(i).initShadowing(perspectiveContext.getPerspective(), camera, world);
 					
 					// Generate the shadow map
@@ -613,7 +613,7 @@ public class RenderEngine {
 	}
 	
 	public String renderStats() {		
-		return "Processed: elements: "+nbe+", triangles: "+nbt+". Triangles: displayed: "+nbt_in+", not displayed: "+nbt_out+", backfacing: "+nbt_bf;
+		return "Render Engine - Processed: elements: "+nbe+", triangles: "+nbt+". Triangles: displayed: "+nbt_in+", not displayed: "+nbt_out+", backfacing: "+nbt_bf+"\n"+rasterizer.renderStats();
 
 	}
 
