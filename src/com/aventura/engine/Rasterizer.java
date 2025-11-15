@@ -788,9 +788,9 @@ public class Rasterizer {
 			float z1 = 0, z2 = 0, za = 0, zb = 0, zc = 0, zd = 0;
 
 
-			switch (perspectiveCtx.getPerspectiveType()) {
+//			switch (perspectiveCtx.getPerspectiveType()) {
 
-			case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
+//			case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
 				// Vertices z
 				za = vpa.v.getProjPos().getW();
 				zb = vpb.v.getProjPos().getW();
@@ -801,25 +801,25 @@ public class Rasterizer {
 				z1 = 1/Tools.interpolate(1/za, 1/zb, gradient1);
 				z2 = 1/Tools.interpolate(1/zc, 1/zd, gradient2);
 
-				break;
+//				break;
 
-			case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
-				// Orthographic projection -> don't use W but use rather Z instead
-				za = vpa.v.getProjPos().getZ();
-				zb = vpb.v.getProjPos().getZ();
-				zc = vpc.v.getProjPos().getZ();
-				zd = vpd.v.getProjPos().getZ();
-
-				// Starting Z & ending Z
-				z1 = Tools.interpolate(za, zb, gradient1);
-				z2 = Tools.interpolate(zc, zd, gradient2);
-
-				break;
-
-			default :
-				// Not implemented, should never happen
-				// TODO raise an UnimplementedException
-			}
+//			case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+//				// Orthographic projection -> don't use W but use rather Z instead
+//				za = vpa.v.getProjPos().getZ();
+//				zb = vpb.v.getProjPos().getZ();
+//				zc = vpc.v.getProjPos().getZ();
+//				zd = vpd.v.getProjPos().getZ();
+//
+//				// Starting Z & ending Z
+//				z1 = Tools.interpolate(za, zb, gradient1);
+//				z2 = Tools.interpolate(zc, zd, gradient2);
+//
+//				break;
+//
+//			default :
+//				// Not implemented, should never happen
+//				// TODO raise an UnimplementedException
+//			}
 
 			// Gouraud's shading (Vertex calculation and interpolation across triangle)
 			// Starting Colors & ending Colors for Shaded color and Specular color
