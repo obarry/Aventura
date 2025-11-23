@@ -141,7 +141,7 @@ public class TestMultiElementsTextureOrtho {
 		System.out.println("********* Creating World");
 		World world = new World();
 		world.setBackgroundColor(Color.BLUE);
-		Element e;
+		Element e1, e2, e3;
 		
 //		for (int i=-1; i<=1; i++) {
 //			for (int j=-1; j<=1; j++) {
@@ -213,16 +213,16 @@ public class TestMultiElementsTextureOrtho {
 //		}
 		
 		
-		e = new Cube(1, texmetalplate);
-		world.addElement(e);
+		e1 = new Cube(1, texmetalplate);
+		world.addElement(e1);
 		
-		e = new Cube(1, texmetalplate);
-		e.setTransformation(new Translation(new Vector3(2,0,0)));
-		world.addElement(e);
+		e2 = new Cube(1, texmetalplate);
+		e2.setTransformation(new Translation(new Vector3(2,0,0)));
+		world.addElement(e2);
 
-		e = new Cube(1, texmetalplate);
-		e.setTransformation(new Translation(new Vector3(-2,0,0)));
-		world.addElement(e);
+		e3 = new Cube(1, texmetalplate);
+		e3.setTransformation(new Translation(new Vector3(-2,0,0)));
+		world.addElement(e3);
 
 		
 		// Generate world and normals
