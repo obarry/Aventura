@@ -110,7 +110,7 @@ public class MapView extends View {
 		for (int i=0; i<width; i++) {
 			for (int j=0; j<height; j++) {
 				if (map[i][j] > max) max = map[i][j];
-				}
+			}
 		}
 		
 		return max;
@@ -118,15 +118,28 @@ public class MapView extends View {
 	
 	public float getMin() {
 		float min = map[0][0];
-		
+
 		for (int i=0; i<width; i++) {
 			for (int j=0; j<height; j++) {
 				if (map[i][j] < min) min = map[i][j];
-				}
+			}
 		}
-		
+
 		return min;
 	}
+
+	public float getAverage() {
+		float avg = 0;
+		
+		for (int i=0; i<width; i++) {
+			for (int j=0; j<height; j++) {
+				avg += map[i][j];
+			}
+		}
+		
+		return avg/(width*height);
+	}
+
 	
 	// To normalize between 0 and 1 so that the map can be used for Colors
 	public void normalizeMap() {

@@ -799,6 +799,7 @@ public class Rasterizer {
 
 			case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
 				// Vertices z
+				// W = -Z in camera coordinates, before Frustum projection
 				za = vpa.v.getProjPos().getW();
 				zb = vpb.v.getProjPos().getW();
 				zc = vpc.v.getProjPos().getW();
@@ -816,6 +817,11 @@ public class Rasterizer {
 				zb = vpb.v.getProjPos().getZ();
 				zc = vpc.v.getProjPos().getZ();
 				zd = vpd.v.getProjPos().getZ();
+				
+//				za = vpa.v.getProjPos().getZ() * 0.5f + 0.5f; // TODO to confirm
+//				zb = vpb.v.getProjPos().getZ() * 0.5f + 0.5f; // TODO to confirm 
+//				zc = vpc.v.getProjPos().getZ() * 0.5f + 0.5f; // TODO to confirm
+//				zd = vpd.v.getProjPos().getZ() * 0.5f + 0.5f; // TODO to confirm
 				
 				//if (vpa.v.getProjPos().getZ() == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "Proj Ortho and Z equal to 0 for VPA: " + vpa.v.getProjPos().getZ());
 				//if (vpb.v.getProjPos().getZ() == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "Proj Ortho and Z equal to 0 for VPB: " + vpa.v.getProjPos().getZ());
@@ -1198,7 +1204,7 @@ public class Rasterizer {
 		// Increment counter of rendered pixels
 		rendered_pixels++;
 	}
-
+	
 	/**
 	 * Draw Map only (zBuffer)
 	 * @param x X screen coordinate (origin is in the center of the screen)

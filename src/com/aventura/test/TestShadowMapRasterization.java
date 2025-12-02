@@ -112,6 +112,7 @@ public class TestShadowMapRasterization {
 		// Camera similar to Light for testing
 		//Vector4 eye = new Vector4(-1,0,0,1);
 		//Vector4 eye = new Vector4(0.1f,0.1f,-1,1);
+		//Vector4 eye = new Vector4(-8,8,1,1);
 		Vector4 eye = new Vector4(8,8,10,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -122,7 +123,7 @@ public class TestShadowMapRasterization {
 		System.out.println("********* Creating World");
 		
 		Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
-		Texture tex3 = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		//Texture tex3 = new Texture("resources/texture/texture_blueground_204x204.jpg");
 		Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
@@ -185,7 +186,8 @@ public class TestShadowMapRasterization {
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
-		renderer.render();
+		MapView map = renderer.render();
+		System.out.println("ZBuffer min: "+map.getMin() + ", ZBuffer max: "+map.getMax() + ", ZBuffer avg: " + map.getAverage());
 		System.out.println(renderer.renderStats());
 		
 		Scanner sc = new Scanner(System.in);
