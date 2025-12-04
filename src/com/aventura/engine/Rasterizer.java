@@ -128,6 +128,10 @@ public class Rasterizer {
 	int rendered_pixels = 0;
 	int discarded_pixels = 0;
 	int not_rendered_pixels = 0;
+	//int rendered_dark_pixels = 0;
+	//int rendered_red =0;
+	//int rendered_green = 0;
+	//int rendered_blue = 0;
 	int outOfBounds_pixels = 0;
 	int calculated_pixels = 0;
 	int processed_pixels = 0;
@@ -310,6 +314,10 @@ public class Rasterizer {
 		rendered_pixels = 0;
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
+		//rendered_dark_pixels = 0;
+		//rendered_red =0;
+		//rendered_green = 0;
+		//rendered_blue = 0;
 		outOfBounds_pixels = 0;
 		calculated_pixels = 0;
 		processed_pixels = 0;
@@ -322,7 +330,7 @@ public class Rasterizer {
 		VertexParam vpa, vpb, vpc = null;
 		int nb_sl = 0; // Number of Shadowing Lights, obtained later if not rasterizing only a Shadow Map
 
-		if (shadowmap) { // Rasterize a Shadowmap
+		if (shadowmap) { // Rasterize a ShadowMap (simplified rasterization)
 			vpa = new VertexParam(t.getV1());
 			vpb = new VertexParam(t.getV2());
 			vpc = new VertexParam(t.getV3());
@@ -648,7 +656,8 @@ public class Rasterizer {
 		if (rasterized_lines >0) triangles_with_lines++;
 		if (rendered_pixels > 0) triangles_with_pixels++;
 
-		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Out of bounds pixels: "+outOfBounds_pixels+". Rasterized lines: "+rasterized_lines+". Discarded lines: "+discarded_lines);
+		//if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+", Dark pixels rendered: " + rendered_dark_pixels + ", red: " + rendered_red + ", green: " + rendered_green + ", blue: " + rendered_blue + ". Out of bounds pixels: "+outOfBounds_pixels+". Rasterized lines: "+rasterized_lines+". Discarded lines: "+discarded_lines);
+		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels + ". Out of bounds pixels: "+outOfBounds_pixels+". Rasterized lines: "+rasterized_lines+". Discarded lines: "+discarded_lines);
 		if (rendered_pixels == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "No pixels rendered for this triangle : discarded: " + discarded_pixels + ", not rendered: " + not_rendered_pixels + ", out of bound: " + outOfBounds_pixels + ", calculated: " + calculated_pixels + ", processed: " + processed_pixels + " Lines : rasterized: " + rasterized_lines + ", discarded: " + discarded_lines + " with no pixels: " + lines_with_no_pixel + ", reversed: " + reversed_lines);
 
 	}
@@ -746,7 +755,7 @@ public class Rasterizer {
 			float xb = xScreen(vpb.v);
 			float xc = xScreen(vpc.v);
 			float xd = xScreen(vpd.v);
-			if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterizing Scan Line for y = " + y + ". xa: " + xa + " ya: " + ya + " xb: " + xb + " yb: " + yb + " xc: " + xc + " yc: " + yc + " xd: " + xd + " yd: " + yd);
+			//if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterizing Scan Line for y = " + y + ". xa: " + xa + " ya: " + ya + " xb: " + xb + " yb: " + yb + " xc: " + xc + " yc: " + yc + " xd: " + xd + " yd: " + yd);
 
 			// Gradient 1 is the gradient on VA VB segment
 			float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
@@ -782,16 +791,24 @@ public class Rasterizer {
 			if (ex < emin) ex = emin;
 			if (ex > emax) ex = emax;
 
+			// Exit as early as possible in case of sx and ex are identical meaning no pixel would be drawn
+			if (sx == ex) {
+				lines_with_no_pixel++;
+				if (Tracer.debug) Tracer.traceDebug(this.getClass(), "sx = ex, no pixels drawn on rasterized scan line");
+				return;
+			}
+
+			
 			// Instrumentation for Rasterizer artifact investigation (due to calculated gradient>1 fixed by rounding in gradient calculation)
 			// TODO possible optimization in Rasterizer to avoid calculation in double, to avoid rounding and use int computation as most as possible then avoid duplicate calculation in several places (x and yScreen for example)
 
 			float z1 = 0, z2 = 0, za = 0, zb = 0, zc = 0, zd = 0;
 
-
 			switch (perspectiveCtx.getPerspectiveType()) {
 
 			case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
 				// Vertices z
+				// W = -Z in camera coordinates, before Frustum projection
 				za = vpa.v.getProjPos().getW();
 				zb = vpb.v.getProjPos().getW();
 				zc = vpc.v.getProjPos().getW();
@@ -804,11 +821,21 @@ public class Rasterizer {
 				break;
 
 			case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
-				// Orthographic projection -> don't use W but use rather Z instead
+				// Orthographic projection -> don't use W but use rather Z instead because W always = 1 in Orthographic projection
 				za = vpa.v.getProjPos().getZ();
 				zb = vpb.v.getProjPos().getZ();
 				zc = vpc.v.getProjPos().getZ();
 				zd = vpd.v.getProjPos().getZ();
+				
+//				za = vpa.v.getProjPos().getZ() * 0.5f + 0.5f; // TODO to confirm
+//				zb = vpb.v.getProjPos().getZ() * 0.5f + 0.5f; // TODO to confirm 
+//				zc = vpc.v.getProjPos().getZ() * 0.5f + 0.5f; // TODO to confirm
+//				zd = vpd.v.getProjPos().getZ() * 0.5f + 0.5f; // TODO to confirm
+				
+				//if (vpa.v.getProjPos().getZ() == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "Proj Ortho and Z equal to 0 for VPA: " + vpa.v.getProjPos().getZ());
+				//if (vpb.v.getProjPos().getZ() == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "Proj Ortho and Z equal to 0 for VPB: " + vpa.v.getProjPos().getZ());
+				//if (vpc.v.getProjPos().getZ() == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "Proj Ortho and Z equal to 0 for VPC: " + vpa.v.getProjPos().getZ());
+				//if (vpd.v.getProjPos().getZ() == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "Proj Ortho and Z equal to 0 for VPD: " + vpa.v.getProjPos().getZ());
 
 				// Starting Z & ending Z
 				z1 = Tools.interpolate(za, zb, gradient1);
@@ -820,6 +847,7 @@ public class Rasterizer {
 				// Not implemented, should never happen
 				// TODO raise an UnimplementedException
 			}
+
 
 			// Gouraud's shading (Vertex calculation and interpolation across triangle)
 			// Starting Colors & ending Colors for Shaded color and Specular color
@@ -852,25 +880,51 @@ public class Rasterizer {
 					vl1 = new Vector4 [nb_lights];
 					vl2 = new Vector4 [nb_lights];
 				}
+				
+				float za_proj = 0, zb_proj = 0, zc_proj = 0, zd_proj = 0;
+				switch (perspectiveCtx.getPerspectiveType()) {
+
+				case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
+					
+					// For 1/z interpolation
+					za_proj = 1/za;
+					zb_proj = 1/zb;
+					zc_proj = 1/zc;
+					zd_proj = 1/zd;
+					break;
+				case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+					
+					// For normal interpolation
+					za_proj = za;
+					zb_proj = zb;
+					zc_proj = zc;
+					zd_proj = zd;
+					break;
+
+				default :
+					// Not implemented, should never happen
+					// TODO raise an UnimplementedException
+				}
+
 
 				// For each Light
 				for (int i=0; i<nb_lights; i++) {
-
+					
 					if (interpolate) {
 						// Shaded color
-						ishc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].shadedColor,1/za), ColorTools.multColor(vpb.l[i].shadedColor,1/zb), gradient1);
-						ishc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].shadedColor,1/zc), ColorTools.multColor(vpd.l[i].shadedColor,1/zd), gradient2);
+						ishc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].shadedColor,za_proj), ColorTools.multColor(vpb.l[i].shadedColor,zb_proj), gradient1);
+						ishc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].shadedColor,zc_proj), ColorTools.multColor(vpd.l[i].shadedColor,zd_proj), gradient2);
 						// Specular color
 						if (lighting.hasSpecular()) {
-							ispc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].specularColor,1/za), ColorTools.multColor(vpb.l[i].specularColor,1/zb), gradient1);
-							ispc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].specularColor,1/zc), ColorTools.multColor(vpd.l[i].specularColor,1/zd), gradient2);
+							ispc1[i] = ColorTools.interpolateColors(ColorTools.multColor(vpa.l[i].specularColor,za_proj), ColorTools.multColor(vpb.l[i].specularColor,zb_proj), gradient1);
+							ispc2[i] = ColorTools.interpolateColors(ColorTools.multColor(vpc.l[i].specularColor,zc_proj), ColorTools.multColor(vpd.l[i].specularColor,zd_proj), gradient2);
 						}
 					} // Else (!interpolate) : do nothing (no interpolation or normal at triangle level)
 
 					if (shadows) {
 						// Interpolate on each [VA, VB] and [VC, VD] segments for each Light
-						vl1[i] = Tools.interpolate(vpa.l[i].vl.times(1/za), vpb.l[i].vl.times(1/zb), gradient1);
-						vl2[i] = Tools.interpolate(vpc.l[i].vl.times(1/zc), vpd.l[i].vl.times(1/zd), gradient2);	
+						vl1[i] = Tools.interpolate(vpa.l[i].vl.times(za_proj), vpb.l[i].vl.times(zb_proj), gradient1);
+						vl2[i] = Tools.interpolate(vpc.l[i].vl.times(zc_proj), vpd.l[i].vl.times(zd_proj), gradient2);	
 					}
 				} // End for each Light
 
@@ -878,22 +932,19 @@ public class Rasterizer {
 				// If texture enabled, calculate Texture vectors at beginning and end of the scan line
 				//
 				if (texture && tex!=null) {
-					vt1 = Tools.interpolate(vpa.t.times(1/za), vpb.t.times(1/zb), gradient1);
-					vt2 = Tools.interpolate(vpc.t.times(1/zc), vpd.t.times(1/zd), gradient2);
+					vt1 = Tools.interpolate(vpa.t.times(za_proj), vpb.t.times(zb_proj), gradient1);
+					vt2 = Tools.interpolate(vpc.t.times(zc_proj), vpd.t.times(zd_proj), gradient2);
 				}
 			}
+				
+				
 			// Resulting colors
 			Color csp = DARK_SHADING_COLOR; // Specular color
 			Color ctx = null; // Texture color
 			Color cc; // Combined color to be drawn, result of the lighting and shading calculation
 			
 			
-			// drawing a line from left (sx) to right (ex)
-			if (sx == ex) {
-				lines_with_no_pixel++;
-				if (Tracer.debug) Tracer.traceDebug(this.getClass(), "sx = ex, no pixels drawn on rasterized scan line");
-			}
-			
+			// drawing a line from left (sx) to right (ex)			
 			// To loop from real min to real max
 			int startx = Math.min(sx,  ex);
 			int endx = Math.max(sx, ex);
@@ -914,7 +965,28 @@ public class Rasterizer {
 						// Interpolation gradient on scan line from sx (0) to ex (1)
 						float gradient = (float)(x-sx)/(float)(ex-sx);
 						// Calculate z using 1/z interpolation
-						float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
+						//float z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
+						float z = 0;
+						
+						switch (perspectiveCtx.getPerspectiveType()) {
+
+						case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
+							
+							// Calculate z using 1/z interpolation
+							z = 1/Tools.interpolate(1/z1, 1/z2, gradient);
+							break;
+
+						case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+
+							// Calculate z using normal interpolation
+							z = Tools.interpolate(z1, z2, gradient);
+							break;
+
+						default :
+							// Not implemented, should never happen
+							// TODO raise an UnimplementedException
+						}
+					
 
 						// zBuffer elimination at earliest stage of computation (as soon as we know z)
 						if (z>zBuffer.get(getXzBuf(x), getYzBuf(y))) { // Discard pixel
@@ -1022,11 +1094,49 @@ public class Rasterizer {
 
 									// Calculate the shaded color for this Light - Gouraud's shading
 									// If interpolation
+									
+									switch (perspectiveCtx.getPerspectiveType()) {
+
+									case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
+										
+										break;
+
+									case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+
+										break;
+
+									default :
+										// Not implemented, should never happen
+										// TODO raise an UnimplementedException
+									}
+
 									if (interpolate) {
 										// Color interpolation
-										csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
-										if (lighting.hasSpecular()) {
-											csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light
+										switch (perspectiveCtx.getPerspectiveType()) {
+										case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
+											csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
+											break;
+										case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+											csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),1/z); // Shaded color of this light
+											break;
+										default :
+											// Not implemented, should never happen
+										}
+										//csh_l = ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient); // Shaded color of this light
+										//csh_l = shadedCol; // Shaded color passed in argument
+									if (lighting.hasSpecular()) {
+										switch (perspectiveCtx.getPerspectiveType()) {
+										case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
+											csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light											
+											break;
+										case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+											csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),1/z); // Specular color of this light
+											break;
+										default :
+											// Not implemented, should never happen
+										}
+											//csp_l = ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient); // Specular color of this light
+											//csp_l = DARK_SHADING_COLOR; // No specular
 										} else {
 											csp_l = DARK_SHADING_COLOR; // No specular
 										}
@@ -1138,8 +1248,12 @@ public class Rasterizer {
 
 		// Increment counter of rendered pixels
 		rendered_pixels++;
+//		rendered_red += c.getRed();
+//		rendered_green += c.getGreen();
+//		rendered_blue += c.getBlue();
+//		if(c.getRed() <= 5 && c.getGreen() <= 5 && c.getBlue() <= 5) rendered_dark_pixels++;
 	}
-
+	
 	/**
 	 * Draw Map only (zBuffer)
 	 * @param x X screen coordinate (origin is in the center of the screen)
@@ -1204,16 +1318,21 @@ public class Rasterizer {
 
 			// Compute the dot product of this Light's vector at current point and the normal vector
 			float dotNL = sl.getLightVectorAtPoint(point).dot(normal.normalize());
-			if (rectoVerso) dotNL = Math.abs(dotNL);
+			//if (rectoVerso) dotNL = Math.abs(dotNL);
 			if (dotNL > 0) {
 				c = ColorTools.multColors(baseCol, sl.getLightColor());
 				// Multiply the color by the new dotNL
 				c = ColorTools.multColor(c, dotNL);
-			}
+			} // Else, not lighted, full dark
+			//else {
+				//if (Tracer.info) Tracer.traceInfo(this.getClass(), "DARK_SHADING_COLOR computed for this triangle");
+			//}
 		} else { // If no lighting, return base color
+			//if (Tracer.info) Tracer.traceInfo(this.getClass(), "BASECOL Color computed for this triangle");
 			return baseCol;
 		}
-
+		
+		//if (c.getRGB() == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "BLACK Color computed for this triangle");
 		return c;
 	}
 

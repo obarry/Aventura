@@ -71,7 +71,7 @@ import com.aventura.view.MapView;
  * 
  * 
  *     +---------------------+		   				    	  				          +---------------------+					
- *     |     Perspective     | <------+-----------------------+ - - - - - - - - - - ->|   PerspectiveContext    |<------+
+ *     |     Perspective     | <------+-----------------------+ - - - - - - - - - - ->|   PerspectiveContext|<------+
  *     +---------------------+        |        		    	  | 			          +---------------------+		|
  *									  |						  |										^				|
  *									  |						  |			+---------------------+		|				|
@@ -282,6 +282,7 @@ public class RenderEngine {
 	 */
 	public void render(Element e, Matrix4 matrix, Color c) {
 		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendering Element: "+e.getName());			
 		// Count Element stats
 		nbe++;
 		
@@ -322,7 +323,7 @@ public class RenderEngine {
 				render(e.getSubElements().get(i), model, col);
 			}
 		} else { // Leaf
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has no sub elements.");			
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+e.getName()+" has no sub elements.");			
 		}
 	}
 	
@@ -461,8 +462,7 @@ public class RenderEngine {
 					// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
 					return t.getV1().getWorldNormal().dot(t.getV1().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV2().getWorldNormal().dot(t.getV2().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV3().getWorldNormal().dot(t.getV3().getWorldPos().minus(camera.getEye()).V3())>0;
 				case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
-					return t.getV1().getProjNormal().getZ() > 0 && t.getV2().getProjNormal().getZ() > 0 && t.getV3().getProjNormal().getZ() > 0;				
-
+					return t.getV1().getProjNormal().getZ() > 0 && t.getV2().getProjNormal().getZ() > 0 && t.getV3().getProjNormal().getZ() > 0;
 				default:
 					// Should never happen
 					break;
@@ -554,7 +554,7 @@ public class RenderEngine {
 	public void displayNormalVectors(Triangle t) {
 		// Caution: in this section, we need to take the original triangle containing the normal and other attributes !!!
 		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Display normals for triangle. Normal of triangle "+t.getNormal());
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Display normals for triangle. Normal of triangle (null if normal at Vertex level): "+t.getNormal());
 		
 		if (t.isTriangleNormal()) { // Normal at Triangle level
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+t.getNormal());
@@ -562,7 +562,8 @@ public class RenderEngine {
 			// Create a vertex corresponding to the barycenter of the triangle
 			// In this case the vertices are calculated from a single normal vector, the one at Triangle level
 			Vertex c = t.getCenter();
-			Vertex n = new Vertex(c.getPos().plus(t.getNormal())); // Before transformation -> using position and normals not yet transformed
+			//Vertex n = new Vertex(c.getPos().plus(t.getNormal())); // Before transformation -> using position and normals not yet transformed
+			Vertex n = new Vertex(c.getPos().plus(t.getWorldNormal())); // Before transformation -> using position and normals not yet transformed
 			modelViewProjection.transformVertex(c, true);
 			modelViewProjection.transformVertex(n, true);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
@@ -571,18 +572,21 @@ public class RenderEngine {
 			rasterizer.drawLine(s, renderContext.normalsColor);
 			
 		} else { // Normals at Vertex level
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level");
 			
 			// Get the 3 vertices from Triangle
 			Vertex p1 = t.getV1();
 			Vertex p2 = t.getV2();
 			Vertex p3 = t.getV3();
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level. V1 normal: " + p1.getNormal() + " V2 normal: " + p2.getNormal() + " V3 normal: " + p3.getNormal());
 			
 			// Create 3 vertices corresponding to the end point of the 3 normal vectors
 			Vertex n1, n2, n3;
-			n1 = new Vertex(p1.getPos().plus(p1.getNormal())); // Before transformation -> using position and normals not yet transformed
-			n2 = new Vertex(p2.getPos().plus(p2.getNormal())); // Before transformation -> using position and normals not yet transformed
-			n3 = new Vertex(p3.getPos().plus(p3.getNormal())); // Before transformation -> using position and normals not yet transformed
+//			n1 = new Vertex(p1.getPos().plus(p1.getNormal())); // Before transformation -> using position and normals not yet transformed
+//			n2 = new Vertex(p2.getPos().plus(p2.getNormal())); // Before transformation -> using position and normals not yet transformed
+//			n3 = new Vertex(p3.getPos().plus(p3.getNormal())); // Before transformation -> using position and normals not yet transformed
+			n1 = new Vertex(p1.getPos().plus(p1.getWorldNormal())); // Before transformation -> using position and normals not yet transformed
+			n2 = new Vertex(p2.getPos().plus(p2.getWorldNormal())); // Before transformation -> using position and normals not yet transformed
+			n3 = new Vertex(p3.getPos().plus(p3.getWorldNormal())); // Before transformation -> using position and normals not yet transformed
 			modelViewProjection.transformVertex(n1, true);
 			modelViewProjection.transformVertex(n2, true);
 			modelViewProjection.transformVertex(n3, true);

@@ -42,12 +42,18 @@ public class OrthographicProjection extends Projection {
 	public OrthographicProjection(float left, float right, float bottom, float top, float near, float far) {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Orthographic projection");
-		
+
+		// Using matrix generating positive z after transformation (unlike OpenGL matrix) hence opposite signs on line 3 of the matrix
+//		float[][] array = { { 2/(right-left)       , 0.0f            ,  0.0f          , -(right+left)/(right-left) },
+//	 			{ 0.0f                 , 2/(top-bottom)  ,  0.0f          , (bottom+top)/(bottom-top)  },
+//	 			{ 0.0f                 , 0.0f            ,  -2/(near-far) , (near+far)/(far-near)      },
+//				{ 0.0f                 , 0.0f            ,  0.0f          , 1.0f                       } };
+
 		float[][] array = { { 2/(right-left)       , 0.0f            ,  0.0f          , -(right+left)/(right-left) },
-				 			{ 0.0f                 , 2/(top-bottom)  ,  0.0f          , (bottom+top)/(bottom-top)  },
-				 			{ 0.0f                 , 0.0f            ,  2/(near-far)  , -(near+far)/(far-near)     },
-				 			{ 0.0f                 , 0.0f            ,  0.0f          , 1.0f                       } };
-		
+	 						{ 0.0f                 , 2/(top-bottom)  ,  0.0f          , -(top+bottom)/(top-bottom) },
+	 						{ 0.0f                 , 0.0f            ,  -1/(far-near)  , -near/(far-near)   		   },
+	 						{ 0.0f                 , 0.0f            ,  0.0f          , 1.0f                       } };
+
 		try {
 			this.setArray(array);
 		} catch (Exception e) {

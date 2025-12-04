@@ -408,17 +408,17 @@ public class Element implements Transformable, Shape, Generable {
 
 	public String toString() {
 		String element = "Element\n";
-		element += "* Name: " + name + "\n";
-		element += "* Id: " + id + "\n";
-		element += "* Triangles: " + getNbTriangles() + "\n";
-		element += "* Vertices: " + getNbVertices() + "\n";
-		element += "* Element color: " + getColor() + "\n";
-		element += "* Specular color: " + getSpecularColor() + "\n";
-		element += "* Specular exponent: " + getSpecularExp() + "\n";
+		element += "* Name:               " + name + "\n";
+		element += "* Id:                 " + id + "\n";
+		element += "* Triangles:          " + getNbTriangles() + "\n";
+		element += "* Vertices:           " + getNbVertices() + "\n";
+		element += "* Element color:      " + getColor() + "\n";
+		element += "* Specular color:     " + getSpecularColor() + "\n";
+		element += "* Specular exponent:  " + getSpecularExp() + "\n";
+		element += "* Is closed:          " + (isClosed ? "yes" : "no") + "\n";
 		element += "* Has transformation: " + (hasTransformation ? "yes" : "no");
 		if (hasTransformation) element += "\n* Transformation matrix: \n" + getTransformation();
 		return element;
-		//return "Element name: "+name+"\nTriangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nElement color: "+elementColor+"\nSpecular color: "+specularColor+" Specular exponent: "+specularExponent;		
 	}
 	
 	// ******************************

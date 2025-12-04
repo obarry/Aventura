@@ -1,6 +1,7 @@
 
 package com.aventura.test;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Toolkit;
@@ -101,7 +102,7 @@ public class TestShadowMapRasterization {
 		System.out.println("********* STARTING APPLICATION *********");
 		Tracer.info = true;
 		Tracer.function = true;
-		//Tracer.debug = true;
+		Tracer.debug = true;
 		
 		// Camera
 		//Vector4 eye = new Vector4(-8,-2,12,1);
@@ -111,6 +112,7 @@ public class TestShadowMapRasterization {
 		// Camera similar to Light for testing
 		//Vector4 eye = new Vector4(-1,0,0,1);
 		//Vector4 eye = new Vector4(0.1f,0.1f,-1,1);
+		//Vector4 eye = new Vector4(-8,8,1,1);
 		Vector4 eye = new Vector4(8,8,10,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
@@ -121,25 +123,30 @@ public class TestShadowMapRasterization {
 		System.out.println("********* Creating World");
 		
 		Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
-		Texture tex3 = new Texture("resources/texture/texture_blueground_204x204.jpg");
+		//Texture tex3 = new Texture("resources/texture/texture_blueground_204x204.jpg");
 		Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
 		Trellis trellis = new Trellis(8, 8, 10, 10, tex2);
 		Cube cube = new Cube(1, tex1);
 		//Cube cube = new Cube(1);
-		Sphere sphere = new Sphere (0.5f ,10 , tex3);
-		//Sphere sphere = new Sphere (0.5f ,10);
+		//Sphere sphere = new Sphere (0.5f ,10 , tex3);
+		Sphere sphere = new Sphere (0.5f ,6);
+		sphere.setColor(new Color(0,10,210));
+		//Cube cube2 = new Cube(1);
+		//cube2.setColor(new Color(0,10,210));
 		// cube.setColor(new Color(200,50,50));
 		// Translate cube on top of trellis
 		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
 		Translation t2 = new Translation(new Vector3(-1.5f, 0, 0.5f));
 		cube.setTransformation(t1);
 		sphere.setTransformation(t2);
+		//cube2.setTransformation(t2);
 
 		world.addElement(trellis);
 		world.addElement(cube);
 		world.addElement(sphere);
+		//world.addElement(cube2);
 		
 		System.out.println("********* Calculating normals");
 		world.generate();
@@ -147,13 +154,16 @@ public class TestShadowMapRasterization {
 		System.out.println(trellis);
 		System.out.println(cube);
 		System.out.println(sphere);
-
+		//System.out.println(cube2);
+		
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.25f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,0,-1));
-		Lighting light = new Lighting(dl, al);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-3,-2));
+		//DirectionalLight dl = new DirectionalLight(new Vector3(1,3,2));
+		//Lighting light = new Lighting(dl, al);
 		//Lighting light = new Lighting(al);
 		//light.setDirectionalLight(dl);
+		Lighting light = new Lighting(dl);
 		
 		// Regular frustum perspective
 		//PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
@@ -169,12 +179,15 @@ public class TestShadowMapRasterization {
 		//rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
-		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
+		rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
+		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
+		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		System.out.println(rContext);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
-		renderer.render();
+		MapView map = renderer.render();
+		System.out.println("ZBuffer min: "+map.getMin() + ", ZBuffer max: "+map.getMax() + ", ZBuffer avg: " + map.getAverage());
 		System.out.println(renderer.renderStats());
 		
 		Scanner sc = new Scanner(System.in);
