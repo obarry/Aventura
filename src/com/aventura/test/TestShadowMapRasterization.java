@@ -102,7 +102,7 @@ public class TestShadowMapRasterization {
 		System.out.println("********* STARTING APPLICATION *********");
 		Tracer.info = true;
 		Tracer.function = true;
-		//Tracer.debug = true;
+		Tracer.debug = true;
 		
 		// Camera
 		//Vector4 eye = new Vector4(-8,-2,12,1);

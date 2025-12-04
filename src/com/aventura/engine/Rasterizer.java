@@ -128,6 +128,10 @@ public class Rasterizer {
 	int rendered_pixels = 0;
 	int discarded_pixels = 0;
 	int not_rendered_pixels = 0;
+	//int rendered_dark_pixels = 0;
+	//int rendered_red =0;
+	//int rendered_green = 0;
+	//int rendered_blue = 0;
 	int outOfBounds_pixels = 0;
 	int calculated_pixels = 0;
 	int processed_pixels = 0;
@@ -310,6 +314,10 @@ public class Rasterizer {
 		rendered_pixels = 0;
 		discarded_pixels = 0;
 		not_rendered_pixels = 0;
+		//rendered_dark_pixels = 0;
+		//rendered_red =0;
+		//rendered_green = 0;
+		//rendered_blue = 0;
 		outOfBounds_pixels = 0;
 		calculated_pixels = 0;
 		processed_pixels = 0;
@@ -648,7 +656,8 @@ public class Rasterizer {
 		if (rasterized_lines >0) triangles_with_lines++;
 		if (rendered_pixels > 0) triangles_with_pixels++;
 
-		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+". Out of bounds pixels: "+outOfBounds_pixels+". Rasterized lines: "+rasterized_lines+". Discarded lines: "+discarded_lines);
+		//if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels+", Dark pixels rendered: " + rendered_dark_pixels + ", red: " + rendered_red + ", green: " + rendered_green + ", blue: " + rendered_blue + ". Out of bounds pixels: "+outOfBounds_pixels+". Rasterized lines: "+rasterized_lines+". Discarded lines: "+discarded_lines);
+		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rendered pixels for this triangle: "+rendered_pixels+". Discarded: "+discarded_pixels+". Not rendered: "+not_rendered_pixels + ". Out of bounds pixels: "+outOfBounds_pixels+". Rasterized lines: "+rasterized_lines+". Discarded lines: "+discarded_lines);
 		if (rendered_pixels == 0) if (Tracer.info) Tracer.traceInfo(this.getClass(), "No pixels rendered for this triangle : discarded: " + discarded_pixels + ", not rendered: " + not_rendered_pixels + ", out of bound: " + outOfBounds_pixels + ", calculated: " + calculated_pixels + ", processed: " + processed_pixels + " Lines : rasterized: " + rasterized_lines + ", discarded: " + discarded_lines + " with no pixels: " + lines_with_no_pixel + ", reversed: " + reversed_lines);
 
 	}
@@ -746,7 +755,7 @@ public class Rasterizer {
 			float xb = xScreen(vpb.v);
 			float xc = xScreen(vpc.v);
 			float xd = xScreen(vpd.v);
-			if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterizing Scan Line for y = " + y + ". xa: " + xa + " ya: " + ya + " xb: " + xb + " yb: " + yb + " xc: " + xc + " yc: " + yc + " xd: " + xd + " yd: " + yd);
+			//if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterizing Scan Line for y = " + y + ". xa: " + xa + " ya: " + ya + " xb: " + xb + " yb: " + yb + " xc: " + xc + " yc: " + yc + " xd: " + xd + " yd: " + yd);
 
 			// Gradient 1 is the gradient on VA VB segment
 			float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
@@ -1085,13 +1094,49 @@ public class Rasterizer {
 
 									// Calculate the shaded color for this Light - Gouraud's shading
 									// If interpolation
+									
+									switch (perspectiveCtx.getPerspectiveType()) {
+
+									case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
+										
+										break;
+
+									case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+
+										break;
+
+									default :
+										// Not implemented, should never happen
+										// TODO raise an UnimplementedException
+									}
+
 									if (interpolate) {
 										// Color interpolation
-										csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
+										switch (perspectiveCtx.getPerspectiveType()) {
+										case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
+											csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),z); // Shaded color of this light
+											break;
+										case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+											csh_l = ColorTools.multColor(ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient),1/z); // Shaded color of this light
+											break;
+										default :
+											// Not implemented, should never happen
+										}
 										//csh_l = ColorTools.interpolateColors(ishc1[i], ishc2[i], gradient); // Shaded color of this light
-										if (lighting.hasSpecular()) {
-											csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light
+										//csh_l = shadedCol; // Shaded color passed in argument
+									if (lighting.hasSpecular()) {
+										switch (perspectiveCtx.getPerspectiveType()) {
+										case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM :
+											csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),z); // Specular color of this light											
+											break;
+										case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC :
+											csp_l = ColorTools.multColor(ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient),1/z); // Specular color of this light
+											break;
+										default :
+											// Not implemented, should never happen
+										}
 											//csp_l = ColorTools.interpolateColors(ispc1[i], ispc2[i], gradient); // Specular color of this light
+											//csp_l = DARK_SHADING_COLOR; // No specular
 										} else {
 											csp_l = DARK_SHADING_COLOR; // No specular
 										}
@@ -1203,6 +1248,10 @@ public class Rasterizer {
 
 		// Increment counter of rendered pixels
 		rendered_pixels++;
+//		rendered_red += c.getRed();
+//		rendered_green += c.getGreen();
+//		rendered_blue += c.getBlue();
+//		if(c.getRed() <= 5 && c.getGreen() <= 5 && c.getBlue() <= 5) rendered_dark_pixels++;
 	}
 	
 	/**
