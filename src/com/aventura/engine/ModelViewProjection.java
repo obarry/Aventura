@@ -214,6 +214,18 @@ public class ModelViewProjection {
 	}
 	
 	/**
+	 * Used for an offline projection of a Vertex, e.g. in context of Shadowing in Light's coordinates
+	 * Project Vertex using the projection resulting only from the ModelViewProjection transformation for ModelToWorld projection (world)
+	 * Return the resulting Vector4 without updating the Vertex (does not update Vertex's projection fields)
+	 * 
+	 * @param v the provided Vertex
+	 * @return the projected Vector4 without Vertex transformation
+	 */
+	public Vector4 projectWorldVertex(Vertex v) {
+		return model.times(v.getPos());
+	}
+	
+	/**
 	 * Transform all vertices of an Element
 	 * 
 	 * @param e the Element

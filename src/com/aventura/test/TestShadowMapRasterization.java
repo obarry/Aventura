@@ -121,24 +121,26 @@ public class TestShadowMapRasterization {
 		TestShadowMapRasterization test = new TestShadowMapRasterization();
 		
 		System.out.println("********* Creating World");
-		
-		Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
+		//Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
 		//Texture tex3 = new Texture("resources/texture/texture_blueground_204x204.jpg");
-		Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
+		//Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
-		Trellis trellis = new Trellis(8, 8, 10, 10, tex2);
-		Cube cube = new Cube(1, tex1);
+		//Trellis trellis = new Trellis(8, 8, 10, 10, tex2);
+		Trellis trellis = new Trellis(8, 8, 10, 10);
+		//Cube cube = new Cube(1, tex1);
+		Cube cube = new Cube(1);
+		cube.setColor(new Color(200,0,40));
 		//Cube cube = new Cube(1);
-		//Sphere sphere = new Sphere (0.5f ,10 , tex3);
-		Sphere sphere = new Sphere (0.5f ,6);
+		//Sphere sphere = new Sphere (1 ,10 , tex3);
+		Sphere sphere = new Sphere (1 ,10);
 		sphere.setColor(new Color(0,10,210));
 		//Cube cube2 = new Cube(1);
 		//cube2.setColor(new Color(0,10,210));
 		// cube.setColor(new Color(200,50,50));
 		// Translate cube on top of trellis
 		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
-		Translation t2 = new Translation(new Vector3(-1.5f, 0, 0.5f));
+		Translation t2 = new Translation(new Vector3(-1.5f, 0, 2));
 		cube.setTransformation(t1);
 		sphere.setTransformation(t2);
 		//cube2.setTransformation(t2);
@@ -160,34 +162,33 @@ public class TestShadowMapRasterization {
 		AmbientLight al = new AmbientLight(0.25f);
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-3,-2));
 		//DirectionalLight dl = new DirectionalLight(new Vector3(1,3,2));
-		//Lighting light = new Lighting(dl, al);
+		Lighting light = new Lighting(dl, al);
 		//Lighting light = new Lighting(al);
 		//light.setDirectionalLight(dl);
-		Lighting light = new Lighting(dl);
+		//Lighting light = new Lighting(dl);
 		
 		// Regular frustum perspective
-		//PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
 		// Perspective Orthographic similar to what is used for Shadow Mapping - For Testing
 		//PerspectiveContext pContext = new PerspectiveContext(6.4f, 3.6f, 0.1f, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 156);
-		PerspectiveContext pContext = new PerspectiveContext(10, 10, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 100);
+		//PerspectiveContext pContext = new PerspectiveContext(10, 10, 1, 20, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 100);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
-		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		//rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
+		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
-		rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
-		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
-		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
+		//rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
+		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		System.out.println(rContext);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
 		MapView map = renderer.render();
-		System.out.println("ZBuffer min: "+map.getMin() + ", ZBuffer max: "+map.getMax() + ", ZBuffer avg: " + map.getAverage());
+		System.out.println("ZBuffer min: "+map.getMin() + ", ZBuffer max: "+map.getMax() + ", ZBuffer avg: " + map.getAverage() + ". Nb of Pixels around min: " + map.getNbOfPixelsInRange(map.getMin(), map.getMin()+0.01f*(map.getMax()-map.getMin())) + ". Nb of Pixels around max: " + map.getNbOfPixelsInRange(map.getMax()-0.01f*(map.getMax()-map.getMin()), map.getMax())+ ". Nb of Pixels in map: " + map.getNbOfPixels());
 		System.out.println(renderer.renderStats());
 		
 		Scanner sc = new Scanner(System.in);
@@ -197,18 +198,21 @@ public class TestShadowMapRasterization {
 		
 		// Now rendering the shadow map for the Directional Light
 		MapView mapView = dl.getMap();
-		
+
 		if (mapView != null) {
 			System.out.println("Now rendering shadow map...");
-			mapView.removeFar(pContext.getPerspective().getFar());
+			System.out.println("ShadowMap min: "+mapView.getMin() + ", ShadowMap max: "+mapView.getMax() + ", ShadowMap avg: " + mapView.getAverage() + ". Nb of Pixels around min: " + mapView.getNbOfPixelsInRange(mapView.getMin(), mapView.getMin()+0.01f*(mapView.getMax()-mapView.getMin())) + ". Nb of Pixels around max: " + mapView.getNbOfPixelsInRange(mapView.getMax()-0.01f*(mapView.getMax()-mapView.getMin()), mapView.getMax())+ ". Nb of Pixels in map: " + mapView.getNbOfPixels());
+			//mapView.removeFar(pContext.getPerspective().getFar(), 0);
 			mapView.normalizeMap();
 			gUIView.setDimensions(mapView.getViewWidth(), mapView.getViewHeight());
 			gUIView.initView(mapView);
 			gUIView.renderView();
 		} else {
+			
 			System.out.println("No shadow map to display.\n");
 		}
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}
+	
 }
