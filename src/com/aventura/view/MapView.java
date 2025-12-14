@@ -139,7 +139,21 @@ public class MapView extends View {
 		
 		return avg/(width*height);
 	}
+	
+	public int getNbOfPixelsInRange(float min, float max) {
+		int n = 0;
+		for (int i=0; i<width; i++) {
+			for (int j=0; j<height; j++) {
+				if(map[i][j]>=min && map[i][j]<=max) n++;
+			}
+		}
+		
+		return n;
+	}
 
+	public int getNbOfPixels() {
+		return width*height;
+	}
 	
 	// To normalize between 0 and 1 so that the map can be used for Colors
 	public void normalizeMap() {
@@ -154,11 +168,11 @@ public class MapView extends View {
 	}
 	
 	// To zero values beyond far (e.g. for Zbuffering)
-	public void removeFar(float far) {
+	public void removeFar(float far, float replaceBy) {
 
 		for (int i=0; i<width; i++) {
 			for (int j=0; j<height; j++) {
-				if (map[i][j] >= far) map[i][j] =0;
+				if (map[i][j] >= far) map[i][j] = replaceBy;
 			}
 		}
 	}
@@ -220,7 +234,7 @@ public class MapView extends View {
 
 		// Calculate the interpolated value as per algorithm: f(x,y) = (1 - {x})((1 - {y})z11 + {y}z12) + {x}((1 - {y})z21 + {y}z22)
 		// https://en.wikipedia.org/wiki/Bilinear_filtering
-		float result = (z11*u_opposite+z21*u_ratio)*v_opposite+(z12*u_opposite+z22*u_ratio)*v_ratio;
+		float result = (z11 * u_opposite + z21 * u_ratio) * v_opposite + (z12 * u_opposite + z22 * u_ratio) * v_ratio;
 		return result;
 	}
 

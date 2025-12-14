@@ -166,7 +166,7 @@ public abstract class ShadowingLight extends Light {
 	public void generateShadowMap(World world) {
 	
 		// Get the map from the Rasterizer while initializing it
-		map = rasterizer_light.initZBuffer(map_size, map_size); // ShadowMap is square
+		map = rasterizer_light.initZBuffer(map_size, map_size, 1); // ShadowMap is square
 
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			

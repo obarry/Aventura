@@ -183,7 +183,7 @@ public class Rasterizer {
 	 */
 	public MapView initZBuffer() {
 
-		return initZBuffer(2 * pixelHalfWidth  + 1, 2 * pixelHalfHeight + 1);
+		return initZBuffer(2 * pixelHalfWidth  + 1, 2 * pixelHalfHeight + 1, perspectiveCtx.getPerspective().getFar());
 	}
 	
 	/**
@@ -192,13 +192,13 @@ public class Rasterizer {
 	 * @param zBuf_width the width of the zBuffer to create
 	 * @param zBuf_height the height of the zBuffer to create
 	 */
-	public MapView initZBuffer(int width, int height) {
+	public MapView initZBuffer(int width, int height, float zBuffer_init) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating zBuffer. Width: " + width + " Height: " + height);
 
 		this.zBuf_width = width;
 		this.zBuf_height = height;
 		// zBuffer is initialized with far value of the perspectiveCtx
-		float zBuffer_init = perspectiveCtx.getPerspective().getFar();
+		//float zBuffer_init = perspectiveCtx.getPerspective().getFar();
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "zBuffer init value: "+zBuffer_init);
 
 		// Only create buffer if needed, otherwise reuse it, it will be reinitialized below
@@ -923,8 +923,10 @@ public class Rasterizer {
 
 					if (shadows) {
 						// Interpolate on each [VA, VB] and [VC, VD] segments for each Light
-						vl1[i] = Tools.interpolate(vpa.l[i].vl.times(za_proj), vpb.l[i].vl.times(zb_proj), gradient1);
-						vl2[i] = Tools.interpolate(vpc.l[i].vl.times(zc_proj), vpd.l[i].vl.times(zd_proj), gradient2);	
+						//vl1[i] = Tools.interpolate(vpa.l[i].vl.times(za_proj), vpb.l[i].vl.times(zb_proj), gradient1);
+						//vl2[i] = Tools.interpolate(vpc.l[i].vl.times(zc_proj), vpd.l[i].vl.times(zd_proj), gradient2);	
+						vl1[i] = Tools.interpolate(vpa.l[i].vl, vpb.l[i].vl, gradient1);
+						vl2[i] = Tools.interpolate(vpc.l[i].vl, vpd.l[i].vl, gradient2);	
 					}
 				} // End for each Light
 
@@ -1054,8 +1056,18 @@ public class Rasterizer {
 									float shadowCoef = 1;
 
 									if (shadows) { // then do the needful to know if the element is in shadow or not
-										Vector4 vl = Tools.interpolate(vl1[i], vl2[i], gradient).times(z);
-										shadowCoef = vpa.l[i].map.getInterpolation(vl.getX()/vl.getW(), vl.getY()/vl.getW());
+										
+										// Calculate the position of the element being rendered in Light's coordinate by interpolation
+										// vl1 and vl2 are the start and end points of the scan line in light's coordinates
+										//Vector4 vl = Tools.interpolate(vl1[i], vl2[i], gradient).times(z);
+										Vector4 vl = Tools.interpolate(vl1[i], vl2[i], gradient); // Normal interpolation assuming orthographic projection -> to be adapted for PointLights
+										
+										// Calculate the depth of this position in Shadow Map
+										// Again use the interpolation feature of the map to calculate the depth at this position that is not exactly matching map elements
+										//shadowCoef = vpa.l[i].map.getInterpolation(vl.getX()/vl.getW(), vl.getY()/vl.getW());
+										shadowCoef = vpa.l[i].map.getInterpolation((vl.getX()+1)/2, (vl.getY()+1)/2); // Map i [0,+1] so to be transformed from [-1,+1] of vl position
+										if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Element in light coordinates: vlx = " + vl.getX() + ", vly = " + vl.getY() + ", shadowCoef: "+shadowCoef);
+
 
 										// TODO Work in Progress - To Be Completed
 										// For each light
