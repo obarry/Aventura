@@ -129,8 +129,8 @@ public class TestShadowMapRasterization {
 		//Trellis trellis = new Trellis(8, 8, 10, 10, tex2);
 		Trellis trellis = new Trellis(8, 8, 10, 10);
 		//Cube cube = new Cube(1, tex1);
-		Cube cube = new Cube(1);
-		cube.setColor(new Color(200,0,40));
+		//Cube cube = new Cube(1);
+		//cube.setColor(new Color(200,0,40));
 		//Cube cube = new Cube(1);
 		//Sphere sphere = new Sphere (1 ,10 , tex3);
 		Sphere sphere = new Sphere (1 ,10);
@@ -140,13 +140,13 @@ public class TestShadowMapRasterization {
 		// cube.setColor(new Color(200,50,50));
 		// Translate cube on top of trellis
 		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
-		Translation t2 = new Translation(new Vector3(-1.5f, 0, 2));
-		cube.setTransformation(t1);
+		Translation t2 = new Translation(new Vector3(-3, 0, 3));
+		//cube.setTransformation(t1);
 		sphere.setTransformation(t2);
 		//cube2.setTransformation(t2);
 
 		world.addElement(trellis);
-		world.addElement(cube);
+		//world.addElement(cube);
 		world.addElement(sphere);
 		//world.addElement(cube2);
 		
@@ -154,13 +154,13 @@ public class TestShadowMapRasterization {
 		world.generate();
 		System.out.println(world);
 		System.out.println(trellis);
-		System.out.println(cube);
+		//System.out.println(cube);
 		System.out.println(sphere);
 		//System.out.println(cube2);
 		
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.25f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-3,-2));
+		DirectionalLight dl = new DirectionalLight(new Vector3(1,-1,-1));
 		//DirectionalLight dl = new DirectionalLight(new Vector3(1,3,2));
 		Lighting light = new Lighting(dl, al);
 		//Lighting light = new Lighting(al);
@@ -179,9 +179,9 @@ public class TestShadowMapRasterization {
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
-		//rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
+		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
 		System.out.println(rContext);
 		
