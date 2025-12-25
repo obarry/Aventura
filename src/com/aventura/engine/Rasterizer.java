@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.context.PerspectiveContext;
+import com.aventura.math.Constants;
 import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -479,11 +480,12 @@ public class Rasterizer {
 				for (int i=0; i<nb_sl; i++) {
 
 					ShadowingLight sl = shadowingLights.get(i); // Used several times
+					sl.getModelView().calculateVPMatrix(); // Calculate the Matrix without Model matrix (only View and Projection)
 
 					// Transform the World position of the Vertex in this Light's coordinates
-					vp1.l[i].vl = sl.getModelView().projectVertex(vp1.v);
-					vp2.l[i].vl = sl.getModelView().projectVertex(vp2.v);
-					vp3.l[i].vl = sl.getModelView().projectVertex(vp3.v);
+					vp1.l[i].vl = sl.getModelView().projectVPVertex(vp1.v);
+					vp2.l[i].vl = sl.getModelView().projectVPVertex(vp2.v);
+					vp3.l[i].vl = sl.getModelView().projectVPVertex(vp3.v);
 
 					// Provide the link to Shadow Map for this Light
 					vp1.l[i].map = sl.getMap();
@@ -1070,7 +1072,8 @@ public class Rasterizer {
 										//shadowCoef = vpa.l[i].map.getInterpolation((vl.getX()+1)/2, (vl.getY()+1)/2); // Map i [0,+1] so to be transformed from [-1,+1] of vl position
 										float depth = vpa.l[i].map.getInterpolation((vl.getX()+1)/2, (vl.getY()+1)/2); // Map i [0,+1] so to be transformed from [-1,+1] of vl position
 										//if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Element in light coordinates: vlx = " + vl.getX() + ", vly = " + vl.getY() + ", depth: "+depth);
-										if (vl.getZ() > depth) shadowCoef = 0;
+										// Epsilon used to avoid "ACNE EFFECT" (or self-shadowing). To be refined and parameterized.
+										if (vl.getZ() > depth + 100 * Constants.EPSILON) shadowCoef = 0;
 
 										// TODO Work in Progress - To Be Completed
 										// For each light

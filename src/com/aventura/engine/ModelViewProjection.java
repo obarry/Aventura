@@ -96,6 +96,8 @@ public class ModelViewProjection {
 	Matrix4 full = null;
 	Matrix4 full_normals = null; // restored 11/7/2023
 	
+	Matrix4 vp = null; // Added 25-Dec-2025
+	
 	/**
 	 * Default constructor.
 	 * Do nothing.
@@ -179,6 +181,21 @@ public class ModelViewProjection {
 	}
 	
 	/**
+	 * The complete transformation, from model to homogeneous coordinates, is done through the following formula:
+	 * TransformedVector = [Projection Matrix] * [GUIView Matrix] * [Model Matrix] * OriginalVector
+	 * 
+	 * This method calculates the MVP matrix (or recalculates when needed due to any change in one of the matrices) 
+	 */
+	public void calculateVPMatrix() {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeVPTransformation()");
+		
+		// Calculate the full matrix = MVP matrix transformation
+		vp = projection.times(view);
+		
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "VP transformation matrix:\n"+ vp);
+	}
+	
+	/**
 	 * Fully compute Vertex projections resulting from the ModelViewProjection transformation for both ModelToWorld and ModelToClip projections
 	 * Complete the provided Vertex with projection data but do not modify original position data
 	 * Calculate the normal projection (Vertex normal) taking care of using the normals Model matrix (in case of non uniform scaling)
@@ -211,6 +228,18 @@ public class ModelViewProjection {
 	 */
 	public Vector4 projectVertex(Vertex v) {
 		return full.times(v.getPos());
+	}
+	
+	/**
+	 * Used for an offline projection of a Vertex, e.g. in context of Shadowing in Light's coordinates
+	 * Project Vertex using the projection resulting from the ModelViewProjection transformation for ModelToClip projection (full)
+	 * Return the resulting Vector4 without updating the Vertex (does not update Vertex's projection fields)
+	 * 
+	 * @param v the provided Vertex
+	 * @return the projected Vector4 without Vertex transformation
+	 */
+	public Vector4 projectVPVertex(Vertex v) {
+		return vp.times(v.getPos());
 	}
 	
 	/**
