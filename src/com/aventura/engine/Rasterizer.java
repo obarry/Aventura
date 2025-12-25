@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.context.PerspectiveContext;
+import com.aventura.math.Constants;
 import com.aventura.math.vector.Tools;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -351,6 +352,7 @@ public class Rasterizer {
 		VertexParam vp1, vp2, vp3; // Ordered Vertex containers
 
 		// TODO use color at Vertex level if defined. This requires to manage 3 colors for a triangle in this case
+		// TODO check if .get3DY() (=y/w)  is really needed for this comparison because in theory this is the y in homogeneous coordinates that should be used here. May be no impact.
 
 		if (vpb.v.getProjPos().get3DY()<vpa.v.getProjPos().get3DY()) { // p2 lower than p1
 			if (vpc.v.getProjPos().get3DY()<vpb.v.getProjPos().get3DY()) { // p3 lower than p2
@@ -478,11 +480,12 @@ public class Rasterizer {
 				for (int i=0; i<nb_sl; i++) {
 
 					ShadowingLight sl = shadowingLights.get(i); // Used several times
+					sl.getModelView().calculateVPMatrix(); // Calculate the Matrix without Model matrix (only View and Projection)
 
 					// Transform the World position of the Vertex in this Light's coordinates
-					vp1.l[i].vl = sl.getModelView().projectVertex(vp1.v);
-					vp2.l[i].vl = sl.getModelView().projectVertex(vp2.v);
-					vp3.l[i].vl = sl.getModelView().projectVertex(vp3.v);
+					vp1.l[i].vl = sl.getModelView().projectVPVertex(vp1.v);
+					vp2.l[i].vl = sl.getModelView().projectVPVertex(vp2.v);
+					vp3.l[i].vl = sl.getModelView().projectVPVertex(vp3.v);
 
 					// Provide the link to Shadow Map for this Light
 					vp1.l[i].map = sl.getMap();
@@ -926,7 +929,7 @@ public class Rasterizer {
 						//vl1[i] = Tools.interpolate(vpa.l[i].vl.times(za_proj), vpb.l[i].vl.times(zb_proj), gradient1);
 						//vl2[i] = Tools.interpolate(vpc.l[i].vl.times(zc_proj), vpd.l[i].vl.times(zd_proj), gradient2);	
 						vl1[i] = Tools.interpolate(vpa.l[i].vl, vpb.l[i].vl, gradient1);
-						vl2[i] = Tools.interpolate(vpc.l[i].vl, vpd.l[i].vl, gradient2);	
+						vl2[i] = Tools.interpolate(vpc.l[i].vl, vpd.l[i].vl, gradient2);
 					}
 				} // End for each Light
 
@@ -1060,14 +1063,17 @@ public class Rasterizer {
 										// Calculate the position of the element being rendered in Light's coordinate by interpolation
 										// vl1 and vl2 are the start and end points of the scan line in light's coordinates
 										//Vector4 vl = Tools.interpolate(vl1[i], vl2[i], gradient).times(z);
+										// vl is the position vector in homogeneous coordinates (full projection)
 										Vector4 vl = Tools.interpolate(vl1[i], vl2[i], gradient); // Normal interpolation assuming orthographic projection -> to be adapted for PointLights
 										
 										// Calculate the depth of this position in Shadow Map
 										// Again use the interpolation feature of the map to calculate the depth at this position that is not exactly matching map elements
 										//shadowCoef = vpa.l[i].map.getInterpolation(vl.getX()/vl.getW(), vl.getY()/vl.getW());
-										shadowCoef = vpa.l[i].map.getInterpolation((vl.getX()+1)/2, (vl.getY()+1)/2); // Map i [0,+1] so to be transformed from [-1,+1] of vl position
-										if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Element in light coordinates: vlx = " + vl.getX() + ", vly = " + vl.getY() + ", shadowCoef: "+shadowCoef);
-
+										//shadowCoef = vpa.l[i].map.getInterpolation((vl.getX()+1)/2, (vl.getY()+1)/2); // Map i [0,+1] so to be transformed from [-1,+1] of vl position
+										float depth = vpa.l[i].map.getInterpolation((vl.getX()+1)/2, (vl.getY()+1)/2); // Map i [0,+1] so to be transformed from [-1,+1] of vl position
+										//if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Element in light coordinates: vlx = " + vl.getX() + ", vly = " + vl.getY() + ", depth: "+depth);
+										// Epsilon used to avoid "ACNE EFFECT" (or self-shadowing). To be refined and parameterized.
+										if (vl.getZ() > depth + 100 * Constants.EPSILON) shadowCoef = 0;
 
 										// TODO Work in Progress - To Be Completed
 										// For each light
