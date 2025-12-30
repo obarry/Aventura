@@ -102,7 +102,8 @@ public class TestShadowMapRasterization {
 		System.out.println("********* STARTING APPLICATION *********");
 		Tracer.info = true;
 		Tracer.function = true;
-		Tracer.debug = true;
+		//Tracer.debug = true;
+		Tracer.stats = true;
 		
 		// Camera
 		//Vector4 eye = new Vector4(-8,-2,12,1);
@@ -201,7 +202,6 @@ public class TestShadowMapRasterization {
 		if (mapView != null) {
 			System.out.println("Now rendering shadow map...");
 			System.out.println("ShadowMap min: "+mapView.getMin() + ", ShadowMap max: "+mapView.getMax() + ", ShadowMap avg: " + mapView.getAverage() + ". Nb of Pixels around min: " + mapView.getNbOfPixelsInRange(mapView.getMin(), mapView.getMin()+0.01f*(mapView.getMax()-mapView.getMin())) + ". Nb of Pixels around max: " + mapView.getNbOfPixelsInRange(mapView.getMax()-0.01f*(mapView.getMax()-mapView.getMin()), mapView.getMax())+ ". Nb of Pixels in map: " + mapView.getNbOfPixels());
-			//mapView.removeFar(pContext.getPerspective().getFar(), 0);
 			mapView.normalizeMap();
 			gUIView.setDimensions(mapView.getViewWidth(), mapView.getViewHeight());
 			gUIView.initView(mapView);

@@ -228,6 +228,9 @@ public class World {
 		float dist = 0;
 		for (int i=0; i<elements.size(); i++) {
 			for (int j=0; j<elements.get(i).vertices.size(); j++) {
+				// BUG : this does not calculate the position of the vertices using the Element's transformation hence not the Max Distance in World coordinates
+				//TODO calculate using wld_position instead of postion
+				//TODO need to calculate wld_position before rendering (as this is geometry calculation, not projection)
 				dist = elements.get(i).vertices.get(j).position.length();
 				max = dist > max ? dist : max;
 			}
@@ -244,6 +247,9 @@ public class World {
 		if (p.isVector()) p.point();
 		for (int i=0; i<elements.size(); i++) {
 			for (int j=0; j<elements.get(i).vertices.size(); j++) {
+				// BUG : this does not calculate the position of the vertices using the Element's transformation hence not the Max Distance in World coordinates
+				//TODO calculate using wld_position instead of postion
+				//TODO need to calculate wld_position before rendering (as this is geometry calculation, not projection)
 				dist = elements.get(i).vertices.get(j).position.minus(p).length();
 				max = dist > max ? dist : max;
 			}

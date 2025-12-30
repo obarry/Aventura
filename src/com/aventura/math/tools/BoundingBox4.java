@@ -65,7 +65,7 @@ public class BoundingBox4 {
 		minY = maxY = arrayOfPoints[0].getY();
 		minZ = maxZ = arrayOfPoints[0].getZ();
 		
-		// Itearate on the rest of the list and keep the min and max of each coordinate
+		// Iterate on the rest of the list and keep the min and max of each coordinate
 		for (int i=1; i<arrayOfPoints.length; i++) {
 			float x = arrayOfPoints[i].getX();
 			float y = arrayOfPoints[i].getY();
@@ -90,24 +90,36 @@ public class BoundingBox4 {
 		boxPoints[1][3] = new Vector4(maxX, maxY, minZ, 1);
 	}
 	
-	public float getMaxX() {
+	protected float getMaxX() {
 		return maxX;
 	}
-	public float getMaxY() {
+	protected float getMaxY() {
 		return maxY;
 	}
-	public float getMaxZ() {
+	protected float getMaxZ() {
 		return maxZ;
 	}
 	
-	public float getMinX() {
+	protected float getMinX() {
 		return minX;
 	}
-	public float getMinY() {
+	protected float getMinY() {
 		return minY;
 	}
-	public float getMinZ() {
+	protected float getMinZ() {
 		return minZ;
+	}
+	
+	public float getWidth() {
+		return maxX - minX;
+	}
+	
+	public float getHeight() {
+		return maxY - minY;
+	}
+	
+	public float getDepth() {
+		return maxZ - minZ;	
 	}
 	
 	public Vector4 getP11() {

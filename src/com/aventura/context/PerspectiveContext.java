@@ -160,7 +160,43 @@ public class PerspectiveContext {
 	}
 	
 	/**
-	 * @param width
+	 * @param pixel_width number of pixel for the width of this perspective
+	 * @param pixel_height number of pixel for the height of this perspective
+	 * @param dist
+	 * @param depth
+	 * @param perspective type of perspective (Orthographic or Frustum)
+	 * @param ppu point per unit
+	 */
+	public PerspectiveContext(int pixel_width, int pixel_height, float dist, float depth, int perspective, int ppu) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: pixel width: " + pixel_width + " pixel height:" + pixel_height + " dist: " + dist + " depth: " + depth +" ppu: " + ppu + " type: "+getTypeString(perspective));
+
+		this.p_type = perspective;
+		this.ppu = ppu;
+
+		this.pixelWidth = pixel_width;
+		this.pixelHeight = pixel_height;
+		this.pixelHalfWidth = pixelWidth/2;
+		this.pixelHalfHeight = pixelHeight/2;
+		
+		createPerspective(perspective, pixel_width/ppu , pixel_height/ppu, dist, depth);
+	}
+	
+	public PerspectiveContext(int pixel_width, float width, float height, float dist, float depth, int perspective) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: pixel width: "+pixel_width+" width: "+width+" height:"+height+" dist: "+dist+" depth: "+depth+" type: "+getTypeString(perspective));
+
+		this.p_type = perspective;
+		this.ppu = (int)(pixel_width/width);
+
+		this.pixelWidth = pixel_width;
+		this.pixelHeight = (int)(height*ppu);
+		this.pixelHalfWidth = pixelWidth/2;
+		this.pixelHalfHeight = pixelHeight/2;
+		
+		createPerspective(perspective, width , height, dist, depth);
+	}
+
+	/**
+	 * @param width 
 	 * @param height
 	 * @param dist
 	 * @param depth
@@ -180,7 +216,17 @@ public class PerspectiveContext {
 		
 		createPerspective(perspective, width , height, dist, depth);
 	}
-	
+
+	/**
+	 * @param top
+	 * @param bottom
+	 * @param right
+	 * @param left
+	 * @param far
+	 * @param near
+	 * @param perspective
+	 * @param ppu
+	 */
 	public PerspectiveContext(float top, float bottom, float right, float left, float far, float near, int perspective, int ppu) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: top: "+top+" bottom: "+bottom+" right: "+right+" left: "+left+" far: "+far+" near: "+near+" ppu: "+ppu+" type: "+getTypeString(perspective));
 		
@@ -206,6 +252,14 @@ public class PerspectiveContext {
 		}
 	}
 	
+	/**
+	 * Create a Perspective with width, height, dist and depth
+	 * @param p_type type of perspective (Orthographic or Frustum)
+	 * @param width
+	 * @param height
+	 * @param dist
+	 * @param depth
+	 */
 	protected void createPerspective(int p_type, float width, float height, float dist, float depth) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: width: "+width+" height: "+height+" dist: "+dist+" depth: "+depth);
 		
@@ -223,6 +277,16 @@ public class PerspectiveContext {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Created perspective : \n" + this.perspective);	
 	}
 	
+	/**
+	 * Create a Perspective with left, right bottom, top, near far
+	 * @param p_type type of perspective (Orthographic or Frustum)
+	 * @param left
+	 * @param right
+	 * @param bottom
+	 * @param top
+	 * @param near
+	 * @param far
+	 */
 	protected void createPerspective(int p_type, float left, float right, float bottom, float top, float near, float far) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: top: "+top+" bottom: "+bottom+" right: "+right+" left: "+left+" far: "+far+" near: "+near);
 		
