@@ -184,6 +184,7 @@ public class RenderEngine {
 	public MapView render() {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Start rendering...");
+		long start_millisec = System.currentTimeMillis();
 		nbt = 0;
 		nbt_in = 0;
 		nbt_out = 0;
@@ -270,6 +271,11 @@ public class RenderEngine {
 
 		// Switch back and front buffers and request GUI repaint
 		gUIView.renderView();
+		
+		long end_millisec = System.currentTimeMillis();
+		
+		long duration_millisec = end_millisec - start_millisec;
+		if (Tracer.stats) Tracer.traceStats(this.getClass(), "Rendering duration : " + duration_millisec + " millisec, FPS : " + (float)1000/duration_millisec);			
 		
 		return zBuffer;
 	}
