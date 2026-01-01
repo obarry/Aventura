@@ -40,7 +40,7 @@ import com.aventura.math.vector.Vector3;
  * @date May 2014
  */
 
-public class Translation extends Matrix4 {
+public class Translation extends Transformation {
 	
 	/**
 	 * Create new Translation from existing Matrix4

@@ -1,7 +1,5 @@
 package com.aventura.math.transform;
 
-import com.aventura.math.vector.Matrix4;
-
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -35,7 +33,7 @@ public interface Transformable {
 	 * Set the transformation Matrix for this transformable object
 	 * @param transformation
 	 */
-	public void setTransformation(Matrix4 transformation);
+	public void setTransformation(Transformation transformation);
 	
 	/**
 	 * Combine the existing transformation Matrix of the transformable object by a supplementary transformation.
@@ -43,18 +41,18 @@ public interface Transformable {
 	 * object by the resulting Matrix.
 	 * @param transformation, the Matrix representing the supplementary transformation
 	 */
-	public void combineTransformation(Matrix4 transformation);
+	public void combineTransformation(Transformation transformation);
 	
 	/**
 	 * Provide the transformation Matrix of the transformable object
 	 * @return
 	 */
-	public Matrix4 getTransformation();
+	public Transformation getTransformation();
 	
 	/**Transform immediately the Element (by transforming all its vertices) regardless the transformation Matrix of this Element.
 	 * @param transformation, the Matrix to be used for this immediate transformation
 	 */
-	public void transform(Matrix4 transformation);
+	public void transform(Transformation transformation);
 	
 	// TBD add methods for translation, rotation and scaling
 	// A transformable object or element should be translated, rotated or scaled

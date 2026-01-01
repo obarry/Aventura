@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.math.transform.Transformable;
+import com.aventura.math.transform.Transformation;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
@@ -132,7 +133,7 @@ public class Element implements Transformable, Shape, Generable {
 	protected ArrayList<Triangle> triangles;  // Triangles related to this element
 	protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
 	
-	protected Matrix4 transform;  // Element to World Transformation Matrix (Model Matrix)
+	protected Transformation transform;  // Element to World Transformation Matrix (Model Matrix)
 	boolean hasTransformation = false; // To know if the Element is genuine (default) or transformed
 	
 	// Colors and specular reflection characteristics
@@ -153,7 +154,7 @@ public class Element implements Transformable, Shape, Generable {
 		this.name = ELEMENT_DEFAULT_NAME + id;
 		triangles = new ArrayList<Triangle>();
 		vertices = new ArrayList<Vertex>();
-		transform = Matrix4.IDENTITY; // By default
+		transform = new Transformation(Matrix4.IDENTITY); // By default
 	}
 
 	/**
@@ -166,7 +167,7 @@ public class Element implements Transformable, Shape, Generable {
 		this.name = name + id;
 		triangles = new ArrayList<Triangle>();
 		vertices = new ArrayList<Vertex>();
-		transform = Matrix4.IDENTITY; // By default
+		transform = new Transformation(Matrix4.IDENTITY); // By default
 	}
 
 	/**
@@ -179,7 +180,7 @@ public class Element implements Transformable, Shape, Generable {
 		this.name = ELEMENT_DEFAULT_NAME + id;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
-		this.transform = Matrix4.IDENTITY; // By default
+		this.transform = new Transformation(Matrix4.IDENTITY); // By default
 		this.isClosed = isClosed;
 	}
 	
@@ -193,7 +194,7 @@ public class Element implements Transformable, Shape, Generable {
 		this.name = name + id;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
-		this.transform = Matrix4.IDENTITY; // By default
+		this.transform = new Transformation(Matrix4.IDENTITY); // By default
 		this.isClosed = isClosed;
 	}
 
@@ -330,19 +331,19 @@ public class Element implements Transformable, Shape, Generable {
 	// **************************
 
 	@Override
-	public void setTransformation(Matrix4 transformation) {
+	public void setTransformation(Transformation transformation) {
 		this.transform = transformation;
 		this.hasTransformation = true;
 	}
 
 	@Override
-	public void combineTransformation(Matrix4 transformation) {
-		this.transform = transformation.times(this.transform);
+	public void combineTransformation(Transformation transformation) {
+		this.transform = new Transformation(transformation.times(this.transform));
 		this.hasTransformation = true;
 	}
 
 	@Override
-	public Matrix4 getTransformation() {
+	public Transformation getTransformation() {
 		return transform;
 	}
 	
@@ -350,7 +351,7 @@ public class Element implements Transformable, Shape, Generable {
 	// Do NOT transform the projected position NOR the normals of the Vertex
 	// It is supposed to be used before calculating normals and projecting Elements through RenderEngine
 	@Override
-	public void transform(Matrix4 transformation) {
+	public void transform(Transformation transformation) {
 
 		for (int i=0; i<this.getNbVertices(); i++) {
 			Vertex v = this.getVertex(i);

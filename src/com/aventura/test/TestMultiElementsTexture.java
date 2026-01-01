@@ -13,8 +13,8 @@ import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Transformation;
 import com.aventura.math.transform.Translation;
-import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -237,7 +237,7 @@ public class TestMultiElementsTexture {
 		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
 		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
 		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
-		Matrix4 r = r1.times(r2).times(r3);
+		Transformation r = new Transformation(r1.times(r2).times(r3));
 		for (int i=0; i<=nb_images; i++) {
 			world.expandTransformation(r);
 			renderer.render();

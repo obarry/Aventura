@@ -14,6 +14,7 @@ import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Scaling;
+import com.aventura.math.transform.Transformation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -165,7 +166,7 @@ public class TestScaling {
 			Rotation r1 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
 			Rotation r2 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
 			Scaling s = new Scaling(1+(float)i/180,1+(float)i/180,1);
-			elm.setTransformation(r1.times(r2.times(s)));
+			elm.setTransformation(new Transformation(r1.times(r2.times(s))));
 			//elm.setTransformation(r1.times(r2));
 			//elm.combineTransformation(s);
 			renderer.render();

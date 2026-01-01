@@ -12,6 +12,7 @@ import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Transformation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -154,8 +155,8 @@ public class TestLighting1 {
 		for (int i=0; i<=3*nb_images; i++) {
 			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
 			trellis.setTransformation(r);
-			cube.setTransformation(r.times(t1));
-			sphere.setTransformation(r.times(t2));
+			cube.setTransformation(new Transformation(r.times(t1)));
+			sphere.setTransformation(new Transformation(r.times(t2)));
 			renderer.render();
 		}
 
