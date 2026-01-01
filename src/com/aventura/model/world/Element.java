@@ -325,9 +325,9 @@ public class Element implements Transformable, Shape, Generable {
 		return vertices.size();
 	}
 
-	// *************************
-	// ***** Transfomation *****
-	// *************************
+	// **************************
+	// ***** Transformation *****
+	// **************************
 
 	@Override
 	public void setTransformation(Matrix4 transformation) {
