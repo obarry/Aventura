@@ -41,7 +41,7 @@ import com.aventura.tools.tracing.Tracer;
  */
 
 
-public class Rotation extends Matrix4 {
+public class Rotation extends Transformation {
 
 	public Rotation() {
 		super(Matrix4.IDENTITY);
@@ -149,7 +149,7 @@ public class Rotation extends Matrix4 {
 	}
 	
 	public Rotation(float[][] array) throws NotARotationException, MatrixArrayWrongSizeException {
-		super(array);
+		super(new Matrix4(array));
 		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+this); 
 	}
 	

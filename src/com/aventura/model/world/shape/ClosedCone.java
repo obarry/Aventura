@@ -2,6 +2,7 @@ package com.aventura.model.world.shape;
 
 import java.awt.Color;
 
+import com.aventura.math.transform.Transformation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.model.texture.Texture;
@@ -62,7 +63,7 @@ public class ClosedCone extends Cone {
 		
 		bottom = new Disc(ray, half_seg);
 		Translation t_bottom = new Translation(Vector3.Z_AXIS, -height/2);
-		bottom.setTransformation(t_bottom);
+		bottom.setTransformation((Transformation)t_bottom);
 		
 		this.addElement(bottom);
 		

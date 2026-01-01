@@ -17,6 +17,7 @@ import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Transformation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -227,7 +228,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         
         Rotation rz = new Rotation((float)Math.PI*(float)mouse_dragged_X/frame.getWidth()/8, Vector3.Z_AXIS);
         Rotation ry = new Rotation((float)Math.PI*(float)mouse_dragged_Y/frame.getHeight()/16, Vector3.Y_AXIS);
-        tre.setTransformation(ry.times(rz));
+        tre.setTransformation(new Transformation(ry.times(rz)));
         //tre.combineTransformation(ry.times(rz));
 
         // Render the updated gUIView after zooming camera and rotating Element

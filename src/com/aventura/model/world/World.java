@@ -3,6 +3,7 @@ package com.aventura.model.world;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import com.aventura.math.transform.Transformation;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.tools.tracing.Tracer;
@@ -110,13 +111,13 @@ public class World {
 		return backgroundColor;
 	}
 	
-	public void setTransformation(Matrix4 t) {
+	public void setTransformation(Transformation t) {
 		for (int i=0; i<elements.size(); i++) {
 			elements.get(i).setTransformation(t);
 		}
 	}
 
-	public void expandTransformation(Matrix4 t) {
+	public void expandTransformation(Transformation t) {
 		for (int i=0; i<elements.size(); i++) {
 			elements.get(i).combineTransformation(t);
 		}

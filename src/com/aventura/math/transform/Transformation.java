@@ -51,7 +51,11 @@ public class Transformation extends Matrix4 {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of new Transformation Matrix.");
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Transformation:\n"+this);
 	}
-		
+	
+	public Transformation(Matrix4 matrix) {
+		super(matrix);
+	}
+	
 	/**
 	 * Transforms the vector x into y based on transformation characteristics
 	 * y = transform(x)
