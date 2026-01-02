@@ -128,7 +128,7 @@ public class TestCubeRotationTexture {
 //		world.addElement(cylinder2);
 		
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-1,0));
 		AmbientLight al = new AmbientLight(0.5f);

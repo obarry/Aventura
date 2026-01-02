@@ -226,7 +226,7 @@ public class TestMultiElementsTextureOrtho {
 
 		
 		// Generate world and normals
-		world.generate();
+		world.build();
 
 		// Print World characteristics on console
 		//System.out.println(world);
@@ -239,7 +239,7 @@ public class TestMultiElementsTextureOrtho {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		PerspectiveContext context = new PerspectiveContext(8, 6, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
+		PerspectiveContext context = new PerspectiveContext(8f, 6f, 1f, 100f, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
 		//PerspectiveContext context = new PerspectiveContext(3.0f, 1.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 400);
 		GUIView gUIView = test.createView(context);
 		System.out.println(context.getPerspective().getProjection());

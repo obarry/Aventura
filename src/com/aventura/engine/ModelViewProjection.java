@@ -208,7 +208,7 @@ public class ModelViewProjection {
 		// Calculate the coordinates in Clip space (full transformation) and store results in Vertex's related field
 		v.setProjPos(full.times(v.getPos()));
 		// Also calculate only the coordinates of the Vertex in World coordinates for geometry calculation (e.g. bounding boxes etc.)
-		v.setWorldPos(model.times(v.getPos()));
+		//v.setWorldPos(model.times(v.getPos()));
 		if (normals) {
 			// Calculate Normals
 			if (v.getNormal() != null) {

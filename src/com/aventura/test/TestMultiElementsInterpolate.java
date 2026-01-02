@@ -161,7 +161,7 @@ public class TestMultiElementsInterpolate {
 		}
 		
 		// Calculate normals
-		world.generate();
+		world.build();
 		
 		System.out.println(world);
 		for (int i=0; i<world.getNbElements(); i++)

@@ -129,7 +129,7 @@ public class TestTorusTexture {
 		world.setBackgroundColor(new Color(0,0,55));
 		
 		System.out.println("********* Generating World");
-		world.generate();
+		world.build();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-1,-1),1.0f);
 		AmbientLight al = new AmbientLight(0.1f);

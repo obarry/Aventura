@@ -42,7 +42,7 @@ public interface Transformable {
 	 * @param transformation, the Matrix representing the supplementary transformation
 	 */
 	public void combineTransformation(Transformation transformation);
-	
+		
 	/**
 	 * Provide the transformation Matrix of the transformable object
 	 * @return
@@ -52,7 +52,7 @@ public interface Transformable {
 	/**Transform immediately the Element (by transforming all its vertices) regardless the transformation Matrix of this Element.
 	 * @param transformation, the Matrix to be used for this immediate transformation
 	 */
-	public void transform(Transformation transformation);
+	public void transform();
 	
 	// TBD add methods for translation, rotation and scaling
 	// A transformable object or element should be translated, rotated or scaled

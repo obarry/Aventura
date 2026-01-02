@@ -109,7 +109,7 @@ public class TestSphereSpecularReflection {
 		world.addElement(s);
 		
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		
 		Vector3 lightVector = new Vector3(-1,-1,0);
 		DirectionalLight dl = new DirectionalLight(lightVector);

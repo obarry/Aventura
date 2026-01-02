@@ -132,7 +132,7 @@ public class PerspectiveContext {
 		this.ppu = 100;
 		createPerspective(PERSPECTIVE_TYPE_FRUSTUM, 8,4.5f,10,1000); // Width/Height ratio = 16/9
 	}
-	
+		
 	/**
 	 * Duplicate PerspectiveContext(e.g. to start from default and update it)
 	 * @param c the PerspectiveContext to duplicate

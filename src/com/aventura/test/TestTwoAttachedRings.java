@@ -114,7 +114,7 @@ public class TestTwoAttachedRings {
 		world.addElement(torus2);
 		
 		System.out.println("********* Generating World");
-		world.generate();
+		world.build();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-1,-1));
 //		AmbientLight al = new AmbientLight(0.2f);

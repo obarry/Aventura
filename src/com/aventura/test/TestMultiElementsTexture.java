@@ -207,7 +207,7 @@ public class TestMultiElementsTexture {
 		}
 		
 		// Generate world and normals
-		world.generate();
+		world.build();
 
 		// Print World characteristics on console
 		System.out.println(world);

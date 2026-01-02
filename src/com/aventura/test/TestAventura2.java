@@ -108,7 +108,7 @@ public class TestAventura2 {
 			}
 		}
 		
-		world.generate();
+		world.build();
 
 		// World is created
 		return world;

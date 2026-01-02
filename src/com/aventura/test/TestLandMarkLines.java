@@ -115,7 +115,7 @@ public class TestLandMarkLines {
 		world.addElement(cube);
 		
 		System.out.println("********* Generating landscape");
-		world.generate();
+		world.build();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.5f);
 		AmbientLight al = new AmbientLight(0.5f);

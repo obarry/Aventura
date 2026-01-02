@@ -109,7 +109,7 @@ public class TestRasterizer11 {
 		world.addElement(pyr);
 		
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 
 		// Set colors to triangles
 		pyr.getTriangle(0).setColor(Color.CYAN);

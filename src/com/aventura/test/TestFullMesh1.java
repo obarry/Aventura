@@ -159,7 +159,7 @@ public class TestFullMesh1 {
 		world.setBackgroundColor(new Color(75,0,150));
 		
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-1,-1), 0.5f);
 		AmbientLight al = new AmbientLight(0.5f);

@@ -114,7 +114,7 @@ public class TestRasterizer12 {
 		world.addElement(box);
 		
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		
 		// Set Texture to all Triangles of the Box
 		// Bottom

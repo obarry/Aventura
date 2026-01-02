@@ -130,7 +130,7 @@ public class TestConeFrustumTexture {
 		world.addElement(cone);
 		world.setBackgroundColor(new Color(10,10,50));
 		
-		world.generate();
+		world.build();
 		System.out.println(world);
 		System.out.println(cone);
 		System.out.println("********* Calculating normals");

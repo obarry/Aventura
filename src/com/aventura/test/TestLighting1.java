@@ -128,7 +128,7 @@ public class TestLighting1 {
 		world.addElement(sphere);
 		
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		System.out.println(world);
 
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
