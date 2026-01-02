@@ -251,7 +251,7 @@ public class World {
 				// BUG : this does not calculate the position of the vertices using the Element's transformation hence not the Max Distance in World coordinates
 				//TODO calculate using wld_position instead of postion
 				//TODO need to calculate wld_position before rendering (as this is geometry calculation, not projection)
-				dist = elements.get(i).vertices.get(j).position.length();
+				dist = elements.get(i).vertices.get(j).wld_position.length();
 				max = dist > max ? dist : max;
 			}
 		}
@@ -270,7 +270,7 @@ public class World {
 				// BUG : this does not calculate the position of the vertices using the Element's transformation hence not the Max Distance in World coordinates
 				//TODO calculate using wld_position instead of postion
 				//TODO need to calculate wld_position before rendering (as this is geometry calculation, not projection)
-				dist = elements.get(i).vertices.get(j).position.minus(p).length();
+				dist = elements.get(i).vertices.get(j).wld_position.minus(p).length();
 				max = dist > max ? dist : max;
 			}
 		}

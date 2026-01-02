@@ -626,12 +626,14 @@ public class RenderEngine {
 		modelViewProjection.setModel(Matrix4.IDENTITY);
 		modelViewProjection.calculateNormalMatrix();
 		modelViewProjection.calculateMVPMatrix();
-		Vertex v = new Vertex(lighting.getDirectionalLight().getLightVectorAtPoint(null));
-		Vertex o = new Vertex(0,0,0);
-		modelViewProjection.transformVertex(v, true);
-		modelViewProjection.transformVertex(o, true);
-		Segment s = new Segment(o, v);
-		rasterizer.drawLine(s, renderContext.lightVectorsColor);
+		for (int i=0; i<lighting.getDirectionalLights().size(); i++) {
+			Vertex v = new Vertex(lighting.getDirectionalLights().get(i).getLightVectorAtPoint(null));
+			Vertex o = new Vertex(0,0,0);
+			modelViewProjection.transformVertex(v, true);
+			modelViewProjection.transformVertex(o, true);
+			Segment s = new Segment(o, v);
+			rasterizer.drawLine(s, renderContext.lightVectorsColor);
+		}
 	}
 	
 	public String renderStats() {		

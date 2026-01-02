@@ -140,7 +140,7 @@ public class TestShadowMapRasterization {
 		//cube2.setColor(new Color(0,10,210));
 		cube.setColor(new Color(200,50,50));
 		// Translate cube on top of trellis
-		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
+		Translation t1 = new Translation(new Vector3(1.5f, 0, 1.5f));
 		Translation t2 = new Translation(new Vector3(-2, 0, 2));
 		cube.setTransformation(t1);
 		sphere.setTransformation(t2);
@@ -162,8 +162,10 @@ public class TestShadowMapRasterization {
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.25f);
 		DirectionalLight dl = new DirectionalLight(new Vector3(2,-1,-3), ShadowingLight.SHADOWING_BOX_WORLD);
+		//DirectionalLight dl2 = new DirectionalLight(new Vector3(-2,-1,-3), ShadowingLight.SHADOWING_BOX_WORLD);
 		//DirectionalLight dl = new DirectionalLight(new Vector3(1,3,2));
 		Lighting light = new Lighting(dl, al);
+		//light.addDirectionalLight(dl2);
 		//Lighting light = new Lighting(al);
 		//light.setDirectionalLight(dl);
 		//Lighting light = new Lighting(dl);
