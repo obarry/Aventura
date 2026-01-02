@@ -83,10 +83,11 @@ public class DirectionalLight extends ShadowingLight {
 	 * Create Directional Light using direction as vector of the light
 	 * The intensity of the light will be extrapolate from the norm of the provided direction vector
 	 * @param direction is where the light comes from (vector from viewer to light source)
+	 * @param shadowingBox_type
 	 */
-	public DirectionalLight(Vector3 direction, World world) {
-		super(direction.length(), world); // Intensity is taken from the norm of the direction vector
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " + World");
+	public DirectionalLight(Vector3 direction, int shadowingBox_type) {
+		super(direction.length(), shadowingBox_type); // Intensity is taken from the norm of the direction vector
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction);
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
@@ -95,13 +96,38 @@ public class DirectionalLight extends ShadowingLight {
 	 * Create Directional Light using direction as vector of the light and separated scalar for intensity
 	 * @param direction is where the light comes from (vector from viewer to light source)
 	 * @param intensity
+	 * @param shadowingBox_type
 	 */
-	public DirectionalLight(Vector3 direction, float intensity, World world) {
-		super(intensity, world);
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " Intensity : " + intensity + " + World");
+	public DirectionalLight(Vector3 direction, float intensity, int shadowingBox_type) {
+		super(intensity, shadowingBox_type);
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " Intensity : " + intensity);
 		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
+
+//	/**
+//	 * Create Directional Light using direction as vector of the light
+//	 * The intensity of the light will be extrapolate from the norm of the provided direction vector
+//	 * @param direction is where the light comes from (vector from viewer to light source)
+//	 */
+//	public DirectionalLight(Vector3 direction, World world) {
+//		super(direction.length(), world); // Intensity is taken from the norm of the direction vector
+//		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " + World");
+//		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
+//		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
+//	}
+//	
+//	/**
+//	 * Create Directional Light using direction as vector of the light and separated scalar for intensity
+//	 * @param direction is where the light comes from (vector from viewer to light source)
+//	 * @param intensity
+//	 */
+//	public DirectionalLight(Vector3 direction, float intensity, World world) {
+//		super(intensity, world);
+//		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction + " Intensity : " + intensity + " + World");
+//		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
+//		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
+//	}
 
 	/**
 	 * The returned vector is normalized

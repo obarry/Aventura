@@ -145,7 +145,7 @@ public class TestMultiElements {
 			}
 		}
 		// Calculate normals
-		world.generate();
+		world.build();
 		
 		// World is created
 		return world;

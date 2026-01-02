@@ -135,7 +135,7 @@ public class TestClosedConeTexture {
 		System.out.println(world);
 		System.out.println(cone);
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);

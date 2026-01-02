@@ -262,7 +262,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 				// TODO Auto-generated catch block
 				exc.printStackTrace();
 			}
-			world.update();
+			world.rebuild();
 			System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles()+" Number of vertices: " + tre.getNbVertices());
 			updateTrianglesColorTrellis();
 			renderer.render();
@@ -454,7 +454,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		
 		// Generate World (including Triangles)
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles()+" Number of vertices: " + tre.getNbVertices());
 		
 		// Then update Triangles as needed (Colors) to create effect on the Landscape

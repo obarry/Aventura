@@ -139,7 +139,7 @@ public class Test3ElementsRotation {
 		world.addElement(e);
 		
 		// Calculate normals
-		world.generate();
+		world.build();
 		
 		System.out.println(e);
 		System.out.println(e1);

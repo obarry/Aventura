@@ -20,6 +20,7 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.light.ShadowingLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
@@ -151,7 +152,7 @@ public class TestShadowMapRasterization {
 		//world.addElement(cube2);
 		
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		System.out.println(world);
 		System.out.println(trellis);
 		System.out.println(cube);
@@ -160,7 +161,7 @@ public class TestShadowMapRasterization {
 		
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.25f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(2,-1,-3));
+		DirectionalLight dl = new DirectionalLight(new Vector3(2,-1,-3), ShadowingLight.SHADOWING_BOX_WORLD);
 		//DirectionalLight dl = new DirectionalLight(new Vector3(1,3,2));
 		Lighting light = new Lighting(dl, al);
 		//Lighting light = new Lighting(al);

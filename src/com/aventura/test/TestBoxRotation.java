@@ -108,7 +108,7 @@ public class TestBoxRotation {
 		
 		world.addElement(box);
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		
 		// Set colors to triangles (triangles are created only when World is generated) 
 		box.getTriangle(0).setColor(Color.CYAN);

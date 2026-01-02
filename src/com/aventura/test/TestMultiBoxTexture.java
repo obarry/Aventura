@@ -133,7 +133,7 @@ public class TestMultiBoxTexture {
 		
 		// Generate the world geometry (including vertices and triangles) based on initialization data
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		
 		// Print the world and each element's characteristics
 		System.out.println(world);

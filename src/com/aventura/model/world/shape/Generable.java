@@ -37,9 +37,9 @@ public interface Generable {
 	// High-level services of the interfaces
 	
 	// First generation of the geometry
-	public void generate();
+	public void build();
 	// Update previously generated geometry. Needed if the Vertices have been changed. Triangles will be regenerated
-	public void update();
+	public void rebuild();
 
 	// Low-level services of the interface
 	

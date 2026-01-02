@@ -146,7 +146,7 @@ public class TestAventura11 {
 		System.out.println("********* Creating World");
 		World world = test.createWorld();
 		System.out.println("********* Calculating normals");
-		world.generate();
+		world.build();
 		
 		Lighting light = test.createLight();
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);

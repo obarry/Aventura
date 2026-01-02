@@ -147,7 +147,7 @@ public class TestPyramidTextureAndColor {
 		
 		System.out.println("********* Generate world");
 		// Generate world
-		world.generate();
+		world.build();
 		
 		System.out.println(world);
 		System.out.println(pyr);

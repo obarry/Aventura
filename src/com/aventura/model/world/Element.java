@@ -129,11 +129,13 @@ public class Element implements Transformable, Shape, Generable {
 	protected String name;
 	protected int id;
 	
+	protected Element parent = null; // parent of this Element in hierarchy, null if this is World (first level Element)
 	protected ArrayList<Element> subelements; // To create a hierarchy of elements - not necessarily used
 	protected ArrayList<Triangle> triangles;  // Triangles related to this element
 	protected ArrayList<Vertex> vertices;     // Vertices of this element (also referenced by the triangles)
 	
 	protected Transformation transform;  // Element to World Transformation Matrix (Model Matrix)
+	protected Transformation full; // Full combined transformation for this Element from World (Model Matrix)
 	boolean hasTransformation = false; // To know if the Element is genuine (default) or transformed
 	
 	// Colors and specular reflection characteristics
@@ -152,9 +154,10 @@ public class Element implements Transformable, Shape, Generable {
 	public Element() {
 		id = ID++;
 		this.name = ELEMENT_DEFAULT_NAME + id;
-		triangles = new ArrayList<Triangle>();
-		vertices = new ArrayList<Vertex>();
-		transform = new Transformation(Matrix4.IDENTITY); // By default
+		this.triangles = new ArrayList<Triangle>();
+		this.vertices = new ArrayList<Vertex>();
+		this.transform = new Transformation(Matrix4.IDENTITY); // By default
+		this.full = new Transformation(Matrix4.IDENTITY); // By default
 	}
 
 	/**
@@ -165,9 +168,10 @@ public class Element implements Transformable, Shape, Generable {
 	public Element(String name) {
 		id = ID++;
 		this.name = name + id;
-		triangles = new ArrayList<Triangle>();
-		vertices = new ArrayList<Vertex>();
-		transform = new Transformation(Matrix4.IDENTITY); // By default
+		this.triangles = new ArrayList<Triangle>();
+		this.vertices = new ArrayList<Vertex>();
+		this.transform = new Transformation(Matrix4.IDENTITY); // By default
+		this.full = new Transformation(Matrix4.IDENTITY); // By default
 	}
 
 	/**
@@ -181,6 +185,7 @@ public class Element implements Transformable, Shape, Generable {
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
 		this.transform = new Transformation(Matrix4.IDENTITY); // By default
+		this.full = new Transformation(Matrix4.IDENTITY); // By default
 		this.isClosed = isClosed;
 	}
 	
@@ -195,6 +200,7 @@ public class Element implements Transformable, Shape, Generable {
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
 		this.transform = new Transformation(Matrix4.IDENTITY); // By default
+		this.full = new Transformation(Matrix4.IDENTITY); // By default
 		this.isClosed = isClosed;
 	}
 
@@ -210,7 +216,17 @@ public class Element implements Transformable, Shape, Generable {
 		return subelements;
 	}
 	
+	public void setParent(Element e) {
+		parent = e;
+		full = new Transformation(e.getTransformation().times(transform));
+	}
+	
+	public Element getParent() {
+		return parent;
+	}
+	
 	public void addElement(Element e) {
+		e.setParent(this);
 		// If never initialized then create the Array
 		if (subelements == null) subelements = new ArrayList<Element>();
 		this.subelements.add(e);
@@ -334,31 +350,51 @@ public class Element implements Transformable, Shape, Generable {
 	public void setTransformation(Transformation transformation) {
 		this.transform = transformation;
 		this.hasTransformation = true;
+		propagateTransformation();
+		// TODO implement case this Element has sub-Elements : the new transformation of this Element should be propagated to the "full" transformation of sub-Elements
 	}
 
 	@Override
 	public void combineTransformation(Transformation transformation) {
 		this.transform = new Transformation(transformation.times(this.transform));
 		this.hasTransformation = true;
+		propagateTransformation();
 	}
 
 	@Override
 	public Transformation getTransformation() {
-		return transform;
+		// TODO Auto-generated method stub
+		return full;
 	}
-	
+
 	// Transform the World position of the Vertices only
 	// Do NOT transform the projected position NOR the normals of the Vertex
 	// It is supposed to be used before calculating normals and projecting Elements through RenderEngine
 	@Override
-	public void transform(Transformation transformation) {
+	public void transform() {
 
-		for (int i=0; i<this.getNbVertices(); i++) {
-			Vertex v = this.getVertex(i);
-			v.setWorldPos(transformation.times(v.getPos()));
+		for (int i=0; i<vertices.size(); i++) {
+			Vertex v = vertices.get(i);
+			v.setWorldPos(full.times(v.getPos()));
 		}
+		// Transform all children's Elements (and recursively)
+		subTransform();
 	}
+	
+	protected void propagateTransformation() {
+		if (parent!=null) {
+			this.full = new Transformation(parent.getTransformation().times(transform));
+		} else {
+			this.full = new Transformation(transform);
+		}
+		if (subelements != null) {
+			for (int i=0; i<subelements.size(); i++) {
+				subelements.get(i).propagateTransformation();
+			}
+		}		
 
+	}
+	
 	// ********************************
 	// ***** Ligthing and Shading *****
 	// ********************************
@@ -418,7 +454,7 @@ public class Element implements Transformable, Shape, Generable {
 		element += "* Specular exponent:  " + getSpecularExp() + "\n";
 		element += "* Is closed:          " + (isClosed ? "yes" : "no") + "\n";
 		element += "* Has transformation: " + (hasTransformation ? "yes" : "no");
-		if (hasTransformation) element += "\n* Transformation matrix: \n" + getTransformation();
+		if (hasTransformation) element += "\n* Transformation matrix: \n" + transform;
 		return element;
 	}
 	
@@ -456,25 +492,25 @@ public class Element implements Transformable, Shape, Generable {
 	// ***** Normal calculation *****
 	// ******************************
 	
-	public void generate() {
+	public void build() {
 
 		//this.createGeometry();
 		this.generateVertices();
 		this.generateTriangles();
 		this.calculateNormals();
-		this.subGenerate();
+		this.subBuild();
 	}
 	
-	public void update() {
+	public void rebuild() {
 		// Clear the previously created triangles before generating the new set.
 		triangles.clear();
 		// Do same than generate except Vertices generation as they are assumed to be already existing (and likely modified)
 		this.generateTriangles();
 		this.calculateNormals();
-		this.subUpdate();
+		this.subRebuild();
 		
 	}
-
+		
 	@Override
 	public void generateVertices() {
 		// This method should be implemented in specific Element classes
@@ -489,20 +525,26 @@ public class Element implements Transformable, Shape, Generable {
 		
 	}
 
-
-	
-	protected void subGenerate() {
+	protected void subTransform() {
 		if (subelements != null) {
 			for (int i=0; i<subelements.size(); i++) {
-				subelements.get(i).generate();
+				subelements.get(i).transform();
+			}
+		}		
+	}
+	
+	protected void subBuild() {
+		if (subelements != null) {
+			for (int i=0; i<subelements.size(); i++) {
+				subelements.get(i).build();
 			}
 		}		
 	}
 
-	protected void subUpdate() {
+	protected void subRebuild() {
 		if (subelements != null) {
 			for (int i=0; i<subelements.size(); i++) {
-				subelements.get(i).update();
+				subelements.get(i).rebuild();
 			}
 		}		
 	}

@@ -135,7 +135,7 @@ public class TestScaling2 {
 		world.setBackgroundColor(new Color(20,10,5));
 		
 		System.out.println("********* Generating World");		
-		world.generate();
+		world.build();
 		System.out.println(world);
 		System.out.println(elm);
 		

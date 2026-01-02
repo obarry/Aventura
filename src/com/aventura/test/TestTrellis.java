@@ -119,9 +119,9 @@ public class TestTrellis {
 		Camera camera = test.createCamera();
 		
 		//PerspectiveContext context = PerspectiveContext.PERSPECTIVE_DEFAULT;
-		PerspectiveContext context = new PerspectiveContext();
-		context.getPerspective().setHeight(6);
-		context.getPerspective().setWidth(10);
+		PerspectiveContext context = new PerspectiveContext(10f,6f,10f,1000f, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 100);
+//		context.getPerspective().setHeight(6);
+//		context.getPerspective().setWidth(10);
 		//context.computePerspective();
 		System.out.println(context);
 		

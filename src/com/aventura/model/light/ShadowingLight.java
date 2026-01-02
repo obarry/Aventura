@@ -61,8 +61,8 @@ public abstract class ShadowingLight extends Light {
 	public static final int DEFAULT_SHADOW_MAP_DIMENSION = 200;
 	
 	// Parameter for Shadow Mapping "box" definition (used for Light's camera and perspective calculation)
-	public static final int SHADOWING_BOX_VIEWFRUSTUM = 1; // Use the View Frustum to calculate the "box" for this Light's view - Is DEFAULT
-	public static final int SHADOWING_BOX_WORLD = 2; // Use the World's max dimensions to calculate the Light's view box
+	public static final int SHADOWING_BOX_WORLD = 1; // Use the World's max dimensions to calculate the Light's view box
+	public static final int SHADOWING_BOX_VIEWFRUSTUM = 2; // Use the View Frustum to calculate the "box" for this Light's view - Is DEFAULT
 	public static final int SHADOWING_BOX_ELEMENT = 3; // Use any Element's max dimensions to calculate the Light's view box
 	public static final int SHADOWING_BOX_SPECIFIC = 4; // Use a specific box to calculate the Light's view box
 
@@ -109,7 +109,18 @@ public abstract class ShadowingLight extends Light {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating ShadowingLight. ShadowingBox type : "+toStringShadowingBoxType(shadowingBox_type));
 		this.shadowingBox_type = shadowingBox_type;
 	}
-	
+
+	/**
+	 * Default constructor with intensity
+	 * @param intensity
+	 */
+	public ShadowingLight(float intensity, int shadowingBox_type) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating ShadowingLight. Intensity : " + intensity + ", ShadowingBox type : "+toStringShadowingBoxType(shadowingBox_type));
+		this.intensity = intensity;
+		this.shadowingBox_type = shadowingBox_type;
+	}
+
+
 	/**
 	 * Constructor + Link to the World : to be used when ShadowingBox is of type SHADOWING_BOX_WORLD
 	 * @param shadowingBox_type
@@ -171,22 +182,24 @@ public abstract class ShadowingLight extends Light {
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
-			generateShadowMap(e, null); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+			//generateShadowMap(e, null); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+			generateShadowMap(e); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 	}
 
-	protected void generateShadowMap(Element e, Matrix4 matrix) {
+	//protected void generateShadowMap(Element e, Matrix4 matrix) {
+	protected void generateShadowMap(Element e) {
 		
 		// Update ModelViewProjection matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
-		Matrix4 model = null;
-		if (matrix == null) {
-			model = e.getTransformation();			
-		} else {
-			model = matrix.times(e.getTransformation());
-		}
+//		Matrix4 model = null;
+//		if (matrix == null) {
+//			model = e.getTransformation();			
+//		} else {
+//			model = matrix.times(e.getTransformation());
+//		}
 		
-		mvp_light.setModel(model);
+		mvp_light.setModel(e.getTransformation());
 		mvp_light.calculateMVPMatrix(); // Compute the whole ModelViewProjection mvp_light matrix including Camera (gUIView)
 
 		// Calculate projection for all vertices of this Element
@@ -209,7 +222,8 @@ public abstract class ShadowingLight extends Light {
 		if (!e.isLeaf()) {
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
-				generateShadowMap(e.getSubElements().get(i), model);
+				//generateShadowMap(e.getSubElements().get(i), model);
+				generateShadowMap(e.getSubElements().get(i));
 			}
 		}
 	}

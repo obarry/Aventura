@@ -191,6 +191,9 @@ public class RenderEngine {
 		nbt_bf = 0;
 		nbe = 0;
 		
+		// Geometry calculation : calculate World coordinates for all vertices of the World
+		world.worldProject(); // To be done before potential Light's cameras calculation (need full world geometry available to calculate bounding boxes etc.)
+		
 		// Initialize backbuffer in the GUIView
 		gUIView.setBackgroundColor(world.getBackgroundColor());
 		gUIView.initView();
@@ -247,10 +250,11 @@ public class RenderEngine {
 			}
 		}
 
-		// For each element of the world
+		// MAIN LOOP : for each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
-			render(e, null, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+			//render(e, null, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+			render(e, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in GUIView Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
@@ -286,7 +290,8 @@ public class RenderEngine {
 	 * @param matrix, the model matrix, for recursive calls of sub-elements or should be null for root element
 	 * @param c (optional, should be null for shading calculation) the color for the various elements to be rendered
 	 */
-	public void render(Element e, Matrix4 matrix, Color c) {
+	//public void render(Element e, Matrix4 matrix, Color c) {
+	public void render(Element e, Color c) {
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendering Element: "+e.getName());			
 		// Count Element stats
@@ -298,14 +303,14 @@ public class RenderEngine {
 		
 		// Update ModelViewProjection matrix for this Element (Element <-> Model) by combining the one from this Element
 		// with the previous one for recursive calls (initialized to IDENTITY at first call)
-		Matrix4 model = null;
-		if (matrix == null) {
-			model = e.getTransformation();			
-		} else {
-			model = matrix.times(e.getTransformation());
-		}
+//		Matrix4 model = null;
+//		if (matrix == null) {
+//			model = e.getTransformation();			
+//		} else {
+//			model = matrix.times(e.getTransformation());
+//		}
 		
-		modelViewProjection.setModel(model); // Set the Model matrix (Element to World)
+		modelViewProjection.setModel(e.getTransformation()); // Set the Model matrix (Element to World)
 		modelViewProjection.calculateNormalMatrix(); // Calculate the Normal matrix
 		modelViewProjection.calculateMVPMatrix(); // Compute the whole ModelViewProjection matrix including Model matrix (Element to World transformation)
 		// Then transform the Element with this MVP matrix
@@ -326,7 +331,8 @@ public class RenderEngine {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+nbe+" has "+e.getSubElements().size()+" sub element(s).");
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
-				render(e.getSubElements().get(i), model, col);
+				//render(e.getSubElements().get(i), model, col);
+				render(e.getSubElements().get(i), col);
 			}
 		} else { // Leaf
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+e.getName()+" has no sub elements.");			
@@ -520,13 +526,17 @@ public class RenderEngine {
 		
 		// X axis arrow
 		Rotation r1 = new Rotation((float)Math.PI/2, Vector4.Y_AXIS);
-		Element e1 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r1);	
-		render(e1, null, renderContext.landmarkXColor);
+		Element e1 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r1);
+		//render(e1, null, renderContext.landmarkXColor);
+		e1.transform();
+		render(e1, renderContext.landmarkXColor);
 		
 		// Y axis arrow
 		Rotation r2 = new Rotation((float)-Math.PI/2, Vector4.X_AXIS);
 		Element e2 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r2);	
-		render(e2, null, renderContext.landmarkYColor);
+		//render(e2, null, renderContext.landmarkYColor);
+		e2.transform();
+		render(e2, renderContext.landmarkYColor);
 	
 		// Z axis arrow
 		Rotation r3 = null;
@@ -537,7 +547,9 @@ public class RenderEngine {
 			e.printStackTrace();
 		}
 		Element e3 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r3);		
-		render(e3, null, renderContext.landmarkZColor);
+		//render(e3, null, renderContext.landmarkZColor);
+		e3.transform();
+		render(e3, renderContext.landmarkZColor);
 
 	}
 	
@@ -553,7 +565,7 @@ public class RenderEngine {
 		e.addElement(l);
 		e.addElement(c);
 		e.setTransformation(r);
-		e.generate();
+		e.build();
 		return e;
 }
 	

@@ -222,7 +222,7 @@ public class AventuraDemo {
 			System.out.println(world.getElement(i));
 
 		// Calculate normals
-		world.generate();
+		world.build();
 
 		// Create lighting
 		System.out.println("********* Creating Lighting");

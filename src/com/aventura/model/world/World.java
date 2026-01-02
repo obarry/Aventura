@@ -81,20 +81,39 @@ public class World {
 		return elements.get(i);
 	}
 
-	public void generate() {
+	/**
+	 * Static construction of all Elements.
+	 * Does not calculate the World projection of each vertex
+	 */
+	public void build() {
 		
 		for (int i=0; i<elements.size(); i++) {
-				elements.get(i).generate();
+				elements.get(i).build();
 		}
 	}
 	
-	public void update() {
+	/**
+	 * Static re-construction of all Elements.
+	 * Does not re-calculate the World projection of each vertex
+	 */
+	public void rebuild() {
 		
 		for (int i=0; i<elements.size(); i++) {
-				elements.get(i).update();
+				elements.get(i).rebuild();
 		}
 	}
 	
+	/**
+	 * Calculate the World projection for each vertex of each Element of the World
+	 */
+	public void worldProject() {
+
+		for (int i=0; i<elements.size(); i++) {
+			elements.get(i).transform();
+		}
+
+	}
+
 	public void setColor(Color c) {
 		this.worldColor = c;
 	}

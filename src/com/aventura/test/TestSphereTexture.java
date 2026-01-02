@@ -144,7 +144,7 @@ public class TestSphereTexture {
 		world.addElement(sph);
 		
 		System.out.println("********* Generating World");
-		world.generate();
+		world.build();
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.9f);
 		AmbientLight al = new AmbientLight(0.05f);

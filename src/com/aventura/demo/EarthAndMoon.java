@@ -122,7 +122,7 @@ public class EarthAndMoon {
 		moon.setTransformation(t);
 		world.addElement(moon);
 		
-		world.generate();
+		world.build();
 		
 		System.out.println("********* Creating light");
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,0), 1.0f);
