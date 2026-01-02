@@ -53,7 +53,7 @@ public class Lighting {
 	// One single AmbientLight
 	protected AmbientLight ambient;
 	// One Directional light in first approach. Future evolution is to support multiple directional lights
-	protected DirectionalLight directional;
+	protected ArrayList<DirectionalLight> directionalLights;
 	// Multiple Point Lights (includes Point and Spot Lights since the 2nd one is a sub-classs of the first one).
 	protected ArrayList<PointLight> pointLights;
 	// All point lights and directional lights are shadowing lights, let's have a list of them (used by Rasterizer)
@@ -70,8 +70,9 @@ public class Lighting {
 	public Lighting(DirectionalLight directional) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System with Directional Light : " + directional);
 		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
-		this.directional = directional;
 		this.shadowingLights.add(directional);
+		if (this.directionalLights == null) this.directionalLights  = new ArrayList<DirectionalLight>();
+		this.directionalLights.add(directional);
 	}
 	
 	public Lighting(AmbientLight ambient) {
@@ -82,26 +83,30 @@ public class Lighting {
 	public Lighting(DirectionalLight directional, AmbientLight ambient) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System with Directional Light : " + directional + " and Ambient Light : " + ambient);
 		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
-		this.ambient = ambient;
-		this.directional = directional;
 		this.shadowingLights.add(directional);
-	}
+		if (this.directionalLights == null) this.directionalLights  = new ArrayList<DirectionalLight>();
+		this.directionalLights.add(directional);
+		this.ambient = ambient;
+		}
 	
 	public Lighting(DirectionalLight directional, boolean specularLight) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System with Directional Light : " + directional + "Specular " + (specularLight ? "enabled" : "disabled"));
 		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
-		this.directional = directional;
 		this.shadowingLights.add(directional);
-		this.specularLight = specularLight;
+		if (this.directionalLights == null) this.directionalLights  = new ArrayList<DirectionalLight>();
+		this.directionalLights.add(directional);
+		
+		this.specularLight = specularLight; // TODO Manage multiple Specular Lights
 	}
 	
 	public Lighting(DirectionalLight directional, AmbientLight ambient, boolean specularLight) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Lighting System with Ambient Light : " + ambient + "Specular " + (specularLight ? "enabled" : "disabled"));
 		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
-		this.ambient = ambient;
-		this.directional = directional;
 		this.shadowingLights.add(directional);
+		if (this.directionalLights == null) this.directionalLights  = new ArrayList<DirectionalLight>();
+		this.directionalLights.add(directional);
 		this.specularLight = specularLight;
+		this.ambient = ambient;
 	}
 	
 	public boolean hasAmbient() {
@@ -109,7 +114,7 @@ public class Lighting {
 	}
 	
 	public boolean hasDirectional() {
-		return directional != null ? true : false;
+		return directionalLights.size() != 0 ? true : false;
 	}
 	
 	public boolean hasPoint() {
@@ -138,12 +143,15 @@ public class Lighting {
 		this.ambient = ambient;
 	}
 
-	public DirectionalLight getDirectionalLight() {
-		return directional;
+	public ArrayList<DirectionalLight> getDirectionalLights() {
+		return directionalLights;
 	}
 	
-	public void setDirectionalLight(DirectionalLight directional) {
-		this.directional = directional;
+	public void addDirectionalLight(DirectionalLight directional) {
+		if (this.directionalLights == null) this.directionalLights  = new ArrayList<DirectionalLight>();
+		if (this.shadowingLights == null) this.shadowingLights  = new ArrayList<ShadowingLight>();
+		this.directionalLights.add(directional);
+		this.shadowingLights.add(directional);
 	}
 	
 	public void addPointLight(PointLight pointLight) {
