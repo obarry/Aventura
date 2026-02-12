@@ -128,45 +128,50 @@ public class TestShadowMapRasterization {
 		//Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
+		
+		// ----- Trellis
 		//Trellis trellis = new Trellis(8, 8, 10, 10, tex2);
 		Trellis trellis = new Trellis(8, 8, 10, 10);
+		world.addElement(trellis);
+		
+		// ----- Cube
 		//Cube cube = new Cube(1, tex1);
 		Cube cube = new Cube(1);
+		cube.setColor(new Color(200,50,50));
 		//cube.setColor(new Color(200,0,40));
+		// Translate cube on top of trellis
+		//Translation t1 = new Translation(new Vector3(1.5f, 0, 1.5f));
+		Translation t1 = new Translation(new Vector3(1.5f, 0, 0.5f));
+		//Translation t1 = new Translation(new Vector3(0, 0, 0.5f));
+		cube.setTransformation(t1);
+		world.addElement(cube);
+		
+		// ----- Sphere
 		//Sphere sphere = new Sphere (1 ,10 , tex3);
 		Sphere sphere = new Sphere (1 ,10);
 		sphere.setColor(new Color(0,10,210));
-		//Cube cube2 = new Cube(1);
-		//cube2.setColor(new Color(0,10,210));
-		cube.setColor(new Color(200,50,50));
-		// Translate cube on top of trellis
-		Translation t1 = new Translation(new Vector3(1.5f, 0, 1.5f));
-		Translation t2 = new Translation(new Vector3(-2, 0, 2));
-		cube.setTransformation(t1);
+		Translation t2 = new Translation(new Vector3(-2, 0, 1));
+		//Translation t2 = new Translation(new Vector3(-2, 0, 2));
 		sphere.setTransformation(t2);
-		//cube2.setTransformation(t2);
-
-		world.addElement(trellis);
-		world.addElement(cube);
 		world.addElement(sphere);
-		//world.addElement(cube2);
-		
+
 		System.out.println("********* Calculating normals");
 		world.build();
 		System.out.println(world);
 		System.out.println(trellis);
 		System.out.println(cube);
-		System.out.println(sphere);
-		//System.out.println(cube2);
+//		System.out.println(sphere);
+
 		
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
-		AmbientLight al = new AmbientLight(0.25f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(2,-1,-3), ShadowingLight.SHADOWING_BOX_WORLD);
-		//DirectionalLight dl2 = new DirectionalLight(new Vector3(-2,-1,-3), ShadowingLight.SHADOWING_BOX_WORLD);
+		AmbientLight al = new AmbientLight(0.1f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(2,-1,-0.1f), ShadowingLight.SHADOWING_BOX_WORLD);
+		DirectionalLight dl2 = new DirectionalLight(new Vector3(-2,-1,-0.1f), ShadowingLight.SHADOWING_BOX_WORLD);
 		//DirectionalLight dl = new DirectionalLight(new Vector3(1,3,2));
-		Lighting light = new Lighting(dl, al);
-		//light.addDirectionalLight(dl2);
-		//Lighting light = new Lighting(al);
+		//Lighting light = new Lighting(dl, al);
+		Lighting light = new Lighting(al);
+		light.addDirectionalLight(dl);
+		light.addDirectionalLight(dl2);
 		//light.setDirectionalLight(dl);
 		//Lighting light = new Lighting(dl);
 		
@@ -195,24 +200,32 @@ public class TestShadowMapRasterization {
 		System.out.println(renderer.renderStats());
 		
 		Scanner sc = new Scanner(System.in);
-		System.out.println("Please type return...");
+		System.out.println("Please type return for Shadow Maps...");
 		sc.nextLine(); // Block until return is typed
-		sc.close();
+		//sc.close();
+	
+		// Now rendering the shadow map for the Directional Lights
 		
-		// Now rendering the shadow map for the Directional Light
-		MapView mapView = dl.getMap();
+		System.out.println("Now rendering shadow map...");
+		for (int i = 0; i < light.getDirectionalLights().size(); i++) {
+			System.out.println("Directional Light #"+i);
 
-		if (mapView != null) {
-			System.out.println("Now rendering shadow map...");
-			System.out.println("ShadowMap min: "+mapView.getMin() + ", ShadowMap max: "+mapView.getMax() + ", ShadowMap avg: " + mapView.getAverage() + ". Nb of Pixels around min: " + mapView.getNbOfPixelsInRange(mapView.getMin(), mapView.getMin()+0.01f*(mapView.getMax()-mapView.getMin())) + ". Nb of Pixels around max: " + mapView.getNbOfPixelsInRange(mapView.getMax()-0.01f*(mapView.getMax()-mapView.getMin()), mapView.getMax())+ ". Nb of Pixels in map: " + mapView.getNbOfPixels());
-			mapView.normalizeMap();
-			gUIView.setDimensions(mapView.getViewWidth(), mapView.getViewHeight());
-			gUIView.initView(mapView);
-			gUIView.renderView();
-		} else {
-			
-			System.out.println("No shadow map to display.\n");
+			MapView mapView = light.getDirectionalLights().get(i).getMap();
+
+			if (mapView != null) {
+				System.out.println("ShadowMap min: "+mapView.getMin() + ", ShadowMap max: "+mapView.getMax() + ", ShadowMap avg: " + mapView.getAverage() + ". Nb of Pixels around min: " + mapView.getNbOfPixelsInRange(mapView.getMin(), mapView.getMin()+0.01f*(mapView.getMax()-mapView.getMin())) + ". Nb of Pixels around max: " + mapView.getNbOfPixelsInRange(mapView.getMax()-0.01f*(mapView.getMax()-mapView.getMin()), mapView.getMax())+ ". Nb of Pixels in map: " + mapView.getNbOfPixels());
+				mapView.normalizeMap();
+				gUIView.setDimensions(mapView.getViewWidth(), mapView.getViewHeight());
+				gUIView.initView(mapView);
+				gUIView.renderView();
+			} else {
+
+				System.out.println("No shadow map to display.\n");
+			}
+			System.out.println("Please type return for next light...");
+	        sc.nextLine();
 		}
+
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}

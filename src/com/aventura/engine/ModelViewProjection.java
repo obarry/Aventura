@@ -51,7 +51,7 @@ import com.aventura.tools.tracing.Tracer;
  *     |  World Coordinates  |
  *     +---------------------+
  *                |
- *                |   [Lookat Matrix] 4x4 Transformation Matrix -> to transform the world into the camera coordinates
+ *                |   [View or Lookat Matrix] 4x4 Transformation Matrix -> to transform the world into the camera coordinates
  *                v
  *     +----------------------+
  *     |  Camera Coordinates  |
@@ -96,6 +96,7 @@ public class ModelViewProjection {
 	Matrix4 full = null;
 	Matrix4 full_normals = null; // restored 11/7/2023
 	
+	// This partial VP Matrix (MVP withouth Model Matrix), used for Shadowing calculation
 	Matrix4 vp = null; // Added 25-Dec-2025
 	
 	/**
@@ -181,15 +182,15 @@ public class ModelViewProjection {
 	}
 	
 	/**
-	 * The complete transformation, from model to homogeneous coordinates, is done through the following formula:
-	 * TransformedVector = [Projection Matrix] * [GUIView Matrix] * [Model Matrix] * OriginalVector
+	 * The partial transformation to homogeneous coordinates, not involving Model Matrix,  is done through the following formula:
+	 * TransformedVector = [Projection Matrix] * [GUIView Matrix] * OriginalVector
 	 * 
-	 * This method calculates the MVP matrix (or recalculates when needed due to any change in one of the matrices) 
+	 * This method calculates the VP matrix (or recalculates it if needed if any change in one of the matrices) 
 	 */
 	public void calculateVPMatrix() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "computeVPTransformation()");
 		
-		// Calculate the full matrix = MVP matrix transformation
+		// Calculate the  VP matrix, subset of MVP transformation, needed for Shadow mapping calculation in Rasterizer
 		vp = projection.times(view);
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "VP transformation matrix:\n"+ vp);
