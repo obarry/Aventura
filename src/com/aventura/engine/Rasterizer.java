@@ -429,12 +429,13 @@ public class Rasterizer {
 			// - calculate shading color once for all triangle
 			if (!interpolate || t.isTriangleNormal()) {
 				Vector3 normal = t.getWorldNormal();
+				Vector4 position = t.getCenterWorldPos();
 
 				if (lighting.hasShadowing()) {
 					Color[] cols = new Color[nb_sl];
 					// For each Light
 					for (int i=0; i<nb_sl; i++) {
-						cols[i] = computeShadedColor(surfCol, t.getCenterWorldPos(), normal, t.isRectoVerso(), shadowingLights.get(i));
+						cols[i] = computeShadedColor(surfCol, position, normal, t.isRectoVerso(), shadowingLights.get(i));
 					}
 					shadedCol = ColorTools.addColors(cols);
 				} else {
@@ -1054,12 +1055,14 @@ public class Rasterizer {
 								Color csh_l = null; // shaded color for the light
 								Color csp_l = null; // specular color for the light
 
-								for (int i=0; i<nb_lights; i++) {
+								float shadowCoef[] = new float[nb_lights];
 
-									float shadowCoef = 1;
+								for (int i=0; i<nb_lights; i++) {
 
 									if (shadows) { // then do the needful to know if the element is in shadow or not
 										
+										shadowCoef[i] = 1; // Full transmission by default (100%), no shadow coefficient reduction
+												
 										// Calculate the position of the element being rendered in Light's coordinate by interpolation
 										// vl1 and vl2 are the start and end points of the scan line in light's coordinates
 										//Vector4 vl = Tools.interpolate(vl1[i], vl2[i], gradient).times(z);
@@ -1072,8 +1075,10 @@ public class Rasterizer {
 										//shadowCoef = vpa.l[i].map.getInterpolation((vl.getX()+1)/2, (vl.getY()+1)/2); // Map i [0,+1] so to be transformed from [-1,+1] of vl position
 										float depth = vpa.l[i].map.getInterpolation((vl.getX()+1)/2, (vl.getY()+1)/2); // Map i [0,+1] so to be transformed from [-1,+1] of vl position
 										//if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Element in light coordinates: vlx = " + vl.getX() + ", vly = " + vl.getY() + ", depth: "+depth);
+										
+										// If Z distance of this element is > depth in Shadow map then element is "in shadow" for this light -> shadowCoef = 0
+										if (vl.getZ() > depth + 10 * Constants.EPSILON) shadowCoef[i] = 0;
 										// Epsilon used to avoid "ACNE EFFECT" (or self-shadowing). To be refined and parameterized.
-										if (vl.getZ() > depth + 100 * Constants.EPSILON) shadowCoef = 0;
 
 										// TODO Work in Progress - To Be Completed
 										// For each light
@@ -1167,9 +1172,9 @@ public class Rasterizer {
 									}
 									
 									if (shadows) {
-										csh_l = ColorTools.multColor(csh_l,  shadowCoef);
+										csh_l = ColorTools.multColor(csh_l, shadowCoef[i]);
 										if (lighting.hasSpecular()) {
-											csp_l = ColorTools.multColor(csp_l,  shadowCoef);
+											csp_l = ColorTools.multColor(csp_l, shadowCoef[i]);
 										}
 									}
 
