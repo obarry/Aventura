@@ -479,8 +479,12 @@ public class Rasterizer {
 			if (shadows) {
 				// For each Light
 				for (int i=0; i<nb_sl; i++) {
+					
+					// TODO ERROR IN THIS SECTION : the Element's transformations are not taken into account !!!
+					// Documented in GitHub https://github.com/obarry/Aventura/issues/128#issue-4060709868
 
 					ShadowingLight sl = shadowingLights.get(i); // Used several times
+					// TODO this may be the issue : not taking the Model matrix (translations / transformations of Elements) 
 					sl.getModelView().calculateVPMatrix(); // Calculate the Matrix without Model matrix (only View and Projection)
 
 					// Transform the World position of the Vertex in this Light's coordinates
@@ -689,13 +693,13 @@ public class Rasterizer {
 	 * @param vpc				VertexParam of Vertex C of second segment: CD
 	 * @param vpd				VertexParam of Vertex D of second segment: CD
 	 * @param tex				Texture object for this triangle
-	 * @param shadedCol			Shaded color if Normal at triangle level (else should be null)
+	 * @param shadedCol			Shaded color if Normal at triangle level (else should be null and will be calculated by interpolation)
 	 * @param ambientCol		Ambient color (independent of the position in space)
 	 * @param interpolate		Flag for interpolation (true) or not (false), also for normal at triangle level (false)
 	 * @param texture			Flag for texture calculation (true) or not (false)
-	 * @param tex_orientation	Flag for isotropic, vertical or horizontal texture interpolation
+	 * @param tex_orientation	Selector for isotropic, vertical or horizontal texture interpolation
 	 * @param shadows			Flag for shadowing enabled (true) or disabled (false)
-	 * @param nb_lights			Number of Lights (except ambient)
+	 * @param nb_lights			Number of Lights (ambient light not included)
 	 * @param shadowmap			Flag for shadow map rasterization (true) or full rasterization (false)
 	 */
 	protected void rasterizeScanLine(
