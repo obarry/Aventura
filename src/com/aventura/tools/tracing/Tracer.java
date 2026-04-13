@@ -67,14 +67,27 @@ public class Tracer {
     private static String STATS     = "STATS";
     private static String DEBUG     = "DEBUG";
     
+    /**
+     * Deprecated / unused helper: activateTracingLevels()
+     *
+     * The logic below was originally used to set tracing levels from a
+     * ConfigManager (open and read a tracing config file, optionally enable
+     * file output). In the current projects this configuration system is
+     * not available (ConfigManager is not part of the codebase) and the
+     * tracing levels are controlled statically by toggling the boolean
+     * flags in this class. Keeping the original method implementation here
+     * as commented-out reference for future re-integration.
+     *
+     * If you want to re-enable it, implement or provide a ConfigManager
+     * and remove the block comment markers.
+     */
     /*
     public static void activateTracingLevels() {
-        
         // Get config manager reference for config parameters
         ConfigManager cfg = ConfigManager.getConfigManager();
-        
+
         isdate               = cfg.getIsTracingDate();
-        
+
         info      = cfg.getIsTracingInfo();
         warning   = cfg.getIsTracingWarning();
         error     = cfg.getIsTracingError();
@@ -84,7 +97,7 @@ public class Tracer {
         object    = cfg.getIsTracingObject();
         stats     = cfg.getIsTracingStats();
         debug     = cfg.getIsTracingDebug();
-        
+
         isfile = cfg.getIsTracingToFile();
         if (isfile) {
             file = cfg.getTracingFile();
