@@ -3,7 +3,7 @@ package com.aventura.math.transform;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-import com.aventura.math.vector.Matrix3;
+import com.aventura.math.vector.Matrix4;
 
 public class TestScaling {
 
@@ -15,11 +15,12 @@ public class TestScaling {
 		System.out.println("Scaling h: "+ h);
 
 		float[][] a = {
-				{12.0f, 0.0f, 0.0f}, 
-				{0.0f, 12.0f, 0.0f},
-				{0.0f, 0.0f, 12.0f}};
+				{12.0f, 0.0f, 0.0f, 0.0f}, 
+				{0.0f, 12.0f, 0.0f, 0.0f},
+				{0.0f, 0.0f, 12.0f, 0.0f},
+				{0.0f, 0.0f, 0.0f, 1.0f}};
 
-		Matrix3 m = new Matrix3(a);
+		Matrix4 m = new Matrix4(a);
 		System.out.println("Matrix m: "+ m);
 
 		assertTrue(h.equals(m));
@@ -33,11 +34,13 @@ public class TestScaling {
 		Scaling h = new Scaling(7);
 
 		float[][] a = {
-				{7.0f, 0.0f, 0.0f}, 
-				{0.0f, 7.0f, 0.0f},
-				{0.0f, 0.0f, 7.0f}};
+				{7.0f, 0.0f, 0.0f, 0.0f}, 
+				{0.0f, 7.0f, 0.0f, 0.0f},
+				{0.0f, 0.0f, 7.0f, 0.0f},
+				{0.0f, 0.0f, 0.0f, 1.0f}};
 
-		Matrix3 m = new Matrix3(a);
+
+		Matrix4 m = new Matrix4(a);
 		System.out.println("Matrix m: "+ m);
 
 		System.out.println("Scaling h(7): "+ h);
