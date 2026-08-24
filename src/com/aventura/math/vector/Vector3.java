@@ -189,6 +189,18 @@ public class Vector3 {
 	}
 	
 	/**
+	 * Set the 3 coordinates of the Vector3
+	 * @param x, the x value to set
+	 * @param y, the y value to set
+	 * @param z, the z value to set
+	 */
+public void set(float x, float y, float z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;		
+	}
+	
+	/**
 	 * Get the coordinate of rank i
 	 * @param i
 	 * @return
