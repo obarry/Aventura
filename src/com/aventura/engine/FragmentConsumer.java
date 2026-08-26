@@ -41,7 +41,7 @@ package com.aventura.engine;
  * pixel. Never retain the reference beyond the call.
  *
  * @author Olivier BARRY
- * @since 2026
+ * @since 2026 (Rasterizer refactoring)
  *
  */
 public interface FragmentConsumer {
