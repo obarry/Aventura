@@ -89,7 +89,7 @@ public class TriangleRasterizer {
 	 * all 3 corners.
 	 */
 	public void rasterize(Triangle t, Vector3 normal1, Vector3 normal2, Vector3 normal3, FragmentConsumer consumer) {
-		rasterize(t, normal1, normal2, normal3, null, null, null, Triangle.TEXTURE_ISOTROPIC, consumer);
+		rasterize(t, normal1, normal2, normal3, null, null, null, consumer);
 	}
 
 	/**
@@ -100,18 +100,18 @@ public class TriangleRasterizer {
 	 * @param normal1..3	per-corner normals to interpolate; pass each vertex's own normal for
 	 *						smooth shading, or the same face normal 3 times for flat shading —
 	 *						this class does not distinguish between the two cases
-	 * @param texCoord1..3	per-corner texture coordinates (homogeneous, as stored on Triangle), or
-	 *						null (all three) if this triangle has no texture
-	 * @param texOrientation how the projective divide is applied to (u, v) before it reaches the
-	 *						Fragment — see Triangle.TEXTURE_ISOTROPIC/VERTICAL/HORIZONTAL. Treated
-	 *						as an interpolation detail, not a shading concern.
+	 * @param texCoord1..3	per-corner homogeneous texture coordinates (as stored on Triangle), or
+	 *						null (all three) if this triangle has no texture. Interpolated here with
+	 *						perspective correction but left UN-divided by W — Fragment exposes the
+	 *						raw (u, v, w), and it's up to Material (which knows the texture's
+	 *						orientation) to apply the right projective divide. This class has no
+	 *						notion of texture orientation at all.
 	 * @param consumer		receives one Fragment per surviving pixel
 	 */
 	public void rasterize(
 			Triangle t,
 			Vector3 normal1, Vector3 normal2, Vector3 normal3,
 			Vector4 texCoord1, Vector4 texCoord2, Vector4 texCoord3,
-			int texOrientation,
 			FragmentConsumer consumer) {
 
 		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterizing triangle.");
@@ -142,17 +142,17 @@ public class TriangleRasterizer {
 		if (dP1P2 > dP1P3) {
 			for (int y = (int) yScreen(v1.vertex); y <= (int) yScreen(v3.vertex); y++) {
 				if (y < yScreen(v2.vertex)) {
-					rasterizeScanLine(y, v1, v3, v1, v2, texOrientation, consumer);
+					rasterizeScanLine(y, v1, v3, v1, v2, consumer);
 				} else {
-					rasterizeScanLine(y, v1, v3, v2, v3, texOrientation, consumer);
+					rasterizeScanLine(y, v1, v3, v2, v3, consumer);
 				}
 			}
 		} else {
 			for (int y = (int) yScreen(v1.vertex); y <= (int) yScreen(v3.vertex); y++) {
 				if (y < yScreen(v2.vertex)) {
-					rasterizeScanLine(y, v1, v2, v1, v3, texOrientation, consumer);
+					rasterizeScanLine(y, v1, v2, v1, v3, consumer);
 				} else {
-					rasterizeScanLine(y, v2, v3, v1, v3, texOrientation, consumer);
+					rasterizeScanLine(y, v2, v3, v1, v3, consumer);
 				}
 			}
 		}
@@ -163,7 +163,7 @@ public class TriangleRasterizer {
 	 * same geometry as the legacy rasterizeScanLine, minus every bit of lighting/texture-color/
 	 * shadow logic, which now lives entirely in whatever FragmentConsumer is supplied.
 	 */
-	private void rasterizeScanLine(int y, RasterVertex va, RasterVertex vb, RasterVertex vc, RasterVertex vd, int texOrientation, FragmentConsumer consumer) {
+	private void rasterizeScanLine(int y, RasterVertex va, RasterVertex vb, RasterVertex vc, RasterVertex vd, FragmentConsumer consumer) {
 
 		if (!isInScreenY(y)) {
 			return;
@@ -260,21 +260,11 @@ public class TriangleRasterizer {
 			fragment.setNormal(normal.getX(), normal.getY(), normal.getZ());
 
 			if (hasTexture) {
+				// Left un-divided on purpose: Fragment exposes raw (u, v, w) and it is up to
+				// Material (TexturedMaterial) to apply the projective divide appropriate to this
+				// triangle's texture orientation — this class has no notion of it.
 				Vector4 tex = Tools.interpolate(texEdge1, texEdge2, gradient).times(wPixel);
-				switch (texOrientation) {
-				case Triangle.TEXTURE_ISOTROPIC:
-					fragment.setTexCoord(tex.getX() / tex.getW(), tex.getY() / tex.getW());
-					break;
-				case Triangle.TEXTURE_VERTICAL:
-					fragment.setTexCoord(tex.getX() / tex.getW(), tex.getY());
-					break;
-				case Triangle.TEXTURE_HORIZONTAL:
-					fragment.setTexCoord(tex.getX(), tex.getY() / tex.getW());
-					break;
-				default:
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Invalid texture orientation: " + texOrientation);
-					fragment.clearTexCoord();
-				}
+				fragment.setTexCoord(tex.getX(), tex.getY(), tex.getW());
 			} else {
 				fragment.clearTexCoord();
 			}

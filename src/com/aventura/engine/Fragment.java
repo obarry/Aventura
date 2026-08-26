@@ -62,9 +62,14 @@ public class Fragment {
 	private final Vector3 worldPosition = new Vector3();
 	private final Vector3 normal = new Vector3();
 
+	// Raw, un-divided homogeneous texture coordinates: (u, v, w) as interpolated with perspective
+	// correction. Deliberately NOT divided by w here — which of u, v (or both) gets divided by w
+	// depends on the triangle's texture orientation (isotropic/vertical/horizontal), a shading
+	// decision that belongs to Material, not to the geometric interpolation done here.
 	private boolean hasTexCoord = false;
-	private float u;
-	private float v;
+	private float texU;
+	private float texV;
+	private float texW;
 
 	public int getScreenX() {
 		return screenX;
@@ -93,12 +98,20 @@ public class Fragment {
 		return hasTexCoord;
 	}
 
-	public float getU() {
-		return u;
+	/** Raw, un-divided U — caller (typically TexturedMaterial) decides whether/how to divide by W. */
+	public float getTexU() {
+		return texU;
 	}
 
-	public float getV() {
-		return v;
+	/** Raw, un-divided V — caller (typically TexturedMaterial) decides whether/how to divide by W. */
+	public float getTexV() {
+		return texV;
+	}
+
+	/** Homogeneous W for the texture coordinate — used by TexturedMaterial to apply the correct
+	 *  projective divide depending on the triangle's texture orientation. */
+	public float getTexW() {
+		return texW;
 	}
 
 	//
@@ -123,10 +136,11 @@ public class Fragment {
 		normal.set(x, y, z);
 	}
 
-	void setTexCoord(float u, float v) {
+	void setTexCoord(float u, float v, float w) {
 		this.hasTexCoord = true;
-		this.u = u;
-		this.v = v;
+		this.texU = u;
+		this.texV = v;
+		this.texW = w;
 	}
 
 	void clearTexCoord() {
