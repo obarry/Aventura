@@ -9,6 +9,8 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.material.Material;
 import com.aventura.model.material.SolidMaterial;
 import com.aventura.model.material.TexturedMaterial;
+import com.aventura.model.world.Vertex;
+import com.aventura.model.world.shape.Segment;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.GUIView;
@@ -28,13 +30,14 @@ import com.aventura.view.MapView;
  * callers are migrated to call TriangleRasterizer directly with an explicit
  * Material, this façade can be deleted.
  *
- * NOT YET CARRIED OVER from the original Rasterizer: wireframe drawing
- * (drawTriangleLines/drawLine/Bresenham) and the full original pixel-statistics
- * set (rasterized_lines, triangles_with_pixels, etc. -- only rendered/discarded
- * pixel counts are preserved here). These were flagged early on as their own,
- * separate concerns (a WireframeRenderer class, and a RasterizerStats class)
- * for the tactical clean-up phase -- let me know if any existing caller
- * actually needs them from THIS class in the meantime.
+ * NOT YET CARRIED OVER from the original Rasterizer: the full original pixel-
+ * statistics set beyond what's listed below (rasterized_lines is not tracked
+ * by the new pipeline, so triangles_with_lines in renderStats() below is
+ * always 0 -- diagnostics-only, no functional impact). drawTriangleLines/
+ * drawLine/Bresenham ARE carried over unchanged (byte-for-byte port from the
+ * legacy code) purely so RenderEngine keeps compiling as-is; they still don't
+ * go through the new pipeline and remain flagged for extraction into their
+ * own WireframeRenderer class in the tactical clean-up phase.
  *
  * @author Olivier BARRY
  * @since 2026 (façade over the new Fragment-based pipeline)
@@ -55,6 +58,12 @@ public class Rasterizer {
 
 	protected ZBuffer zBuffer;
 	protected TriangleRasterizer triangleRasterizer;
+
+	// Diagnostics-only triangle counters for renderStats(), ported unchanged from the legacy
+	// Rasterizer (see its comment above about triangles_with_lines).
+	protected int rendered_triangles = 0;
+	protected int triangles_with_lines = 0;
+	protected int triangles_with_pixels = 0;
 
 	/**
 	 * Creation of Rasterizer with requested references for run time.
@@ -164,6 +173,10 @@ public class Rasterizer {
 		} else {
 			triangleRasterizer.rasterize(t, normal1, normal2, normal3, consumer);
 		}
+
+		// Diagnostics-only counters, ported unchanged from the legacy Rasterizer.
+		rendered_triangles++;
+		if (triangleRasterizer.getRenderedPixels() > 0) triangles_with_pixels++;
 	}
 
 	public int getRenderedPixels() {
@@ -173,4 +186,50 @@ public class Rasterizer {
 	public int getDiscardedPixels() {
 		return triangleRasterizer != null ? triangleRasterizer.getDiscardedPixels() : 0;
 	}
-}}
+
+	//
+	// Wireframe drawing -- ported unchanged from the legacy Rasterizer so RenderEngine keeps
+	// compiling as-is. Does not go through TriangleRasterizer/Fragment at all. Flagged for
+	// extraction into its own WireframeRenderer class in the tactical clean-up phase.
+	//
+
+	public void drawTriangleLines(Triangle t, Color c) {
+		gUIView.setColor(c);
+		drawLine(t.getV1(), t.getV2());
+		drawLine(t.getV2(), t.getV3());
+		drawLine(t.getV3(), t.getV1());
+	}
+
+	public void drawLine(Segment l) {
+		drawLine(l.getV1(), l.getV2());
+	}
+
+	public void drawLine(Segment l, Color c) {
+		drawLine(l.getV1(), l.getV2(), c);
+	}
+
+	public void drawLine(Vertex v1, Vertex v2) {
+		int x1 = (int) xScreen(v1);
+		int y1 = (int) yScreen(v1);
+		int x2 = (int) xScreen(v2);
+		int y2 = (int) yScreen(v2);
+		gUIView.drawLine(x1, y1, x2, y2);
+	}
+
+	public void drawLine(Vertex v1, Vertex v2, Color c) {
+		gUIView.setColor(c);
+		drawLine(v1, v2);
+	}
+
+	private float xScreen(Vertex v) {
+		return v.getProjPos().get3DX() * perspectiveCtx.getPixelHalfWidth();
+	}
+
+	private float yScreen(Vertex v) {
+		return v.getProjPos().get3DY() * perspectiveCtx.getPixelHalfHeight();
+	}
+
+	public String renderStats() {
+		return "Rasterizer - Triangles: rendered: " + rendered_triangles + ", rendered with lines: " + triangles_with_lines + ", rendered with pixels: " + triangles_with_pixels;
+	}
+}
