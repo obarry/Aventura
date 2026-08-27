@@ -1,10 +1,7 @@
 package com.aventura.model.light;
 
-import java.awt.Color;
-
 import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.ModelViewProjection;
-import com.aventura.engine.Rasterizer;
 import com.aventura.math.projection.OrthographicProjection;
 import com.aventura.math.tools.BoundingBox4;
 import com.aventura.math.vector.GeometryTools;
@@ -56,14 +53,21 @@ public class DirectionalLight extends ShadowingLight {
 	protected Vector3 light_vector; // = -direction
 	
 	/**
-	 * Create Directional Light using direction as vector of the light
-	 * The intensity of the light will be extrapolate from the norm of the provided direction vector
+	 * Create Directional Light using direction as vector of the light, with default intensity.
+	 *
+	 * CHANGED BEHAVIOR: this used to derive intensity from the norm of the direction vector
+	 * (super(direction.length())) -- a fragile, implicit API: normalizing your vector before
+	 * passing it here would silently zero out the light's intensity with no error. Intensity is
+	 * now always Light.DEFAULT_LIGHT_INTENSITY here; use the (direction, intensity) constructor
+	 * below for explicit control. If existing scene-building code relied on passing a
+	 * non-unit-length vector specifically to encode brightness, it needs to move to that
+	 * constructor instead.
+	 *
 	 * @param direction is where the light comes from (vector from viewer to light source)
 	 */
 	public DirectionalLight(Vector3 direction) {
-		super(direction.length()); // Intensity is taken from the norm of the direction vector
+		super(Light.DEFAULT_LIGHT_INTENSITY);
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction);
-		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
 	
@@ -80,15 +84,15 @@ public class DirectionalLight extends ShadowingLight {
 	}
 
 	/**
-	 * Create Directional Light using direction as vector of the light
-	 * The intensity of the light will be extrapolate from the norm of the provided direction vector
+	 * Create Directional Light using direction as vector of the light, with default intensity.
+	 * See the (Vector3) constructor's Javadoc for why intensity is no longer derived from the
+	 * vector's length.
 	 * @param direction is where the light comes from (vector from viewer to light source)
 	 * @param shadowingBox_type
 	 */
 	public DirectionalLight(Vector3 direction, int shadowingBox_type) {
-		super(direction.length(), shadowingBox_type); // Intensity is taken from the norm of the direction vector
+		super(Light.DEFAULT_LIGHT_INTENSITY, shadowingBox_type);
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "creating Directional Light. Direction : " + direction);
-		//this.direction = new Vector3(direction).normalize(); // direction vector is normalized
 		this.light_vector = direction.times(-1).normalize(); // light vector (the opposite) is normalized
 	}
 	
@@ -144,17 +148,14 @@ public class DirectionalLight extends ShadowingLight {
 		return intensity;
 	}
 
-	@Override
-	public Color getLightColorAtPoint(Vector4 point) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	// getLightColorAtPoint() removed: was a broken stub returning null, now covered by Light's
+	// default implementation.
 
 	@Override
 	public void setLightVector(Vector3 light) {
-		this.intensity = light.length();
+		// NOTE: no longer derives intensity from the vector's length -- same fix as the
+		// constructor below, see its Javadoc for why.
 		this.light_vector = new Vector3(light).normalize();
-		//this.direction = this.light_vector.times(-1);
 	}
 
 	@Override
@@ -274,19 +275,19 @@ public class DirectionalLight extends ShadowingLight {
 		/*
 		 * From: https://community.khronos.org/t/directional-light-and-shadow-mapping-gUIView-projection-matrices/71386
 		 * 
-		 Think of light’s orthographic frustum as a bounding box that encloses all objects visible by the camera,
-		 plus objects not visible but potentially casting shadows. For the simplicity let’s disregard the latter.
+		 Think of lightï¿½s orthographic frustum as a bounding box that encloses all objects visible by the camera,
+		 plus objects not visible but potentially casting shadows. For the simplicity letï¿½s disregard the latter.
 		 
 		 So to find this frustum:
 		 - find all objects that are inside the current camera frustum
 		 - find minimal bounding box that encloses them all
-		 - transform corners of that bounding box to the light’s space (using light’s gUIView matrix)
-		 - find bounding box in light’s space of the transformed (now obb) bounding box
-		 - this bounding box is your directional light’s orthographic frustum.
+		 - transform corners of that bounding box to the lightï¿½s space (using lightï¿½s gUIView matrix)
+		 - find bounding box in lightï¿½s space of the transformed (now obb) bounding box
+		 - this bounding box is your directional lightï¿½s orthographic frustum.
 		 
-		 Note that actual translation component in light gUIView matrix doesn’t really matter as you’ll only get different Z values
+		 Note that actual translation component in light gUIView matrix doesnï¿½t really matter as youï¿½ll only get different Z values
 		 for the frustum but the boundaries will be the same in world space. For the convenience, when building light gUIView matrix,
-		 you can assume the light “position” is at the center of the bounding box enclosing all visible objects.
+		 you can assume the light ï¿½positionï¿½ is at the center of the bounding box enclosing all visible objects.
 		 */
 		
 		// Calculate the center of Frustum (geometrical center of the 8 points)
@@ -316,7 +317,10 @@ public class DirectionalLight extends ShadowingLight {
 		}
 		//perspective_light = new Orthographic(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ());
 		
-		rasterizer_light = new Rasterizer(camera_light, perspectiveCtx_light);
+		// NOTE: rasterizer_light is no longer constructed here. TriangleRasterizer needs a ZBuffer
+		// at construction time, and that ZBuffer should be fresh for every shadow map generation
+		// (not reused stale across frames for a moving scene) -- so it's now built inside
+		// ShadowingLight.generateShadowMap(), right when map_size is used, instead of here.
 
 		// Create the MVP using this orthographic projection matrix
 		mvp_light = new ModelViewProjection(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
