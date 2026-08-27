@@ -61,6 +61,17 @@ public class TriangleRasterizer {
 	}
 
 	/**
+	 * Resets the pixel counters to zero. The legacy Rasterizer used to do this at the start of
+	 * every rasterizeTriangle() call, giving per-triangle stats; call this at the same point if
+	 * you need to preserve that granularity across multiple rasterize() calls sharing one
+	 * TriangleRasterizer instance (as the Rasterizer façade does, one instance per frame).
+	 */
+	public void resetStats() {
+		renderedPixels = 0;
+		discardedPixels = 0;
+	}
+
+	/**
 	 * Rasterizes a triangle without texture (e.g. shadow map depth-only pass, or an untextured
 	 * material). Equivalent to calling the full overload with a null texture coordinate for
 	 * all 3 corners.
