@@ -1,8 +1,11 @@
 package com.aventura.model.light;
 
 import com.aventura.context.PerspectiveContext;
+import com.aventura.engine.DepthOnlyConsumer;
 import com.aventura.engine.ModelViewProjection;
-import com.aventura.engine.Rasterizer;
+import com.aventura.engine.TriangleRasterizer;
+import com.aventura.engine.ZBuffer;
+import com.aventura.math.Constants;
 import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
@@ -72,7 +75,9 @@ public abstract class ShadowingLight extends Light {
 	// Fields related to Shadow generation
 	protected Camera camera_light; // The corresponding "camera" from Light View's perspective
 	protected PerspectiveContext perspectiveCtx_light; // The perspective from the light to generate the shadow map
-	protected Rasterizer rasterizer_light; // An instance of rasterizer dedicated to this light to generate the shadow map
+	// NOTE: rasterizer_light (an owned Rasterizer instance) was removed as a persistent field.
+	// TriangleRasterizer is now created fresh inside generateShadowMap(), together with a fresh
+	// ZBuffer for that pass -- see the comment there for why.
 	protected ModelViewProjection mvp_light; // ModelViewProjection matrix and vertices conversion tool for the calculation of the Shadow map
 
 	// GUIView Frustum
@@ -175,57 +180,92 @@ public abstract class ShadowingLight extends Light {
 	 * @param world
 	 */
 	public void generateShadowMap(World world) {
-	
-		// Get the map from the Rasterizer while initializing it
-		map = rasterizer_light.initZBuffer(map_size, map_size, 1); // ShadowMap is square
+
+		// Fresh ZBuffer + TriangleRasterizer for this generation pass -- rebuilt every time rather
+		// than reused across frames, since the shadow map must not carry over stale depth from a
+		// previous frame in a scene with moving lights/geometry. This replaces the old
+		// rasterizer_light.initZBuffer(...) call (which mutated a persistent Rasterizer instance).
+		int half = map_size / 2;
+		ZBuffer shadowZBuffer = new ZBuffer(map_size, map_size, half, half, Float.MAX_VALUE);
+		this.map = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
+		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx_light, shadowZBuffer);
+		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
 
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
-			//generateShadowMap(e, null); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
-			generateShadowMap(e); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+			generateShadowMap(e, rasterizer, consumer); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 	}
 
-	//protected void generateShadowMap(Element e, Matrix4 matrix) {
-	protected void generateShadowMap(Element e) {
-		
-		// Update ModelViewProjection matrix for this Element (Element <-> Model) by combining the one from this Element
-		// with the previous one for recursive calls (initialized to IDENTITY at first call)
-//		Matrix4 model = null;
-//		if (matrix == null) {
-//			model = e.getTransformation();			
-//		} else {
-//			model = matrix.times(e.getTransformation());
-//		}
-		
+	protected void generateShadowMap(Element e, TriangleRasterizer rasterizer, DepthOnlyConsumer consumer) {
+
 		mvp_light.setModel(e.getTransformation());
 		mvp_light.calculateMVPMatrix(); // Compute the whole ModelViewProjection mvp_light matrix including Camera (gUIView)
 
 		// Calculate projection for all vertices of this Element
 		mvp_light.transformElement(e, false); // Calculate prj_pos of each vertex of this Element
 
-		// Process each Triangle (this will update the map)
+		// Process each Triangle (this will update the shadow map's ZBuffer)
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			Triangle t = e.getTriangle(j);
-			// Scissor test for the triangle
-			// If triangle is totally or partially in the GUIView Frustum
-			// Then shadowmap this triangle
+			// Scissor test: only shadow-map triangles at least partially in the GUIView Frustum
 			if (t.isInViewFrustum()) {
-				
-				// Simplified rasterization : only last parameter is true to indicate this is a shadow map
-				rasterizer_light.rasterizeTriangle(t, null, 0, null, false, false, false, true); 
+				// Depth-only pass: normals/texture are irrelevant to a DepthOnlyConsumer, so the
+				// triangle's own (flat) normal is passed 3 times as a cheap placeholder rather than
+				// looking up each vertex's real normal for no benefit.
+				Vector3 flatNormal = t.getWorldNormal();
+				rasterizer.rasterize(t, flatNormal, flatNormal, flatNormal, consumer);
 			}
 		}
 
 		// Do a recursive call for SubElements
 		if (!e.isLeaf()) {
 			for (int i=0; i<e.getSubElements().size(); i++) {
-				// Recursive call
-				//generateShadowMap(e.getSubElements().get(i), model);
-				generateShadowMap(e.getSubElements().get(i));
+				generateShadowMap(e.getSubElements().get(i), rasterizer, consumer);
 			}
 		}
+	}
+
+	/**
+	 * Returns how lit (1) or shadowed (0) a world-space point is according to this light's shadow
+	 * map. This is what replaces the old, buggy vertex-level shadow projection/interpolation dance
+	 * (VertexLightParam.vl, interpolated per scan line): TriangleRasterizer already interpolates
+	 * Fragment.getWorldPosition() correctly in true world space (Model matrix included), so this
+	 * method only needs to apply this light's own View*Projection to it -- no separate Model
+	 * matrix handling is needed here, which is what the legacy code was missing.
+	 *
+	 * ASSUMPTION: ModelViewProjection exposes some way to project a raw Vector4 world position
+	 * through the light's current View*Projection matrix. The legacy code only ever projected a
+	 * Vertex (projectVPVertex(Vertex)); I don't have ModelViewProjection.java, so I've written this
+	 * against a hypothetical projectVP(Vector4) -- please point me to the right method (or let me
+	 * see ModelViewProjection.java) so I can correct this.
+	 *
+	 * @param worldPosition world-space position to test (e.g. Fragment.getWorldPosition())
+	 * @return 1.0 if fully lit, 0.0 if in shadow
+	 */
+	public float shadowFactorAt(Vector4 worldPosition) {
+
+		if (map == null) {
+			// No shadow map generated (yet) for this light -- treat as fully lit rather than
+			// silently discarding all lighting for every fragment.
+			return 1f;
+		}
+
+		mvp_light.calculateVPMatrix(); // View*Projection only, no Model -- correct here since
+										// worldPosition is already fully in world space.
+
+		Vector4 posInLightSpace = mvp_light.projectVP(worldPosition); // See ASSUMPTION above.
+
+		// Map is stored in [0, 1] while clip-space coordinates are in [-1, 1].
+		float depth = map.getInterpolation((posInLightSpace.getX() + 1) / 2, (posInLightSpace.getY() + 1) / 2);
+
+		// Epsilon bias to avoid "shadow acne" (self-shadowing) -- same value and reasoning as the
+		// legacy code.
+		if (posInLightSpace.getZ() > depth + 10 * Constants.EPSILON) {
+			return 0f;
+		}
+		return 1f;
 	}
 
 	public ModelViewProjection getModelView() {

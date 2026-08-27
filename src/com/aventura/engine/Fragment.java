@@ -1,32 +1,10 @@
 package com.aventura.engine;
 
 import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
 
 /**
- * ------------------------------------------------------------------------------ 
- * MIT License
- * 
- * Copyright (c) 2016-2026 Olivier BARRY
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- * ------------------------------------------------------------------------------ 
- * 
+ * ------------------------------------------------------------------------------
  * A Fragment carries the interpolated per-pixel attributes produced while a
  * TriangleRasterizer walks a triangle: screen position, depth, and — when
  * relevant to the current pass — world-space position, normal, and texture
@@ -49,7 +27,7 @@ import com.aventura.math.vector.Vector3;
  * computation state, not persisted data.
  *
  * @author Olivier BARRY
- * @since 2026 (Rasterizer refactoring)
+ * @since 2026
  *
  */
 public class Fragment {
@@ -59,7 +37,10 @@ public class Fragment {
 	private float z;
 
 	// Reused, mutated in place — see class-level lifecycle contract.
-	private final Vector3 worldPosition = new Vector3();
+	// Vector4 (not Vector3) for worldPosition to match Light's getLightVectorAtPoint(Vector4)/
+	// getIntensity(Vector4) contract, and the rest of the codebase's convention of representing
+	// world-space points as homogeneous Vector4 (w = 1).
+	private final Vector4 worldPosition = new Vector4();
 	private final Vector3 normal = new Vector3();
 
 	// Raw, un-divided homogeneous texture coordinates: (u, v, w) as interpolated with perspective
@@ -83,8 +64,8 @@ public class Fragment {
 		return z;
 	}
 
-	/** World-space position of this fragment. Reused instance — do not retain, read values out. */
-	public Vector3 getWorldPosition() {
+	/** World-space position of this fragment (homogeneous, w = 1). Reused instance — do not retain, read values out. */
+	public Vector4 getWorldPosition() {
 		return worldPosition;
 	}
 
@@ -126,10 +107,10 @@ public class Fragment {
 	}
 
 	void setWorldPosition(float x, float y, float z) {
-		// NOTE: assumes Vector3 exposes a mutable setter. If your Vector3 is immutable,
-		// tell me and I'll switch this to worldPosition = new Vector3(x, y, z) — which
-		// would reintroduce a per-pixel allocation, worth knowing either way.
-		worldPosition.set(x, y, z);
+		// NOTE: assumes Vector4 exposes a mutable setter. If your Vector4/Vector3 are immutable,
+		// tell me and I'll switch to allocating a new instance per pixel instead — a perf
+		// trade-off worth knowing about either way.
+		worldPosition.set(x, y, z, 1f);
 	}
 
 	void setNormal(float x, float y, float z) {

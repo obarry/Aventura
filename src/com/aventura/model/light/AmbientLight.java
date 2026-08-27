@@ -1,10 +1,7 @@
 package com.aventura.model.light;
 
-import java.awt.Color;
-
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
-import com.aventura.tools.color.ColorTools;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -58,11 +55,8 @@ public class AmbientLight extends Light {
 		return intensity;
 	}
 
-	@Override
-	public Color getLightColorAtPoint(Vector4 point) {
-		// TODO Auto-generated method stub
-		return ColorTools.multColor(lightColor, intensity);
-	}
+	// getLightColorAtPoint() removed: Light's default implementation (lightColor * getIntensity(point))
+	// already does exactly this for Ambient light, since getIntensity() above ignores the point.
 
 	@Override
 	public void setLightVector(Vector3 light) {
@@ -75,10 +69,7 @@ public class AmbientLight extends Light {
 		this.intensity = intensity;
 	}
 
-	@Override
-	public void setLightColor(Color c) {
-		// TODO Auto-generated method stub
-		
-	}
+	// setLightColor(Color) removed: it was an empty override silently no-op'ing Light's working
+	// implementation (this.lightColor = c) — a real bug, not just dead code.
 
 }

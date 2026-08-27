@@ -1,7 +1,5 @@
 package com.aventura.model.light;
 
-import java.awt.Color;
-
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -115,11 +113,9 @@ public class PointLight extends ShadowingLight {
 		return attenuationFunc(distance) * intensity; // The intensity factor is used here
 	}
 
-	@Override
-	public Color getLightColorAtPoint(Vector4 point) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	// getLightColorAtPoint() removed: was a broken stub returning null. Light's default
+	// implementation (lightColor * getIntensity(point)) now correctly applies this light's
+	// distance attenuation to its color, which this stub never did.
 
 	@Override
 	public void setLightVector(Vector3 light) {
