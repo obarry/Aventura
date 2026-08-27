@@ -9,7 +9,30 @@ import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 
 /**
+ * ------------------------------------------------------------------------------ 
+ * MIT License
+ * 
+ * Copyright (c) 2016-2026 Olivier BARRY
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  * ------------------------------------------------------------------------------
+ * 
  * TriangleRasterizer is the pure geometric core of the rendering pipeline: it
  * knows how to walk the pixels covered by a triangle on screen, interpolate
  * per-vertex attributes (world position, normal, texture coordinates) with
@@ -58,6 +81,17 @@ public class TriangleRasterizer {
 
 	public int getDiscardedPixels() {
 		return discardedPixels;
+	}
+
+	/**
+	 * Resets the pixel counters to zero. The legacy Rasterizer used to do this at the start of
+	 * every rasterizeTriangle() call, giving per-triangle stats; call this at the same point if
+	 * you need to preserve that granularity across multiple rasterize() calls sharing one
+	 * TriangleRasterizer instance (as the Rasterizer façade does, one instance per frame).
+	 */
+	public void resetStats() {
+		renderedPixels = 0;
+		discardedPixels = 0;
 	}
 
 	/**
