@@ -222,6 +222,20 @@ public class Vector4 {
 	}
 	
 	/**
+	 * Set all the coordinates of the Vector4 with values x, y, z and v
+	 * @param x, the value to set for the first coordinate
+	 * @param y, the value to set for the second coordinate
+	 * @param z, the value to set for the third coordinate
+	 * @param v, the value to set for the fourth coordinate
+	 */
+	public void set(float x, float y, float z, float v) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = v;
+	}
+	
+	/**
 	 * Get the coordinate of rank i
 	 * @param i
 	 * @return

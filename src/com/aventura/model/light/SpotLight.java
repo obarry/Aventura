@@ -1,7 +1,5 @@
 package com.aventura.model.light;
 
-import java.awt.Color;
-
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -69,11 +67,8 @@ public class SpotLight extends PointLight {
 		return 0;
 	}
 
-	@Override
-	public Color getLightColorAtPoint(Vector4 point) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	// getLightColorAtPoint() removed: was a broken stub returning null, now covered by Light's
+	// default implementation.
 
 	@Override
 	public void setLightVector(Vector3 light) {
@@ -87,11 +82,8 @@ public class SpotLight extends PointLight {
 		
 	}
 
-	@Override
-	public void setLightColor(Color c) {
-		// TODO Auto-generated method stub
-		
-	}
+	// setLightColor(Color) removed: was an empty override silently no-op'ing Light's working
+	// implementation -- same bug as the one found and fixed in AmbientLight.
 
 	@Override
 	public void initShadowing(Perspective perspective, Camera camera_view) {

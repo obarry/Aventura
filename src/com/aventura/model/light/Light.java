@@ -3,6 +3,7 @@ package com.aventura.model.light;
 import java.awt.Color;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.tools.color.ColorTools;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -49,11 +50,18 @@ public abstract class Light {
 	// Get light vector (or null vector for ambient light) at a given point of world space
 	public abstract Vector3 getLightVectorAtPoint(Vector4 point);
 	
-	// Get color of light at a given point
-	public abstract Color getLightColorAtPoint(Vector4 point);
-
 	// Get intensity of light at a given point of world space
 	public abstract float getIntensity(Vector4 point);
+
+	/**
+	 * Get color of light at a given point. Default implementation: lightColor weighted by this
+	 * point's intensity — correct for every light we have today (none of them actually vary in
+	 * hue by position, only in intensity). Override only if a future light needs to vary its hue
+	 * by position (e.g. a colored gel, a projected texture).
+	 */
+	public Color getLightColorAtPoint(Vector4 point) {
+		return ColorTools.multColor(lightColor, getIntensity(point));
+	}
 
 	// Set this Light's direction (Directional Light)
 	public abstract void setLightVector(Vector3 light);
