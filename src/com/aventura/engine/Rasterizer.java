@@ -17,7 +17,7 @@ import com.aventura.view.GUIView;
 import com.aventura.view.MapView;
 
 /**
-  * ------------------------------------------------------------------------------ 
+ * ------------------------------------------------------------------------------ 
  * MIT License
  * 
  * Copyright (c) 2016-2026 Olivier BARRY
@@ -73,6 +73,10 @@ public class Rasterizer {
 	// implicit ambient reflectivity of 1. Kept as a named constant for clarity rather than a
 	// magic number.
 	private static final float LEGACY_AMBIENT_REFLECTIVITY = 1f;
+
+	// Ported unchanged from the legacy Rasterizer: an Element/Triangle with no explicit specular
+	// color falls back to white rather than leaving specularColorAt() return null downstream.
+	private static final Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
 
 	protected Camera camera;
 	protected PerspectiveContext perspectiveCtx;
@@ -185,9 +189,16 @@ public class Rasterizer {
 
 		boolean useTexture = texture && t.getTexture() != null;
 
+		// surfCol (D) is ALWAYS used, even in textured mode -- it tints the texture sample (D*T),
+		// it is never replaced by it. See TexturedMaterial's Javadoc. Only SolidMaterial needs a
+		// non-null fallback (Color.WHITE) since it has no texture to fall back on if surfCol is null.
+		// specCol falls back to DEFAULT_SPECULAR_COLOR (white), exactly like the legacy
+		// computeSpecularColor()'s "Color spc = sc == null ? DEFAULT_SPECULAR_COLOR : sc;".
+		Color effectiveSpecCol = specCol != null ? specCol : DEFAULT_SPECULAR_COLOR;
+
 		Material material = useTexture
-				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), specCol, specExp, LEGACY_AMBIENT_REFLECTIVITY)
-				: new SolidMaterial(surfCol, specCol, specExp, LEGACY_AMBIENT_REFLECTIVITY);
+				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), surfCol, effectiveSpecCol, specExp, LEGACY_AMBIENT_REFLECTIVITY)
+				: new SolidMaterial(surfCol != null ? surfCol : Color.WHITE, effectiveSpecCol, specExp, LEGACY_AMBIENT_REFLECTIVITY);
 
 		ShadingConsumer consumer = new ShadingConsumer(material, lighting, camera, zBuffer, gUIView, shadows);
 

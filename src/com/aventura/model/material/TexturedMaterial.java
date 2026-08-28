@@ -5,6 +5,7 @@ import java.awt.Color;
 import com.aventura.engine.Fragment;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.triangle.Triangle;
+import com.aventura.tools.color.ColorTools;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -32,11 +33,20 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  * 
- * A Material backed by a Texture. This is where the texture orientation
- * (Triangle.TEXTURE_ISOTROPIC / TEXTURE_VERTICAL / TEXTURE_HORIZONTAL) is now
- * handled — TriangleRasterizer only ever hands this class the raw, un-divided
+ * A Material backed by a Texture, tinted by a diffuse color — matching the
+ * legacy Rasterizer's behavior where the surface color (D) is ALWAYS
+ * multiplied with the texture sample (T), never replaced by it: final base
+ * color = D * T (or just T if D is null, see below).
+ *
+ * This is what a "colored Element built from several specifically-colored
+ * Triangles" relies on: the same texture can be tinted differently per
+ * Element/Triangle by varying only the diffuse color, without needing a
+ * different texture asset.
+ *
+ * TriangleRasterizer only ever hands this class the raw, un-divided
  * homogeneous texture coordinates (Fragment.getTexU()/getTexV()/getTexW());
- * this class decides which of u, v (or both) to divide by w before sampling.
+ * this class decides which of u, v (or both) to divide by w before sampling,
+ * based on textureOrientation.
  *
  * ASSUMPTION: Texture.getInterpolatedColor(float u, float v) is the sampling
  * method, mirroring its use in the legacy Rasterizer. Adjust if the real
@@ -50,13 +60,21 @@ public class TexturedMaterial implements Material {
 
 	private final Texture texture;
 	private final int textureOrientation;
+	private final Color diffuseTint; // "D" -- may be null, see baseColorAt()
 	private final Color specularColor;
 	private final float specularExponent;
 	private final float ambientReflectivity;
 
-	public TexturedMaterial(Texture texture, int textureOrientation, Color specularColor, float specularExponent, float ambientReflectivity) {
+	/**
+	 * @param diffuseTint  the surface color (D) to multiply with every texture sample (T) --
+	 *                     matches the legacy surfCol parameter's role even in textured mode.
+	 *                     May be null, in which case the texture sample is used as-is (no tint),
+	 *                     equivalent to D being pure white.
+	 */
+	public TexturedMaterial(Texture texture, int textureOrientation, Color diffuseTint, Color specularColor, float specularExponent, float ambientReflectivity) {
 		this.texture = texture;
 		this.textureOrientation = textureOrientation;
+		this.diffuseTint = diffuseTint;
 		this.specularColor = specularColor;
 		this.specularExponent = specularExponent;
 		this.ambientReflectivity = ambientReflectivity;
@@ -93,17 +111,21 @@ public class TexturedMaterial implements Material {
 			break;
 		}
 
+		Color textureSample;
 		try {
-			return texture.getInterpolatedColor(u, v);
+			textureSample = texture.getInterpolatedColor(u, v);
 		} catch (Exception e) {
 			// NOTE: the legacy Rasterizer caught this the same way (printStackTrace, then silently
 			// left the pixel's texture color as whatever was left over from the previous pixel).
 			// Here we log through Tracer and return a visible fallback instead, so a broken texture
-			// sample is obvious in the render rather than silently blending stale data. Tell me if
-			// you'd rather keep the original silent behavior for now.
+			// sample is obvious in the render rather than silently blending stale data.
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Error sampling texture at (" + u + ", " + v + "): " + e.getMessage());
 			return Color.MAGENTA;
 		}
+
+		// D * T -- diffuseTint (D) is ALWAYS applied when present, matching the legacy behavior;
+		// null means "no tint", i.e. the texture is shown as-is (equivalent to D = white).
+		return diffuseTint != null ? ColorTools.multColors(diffuseTint, textureSample) : textureSample;
 	}
 
 	@Override
