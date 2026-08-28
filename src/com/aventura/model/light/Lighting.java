@@ -229,11 +229,18 @@ public class Lighting {
 			if (dotRV > 0) {
 				float specularFactor = (float) Math.pow(dotRV, material.specularExponent());
 				Color specularColor = material.specularColorAt(fragment);
-				// Ci . Si  (kept as a separate term from the diffuse one, per the documented
-				// formula -- the legacy code actually multiplied the diffuse-shaded color into
-				// this term too, which looked like an unintended coupling; flagging this as a
-				// behavior change, see accompanying message)
-				specular = ColorTools.multColor(ColorTools.multColors(lightColor, specularColor), specularFactor);
+				// Defensive null-check: a Material implementation that doesn't set an explicit
+				// specular color (e.g. ported from legacy code where it defaulted to
+				// DEFAULT_SPECULAR_COLOR at the call site rather than inside the color itself)
+				// would otherwise NPE here. Treat a null specular color as "no specular"
+				// rather than crash the whole render.
+				if (specularColor != null) {
+					// Ci . Si  (kept as a separate term from the diffuse one, per the documented
+					// formula -- the legacy code actually multiplied the diffuse-shaded color into
+					// this term too, which looked like an unintended coupling; flagging this as a
+					// behavior change, see accompanying message)
+					specular = ColorTools.multColor(ColorTools.multColors(lightColor, specularColor), specularFactor);
+				}
 			}
 		}
 
