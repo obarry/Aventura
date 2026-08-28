@@ -8,6 +8,9 @@ import com.aventura.model.world.Vertex;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 /**
  * ------------------------------------------------------------------------------ 
  * MIT License
@@ -312,36 +315,15 @@ public class TriangleRasterizer {
 	}
 
 	/**
-	 * Sorts 3 corners by ascending screen Y (v1 lowest Y, v3 highest Y), preserving the exact
-	 * comparison structure of the legacy vertex-ordering logic.
+	 * Sorts 3 corners by ascending screen Y (v1 lowest Y, v3 highest Y). Only 3 elements and
+	 * called once per triangle (not in the per-pixel hot path), so a plain Comparator-based sort
+	 * is preferred here for readability over the legacy nested if/else, which encoded the same
+	 * ascending order but required tracing 8 branches by hand to verify.
 	 */
 	private RasterVertex[] sortByScreenY(RasterVertex a, RasterVertex b, RasterVertex c) {
-
-		float ya = yScreen(a.vertex);
-		float yb = yScreen(b.vertex);
-		float yc = yScreen(c.vertex);
-
-		if (yb < ya) {
-			if (yc < yb) {
-				return new RasterVertex[] { c, b, a };
-			} else {
-				if (yc < ya) {
-					return new RasterVertex[] { b, c, a };
-				} else {
-					return new RasterVertex[] { b, a, c };
-				}
-			}
-		} else {
-			if (yc < ya) {
-				return new RasterVertex[] { c, a, b };
-			} else {
-				if (yc < yb) {
-					return new RasterVertex[] { a, c, b };
-				} else {
-					return new RasterVertex[] { a, b, c };
-				}
-			}
-		}
+		RasterVertex[] sorted = { a, b, c };
+		Arrays.sort(sorted, Comparator.comparing(v -> yScreen(v.vertex)));
+		return sorted;
 	}
 
 	/** Bundles one triangle corner's geometry with the attributes the caller wants interpolated. */

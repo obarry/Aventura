@@ -1,13 +1,10 @@
 package com.aventura.engine;
 
-import java.awt.Color;
-
 import com.aventura.math.vector.Vector3;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowingLight;
 import com.aventura.model.material.Material;
-import com.aventura.tools.color.ColorTools;
 import com.aventura.view.GUIView;
 
 /**
@@ -64,6 +61,10 @@ public class ShadingConsumer implements FragmentConsumer {
 	private final GUIView view;
 	private final boolean shadowsEnabled;
 
+	// Reused across every pixel this consumer processes -- see its own class Javadoc, same
+	// lifecycle pattern as Fragment.
+	private final RGBAccumulator accumulator = new RGBAccumulator();
+
 	public ShadingConsumer(Material material, Lighting lighting, Camera camera, ZBuffer zBuffer, GUIView view, boolean shadowsEnabled) {
 		this.material = material;
 		this.lighting = lighting;
@@ -76,8 +77,10 @@ public class ShadingConsumer implements FragmentConsumer {
 	@Override
 	public void consume(Fragment fragment) {
 
+		accumulator.reset();
+
 		// Ambient term: D.T.A — independent of any light or shadow.
-		Color result = lighting.ambientContributionAt(fragment, material);
+		lighting.accumulateAmbient(fragment, material, accumulator);
 
 		// ASSUMPTION: Camera.getEye() returns a Vector4 (as used elsewhere, e.g. the legacy
 		// specular viewer vector calculation) and Vector4 exposes .minus(Vector4).V3().
@@ -86,23 +89,20 @@ public class ShadingConsumer implements FragmentConsumer {
 		if (lighting.getShadowingLights() != null) {
 			for (ShadowingLight light : lighting.getShadowingLights()) {
 
-				float shadowFactor = 1f;
-				if (shadowsEnabled) {
-					shadowFactor = light.shadowFactorAt(fragment.getWorldPosition());
-					if (shadowFactor <= 0) {
-						continue; // Fully in shadow for this light: no diffuse/specular to add
-					}
+				if (shadowsEnabled && light.shadowFactorAt(fragment.getWorldPosition()) <= 0) {
+					// Fully in shadow for this light -- nothing to add. NOTE: shadowFactorAt()
+					// today only ever returns 0 or 1 (hard shadows, no PCF/soft shadows yet -- see
+					// its Javadoc), so a binary skip-or-include here is sufficient; if soft shadows
+					// are added later, this will need to become a scaled accumulation instead of a
+					// skip, which would need a per-light scratch accumulator.
+					continue;
 				}
 
-				Color contribution = lighting.contributionOf(light, fragment, viewerDirection, material);
-				if (shadowFactor < 1f) {
-					contribution = ColorTools.multColor(contribution, shadowFactor);
-				}
-				result = ColorTools.addColors(result, contribution);
+				lighting.accumulateContribution(light, fragment, viewerDirection, material, accumulator);
 			}
 		}
 
-		view.drawPixel(fragment.getScreenX(), fragment.getScreenY(), result);
+		view.drawPixel(fragment.getScreenX(), fragment.getScreenY(), accumulator.toColor());
 		zBuffer.update(fragment.getScreenX(), fragment.getScreenY(), fragment.getZ());
 	}
 }
