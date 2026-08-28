@@ -17,30 +17,7 @@ import com.aventura.view.GUIView;
 import com.aventura.view.MapView;
 
 /**
-  * ------------------------------------------------------------------------------ 
- * MIT License
- * 
- * Copyright (c) 2016-2026 Olivier BARRY
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
-* ------------------------------------------------------------------------------
-* 
+ * ------------------------------------------------------------------------------
  * COMPATIBILITY FAÇADE. Keeps the exact public API of the original Rasterizer
  * (same constructors, same rasterizeTriangle(...) signature) so that existing
  * callers (RenderEngine, test apps) keep compiling and behaving the same way,
@@ -185,9 +162,12 @@ public class Rasterizer {
 
 		boolean useTexture = texture && t.getTexture() != null;
 
+		// surfCol (D) is ALWAYS used, even in textured mode -- it tints the texture sample (D*T),
+		// it is never replaced by it. See TexturedMaterial's Javadoc. Only SolidMaterial needs a
+		// non-null fallback (Color.WHITE) since it has no texture to fall back on if surfCol is null.
 		Material material = useTexture
-				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), specCol, specExp, LEGACY_AMBIENT_REFLECTIVITY)
-				: new SolidMaterial(surfCol, specCol, specExp, LEGACY_AMBIENT_REFLECTIVITY);
+				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), surfCol, specCol, specExp, LEGACY_AMBIENT_REFLECTIVITY)
+				: new SolidMaterial(surfCol != null ? surfCol : Color.WHITE, specCol, specExp, LEGACY_AMBIENT_REFLECTIVITY);
 
 		ShadingConsumer consumer = new ShadingConsumer(material, lighting, camera, zBuffer, gUIView, shadows);
 
