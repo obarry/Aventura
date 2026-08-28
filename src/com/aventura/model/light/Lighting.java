@@ -4,9 +4,9 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.engine.Fragment;
+import com.aventura.engine.RGBAccumulator;
 import com.aventura.math.vector.Vector3;
 import com.aventura.model.material.Material;
-import com.aventura.tools.color.ColorTools;
 import com.aventura.tools.tracing.Tracer;
 
 
@@ -177,32 +177,31 @@ public class Lighting {
 	// --------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * The ambient contribution at this fragment: A * baseColor. Zero (black) if there is no
-	 * ambient light configured.
+	 * Adds the ambient contribution at this fragment (A * baseColor) into out. No-op if there is
+	 * no ambient light configured.
 	 */
-	public Color ambientContributionAt(Fragment fragment, Material material) {
-		Color baseColor = material.baseColorAt(fragment);
+	public void accumulateAmbient(Fragment fragment, Material material, RGBAccumulator out) {
 		if (!hasAmbient()) {
-			return ColorTools.multColor(baseColor, 0f);
+			return;
 		}
+		Color baseColor = material.baseColorAt(fragment);
 		Color ambientLightColor = ambient.getLightColorAtPoint(fragment.getWorldPosition());
-		return ColorTools.multColors(ambientLightColor, baseColor);
+		out.addProduct(ambientLightColor, baseColor);
 	}
 
 	/**
-	 * The diffuse + specular contribution of a single light at this fragment, WITHOUT any shadow
-	 * factor applied — the caller (ShadingConsumer) is responsible for querying
-	 * ShadowingLight.shadowFactorAt(...) itself and weighting the result, since not every Light is
-	 * a ShadowingLight (AmbientLight isn't) and shadows may be globally disabled for the scene.
+	 * Adds a single light's diffuse + specular contribution at this fragment into out. The caller
+	 * (ShadingConsumer) is responsible for the shadow test itself and for not calling this at all
+	 * when the light is fully shadowed for this fragment -- see the class-level formula comment
+	 * above for why shadowing isn't handled in here.
 	 *
-	 * @param light            the light to evaluate (any Light except AmbientLight — pass ambient
-	 *                         light through ambientContributionAt() instead)
+	 * @param light            the light to evaluate (any Light except AmbientLight — see accumulateAmbient() for that)
 	 * @param fragment         the fragment being shaded
-	 * @param viewerDirection  normalized vector from the fragment towards the camera, used for the
-	 *                         specular reflection term
+	 * @param viewerDirection  normalized vector from the fragment towards the camera, used for the specular reflection term
 	 * @param material         the surface's material at this fragment
+	 * @param out              accumulator to add this light's contribution into
 	 */
-	public Color contributionOf(Light light, Fragment fragment, Vector3 viewerDirection, Material material) {
+	public void accumulateContribution(Light light, Fragment fragment, Vector3 viewerDirection, Material material, RGBAccumulator out) {
 
 		Color baseColor = material.baseColorAt(fragment);
 		Vector3 normal = fragment.getNormal().normalize();
@@ -211,15 +210,17 @@ public class Lighting {
 		float dotNL = lightVector.dot(normal);
 
 		if (dotNL <= 0) {
-			return ColorTools.multColor(baseColor, 0f); // Not lit by this light -- full dark contribution
+			return; // Not lit by this light -- nothing to add
 		}
 
+		// Fetched once and reused for both the diffuse and specular terms below, rather than once
+		// per term -- halves the allocation this call makes (getLightColorAtPoint() still returns
+		// a java.awt.Color, since it's a Light-extensible contract; see its Javadoc).
 		Color lightColor = light.getLightColorAtPoint(fragment.getWorldPosition());
 
 		// Diffuse term: Ci . D.T . dotNL
-		Color diffuse = ColorTools.multColor(ColorTools.multColors(lightColor, baseColor), dotNL);
+		out.addProduct(lightColor, baseColor, dotNL);
 
-		Color specular = ColorTools.multColor(baseColor, 0f); // Dark by default (no specular)
 		if (hasSpecular() && material.specularExponent() > 0) {
 			// Reflection vector R = 2N.dotNL - L
 			Vector3 reflection = normal.times(2 * dotNL).minus(lightVector);
@@ -229,22 +230,13 @@ public class Lighting {
 			if (dotRV > 0) {
 				float specularFactor = (float) Math.pow(dotRV, material.specularExponent());
 				Color specularColor = material.specularColorAt(fragment);
-				// Defensive null-check: a Material implementation that doesn't set an explicit
-				// specular color (e.g. ported from legacy code where it defaulted to
-				// DEFAULT_SPECULAR_COLOR at the call site rather than inside the color itself)
-				// would otherwise NPE here. Treat a null specular color as "no specular"
-				// rather than crash the whole render.
 				if (specularColor != null) {
-					// Ci . Si  (kept as a separate term from the diffuse one, per the documented
-					// formula -- the legacy code actually multiplied the diffuse-shaded color into
-					// this term too, which looked like an unintended coupling; flagging this as a
-					// behavior change, see accompanying message)
-					specular = ColorTools.multColor(ColorTools.multColors(lightColor, specularColor), specularFactor);
+					// Ci . Si (kept as a separate term from the diffuse one, per the documented
+					// formula -- see the earlier discussion about the legacy code's coupling bug)
+					out.addProduct(lightColor, specularColor, specularFactor);
 				}
 			}
 		}
-
-		return ColorTools.addColors(diffuse, specular);
 	}
 
 }
