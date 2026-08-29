@@ -1,0 +1,134 @@
+package com.aventura.engine;
+
+import java.awt.Color;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.world.Vertex;
+import com.aventura.model.world.shape.Segment;
+import com.aventura.model.world.triangle.Triangle;
+import com.aventura.view.GUIView;
+
+/**
+ * ------------------------------------------------------------------------------ 
+ * MIT License
+ * 
+ * Copyright (c) 2016-2026 Olivier BARRY
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ------------------------------------------------------------------------------
+ * 
+ * Draws lines on screen for two related but distinct needs:
+ * - Triangle wireframe edges, from Vertex data already projected by the ongoing
+ *   per-Element Model*View*Projection pipeline (getProjPos()).
+ * - Standalone debug vectors anchored in world space (axis landmarks, surface
+ *   normals, light directions), projected here directly via View*Projection
+ *   only (no Model involved, since the caller already supplies a world-space
+ *   point) — see drawVector()'s Javadoc.
+ *
+ * These were kept as one class rather than two because the actual mechanism
+ * (project two points, draw a line) is identical; only which "already
+ * computed" data each need starts from differs.
+ *
+ * NOT CARRIED OVER: the legacy bressenham_int/bressenham_short methods —
+ * dead code even before this refactoring, since drawLine already delegated to
+ * GUIView.drawLine() and never called them.
+ *
+ * DEFERRED (backlog): z-buffer-aware wireframe. Edges are currently drawn
+ * regardless of what's in front of them, matching the legacy behavior.
+ *
+ * @author Olivier BARRY
+ * @since 2026
+ *
+ */
+public class ScreenLineRenderer {
+
+	private final PerspectiveContext perspectiveCtx;
+
+	// The camera's single, frame-lifetime ModelViewProjection instance (not a light's) — used only
+	// for its VP matrix (see drawVector()). calculateVPMatrix() must have been called on it at
+	// least once before any drawVector() call; since view/projection are constant for a
+	// RenderEngine's whole lifetime, this is expected to happen once, at RenderEngine construction.
+	private final ModelViewProjection modelViewProjection;
+
+	private final GUIView view;
+
+	public ScreenLineRenderer(PerspectiveContext perspectiveCtx, ModelViewProjection modelViewProjection, GUIView view) {
+		this.perspectiveCtx = perspectiveCtx;
+		this.modelViewProjection = modelViewProjection;
+		this.view = view;
+	}
+
+	//
+	// Triangle wireframe
+	//
+
+	public void drawTriangleEdges(Triangle t, Color c) {
+		drawLine(t.getV1(), t.getV2(), c);
+		drawLine(t.getV2(), t.getV3(), c);
+		drawLine(t.getV3(), t.getV1(), c);
+	}
+
+	public void drawLine(Vertex v1, Vertex v2, Color c) {
+		view.setColor(c);
+		view.drawLine(screenX(v1), screenY(v1), screenX(v2), screenY(v2));
+	}
+
+	public void drawLine(Segment s, Color c) {
+		drawLine(s.getV1(), s.getV2(), c);
+	}
+
+	private int screenX(Vertex v) {
+		return (int) (v.getProjPos().get3DX() * perspectiveCtx.getPixelHalfWidth());
+	}
+
+	private int screenY(Vertex v) {
+		return (int) (v.getProjPos().get3DY() * perspectiveCtx.getPixelHalfHeight());
+	}
+
+	//
+	// Debug vectors — world-space in, no Model matrix involved (View*Projection only), which is
+	// exactly what avoids the model/world-space-mixing bug found in the legacy
+	// RenderEngine.displayNormalVectors(): every caller here supplies a genuinely world-space
+	// origin (e.g. Triangle.getCenterWorldPos(), Vertex.getWorldPos()) rather than a model-space
+	// position combined with a world-space direction.
+	//
+
+	/**
+	 * Draws a line from worldOrigin to worldOrigin + direction, both understood as world-space
+	 * (Vector4.plus(Vector3) preserves worldOrigin's w, so this is a correct point+vector addition
+	 * regardless of whether direction is normalized or scaled for visibility).
+	 */
+	public void drawVector(Vector4 worldOrigin, Vector3 direction, Color c) {
+		Vector4 worldTip = worldOrigin.plus(direction);
+		view.setColor(c);
+		view.drawLine(screenXWorld(worldOrigin), screenYWorld(worldOrigin), screenXWorld(worldTip), screenYWorld(worldTip));
+	}
+
+	private int screenXWorld(Vector4 worldPoint) {
+		Vector4 clip = modelViewProjection.projectVP(worldPoint);
+		return (int) (clip.get3DX() * perspectiveCtx.getPixelHalfWidth());
+	}
+
+	private int screenYWorld(Vector4 worldPoint) {
+		Vector4 clip = modelViewProjection.projectVP(worldPoint);
+		return (int) (clip.get3DY() * perspectiveCtx.getPixelHalfHeight());
+	}
+}

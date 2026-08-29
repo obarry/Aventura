@@ -9,8 +9,6 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.material.Material;
 import com.aventura.model.material.SolidMaterial;
 import com.aventura.model.material.TexturedMaterial;
-import com.aventura.model.world.Vertex;
-import com.aventura.model.world.shape.Segment;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.GUIView;
@@ -39,8 +37,9 @@ import com.aventura.view.MapView;
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
-* ------------------------------------------------------------------------------
-* 
+ * ------------------------------------------------------------------------------
+ * 
+ * 
  * COMPATIBILITY FAÇADE. Keeps the exact public API of the original Rasterizer
  * (same constructors, same rasterizeTriangle(...) signature) so that existing
  * callers (RenderEngine, test apps) keep compiling and behaving the same way,
@@ -56,11 +55,9 @@ import com.aventura.view.MapView;
  * NOT YET CARRIED OVER from the original Rasterizer: the full original pixel-
  * statistics set beyond what's listed below (rasterized_lines is not tracked
  * by the new pipeline, so triangles_with_lines in renderStats() below is
- * always 0 -- diagnostics-only, no functional impact). drawTriangleLines/
- * drawLine/Bresenham ARE carried over unchanged (byte-for-byte port from the
- * legacy code) purely so RenderEngine keeps compiling as-is; they still don't
- * go through the new pipeline and remain flagged for extraction into their
- * own WireframeRenderer class in the tactical clean-up phase.
+ * always 0 -- diagnostics-only, no functional impact). Wireframe drawing
+ * (drawTriangleLines/drawLine/Bresenham) has moved to its own
+ * ScreenLineRenderer class, as planned.
  *
  * @author Olivier BARRY
  * @since 2026 (façade over the new Fragment-based pipeline)
@@ -219,48 +216,6 @@ public class Rasterizer {
 
 	public int getDiscardedPixels() {
 		return triangleRasterizer != null ? triangleRasterizer.getDiscardedPixels() : 0;
-	}
-
-	//
-	// Wireframe drawing -- ported unchanged from the legacy Rasterizer so RenderEngine keeps
-	// compiling as-is. Does not go through TriangleRasterizer/Fragment at all. Flagged for
-	// extraction into its own WireframeRenderer class in the tactical clean-up phase.
-	//
-
-	public void drawTriangleLines(Triangle t, Color c) {
-		gUIView.setColor(c);
-		drawLine(t.getV1(), t.getV2());
-		drawLine(t.getV2(), t.getV3());
-		drawLine(t.getV3(), t.getV1());
-	}
-
-	public void drawLine(Segment l) {
-		drawLine(l.getV1(), l.getV2());
-	}
-
-	public void drawLine(Segment l, Color c) {
-		drawLine(l.getV1(), l.getV2(), c);
-	}
-
-	public void drawLine(Vertex v1, Vertex v2) {
-		int x1 = (int) xScreen(v1);
-		int y1 = (int) yScreen(v1);
-		int x2 = (int) xScreen(v2);
-		int y2 = (int) yScreen(v2);
-		gUIView.drawLine(x1, y1, x2, y2);
-	}
-
-	public void drawLine(Vertex v1, Vertex v2, Color c) {
-		gUIView.setColor(c);
-		drawLine(v1, v2);
-	}
-
-	private float xScreen(Vertex v) {
-		return v.getProjPos().get3DX() * perspectiveCtx.getPixelHalfWidth();
-	}
-
-	private float yScreen(Vertex v) {
-		return v.getProjPos().get3DY() * perspectiveCtx.getPixelHalfHeight();
 	}
 
 	public String renderStats() {
