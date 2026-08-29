@@ -159,9 +159,9 @@ public class TestScaling2 {
 		renderer.render();
 
 		System.out.println("********* Rendering...");
-		int nb_images = 90;
+		int nb_images = 450;
 		//Scaling s = new Scaling(2,2,1);
-		for (int i=0; i<=3*nb_images; i++) {
+		for (int i=0; i<=30*nb_images; i++) {
 			Rotation r1 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
 			Rotation r2 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
 			Scaling s = new Scaling(1+(float)i/180,1+(float)i/180,1);

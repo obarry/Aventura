@@ -19,7 +19,6 @@ import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
 import com.aventura.model.world.shape.Cylinder;
-import com.aventura.model.world.shape.Segment;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.GUIView;
@@ -123,6 +122,9 @@ public class RenderEngine {
 	
 	// Rasterizer
 	private Rasterizer rasterizer;
+
+	// Wireframe / debug vector drawing -- constructed once GUIView is known (see setView())
+	private ScreenLineRenderer screenLineRenderer;
 	
 	/**
 	 * Create a Rendering Engine with required dependencies and context
@@ -147,7 +149,12 @@ public class RenderEngine {
 				
 		// Create ModelViewProjection matrix with for GUIView (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
 		this.modelViewProjection = new ModelViewProjection(camera.getMatrix(), perspectiveCtx.getPerspective().getProjection());
-		
+
+		// Computed once here rather than per-debug-vector-draw: view/projection are constant for
+		// this RenderEngine's whole lifetime (a RenderEngine is built for a single Camera), so
+		// there is no need to ever recompute this -- see ScreenLineRenderer.drawVector()'s Javadoc.
+		this.modelViewProjection.calculateVPMatrix();
+
 		// Delegate rasterization tasks to a dedicated engine
 		// No shading in this constructor -> null
 		this.rasterizer = new Rasterizer(camera, perspectiveCtx, lighting);
@@ -158,6 +165,7 @@ public class RenderEngine {
 	public void setView(GUIView v) {
 		gUIView = v;
 		rasterizer.setView(v);
+		screenLineRenderer = new ScreenLineRenderer(perspectiveContext, modelViewProjection, v);
 	}
 	
 	/**
@@ -379,7 +387,7 @@ public class RenderEngine {
 			
 			// If RENDERING_TYPE_LINE then no backface culling
 			if (renderContext.renderingType == RenderContext.RENDERING_TYPE_LINE) {
-				rasterizer.drawTriangleLines(t, color);
+				screenLineRenderer.drawTriangleEdges(t, color);
 				nbt_in++;
 
 			} else {
@@ -424,7 +432,7 @@ public class RenderEngine {
 
 					// Superimpose lines when enabled in the previous modes
 					if (renderContext.renderingLines == RenderContext.RENDERING_LINES_ENABLED && renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
-						rasterizer.drawTriangleLines(t, color);				
+						screenLineRenderer.drawTriangleEdges(t, color);				
 					}
 
 					// If DISPLAY_NORMALS is activated then renderContext normals
@@ -492,29 +500,12 @@ public class RenderEngine {
 	
 
 	public void displayLandMarkLines() {
-		// Set the Model Matrix to IDENTITY (no translation)
-		modelViewProjection.setModel(Matrix4.IDENTITY);
-		modelViewProjection.calculateNormalMatrix();
-		modelViewProjection.calculateMVPMatrix();
-
-		// Create Vertices to draw unit segments
-		Vertex o = new Vertex(0,0,0);
-		Vertex x = new Vertex(1,0,0);
-		Vertex y = new Vertex(0,1,0);
-		Vertex z = new Vertex(0,0,1);
-		modelViewProjection.transformVertex(o, true);
-		modelViewProjection.transformVertex(x, true);
-		modelViewProjection.transformVertex(y, true);
-		modelViewProjection.transformVertex(z, true);
-		// Create 3 unit segments
-		Segment lx = new Segment(o, x);
-		Segment ly = new Segment(o, y);
-		Segment lz = new Segment(o, z);
-		// Draw segments with different colors (x=RED, y=GREEN, z=BLUE) for mnemotechnic
-		rasterizer.drawLine(lx, renderContext.landmarkXColor);
-		rasterizer.drawLine(ly, renderContext.landmarkYColor);
-		rasterizer.drawLine(lz, renderContext.landmarkZColor);
-
+		// Entirely in world space -- no Model matrix involved (drawVector uses View*Projection
+		// only), so there is no need to reset modelViewProjection to an identity Model anymore.
+		Vector4 origin = Vector4.ZERO_POINT;
+		screenLineRenderer.drawVector(origin, Vector3.X_AXIS, renderContext.landmarkXColor);
+		screenLineRenderer.drawVector(origin, Vector3.Y_AXIS, renderContext.landmarkYColor);
+		screenLineRenderer.drawVector(origin, Vector3.Z_AXIS, renderContext.landmarkZColor);
 	}
 	
 	public void displayLandMarkLinesInterpolate() {
@@ -570,69 +561,36 @@ public class RenderEngine {
 }
 	
 	public void displayNormalVectors(Triangle t) {
-		// Caution: in this section, we need to take the original triangle containing the normal and other attributes !!!
-		
+		// Entirely in world space now (getCenterWorldPos()/getWorldPos() + getWorldNormal()) --
+		// the legacy version mixed model-space position (getPos()/getCenter()) with world-space
+		// normal (getWorldNormal()) in BOTH branches below, which only happened to look right
+		// when an Element's Model matrix was the identity. See the earlier discussion for details.
+
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Display normals for triangle. Normal of triangle (null if normal at Vertex level): "+t.getNormal());
 		
 		if (t.isTriangleNormal()) { // Normal at Triangle level
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+t.getNormal());
-			
-			// Create a vertex corresponding to the barycenter of the triangle
-			// In this case the vertices are calculated from a single normal vector, the one at Triangle level
-			Vertex c = t.getCenter();
-			//Vertex n = new Vertex(c.getPos().plus(t.getNormal())); // Before transformation -> using position and normals not yet transformed
-			Vertex n = new Vertex(c.getPos().plus(t.getWorldNormal())); // Before transformation -> using position and normals not yet transformed
-			modelViewProjection.transformVertex(c, true);
-			modelViewProjection.transformVertex(n, true);
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Center of triangle"+c);
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal display - Arrow of normal"+n);
-			Segment s = new Segment(c, n);
-			rasterizer.drawLine(s, renderContext.normalsColor);
-			
+			screenLineRenderer.drawVector(t.getCenterWorldPos(), t.getWorldNormal(), renderContext.normalsColor);
+
 		} else { // Normals at Vertex level
-			
-			// Get the 3 vertices from Triangle
+
 			Vertex p1 = t.getV1();
 			Vertex p2 = t.getV2();
 			Vertex p3 = t.getV3();
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level. V1 normal: " + p1.getNormal() + " V2 normal: " + p2.getNormal() + " V3 normal: " + p3.getNormal());
-			
-			// Create 3 vertices corresponding to the end point of the 3 normal vectors
-			Vertex n1, n2, n3;
-//			n1 = new Vertex(p1.getPos().plus(p1.getNormal())); // Before transformation -> using position and normals not yet transformed
-//			n2 = new Vertex(p2.getPos().plus(p2.getNormal())); // Before transformation -> using position and normals not yet transformed
-//			n3 = new Vertex(p3.getPos().plus(p3.getNormal())); // Before transformation -> using position and normals not yet transformed
-			n1 = new Vertex(p1.getPos().plus(p1.getWorldNormal())); // Before transformation -> using position and normals not yet transformed
-			n2 = new Vertex(p2.getPos().plus(p2.getWorldNormal())); // Before transformation -> using position and normals not yet transformed
-			n3 = new Vertex(p3.getPos().plus(p3.getWorldNormal())); // Before transformation -> using position and normals not yet transformed
-			modelViewProjection.transformVertex(n1, true);
-			modelViewProjection.transformVertex(n2, true);
-			modelViewProjection.transformVertex(n3, true);
-			
-			// Create 3 segments corresponding to normal vectors
-			Segment l1 = new Segment(p1, n1);
-			Segment l2 = new Segment(p2, n2);
-			Segment l3 = new Segment(p3, n3);
-			
-			// Draw each normal vector starting from their corresponding vertex  
-			rasterizer.drawLine(l1, renderContext.normalsColor);
-			rasterizer.drawLine(l2, renderContext.normalsColor);
-			rasterizer.drawLine(l3, renderContext.normalsColor);
+
+			screenLineRenderer.drawVector(p1.getWorldPos(), p1.getWorldNormal(), renderContext.normalsColor);
+			screenLineRenderer.drawVector(p2.getWorldPos(), p2.getWorldNormal(), renderContext.normalsColor);
+			screenLineRenderer.drawVector(p3.getWorldPos(), p3.getWorldNormal(), renderContext.normalsColor);
 		}
 	}
 		
 	public void displayLight() {
-		// Set the Model Matrix to IDENTITY (no translation)
-		modelViewProjection.setModel(Matrix4.IDENTITY);
-		modelViewProjection.calculateNormalMatrix();
-		modelViewProjection.calculateMVPMatrix();
+		// Entirely in world space now, same simplification as displayLandMarkLines().
+		Vector4 origin = Vector4.ZERO_POINT;
 		for (int i=0; i<lighting.getDirectionalLights().size(); i++) {
-			Vertex v = new Vertex(lighting.getDirectionalLights().get(i).getLightVectorAtPoint(null));
-			Vertex o = new Vertex(0,0,0);
-			modelViewProjection.transformVertex(v, true);
-			modelViewProjection.transformVertex(o, true);
-			Segment s = new Segment(o, v);
-			rasterizer.drawLine(s, renderContext.lightVectorsColor);
+			Vector3 lightDirection = lighting.getDirectionalLights().get(i).getLightVectorAtPoint(null);
+			screenLineRenderer.drawVector(origin, lightDirection, renderContext.lightVectorsColor);
 		}
 	}
 	
