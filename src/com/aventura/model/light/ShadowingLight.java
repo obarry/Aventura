@@ -8,7 +8,6 @@ import com.aventura.engine.ZBuffer;
 import com.aventura.math.Constants;
 import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
@@ -191,6 +190,11 @@ public abstract class ShadowingLight extends Light {
 		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx_light, shadowZBuffer);
 		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
 
+		// Computed once here rather than per-fragment inside shadowFactorAt() -- view/projection
+		// are constant for the whole shadow map generation pass, so recomputing this per pixel
+		// (as an earlier version of this method did) was pure waste.
+		mvp_light.calculateVPMatrix();
+
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
@@ -211,11 +215,11 @@ public abstract class ShadowingLight extends Light {
 			Triangle t = e.getTriangle(j);
 			// Scissor test: only shadow-map triangles at least partially in the GUIView Frustum
 			if (t.isInViewFrustum()) {
-				// Depth-only pass: normals/texture are irrelevant to a DepthOnlyConsumer, so the
-				// triangle's own (flat) normal is passed 3 times as a cheap placeholder rather than
-				// looking up each vertex's real normal for no benefit.
-				Vector3 flatNormal = t.getWorldNormal();
-				rasterizer.rasterize(t, flatNormal, flatNormal, flatNormal, consumer);
+				// Depth-only pass: no normal/world-position interpolation is done at all (see
+				// TriangleRasterizer's depth-only rasterize() overload) -- convenient, since
+				// normals aren't even computed for this triangle during shadow map generation
+				// (transformElement(e, false) above deliberately skips that).
+				rasterizer.rasterize(t, consumer);
 			}
 		}
 
@@ -252,8 +256,9 @@ public abstract class ShadowingLight extends Light {
 			return 1f;
 		}
 
-		mvp_light.calculateVPMatrix(); // View*Projection only, no Model -- correct here since
-										// worldPosition is already fully in world space.
+		// NOTE: mvp_light.calculateVPMatrix() used to be called here, per-fragment -- moved to
+		// generateShadowMap() (called once per frame) since view/projection never change during
+		// a shadow map pass; recomputing per pixel was pure waste.
 
 		Vector4 posInLightSpace = mvp_light.projectVP(worldPosition); // See ASSUMPTION above.
 

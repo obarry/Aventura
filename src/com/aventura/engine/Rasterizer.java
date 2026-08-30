@@ -15,31 +15,7 @@ import com.aventura.view.GUIView;
 import com.aventura.view.MapView;
 
 /**
- * ------------------------------------------------------------------------------ 
- * MIT License
- * 
- * Copyright (c) 2016-2026 Olivier BARRY
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
- * 
  * COMPATIBILITY FAÇADE. Keeps the exact public API of the original Rasterizer
  * (same constructors, same rasterizeTriangle(...) signature) so that existing
  * callers (RenderEngine, test apps) keep compiling and behaving the same way,
@@ -162,9 +138,20 @@ public class Rasterizer {
 		// every rasterizeTriangle() call) -- see TriangleRasterizer.resetStats()'s Javadoc.
 		triangleRasterizer.resetStats();
 
+		if (shadowmap) {
+			// Depth-only pass: uses TriangleRasterizer's dedicated depth-only overload, which
+			// skips normal/world-position interpolation entirely -- normals may not even be
+			// computed at all for this triangle during a shadow map pass, so resolving
+			// isTriangleNormal()/interpolate below (which reads getWorldNormal()) would risk the
+			// same NullPointerException found in ShadowingLight.generateShadowMap().
+			triangleRasterizer.rasterize(t, new DepthOnlyConsumer(zBuffer));
+			return;
+		}
+
 		// Resolve which 3 normals to interpolate -- this is the exact isTriangleNormal/interpolate
 		// logic from the legacy rasterizeTriangle(); TriangleRasterizer itself doesn't need to know
-		// about this distinction (see its class Javadoc).
+		// about this distinction (see its class Javadoc). Only needed below this point (normal
+		// rendering), never for the depth-only shadowmap path above.
 		Vector3 normal1, normal2, normal3;
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 flat = t.getWorldNormal();
@@ -175,13 +162,6 @@ public class Rasterizer {
 			normal1 = t.getV1().getWorldNormal();
 			normal2 = t.getV2().getWorldNormal();
 			normal3 = t.getV3().getWorldNormal();
-		}
-
-		if (shadowmap) {
-			// Depth-only pass: Material/Lighting are irrelevant, TriangleRasterizer just needs
-			// something to interpolate for normal1..3, which the DepthOnlyConsumer will ignore.
-			triangleRasterizer.rasterize(t, normal1, normal2, normal3, new DepthOnlyConsumer(zBuffer));
-			return;
 		}
 
 		boolean useTexture = texture && t.getTexture() != null;

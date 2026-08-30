@@ -12,30 +12,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 /**
- * ------------------------------------------------------------------------------ 
- * MIT License
- * 
- * Copyright (c) 2016-2026 Olivier BARRY
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
  * TriangleRasterizer is the pure geometric core of the rendering pipeline: it
  * knows how to walk the pixels covered by a triangle on screen, interpolate
  * per-vertex attributes (world position, normal, texture coordinates) with
@@ -98,9 +75,27 @@ public class TriangleRasterizer {
 	}
 
 	/**
-	 * Rasterizes a triangle without texture (e.g. shadow map depth-only pass, or an untextured
-	 * material). Equivalent to calling the full overload with a null texture coordinate for
-	 * all 3 corners.
+	 * Rasterizes a triangle for a depth-only pass (e.g. shadow map generation): no normal, world
+	 * position, or texture coordinate is interpolated at all, since a depth-only FragmentConsumer
+	 * (DepthOnlyConsumer) never reads Fragment.getNormal()/getWorldPosition()/getTexU() etc. This
+	 * is not just a convenience overload -- it skips real per-pixel work (world position + normal
+	 * interpolation) that a full rasterize() call would otherwise waste on every pixel of a shadow
+	 * map, and it means normals do NOT need to have been computed for this triangle beforehand
+	 * (transformElement(e, false) deliberately skips that, exactly for this pass).
+	 *
+	 * IMPORTANT: a FragmentConsumer used with THIS overload must only read
+	 * Fragment.getScreenX()/getScreenY()/getZ() -- getWorldPosition()/getNormal()/getTexU() etc.
+	 * are left untouched (still holding whatever a previous triangle's rasterize() call last wrote
+	 * into the reused Fragment instance) and must not be relied upon.
+	 */
+	public void rasterize(Triangle t, FragmentConsumer consumer) {
+		rasterize(t, null, null, null, null, null, null, consumer);
+	}
+
+	/**
+	 * Rasterizes a triangle without texture (e.g. an untextured material, or a depth-only pass
+	 * that still wants normal/world-position interpolation for some reason). Equivalent to calling
+	 * the full overload with a null texture coordinate for all 3 corners.
 	 */
 	public void rasterize(Triangle t, Vector3 normal1, Vector3 normal2, Vector3 normal3, FragmentConsumer consumer) {
 		rasterize(t, normal1, normal2, normal3, null, null, null, consumer);
@@ -113,7 +108,9 @@ public class TriangleRasterizer {
 	 * @param t				the triangle to rasterize (used for screen/world vertex positions and texture)
 	 * @param normal1..3	per-corner normals to interpolate; pass each vertex's own normal for
 	 *						smooth shading, or the same face normal 3 times for flat shading —
-	 *						this class does not distinguish between the two cases
+	 *						this class does not distinguish between the two cases. Pass null for
+	 *						all three (see the depth-only overload above) to skip normal AND world
+	 *						position interpolation entirely for a pure depth-only pass.
 	 * @param texCoord1..3	per-corner homogeneous texture coordinates (as stored on Triangle), or
 	 *						null (all three) if this triangle has no texture. Interpolated here with
 	 *						perspective correction but left UN-divided by W — Fragment exposes the
@@ -229,11 +226,22 @@ public class TriangleRasterizer {
 		float wc = frustum ? 1 / zc : 1;
 		float wd = frustum ? 1 / zd : 1;
 
-		Vector4 worldEdge1 = Tools.interpolate(va.vertex.getWorldPos().times(wa), vb.vertex.getWorldPos().times(wb), gradient1);
-		Vector4 worldEdge2 = Tools.interpolate(vc.vertex.getWorldPos().times(wc), vd.vertex.getWorldPos().times(wd), gradient2);
+		Vector4 worldEdge1 = null, worldEdge2 = null;
+		Vector3 normalEdge1 = null, normalEdge2 = null;
 
-		Vector3 normalEdge1 = lerpV3(va.normal.times(wa), vb.normal.times(wb), gradient1);
-		Vector3 normalEdge2 = lerpV3(vc.normal.times(wc), vd.normal.times(wd), gradient2);
+		// Depth-only convention: normal == null means "skip normal AND world position
+		// interpolation entirely" -- used by the no-attribute rasterize(Triangle, FragmentConsumer)
+		// overload for shadow map generation, where a DepthOnlyConsumer never reads either, and
+		// where normals may not even have been computed for this triangle at all (transformElement
+		// is called with normals=false for that pass).
+		boolean needsShadingAttributes = va.normal != null;
+		if (needsShadingAttributes) {
+			worldEdge1 = Tools.interpolate(va.vertex.getWorldPos().times(wa), vb.vertex.getWorldPos().times(wb), gradient1);
+			worldEdge2 = Tools.interpolate(vc.vertex.getWorldPos().times(wc), vd.vertex.getWorldPos().times(wd), gradient2);
+
+			normalEdge1 = lerpV3(va.normal.times(wa), vb.normal.times(wb), gradient1);
+			normalEdge2 = lerpV3(vc.normal.times(wc), vd.normal.times(wd), gradient2);
+		}
 
 		boolean hasTexture = va.texCoord != null;
 		Vector4 texEdge1 = null, texEdge2 = null;
@@ -266,12 +274,17 @@ public class TriangleRasterizer {
 
 			float wPixel = frustum ? z : 1; // undoes the /z weighting above; no-op under Orthographic
 
-			Vector4 worldPos = Tools.interpolate(worldEdge1, worldEdge2, gradient).times(wPixel);
-			Vector3 normal = lerpV3(normalEdge1, normalEdge2, gradient).times(wPixel);
-
 			fragment.setScreen(x, y, z);
-			fragment.setWorldPosition(worldPos.getX(), worldPos.getY(), worldPos.getZ());
-			fragment.setNormal(normal.getX(), normal.getY(), normal.getZ());
+
+			if (needsShadingAttributes) {
+				Vector4 worldPos = Tools.interpolate(worldEdge1, worldEdge2, gradient).times(wPixel);
+				Vector3 normal = lerpV3(normalEdge1, normalEdge2, gradient).times(wPixel);
+				fragment.setWorldPosition(worldPos.getX(), worldPos.getY(), worldPos.getZ());
+				fragment.setNormal(normal.getX(), normal.getY(), normal.getZ());
+			}
+			// else: depth-only pass -- Fragment.getWorldPosition()/getNormal() are left untouched
+			// (stale from a previous triangle) on purpose; the consumer must not read them, see
+			// the depth-only rasterize() overload's Javadoc.
 
 			if (hasTexture) {
 				// Left un-divided on purpose: Fragment exposes raw (u, v, w) and it is up to
