@@ -59,11 +59,8 @@ public class Rasterizer {
 	protected ZBuffer zBuffer;
 	protected TriangleRasterizer triangleRasterizer;
 
-	// Diagnostics-only triangle counters for renderStats(), ported unchanged from the legacy
-	// Rasterizer (see its comment above about triangles_with_lines).
-	protected int rendered_triangles = 0;
-	protected int triangles_with_lines = 0;
-	protected int triangles_with_pixels = 0;
+	// Diagnostics-only, ported unchanged from the legacy Rasterizer -- see RasterizerStats' Javadoc.
+	protected RasterizerStats stats = new RasterizerStats();
 
 	/**
 	 * Creation of Rasterizer with requested references for run time.
@@ -145,6 +142,9 @@ public class Rasterizer {
 			// isTriangleNormal()/interpolate below (which reads getWorldNormal()) would risk the
 			// same NullPointerException found in ShadowingLight.generateShadowMap().
 			triangleRasterizer.rasterize(t, new DepthOnlyConsumer(zBuffer));
+			// Legacy parity: the old rasterizeTriangle() incremented these same counters for the
+			// shadowmap path too (one continuous method, no early branch) -- preserved here.
+			stats.recordTriangle(triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
 			return;
 		}
 
@@ -185,9 +185,17 @@ public class Rasterizer {
 			triangleRasterizer.rasterize(t, normal1, normal2, normal3, consumer);
 		}
 
-		// Diagnostics-only counters, ported unchanged from the legacy Rasterizer.
-		rendered_triangles++;
-		if (triangleRasterizer.getRenderedPixels() > 0) triangles_with_pixels++;
+		// Diagnostics-only counter, ported unchanged from the legacy Rasterizer.
+		stats.recordTriangle(triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
+	}
+
+	/**
+	 * Call once per frame (e.g. from RenderEngine.render(), after all triangles for that frame
+	 * have been rasterized) to compute this-frame deltas -- see RasterizerStats.endFrame()'s
+	 * Javadoc. Optional: lifetime totals in renderStats() work fine even if this is never called.
+	 */
+	public void endFrame() {
+		stats.endFrame();
 	}
 
 	public int getRenderedPixels() {
@@ -199,6 +207,6 @@ public class Rasterizer {
 	}
 
 	public String renderStats() {
-		return "Rasterizer - Triangles: rendered: " + rendered_triangles + ", rendered with lines: " + triangles_with_lines + ", rendered with pixels: " + triangles_with_pixels;
+		return stats.toString();
 	}
 }

@@ -3,6 +3,7 @@ package com.aventura.model.light;
 import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.DepthOnlyConsumer;
 import com.aventura.engine.ModelViewProjection;
+import com.aventura.engine.RasterizerStats;
 import com.aventura.engine.TriangleRasterizer;
 import com.aventura.engine.ZBuffer;
 import com.aventura.math.Constants;
@@ -89,6 +90,14 @@ public abstract class ShadowingLight extends Light {
 	// Shadow map
 	int map_size = 0;
 	protected MapView map; // As an attribute of the (Shadowing)Light, there will be multiple maps if multiple lights
+
+	// Diagnostics for shadow map generation: reuses RasterizerStats (see its Javadoc) to give
+	// both lifetime totals and "last generation" deltas -- e.g. getShadowMapStats().getTrianglesThisFrame()
+	// tells you how many triangles went into the most recent generateShadowMap(World) call, which is a
+	// quick way to spot an empty/all-far shadow map (a very common shadow-mapping bug) while the
+	// shadow-calculation rework mentioned in the backlog is still pending.
+	protected RasterizerStats shadowMapStats = new RasterizerStats();
+	private int trianglesThisGeneration = 0; // reset at the start of each generateShadowMap(World) call
 	
 	// Default constructor
 	public ShadowingLight() {
@@ -195,11 +204,23 @@ public abstract class ShadowingLight extends Light {
 		// (as an earlier version of this method did) was pure waste.
 		mvp_light.calculateVPMatrix();
 
+		trianglesThisGeneration = 0;
+
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
 			generateShadowMap(e, rasterizer, consumer); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
+
+		// Diagnostics: recorded as a single batch since TriangleRasterizer's pixel counters
+		// accumulate over the whole pass (never reset per-triangle here), unlike the main render
+		// pass which resets and reads them triangle by triangle.
+		shadowMapStats.recordBatch(trianglesThisGeneration, rasterizer.getRenderedPixels(), rasterizer.getDiscardedPixels());
+		shadowMapStats.endFrame();
+	}
+
+	public RasterizerStats getShadowMapStats() {
+		return shadowMapStats;
 	}
 
 	protected void generateShadowMap(Element e, TriangleRasterizer rasterizer, DepthOnlyConsumer consumer) {
@@ -220,6 +241,7 @@ public abstract class ShadowingLight extends Light {
 				// normals aren't even computed for this triangle during shadow map generation
 				// (transformElement(e, false) above deliberately skips that).
 				rasterizer.rasterize(t, consumer);
+				trianglesThisGeneration++;
 			}
 		}
 
