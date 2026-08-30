@@ -11,6 +11,7 @@ import javax.swing.WindowConstants;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
+import com.aventura.engine.RasterizerStats;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.vector.Vector3;
@@ -159,11 +160,42 @@ public class TestBoxTexture {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
+		int totalFrames = 3*nb_images + 1;
+		int statsIntervalFrames = 60; // Print a lightweight progress line every N frames, to avoid flooding the console
+
 		for (int i=0; i<=3*nb_images; i++) {
 			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
 			elm.setTransformation(r);
 			renderer.render();
+
+			if (i % statsIntervalFrames == 0) {
+				// This-frame deltas (RasterizerStats.endFrame() is called automatically at the end
+				// of every RenderEngine.render()) -- shows per-frame cost without wading through
+				// the full cumulative report below.
+				RasterizerStats frameStats = renderer.getRasterizerStats();
+				System.out.println("--- Frame " + i + "/" + totalFrames + " -- this frame: "
+						+ frameStats.getTrianglesThisFrame() + " triangles, "
+						+ frameStats.getRenderedPixelsThisFrame() + " px rendered, "
+						+ frameStats.getDiscardedPixelsThisFrame() + " px discarded ---");
+			}
 		}
+
+		System.out.println("********* Rendering complete *********");
+		System.out.println();
+		System.out.println("--- Final report (RenderEngine + Rasterizer, cumulative over " + totalFrames + " frames) ---");
+		System.out.println(renderer.renderStats());
+
+		// Individual cumulative counters, straight from RasterizerStats, for anything not already
+		// folded into the renderStats() summary string above.
+		RasterizerStats finalStats = renderer.getRasterizerStats();
+		System.out.println("--- RasterizerStats detail ---");
+		System.out.println("Rendered triangles (lifetime): " + finalStats.getRenderedTriangles());
+		System.out.println("Triangles with pixels (lifetime): " + finalStats.getTrianglesWithPixels());
+		System.out.println("Rendered pixels (lifetime): " + finalStats.getTotalRenderedPixels());
+		System.out.println("Discarded pixels (lifetime): " + finalStats.getTotalDiscardedPixels());
+		System.out.println("Last frame -- triangles: " + finalStats.getTrianglesThisFrame()
+				+ ", pixels rendered: " + finalStats.getRenderedPixelsThisFrame()
+				+ ", pixels discarded: " + finalStats.getDiscardedPixelsThisFrame());
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}
