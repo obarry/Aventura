@@ -232,4 +232,8 @@ public class Rasterizer {
 	public String renderStats() {
 		return stats.toString();
 	}
+
+	public RasterizerStats getStats() {
+		return stats;
+	}
 }

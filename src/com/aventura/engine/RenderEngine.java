@@ -602,5 +602,10 @@ public class RenderEngine {
 
 	}
 
+	/** Direct access to the Rasterizer's RasterizerStats for individual counters (lifetime totals, this-frame deltas). */
+	public RasterizerStats getRasterizerStats() {
+		return rasterizer.getStats();
+	}
+
 
 }
