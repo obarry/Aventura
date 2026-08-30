@@ -39,7 +39,6 @@ import com.aventura.view.MapView;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  * 
- * 
  * COMPATIBILITY FAÇADE. Keeps the exact public API of the original Rasterizer
  * (same constructors, same rasterizeTriangle(...) signature) so that existing
  * callers (RenderEngine, test apps) keep compiling and behaving the same way,
@@ -83,11 +82,8 @@ public class Rasterizer {
 	protected ZBuffer zBuffer;
 	protected TriangleRasterizer triangleRasterizer;
 
-	// Diagnostics-only triangle counters for renderStats(), ported unchanged from the legacy
-	// Rasterizer (see its comment above about triangles_with_lines).
-	protected int rendered_triangles = 0;
-	protected int triangles_with_lines = 0;
-	protected int triangles_with_pixels = 0;
+	// Diagnostics-only, ported unchanged from the legacy Rasterizer -- see RasterizerStats' Javadoc.
+	protected RasterizerStats stats = new RasterizerStats();
 
 	/**
 	 * Creation of Rasterizer with requested references for run time.
@@ -162,9 +158,23 @@ public class Rasterizer {
 		// every rasterizeTriangle() call) -- see TriangleRasterizer.resetStats()'s Javadoc.
 		triangleRasterizer.resetStats();
 
+		if (shadowmap) {
+			// Depth-only pass: uses TriangleRasterizer's dedicated depth-only overload, which
+			// skips normal/world-position interpolation entirely -- normals may not even be
+			// computed at all for this triangle during a shadow map pass, so resolving
+			// isTriangleNormal()/interpolate below (which reads getWorldNormal()) would risk the
+			// same NullPointerException found in ShadowingLight.generateShadowMap().
+			triangleRasterizer.rasterize(t, new DepthOnlyConsumer(zBuffer));
+			// Legacy parity: the old rasterizeTriangle() incremented these same counters for the
+			// shadowmap path too (one continuous method, no early branch) -- preserved here.
+			stats.recordTriangle(triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
+			return;
+		}
+
 		// Resolve which 3 normals to interpolate -- this is the exact isTriangleNormal/interpolate
 		// logic from the legacy rasterizeTriangle(); TriangleRasterizer itself doesn't need to know
-		// about this distinction (see its class Javadoc).
+		// about this distinction (see its class Javadoc). Only needed below this point (normal
+		// rendering), never for the depth-only shadowmap path above.
 		Vector3 normal1, normal2, normal3;
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 flat = t.getWorldNormal();
@@ -175,13 +185,6 @@ public class Rasterizer {
 			normal1 = t.getV1().getWorldNormal();
 			normal2 = t.getV2().getWorldNormal();
 			normal3 = t.getV3().getWorldNormal();
-		}
-
-		if (shadowmap) {
-			// Depth-only pass: Material/Lighting are irrelevant, TriangleRasterizer just needs
-			// something to interpolate for normal1..3, which the DepthOnlyConsumer will ignore.
-			triangleRasterizer.rasterize(t, normal1, normal2, normal3, new DepthOnlyConsumer(zBuffer));
-			return;
 		}
 
 		boolean useTexture = texture && t.getTexture() != null;
@@ -205,9 +208,17 @@ public class Rasterizer {
 			triangleRasterizer.rasterize(t, normal1, normal2, normal3, consumer);
 		}
 
-		// Diagnostics-only counters, ported unchanged from the legacy Rasterizer.
-		rendered_triangles++;
-		if (triangleRasterizer.getRenderedPixels() > 0) triangles_with_pixels++;
+		// Diagnostics-only counter, ported unchanged from the legacy Rasterizer.
+		stats.recordTriangle(triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
+	}
+
+	/**
+	 * Call once per frame (e.g. from RenderEngine.render(), after all triangles for that frame
+	 * have been rasterized) to compute this-frame deltas -- see RasterizerStats.endFrame()'s
+	 * Javadoc. Optional: lifetime totals in renderStats() work fine even if this is never called.
+	 */
+	public void endFrame() {
+		stats.endFrame();
 	}
 
 	public int getRenderedPixels() {
@@ -219,6 +230,6 @@ public class Rasterizer {
 	}
 
 	public String renderStats() {
-		return "Rasterizer - Triangles: rendered: " + rendered_triangles + ", rendered with lines: " + triangles_with_lines + ", rendered with pixels: " + triangles_with_pixels;
+		return stats.toString();
 	}
 }

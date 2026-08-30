@@ -283,6 +283,9 @@ public class RenderEngine {
 
 		// Switch back and front buffers and request GUI repaint
 		gUIView.renderView();
+
+		// Snapshot this frame's diagnostic deltas (RasterizerStats) -- see its Javadoc.
+		rasterizer.endFrame();
 		
 		long end_millisec = System.currentTimeMillis();
 		
