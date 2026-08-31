@@ -11,30 +11,7 @@ import com.aventura.model.world.triangle.Triangle;
 import com.aventura.view.GUIView;
 
 /**
- * ------------------------------------------------------------------------------ 
- * MIT License
- * 
- * Copyright (c) 2016-2026 Olivier BARRY
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
  * Draws lines on screen for two related but distinct needs:
  * - Triangle wireframe edges, from Vertex data already projected by the ongoing
  *   per-Element Model*View*Projection pipeline (getProjPos()).
@@ -62,17 +39,16 @@ public class ScreenLineRenderer {
 
 	private final PerspectiveContext perspectiveCtx;
 
-	// The camera's single, frame-lifetime ModelViewProjection instance (not a light's) — used only
-	// for its VP matrix (see drawVector()). calculateVPMatrix() must have been called on it at
-	// least once before any drawVector() call; since view/projection are constant for a
-	// RenderEngine's whole lifetime, this is expected to happen once, at RenderEngine construction.
-	private final ModelViewProjection modelViewProjection;
+	// The camera's single, frame-lifetime ViewProjection instance (not a light's) — used only for
+	// drawVector()'s world-space projection. Its VP matrix is ready as soon as it's constructed
+	// (no separate "calculate" call needed, unlike the legacy ModelViewProjection).
+	private final ViewProjection viewProjection;
 
 	private final GUIView view;
 
-	public ScreenLineRenderer(PerspectiveContext perspectiveCtx, ModelViewProjection modelViewProjection, GUIView view) {
+	public ScreenLineRenderer(PerspectiveContext perspectiveCtx, ViewProjection viewProjection, GUIView view) {
 		this.perspectiveCtx = perspectiveCtx;
-		this.modelViewProjection = modelViewProjection;
+		this.viewProjection = viewProjection;
 		this.view = view;
 	}
 
@@ -123,12 +99,12 @@ public class ScreenLineRenderer {
 	}
 
 	private int screenXWorld(Vector4 worldPoint) {
-		Vector4 clip = modelViewProjection.projectVP(worldPoint);
+		Vector4 clip = viewProjection.project(worldPoint);
 		return (int) (clip.get3DX() * perspectiveCtx.getPixelHalfWidth());
 	}
 
 	private int screenYWorld(Vector4 worldPoint) {
-		Vector4 clip = modelViewProjection.projectVP(worldPoint);
+		Vector4 clip = viewProjection.project(worldPoint);
 		return (int) (clip.get3DY() * perspectiveCtx.getPixelHalfHeight());
 	}
 }
