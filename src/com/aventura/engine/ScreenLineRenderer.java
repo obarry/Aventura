@@ -62,17 +62,16 @@ public class ScreenLineRenderer {
 
 	private final PerspectiveContext perspectiveCtx;
 
-	// The camera's single, frame-lifetime ModelViewProjection instance (not a light's) — used only
-	// for its VP matrix (see drawVector()). calculateVPMatrix() must have been called on it at
-	// least once before any drawVector() call; since view/projection are constant for a
-	// RenderEngine's whole lifetime, this is expected to happen once, at RenderEngine construction.
-	private final ModelViewProjection modelViewProjection;
+	// The camera's single, frame-lifetime ViewProjection instance (not a light's) — used only for
+	// drawVector()'s world-space projection. Its VP matrix is ready as soon as it's constructed
+	// (no separate "calculate" call needed, unlike the legacy ModelViewProjection).
+	private final ViewProjection viewProjection;
 
 	private final GUIView view;
 
-	public ScreenLineRenderer(PerspectiveContext perspectiveCtx, ModelViewProjection modelViewProjection, GUIView view) {
+	public ScreenLineRenderer(PerspectiveContext perspectiveCtx, ViewProjection viewProjection, GUIView view) {
 		this.perspectiveCtx = perspectiveCtx;
-		this.modelViewProjection = modelViewProjection;
+		this.viewProjection = viewProjection;
 		this.view = view;
 	}
 
@@ -123,12 +122,12 @@ public class ScreenLineRenderer {
 	}
 
 	private int screenXWorld(Vector4 worldPoint) {
-		Vector4 clip = modelViewProjection.projectVP(worldPoint);
+		Vector4 clip = viewProjection.project(worldPoint);
 		return (int) (clip.get3DX() * perspectiveCtx.getPixelHalfWidth());
 	}
 
 	private int screenYWorld(Vector4 worldPoint) {
-		Vector4 clip = modelViewProjection.projectVP(worldPoint);
+		Vector4 clip = viewProjection.project(worldPoint);
 		return (int) (clip.get3DY() * perspectiveCtx.getPixelHalfHeight());
 	}
 }

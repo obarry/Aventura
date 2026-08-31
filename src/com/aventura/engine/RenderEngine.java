@@ -117,8 +117,12 @@ public class RenderEngine {
 	// GUIView
 	private GUIView gUIView;
 	
-	// ModelViewProjection modelViewProjection
-	private ModelViewProjection modelViewProjection;
+	// Split from the former single ModelViewProjection class into its two real roles:
+	// - viewProjection: pure View*Projection projector, used by ScreenLineRenderer for debug vectors
+	// - elementTransform: mutating per-Element pipeline (clip-space position + world normal), used
+	//   in the main triangle-processing loop below
+	private ViewProjection viewProjection;
+	private ElementTransform elementTransform;
 	
 	// Rasterizer
 	private Rasterizer rasterizer;
@@ -147,13 +151,11 @@ public class RenderEngine {
 		this.lighting = lighting;
 		this.camera = camera;
 				
-		// Create ModelViewProjection matrix with for GUIView (World -> Camera) and Projection (Camera -> Homogeneous) Matrices
-		this.modelViewProjection = new ModelViewProjection(camera.getMatrix(), perspectiveCtx.getPerspective().getProjection());
-
-		// Computed once here rather than per-debug-vector-draw: view/projection are constant for
-		// this RenderEngine's whole lifetime (a RenderEngine is built for a single Camera), so
-		// there is no need to ever recompute this -- see ScreenLineRenderer.drawVector()'s Javadoc.
-		this.modelViewProjection.calculateVPMatrix();
+		// Create the pure View*Projection projector (for debug vectors) and the per-Element
+		// mutation pipeline (for the main render loop) -- view/projection are constant for this
+		// RenderEngine's whole lifetime (built for a single Camera), computed once, here.
+		this.viewProjection = new ViewProjection(camera, perspectiveCtx.getPerspective());
+		this.elementTransform = new ElementTransform(camera.getMatrix(), perspectiveCtx.getPerspective().getProjection());
 
 		// Delegate rasterization tasks to a dedicated engine
 		// No shading in this constructor -> null
@@ -165,7 +167,7 @@ public class RenderEngine {
 	public void setView(GUIView v) {
 		gUIView = v;
 		rasterizer.setView(v);
-		screenLineRenderer = new ScreenLineRenderer(perspectiveContext, modelViewProjection, v);
+		screenLineRenderer = new ScreenLineRenderer(perspectiveContext, viewProjection, v);
 	}
 	
 	/**
@@ -173,7 +175,7 @@ public class RenderEngine {
 	 * 
 	 * It processes all triangles of the World, Element by Element.
 	 * For each Element it takes all Triangles one by one and renderContext them.
-	 * - Full ModelViewProjection modelViewProjection into homogeneous coordinates
+	 * - Full transformation (via ElementTransform) into homogeneous coordinates
 	 * - Rasterization
 	 * It uses the parameters of PerspectiveContext and RenderContext:
 	 * - GUIView information contained into PerspectiveContext
@@ -184,7 +186,7 @@ public class RenderEngine {
 	 * - Screen and display area
 	 * - etc.
 	 * 
-	 * But this method will also recalculate each time the full ModelViewProjection modelViewProjection Matrix including the Camera so any change
+	 * But this method will also recalculate each time the full ElementTransform matrix including the Camera so any change
 	 * will be taken into account.
 	 * 
 	 * @return the zBuffer in form of a MapView that can be easily displayed in GUI.
@@ -321,11 +323,11 @@ public class RenderEngine {
 //			model = matrix.times(e.getTransformation());
 //		}
 		
-		modelViewProjection.setModel(e.getTransformation()); // Set the Model matrix (Element to World)
-		modelViewProjection.calculateNormalMatrix(); // Calculate the Normal matrix
-		modelViewProjection.calculateMVPMatrix(); // Compute the whole ModelViewProjection matrix including Model matrix (Element to World transformation)
+		// Single call replaces the legacy setModel()+calculateNormalMatrix()+calculateMVPMatrix()
+		// trio -- see ElementTransform.setModel()'s Javadoc.
+		elementTransform.setModel(e.getTransformation(), true);
 		// Then transform the Element with this MVP matrix
-		modelViewProjection.transformElement(e, true); // Calculate projection for all vertices of this Element with normals calculation (and recursively for SubElements)
+		elementTransform.transformElement(e, true); // Calculate projection for all vertices of this Element with normals calculation (and recursively for SubElements)
 				
 		// Now all vertices of this Element are "transformed" into Clip coordinates, then process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
@@ -356,7 +358,7 @@ public class RenderEngine {
 	 * This method will calculate transformed triangle (which consists in transforming each vertex) then it delegates
 	 * the low level rasterization of the triangle to the Rasterizer, using appropriate methods based on the type of
 	 * rendering that is expected (lines, plain faces, interpolation, etc.). 
-	 * Pre-requisite: This assumes that the initialization of ModelViewProjection modelViewProjection is already done
+	 * Pre-requisite: This assumes that the initialization of ElementTransform/ViewProjection is already done
 	 * 
 	 * @param to the triangle to render
 	 * @param c the color of the Element, can be overridden if color defined (not null) at Triangle level
@@ -385,7 +387,7 @@ public class RenderEngine {
 			if (renderContext.renderingType != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal() || backfaceCulling) {
 				// Calculate normal if not calculated
 				if (t.getNormal()==null) t.calculateNormal();
-				modelViewProjection.transformNormal(t);
+				elementTransform.transformNormal(t);
 			}
 			
 			// If RENDERING_TYPE_LINE then no backface culling
@@ -472,13 +474,13 @@ public class RenderEngine {
 					return t.getWorldNormal().dot(ey)>0;
 				case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
 					// Need only to test the normal in homogeneous coordinate has a non-null positive Z component (hence pointing behind camera)
-					return modelViewProjection.projectNormal(t).getZ()>0;
+					return elementTransform.projectNormal(t).getZ()>0;
 				default:
 					// Should never happen
 					break;
 				}
 				// Should never happen
-				return modelViewProjection.projectNormal(t).getZ()>0;
+				return elementTransform.projectNormal(t).getZ()>0;
 			} else {
 				switch (perspectiveContext.getPerspectiveType()) {
 				case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM:
@@ -497,14 +499,14 @@ public class RenderEngine {
 		} catch (Exception e) { // If no Vertex normals, then use Triangle normal with same test
 			//Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
 			//return t.getWorldNormal().dot(ey)>0;
-			return modelViewProjection.projectNormal(t).getZ()>0;
+			return elementTransform.projectNormal(t).getZ()>0;
 		}
 	}
 	
 
 	public void displayLandMarkLines() {
 		// Entirely in world space -- no Model matrix involved (drawVector uses View*Projection
-		// only), so there is no need to reset modelViewProjection to an identity Model anymore.
+		// only), so there is no need to reset the Model matrix to identity anymore.
 		Vector4 origin = Vector4.ZERO_POINT;
 		screenLineRenderer.drawVector(origin, Vector3.X_AXIS, renderContext.landmarkXColor);
 		screenLineRenderer.drawVector(origin, Vector3.Y_AXIS, renderContext.landmarkYColor);

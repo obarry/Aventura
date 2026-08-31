@@ -1,7 +1,8 @@
 package com.aventura.model.light;
 
 import com.aventura.context.PerspectiveContext;
-import com.aventura.engine.ModelViewProjection;
+import com.aventura.engine.ElementTransform;
+import com.aventura.engine.ViewProjection;
 import com.aventura.math.projection.OrthographicProjection;
 import com.aventura.math.tools.BoundingBox4;
 import com.aventura.math.vector.GeometryTools;
@@ -323,7 +324,10 @@ public class DirectionalLight extends ShadowingLight {
 		// ShadowingLight.generateShadowMap(), right when map_size is used, instead of here.
 
 		// Create the MVP using this orthographic projection matrix
-		mvp_light = new ModelViewProjection(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
+		// Both constructed once, here, for this light's lifetime -- see their fields' Javadoc on
+		// ShadowingLight for why two objects now cover what a single ModelViewProjection used to.
+		viewProjection_light = new ViewProjection(camera_light, perspectiveCtx_light.getPerspective());
+		elementTransform_light = new ElementTransform(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
 		
 	}
 

@@ -2,9 +2,10 @@ package com.aventura.model.light;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.DepthOnlyConsumer;
-import com.aventura.engine.ModelViewProjection;
+import com.aventura.engine.ElementTransform;
 import com.aventura.engine.RasterizerStats;
 import com.aventura.engine.TriangleRasterizer;
+import com.aventura.engine.ViewProjection;
 import com.aventura.engine.ZBuffer;
 import com.aventura.math.Constants;
 import com.aventura.math.projection.Projection;
@@ -78,7 +79,15 @@ public abstract class ShadowingLight extends Light {
 	// NOTE: rasterizer_light (an owned Rasterizer instance) was removed as a persistent field.
 	// TriangleRasterizer is now created fresh inside generateShadowMap(), together with a fresh
 	// ZBuffer for that pass -- see the comment there for why.
-	protected ModelViewProjection mvp_light; // ModelViewProjection matrix and vertices conversion tool for the calculation of the Shadow map
+
+	// Split from the former single ModelViewProjection into its two real roles (see their own
+	// Javadoc): viewProjection_light for the per-fragment shadowFactorAt() test, elementTransform_light
+	// for building each shadow-map triangle's screen position per Element, just like the main camera.
+	// Both are constructed once (in initShadowing(), by each ShadowingLight subclass) since
+	// view/projection for a light are fixed for its lifetime -- same immutability the legacy
+	// ModelViewProjection already had, just made explicit.
+	protected ViewProjection viewProjection_light;
+	protected ElementTransform elementTransform_light;
 
 	// GUIView Frustum
 	//protected Vector4[][] frustum;
@@ -199,11 +208,10 @@ public abstract class ShadowingLight extends Light {
 		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx_light, shadowZBuffer);
 		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
 
-		// Computed once here rather than per-fragment inside shadowFactorAt() -- view/projection
-		// are constant for the whole shadow map generation pass, so recomputing this per pixel
-		// (as an earlier version of this method did) was pure waste.
-		mvp_light.calculateVPMatrix();
-
+		// NOTE: no VP calculation needed here at all anymore -- ViewProjection computes it once,
+		// at construction (in initShadowing()), rather than needing an explicit recalculation call
+		// per pass (an earlier version of this method still recomputed it per-fragment inside
+		// shadowFactorAt(), which was pure waste; this removes even the once-per-pass call).
 		trianglesThisGeneration = 0;
 
 		// For each element of the world
@@ -225,11 +233,13 @@ public abstract class ShadowingLight extends Light {
 
 	protected void generateShadowMap(Element e, TriangleRasterizer rasterizer, DepthOnlyConsumer consumer) {
 
-		mvp_light.setModel(e.getTransformation());
-		mvp_light.calculateMVPMatrix(); // Compute the whole ModelViewProjection mvp_light matrix including Camera (gUIView)
+		// Single call replaces the legacy setModel()+calculateMVPMatrix() pair -- withNormals=false
+		// since shadow map generation never needs normals (matches the legacy behavior, which
+		// never called calculateNormalMatrix() for mvp_light either).
+		elementTransform_light.setModel(e.getTransformation(), false);
 
 		// Calculate projection for all vertices of this Element
-		mvp_light.transformElement(e, false); // Calculate prj_pos of each vertex of this Element
+		elementTransform_light.transformElement(e, false); // Calculate prj_pos of each vertex of this Element
 
 		// Process each Triangle (this will update the shadow map's ZBuffer)
 		for (int j=0; j<e.getTriangles().size(); j++) {
@@ -261,12 +271,6 @@ public abstract class ShadowingLight extends Light {
 	 * method only needs to apply this light's own View*Projection to it -- no separate Model
 	 * matrix handling is needed here, which is what the legacy code was missing.
 	 *
-	 * ASSUMPTION: ModelViewProjection exposes some way to project a raw Vector4 world position
-	 * through the light's current View*Projection matrix. The legacy code only ever projected a
-	 * Vertex (projectVPVertex(Vertex)); I don't have ModelViewProjection.java, so I've written this
-	 * against a hypothetical projectVP(Vector4) -- please point me to the right method (or let me
-	 * see ModelViewProjection.java) so I can correct this.
-	 *
 	 * @param worldPosition world-space position to test (e.g. Fragment.getWorldPosition())
 	 * @return 1.0 if fully lit, 0.0 if in shadow
 	 */
@@ -278,11 +282,7 @@ public abstract class ShadowingLight extends Light {
 			return 1f;
 		}
 
-		// NOTE: mvp_light.calculateVPMatrix() used to be called here, per-fragment -- moved to
-		// generateShadowMap() (called once per frame) since view/projection never change during
-		// a shadow map pass; recomputing per pixel was pure waste.
-
-		Vector4 posInLightSpace = mvp_light.projectVP(worldPosition); // See ASSUMPTION above.
+		Vector4 posInLightSpace = viewProjection_light.project(worldPosition);
 
 		// Map is stored in [0, 1] while clip-space coordinates are in [-1, 1].
 		float depth = map.getInterpolation((posInLightSpace.getX() + 1) / 2, (posInLightSpace.getY() + 1) / 2);
@@ -295,10 +295,6 @@ public abstract class ShadowingLight extends Light {
 		return 1f;
 	}
 
-	public ModelViewProjection getModelView() {
-		return mvp_light;
-	}
-	
 	public float getMap(int x, int y) {
 		return map.get(x, y);
 	}
