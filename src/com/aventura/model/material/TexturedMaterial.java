@@ -9,30 +9,7 @@ import com.aventura.tools.color.ColorTools;
 import com.aventura.tools.tracing.Tracer;
 
 /**
- * ------------------------------------------------------------------------------ 
- * MIT License
- * 
- * Copyright (c) 2016-2026 Olivier BARRY
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
  * A Material backed by a Texture, tinted by a diffuse color — matching the
  * legacy Rasterizer's behavior where the surface color (D) is ALWAYS
  * multiplied with the texture sample (T), never replaced by it: final base
@@ -111,17 +88,9 @@ public class TexturedMaterial implements Material {
 			break;
 		}
 
-		Color textureSample;
-		try {
-			textureSample = texture.getInterpolatedColor(u, v);
-		} catch (Exception e) {
-			// NOTE: the legacy Rasterizer caught this the same way (printStackTrace, then silently
-			// left the pixel's texture color as whatever was left over from the previous pixel).
-			// Here we log through Tracer and return a visible fallback instead, so a broken texture
-			// sample is obvious in the render rather than silently blending stale data.
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Error sampling texture at (" + u + ", " + v + "): " + e.getMessage());
-			return Color.MAGENTA;
-		}
+		// getInterpolatedColor() no longer throws a checked exception nor returns null (see its
+		// Javadoc) -- the try/catch this used to need has been removed accordingly.
+		Color textureSample = texture.getInterpolatedColor(u, v);
 
 		// D * T -- diffuseTint (D) is ALWAYS applied when present, matching the legacy behavior;
 		// null means "no tint", i.e. the texture is shown as-is (equivalent to D = white).
