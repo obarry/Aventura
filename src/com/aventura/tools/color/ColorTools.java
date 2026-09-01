@@ -124,8 +124,11 @@ public class ColorTools {
 		float g = 0;
 		float b = 0;
 		
+		// Reused across the loop instead of letting getRGBColorComponents(null) allocate a fresh
+		// float[3] on every iteration.
+		float[] c_array = new float[3];
 		for (int i=0; i<ctab.length; i++) {
-			float[] c_array = ctab[i].getRGBColorComponents(null);
+			ctab[i].getRGBColorComponents(c_array);
 			r = r + c_array[0];
 			g = g + c_array[1];
 			b = b + c_array[2];
@@ -140,12 +143,18 @@ public class ColorTools {
 	 * @return a newly created Color that is the result of the multiplication of all Colors passed in array
 	 */
 	public static Color multColors(Color[] ctab) {
-		float r = 0;
-		float g = 0;
-		float b = 0;
+		// BUGFIX: these must start at 1, not 0 -- a product accumulator seeded at 0 stays 0
+		// forever (0 * anything = 0), so this method used to always return black regardless of
+		// input.
+		float r = 1;
+		float g = 1;
+		float b = 1;
 		
+		// Reused across the loop instead of letting getRGBColorComponents(null) allocate a fresh
+		// float[3] on every iteration.
+		float[] c_array = new float[3];
 		for (int i=0; i<ctab.length; i++) {
-			float[] c_array = ctab[i].getRGBColorComponents(null);
+			ctab[i].getRGBColorComponents(c_array);
 			r = r * c_array[0];
 			g = g * c_array[1];
 			b = b * c_array[2];
@@ -237,7 +246,10 @@ public class ColorTools {
 	 * @param v_ratio Ratio of the first position on second axis (second position ratio is 1-v_ratio)
 	 * @return the interpolated Bi-linear filtered component
 	 */
-	protected static float getBilinearFilteredComponent(float z11, float z12, float z21, float z22, float u_ratio, float v_ratio) {
+	// Widened from protected to public: Texture (a different package) now calls this directly on
+	// raw float components extracted from packed ARGB ints, to avoid allocating 4 intermediate
+	// Color objects + 4 float[3] arrays per texture sample -- see Texture.getInterpolatedColor().
+	public static float getBilinearFilteredComponent(float z11, float z12, float z21, float z22, float u_ratio, float v_ratio) {
 		
 		float u_opposite = 1 - u_ratio;
 		float v_opposite = 1 - v_ratio;

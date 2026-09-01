@@ -171,11 +171,21 @@ public class Texture {
 	
 	/**
 	 * Calculate the bilinear interpolated Color of this Texture at coordinates <s,t> with 0 <= s <= 1 and 0 <= t <= 1
+	 *
+	 * PERF NOTE: works directly on the packed ARGB ints stored in tex[][], extracting R/G/B as
+	 * floats via bit shifts rather than constructing 4 intermediate Color objects (one per
+	 * sample) and extracting their components via getRGBColorComponents() (which itself
+	 * allocates a float[3] per call). Only one Color is ever created here, at the very end --
+	 * same "allocate once, at the end" approach already used for Fragment/RGBAccumulator
+	 * elsewhere in the rendering pipeline. This matters because this method runs once per
+	 * textured pixel, potentially the hottest per-pixel path in the whole renderer.
+	 *
 	 * @param s
 	 * @param t
-	 * @return
+	 * @return the interpolated Color, never null (a texture with degenerate 0 width/height would
+	 *         still fail, but that was already true before and is out of scope here)
 	 */
-	public Color getInterpolatedColor(float s, float t) throws Exception {
+	public Color getInterpolatedColor(float s, float t) {
 
 		// Calculate the coordinates within the texture (-0.5 as per bressenham)
 		float u = s * this.width - 0.5f;
@@ -187,28 +197,53 @@ public class Texture {
 		int x1 = x0 + 1;
 		int y1 = y0 + 1;
 		
-		// Calculate the frac value of u and v (their respective complement to 1 will be computed in the getBilinearFilteredColor method directly)
-		float u_ratio = (float)u - x0;
-		float v_ratio = (float)v - y0;
-		
-		if (x0<0) x0 = 0;
-		if (y0<0) y0 = 0;
-		if (x0>=this.width)  x0 = this.width - 1;
-		if (y0>=this.height) y0 = this.height - 1;
-		if (x1<0) x1 = 0;
-		if (y1<0) y1 = 0;
-		if (x1>=this.width)  x1 = this.width - 1;
-		if (y1>=this.height) y1 = this.height - 1;
+		// Calculate the frac value of u and v (their respective complement to 1 will be computed in getBilinearFilteredComponent directly)
+		float u_ratio = u - x0;
+		float v_ratio = v - y0;
 
-		// Calculate the interpolated value as per Bilinear Filtering algorithm
-		Color result = null;
-		try {
-		 result = ColorTools.getBilinearFilteredColor(new Color(tex[x0][y0]), new Color(tex[x0][y1]), new Color(tex[x1][y0]), new Color(tex[x1][y1]), u_ratio, v_ratio);
-		} catch (java.lang.ArrayIndexOutOfBoundsException e) {
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Exception getting bilinear filtered color for: x0="+x0+" y0="+y0+" x1="+x1+" y1="+y1+". Texture width: "+this.width+" height:"+this.height);
-			e.printStackTrace();
-		}
-		return result;
+		x0 = clampToWidth(x0);
+		x1 = clampToWidth(x1);
+		y0 = clampToHeight(y0);
+		y1 = clampToHeight(y1);
+
+		int argb00 = tex[x0][y0];
+		int argb01 = tex[x0][y1];
+		int argb10 = tex[x1][y0];
+		int argb11 = tex[x1][y1];
+
+		float r = ColorTools.getBilinearFilteredComponent(red(argb00), red(argb01), red(argb10), red(argb11), u_ratio, v_ratio);
+		float g = ColorTools.getBilinearFilteredComponent(green(argb00), green(argb01), green(argb10), green(argb11), u_ratio, v_ratio);
+		float b = ColorTools.getBilinearFilteredComponent(blue(argb00), blue(argb01), blue(argb10), blue(argb11), u_ratio, v_ratio);
+
+		return new Color(clamp01(r), clamp01(g), clamp01(b));
+	}
+
+	private static float red(int argb) {
+		return ((argb >> 16) & 0xFF) / 255f;
+	}
+
+	private static float green(int argb) {
+		return ((argb >> 8) & 0xFF) / 255f;
+	}
+
+	private static float blue(int argb) {
+		return (argb & 0xFF) / 255f;
+	}
+
+	private static float clamp01(float v) {
+		return v < 0f ? 0f : (v > 1f ? 1f : v);
+	}
+
+	private int clampToWidth(int x) {
+		if (x < 0) return 0;
+		if (x >= width) return width - 1;
+		return x;
+	}
+
+	private int clampToHeight(int y) {
+		if (y < 0) return 0;
+		if (y >= height) return height - 1;
+		return y;
 	}
 	
 	public Color getColor(int x, int y) {
