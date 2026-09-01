@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import com.aventura.tools.color.ColorTools;
+import com.aventura.tools.color.RGBAccumulator;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -52,6 +52,12 @@ public class Texture {
 	// array containing data e.g. rgb values
 	protected int[][] tex;
 	protected int width, height;
+
+	// Reused across every call to getInterpolatedColor() -- same "own the mutable scratch object"
+	// pattern as Fragment (TriangleRasterizer) and RGBAccumulator (ShadingConsumer): one texture
+	// asset is typically sampled for many pixels, so this amortizes to zero allocations per call
+	// rather than one per call.
+	private final RGBAccumulator accumulator = new RGBAccumulator();
 	
 	/**
 	 * Create an empty Texture of a given width and height
@@ -211,11 +217,21 @@ public class Texture {
 		int argb10 = tex[x1][y0];
 		int argb11 = tex[x1][y1];
 
-		float r = ColorTools.getBilinearFilteredComponent(red(argb00), red(argb01), red(argb10), red(argb11), u_ratio, v_ratio);
-		float g = ColorTools.getBilinearFilteredComponent(green(argb00), green(argb01), green(argb10), green(argb11), u_ratio, v_ratio);
-		float b = ColorTools.getBilinearFilteredComponent(blue(argb00), blue(argb01), blue(argb10), blue(argb11), u_ratio, v_ratio);
+		// Bilinear filtering IS a weighted sum of 4 RGB samples (weights (1-u)(1-v), (1-u)v,
+		// u(1-v), uv) -- exactly the shape RGBAccumulator already handles for combining light
+		// contributions, so reused here rather than a separate per-channel helper. No extra
+		// allocation cost versus the 3-separate-channel-calls version: still zero intermediate
+		// allocations, one Color materialized at the end.
+		float u_opposite = 1f - u_ratio;
+		float v_opposite = 1f - v_ratio;
 
-		return new Color(clamp01(r), clamp01(g), clamp01(b));
+		accumulator.reset();
+		accumulator.add(red(argb00), green(argb00), blue(argb00), u_opposite * v_opposite);
+		accumulator.add(red(argb01), green(argb01), blue(argb01), u_opposite * v_ratio);
+		accumulator.add(red(argb10), green(argb10), blue(argb10), u_ratio * v_opposite);
+		accumulator.add(red(argb11), green(argb11), blue(argb11), u_ratio * v_ratio);
+
+		return accumulator.toColor();
 	}
 
 	private static float red(int argb) {
@@ -228,10 +244,6 @@ public class Texture {
 
 	private static float blue(int argb) {
 		return (argb & 0xFF) / 255f;
-	}
-
-	private static float clamp01(float v) {
-		return v < 0f ? 0f : (v > 1f ? 1f : v);
 	}
 
 	private int clampToWidth(int x) {

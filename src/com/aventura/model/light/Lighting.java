@@ -4,9 +4,9 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.engine.Fragment;
-import com.aventura.engine.RGBAccumulator;
 import com.aventura.math.vector.Vector3;
 import com.aventura.model.material.Material;
+import com.aventura.tools.color.RGBAccumulator;
 import com.aventura.tools.tracing.Tracer;
 
 

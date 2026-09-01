@@ -1,32 +1,9 @@
-package com.aventura.engine;
+package com.aventura.tools.color;
 
 import java.awt.Color;
 
 /**
- * ------------------------------------------------------------------------------ 
- * MIT License
- * 
- * Copyright (c) 2016-2026 Olivier BARRY
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
  * A mutable RGB accumulator used to combine multiple light contributions
  * (ambient + each light's diffuse/specular) into a final pixel color WITHOUT
  * allocating an intermediate java.awt.Color object at every combination step.
@@ -62,6 +39,18 @@ public class RGBAccumulator {
 		r += scratch[0] * scale;
 		g += scratch[1] * scale;
 		b += scratch[2] * scale;
+	}
+
+	/**
+	 * Adds (sampleR, sampleG, sampleB) * scale to the running total, without needing a
+	 * java.awt.Color at all -- for callers that already have raw components (e.g. Texture,
+	 * extracting R/G/B from a packed ARGB int via bit shifts) and would otherwise have to
+	 * construct a throwaway Color just to hand it to add(Color, float).
+	 */
+	public void add(float sampleR, float sampleG, float sampleB, float scale) {
+		r += sampleR * scale;
+		g += sampleG * scale;
+		b += sampleB * scale;
 	}
 
 	/** Adds (colorA * colorB) * scale to the running total, without allocating the intermediate product Color. */
