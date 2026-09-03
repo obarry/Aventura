@@ -8,8 +8,6 @@ import com.aventura.engine.TriangleRasterizer;
 import com.aventura.engine.ViewProjection;
 import com.aventura.engine.ZBuffer;
 import com.aventura.math.Constants;
-import com.aventura.math.projection.Projection;
-import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
