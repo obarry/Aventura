@@ -208,10 +208,13 @@ public abstract class ShadowingLight extends Light {
 		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx_light, shadowZBuffer);
 		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
 
-		// NOTE: no VP calculation needed here at all anymore -- ViewProjection computes it once,
-		// at construction (in initShadowing()), rather than needing an explicit recalculation call
-		// per pass (an earlier version of this method still recomputed it per-fragment inside
-		// shadowFactorAt(), which was pure waste; this removes even the once-per-pass call).
+		// Recompute this light's View*Projection from its camera's CURRENT state, in case the
+		// light itself moved since the last generation (same reasoning as
+		// RenderEngine.render()'s viewProjection.refresh() call -- see ViewProjection's Javadoc
+		// for why a cached vp can silently go stale after Camera.updateCamera()). Cheap; done once
+		// per generation regardless of whether this light actually moved.
+		viewProjection_light.refresh();
+
 		trianglesThisGeneration = 0;
 
 		// For each element of the world
