@@ -217,6 +217,13 @@ public class RenderEngine {
 		nbt_out = 0;
 		nbt_bf = 0;
 		nbe = 0;
+
+		// Recompute the View*Projection matrix from the camera's CURRENT state -- necessary
+		// because Camera.updateCamera() mutates the same LookAt/Matrix4 object in place (rather
+		// than replacing it), so a cached vp would silently go stale after e.g. a mouse-driven
+		// camera move otherwise. Cheap (one matrix multiplication); done once per frame, shared by
+		// both elementTransform (main render loop) and screenLineRenderer (debug vectors).
+		viewProjection.refresh();
 		
 		// Geometry calculation : calculate World coordinates for all vertices of the World
 		world.worldProject(); // To be done before potential Light's cameras calculation (need full world geometry available to calculate bounding boxes etc.)

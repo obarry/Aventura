@@ -10,7 +10,30 @@ import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 
 /**
+ * ------------------------------------------------------------------------------ 
+ * MIT License
+ * 
+ * Copyright (c) 2016-2026 Olivier BARRY
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  * ------------------------------------------------------------------------------
+ * 
  * The mutating per-Element transformation pipeline: given a fixed view +
  * projection pair (constant for this object's lifetime) and a current Model
  * matrix (changes for every Element, potentially every frame), computes each
@@ -35,7 +58,10 @@ import com.aventura.tools.tracing.Tracer;
  */
 public class ElementTransform {
 
-	private final Matrix4 vp; // View*Projection, reused from a shared ViewProjection instance -- see its Javadoc
+	// Held live (not just its matrix snapshotted once) so that a viewProjection.refresh() call
+	// (e.g. after the camera moves) is picked up on the next setModel() -- see the bug this fixed,
+	// where caching vp as a final field here made ViewProjection.refresh() ineffective.
+	private final ViewProjection viewProjection;
 
 	private Matrix4 model;
 	private Matrix4 modelNormals; // null whenever the current Model was set with withNormals=false
@@ -49,7 +75,7 @@ public class ElementTransform {
 	 *                       both purposes, rather than redundantly by each.
 	 */
 	public ElementTransform(ViewProjection viewProjection) {
-		this.vp = viewProjection.getMatrix();
+		this.viewProjection = viewProjection;
 	}
 
 	/**
@@ -65,6 +91,7 @@ public class ElementTransform {
 	 */
 	public void setModel(Matrix4 model, boolean withNormals) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModel(model, withNormals=" + withNormals + ")");
+		Matrix4 vp = viewProjection.getMatrix(); // re-fetched every call -- reflects the latest refresh()
 		this.model = model;
 		this.full = vp.times(model); // was projection.times(view.times(model)) -- one multiplication instead of two, see class Javadoc
 
