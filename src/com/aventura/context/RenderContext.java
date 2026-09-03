@@ -52,6 +52,10 @@ public class RenderContext {
 	public static final int RENDERING_TYPE_MONOCHROME = 2;  		// Draw lines and fill with monochrome color each triangle
 	public static final int RENDERING_TYPE_PLAIN = 3;				// Fill each triangle with one color depending on Lighting and orientation
 	public static final int RENDERING_TYPE_INTERPOLATE = 4; 		// Fill each triangle by interpolating each pixel's color
+	public static final int RENDERING_TYPE_FLAT = 5;				// Fill each triangle using a single normal for the whole face (faceted look),
+																	// regardless of whether the triangle/mesh also has per-vertex normals --
+																	// unlike PLAIN, which only looks "flat" incidentally when the mesh happens
+																	// to carry an explicit per-triangle normal (Triangle.isTriangleNormal())
 
 	public static final int RENDERING_LINES_DISABLED = 0;
 	public static final int RENDERING_LINES_ENABLED = 1;
@@ -253,6 +257,9 @@ public class RenderContext {
 			break;
 		case RENDERING_TYPE_INTERPOLATE:
 			renderContext += "INTERPOLATE";
+			break;
+		case RENDERING_TYPE_FLAT:
+			renderContext += "FLAT";
 			break;
 		}
 		renderContext += "\n";
