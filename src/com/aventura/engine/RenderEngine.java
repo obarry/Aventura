@@ -81,17 +81,17 @@ import com.aventura.view.MapView;
  *     |        World        | <------+						  |			+---------------------+		|				|
  *     +---------------------+        |						  |			 		     |				|				|
  *                					  |						  |			+---------------------+		|				|
- *                   				  |						  +-------->|      Rasterizer     |-----+--------+		|
+ *                   				  |						  +-------->|  TriangleRasterizer |-----+--------+		|
  *     +---------------------+		  |						  |			+---------------------+		         |		|
  *     |      Lighting       | <------+						  |											     v		|
  *     +---------------------+		  |		     +---------------------+								+---------------------+
  *                ^                   |----------|    RenderEngine     |- - - - - - - - - - - - - - - ->|        GUIView      |
  *                |          		  |		     +---------------------+ 								+---------------------+
- *                |                   |                     |
- *     			  |			          |        		        v		
- *     +---------------------+ 		  |     +-------------------------------+
- *     |       Camera        | <------+-----|      ModelViewProjection      |
- *	   +---------------------+		    	+-------------------------------+
+ *                |                   |               |            |
+ *     			  |			          |               v            v
+ *     +---------------------+ 		  |     +-----------------+  +-------------------+
+ *     |       Camera        | <------+-----|  ViewProjection |->|  ElementTransform |
+ *	   +---------------------+		    	+-----------------+  +-------------------+
  *
  *          	 Model								 Engine						Context(s)						 GUIView
  *			com.aventura.model					com.aventura.engine			com.aventura.context			com.aventura.view
@@ -167,9 +167,11 @@ public class RenderEngine {
 				
 		// Create the pure View*Projection projector (for debug vectors) and the per-Element
 		// mutation pipeline (for the main render loop) -- view/projection are constant for this
-		// RenderEngine's whole lifetime (built for a single Camera), computed once, here.
+		// RenderEngine's whole lifetime (built for a single Camera), computed once, here, and
+		// shared between the two (ElementTransform reuses viewProjection's matrix rather than
+		// recomputing it).
 		this.viewProjection = new ViewProjection(camera, perspectiveCtx.getPerspective());
-		this.elementTransform = new ElementTransform(camera.getMatrix(), perspectiveCtx.getPerspective().getProjection());
+		this.elementTransform = new ElementTransform(viewProjection);
 
 		// Built once, here, rather than reallocated every frame (see initFrameZBuffer()) --
 		// same width/height/init-value the legacy Rasterizer.initZBuffer() (no-arg) used to compute.
@@ -667,7 +669,7 @@ public class RenderEngine {
 			screenLineRenderer.drawVector(p3.getWorldPos(), p3.getWorldNormal(), renderContext.normalsColor);
 		}
 	}
-	
+		
 	public void displayLight() {
 		// Entirely in world space now, same simplification as displayLandMarkLines().
 		Vector4 origin = Vector4.ZERO_POINT;

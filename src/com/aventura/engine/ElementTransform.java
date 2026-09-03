@@ -10,30 +10,7 @@ import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 
 /**
- * ------------------------------------------------------------------------------ 
- * MIT License
- * 
- * Copyright (c) 2016-2026 Olivier BARRY
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
  * The mutating per-Element transformation pipeline: given a fixed view +
  * projection pair (constant for this object's lifetime) and a current Model
  * matrix (changes for every Element, potentially every frame), computes each
@@ -45,23 +22,34 @@ import com.aventura.tools.tracing.Tracer;
  * everything in one atomic call -- there is no intermediate state where
  * calling transformVertex() would use a stale or half-computed matrix.
  *
+ * Takes a ViewProjection (rather than raw view/projection matrices) so that
+ * the vp = projection*view computation is shared with anything else
+ * projecting points for the same camera/light (e.g. ScreenLineRenderer),
+ * instead of being computed redundantly here too -- and so that setModel()
+ * only needs one matrix multiplication (vp.times(model)) instead of two
+ * (projection.times(view.times(model))).
+ *
  * @author Olivier BARRY
  * @since 2026 (extracted from ModelViewProjection)
  *
  */
 public class ElementTransform {
 
-	private final Matrix4 view;
-	private final Matrix4 projection;
+	private final Matrix4 vp; // View*Projection, reused from a shared ViewProjection instance -- see its Javadoc
 
 	private Matrix4 model;
 	private Matrix4 modelNormals; // null whenever the current Model was set with withNormals=false
-	private Matrix4 full;         // projection * view * model
-	private Matrix4 fullNormals;  // projection * view * modelNormals -- null whenever modelNormals is null
+	private Matrix4 full;         // vp * model
+	private Matrix4 fullNormals;  // vp * modelNormals -- null whenever modelNormals is null
 
-	public ElementTransform(Matrix4 view, Matrix4 projection) {
-		this.view = view;
-		this.projection = projection;
+	/**
+	 * @param viewProjection the same ViewProjection instance shared with anything else that needs
+	 *                       to project points for this camera/light (e.g. ScreenLineRenderer) --
+	 *                       reusing it here means vp = projection*view is computed only once for
+	 *                       both purposes, rather than redundantly by each.
+	 */
+	public ElementTransform(ViewProjection viewProjection) {
+		this.vp = viewProjection.getMatrix();
 	}
 
 	/**
@@ -78,11 +66,11 @@ public class ElementTransform {
 	public void setModel(Matrix4 model, boolean withNormals) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "setModel(model, withNormals=" + withNormals + ")");
 		this.model = model;
-		this.full = projection.times(view.times(model));
+		this.full = vp.times(model); // was projection.times(view.times(model)) -- one multiplication instead of two, see class Javadoc
 
 		if (withNormals) {
 			this.modelNormals = computeNormalMatrix(model);
-			this.fullNormals = projection.times(view.times(modelNormals));
+			this.fullNormals = vp.times(modelNormals);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation normal matrix:\n" + fullNormals);
 		} else {
 			this.modelNormals = null;

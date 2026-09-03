@@ -326,8 +326,9 @@ public class DirectionalLight extends ShadowingLight {
 		// Create the MVP using this orthographic projection matrix
 		// Both constructed once, here, for this light's lifetime -- see their fields' Javadoc on
 		// ShadowingLight for why two objects now cover what a single ModelViewProjection used to.
+		// elementTransform_light reuses viewProjection_light's matrix rather than recomputing it.
 		viewProjection_light = new ViewProjection(camera_light, perspectiveCtx_light.getPerspective());
-		elementTransform_light = new ElementTransform(camera_light.getMatrix(), perspectiveCtx_light.getPerspective().getProjection());
+		elementTransform_light = new ElementTransform(viewProjection_light);
 		
 	}
 
