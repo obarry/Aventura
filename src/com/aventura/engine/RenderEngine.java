@@ -14,6 +14,9 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowingLight;
+import com.aventura.model.material.Material;
+import com.aventura.model.material.SolidMaterial;
+import com.aventura.model.material.TexturedMaterial;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
@@ -78,17 +81,17 @@ import com.aventura.view.MapView;
  *     |        World        | <------+						  |			+---------------------+		|				|
  *     +---------------------+        |						  |			 		     |				|				|
  *                					  |						  |			+---------------------+		|				|
- *                   				  |						  +-------->|      Rasterizer     |-----+--------+		|
+ *                   				  |						  +-------->|  TriangleRasterizer |-----+--------+		|
  *     +---------------------+		  |						  |			+---------------------+		         |		|
  *     |      Lighting       | <------+						  |											     v		|
  *     +---------------------+		  |		     +---------------------+								+---------------------+
  *                ^                   |----------|    RenderEngine     |- - - - - - - - - - - - - - - ->|        GUIView      |
  *                |          		  |		     +---------------------+ 								+---------------------+
- *                |                   |                     |
- *     			  |			          |        		        v		
- *     +---------------------+ 		  |     +-------------------------------+
- *     |       Camera        | <------+-----|      ModelViewProjection      |
- *	   +---------------------+		    	+-------------------------------+
+ *                |                   |               |            |
+ *     			  |			          |               v            v
+ *     +---------------------+ 		  |     +-----------------+  +-------------------+
+ *     |       Camera        | <------+-----|  ViewProjection |->|  ElementTransform |
+ *	   +---------------------+		    	+-----------------+  +-------------------+
  *
  *          	 Model								 Engine						Context(s)						 GUIView
  *			com.aventura.model					com.aventura.engine			com.aventura.context			com.aventura.view
@@ -123,9 +126,20 @@ public class RenderEngine {
 	//   in the main triangle-processing loop below
 	private ViewProjection viewProjection;
 	private ElementTransform elementTransform;
-	
-	// Rasterizer
-	private Rasterizer rasterizer;
+
+	// Former Rasterizer façade, now owned directly by RenderEngine (its sole remaining caller,
+	// since ShadowingLight already builds its own TriangleRasterizer/ZBuffer for shadow maps).
+	// mainZBuffer/triangleRasterizer are built once, here, and reused every frame -- see
+	// initFrameZBuffer() for the per-frame clear() that replaces the old per-frame reallocation.
+	private ZBuffer mainZBuffer;
+	private TriangleRasterizer triangleRasterizer;
+	private RasterizerStats stats = new RasterizerStats();
+
+	// Legacy-parity constants, formerly on the Rasterizer façade -- see their original comments
+	// there for why: no separate Ka coefficient existed, and a missing specular color fell back
+	// to white rather than propagating null.
+	private static final float LEGACY_AMBIENT_REFLECTIVITY = 1f;
+	private static final Color DEFAULT_SPECULAR_COLOR = Color.WHITE;
 
 	// Wireframe / debug vector drawing -- constructed once GUIView is known (see setView())
 	private ScreenLineRenderer screenLineRenderer;
@@ -153,20 +167,23 @@ public class RenderEngine {
 				
 		// Create the pure View*Projection projector (for debug vectors) and the per-Element
 		// mutation pipeline (for the main render loop) -- view/projection are constant for this
-		// RenderEngine's whole lifetime (built for a single Camera), computed once, here.
+		// RenderEngine's whole lifetime (built for a single Camera), computed once, here, and
+		// shared between the two (ElementTransform reuses viewProjection's matrix rather than
+		// recomputing it).
 		this.viewProjection = new ViewProjection(camera, perspectiveCtx.getPerspective());
-		this.elementTransform = new ElementTransform(camera.getMatrix(), perspectiveCtx.getPerspective().getProjection());
+		this.elementTransform = new ElementTransform(viewProjection);
 
-		// Delegate rasterization tasks to a dedicated engine
-		// No shading in this constructor -> null
-		this.rasterizer = new Rasterizer(camera, perspectiveCtx, lighting);
-		//this.rasterizer = new Rasterizer(camera, perspectiveCtx); // TESTING RASTERIZATION OF SHADOW MAP - TO BE REMOVED
+		// Built once, here, rather than reallocated every frame (see initFrameZBuffer()) --
+		// same width/height/init-value the legacy Rasterizer.initZBuffer() (no-arg) used to compute.
+		int halfWidth = perspectiveCtx.getPixelHalfWidth();
+		int halfHeight = perspectiveCtx.getPixelHalfHeight();
+		this.mainZBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, perspectiveCtx.getPerspective().getFar());
+		this.triangleRasterizer = new TriangleRasterizer(perspectiveCtx, mainZBuffer);
 	}
 		
 
 	public void setView(GUIView v) {
 		gUIView = v;
-		rasterizer.setView(v);
 		screenLineRenderer = new ScreenLineRenderer(perspectiveContext, viewProjection, v);
 	}
 	
@@ -208,10 +225,13 @@ public class RenderEngine {
 		gUIView.setBackgroundColor(world.getBackgroundColor());
 		gUIView.initView();
 		
-		// zBuffer initialization (if applicable)
+		// zBuffer clear (if applicable) -- mainZBuffer is built once, in the constructor; only
+		// cleared here, every frame, rather than reallocated (as the legacy per-frame
+		// rasterizer.initZBuffer() call used to do).
 		MapView zBuffer = null;
 		if (renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
-			zBuffer = rasterizer.initZBuffer();
+			mainZBuffer.clear(perspectiveContext.getPerspective().getFar());
+			zBuffer = mainZBuffer.getMapView();
 		}
 		
 		// Shadowing initialization and Shadow map(s) calculation
@@ -287,7 +307,7 @@ public class RenderEngine {
 		gUIView.renderView();
 
 		// Snapshot this frame's diagnostic deltas (RasterizerStats) -- see its Javadoc.
-		rasterizer.endFrame();
+		stats.endFrame();
 		
 		long end_millisec = System.currentTimeMillis();
 		
@@ -415,20 +435,26 @@ public class RenderEngine {
 						// No shading
 						break;
 					case RenderContext.RENDERING_TYPE_PLAIN:
-						// Draw triangles with shading full face, no interpolation.
-						// This forces the mode to be normal at Triangle level even if the normals are at Vertex level
-						rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false, false);
-						//rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false, true); // TESTING RASTERIZATION OF SHADOW MAP - TO BE REMOVED
+						// NOTE: kept exactly as before (interpolate=true, texture forced on
+						// unconditionally) for backward compatibility -- despite its name and
+						// original comment, this does NOT actually force a single flat normal
+						// unless the triangle happens to have isTriangleNormal() set; see
+						// RENDERING_TYPE_FLAT below for a mode that genuinely always does.
+						rasterizeShadedTriangle(t, color, se, sc, true, true, renderContext.shadowing == RenderContext.SHADOWING_ENABLED);
+						break;
+					case RenderContext.RENDERING_TYPE_FLAT:
+						// Always uses the triangle's single flat normal (interpolate=false),
+						// regardless of isTriangleNormal() -- genuine faceted/angular shading.
+						// Respects textureProcessing the same way INTERPOLATE does, for consistency.
+						rasterizeShadedTriangle(t, color, se, sc, false,
+								renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED,
+								renderContext.shadowing == RenderContext.SHADOWING_ENABLED);
 						break;
 					case RenderContext.RENDERING_TYPE_INTERPOLATE:
 						// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-						if (renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED) {
-							rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false, false);
-							//rasterizer.rasterizeTriangle(t, color, se, sc, true, true, renderContext.shadowing == 1 ? true : false, true); // TESTING RASTERIZATION OF SHADOW MAP - TO BE REMOVED
-						} else { // No Texture
-							rasterizer.rasterizeTriangle(t, color, se, sc, true, false, renderContext.shadowing == 1 ? true : false, false);
-							//rasterizer.rasterizeTriangle(t, color, se, sc, true, false, renderContext.shadowing == 1 ? true : false, true); // TESTING RASTERIZATION OF SHADOW MAP - TO BE REMOVED
-						}
+						rasterizeShadedTriangle(t, color, se, sc, true,
+								renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED,
+								renderContext.shadowing == RenderContext.SHADOWING_ENABLED);
 						break;
 					default:
 						// Invalid rendering type
@@ -456,6 +482,60 @@ public class RenderEngine {
 		}
 	}
 		
+	/**
+	 * Resolves a Material and the right normals from (color, se, sc, interpolate, texture),
+	 * then rasterizes t through the direct pipeline (TriangleRasterizer + ShadingConsumer) --
+	 * this is what used to be the Rasterizer façade's rasterizeTriangle(), inlined here since
+	 * RenderEngine is now its only caller.
+	 *
+	 * @param t           the triangle to rasterize
+	 * @param color       the surface color (D), tinting the texture sample if textured -- see
+	 *                    TexturedMaterial's Javadoc; may be null (SolidMaterial falls back to white)
+	 * @param se          specular exponent
+	 * @param sc          specular color; falls back to white if null, matching the legacy
+	 *                    computeSpecularColor()'s DEFAULT_SPECULAR_COLOR behavior
+	 * @param interpolate false forces the triangle's single flat normal regardless of
+	 *                    isTriangleNormal(); true interpolates per-vertex normals unless the
+	 *                    triangle itself already forces flat via isTriangleNormal()
+	 * @param texture     whether to sample t's texture (if it has one) at all
+	 * @param shadows     whether shadow-map testing is applied for this triangle's lighting
+	 */
+	private void rasterizeShadedTriangle(Triangle t, Color color, float se, Color sc, boolean interpolate, boolean texture, boolean shadows) {
+
+		// Resolve which 3 normals to interpolate -- see this method's Javadoc.
+		Vector3 normal1, normal2, normal3;
+		if (!interpolate || t.isTriangleNormal()) {
+			Vector3 flat = t.getWorldNormal();
+			normal1 = flat;
+			normal2 = flat;
+			normal3 = flat;
+		} else {
+			normal1 = t.getV1().getWorldNormal();
+			normal2 = t.getV2().getWorldNormal();
+			normal3 = t.getV3().getWorldNormal();
+		}
+
+		boolean useTexture = texture && t.getTexture() != null;
+		Color effectiveSpecCol = sc != null ? sc : DEFAULT_SPECULAR_COLOR;
+
+		// color (D) is ALWAYS used, even in textured mode -- it tints the texture sample (D*T),
+		// never replaced by it. Only SolidMaterial needs a non-null fallback (white) since it has
+		// no texture to fall back on if color is null.
+		Material material = useTexture
+				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY)
+				: new SolidMaterial(color != null ? color : Color.WHITE, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY);
+
+		ShadingConsumer consumer = new ShadingConsumer(material, lighting, camera, mainZBuffer, gUIView, shadows);
+
+		if (useTexture) {
+			triangleRasterizer.rasterize(t, normal1, normal2, normal3, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
+		} else {
+			triangleRasterizer.rasterize(t, normal1, normal2, normal3, consumer);
+		}
+
+		stats.recordTriangle(triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
+	}
+
 	/**
 	 * Is true if triangle is "back face" with regards to its normal, else false
 	 * 
@@ -600,13 +680,13 @@ public class RenderEngine {
 	}
 	
 	public String renderStats() {		
-		return "Render Engine - Processed: elements: "+nbe+", triangles: "+nbt+". Triangles: displayed: "+nbt_in+", not displayed: "+nbt_out+", backfacing: "+nbt_bf+"\n"+rasterizer.renderStats();
+		return "Render Engine - Processed: elements: "+nbe+", triangles: "+nbt+". Triangles: displayed: "+nbt_in+", not displayed: "+nbt_out+", backfacing: "+nbt_bf+"\n"+stats.toString();
 
 	}
 
 	/** Direct access to the Rasterizer's RasterizerStats for individual counters (lifetime totals, this-frame deltas). */
 	public RasterizerStats getRasterizerStats() {
-		return rasterizer.getStats();
+		return stats;
 	}
 
 

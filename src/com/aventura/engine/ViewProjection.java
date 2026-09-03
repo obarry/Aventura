@@ -7,30 +7,7 @@ import com.aventura.model.perspective.Perspective;
 import com.aventura.tools.tracing.Tracer;
 
 /**
- * ------------------------------------------------------------------------------ 
- * MIT License
- * 
- * Copyright (c) 2016-2026 Olivier BARRY
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
  * A pure View*Projection projector: combines a Camera's view matrix and a
  * Perspective's projection matrix into a single, immutable transformation
  * that maps a world-space point directly to clip space -- no Model matrix
@@ -76,5 +53,15 @@ public class ViewProjection {
 	/** Projects a world-space point (homogeneous, w = 1) directly into clip space. Pure -- does not mutate worldPoint. */
 	public Vector4 project(Vector4 worldPoint) {
 		return vp.times(worldPoint);
+	}
+
+	/**
+	 * Exposes the raw View*Projection matrix for further composition -- e.g. ElementTransform
+	 * uses this to compute full = vp.times(model) in one multiplication, instead of recomputing
+	 * projection.times(view.times(model)) (two multiplications) for every Element, and instead of
+	 * every user of a VP matrix each calling projection.times(view) independently.
+	 */
+	public Matrix4 getMatrix() {
+		return vp;
 	}
 }
