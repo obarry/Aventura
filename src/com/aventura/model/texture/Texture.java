@@ -73,13 +73,21 @@ public class Texture {
 	/**
 	 * Create a Texture from a bitmap file
 	 * @param fileName
+	 * @throws TextureLoadException if the file cannot be read/decoded as an image -- fails fast
+	 *         with a clear message rather than silently proceeding to a NullPointerException on
+	 *         img.getHeight() (the previous behavior when ImageIO.read() failed).
 	 */
 	public Texture(String fileName) {
         BufferedImage img = null;
         try {
             img = ImageIO.read(new File(fileName));
         } catch (IOException e) {
-        	// TODO To be implemented, manage exception and safely return with an Error
+        	throw new TextureLoadException("Failed to load texture file: " + fileName, e);
+        }
+        if (img == null) {
+        	// ImageIO.read() returns null (no exception) when the file exists but isn't a
+        	// recognized image format -- same fail-fast treatment as the IOException case above.
+        	throw new TextureLoadException("Failed to load texture file (unrecognized image format): " + fileName);
         }
         this.height = img.getHeight();
         this.width = img.getWidth();
@@ -98,13 +106,18 @@ public class Texture {
 	/**
 	 * Create a Texture from a bitmap file
 	 * @param fileName
+	 * @throws TextureLoadException if the file cannot be read/decoded as an image -- see the
+	 *         other String constructor's Javadoc for why.
 	 */
 	public Texture(String fileName, int direction, int horizontal_orientation, int vertical_orientation) {
 		BufferedImage img = null;
 		try {
 			img = ImageIO.read(new File(fileName));
 		} catch (IOException e) {
-			// TODO To be implemented, manage exception and safely return with an Error
+			throw new TextureLoadException("Failed to load texture file: " + fileName, e);
+		}
+		if (img == null) {
+			throw new TextureLoadException("Failed to load texture file (unrecognized image format): " + fileName);
 		}
 
 		if (direction == TEXTURE_DIRECTION_VERTICAL) {
