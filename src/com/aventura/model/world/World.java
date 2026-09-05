@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import com.aventura.math.transform.Transformation;
-import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.tools.tracing.Tracer;
 
