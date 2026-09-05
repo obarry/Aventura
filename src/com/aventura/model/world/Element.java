@@ -685,4 +685,66 @@ public class Element implements Transformable, Shape, Generable {
 		return min;
 	}
 
+	// ***************************************************
+	// ***** World-space bounds (recursive, post-transformation) *****
+	// ***************************************************
+	// NOTE: unlike getMaxX()/getMaxY()/getMaxZ()/getMinX()/getMinY()/getMinZ() above (which report
+	// this Element's own LOCAL extent from getPos(), and do NOT recurse into sub-Elements), the two
+	// methods below work in WORLD space (post full transformation, via Vertex.getWorldPos()) and DO
+	// recurse -- added for World.getWorldBounds()/getMaxDistance(), which need a genuine scene-wide
+	// bound (e.g. for sizing a directional light's shadow box). Left as new methods rather than
+	// changing the existing ones' behavior, since other callers may rely on the current
+	// local/non-recursive semantics.
+
+	/**
+	 * Accumulates this Element's (and recursively its sub-Elements') world-space vertex position
+	 * bounds into the given running min/max arrays (each length 3: x, y, z).
+	 *
+	 * @param min running [minX, minY, minZ], updated in place
+	 * @param max running [maxX, maxY, maxZ], updated in place
+	 */
+	public void accumulateWorldBounds(float[] min, float[] max) {
+		for (int i=0; i<vertices.size(); i++) {
+			Vector4 p = vertices.get(i).getWorldPos();
+			if (p == null) {
+				// Not yet transformed (World.worldProject() not called yet) -- skip rather than NPE.
+				continue;
+			}
+			if (p.getX() < min[0]) min[0] = p.getX();
+			if (p.getY() < min[1]) min[1] = p.getY();
+			if (p.getZ() < min[2]) min[2] = p.getZ();
+			if (p.getX() > max[0]) max[0] = p.getX();
+			if (p.getY() > max[1]) max[1] = p.getY();
+			if (p.getZ() > max[2]) max[2] = p.getZ();
+		}
+		if (subelements != null) {
+			for (int i=0; i<subelements.size(); i++) {
+				subelements.get(i).accumulateWorldBounds(min, max);
+			}
+		}
+	}
+
+	/**
+	 * Accumulates the max world-space distance from point from across this Element's (and
+	 * recursively its sub-Elements') vertices into runningMax[0].
+	 *
+	 * @param from       the reference point, in world space
+	 * @param runningMax running [maxDistance], updated in place
+	 */
+	public void accumulateMaxDistance(Vector4 from, float[] runningMax) {
+		for (int i=0; i<vertices.size(); i++) {
+			Vector4 p = vertices.get(i).getWorldPos();
+			if (p == null) {
+				continue;
+			}
+			float d = p.minus(from).length();
+			if (d > runningMax[0]) runningMax[0] = d;
+		}
+		if (subelements != null) {
+			for (int i=0; i<subelements.size(); i++) {
+				subelements.get(i).accumulateMaxDistance(from, runningMax);
+			}
+		}
+	}
+
 }

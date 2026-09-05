@@ -241,40 +241,53 @@ public class World {
 	}
 	
 	/**
-	 * @return the max distance from origin of all vertices in the World
+	 * @return the max distance from origin of all vertices in the World (including sub-Elements
+	 *         recursively -- see the fix note on the (Vector4) overload below)
 	 */
 	public float getMaxDistance() {
-		float max = 0;
-		float dist = 0;
-		for (int i=0; i<elements.size(); i++) {
-			for (int j=0; j<elements.get(i).vertices.size(); j++) {
-				// BUG : this does not calculate the position of the vertices using the Element's transformation hence not the Max Distance in World coordinates
-				//TODO calculate using wld_position instead of postion
-				//TODO need to calculate wld_position before rendering (as this is geometry calculation, not projection)
-				dist = elements.get(i).vertices.get(j).wld_position.length();
-				max = dist > max ? dist : max;
-			}
-		}
-		return max;
+		return getMaxDistance(Vector4.ZERO_POINT);
 	}
 	
 	/**
-	 * @return the max distance from Point p of all vertices  in the World
+	 * @return the max distance from Point p of all vertices in the World
+	 *
+	 * BUGFIX: this used to iterate only elements.get(i).vertices directly, missing every
+	 * sub-Element's vertices entirely (Element.getSubElements() was never consulted) -- silently
+	 * under-reporting the World's true extent for any scene with an Element hierarchy. Now
+	 * delegates to Element.accumulateMaxDistance(), which does recurse.
 	 */
 	public float getMaxDistance(Vector4 p) {
-		float max = 0;
-		float dist = 0;
 		if (p.isVector()) p.point();
+		float[] runningMax = { 0f };
 		for (int i=0; i<elements.size(); i++) {
-			for (int j=0; j<elements.get(i).vertices.size(); j++) {
-				// BUG : this does not calculate the position of the vertices using the Element's transformation hence not the Max Distance in World coordinates
-				//TODO calculate using wld_position instead of postion
-				//TODO need to calculate wld_position before rendering (as this is geometry calculation, not projection)
-				dist = elements.get(i).vertices.get(j).wld_position.minus(p).length();
-				max = dist > max ? dist : max;
-			}
+			elements.get(i).accumulateMaxDistance(p, runningMax);
 		}
-		return max;
+		return runningMax[0];
+	}
+
+	/**
+	 * The min and max world-space (x, y, z) corners of an axis-aligned box containing every
+	 * vertex of every Element in this World, INCLUDING sub-Elements recursively, in WORLD space
+	 * (post full transformation -- requires worldProject() to have been called at least once).
+	 *
+	 * Added for e.g. sizing a directional light's shadow box: unlike getMaxX()/getMaxY()/
+	 * getMaxZ()/getMinX()/getMinY()/getMinZ() below (which report LOCAL extent and don't recurse
+	 * into sub-Elements -- kept as-is since other callers may rely on that), this is a genuine
+	 * scene-wide, world-space bound. The two points returned can be fed directly into
+	 * BoundingBox4's array constructor (it only needs the extremes of the point set).
+	 *
+	 * @return a 2-element array: [0] = min corner, [1] = max corner (homogeneous, w = 1)
+	 */
+	public Vector4[] getWorldBounds() {
+		float[] min = { Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE };
+		float[] max = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE };
+		for (int i=0; i<elements.size(); i++) {
+			elements.get(i).accumulateWorldBounds(min, max);
+		}
+		return new Vector4[] {
+				new Vector4(min[0], min[1], min[2], 1),
+				new Vector4(max[0], max[1], max[2], 1)
+		};
 	}
 
 	
