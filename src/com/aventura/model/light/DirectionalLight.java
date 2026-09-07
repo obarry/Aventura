@@ -232,6 +232,20 @@ public class DirectionalLight extends ShadowingLight {
 		float bottom = umin - uCenter;
 		float top = umax - uCenter;
 
+		// ShadowingLight.generateShadowMap() always allocates a SQUARE ZBuffer (map_size x
+		// map_size, both taken from perspectiveCtx_light.getPixelWidth() alone) -- so the
+		// left/right and bottom/top spans below MUST match, or pixels whose Y falls outside the
+		// (differently-sized) actual pixelHeight get silently lost. The previous WORLD box was
+		// always an exact cube (min=-max on all 3 axes) so this held by accident; a real AABB's
+		// footprint in the light's basis essentially never is. Pad the smaller span to match the
+		// larger, keeping the box centered (left=-right and bottom=-top already hold from the
+		// AABB symmetry above, so this just takes the max of the two half-extents).
+		float halfExtent = Math.max(right, top);
+		left = -halfExtent;
+		right = halfExtent;
+		bottom = -halfExtent;
+		top = halfExtent;
+
 		// eye = boxCenter shifted along forward only, so its own (side, up) coordinates match
 		// boxCenter's -- which is exactly what makes left/right/bottom/top above (computed
 		// without explicitly subtracting eye) correct.
