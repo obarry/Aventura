@@ -172,150 +172,106 @@ public class DirectionalLight extends ShadowingLight {
 	public void initShadowing(Perspective perspectiveWorld, Camera camera_view) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "initShadowing");
 
-		// map = new MapView(map_size, map_size);
-		//this.map_size = map_size; 
+		// Forward = propagation direction of the light (from source into the scene) = -light_vector
+		Vector3 forward = this.light_vector.times(-1); // already unit length (light_vector is normalized)
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Light forward direction: " + forward);
 
-		// Build Camera light
-		// We need to calculate the camera light Eye
-		// In order to calculate the camera light "eye", we start form the PoI : the centre of the gUIView frustum obtained before.
-		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the gUIView frustum.
-		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
-
-		Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Calculate Camera Light: Light direction: " + light_dir);
-		
-		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
-		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
-		//camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
-		//camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS);
-		
-		// Create Camera light without eye position at this stage, only the 3 directions of the Camera are defined
-		camera_light = new Camera(light_dir, Vector4.Z_AXIS);
-		
-		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
-		
-		/*
-		 * Mat4 viewMatrix = LookAt(lighting.mCameraPosition,
-		 * 							lighting.mCameraPosition + glm::normalize(directionalLight.mLightDirection),
-		 * 							Vec3(0.0f, 1.0f, 0.0f));
-		 * 
-		 * Mat4 lightVP = CreateOrthographicMatrix(lighting.mCameraPosition.x - 25.0f,
-		 * 											lighting.mCameraPosition.x + 25.0f,
-		 * 											lighting.mCameraPosition.y - 25.0f,
-		 * 											lighting.mCameraPosition.y + 25.0f,
-		 * 											lighting.mCameraPosition.z + 25.0f,
-		 * 											lighting.mCameraPosition.z - 25.0f) * viewMatrix;
-		 */
-
-		Vector4 [] box_world = null;
-		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Creating Bounding Box. ShadowingBox type : " + toStringShadowingBoxType(this.shadowingBox_type));
-		switch (this.shadowingBox_type) {
-		
-		case SHADOWING_BOX_VIEWFRUSTUM:
-			// Define the bounding box for the light camera using the View Frustum (Camera of the scene)
-			// For this let's use the 8 corner's of the View Frustum and transform them into the Light camera coordinates using the camera_light matrix
-			Vector4[][] frustum = perspectiveWorld.getFrustumFromEye(camera_view);
-			box_world = new Vector4[8]; // Create an array of Vectors that will contain all 4 vertices of the view Frustum projected in Light's coordinates
-			// And take the min and max in each dimension of these vertices in light coordinates
-			int k =0;
-			for (int i=0; i<2; i++) {
-				for (int j= 0; j<4; j++) {
-					box_world[k] = camera_light.getMatrix().times(frustum[i][j]);
-					k++;
-				}
-			}					
-			break;
-			
-		case SHADOWING_BOX_WORLD:
-			// Define the bounding box for the light camera
-			box_world = new Vector4[8];
-			float max = world.getMaxDistance();
-			float min = -max;
-			box_world[0] = new Vector4(min, min, min, 1);
-			box_world[1] = new Vector4(max, min, min, 1);
-			box_world[2] = new Vector4(max, max, min, 1);
-			box_world[3] = new Vector4(min, max, min, 1);
-			box_world[4] = new Vector4(min, min, max, 1);
-			box_world[5] = new Vector4(max, min, max, 1);
-			box_world[6] = new Vector4(max, max, max, 1);
-			box_world[7] = new Vector4(min, max, max, 1);
-			
-			// For this create the min and max of the World (in World coordinates)	
-//			box_world[0] = new Vector4(world.getMinX(), world.getMinY(), world.getMinZ(), 1);
-//			box_world[1] = new Vector4(world.getMaxX(), world.getMinY(), world.getMinZ(), 1);
-//			box_world[2] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMinZ(), 1);
-//			box_world[3] = new Vector4(world.getMinX(), world.getMaxY(), world.getMinZ(), 1);
-//			box_world[4] = new Vector4(world.getMinX(), world.getMinY(), world.getMaxZ(), 1);
-//			box_world[5] = new Vector4(world.getMaxX(), world.getMinY(), world.getMaxZ(), 1);
-//			box_world[6] = new Vector4(world.getMaxX(), world.getMaxY(), world.getMaxZ(), 1);
-//			box_world[7] = new Vector4(world.getMinX(), world.getMaxY(), world.getMaxZ(), 1);
-
-			break;
-			
-		case SHADOWING_BOX_ELEMENT: // Not implemented yet
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_ELEMENT");
-			break;
-			
-		case SHADOWING_BOX_SPECIFIC: // Not implemented yet
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_SPECIFIC");
-			break;
-			
-		default:
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Unknown Shadowing Box Type: " + this.shadowingBox_type);
-			break;
+		// Robust up hint: Z_AXIS by convention (matches the rest of the engine), falling back to
+		// Y_AXIS when forward is (nearly) parallel to Z_AXIS -- this is what used to make side = f×u
+		// collapse to a near-zero vector and blow up normalize() with NaN/Infinity (the
+		// "WARNING BUG MISTAKE ERROR" that used to be flagged here).
+		Vector3 upHint = Vector3.Z_AXIS;
+		if (Math.abs(forward.dot(Vector3.Z_AXIS)) > 0.999f) {
+			upHint = Vector3.Y_AXIS;
 		}
-		
-		// Create the bounding box around the 8 vertices of the World "box" (in Light's coordinates)
-		BoundingBox4 box = new BoundingBox4(box_world);
 
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Bounding Box : \n" + box);
-	
-		/*
-		 * From: https://community.khronos.org/t/directional-light-and-shadow-mapping-gUIView-projection-matrices/71386
-		 * 
-		 Think of light�s orthographic frustum as a bounding box that encloses all objects visible by the camera,
-		 plus objects not visible but potentially casting shadows. For the simplicity let�s disregard the latter.
-		 
-		 So to find this frustum:
-		 - find all objects that are inside the current camera frustum
-		 - find minimal bounding box that encloses them all
-		 - transform corners of that bounding box to the light�s space (using light�s gUIView matrix)
-		 - find bounding box in light�s space of the transformed (now obb) bounding box
-		 - this bounding box is your directional light�s orthographic frustum.
-		 
-		 Note that actual translation component in light gUIView matrix doesn�t really matter as you�ll only get different Z values
-		 for the frustum but the boundaries will be the same in world space. For the convenience, when building light gUIView matrix,
-		 you can assume the light �position� is at the center of the bounding box enclosing all visible objects.
-		 */
-		
-		// Calculate the center of Frustum (geometrical center of the 8 points)
-		Vector4 light_PoI = new Vector4(0,0,0,0); // FOR TESTING PURPOSE
-		//Vector4 light_PoI = GeometryTools.center(perspectiveWorld.getFrustumFromEye(camera_view));		
-		//Vector4 light_eye = light_PoI.minus(light_dir.times(perspectiveWorld.getFar()-perspectiveWorld.getNear()));
-		Vector4 light_eye = light_PoI.minus(light_dir).times(3f); // FOR TESTING PURPOSE
+		// Build this light's own orthonormal basis exactly the way LookAt does internally
+		// (side = f x u, up = side x f), so it is guaranteed consistent with the actual camera matrix
+		// built by new Camera(eye, poi, up) below.
+		Vector3 side = forward.times(upHint).normalize();
+		Vector3 up = side.times(forward).normalize();
 
-		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView -> NO !!!!!
-		camera_light.updateCamera(light_eye);
+		// Gather the 8 corners (world space) of the box to fit, depending on shadowingBox_type.
+		Vector4[] corners = computeBoxCorners(perspectiveWorld, camera_view);
 
-		
-		// At last initialize the Orthographic projection
-		// Orthographic(float left, float right, float bottom, float top, float near, float far)
-		
-		// TODO PPU calculation is NOT DEFAULT_SHADOW_MAP_DIMENSION
-		//perspectiveCtx_light = new PerspectiveContext(box.getMaxY(), box.getMinY(), box.getMaxX(), box.getMinX(), box.getMaxZ()-box.getMinZ(), light_eye.length(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, DEFAULT_SHADOW_MAP_DIMENSION);
-		//perspectiveCtx_light = new PerspectiveContext(12.8f, 12.8f, 0.1f, 10, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 78);
-		//perspectiveCtx_light = new PerspectiveContext(1000, 1000, 0.1f, 10, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC,80);
-		//perspectiveCtx_light = new PerspectiveContext(1000, 15.0f, 15.0f, 0.1f, 10.0f, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC);
-		perspectiveCtx_light = new PerspectiveContext(1000, box.getWidth(), box.getHeight(), 0.1f, box.getDepth(), PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC);
-		
+		// Project every corner onto (forward, side, up) to get this light's tight-fit extents.
+		// For an AABB-derived corner set (center +/- half-extents on each axis), the projection
+		// onto ANY unit axis is symmetric around the projection of the center -- so left=-right
+		// and bottom=-top fall out naturally here, without assuming it up front.
+		float tmin = Float.MAX_VALUE, tmax = -Float.MAX_VALUE;
+		float smin = Float.MAX_VALUE, smax = -Float.MAX_VALUE;
+		float umin = Float.MAX_VALUE, umax = -Float.MAX_VALUE;
+		Vector3 centerSum = new Vector3(0, 0, 0);
+		for (Vector4 c : corners) {
+			Vector3 c3 = c.V3();
+			float t = forward.dot(c3);
+			float s = side.dot(c3);
+			float u = up.dot(c3);
+			if (t < tmin) tmin = t;
+			if (t > tmax) tmax = t;
+			if (s < smin) smin = s;
+			if (s > smax) smax = s;
+			if (u < umin) umin = u;
+			if (u > umax) umax = u;
+			centerSum.plusEquals(c3);
+		}
+		Vector3 boxCenter = centerSum.times(1f / corners.length);
+		float sCenter = side.dot(boxCenter);
+		float uCenter = up.dot(boxCenter);
+		float tCenter = forward.dot(boxCenter);
+
+		// Small margin so the near plane never sits exactly on the box's surface (avoids a
+		// degenerate near=0 and gives a little slack for elements right at the box edge).
+		float margin = Math.max(0.01f, 0.05f * (tmax - tmin));
+		float eyeT = tmin - margin;
+
+		float near = margin;                // = tmin - eyeT
+		float far = (tmax - tmin) + margin; // = tmax - eyeT
+		float left = smin - sCenter;
+		float right = smax - sCenter;
+		float bottom = umin - uCenter;
+		float top = umax - uCenter;
+
+		// ShadowingLight.generateShadowMap() always allocates a SQUARE ZBuffer (map_size x
+		// map_size, both taken from perspectiveCtx_light.getPixelWidth() alone) -- so the
+		// left/right and bottom/top spans below MUST match, or pixels whose Y falls outside the
+		// (differently-sized) actual pixelHeight get silently lost. The previous WORLD box was
+		// always an exact cube (min=-max on all 3 axes) so this held by accident; a real AABB's
+		// footprint in the light's basis essentially never is. Pad the smaller span to match the
+		// larger, keeping the box centered (left=-right and bottom=-top already hold from the
+		// AABB symmetry above, so this just takes the max of the two half-extents).
+		float halfExtent = Math.max(right, top);
+		left = -halfExtent;
+		right = halfExtent;
+		bottom = -halfExtent;
+		top = halfExtent;
+
+		// eye = boxCenter shifted along forward only, so its own (side, up) coordinates match
+		// boxCenter's -- which is exactly what makes left/right/bottom/top above (computed
+		// without explicitly subtracting eye) correct.
+		Vector3 eye3 = boxCenter.plus(forward.times(eyeT - tCenter));
+		Vector4 eye = new Vector4(eye3.getX(), eye3.getY(), eye3.getZ(), 1);
+		Vector4 poi = eye.plus(forward); // any point further along forward works, LookAt only needs the direction
+
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Light eye: " + eye + " poi: " + poi + " up: " + up);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Light box: left=" + left + " right=" + right + " bottom=" + bottom + " top=" + top + " near=" + near + " far=" + far);
+
+		camera_light = new Camera(eye, poi, up.V4());
+
+		// At last initialize the Orthographic projection using the exact (possibly asymmetric)
+		// extents computed above.
+		// TODO: ppu is fixed arbitrarily here (map resolution = box extent * ppu, not a fixed
+		// pixel count) -- tying this to DEFAULT_SHADOW_MAP_DIMENSION instead is left for a later,
+		// separate step (backlog item, not part of this patch).
+		int ppu = 1000;
+		perspectiveCtx_light = new PerspectiveContext(top, bottom, right, left, far, near, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, ppu);
+
 		map_size = perspectiveCtx_light.getPixelWidth();
 		if (perspectiveCtx_light.getPixelWidth() != perspectiveCtx_light.getPixelHeight()) {
 			// Should never happen
 			if (Tracer.error) Tracer.traceError(this.getClass(), "perspectiveLight pixel width: " + perspectiveCtx_light.getPixelWidth() + " is different than pixel height: " + perspectiveCtx_light.getPixelHeight());			
 		}
-		//perspective_light = new Orthographic(box.getMinX(), box.getMaxX(), box.getMinY(), box.getMaxY(), box.getMinZ(), box.getMaxZ());
-		
+
 		// NOTE: rasterizer_light is no longer constructed here. TriangleRasterizer needs a ZBuffer
 		// at construction time, and that ZBuffer should be fresh for every shadow map generation
 		// (not reused stale across frames for a moving scene) -- so it's now built inside
@@ -330,34 +286,55 @@ public class DirectionalLight extends ShadowingLight {
 		
 	}
 
-	//public void calculateCameraLight(Perspective perspectiveWorld, Camera camera_view) {
-	public void calculateCameraLight() {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "calculateCameraLight");
-		
-		// Build Camera light
-		// We need to calculate the camera light Eye
-		// In order to calculate the camera light "eye", we start from the PoI : the centre of the gUIView frustum obtained before.
-		// We then go back to the direction of light an amount equal to the distance between the near and far z planes of the gUIView frustum.
-		// Information found at: https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter26/chapter26.html
+	/**
+	 * Returns the 8 world-space corners of the box to use for this light's shadow frustum,
+	 * according to shadowingBox_type.
+	 *
+	 * SHADOWING_BOX_ELEMENT and SHADOWING_BOX_SPECIFIC are not implemented yet -- both fall back
+	 * to SHADOWING_BOX_WORLD (with an error trace) rather than returning a null/empty box, which
+	 * would otherwise blow up the projection below.
+	 */
+	private Vector4[] computeBoxCorners(Perspective perspectiveWorld, Camera camera_view) {
 
-		// Calculate the center of Frustum (geometrical center of the 8 points)
-		Vector4 light_PoI = new Vector4(0,0,0,0); // FOR TESTING PURPOSE
-		//Vector4 light_PoI = GeometryTools.center(perspectiveWorld.getFrustumFromEye(camera_view));		
-		Vector4 light_dir = this.light_vector.times(-1).V4(); // Light direction is -light vector
-		//Vector4 light_eye = light_PoI.minus(light_dir.times(perspectiveWorld.getFar()-perspectiveWorld.getNear()));
-		Vector4 light_eye = light_PoI.minus(light_dir).times(10f); // FOR TESTING PURPOSE
-		
-		// Define camera and LookAt matrix using light eye and PoI defined as center of the gUIView frustum and up vector of camera gUIView -> NO !!!!!
-		
-		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
-		// TODO MISTAKE ON UP ASSUMPTION : IT CANNOT BE GUI CAMERA UP VECTOR BUT ANOTHER ONE TO BE DEFINED
-		//camera_light = new Camera(light_eye, light_PoI, camera_view.getUp());
-		camera_light = new Camera(light_eye, light_PoI, Vector4.Z_AXIS); // This assumes that Light vector is not parallel to Z_AXIS TODO manage this case
-		//camera_light = new Camera(this.light_vector.times(-1).V4(), Vector4.Z_AXIS);
-		// WARNING BUG MISTAKE ERROR ********************************************************************************************************************
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Creating Bounding Box. ShadowingBox type : " + toStringShadowingBoxType(this.shadowingBox_type));
 
+		switch (this.shadowingBox_type) {
+
+		case SHADOWING_BOX_VIEWFRUSTUM: {
+			// Define the bounding box for the light camera using the View Frustum (Camera of the scene):
+			// its 8 corners, in world space.
+			Vector4[][] frustum = perspectiveWorld.getFrustumFromEye(camera_view);
+			Vector4[] corners = new Vector4[8];
+			int k = 0;
+			for (int i = 0; i < 2; i++) {
+				for (int j = 0; j < 4; j++) {
+					corners[k++] = frustum[i][j];
+				}
+			}
+			return corners;
+		}
+
+		case SHADOWING_BOX_ELEMENT:
+			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_ELEMENT -- falling back to SHADOWING_BOX_WORLD");
+			// Fall through to SHADOWING_BOX_WORLD
+
+		case SHADOWING_BOX_SPECIFIC:
+			if (this.shadowingBox_type == SHADOWING_BOX_SPECIFIC && Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_SPECIFIC -- falling back to SHADOWING_BOX_WORLD");
+			// Fall through to SHADOWING_BOX_WORLD
+
+		case SHADOWING_BOX_WORLD:
+		default: {
+			if (this.shadowingBox_type != SHADOWING_BOX_WORLD && Tracer.error) Tracer.traceError(this.getClass(), "Unknown Shadowing Box Type: " + this.shadowingBox_type + " -- falling back to SHADOWING_BOX_WORLD");
+			// World-space AABB of the whole World (all Elements, recursively) -- see World.getWorldBounds()'s Javadoc.
+			BoundingBox4 box = new BoundingBox4(world.getWorldBounds());
+			return new Vector4[] {
+					box.getP11(), box.getP12(), box.getP13(), box.getP14(),
+					box.getP21(), box.getP22(), box.getP23(), box.getP24()
+			};
+		}
+		}
 	}
-	
+
 	public String toString() {
 		return "Directional Light with light vector (= -direction of the light) : " + this.light_vector;
 	}
