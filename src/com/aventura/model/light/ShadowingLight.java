@@ -60,7 +60,11 @@ import com.aventura.view.MapView;
 public abstract class ShadowingLight extends Light {
 	
 	// Default Shadow Map dimension (Shadow Map is Square)
-	public static final int DEFAULT_SHADOW_MAP_DIMENSION = 200;
+	// Used by DirectionalLight.initShadowing() as a fixed pixel resolution for the shadow map,
+	// independent of the light box's world-space extent (see the "TODO PPU calculation" removed
+	// from there -- this constant is that fix). Not yet exposed through PerspectiveContext /
+	// RenderContext's configuration surface -- see the backlog note on that method.
+	public static final int DEFAULT_SHADOW_MAP_DIMENSION = 500;
 	
 	// Parameter for Shadow Mapping "box" definition (used for Light's camera and perspective calculation)
 	public static final int SHADOWING_BOX_WORLD = 1; // Use the World's max dimensions to calculate the Light's view box
