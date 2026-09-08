@@ -258,13 +258,19 @@ public class DirectionalLight extends ShadowingLight {
 
 		camera_light = new Camera(eye, poi, up.V4());
 
-		// At last initialize the Orthographic projection using the exact (possibly asymmetric)
-		// extents computed above.
-		// TODO: ppu is fixed arbitrarily here (map resolution = box extent * ppu, not a fixed
-		// pixel count) -- tying this to DEFAULT_SHADOW_MAP_DIMENSION instead is left for a later,
-		// separate step (backlog item, not part of this patch).
-		int ppu = 1000;
-		perspectiveCtx_light = new PerspectiveContext(top, bottom, right, left, far, near, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, ppu);
+		// At last initialize the Orthographic projection using the exact extents computed above.
+		// Fixed PIXEL resolution (DEFAULT_SHADOW_MAP_DIMENSION), not a fixed ppu -- ppu would make
+		// map resolution scale with the light box's world-space extent (huge maps for big scenes,
+		// tiny/blank-looking ones for small scenes, as found when this was first tried). left/right
+		// and bottom/top are equal at this point (square footprint, see above), so width == height
+		// here and this stays a square map, matching ShadowingLight.generateShadowMap()'s square
+		// ZBuffer allocation.
+		// TODO: DEFAULT_SHADOW_MAP_DIMENSION is not yet exposed through PerspectiveContext /
+		// RenderContext's configuration surface -- backlog item, not part of this patch.
+		float width = right - left;
+		float height = top - bottom;
+		float depth = far - near;
+		perspectiveCtx_light = new PerspectiveContext(DEFAULT_SHADOW_MAP_DIMENSION, width, height, near, depth, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC);
 
 		map_size = perspectiveCtx_light.getPixelWidth();
 		if (perspectiveCtx_light.getPixelWidth() != perspectiveCtx_light.getPixelHeight()) {
