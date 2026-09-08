@@ -165,8 +165,10 @@ public class TestShadowMapRasterization {
 		
 		//DirectionalLight dl = new DirectionalLight(new Vector3(0,1,2));
 		AmbientLight al = new AmbientLight(0.1f);
-		DirectionalLight dl = new DirectionalLight(new Vector3(2,-1,-0.1f), ShadowingLight.SHADOWING_BOX_WORLD);
-		DirectionalLight dl2 = new DirectionalLight(new Vector3(-2,-1,-0.1f), ShadowingLight.SHADOWING_BOX_WORLD);
+		//DirectionalLight dl = new DirectionalLight(new Vector3(2,-1,-0.1f), ShadowingLight.SHADOWING_BOX_WORLD);
+		//DirectionalLight dl2 = new DirectionalLight(new Vector3(-2,-1,-0.1f), ShadowingLight.SHADOWING_BOX_WORLD);
+		DirectionalLight dl = new DirectionalLight(new Vector3(2,-1,-2f), ShadowingLight.SHADOWING_BOX_WORLD);
+		DirectionalLight dl2 = new DirectionalLight(new Vector3(-2,-1,-2f), ShadowingLight.SHADOWING_BOX_WORLD);
 		//DirectionalLight dl = new DirectionalLight(new Vector3(1,3,2));
 		//Lighting light = new Lighting(dl, al);
 		Lighting light = new Lighting(al);

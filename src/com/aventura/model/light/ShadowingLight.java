@@ -7,7 +7,6 @@ import com.aventura.engine.RasterizerStats;
 import com.aventura.engine.TriangleRasterizer;
 import com.aventura.engine.ViewProjection;
 import com.aventura.engine.ZBuffer;
-import com.aventura.math.Constants;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
@@ -109,6 +108,25 @@ public abstract class ShadowingLight extends Light {
 	// shadow-calculation rework mentioned in the backlog is still pending.
 	protected RasterizerStats shadowMapStats = new RasterizerStats();
 	private int trianglesThisGeneration = 0; // reset at the start of each generateShadowMap(World) call
+
+	// Anti-acne depth bias, expressed as a WORLD-space distance (a physically meaningful depth
+	// tolerance, independent of how tight or loose this light's box happens to be) rather than a
+	// fixed slice of the [0,1] NDC depth range. A fixed NDC epsilon (the legacy "10*EPSILON")
+	// implicitly means a much SMALLER world-space bias for a tight-fit box than for a loose one
+	// (world bias = ndcEpsilon * (far-near)) -- which is exactly what turned invisible once the
+	// box calculation in DirectionalLight.initShadowing() started producing a tight-fit depth
+	// range instead of the old, much deeper, arbitrary one: the same "10*EPSILON" that used to be
+	// enough stopped being enough, producing self-shadowing acne on grazing-angle surfaces (e.g.
+	// this class's flat Trellis floor under a near-horizontal DirectionalLight).
+	// TODO (backlog): this is still a single fixed value, not slope-scaled by the angle between
+	// the surface and the light (dotNL) -- a very grazing angle can still need more bias than a
+	// perpendicular one. Left as a further refinement; requires threading the fragment's normal
+	// (or dotNL) into shadowFactorAt(), a signature change not made in this pass.
+	protected static final float SHADOW_BIAS_WORLD = 0.02f;
+	// Derived from SHADOW_BIAS_WORLD and this light's current depth range -- (re)computed once per
+	// generateShadowMap(World) call (perspectiveCtx_light is only valid after initShadowing() has
+	// run), then reused by every shadowFactorAt() call for that frame.
+	protected float ndcShadowBias = 0f;
 	
 	// Default constructor
 	public ShadowingLight() {
@@ -205,10 +223,33 @@ public abstract class ShadowingLight extends Light {
 		// previous frame in a scene with moving lights/geometry. This replaces the old
 		// rasterizer_light.initZBuffer(...) call (which mutated a persistent Rasterizer instance).
 		int half = map_size / 2;
-		ZBuffer shadowZBuffer = new ZBuffer(map_size, map_size, half, half, Float.MAX_VALUE);
+		// Orthographic projections in this engine always normalize NDC depth to [0, 1] (see
+		// OrthographicProjection's matrix -- z_ndc = 0 at near, 1 at far, regardless of the actual
+		// near/far world-space values chosen). Float.MAX_VALUE used to be used here as a generic
+		// "further than anything real" sentinel, but it is NOT close to 1 -- so any part of the
+		// map never touched by a triangle (e.g. the square map's corners outside a diamond-shaped
+		// Trellis footprint) stayed at Float.MAX_VALUE, which then dominated
+		// MapView.normalizeMap()'s min/max range so completely that every REAL depth value (0..1)
+		// collapsed to ~0 (solid black, no visible gradient) when displayed -- purely a display
+		// artifact of the debug shadow map view, NOT a bug in shadowFactorAt() itself (which reads
+		// raw depth values directly, not normalized ones, so it was never affected).
+		// A small margin above 1.0 guards against a fragment exactly at the box's far corner
+		// (z_ndc mathematically == 1.0, see DirectionalLight.initShadowing()'s far/near derivation)
+		// failing the depth test (z <= stored) purely from floating-point rounding.
+		// TODO: if/when PointLight/SpotLight shadow maps are implemented with a Frustum (not
+		// Orthographic) projection, re-check whether their NDC depth convention is also [0,1] --
+		// this constant assumes it is.
+		final float SHADOW_MAP_FAR_NDC = 1.0f + 1e-4f;
+		ZBuffer shadowZBuffer = new ZBuffer(map_size, map_size, half, half, SHADOW_MAP_FAR_NDC);
 		this.map = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
 		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx_light, shadowZBuffer);
 		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
+
+		// See SHADOW_BIAS_WORLD's Javadoc: converts the fixed world-space bias into this frame's
+		// NDC depth units, using this light's CURRENT (far-near) depth range -- so the physical
+		// tolerance stays constant even as initShadowing() recomputes a tighter or looser box.
+		float depthRange = perspectiveCtx_light.getPerspective().getDepth();
+		ndcShadowBias = depthRange > 0 ? SHADOW_BIAS_WORLD / depthRange : SHADOW_BIAS_WORLD;
 
 		// Recompute this light's View*Projection from its camera's CURRENT state, in case the
 		// light itself moved since the last generation (same reasoning as
@@ -292,9 +333,9 @@ public abstract class ShadowingLight extends Light {
 		// Map is stored in [0, 1] while clip-space coordinates are in [-1, 1].
 		float depth = map.getInterpolation((posInLightSpace.getX() + 1) / 2, (posInLightSpace.getY() + 1) / 2);
 
-		// Epsilon bias to avoid "shadow acne" (self-shadowing) -- same value and reasoning as the
-		// legacy code.
-		if (posInLightSpace.getZ() > depth + 10 * Constants.EPSILON) {
+		// Epsilon bias to avoid "shadow acne" (self-shadowing) -- see ndcShadowBias's Javadoc for
+		// why this is now derived per-light-per-frame instead of a fixed constant.
+		if (posInLightSpace.getZ() > depth + ndcShadowBias) {
 			return 0f;
 		}
 		return 1f;
