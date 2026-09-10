@@ -44,11 +44,6 @@ import com.aventura.view.GUIView;
  * to Lighting.ambientContributionAt()/contributionOf(), with this class only
  * orchestrating the loop over lights and the shadow weighting.
  *
- * DEPENDENCY NOTE: this class calls ShadowingLight.shadowFactorAt(Vector4),
- * which doesn't exist yet on ShadowingLight — it's part of the next step
- * (the Lighting/Light fixes + shadow factor addition). This class is
- * otherwise complete and won't need further changes once that method lands.
- *
  * @author Olivier BARRY
  * @since 2026
  *
@@ -90,7 +85,7 @@ public class ShadingConsumer implements FragmentConsumer {
 		if (lighting.getShadowingLights() != null) {
 			for (ShadowingLight light : lighting.getShadowingLights()) {
 
-				if (shadowsEnabled && light.shadowFactorAt(fragment.getWorldPosition()) <= 0) {
+				if (shadowsEnabled && light.shadowFactorAt(fragment.getWorldPosition(), fragment.getNormal()) <= 0) {
 					// Fully in shadow for this light -- nothing to add. NOTE: shadowFactorAt()
 					// today only ever returns 0 or 1 (hard shadows, no PCF/soft shadows yet -- see
 					// its Javadoc), so a binary skip-or-include here is sufficient; if soft shadows

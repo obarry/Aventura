@@ -188,7 +188,21 @@ public class PerspectiveContext {
 		this.ppu = (int)(pixel_width/width);
 
 		this.pixelWidth = pixel_width;
-		this.pixelHeight = (int)(height*ppu);
+		// BUGFIX: this used to be (int)(height*ppu) -- going through ppu (an int, already
+		// truncated from pixel_width/width) compounds a second truncation on top of the first.
+		// Even when height == width EXACTLY (as DirectionalLight.initShadowing() guarantees for
+		// its square-footprint shadow box), the two independent truncations could disagree --
+		// e.g. width=10.733126, pixel_width=500 gave ppu=(int)46.58=46, then
+		// pixelHeight=(int)(10.733126*46)=493, while pixelWidth stayed the exact requested 500.
+		// That single-pixel-class mismatch was enough to desynchronize ShadowingLight's ZBuffer
+		// half-height (derived from pixelWidth alone) from TriangleRasterizer's actual
+		// getPixelHalfHeight() (derived from this pixelHeight), producing a small constant
+		// vertical write/read offset in shadow map sampling -- see the accompanying message for
+		// the full trace that led here.
+		// Fix: derive pixelHeight from pixelWidth and the exact (float) height/width ratio in a
+		// single rounding step, instead of round-tripping through the separately-truncated ppu.
+		// When height == width bit-for-bit, this reduces to exactly pixel_width, no exceptions.
+		this.pixelHeight = Math.round(pixel_width * (height / width));
 		this.pixelHalfWidth = pixelWidth/2;
 		this.pixelHalfHeight = pixelHeight/2;
 		

@@ -7,6 +7,7 @@ import com.aventura.engine.RasterizerStats;
 import com.aventura.engine.TriangleRasterizer;
 import com.aventura.engine.ViewProjection;
 import com.aventura.engine.ZBuffer;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
@@ -63,7 +64,7 @@ public abstract class ShadowingLight extends Light {
 	// independent of the light box's world-space extent (see the "TODO PPU calculation" removed
 	// from there -- this constant is that fix). Not yet exposed through PerspectiveContext /
 	// RenderContext's configuration surface -- see the backlog note on that method.
-	public static final int DEFAULT_SHADOW_MAP_DIMENSION = 500;
+	public static final int DEFAULT_SHADOW_MAP_DIMENSION = 1000;
 	
 	// Parameter for Shadow Mapping "box" definition (used for Light's camera and perspective calculation)
 	public static final int SHADOWING_BOX_WORLD = 1; // Use the World's max dimensions to calculate the Light's view box
@@ -118,15 +119,26 @@ public abstract class ShadowingLight extends Light {
 	// range instead of the old, much deeper, arbitrary one: the same "10*EPSILON" that used to be
 	// enough stopped being enough, producing self-shadowing acne on grazing-angle surfaces (e.g.
 	// this class's flat Trellis floor under a near-horizontal DirectionalLight).
-	// TODO (backlog): this is still a single fixed value, not slope-scaled by the angle between
-	// the surface and the light (dotNL) -- a very grazing angle can still need more bias than a
-	// perpendicular one. Left as a further refinement; requires threading the fragment's normal
-	// (or dotNL) into shadowFactorAt(), a signature change not made in this pass.
 	protected static final float SHADOW_BIAS_WORLD = 0.02f;
-	// Derived from SHADOW_BIAS_WORLD and this light's current depth range -- (re)computed once per
-	// generateShadowMap(World) call (perspectiveCtx_light is only valid after initShadowing() has
-	// run), then reused by every shadowFactorAt() call for that frame.
-	protected float ndcShadowBias = 0f;
+
+	// Slope scaling: the depth-quantization error a fixed world bias needs to absorb grows
+	// roughly as 1/dotNL as the surface tilts away from facing the light (dotNL -> 0 at a
+	// grazing angle) -- a bias tuned for a well-lit surface (dotNL close to 1) can still be too
+	// small for a much more grazing one, even one that doesn't look extreme (e.g. dotNL ~ 0.4,
+	// ~66 degrees off the normal, already needed noticeably more bias than dotNL ~ 0.67 in
+	// testing). shadowFactorAt() now divides the base bias by max(dotNL, DOT_NL_FLOOR) instead of
+	// using one fixed value for every angle. DOT_NL_FLOOR caps this scaling at near-grazing
+	// incidence (dotNL -> 0 would otherwise blow the bias up to infinity); hardcoded for now, see
+	// backlog note about grouping this with SHADOW_BIAS_WORLD and other hardcoded tuning
+	// constants once we revisit making them configurable.
+	protected static final float DOT_NL_FLOOR = 0.1f;
+
+	// Base bias in NDC depth units (SHADOW_BIAS_WORLD converted using this light's CURRENT
+	// (far-near) depth range), BEFORE the per-fragment slope scaling above is applied.
+	// (Re)computed once per generateShadowMap(World) call (perspectiveCtx_light is only valid
+	// after initShadowing() has run), then reused -- with a different slope factor each time --
+	// by every shadowFactorAt() call for that frame.
+	protected float ndcShadowBiasBase = 0f;
 	
 	// Default constructor
 	public ShadowingLight() {
@@ -248,8 +260,10 @@ public abstract class ShadowingLight extends Light {
 		// See SHADOW_BIAS_WORLD's Javadoc: converts the fixed world-space bias into this frame's
 		// NDC depth units, using this light's CURRENT (far-near) depth range -- so the physical
 		// tolerance stays constant even as initShadowing() recomputes a tighter or looser box.
+		// This is the BASE bias only -- shadowFactorAt() further scales it per-fragment by the
+		// surface's slope relative to this light (see DOT_NL_FLOOR's Javadoc).
 		float depthRange = perspectiveCtx_light.getPerspective().getDepth();
-		ndcShadowBias = depthRange > 0 ? SHADOW_BIAS_WORLD / depthRange : SHADOW_BIAS_WORLD;
+		ndcShadowBiasBase = depthRange > 0 ? SHADOW_BIAS_WORLD / depthRange : SHADOW_BIAS_WORLD;
 
 		// Recompute this light's View*Projection from its camera's CURRENT state, in case the
 		// light itself moved since the last generation (same reasoning as
@@ -318,9 +332,11 @@ public abstract class ShadowingLight extends Light {
 	 * matrix handling is needed here, which is what the legacy code was missing.
 	 *
 	 * @param worldPosition world-space position to test (e.g. Fragment.getWorldPosition())
+	 * @param normal        world-space surface normal at worldPosition (e.g. Fragment.getNormal()),
+	 *                      used to slope-scale the anti-acne bias -- see DOT_NL_FLOOR's Javadoc.
 	 * @return 1.0 if fully lit, 0.0 if in shadow
 	 */
-	public float shadowFactorAt(Vector4 worldPosition) {
+	public float shadowFactorAt(Vector4 worldPosition, Vector3 normal) {
 
 		if (map == null) {
 			// No shadow map generated (yet) for this light -- treat as fully lit rather than
@@ -333,8 +349,12 @@ public abstract class ShadowingLight extends Light {
 		// Map is stored in [0, 1] while clip-space coordinates are in [-1, 1].
 		float depth = map.getInterpolation((posInLightSpace.getX() + 1) / 2, (posInLightSpace.getY() + 1) / 2);
 
-		// Epsilon bias to avoid "shadow acne" (self-shadowing) -- see ndcShadowBias's Javadoc for
-		// why this is now derived per-light-per-frame instead of a fixed constant.
+		// Slope-scaled epsilon bias to avoid "shadow acne" (self-shadowing) -- see
+		// DOT_NL_FLOOR's Javadoc for why a single fixed bias (ndcShadowBiasBase alone) isn't
+		// enough across every incidence angle.
+		float dotNL = getLightVectorAtPoint(worldPosition).dot(normal.normalize());
+		float ndcShadowBias = ndcShadowBiasBase / Math.max(dotNL, DOT_NL_FLOOR);
+
 		if (posInLightSpace.getZ() > depth + ndcShadowBias) {
 			return 0f;
 		}
