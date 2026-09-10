@@ -125,13 +125,13 @@ public class TestShadowMapRasterization {
 		System.out.println("********* Creating World");
 		//Texture tex1 = new Texture("resources/texture/texture_bricks_204x204.jpg");
 		//Texture tex3 = new Texture("resources/texture/texture_blueground_204x204.jpg");
-		//Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
+		Texture tex2 = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		
 		World world = new World();
 		
 		// ----- Trellis
-		//Trellis trellis = new Trellis(8, 8, 10, 10, tex2);
-		Trellis trellis = new Trellis(8, 8, 10, 10);
+		Trellis trellis = new Trellis(8, 8, 10, 10, tex2);
+		//Trellis trellis = new Trellis(8, 8, 10, 10);
 		world.addElement(trellis);
 		
 		// ----- Cube
@@ -169,7 +169,7 @@ public class TestShadowMapRasterization {
 		//DirectionalLight dl2 = new DirectionalLight(new Vector3(-2,-1,-0.1f), ShadowingLight.SHADOWING_BOX_WORLD);
 		
 		DirectionalLight dl = new DirectionalLight(new Vector3(2,-1,-2f), ShadowingLight.SHADOWING_BOX_WORLD);
-		DirectionalLight dl2 = new DirectionalLight(new Vector3(-2,-1,-2f), ShadowingLight.SHADOWING_BOX_WORLD);
+		DirectionalLight dl2 = new DirectionalLight(new Vector3(-2,-2,-0.5f), ShadowingLight.SHADOWING_BOX_WORLD);
 		
 		//DirectionalLight dl = new DirectionalLight(new Vector3(1,3,2));
 		//Lighting light = new Lighting(dl, al);
@@ -206,27 +206,27 @@ public class TestShadowMapRasterization {
 		System.out.println(renderer.renderStats());
 		
 		// --- TEMPORARY DEBUG PROBE ---
-		System.out.println("Shadow probe for dl (grid over the Trellis, z=0):");
-		int steps = 41; // odd, so 0,0 falls exactly on a sample
-		for (int j = steps - 1; j >= 0; j--) {
-		    float y = -4f + 8f * j / (steps - 1); // trellis is 8x8, centered
-		    StringBuilder line = new StringBuilder();
-		    for (int i = 0; i < steps; i++) {
-		        float x = -4f + 8f * i / (steps - 1);
-		        Vector4 p = new Vector4(x, y, 0, 1);
-		        float factor = dl.shadowFactorAt(p);
-		        line.append(factor > 0 ? '.' : '#');
-		    }
-		    System.out.println(line.toString());
-		}
-		System.out.println("--- END PROBE ---");
-		try {
-			probePoint(dl, 0.2f, 0f);
-			probePoint(dl, 0.6f, 0f);
-			} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		System.out.println("Shadow probe for dl (grid over the Trellis, z=0):");
+//		int steps = 41; // odd, so 0,0 falls exactly on a sample
+//		for (int j = steps - 1; j >= 0; j--) {
+//		    float y = -4f + 8f * j / (steps - 1); // trellis is 8x8, centered
+//		    StringBuilder line = new StringBuilder();
+//		    for (int i = 0; i < steps; i++) {
+//		        float x = -4f + 8f * i / (steps - 1);
+//		        Vector4 p = new Vector4(x, y, 0, 1);
+//		        float factor = dl.shadowFactorAt(p);
+//		        line.append(factor > 0 ? '.' : '#');
+//		    }
+//		    System.out.println(line.toString());
+//		}
+//		System.out.println("--- END PROBE ---");
+//		try {
+//			probePoint(dl, 0.2f, 0f);
+//			probePoint(dl, 0.6f, 0f);
+//			} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
 		
 		Scanner sc = new Scanner(System.in);
@@ -262,29 +262,29 @@ public class TestShadowMapRasterization {
 	
 
 
-//TEMPORARY: duplicate of shadowFactorAt()'s logic, but printing every intermediate value
-static void probePoint(DirectionalLight dl, float x, float y) throws Exception {
- java.lang.reflect.Field vpField = com.aventura.model.light.ShadowingLight.class.getDeclaredField("viewProjection_light");
- vpField.setAccessible(true);
- com.aventura.engine.ViewProjection vp = (com.aventura.engine.ViewProjection) vpField.get(dl);
-
- java.lang.reflect.Field mapField = com.aventura.model.light.ShadowingLight.class.getDeclaredField("map");
- mapField.setAccessible(true);
- com.aventura.view.MapView map = (com.aventura.view.MapView) mapField.get(dl);
-
- java.lang.reflect.Field biasField = com.aventura.model.light.ShadowingLight.class.getDeclaredField("ndcShadowBias");
- biasField.setAccessible(true);
- float bias = biasField.getFloat(dl);
-
- Vector4 p = new Vector4(x, y, 0, 1);
- Vector4 pls = vp.project(p);
- float s = (pls.getX() + 1) / 2;
- float t = (pls.getY() + 1) / 2;
- float depth = map.getInterpolation(s, t);
-
- System.out.println("Point (" + x + "," + y + "): posInLightSpace=" + pls
-     + " s=" + s + " t=" + t + " sampledDepth=" + depth
-     + " queryZ=" + pls.getZ() + " bias=" + bias
-     + " => " + (pls.getZ() > depth + bias ? "SHADOW" : "LIT"));
-}
+////TEMPORARY: duplicate of shadowFactorAt()'s logic, but printing every intermediate value
+//static void probePoint(DirectionalLight dl, float x, float y) throws Exception {
+// java.lang.reflect.Field vpField = com.aventura.model.light.ShadowingLight.class.getDeclaredField("viewProjection_light");
+// vpField.setAccessible(true);
+// com.aventura.engine.ViewProjection vp = (com.aventura.engine.ViewProjection) vpField.get(dl);
+//
+// java.lang.reflect.Field mapField = com.aventura.model.light.ShadowingLight.class.getDeclaredField("map");
+// mapField.setAccessible(true);
+// com.aventura.view.MapView map = (com.aventura.view.MapView) mapField.get(dl);
+//
+// java.lang.reflect.Field biasField = com.aventura.model.light.ShadowingLight.class.getDeclaredField("ndcShadowBias");
+// biasField.setAccessible(true);
+// float bias = biasField.getFloat(dl);
+//
+// Vector4 p = new Vector4(x, y, 0, 1);
+// Vector4 pls = vp.project(p);
+// float s = (pls.getX() + 1) / 2;
+// float t = (pls.getY() + 1) / 2;
+// float depth = map.getInterpolation(s, t);
+//
+// System.out.println("Point (" + x + "," + y + "): posInLightSpace=" + pls
+//     + " s=" + s + " t=" + t + " sampledDepth=" + depth
+//     + " queryZ=" + pls.getZ() + " bias=" + bias
+//     + " => " + (pls.getZ() > depth + bias ? "SHADOW" : "LIT"));
+//}
 }
