@@ -581,15 +581,73 @@ public class Vector4 {
 		return w != 0 ? true : false;
 	}
 	
+	/**
+	 * @deprecated duplicates vector() exactly (same body); kept as-is for now (no API removal in this pass,
+	 * see audit report) but delegates to vector() to remove the duplicated logic. Prefer vector().
+	 */
+	@Deprecated
 	public void setVector() {
-		this.w = 0;
+		vector();
 	}
-	
+
 	public void point() {
 		this.w = 1;
 	}
-	
+
 	public void vector() {
 		this.w = 0;
+	}
+
+	/**
+	 * Squared length of the vector, including the 4th coordinate (new method).
+	 * Avoids the sqrt() of length() when only a comparison between lengths is needed
+	 * (e.g. nearest-point search), which matters in a performance-sensitive render loop.
+	 * @return the squared length (or squared 'norm') of this Vector4
+	 */
+	public float lengthSquared() {
+		return this.x*this.x + this.y*this.y + this.z*this.z + this.w*this.w;
+	}
+
+	/**
+	 * Euclidean distance between this Vector4 and another, computed without allocating
+	 * an intermediate Vector4 (new method).
+	 * @param w the other Vector4
+	 * @return the distance between this Vector4 and w
+	 */
+	public float distance(Vector4 w) {
+		return (float)Math.sqrt(distanceSquared(w));
+	}
+
+	/**
+	 * Squared Euclidean distance between this Vector4 and another, computed without allocating
+	 * an intermediate Vector4 and without paying for sqrt() (new method).
+	 * @param w the other Vector4
+	 * @return the squared distance between this Vector4 and w
+	 */
+	public float distanceSquared(Vector4 w) {
+		float dx = this.x-w.x, dy = this.y-w.y, dz = this.z-w.z, dw = this.w-w.w;
+		return dx*dx + dy*dy + dz*dz + dw*dw;
+	}
+
+	/**
+	 * Export this Vector4 as a newly allocated float[4] array, e.g. for upload to a GPU buffer (new method).
+	 * @return a new float[4] {x, y, z, w}
+	 */
+	public float[] toArray() {
+		return new float[] {this.x, this.y, this.z, this.w};
+	}
+
+	/**
+	 * Export this Vector4 into a caller-provided array, avoiding an allocation (new method).
+	 * Useful for performance-sensitive code (e.g. filling a reusable GPU upload buffer in a render loop).
+	 * @param dest the destination array, must have length &gt;= 4
+	 * @return dest, filled with {x, y, z, w}
+	 */
+	public float[] toArray(float[] dest) {
+		dest[0] = this.x;
+		dest[1] = this.y;
+		dest[2] = this.z;
+		dest[3] = this.w;
+		return dest;
 	}
 }

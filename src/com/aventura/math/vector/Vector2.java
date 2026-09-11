@@ -89,13 +89,47 @@ public class Vector2 {
 		return r;
 	}
 	
+	/**
+	 * @deprecated this no-arg method does not compare anything: it returns a copy of this Vector2,
+	 * despite its "equals" name. It is a naming bug (see audit report) but is left untouched here to
+	 * avoid an API change in this pass; use copy() instead, or equals(Vector2) to actually compare.
+	 */
+	@Deprecated
 	public Vector2 equals() {
-		Vector2 w = new Vector2(this.x, this.y);
-		return w;
+		return copy();
 	}
-	
+
+	/**
+	 * Return a new Vector2 with the same coordinates as this one (new method).
+	 * This is what the misleadingly-named equals() above actually does; copy() is the correctly-named
+	 * equivalent to use going forward.
+	 * @return a new Vector2 equal to this one
+	 */
+	public Vector2 copy() {
+		return new Vector2(this.x, this.y);
+	}
+
 	public static boolean equals(Vector2 v1, Vector2 v2) {
 		return MathTools.equals(v1.x , v2.x) && MathTools.equals(v1.y , v2.y);
+	}
+
+	/**
+	 * Compare this Vector2 with another (new method, mirrors Vector3.equals(Vector3)/Vector4.equals(Vector4)
+	 * for consistency - Vector2 previously only had the static equals(Vector2, Vector2) form).
+	 * @param w the other Vector2
+	 * @return true if all the elements of this Vector2 are equal to the elements of w
+	 */
+	public boolean equals(Vector2 w) {
+		return MathTools.equals(this.x, w.x) && MathTools.equals(this.y, w.y);
+	}
+
+	/**
+	 * Squared length of the vector (new method, mirrors Vector3.lengthSquared/Vector4.lengthSquared).
+	 * Avoids the sqrt() of length() when only a comparison between lengths is needed.
+	 * @return the squared length (or squared 'norm') of this Vector2
+	 */
+	public float lengthSquared() {
+		return this.x*this.x + this.y*this.y;
 	}
 	
 	/**

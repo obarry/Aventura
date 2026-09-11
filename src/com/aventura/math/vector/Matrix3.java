@@ -160,7 +160,7 @@ public class Matrix3 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public Vector3 getRow(int r) throws IndiceOutOfBoundException {
-		if (r<0 || r>Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix3"); 
+		if (r<0 || r>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix3");
 		float[] array = new float[Constants.SIZE_3];
 		Vector3 v = null;
 		// No loop for optimization
@@ -185,7 +185,7 @@ public class Matrix3 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public Vector3 getColumn(int c) throws IndiceOutOfBoundException {
-		if (c<0 || c>Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix3"); 
+		if (c<0 || c>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix3");
 		float[] array = new float[Constants.SIZE_3];
 		Vector3 v = null;
 		// No loop for optimization
@@ -200,7 +200,69 @@ public class Matrix3 {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
 			e.printStackTrace();
 		}
-		return v;	
+		return v;
+	}
+
+	/**
+	 * Set row of a Matrix3 in the format of a Vector3
+	 * (new method, added to align Matrix3 services with Matrix4.setRow)
+	 * @param r the rank of the row
+	 * @param v a Vector3 representing the row
+	 * @throws IndiceOutOfBoundException
+	 */
+	public void setRow(int r, Vector3 v) throws IndiceOutOfBoundException {
+		if (r<0 || r>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while setting Row ("+r+") of Matrix3");
+		// No loop for optimization
+		this.array[r][0] = v.getX();
+		this.array[r][1] = v.getY();
+		this.array[r][2] = v.getZ();
+	}
+
+	/**
+	 * Set column of a Matrix3 in the format of a Vector3
+	 * (new method, added to align Matrix3 services with Matrix4.setColumn)
+	 * @param c the rank of the column
+	 * @param v a Vector3 representing the column
+	 * @throws IndiceOutOfBoundException
+	 */
+	public void setColumn(int c, Vector3 v) throws IndiceOutOfBoundException {
+		if (c<0 || c>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while setting Column ("+c+") of Matrix3");
+		// No loop for optimization
+		this.array[0][c] = v.getX();
+		this.array[1][c] = v.getY();
+		this.array[2][c] = v.getZ();
+	}
+
+	/**
+	 * Get a defensive copy of the internal 2D array of this Matrix3.
+	 * (new method, added to align Matrix3 services with Matrix4.getArray; unlike Matrix4.getArray()
+	 * this returns a copy, not the internal reference, to avoid exposing internal state - see audit report)
+	 * @return a new 2D array holding a copy of this Matrix3's elements
+	 */
+	public float[][] getArray() {
+		float[][] copy = new float[Constants.SIZE_3][Constants.SIZE_3];
+		for (int i=0; i<Constants.SIZE_3; i++) {
+			for (int j=0; j<Constants.SIZE_3; j++) {
+				copy[i][j] = this.array[i][j];
+			}
+		}
+		return copy;
+	}
+
+	/**
+	 * Sum of the diagonal elements of this Matrix (new method)
+	 * @return the trace of this Matrix
+	 */
+	public float trace() {
+		return array[0][0] + array[1][1] + array[2][2];
+	}
+
+	/**
+	 * Whether this Matrix is equal to the Identity matrix, within Constants.EPSILON tolerance (new method)
+	 * @return true if this Matrix is the Identity matrix
+	 */
+	public boolean isIdentity() {
+		return this.equals(IDENTITY);
 	}
 
 	/**
@@ -392,7 +454,7 @@ public class Matrix3 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public void timesRow(int a, float s) throws IndiceOutOfBoundException {
-		if (a<0 || a>Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while multiplying Row ("+a+") of Matrix3"); 
+		if (a<0 || a>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while multiplying Row ("+a+") of Matrix3");
 
 		for (int j=0; j<Constants.SIZE_3; j++) {
 			this.array[a][j]*=s;
@@ -414,7 +476,10 @@ public class Matrix3 {
 			int k = indiceOfMaxRowInColumn(matrix,j, r);
 			pivot = matrix.get(k, j); // Pivot
 
-			if (pivot == 0) throw new NotInvertibleMatrixException();
+			// Use an epsilon-based tolerance rather than a strict equality to 0: with accumulated floating point
+			// rounding errors, a near-singular Matrix can have a pivot that is not exactly 0 but numerically
+			// meaningless, which would otherwise silently produce an unstable (Infinity/NaN-laden) result.
+			if (Math.abs(pivot) < Constants.EPSILON) throw new NotInvertibleMatrixException();
 			// Else if pivot is not null then continue
 
 			// Divide all the row by the pivot to reduce the pivot to 1
@@ -450,7 +515,10 @@ public class Matrix3 {
 	 * @return
 	 */
 	static protected int indiceOfMaxRowInColumn(Matrix3 m, int col, int pivot) {
-		float max = 0;
+		// Bug fix: the search must also consider the pivot row itself, not only the rows below it,
+		// otherwise the row actually holding the largest absolute value in the column can be missed
+		// and the partial pivoting loses its numerical stability benefit (see audit report).
+		float max = Math.abs(m.get(pivot, col));
 		int indiceMax = pivot;
 		for (int i=pivot+1; i < Constants.SIZE_3; i++) {
 			float val = Math.abs(m.get(i, col));
