@@ -43,13 +43,14 @@ public class Matrix4 {
 	protected float[][] array;
 
 	/**
-	 * Initialize a square Matrix of size s with 0 for all elements of the matrix
-	 * @param s the size of the Matrix (number of rows and columns)
+	 * Initialize a Matrix4 with 0 for all elements of the matrix.
+	 * (Javadoc fixed: this no-arg constructor takes no size parameter; a Matrix4 is always 4x4.
+	 * Java already zero-fills a newly created float[][], so allocating the array is enough here -
+	 * no explicit loop is needed, unlike initialize(val) which is used for a non-zero value.)
 	 */
 	public Matrix4() {
-		// Only create the array
+		// Only create the array: relies on Java zero-filling it by default (optimization vs initialize(0))
 		array = new float[Constants.SIZE_4][Constants.SIZE_4];
-		//initialize(0); // optimize -> no init or use Matrix4(0) instead
 	}
 
 		
@@ -154,7 +155,9 @@ public class Matrix4 {
 	 * @param v the value to set
 	 */
 	public void setDiagonal(float v) {
-		for (int i=0; i<Constants.SIZE_4-1; i++) {
+		// Bug fix: the loop bound was Constants.SIZE_4-1, which left the last diagonal element (3,3)
+		// untouched (Matrix3.setDiagonal, in comparison, always set all elements correctly - see audit report).
+		for (int i=0; i<Constants.SIZE_4; i++) {
 			array[i][i] = v;
 		}
 	}
@@ -166,7 +169,7 @@ public class Matrix4 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public Vector4 getRow(int r) throws IndiceOutOfBoundException {
-		if (r<0 || r>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix4"); 
+		if (r<0 || r>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix4");
 		float[] array = new float[Constants.SIZE_4];
 		Vector4 v = null;
 		// No loop for optimization
@@ -191,6 +194,9 @@ public class Matrix4 {
 	 * @param v a Vector4 representing the row
 	 */
 	public void setRow(int r, Vector4 v) throws IndiceOutOfBoundException {
+		// Bug fix: this method declared IndiceOutOfBoundException but never actually validated the
+		// index before, so an out-of-range r fell through to a raw ArrayIndexOutOfBoundsException instead.
+		if (r<0 || r>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while setting Row ("+r+") of Matrix4");
 		// No loop for optimization
 		this.array[r][0] = v.get(0);
 		this.array[r][1] = v.get(1);
@@ -205,7 +211,7 @@ public class Matrix4 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public Vector4 getColumn(int c) throws IndiceOutOfBoundException {
-		if (c<0 || c>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix4"); 
+		if (c<0 || c>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix4");
 		float[] array = new float[Constants.SIZE_4];
 		Vector4 v = null;
 		// No loop for optimization
@@ -231,6 +237,8 @@ public class Matrix4 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public void setColumn(int c, Vector4 v) throws IndiceOutOfBoundException {
+		// Bug fix: same missing validation issue as setRow above.
+		if (c<0 || c>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while setting Column ("+c+") of Matrix4");
 		// No loop for optimization
 		this.array[0][c] = v.get(0);
 		this.array[1][c] = v.get(1);
@@ -238,6 +246,23 @@ public class Matrix4 {
 		this.array[3][c] = v.get(3);
 	}
 		
+	/**
+	 * Sum of the diagonal elements of this Matrix (new method, mirrors Matrix3.trace)
+	 * @return the trace of this Matrix
+	 */
+	public float trace() {
+		return array[0][0] + array[1][1] + array[2][2] + array[3][3];
+	}
+
+	/**
+	 * Whether this Matrix is equal to the Identity matrix, within Constants.EPSILON tolerance
+	 * (new method, mirrors Matrix3.isIdentity)
+	 * @return true if this Matrix is the Identity matrix
+	 */
+	public boolean isIdentity() {
+		return this.equals(IDENTITY);
+	}
+
 	/**
 	 * Compare this Matrix with another
 	 * @param B the other Matrix
@@ -438,7 +463,7 @@ public class Matrix4 {
 	 * @throws IndiceOutOfBoundException
 	 */
 	public void timesRow(int a, float s) throws IndiceOutOfBoundException {
-		if (a<0 || a>Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while multiplying Row ("+a+") of Matrix4"); 
+		if (a<0 || a>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while multiplying Row ("+a+") of Matrix4");
 		
 		for (int j=0; j<Constants.SIZE_4; j++) {
 			this.array[a][j]*=s;
@@ -460,8 +485,11 @@ public class Matrix4 {
 			int k = indiceOfMaxRowInColumn(matrix,j, r);
 			pivot = matrix.get(k, j); // Pivot
 			//System.out.println("Indice of max row = "+k+" for iteration j="+j+" Pivot = "+pivot);
-			
-			if (pivot == 0) throw new NotInvertibleMatrixException();
+
+			// Use an epsilon-based tolerance rather than a strict equality to 0: with accumulated floating point
+			// rounding errors, a near-singular Matrix can have a pivot that is not exactly 0 but numerically
+			// meaningless, which would otherwise silently produce an unstable (Infinity/NaN-laden) result.
+			if (Math.abs(pivot) < Constants.EPSILON) throw new NotInvertibleMatrixException();
 			// Else if pivot is not null then continue
 			
 			// Divide all the row by the pivot to reduce the pivot to 1
@@ -499,7 +527,10 @@ public class Matrix4 {
 	 * @return
 	 */
 	static protected int indiceOfMaxRowInColumn(Matrix4 m, int col, int pivot) {
-		float max = 0;
+		// Bug fix: the search must also consider the pivot row itself, not only the rows below it,
+		// otherwise the row actually holding the largest absolute value in the column can be missed
+		// and the partial pivoting loses its numerical stability benefit (see audit report).
+		float max = Math.abs(m.get(pivot, col));
 		int indiceMax = pivot;
 		for (int i=pivot+1; i < Constants.SIZE_4; i++) {
 			float val = Math.abs(m.get(i, col));

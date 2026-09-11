@@ -147,7 +147,8 @@ public class TestTrellisTexture {
 		System.out.println("********* Calculating normals");
 		world.build();
 		
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.7f);
+		//DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.7f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-0.5f), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, false);
 		
@@ -163,6 +164,7 @@ public class TestTrellisTexture {
 		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
 
 		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);

@@ -436,4 +436,56 @@ public void set(float x, float y, float z) {
 	public Vector4 V4() {
 		return new Vector4(this);
 	}
+
+	/**
+	 * Squared length of the vector (new method).
+	 * Avoids the sqrt() of length() when only a comparison between lengths is needed
+	 * (e.g. nearest-point search, distance culling), which matters in a performance-sensitive render loop.
+	 * @return the squared length (or squared 'norm') of this Vector3
+	 */
+	public float lengthSquared() {
+		return this.x*this.x + this.y*this.y + this.z*this.z;
+	}
+
+	/**
+	 * Euclidean distance between this Vector3 and another, computed without allocating
+	 * an intermediate Vector3 (new method).
+	 * @param w the other Vector3
+	 * @return the distance between this Vector3 and w
+	 */
+	public float distance(Vector3 w) {
+		return (float)Math.sqrt(distanceSquared(w));
+	}
+
+	/**
+	 * Squared Euclidean distance between this Vector3 and another, computed without allocating
+	 * an intermediate Vector3 and without paying for sqrt() (new method).
+	 * @param w the other Vector3
+	 * @return the squared distance between this Vector3 and w
+	 */
+	public float distanceSquared(Vector3 w) {
+		float dx = this.x-w.x, dy = this.y-w.y, dz = this.z-w.z;
+		return dx*dx + dy*dy + dz*dz;
+	}
+
+	/**
+	 * Export this Vector3 as a newly allocated float[3] array, e.g. for upload to a GPU buffer (new method).
+	 * @return a new float[3] {x, y, z}
+	 */
+	public float[] toArray() {
+		return new float[] {this.x, this.y, this.z};
+	}
+
+	/**
+	 * Export this Vector3 into a caller-provided array, avoiding an allocation (new method).
+	 * Useful for performance-sensitive code (e.g. filling a reusable GPU upload buffer in a render loop).
+	 * @param dest the destination array, must have length &gt;= 3
+	 * @return dest, filled with {x, y, z}
+	 */
+	public float[] toArray(float[] dest) {
+		dest[0] = this.x;
+		dest[1] = this.y;
+		dest[2] = this.z;
+		return dest;
+	}
 }

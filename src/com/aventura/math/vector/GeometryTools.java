@@ -42,8 +42,10 @@ public class GeometryTools {
 	 * @return the geometrical center of the array of points
 	 */
 	public static Vector4 center(Vector4[] points) {
-		
-		if (points != null) {
+
+		// Bug fix: an empty array used to fall through to a division by 0 (points.length), silently
+		// producing a center point full of NaN/Infinity instead of a clear null result (see audit report).
+		if (points != null && points.length > 0) {
 
 			// Initialize a point to be the resulting center of all points
 			Vector4 center = new Vector4(0,0,0,1);
@@ -73,8 +75,10 @@ public class GeometryTools {
 	 * @return the geometrical center of the array of points
 	 */
 	public static Vector4 center(Vector4[][] points) {
-		
-		if (points != null) {
+
+		// Bug fix: same empty-array division-by-0 issue as the mono-dimensional overload above,
+		// plus a guard on points[0] which the length computation below dereferences.
+		if (points != null && points.length > 0 && points[0] != null && points[0].length > 0) {
 
 			// Initialize a point to be the resulting center of all points
 			Vector4 center = new Vector4(0,0,0,1);
@@ -103,4 +107,3 @@ public class GeometryTools {
 
 
 }
-
