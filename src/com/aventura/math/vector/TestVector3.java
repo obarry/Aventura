@@ -408,8 +408,140 @@ public class TestVector3 {
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
 		} catch (IndiceOutOfBoundException e) {
-			fail("V1 indice out of bound");		
+			fail("V1 indice out of bound");
 		}
+	}
+
+	// ----- Additional tests added to blindage the coverage (bounds, new methods, equals, extra constructors) -----
+
+	@Test(expected = IndiceOutOfBoundException.class)
+	public void testVector_get_invalidIndex_throws() throws IndiceOutOfBoundException {
+		System.out.println("***** Test Vector3 get(3) out of bound must throw *****");
+
+		Vector3 v = new Vector3();
+		v.get(3); // valid indices are 0..2
+	}
+
+	@Test(expected = IndiceOutOfBoundException.class)
+	public void testVector_set_invalidIndex_throws() throws IndiceOutOfBoundException {
+		System.out.println("***** Test Vector3 set(3, val) out of bound must throw *****");
+
+		Vector3 v = new Vector3();
+		v.set(3, 1f); // valid indices are 0..2
+	}
+
+	@Test
+	public void testVector_equals_negativeCase() {
+		System.out.println("***** Test Vector3 equals negative case *****");
+
+		Vector3 v1 = new Vector3(1f, 2f, 3f);
+		Vector3 v2 = new Vector3(9f, 9f, 9f);
+		if (v1.equals(v2)) fail("v1 should not equal v2");
+	}
+
+	@Test
+	public void testVector_dot_orthogonalIsZero() {
+		System.out.println("***** Test Vector3 dot product of orthogonal vectors is 0 *****");
+
+		assertEquals(0f, Vector3.X_AXIS.dot(Vector3.Y_AXIS), 0.00001f);
+		assertEquals(0f, Vector3.Y_AXIS.dot(Vector3.Z_AXIS), 0.00001f);
+	}
+
+	@Test
+	public void testVector_cross_isAnticommutative() {
+		System.out.println("***** Test Vector3 cross product anti-commutativity: v1^v2 == -(v2^v1) *****");
+
+		Vector3 v1 = new Vector3(1f, 2f, 3f);
+		Vector3 v2 = new Vector3(4f, 5f, 6f);
+
+		Vector3 cross12 = v1.times(v2);
+		Vector3 cross21 = v2.times(v1);
+
+		if (!cross12.equals(cross21.times(-1f))) fail("v1^v2 should equal -(v2^v1)");
+	}
+
+	@Test
+	public void testVector_constructor_fromVector4_dropsW() {
+		System.out.println("***** Test Vector3 constructor from Vector4 drops w *****");
+
+		Vector4 v4 = new Vector4(1f, 2f, 3f, 99f);
+		Vector3 v3 = new Vector3(v4);
+		assertEquals(1f, v3.getX(), 0f);
+		assertEquals(2f, v3.getY(), 0f);
+		assertEquals(3f, v3.getZ(), 0f);
+	}
+
+	@Test
+	public void testVector_constructor_fromTwoVector4Points() {
+		System.out.println("***** Test Vector3 constructor from two Vector4 points *****");
+
+		Vector4 a = new Vector4(1f, 1f, 1f, 1f);
+		Vector4 b = new Vector4(4f, 6f, 8f, 1f);
+		Vector3 ab = new Vector3(a, b);
+
+		assertEquals(3f, ab.getX(), 0f);
+		assertEquals(5f, ab.getY(), 0f);
+		assertEquals(7f, ab.getZ(), 0f);
+	}
+
+	@Test
+	public void testVector_constructor_fromMatrix3RowColumn() {
+		System.out.println("***** Test Vector3 constructor from Matrix3 row/column *****");
+
+		Matrix3 m = new Matrix3(Matrix3.IDENTITY);
+		Vector3 row0 = new Vector3(0, m);
+		assertEquals(1f, row0.getX(), 0f);
+		assertEquals(0f, row0.getY(), 0f);
+
+		Vector3 col1 = new Vector3(m, 1);
+		assertEquals(0f, col1.getX(), 0f);
+		assertEquals(1f, col1.getY(), 0f);
+	}
+
+	@Test
+	public void testVector_V4_conversion() {
+		System.out.println("***** Test Vector3 V4() conversion *****");
+
+		Vector3 v3 = new Vector3(1f, 2f, 3f);
+		Vector4 v4 = v3.V4();
+		assertEquals(1f, v4.getX(), 0f);
+		assertEquals(2f, v4.getY(), 0f);
+		assertEquals(3f, v4.getZ(), 0f);
+	}
+
+	@Test
+	public void testVector_lengthSquared() {
+		System.out.println("***** Test Vector3 lengthSquared (new method) *****");
+
+		Vector3 v = new Vector3(2f, 3f, 6f);
+		assertEquals(49f, v.lengthSquared(), 0.00001f); // 4+9+36
+		assertEquals(v.length()*v.length(), v.lengthSquared(), 0.001f);
+	}
+
+	@Test
+	public void testVector_distance_distanceSquared() {
+		System.out.println("***** Test Vector3 distance/distanceSquared (new methods) *****");
+
+		Vector3 v1 = new Vector3(0f, 0f, 0f);
+		Vector3 v2 = new Vector3(2f, 3f, 6f);
+
+		assertEquals(49f, v1.distanceSquared(v2), 0.00001f);
+		assertEquals(7f, v1.distance(v2), 0.00001f);
+		assertEquals(v1.minus(v2).length(), v1.distance(v2), 0.0001f);
+	}
+
+	@Test
+	public void testVector_toArray() {
+		System.out.println("***** Test Vector3 toArray/toArray(dest) (new methods) *****");
+
+		Vector3 v = new Vector3(1f, 2f, 3f);
+		float[] a = v.toArray();
+		assertArrayEquals(new float[]{1f,2f,3f}, a, 0.00001f);
+
+		float[] dest = new float[3];
+		float[] r = v.toArray(dest);
+		assertSame(dest, r);
+		assertArrayEquals(new float[]{1f,2f,3f}, dest, 0.00001f);
 	}
 
 }
