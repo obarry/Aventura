@@ -63,11 +63,28 @@ public class Matrix4 {
 	}
 
 	/**
-	 * Initialize Matrix with a 2D array of double
+	 * Initialize Matrix with a 2D array of double.
+	 * Bug fix: this used to store the given array by reference, so any later mutation of the caller's
+	 * array would silently corrupt this Matrix's state (see audit report, aliasing/encapsulation issue).
+	 * A defensive copy is made instead - verified against every real call site in the codebase to have
+	 * no observable effect there (the array passed in is always freshly built and never reused afterward).
 	 * @param a the 2D array of double
 	 */
 	public Matrix4(float[][] a) {
-		this.array = a;
+		this.array = copyOfArray(a);
+	}
+
+	/**
+	 * Defensive copy helper (new private method) used by the constructor above, setArray() and getArray().
+	 * @param a the source array, expected to be Constants.SIZE_4 x Constants.SIZE_4
+	 * @return a new array with the same content as a
+	 */
+	private static float[][] copyOfArray(float[][] a) {
+		float[][] copy = new float[a.length][];
+		for (int i=0; i<a.length; i++) {
+			copy[i] = a[i].clone();
+		}
+		return copy;
 	}
 
 	/**
@@ -94,9 +111,10 @@ public class Matrix4 {
 	}
 	
 	public void setArray(float[][] a) throws MatrixArrayWrongSizeException {
-		if (a.length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix4 from array"); 
-		if (a[0].length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix4 from array"); 
-		this.array = a;
+		if (a.length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix4 from array");
+		if (a[0].length != Constants.SIZE_4) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix4 from array");
+		// Bug fix: same aliasing issue as the float[][] constructor above - now stores a defensive copy.
+		this.array = copyOfArray(a);
 	}
 	
 	@Override
@@ -146,8 +164,15 @@ public class Matrix4 {
 		return array[i][j];
 	}
 	
+	/**
+	 * Bug fix: this used to return the internal array by reference, letting any caller mutate this
+	 * Matrix's state from the outside without going through set()/setArray() (see audit report).
+	 * Now returns a defensive copy, aligned with the new Matrix3.getArray(). Verified against the only
+	 * 2 real call sites in the codebase (LookAt.java, both on a disposable temporary Matrix4): harmless.
+	 * @return a new 2D array holding a copy of this Matrix4's elements
+	 */
 	public float[][] getArray() {
-		return array;
+		return copyOfArray(array);
 	}
 	
 	/**
@@ -166,10 +191,10 @@ public class Matrix4 {
 	 * Get row of a Matrix4 in the format of a Vector4
 	 * @param r the rank of the row
 	 * @return a Vector4 representing the row
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public Vector4 getRow(int r) throws IndiceOutOfBoundException {
-		if (r<0 || r>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix4");
+	public Vector4 getRow(int r) throws IndexOutOfBoundException {
+		if (r<0 || r>=Constants.SIZE_4) throw new IndexOutOfBoundException("Index out of bound while getting Row ("+r+") of Matrix4");
 		float[] array = new float[Constants.SIZE_4];
 		Vector4 v = null;
 		// No loop for optimization
@@ -193,10 +218,10 @@ public class Matrix4 {
 	 * @param r the rank of the row
 	 * @param v a Vector4 representing the row
 	 */
-	public void setRow(int r, Vector4 v) throws IndiceOutOfBoundException {
-		// Bug fix: this method declared IndiceOutOfBoundException but never actually validated the
+	public void setRow(int r, Vector4 v) throws IndexOutOfBoundException {
+		// Bug fix: this method declared IndexOutOfBoundException but never actually validated the
 		// index before, so an out-of-range r fell through to a raw ArrayIndexOutOfBoundsException instead.
-		if (r<0 || r>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while setting Row ("+r+") of Matrix4");
+		if (r<0 || r>=Constants.SIZE_4) throw new IndexOutOfBoundException("Index out of bound while setting Row ("+r+") of Matrix4");
 		// No loop for optimization
 		this.array[r][0] = v.get(0);
 		this.array[r][1] = v.get(1);
@@ -208,10 +233,10 @@ public class Matrix4 {
 	 * Get column of a Matrix4 in the format of a Vector4
 	 * @param c the rank of the column
 	 * @return a Vector4 representing the column
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public Vector4 getColumn(int c) throws IndiceOutOfBoundException {
-		if (c<0 || c>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix4");
+	public Vector4 getColumn(int c) throws IndexOutOfBoundException {
+		if (c<0 || c>=Constants.SIZE_4) throw new IndexOutOfBoundException("Index out of bound while getting Column ("+c+") of Matrix4");
 		float[] array = new float[Constants.SIZE_4];
 		Vector4 v = null;
 		// No loop for optimization
@@ -234,11 +259,11 @@ public class Matrix4 {
 	 * Set column of a Matrix4 in the format of a Vector4
 	 * @param c the rank of the column
 	 * @param v a Vector4 representing the column
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public void setColumn(int c, Vector4 v) throws IndiceOutOfBoundException {
+	public void setColumn(int c, Vector4 v) throws IndexOutOfBoundException {
 		// Bug fix: same missing validation issue as setRow above.
-		if (c<0 || c>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while setting Column ("+c+") of Matrix4");
+		if (c<0 || c>=Constants.SIZE_4) throw new IndexOutOfBoundException("Index out of bound while setting Column ("+c+") of Matrix4");
 		// No loop for optimization
 		this.array[0][c] = v.get(0);
 		this.array[1][c] = v.get(1);
@@ -261,6 +286,46 @@ public class Matrix4 {
 	 */
 	public boolean isIdentity() {
 		return this.equals(IDENTITY);
+	}
+
+	/**
+	 * Determinant of this 4x4 Matrix, computed by cofactor expansion along the first row (new method).
+	 * Useful on its own (e.g. to detect a degenerate/non-invertible transform cheaply) without paying
+	 * for a full inverse() just to find out the Matrix is singular.
+	 * @return the determinant of this Matrix
+	 */
+	public float determinant() {
+		float det = 0f;
+		for (int col=0; col<Constants.SIZE_4; col++) {
+			float sign = (col % 2 == 0) ? 1f : -1f;
+			det += sign * array[0][col] * minorDeterminant3x3(0, col);
+		}
+		return det;
+	}
+
+	/**
+	 * Determinant of the 3x3 minor obtained by removing the given row and column (new private helper,
+	 * used only by determinant()).
+	 * @param skipRow the row to remove
+	 * @param skipCol the column to remove
+	 * @return the determinant of the resulting 3x3 minor
+	 */
+	private float minorDeterminant3x3(int skipRow, int skipCol) {
+		float[][] m = new float[3][3];
+		int mi = 0;
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			if (i == skipRow) continue;
+			int mj = 0;
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				if (j == skipCol) continue;
+				m[mi][mj] = array[i][j];
+				mj++;
+			}
+			mi++;
+		}
+		return m[0][0]*(m[1][1]*m[2][2] - m[1][2]*m[2][1])
+		     - m[0][1]*(m[1][0]*m[2][2] - m[1][2]*m[2][0])
+		     + m[0][2]*(m[1][0]*m[2][1] - m[1][1]*m[2][0]);
 	}
 
 	/**
@@ -460,10 +525,10 @@ public class Matrix4 {
 	 * Multiply entire row a by value s
 	 * @param a row
 	 * @param s value
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public void timesRow(int a, float s) throws IndiceOutOfBoundException {
-		if (a<0 || a>=Constants.SIZE_4) throw new IndiceOutOfBoundException("Indice out of bound while multiplying Row ("+a+") of Matrix4");
+	public void timesRow(int a, float s) throws IndexOutOfBoundException {
+		if (a<0 || a>=Constants.SIZE_4) throw new IndexOutOfBoundException("Index out of bound while multiplying Row ("+a+") of Matrix4");
 		
 		for (int j=0; j<Constants.SIZE_4; j++) {
 			this.array[a][j]*=s;

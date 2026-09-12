@@ -66,8 +66,8 @@ public class TestMatrix4 {
 			System.out.println("B="+B);
 
 			if (!A.equals(B)) fail("A does not equals B");
-//		} catch (IndiceOutOfBoundException e) {
-//			fail("Indice out of bound");		
+//		} catch (IndexOutOfBoundException e) {
+//			fail("Index out of bound");		
 //		}
 	}
 
@@ -421,6 +421,290 @@ public class TestMatrix4 {
 			fail("Not invertible Matrix");
 		}
 
+	}
+
+	// ----- Additional tests added to blindage the coverage (bounds regressions, new methods, singular matrix) -----
+
+	@Test
+	public void testMatrix4_setDiagonal_regression_lastElement() {
+		System.out.println("***** Test Matrix4 : setDiagonal must set (3,3) too (regression) *****");
+
+		Matrix4 m = new Matrix4(0f);
+		m.setDiagonal(7f);
+		assertEquals(7f, m.get(0,0), 0f);
+		assertEquals(7f, m.get(1,1), 0f);
+		assertEquals(7f, m.get(2,2), 0f);
+		assertEquals(7f, m.get(3,3), 0f); // this element was left at 0 before the fix
+	}
+
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_getRow_invalidIndex_throws() throws IndexOutOfBoundException {
+		System.out.println("***** Test Matrix4 : getRow(4) out of bound must throw (off-by-one regression) *****");
+
+		Matrix4 m = new Matrix4(Matrix4.IDENTITY);
+		m.getRow(4); // valid indices are 0..3
+	}
+
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_getColumn_invalidIndex_throws() throws IndexOutOfBoundException {
+		System.out.println("***** Test Matrix4 : getColumn(4) out of bound must throw (off-by-one regression) *****");
+
+		Matrix4 m = new Matrix4(Matrix4.IDENTITY);
+		m.getColumn(4); // valid indices are 0..3
+	}
+
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_timesRow_invalidIndex_throws() throws IndexOutOfBoundException {
+		System.out.println("***** Test Matrix4 : timesRow(4, s) out of bound must throw (off-by-one regression) *****");
+
+		Matrix4 m = new Matrix4(Matrix4.IDENTITY);
+		m.timesRow(4, 2f);
+	}
+
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_setRow_invalidIndex_throws() throws IndexOutOfBoundException {
+		System.out.println("***** Test Matrix4 : setRow(4, v) out of bound must throw (was previously never validated) *****");
+
+		Matrix4 m = new Matrix4(0f);
+		m.setRow(4, Vector4.ZERO_VECTOR);
+	}
+
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_setColumn_invalidIndex_throws() throws IndexOutOfBoundException {
+		System.out.println("***** Test Matrix4 : setColumn(4, v) out of bound must throw (was previously never validated) *****");
+
+		Matrix4 m = new Matrix4(0f);
+		m.setColumn(4, Vector4.ZERO_VECTOR);
+	}
+
+	@Test
+	public void testMatrix4_setRow_setColumn_roundTrip() throws IndexOutOfBoundException {
+		System.out.println("***** Test Matrix4 : setRow/setColumn round-trip with getRow/getColumn *****");
+
+		Matrix4 m = new Matrix4(0f);
+		m.setRow(2, new Vector4(1f, 2f, 3f, 4f));
+		Vector4 row2 = m.getRow(2);
+		assertEquals(1f, row2.getX(), 0f);
+		assertEquals(4f, row2.getW(), 0f);
+
+		m.setColumn(3, new Vector4(5f, 6f, 7f, 8f));
+		Vector4 col3 = m.getColumn(3);
+		assertEquals(5f, col3.getX(), 0f);
+		assertEquals(8f, col3.getW(), 0f);
+	}
+
+	@Test
+	public void testMatrix4_getMatrix3_subMatrix() {
+		System.out.println("***** Test Matrix4 : getMatrix3() extracts the top-left 3x3 sub-matrix *****");
+
+		Matrix4 m = new Matrix4(new float[][] {
+			{1f, 2f, 3f, 99f},
+			{4f, 5f, 6f, 99f},
+			{7f, 8f, 9f, 99f},
+			{0f, 0f, 0f, 1f}
+		});
+		Matrix3 sub = m.getMatrix3();
+		assertEquals(1f, sub.get(0,0), 0f);
+		assertEquals(5f, sub.get(1,1), 0f);
+		assertEquals(9f, sub.get(2,2), 0f);
+		assertEquals(8f, sub.get(2,1), 0f);
+	}
+
+	@Test
+	public void testMatrix4_trace() {
+		System.out.println("***** Test Matrix4 : trace() (new method) *****");
+
+		assertEquals(4f, Matrix4.IDENTITY.trace(), 0.00001f);
+
+		Matrix4 m = new Matrix4(new float[][] {
+			{2f,0f,0f,0f},
+			{0f,3f,0f,0f},
+			{0f,0f,4f,0f},
+			{0f,0f,0f,5f}
+		});
+		assertEquals(14f, m.trace(), 0.00001f);
+	}
+
+	@Test
+	public void testMatrix4_isIdentity() {
+		System.out.println("***** Test Matrix4 : isIdentity() (new method) *****");
+
+		assertTrue(Matrix4.IDENTITY.isIdentity());
+		assertTrue(new Matrix4(Matrix4.IDENTITY).isIdentity());
+		assertFalse(new Matrix4(0f).isIdentity());
+	}
+
+	@Test
+	public void testMatrix4_equals_negativeCase() {
+		System.out.println("***** Test Matrix4 : equals negative case *****");
+
+		Matrix4 a = new Matrix4(1f);
+		Matrix4 b = new Matrix4(2f);
+		if (a.equals(b)) fail("a should not equal b");
+	}
+
+	@Test
+	public void testMatrix4_times_isNotCommutative() {
+		System.out.println("***** Test Matrix4 : A*B != B*A in general *****");
+
+		Matrix4 a = new Matrix4(new float[][] {
+			{1f,2f,0f,0f},
+			{0f,1f,0f,0f},
+			{0f,0f,1f,0f},
+			{0f,0f,0f,1f}
+		});
+		Matrix4 b = new Matrix4(new float[][] {
+			{1f,0f,0f,0f},
+			{3f,1f,0f,0f},
+			{0f,0f,1f,0f},
+			{0f,0f,0f,1f}
+		});
+
+		Matrix4 ab = a.times(b);
+		Matrix4 ba = b.times(a);
+		if (ab.equals(ba)) fail("A*B should not equal B*A for these matrices");
+	}
+
+	@Test(expected = NotInvertibleMatrixException.class)
+	public void testMatrix4_inverse_singularMatrix_throws() throws NotInvertibleMatrixException {
+		System.out.println("***** Test Matrix4 : inverse() of a singular matrix must throw NotInvertibleMatrixException *****");
+
+		// Last row is entirely 0: this matrix is singular (determinant 0).
+		Matrix4 singular = new Matrix4(new float[][] {
+			{1f, 2f, 3f, 4f},
+			{5f, 6f, 7f, 8f},
+			{9f, 10f, 11f, 12f},
+			{0f, 0f, 0f, 0f}
+		});
+		singular.inverse();
+	}
+
+	@Test
+	public void testMatrix4_inverse_pivotSelection_regression() {
+		System.out.println("***** Test Matrix4 : partial pivoting must pick the true max-abs row (pivot bug regression) *****");
+
+		Matrix4 m = new Matrix4(new float[][] {
+			{2f, 1f, 1f, 1f},
+			{5f, 1f, 1f, 1f},
+			{1f, 1f, 1f, 1f},
+			{1f, 1f, 1f, 1f}
+		});
+		int chosen = Matrix4.indiceOfMaxRowInColumn(m, 0, 0);
+		assertEquals(1, chosen);
+
+		Matrix4 m2 = new Matrix4(new float[][] {
+			{9f, 1f, 1f, 1f},
+			{5f, 1f, 1f, 1f},
+			{1f, 1f, 1f, 1f},
+			{1f, 1f, 1f, 1f}
+		});
+		int chosen2 = Matrix4.indiceOfMaxRowInColumn(m2, 0, 0);
+		assertEquals(0, chosen2);
+	}
+
+	@Test
+	public void testMatrix4_inverse_precision_generalCase() throws NotInvertibleMatrixException {
+		System.out.println("***** Test Matrix4 : A * inverse(A) == Identity on a general (non-trivial-pivot) matrix *****");
+
+		Matrix4 a = new Matrix4(new float[][] {
+			{4f, 7f, 2f, 1f},
+			{3f, 5f, 1f, 2f},
+			{2f, 3f, 1f, 0f},
+			{1f, 0f, 2f, 3f}
+		});
+		Matrix4 invA = a.inverse();
+		Matrix4 product = a.times(invA);
+		if (!product.equals(Matrix4.IDENTITY)) fail("A * inverse(A) should equal Identity");
+	}
+
+	@Test
+	public void testMatrix4_constructor_array_isDefensiveCopy() {
+		System.out.println("***** Test Matrix4 : constructor(float[][]) makes a defensive copy (aliasing bug fix) *****");
+
+		float[][] source = new float[][] {
+			{1f, 0f, 0f, 0f},
+			{0f, 1f, 0f, 0f},
+			{0f, 0f, 1f, 0f},
+			{0f, 0f, 0f, 1f}
+		};
+		Matrix4 m = new Matrix4(source);
+
+		source[0][0] = 999f;
+		assertEquals(1f, m.get(0,0), 0f);
+	}
+
+	@Test
+	public void testMatrix4_setArray_isDefensiveCopy() throws MatrixArrayWrongSizeException {
+		System.out.println("***** Test Matrix4 : setArray(float[][]) makes a defensive copy (aliasing bug fix) *****");
+
+		Matrix4 m = new Matrix4(0f);
+		float[][] source = new float[][] {
+			{1f, 2f, 3f, 4f},
+			{5f, 6f, 7f, 8f},
+			{9f, 10f, 11f, 12f},
+			{13f, 14f, 15f, 16f}
+		};
+		m.setArray(source);
+
+		source[0][0] = 999f;
+		assertEquals(1f, m.get(0,0), 0f);
+	}
+
+	@Test
+	public void testMatrix4_getArray_isDefensiveCopy() {
+		System.out.println("***** Test Matrix4 : getArray() returns a defensive copy (aliasing bug fix, aligned with Matrix3) *****");
+
+		Matrix4 m = new Matrix4(Matrix4.IDENTITY);
+		float[][] arr = m.getArray();
+		arr[0][0] = 999f;
+
+		assertEquals(1f, m.get(0,0), 0f);
+	}
+
+	@Test
+	public void testMatrix4_determinant() {
+		System.out.println("***** Test Matrix4 : determinant() (new method) *****");
+
+		assertEquals(1f, Matrix4.IDENTITY.determinant(), 0.00001f);
+
+		Matrix4 m = new Matrix4(new float[][] {
+			{2f, 0f, 0f, 0f},
+			{0f, 3f, 0f, 0f},
+			{0f, 0f, 4f, 0f},
+			{0f, 0f, 0f, 5f}
+		});
+		assertEquals(120f, m.determinant(), 0.0001f); // diagonal matrix: det = product of diagonal
+
+		// Last row all zero -> singular -> determinant 0
+		Matrix4 singular = new Matrix4(new float[][] {
+			{1f, 2f, 3f, 4f},
+			{5f, 6f, 7f, 8f},
+			{9f, 10f, 11f, 12f},
+			{0f, 0f, 0f, 0f}
+		});
+		assertEquals(0f, singular.determinant(), 0.0001f);
+	}
+
+	@Test
+	public void testMatrix4_setArrayOfGetArray_realWorldPattern() throws MatrixArrayWrongSizeException {
+		System.out.println("***** Test Matrix4 : A.setArray(B.times(C).getArray()) still works correctly *****");
+
+		// This mirrors the exact pattern used in LookAt.java (real codebase): combine two matrices,
+		// then adopt the result's array into a third Matrix via getArray()/setArray(). With both methods
+		// now doing a defensive copy, the values must still end up correct (just with one harmless
+		// extra copy instead of a shared reference).
+		Matrix4 b = new Matrix4(new float[][] {
+			{1f,0f,0f,2f},
+			{0f,1f,0f,3f},
+			{0f,0f,1f,4f},
+			{0f,0f,0f,1f}
+		});
+		Matrix4 c = new Matrix4(Matrix4.IDENTITY);
+
+		Matrix4 a = new Matrix4(0f);
+		a.setArray(b.times(c).getArray());
+
+		if (!a.equals(b)) fail("a should equal b*Identity after the getArray()/setArray() round-trip");
 	}
 
 }

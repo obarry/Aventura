@@ -1,5 +1,6 @@
 package com.aventura.math.vector;
 
+import com.aventura.math.Constants;
 import com.aventura.math.tools.MathTools;
 
 /**
@@ -51,21 +52,70 @@ public class Vector2 {
 		this.y = v.y;
 	}
 
-	
+	/**
+	 * Initialize Vector2 with a 2-element array (new constructor, mirrors Vector3(float[])/Vector4(float[])
+	 * - Vector2 was missing this constructor, an asymmetry noted in the audit report).
+	 * @param array the array of 2 elements {x, y}
+	 * @throws VectorArrayWrongSizeException if array has fewer than 2 elements
+	 */
+	public Vector2(float[] array) throws VectorArrayWrongSizeException {
+		if (array.length < Constants.SIZE_2) throw new VectorArrayWrongSizeException("Array passed in parameter of Vector2 constructor is out of bound: "+array.length);
+		this.x = array[0];
+		this.y = array[1];
+	}
+
+
 	public float getX() {
 		return this.x;
 	}
-	
+
 	public float getY() {
 		return this.y;
 	}
-	
+
 	public void setX(float x) {
 		this.x = x;
 	}
-	
+
 	public void setY(float y) {
 		this.y = y;
+	}
+
+	/**
+	 * Get the coordinate of rank i (new method, mirrors Vector3.get(int)/Vector4.get(int) -
+	 * Vector2 was missing indexed access, an asymmetry noted in the audit report).
+	 * @param i the rank of the coordinate (0 or 1)
+	 * @return the value of that coordinate
+	 * @throws IndexOutOfBoundException
+	 */
+	public float get(int i) throws IndexOutOfBoundException {
+		switch (i) {
+		case 0:
+			return this.x;
+		case 1:
+			return this.y;
+		default:
+			throw new IndexOutOfBoundException("Index out of bound while getting coordinate ("+i+") of Vector2");
+		}
+	}
+
+	/**
+	 * Set the coordinate of rank i with value v (new method, mirrors Vector3.set(int,float)/Vector4.set(int,float)).
+	 * @param i the rank of the coordinate to set (0 or 1)
+	 * @param v the value to set
+	 * @throws IndexOutOfBoundException
+	 */
+	public void set(int i, float v) throws IndexOutOfBoundException {
+		switch (i) {
+		case 0:
+			this.x = v;
+			break;
+		case 1:
+			this.y = v;
+			break;
+		default:
+			throw new IndexOutOfBoundException("Index out of bound while setting coordinate ("+i+") of Vector2");
+		}
 	}
 	
 	public float length() {
@@ -131,7 +181,50 @@ public class Vector2 {
 	public float lengthSquared() {
 		return this.x*this.x + this.y*this.y;
 	}
-	
+
+	/**
+	 * Euclidean distance between this Vector2 and another, computed without allocating
+	 * an intermediate Vector2 (new method, mirrors Vector3.distance/Vector4.distance).
+	 * @param w the other Vector2
+	 * @return the distance between this Vector2 and w
+	 */
+	public float distance(Vector2 w) {
+		return (float)Math.sqrt(distanceSquared(w));
+	}
+
+	/**
+	 * Squared Euclidean distance between this Vector2 and another, computed without allocating
+	 * an intermediate Vector2 and without paying for sqrt() (new method, mirrors Vector3.distanceSquared/
+	 * Vector4.distanceSquared).
+	 * @param w the other Vector2
+	 * @return the squared distance between this Vector2 and w
+	 */
+	public float distanceSquared(Vector2 w) {
+		float dx = this.x-w.x, dy = this.y-w.y;
+		return dx*dx + dy*dy;
+	}
+
+	/**
+	 * Export this Vector2 as a newly allocated float[2] array (new method, mirrors Vector3.toArray/
+	 * Vector4.toArray).
+	 * @return a new float[2] {x, y}
+	 */
+	public float[] toArray() {
+		return new float[] {this.x, this.y};
+	}
+
+	/**
+	 * Export this Vector2 into a caller-provided array, avoiding an allocation (new method, mirrors
+	 * Vector3.toArray(dest)/Vector4.toArray(dest)).
+	 * @param dest the destination array, must have length &gt;= 2
+	 * @return dest, filled with {x, y}
+	 */
+	public float[] toArray(float[] dest) {
+		dest[0] = this.x;
+		dest[1] = this.y;
+		return dest;
+	}
+
 	/**
 	 * Vector2 addition V=V+W. This Vector2 (V) is modified and contains the result of the operation.
 	 * @param w the Vector2 to be added to this Vector2

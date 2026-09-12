@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.aventura.math.vector.IndiceOutOfBoundException;
+import com.aventura.math.vector.IndexOutOfBoundException;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 
@@ -12,7 +12,7 @@ public class TestTranslation {
 
 
 	@Test
-	public void testTranslationVector3() throws IndiceOutOfBoundException {
+	public void testTranslationVector3() throws IndexOutOfBoundException {
 		System.out.println("***** Test Translation : testTranslationVector3 *****");
 		Vector3 v = new Vector3(1,2,3);
 		System.out.println("Vector v="+v);
@@ -22,7 +22,7 @@ public class TestTranslation {
 	}
 	
 	@Test
-	public void testTranslationAddition() throws IndiceOutOfBoundException {
+	public void testTranslationAddition() throws IndexOutOfBoundException {
 		System.out.println("***** Test Translation : testTranslationAddition *****");
 		Vector3 v1 = new Vector3(1,2,3);
 		System.out.println("Vector v1="+v1);

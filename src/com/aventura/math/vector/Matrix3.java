@@ -60,11 +60,28 @@ public class Matrix3 {
 	}
 
 	/**
-	 * Initialize Matrix with a 2D array of double
+	 * Initialize Matrix with a 2D array of double.
+	 * Bug fix: this used to store the given array by reference, so any later mutation of the caller's
+	 * array would silently corrupt this Matrix's state (see audit report, aliasing/encapsulation issue).
+	 * A defensive copy is made instead - verified against every real call site in the codebase to have
+	 * no observable effect there (the array passed in is always freshly built and never reused afterward).
 	 * @param a the 2D array of double
 	 */
 	public Matrix3(float[][] a) {
-		this.array = a;
+		this.array = copyOfArray(a);
+	}
+
+	/**
+	 * Defensive copy helper (new private method) used by the constructor above and by setArray().
+	 * @param a the source array, expected to be Constants.SIZE_3 x Constants.SIZE_3
+	 * @return a new array with the same content as a
+	 */
+	private static float[][] copyOfArray(float[][] a) {
+		float[][] copy = new float[a.length][];
+		for (int i=0; i<a.length; i++) {
+			copy[i] = a[i].clone();
+		}
+		return copy;
 	}
 
 	/**
@@ -91,9 +108,10 @@ public class Matrix3 {
 	}
 
 	public void setArray(float[][] a) throws MatrixArrayWrongSizeException {
-		if (a.length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix3 from array"); 
-		if (a[0].length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array"); 
-		this.array = a;
+		if (a.length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array row size ("+a.length+") while creating Matrix3 from array");
+		if (a[0].length != Constants.SIZE_3) throw new MatrixArrayWrongSizeException("Wrong array column size ("+a[0].length+") while creating Matrix3 from array");
+		// Bug fix: same aliasing issue as the float[][] constructor above - now stores a defensive copy.
+		this.array = copyOfArray(a);
 	}
 
 	/**
@@ -157,10 +175,10 @@ public class Matrix3 {
 	 * Get row of a Matrix3 in the format of a Vector3
 	 * @param r the rank of the row
 	 * @return a Vector3 representing the row
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public Vector3 getRow(int r) throws IndiceOutOfBoundException {
-		if (r<0 || r>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while getting Row ("+r+") of Matrix3");
+	public Vector3 getRow(int r) throws IndexOutOfBoundException {
+		if (r<0 || r>=Constants.SIZE_3) throw new IndexOutOfBoundException("Index out of bound while getting Row ("+r+") of Matrix3");
 		float[] array = new float[Constants.SIZE_3];
 		Vector3 v = null;
 		// No loop for optimization
@@ -182,10 +200,10 @@ public class Matrix3 {
 	 * Get column of a Matrix3 in the format of a Vector3
 	 * @param c the rank of the column
 	 * @return a Vector3 representing the column
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public Vector3 getColumn(int c) throws IndiceOutOfBoundException {
-		if (c<0 || c>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while getting Column ("+c+") of Matrix3");
+	public Vector3 getColumn(int c) throws IndexOutOfBoundException {
+		if (c<0 || c>=Constants.SIZE_3) throw new IndexOutOfBoundException("Index out of bound while getting Column ("+c+") of Matrix3");
 		float[] array = new float[Constants.SIZE_3];
 		Vector3 v = null;
 		// No loop for optimization
@@ -208,10 +226,10 @@ public class Matrix3 {
 	 * (new method, added to align Matrix3 services with Matrix4.setRow)
 	 * @param r the rank of the row
 	 * @param v a Vector3 representing the row
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public void setRow(int r, Vector3 v) throws IndiceOutOfBoundException {
-		if (r<0 || r>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while setting Row ("+r+") of Matrix3");
+	public void setRow(int r, Vector3 v) throws IndexOutOfBoundException {
+		if (r<0 || r>=Constants.SIZE_3) throw new IndexOutOfBoundException("Index out of bound while setting Row ("+r+") of Matrix3");
 		// No loop for optimization
 		this.array[r][0] = v.getX();
 		this.array[r][1] = v.getY();
@@ -223,10 +241,10 @@ public class Matrix3 {
 	 * (new method, added to align Matrix3 services with Matrix4.setColumn)
 	 * @param c the rank of the column
 	 * @param v a Vector3 representing the column
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public void setColumn(int c, Vector3 v) throws IndiceOutOfBoundException {
-		if (c<0 || c>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while setting Column ("+c+") of Matrix3");
+	public void setColumn(int c, Vector3 v) throws IndexOutOfBoundException {
+		if (c<0 || c>=Constants.SIZE_3) throw new IndexOutOfBoundException("Index out of bound while setting Column ("+c+") of Matrix3");
 		// No loop for optimization
 		this.array[0][c] = v.getX();
 		this.array[1][c] = v.getY();
@@ -263,6 +281,18 @@ public class Matrix3 {
 	 */
 	public boolean isIdentity() {
 		return this.equals(IDENTITY);
+	}
+
+	/**
+	 * Determinant of this 3x3 Matrix, computed by cofactor expansion along the first row (new method).
+	 * Useful on its own (e.g. to detect a degenerate/non-invertible transform cheaply) without paying
+	 * for a full inverse() just to find out the Matrix is singular.
+	 * @return the determinant of this Matrix
+	 */
+	public float determinant() {
+		return array[0][0] * (array[1][1]*array[2][2] - array[1][2]*array[2][1])
+		     - array[0][1] * (array[1][0]*array[2][2] - array[1][2]*array[2][0])
+		     + array[0][2] * (array[1][0]*array[2][1] - array[1][1]*array[2][0]);
 	}
 
 	/**
@@ -451,10 +481,10 @@ public class Matrix3 {
 	 * Multiply entire row a by value s
 	 * @param a row
 	 * @param s value
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public void timesRow(int a, float s) throws IndiceOutOfBoundException {
-		if (a<0 || a>=Constants.SIZE_3) throw new IndiceOutOfBoundException("Indice out of bound while multiplying Row ("+a+") of Matrix3");
+	public void timesRow(int a, float s) throws IndexOutOfBoundException {
+		if (a<0 || a>=Constants.SIZE_3) throw new IndexOutOfBoundException("Index out of bound while multiplying Row ("+a+") of Matrix3");
 
 		for (int j=0; j<Constants.SIZE_3; j++) {
 			this.array[a][j]*=s;
