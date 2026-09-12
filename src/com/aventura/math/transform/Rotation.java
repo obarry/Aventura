@@ -1,7 +1,7 @@
 package com.aventura.math.transform;
 
 import com.aventura.math.Constants;
-import com.aventura.math.vector.IndiceOutOfBoundException;
+import com.aventura.math.vector.IndexOutOfBoundException;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.MatrixArrayWrongSizeException;
 import com.aventura.math.vector.Vector3;
@@ -163,7 +163,7 @@ public class Rotation extends Transformation {
 			v1=this.getColumn(0);
 			v2=this.getColumn(1);
 			v3=this.getColumn(2);
-		} catch (IndiceOutOfBoundException e) {
+		} catch (IndexOutOfBoundException e) {
 			if (Tracer.exception) Tracer.traceException(this.getClass(), "Unexpected exception: "+e);
 			return false;
 		}

@@ -421,24 +421,24 @@ public class TestMatrix3 {
 
 	// ----- Additional tests added to blindage the coverage (bounds regressions, new methods, singular matrix) -----
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix3_getRow_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix3_getRow_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix3 : getRow(3) out of bound must throw (off-by-one regression) *****");
 
 		Matrix3 m = new Matrix3(Matrix3.IDENTITY);
 		m.getRow(3); // valid indices are 0..2
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix3_getColumn_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix3_getColumn_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix3 : getColumn(3) out of bound must throw (off-by-one regression) *****");
 
 		Matrix3 m = new Matrix3(Matrix3.IDENTITY);
 		m.getColumn(3); // valid indices are 0..2
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix3_timesRow_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix3_timesRow_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix3 : timesRow(3, s) out of bound must throw (off-by-one regression) *****");
 
 		Matrix3 m = new Matrix3(Matrix3.IDENTITY);
@@ -446,7 +446,7 @@ public class TestMatrix3 {
 	}
 
 	@Test
-	public void testMatrix3_setRow_setColumn() throws IndiceOutOfBoundException {
+	public void testMatrix3_setRow_setColumn() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix3 : setRow/setColumn (new methods) *****");
 
 		Matrix3 m = new Matrix3(0f);
@@ -467,16 +467,16 @@ public class TestMatrix3 {
 		assertEquals(9f, col2.getZ(), 0f);
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix3_setRow_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix3_setRow_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix3 : setRow(3, v) out of bound must throw (new method) *****");
 
 		Matrix3 m = new Matrix3(0f);
 		m.setRow(3, Vector3.ZERO_VECTOR);
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix3_setColumn_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix3_setColumn_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix3 : setColumn(3, v) out of bound must throw (new method) *****");
 
 		Matrix3 m = new Matrix3(0f);
@@ -597,5 +597,59 @@ public class TestMatrix3 {
 		Matrix3 invA = a.inverse();
 		Matrix3 product = a.times(invA);
 		if (!product.equals(Matrix3.IDENTITY)) fail("A * inverse(A) should equal Identity");
+	}
+
+	@Test
+	public void testMatrix3_constructor_array_isDefensiveCopy() {
+		System.out.println("***** Test Matrix3 : constructor(float[][]) makes a defensive copy (aliasing bug fix) *****");
+
+		float[][] source = new float[][] {
+			{1f, 2f, 3f},
+			{4f, 5f, 6f},
+			{7f, 8f, 9f}
+		};
+		Matrix3 m = new Matrix3(source);
+
+		// Mutate the source array after construction: the Matrix must be unaffected.
+		source[0][0] = 999f;
+		assertEquals(1f, m.get(0,0), 0f);
+	}
+
+	@Test
+	public void testMatrix3_setArray_isDefensiveCopy() throws MatrixArrayWrongSizeException {
+		System.out.println("***** Test Matrix3 : setArray(float[][]) makes a defensive copy (aliasing bug fix) *****");
+
+		Matrix3 m = new Matrix3(0f);
+		float[][] source = new float[][] {
+			{1f, 2f, 3f},
+			{4f, 5f, 6f},
+			{7f, 8f, 9f}
+		};
+		m.setArray(source);
+
+		source[0][0] = 999f;
+		assertEquals(1f, m.get(0,0), 0f);
+	}
+
+	@Test
+	public void testMatrix3_determinant() {
+		System.out.println("***** Test Matrix3 : determinant() (new method) *****");
+
+		assertEquals(1f, Matrix3.IDENTITY.determinant(), 0.00001f);
+
+		Matrix3 m = new Matrix3(new float[][] {
+			{2f, 0f, 0f},
+			{0f, 3f, 0f},
+			{0f, 0f, 4f}
+		});
+		assertEquals(24f, m.determinant(), 0.00001f); // diagonal matrix: det = product of diagonal
+
+		// A known singular matrix (third row = row1+row2) must have determinant 0
+		Matrix3 singular = new Matrix3(new float[][] {
+			{1f, 2f, 3f},
+			{4f, 5f, 6f},
+			{5f, 7f, 9f}
+		});
+		assertEquals(0f, singular.determinant(), 0.00001f);
 	}
 }

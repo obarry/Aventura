@@ -145,9 +145,9 @@ public class Vector3 {
 	 * Set the coordinate of rank i with value v
 	 * @param i the rank of the coordinate to set value
 	 * @param v, the value to set
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public void set(int i, float v) throws IndiceOutOfBoundException {
+	public void set(int i, float v) throws IndexOutOfBoundException {
 		switch (i) {
 		case 0:
 			this.x = v;
@@ -159,7 +159,7 @@ public class Vector3 {
 			this.z = v;
 			break;
 		default :
-			throw new IndiceOutOfBoundException("Indice out of bound while setting coordinate ("+i+") of Vector3");
+			throw new IndexOutOfBoundException("Index out of bound while setting coordinate ("+i+") of Vector3");
 		}
 }
 
@@ -204,9 +204,9 @@ public void set(float x, float y, float z) {
 	 * Get the coordinate of rank i
 	 * @param i
 	 * @return
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public float get(int i) throws IndiceOutOfBoundException {
+	public float get(int i) throws IndexOutOfBoundException {
 		switch (i) {
 		case 0:
 			return this.x;
@@ -215,7 +215,7 @@ public void set(float x, float y, float z) {
 		case 2:
 			return this.z;
 		default :
-			throw new IndiceOutOfBoundException("Indice out of bound while getting coordinate ("+i+") of Vector3");
+			throw new IndexOutOfBoundException("Index out of bound while getting coordinate ("+i+") of Vector3");
 		}
 	}
 
@@ -394,7 +394,7 @@ public void set(float x, float y, float z) {
 			for (int j=0; j<Constants.SIZE_3; j++) {
 				try {
 					r.set(i, r.get(i)+A.get(i,j)*this.get(j));
-				} catch (IndiceOutOfBoundException e) {
+				} catch (IndexOutOfBoundException e) {
 					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
 					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
 					e.printStackTrace();
@@ -417,7 +417,7 @@ public void set(float x, float y, float z) {
 			for (int j=0; j<Constants.SIZE_3; j++) {
 				try {
 					array[i]+=A.get(i,j)*this.get(j);
-				} catch (IndiceOutOfBoundException e) {
+				} catch (IndexOutOfBoundException e) {
 					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
 					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
 					e.printStackTrace();

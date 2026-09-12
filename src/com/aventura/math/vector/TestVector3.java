@@ -125,8 +125,8 @@ public class TestVector3 {
 			if (!V1.equals(V2)) fail("V1 does not equals V2");
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
-		} catch (IndiceOutOfBoundException e) {
-			fail("Indice out of bound");		
+		} catch (IndexOutOfBoundException e) {
+			fail("Index out of bound");		
 		}
 	}
 	
@@ -156,8 +156,8 @@ public class TestVector3 {
 			}
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
-		} catch (IndiceOutOfBoundException e) {
-			fail("V3 indice out of bound: "+i);		
+		} catch (IndexOutOfBoundException e) {
+			fail("V3 Index out of bound: "+i);		
 		}
 	}
 
@@ -192,8 +192,8 @@ public class TestVector3 {
 
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
-		} catch (IndiceOutOfBoundException e) {
-			fail("V3 indice out of bound: "+i);		
+		} catch (IndexOutOfBoundException e) {
+			fail("V3 Index out of bound: "+i);		
 		}
 	}
 	
@@ -223,8 +223,8 @@ public class TestVector3 {
 			}
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
-		} catch (IndiceOutOfBoundException e) {
-			fail("V3 indice out of bound: "+i);		
+		} catch (IndexOutOfBoundException e) {
+			fail("V3 Index out of bound: "+i);		
 		}
 	}
 	
@@ -259,8 +259,8 @@ public class TestVector3 {
 
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
-		} catch (IndiceOutOfBoundException e) {
-			fail("V3 indice out of bound: "+i);		
+		} catch (IndexOutOfBoundException e) {
+			fail("V3 Index out of bound: "+i);		
 		}
 	}
 	
@@ -286,8 +286,8 @@ public class TestVector3 {
 			if (!(V2.get(0) == 7.0 && V2.get(1) == 14.0 && V2.get(2) == 21.0)) fail("V2 does not equals V1*7.0");
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
-		} catch (IndiceOutOfBoundException e) {
-			fail("V2 indice out of bound");		
+		} catch (IndexOutOfBoundException e) {
+			fail("V2 Index out of bound");		
 		}
 	}
 
@@ -311,8 +311,8 @@ public class TestVector3 {
 			if (!(V1.get(0) == -3.0 && V1.get(1) == 0.0 && V1.get(2) == 3.0)) fail("V1 does not equals V1*3.0");
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
-		} catch (IndiceOutOfBoundException e) {
-			fail("V1 indice out of bound");		
+		} catch (IndexOutOfBoundException e) {
+			fail("V1 Index out of bound");		
 		}
 	}
 
@@ -372,8 +372,8 @@ public class TestVector3 {
 			if (!(V3.get(0) == -3.0 && V3.get(1) == 6.0 && V3.get(2) == -3.0)) fail("V3 does not equals V1^V2");
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
-		} catch (IndiceOutOfBoundException e) {
-			fail("V3 indice out of bound");		
+		} catch (IndexOutOfBoundException e) {
+			fail("V3 Index out of bound");		
 		}
 	}
 
@@ -407,23 +407,23 @@ public class TestVector3 {
 			if (!(V1.get(0) == -4.0 && V1.get(1) == 8.0 && V1.get(2) == -4.0)) fail("V1 does not equals V1^V2");
 		} catch (VectorArrayWrongSizeException e) {
 			fail("V1 array is out of bound");
-		} catch (IndiceOutOfBoundException e) {
-			fail("V1 indice out of bound");
+		} catch (IndexOutOfBoundException e) {
+			fail("V1 Index out of bound");
 		}
 	}
 
 	// ----- Additional tests added to blindage the coverage (bounds, new methods, equals, extra constructors) -----
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testVector_get_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testVector_get_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Vector3 get(3) out of bound must throw *****");
 
 		Vector3 v = new Vector3();
 		v.get(3); // valid indices are 0..2
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testVector_set_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testVector_set_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Vector3 set(3, val) out of bound must throw *****");
 
 		Vector3 v = new Vector3();

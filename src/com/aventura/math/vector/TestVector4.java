@@ -94,7 +94,7 @@ public class TestVector4 {
 	}
 
 	@Test
-	public void testVector4_indexedGetSet_valid() throws IndiceOutOfBoundException {
+	public void testVector4_indexedGetSet_valid() throws IndexOutOfBoundException {
 		System.out.println("***** Test Vector4 : indexed get/set (valid indices) *****");
 
 		Vector4 v = new Vector4();
@@ -109,16 +109,16 @@ public class TestVector4 {
 		assertEquals(4f, v.get(3), 0f);
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testVector4_get_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testVector4_get_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Vector4 : get(4) out of bound must throw *****");
 
 		Vector4 v = new Vector4();
 		v.get(4); // valid indices are 0..3
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testVector4_set_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testVector4_set_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Vector4 : set(4, val) out of bound must throw *****");
 
 		Vector4 v = new Vector4();

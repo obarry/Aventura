@@ -177,4 +177,75 @@ public class TestVector2 {
 		if (!v2.equals(v1)) fail("Legacy equals() should still return a Vector2 equal to the original");
 		if (v1 == v2) fail("Legacy equals() should still return a distinct copy, not the same reference");
 	}
+
+	@Test
+	public void testVector2_constructor_array_ok() throws VectorArrayWrongSizeException {
+		System.out.println("***** Test Vector2 : array constructor, valid size (new constructor) *****");
+
+		float[] array = {3f, 4f};
+		Vector2 v = new Vector2(array);
+		assertEquals(3f, v.getX(), 0f);
+		assertEquals(4f, v.getY(), 0f);
+	}
+
+	@Test(expected = VectorArrayWrongSizeException.class)
+	public void testVector2_constructor_array_tooShort() throws VectorArrayWrongSizeException {
+		System.out.println("***** Test Vector2 : array constructor, too short, must throw (new constructor) *****");
+
+		float[] array = {3f}; // only 1 element, Vector2 needs 2
+		new Vector2(array);
+	}
+
+	@Test
+	public void testVector2_indexedGetSet_valid() throws IndexOutOfBoundException {
+		System.out.println("***** Test Vector2 : indexed get/set, valid indices (new methods) *****");
+
+		Vector2 v = new Vector2();
+		v.set(0, 5f);
+		v.set(1, 6f);
+		assertEquals(5f, v.get(0), 0f);
+		assertEquals(6f, v.get(1), 0f);
+	}
+
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testVector2_get_invalidIndex_throws() throws IndexOutOfBoundException {
+		System.out.println("***** Test Vector2 : get(2) out of bound must throw (new method) *****");
+
+		Vector2 v = new Vector2();
+		v.get(2); // valid indices are 0..1
+	}
+
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testVector2_set_invalidIndex_throws() throws IndexOutOfBoundException {
+		System.out.println("***** Test Vector2 : set(2, val) out of bound must throw (new method) *****");
+
+		Vector2 v = new Vector2();
+		v.set(2, 1f); // valid indices are 0..1
+	}
+
+	@Test
+	public void testVector2_distance_distanceSquared() {
+		System.out.println("***** Test Vector2 : distance/distanceSquared (new methods) *****");
+
+		Vector2 v1 = new Vector2(0f, 0f);
+		Vector2 v2 = new Vector2(3f, 4f);
+
+		assertEquals(25f, v1.distanceSquared(v2), 0.00001f);
+		assertEquals(5f, v1.distance(v2), 0.00001f);
+		assertEquals(v1.minus(v2).length(), v1.distance(v2), 0.0001f);
+	}
+
+	@Test
+	public void testVector2_toArray() {
+		System.out.println("***** Test Vector2 : toArray/toArray(dest) (new methods) *****");
+
+		Vector2 v = new Vector2(1f, 2f);
+		float[] a = v.toArray();
+		assertArrayEquals(new float[]{1f,2f}, a, 0.00001f);
+
+		float[] dest = new float[2];
+		float[] r = v.toArray(dest);
+		assertSame(dest, r);
+		assertArrayEquals(new float[]{1f,2f}, dest, 0.00001f);
+	}
 }

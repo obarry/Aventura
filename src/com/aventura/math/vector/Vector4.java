@@ -168,9 +168,9 @@ public class Vector4 {
 	 * Set the coordinate of rank i with value v
 	 * @param i the rank of the coordinate to set value
 	 * @param v, the value to set
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public void set(int i, float v) throws IndiceOutOfBoundException {
+	public void set(int i, float v) throws IndexOutOfBoundException {
 		switch (i) {
 		case 0:
 			this.x = v;
@@ -185,7 +185,7 @@ public class Vector4 {
 			this.w = v;
 			break;
 		default :
-			throw new IndiceOutOfBoundException("Indice out of bound while setting coordinate ("+i+") of Vector4");
+			throw new IndexOutOfBoundException("Index out of bound while setting coordinate ("+i+") of Vector4");
 		}
 	}
 	
@@ -239,9 +239,9 @@ public class Vector4 {
 	 * Get the coordinate of rank i
 	 * @param i
 	 * @return
-	 * @throws IndiceOutOfBoundException
+	 * @throws IndexOutOfBoundException
 	 */
-	public float get(int i) throws IndiceOutOfBoundException {
+	public float get(int i) throws IndexOutOfBoundException {
 		switch (i) {
 		case 0:
 			return this.x;
@@ -252,7 +252,7 @@ public class Vector4 {
 		case 3:
 			return this.w;
 		default :
-			throw new IndiceOutOfBoundException("Indice out of bound while getting coordinate ("+i+") of Vector4");
+			throw new IndexOutOfBoundException("Index out of bound while getting coordinate ("+i+") of Vector4");
 		}
 	}
 	
@@ -529,7 +529,7 @@ public class Vector4 {
 			for (int j=0; j<Constants.SIZE_4; j++) {
 				try {
 					r.set(i, r.get(i)+A.get(i,j)*this.get(j));
-				} catch (IndiceOutOfBoundException e) {
+				} catch (IndexOutOfBoundException e) {
 					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
 					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
 					e.printStackTrace();
@@ -552,7 +552,7 @@ public class Vector4 {
 			for (int j=0; j<Constants.SIZE_4; j++) {
 				try {
 					array[i]+=A.get(i,j)*this.get(j);
-				} catch (IndiceOutOfBoundException e) {
+				} catch (IndexOutOfBoundException e) {
 					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
 					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
 					e.printStackTrace();

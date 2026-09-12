@@ -66,8 +66,8 @@ public class TestMatrix4 {
 			System.out.println("B="+B);
 
 			if (!A.equals(B)) fail("A does not equals B");
-//		} catch (IndiceOutOfBoundException e) {
-//			fail("Indice out of bound");		
+//		} catch (IndexOutOfBoundException e) {
+//			fail("Index out of bound");		
 //		}
 	}
 
@@ -437,40 +437,40 @@ public class TestMatrix4 {
 		assertEquals(7f, m.get(3,3), 0f); // this element was left at 0 before the fix
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix4_getRow_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_getRow_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix4 : getRow(4) out of bound must throw (off-by-one regression) *****");
 
 		Matrix4 m = new Matrix4(Matrix4.IDENTITY);
 		m.getRow(4); // valid indices are 0..3
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix4_getColumn_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_getColumn_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix4 : getColumn(4) out of bound must throw (off-by-one regression) *****");
 
 		Matrix4 m = new Matrix4(Matrix4.IDENTITY);
 		m.getColumn(4); // valid indices are 0..3
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix4_timesRow_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_timesRow_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix4 : timesRow(4, s) out of bound must throw (off-by-one regression) *****");
 
 		Matrix4 m = new Matrix4(Matrix4.IDENTITY);
 		m.timesRow(4, 2f);
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix4_setRow_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_setRow_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix4 : setRow(4, v) out of bound must throw (was previously never validated) *****");
 
 		Matrix4 m = new Matrix4(0f);
 		m.setRow(4, Vector4.ZERO_VECTOR);
 	}
 
-	@Test(expected = IndiceOutOfBoundException.class)
-	public void testMatrix4_setColumn_invalidIndex_throws() throws IndiceOutOfBoundException {
+	@Test(expected = IndexOutOfBoundException.class)
+	public void testMatrix4_setColumn_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix4 : setColumn(4, v) out of bound must throw (was previously never validated) *****");
 
 		Matrix4 m = new Matrix4(0f);
@@ -478,7 +478,7 @@ public class TestMatrix4 {
 	}
 
 	@Test
-	public void testMatrix4_setRow_setColumn_roundTrip() throws IndiceOutOfBoundException {
+	public void testMatrix4_setRow_setColumn_roundTrip() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix4 : setRow/setColumn round-trip with getRow/getColumn *****");
 
 		Matrix4 m = new Matrix4(0f);
@@ -615,6 +615,96 @@ public class TestMatrix4 {
 		Matrix4 invA = a.inverse();
 		Matrix4 product = a.times(invA);
 		if (!product.equals(Matrix4.IDENTITY)) fail("A * inverse(A) should equal Identity");
+	}
+
+	@Test
+	public void testMatrix4_constructor_array_isDefensiveCopy() {
+		System.out.println("***** Test Matrix4 : constructor(float[][]) makes a defensive copy (aliasing bug fix) *****");
+
+		float[][] source = new float[][] {
+			{1f, 0f, 0f, 0f},
+			{0f, 1f, 0f, 0f},
+			{0f, 0f, 1f, 0f},
+			{0f, 0f, 0f, 1f}
+		};
+		Matrix4 m = new Matrix4(source);
+
+		source[0][0] = 999f;
+		assertEquals(1f, m.get(0,0), 0f);
+	}
+
+	@Test
+	public void testMatrix4_setArray_isDefensiveCopy() throws MatrixArrayWrongSizeException {
+		System.out.println("***** Test Matrix4 : setArray(float[][]) makes a defensive copy (aliasing bug fix) *****");
+
+		Matrix4 m = new Matrix4(0f);
+		float[][] source = new float[][] {
+			{1f, 2f, 3f, 4f},
+			{5f, 6f, 7f, 8f},
+			{9f, 10f, 11f, 12f},
+			{13f, 14f, 15f, 16f}
+		};
+		m.setArray(source);
+
+		source[0][0] = 999f;
+		assertEquals(1f, m.get(0,0), 0f);
+	}
+
+	@Test
+	public void testMatrix4_getArray_isDefensiveCopy() {
+		System.out.println("***** Test Matrix4 : getArray() returns a defensive copy (aliasing bug fix, aligned with Matrix3) *****");
+
+		Matrix4 m = new Matrix4(Matrix4.IDENTITY);
+		float[][] arr = m.getArray();
+		arr[0][0] = 999f;
+
+		assertEquals(1f, m.get(0,0), 0f);
+	}
+
+	@Test
+	public void testMatrix4_determinant() {
+		System.out.println("***** Test Matrix4 : determinant() (new method) *****");
+
+		assertEquals(1f, Matrix4.IDENTITY.determinant(), 0.00001f);
+
+		Matrix4 m = new Matrix4(new float[][] {
+			{2f, 0f, 0f, 0f},
+			{0f, 3f, 0f, 0f},
+			{0f, 0f, 4f, 0f},
+			{0f, 0f, 0f, 5f}
+		});
+		assertEquals(120f, m.determinant(), 0.0001f); // diagonal matrix: det = product of diagonal
+
+		// Last row all zero -> singular -> determinant 0
+		Matrix4 singular = new Matrix4(new float[][] {
+			{1f, 2f, 3f, 4f},
+			{5f, 6f, 7f, 8f},
+			{9f, 10f, 11f, 12f},
+			{0f, 0f, 0f, 0f}
+		});
+		assertEquals(0f, singular.determinant(), 0.0001f);
+	}
+
+	@Test
+	public void testMatrix4_setArrayOfGetArray_realWorldPattern() throws MatrixArrayWrongSizeException {
+		System.out.println("***** Test Matrix4 : A.setArray(B.times(C).getArray()) still works correctly *****");
+
+		// This mirrors the exact pattern used in LookAt.java (real codebase): combine two matrices,
+		// then adopt the result's array into a third Matrix via getArray()/setArray(). With both methods
+		// now doing a defensive copy, the values must still end up correct (just with one harmless
+		// extra copy instead of a shared reference).
+		Matrix4 b = new Matrix4(new float[][] {
+			{1f,0f,0f,2f},
+			{0f,1f,0f,3f},
+			{0f,0f,1f,4f},
+			{0f,0f,0f,1f}
+		});
+		Matrix4 c = new Matrix4(Matrix4.IDENTITY);
+
+		Matrix4 a = new Matrix4(0f);
+		a.setArray(b.times(c).getArray());
+
+		if (!a.equals(b)) fail("a should equal b*Identity after the getArray()/setArray() round-trip");
 	}
 
 }
