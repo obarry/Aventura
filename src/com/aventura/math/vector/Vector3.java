@@ -41,15 +41,67 @@ public class Vector3 {
 	public static int nb_to_display = 0; // count before next display session
 	public static final int DISPLAY_EVERY = 1000000; // nb of count between 2 display sessions
 
-    public static final Vector3 X_AXIS = new Vector3(1,0,0);
-    public static final Vector3 Y_AXIS = new Vector3(0,1,0);
-    public static final Vector3 Z_AXIS = new Vector3(0,0,1);
+	// Backing values for the accessors below. Kept private so the mutable-Vector3-as-a-shared-constant
+	// footgun (public static final field pointing to a mutable object - see audit report) cannot happen:
+	// nothing outside this class can ever hold a reference to these particular instances.
+	private static final Vector3 X_AXIS_VALUE = new Vector3(1,0,0);
+	private static final Vector3 Y_AXIS_VALUE = new Vector3(0,1,0);
+	private static final Vector3 Z_AXIS_VALUE = new Vector3(0,0,1);
 
-    public static final Vector3 X_OPP_AXIS = new Vector3(-1,0,0);
-    public static final Vector3 Y_OPP_AXIS = new Vector3(0,-1,0);
-    public static final Vector3 Z_OPP_AXIS = new Vector3(0,0,-1);
-    
-	public static final Vector3 ZERO_VECTOR = new Vector3(0,0,0);
+	private static final Vector3 X_OPP_AXIS_VALUE = new Vector3(-1,0,0);
+	private static final Vector3 Y_OPP_AXIS_VALUE = new Vector3(0,-1,0);
+	private static final Vector3 Z_OPP_AXIS_VALUE = new Vector3(0,0,-1);
+
+	private static final Vector3 ZERO_VECTOR_VALUE = new Vector3(0,0,0);
+
+	/**
+	 * @return a new Vector3 (1,0,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector3 xAxis() {
+		return new Vector3(X_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector3 (0,1,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector3 yAxis() {
+		return new Vector3(Y_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector3 (0,0,1) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector3 zAxis() {
+		return new Vector3(Z_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector3 (-1,0,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector3 xOppAxis() {
+		return new Vector3(X_OPP_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector3 (0,-1,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector3 yOppAxis() {
+		return new Vector3(Y_OPP_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector3 (0,0,-1) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector3 zOppAxis() {
+		return new Vector3(Z_OPP_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector3 (0,0,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector3 zeroVector() {
+		return new Vector3(ZERO_VECTOR_VALUE);
+	}
 
     // Components of the Vector
 	protected float x;
@@ -272,6 +324,34 @@ public void set(float x, float y, float z) {
 	}
 
 	/**
+	 * Object contract override (new method - see audit report: equals(Vector3) above is a same-type overload,
+	 * not an override of Object.equals(Object), which silently breaks the general contract). Delegates to
+	 * equals(Vector3) so behavior (including the epsilon tolerance from MathTools) stays identical for callers
+	 * that already use the typed overload.
+	 * Note: because of that epsilon tolerance, equals() is not a strict mathematical equivalence relation
+	 * (two vectors within epsilon of a third may not be within epsilon of each other), which is an inherent
+	 * tension with the equals()/hashCode() contract when floating-point comparisons use a tolerance. This is
+	 * accepted here as a practical tradeoff, consistent with how equals(Vector3) already worked.
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof Vector3)) return false;
+		return equals((Vector3)o);
+	}
+
+	/**
+	 * Object contract override (new method, paired with equals(Object) above).
+	 */
+	@Override
+	public int hashCode() {
+		int result = Float.floatToIntBits(this.x);
+		result = 31*result + Float.floatToIntBits(this.y);
+		result = 31*result + Float.floatToIntBits(this.z);
+		return result;
+	}
+
+	/**
 	 * Sum of this Vector3 V and another Vector3 W, returns a newly created Vector3 
 	 * @param w
 	 * @return V+W
@@ -349,11 +429,13 @@ public void set(float x, float y, float z) {
 	}
 		
 	/**
-	 * V^W : Vector product of this Vector3 with W, another Vector3.
+	 * V^W : Vector (cross) product of this Vector3 with W, another Vector3.
+	 * Named cross() rather than an overload of times() (see audit report - times() otherwise mixes
+	 * scalar multiplication, cross product and matrix multiplication under one name).
 	 * @param w
-	 * @return a new Vector3 corresponding to the product
+	 * @return a new Vector3 corresponding to the cross product
 	 */
-	public Vector3 times(Vector3 w) {
+	public Vector3 cross(Vector3 w) {
 		/*
 		 * a=(a1,a2,a3) and b=(b1,b2,b3) then a^b=(a2b3−a3b2, a3b1−a1b3, a1b2−a2b1)
 		 */
@@ -361,22 +443,22 @@ public void set(float x, float y, float z) {
 		r.x = this.y*w.z-this.z*w.y;
 		r.y = this.z*w.x-this.x*w.z;
 		r.z = this.x*w.y-this.y*w.x;
-		
+
 		return r;
 	}
-	
+
 	/**
-	 *  V^W : Vector product of this Vector3 with W, another Vector3.
+	 *  V^W : Vector (cross) product of this Vector3 with W, another Vector3.
 	 *  This Vector3 is modified and contains the result of the operation.
 	 *  @param w
 	 */
-	public void timesEquals(Vector3 w) {
+	public void crossEquals(Vector3 w) {
 		float xp, yp, zp;
 
 		xp = this.y*w.z-this.z*w.y;
 		yp = this.z*w.x-this.x*w.z;
 		zp = this.x*w.y-this.y*w.x;
-		
+
 		this.x = xp;
 		this.y = yp;
 		this.z = zp;

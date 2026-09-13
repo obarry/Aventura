@@ -108,7 +108,7 @@ public class Test3ElementsRotation {
 		// Camera
 		Vector4 eye = new Vector4(14,8,4,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		Test3ElementsRotation test = new Test3ElementsRotation();
 		
@@ -166,7 +166,7 @@ public class Test3ElementsRotation {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
+			r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.xAxis());
 			e.setTransformation(r);
 			renderer.render();
 		}

@@ -156,8 +156,8 @@ public class Element implements Transformable, Shape, Generable {
 		this.name = ELEMENT_DEFAULT_NAME + id;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
-		this.transform = new Transformation(Matrix4.IDENTITY); // By default
-		this.full = new Transformation(Matrix4.IDENTITY); // By default
+		this.transform = new Transformation(Matrix4.identity()); // By default
+		this.full = new Transformation(Matrix4.identity()); // By default
 	}
 
 	/**
@@ -170,8 +170,8 @@ public class Element implements Transformable, Shape, Generable {
 		this.name = name + id;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
-		this.transform = new Transformation(Matrix4.IDENTITY); // By default
-		this.full = new Transformation(Matrix4.IDENTITY); // By default
+		this.transform = new Transformation(Matrix4.identity()); // By default
+		this.full = new Transformation(Matrix4.identity()); // By default
 	}
 
 	/**
@@ -184,8 +184,8 @@ public class Element implements Transformable, Shape, Generable {
 		this.name = ELEMENT_DEFAULT_NAME + id;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
-		this.transform = new Transformation(Matrix4.IDENTITY); // By default
-		this.full = new Transformation(Matrix4.IDENTITY); // By default
+		this.transform = new Transformation(Matrix4.identity()); // By default
+		this.full = new Transformation(Matrix4.identity()); // By default
 		this.isClosed = isClosed;
 	}
 	
@@ -199,8 +199,8 @@ public class Element implements Transformable, Shape, Generable {
 		this.name = name + id;
 		this.triangles = new ArrayList<Triangle>();
 		this.vertices = new ArrayList<Vertex>();
-		this.transform = new Transformation(Matrix4.IDENTITY); // By default
-		this.full = new Transformation(Matrix4.IDENTITY); // By default
+		this.transform = new Transformation(Matrix4.identity()); // By default
+		this.full = new Transformation(Matrix4.identity()); // By default
 		this.isClosed = isClosed;
 	}
 

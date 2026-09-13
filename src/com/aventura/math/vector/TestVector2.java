@@ -248,4 +248,28 @@ public class TestVector2 {
 		assertSame(dest, r);
 		assertArrayEquals(new float[]{1f,2f}, dest, 0.00001f);
 	}
+
+	@Test
+	public void testVector2_equalsObject_and_hashCode() {
+		System.out.println("***** Test Vector2 : equals(Object) override + hashCode() (new methods, phase 2) *****");
+
+		Vector2 v1 = new Vector2(1f, 2f);
+		Vector2 v2 = new Vector2(1f, 2f);
+		Vector2 v3 = new Vector2(9f, 9f);
+
+		// equals(Object) must agree with the existing typed equals(Vector2) overload
+		Object o2 = v2;
+		Object o3 = v3;
+		assertTrue(v1.equals(o2));
+		assertFalse(v1.equals(o3));
+
+		// Object contract basics
+		Object nullObj = null;
+		assertFalse(v1.equals(nullObj)); // must go through equals(Object), not the more specific equals(Vector2)
+		assertFalse(v1.equals("not a Vector2"));
+		assertTrue(v1.equals(v1));
+
+		// equal objects must have equal hashCodes
+		assertEquals(v1.hashCode(), v2.hashCode());
+	}
 }

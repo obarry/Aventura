@@ -99,7 +99,7 @@ public class TestTrellis {
 		Vector4 eye = new Vector4(-25,10,25,1);
 		Vector4 poi = new Vector4(0, 0, 0, 1);
 		
-		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
+		Camera cam = new Camera(eye, poi, Vector4.yAxis());		
 		
 		return cam;
 	}

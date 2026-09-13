@@ -132,14 +132,14 @@ public class Cone extends Element {
 
 			// For each bottom Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
-			u = (summit.minus(bottom_center)).times(mesh.getVertex(i).getPos().minus(bottom_center));
-			n = (mesh.getVertex(i).getPos().minus(summit)).times(u);
+			u = (summit.minus(bottom_center)).cross(mesh.getVertex(i).getPos().minus(bottom_center));
+			n = (mesh.getVertex(i).getPos().minus(summit)).cross(u);
 			n.normalize();
 			mesh.getVertex(i).setNormal(n.V3());
-			
+
 			// For each summit, use the ray vector from top center to the Vertex and normalize it
 			if (i<half_seg*2) {
-				n = (mesh.getVertex(i).getPos().minus(summit)).times(mesh.getVertex(i+1).getPos().minus(summit));
+				n = (mesh.getVertex(i).getPos().minus(summit)).cross(mesh.getVertex(i+1).getPos().minus(summit));
 				n.normalize();
 				mesh.getSummit(i).setNormal(n.V3());
 			}

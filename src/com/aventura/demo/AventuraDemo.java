@@ -131,7 +131,7 @@ public class AventuraDemo {
 		// Camera
 		Vector4 eye = new Vector4(10,6,3,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		AventuraDemo demo = new AventuraDemo();
 				
@@ -244,16 +244,16 @@ public class AventuraDemo {
 		
 		System.out.println("********* Rendering...");
 		int nb_images = 360;
-		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
-		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
-		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
+		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.xAxis());
+		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.yAxis());
+		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.zAxis());
 		Vector4 camera_trans = new Vector4(new Vector4(0,-10,-2,1).minus(eye).times((float)1/(nb_images)));
 		Transformation r = new Transformation(r1.times(r2).times(r3));
 		renderer.render();
 		for (int i=0; i<=nb_images; i++) {
 			world.expandTransformation(r);
 			eye.plusEquals(camera_trans);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			camera.updateCamera(eye, poi, Vector4.zAxis());
 			renderer.render();
 		}
 

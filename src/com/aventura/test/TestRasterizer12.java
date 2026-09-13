@@ -97,7 +97,7 @@ public class TestRasterizer12 {
 		// Camera
 		Vector4 eye = new Vector4(8,3,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestRasterizer12 test = new TestRasterizer12();
 		
@@ -157,7 +157,7 @@ public class TestRasterizer12 {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.zAxis());
 			box.setTransformation(r);
 			renderer.render();
 		}

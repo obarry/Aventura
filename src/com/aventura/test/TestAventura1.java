@@ -127,8 +127,8 @@ public class TestAventura1 {
 		//Element e = world.createElement();
 		
 		// Create a Transformation for this Element
-		//Rotation r = new Rotation(Math.PI/10, Vector3.Z_AXIS);
-		Rotation r = new Rotation(0, Vector3.Z_AXIS);
+		//Rotation r = new Rotation(Math.PI/10, Vector3.zAxis());
+		Rotation r = new Rotation(0, Vector3.zAxis());
 		Scaling s = new Scaling(1);
 		
 		// Consolidate the Scaling, Rotation and Translation in a single Transformation object and assign it to the Element
@@ -151,7 +151,7 @@ public class TestAventura1 {
 		Vector4 eye = new Vector4(-30,0,0,1);
 		Vector4 poi = new Vector4(0,0,-50,1);
 		
-		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
+		Camera cam = new Camera(eye, poi, Vector4.yAxis());		
 		
 		return cam;
 	}

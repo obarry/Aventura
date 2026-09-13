@@ -62,7 +62,7 @@ public class ClosedCone extends Cone {
 	protected void createSubElements() {
 		
 		bottom = new Disc(ray, half_seg);
-		Translation t_bottom = new Translation(Vector3.Z_AXIS, -height/2);
+		Translation t_bottom = new Translation(Vector3.zAxis(), -height/2);
 		bottom.setTransformation((Transformation)t_bottom);
 		
 		this.addElement(bottom);

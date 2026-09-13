@@ -113,7 +113,7 @@ public class ElementTransform {
 	 */
 	private Matrix4 computeNormalMatrix(Matrix4 model) {
 		Matrix3 model3 = model.getMatrix3();
-		if (model3.times(model3.transpose()).equals(Matrix3.IDENTITY)) {
+		if (model3.times(model3.transpose()).equals(Matrix3.identity())) {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model normals matrix = Model matrix");
 			return model;
 		}

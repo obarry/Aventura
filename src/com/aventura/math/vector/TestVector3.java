@@ -28,9 +28,9 @@ public class TestVector3 {
 		float[] y_axis = {0.0f, 1.0f, 0.0f};
 		float[] z_axis = {0.0f, 0.0f, 1.0f};
 		
-		Vector3 V1 = Vector3.X_AXIS;
-		Vector3 V2 = Vector3.Y_AXIS;
-		Vector3 V3 = Vector3.Z_AXIS;
+		Vector3 V1 = Vector3.xAxis();
+		Vector3 V2 = Vector3.yAxis();
+		Vector3 V3 = Vector3.zAxis();
 		
 		System.out.println("V1="+V1);
 		System.out.println("V2="+V2);
@@ -364,7 +364,7 @@ public class TestVector3 {
 		try {
 			V1 = new Vector3(array1);
 			V2 = new Vector3(array2);
-			Vector3 V3 = V1.times(V2); // V3=(1x1-2x2, 2x3-0x1, 0x2-1x3)=(-3,6,-3)
+			Vector3 V3 = V1.cross(V2); // V3=(1x1-2x2, 2x3-0x1, 0x2-1x3)=(-3,6,-3)
 			System.out.println("V1="+V1);
 			System.out.println("V2="+V2);
 			System.out.println("V3="+V3);
@@ -400,7 +400,7 @@ public class TestVector3 {
 			V2 = new Vector3(array2);
 			System.out.println("V1="+V1);
 			System.out.println("V2="+V2);
-			V1.timesEquals(V2); // Result=(2x1-3x2, 3x3-1x1, 1x2-2x3)=(-4,8,-4)
+			V1.crossEquals(V2); // Result=(2x1-3x2, 3x3-1x1, 1x2-2x3)=(-4,8,-4)
 			System.out.println("V1="+V1);
 			System.out.println("V2="+V2);
 	
@@ -443,8 +443,8 @@ public class TestVector3 {
 	public void testVector_dot_orthogonalIsZero() {
 		System.out.println("***** Test Vector3 dot product of orthogonal vectors is 0 *****");
 
-		assertEquals(0f, Vector3.X_AXIS.dot(Vector3.Y_AXIS), 0.00001f);
-		assertEquals(0f, Vector3.Y_AXIS.dot(Vector3.Z_AXIS), 0.00001f);
+		assertEquals(0f, Vector3.xAxis().dot(Vector3.yAxis()), 0.00001f);
+		assertEquals(0f, Vector3.yAxis().dot(Vector3.zAxis()), 0.00001f);
 	}
 
 	@Test
@@ -454,8 +454,8 @@ public class TestVector3 {
 		Vector3 v1 = new Vector3(1f, 2f, 3f);
 		Vector3 v2 = new Vector3(4f, 5f, 6f);
 
-		Vector3 cross12 = v1.times(v2);
-		Vector3 cross21 = v2.times(v1);
+		Vector3 cross12 = v1.cross(v2);
+		Vector3 cross21 = v2.cross(v1);
 
 		if (!cross12.equals(cross21.times(-1f))) fail("v1^v2 should equal -(v2^v1)");
 	}
@@ -488,7 +488,7 @@ public class TestVector3 {
 	public void testVector_constructor_fromMatrix3RowColumn() {
 		System.out.println("***** Test Vector3 constructor from Matrix3 row/column *****");
 
-		Matrix3 m = new Matrix3(Matrix3.IDENTITY);
+		Matrix3 m = new Matrix3(Matrix3.identity());
 		Vector3 row0 = new Vector3(0, m);
 		assertEquals(1f, row0.getX(), 0f);
 		assertEquals(0f, row0.getY(), 0f);
@@ -542,6 +542,50 @@ public class TestVector3 {
 		float[] r = v.toArray(dest);
 		assertSame(dest, r);
 		assertArrayEquals(new float[]{1f,2f,3f}, dest, 0.00001f);
+	}
+
+	@Test
+	public void testVector3_equalsObject_and_hashCode() {
+		System.out.println("***** Test Vector3 : equals(Object) override + hashCode() (new methods, phase 2) *****");
+
+		Vector3 v1 = new Vector3(1f, 2f, 3f);
+		Vector3 v2 = new Vector3(1f, 2f, 3f);
+		Vector3 v3 = new Vector3(9f, 9f, 9f);
+
+		Object o2 = v2;
+		Object o3 = v3;
+		assertTrue(v1.equals(o2));
+		assertFalse(v1.equals(o3));
+
+		Object nullObj = null;
+		assertFalse(v1.equals(nullObj)); // must go through equals(Object), not the more specific equals(Vector3)
+		assertFalse(v1.equals("not a Vector3"));
+		assertTrue(v1.equals(v1));
+
+		assertEquals(v1.hashCode(), v2.hashCode());
+	}
+
+	@Test
+	public void testVector3_accessorConstants_areFreshIndependentCopies() {
+		System.out.println("***** Test Vector3 : xAxis()/yAxis()/zAxis()/zeroVector() etc return fresh, independent copies (new methods, phase 2) *****");
+
+		Vector3 a1 = Vector3.xAxis();
+		Vector3 a2 = Vector3.xAxis();
+		if (a1 == a2) fail("xAxis() should return a fresh instance every call, not a shared one");
+		assertTrue(a1.equals(a2));
+
+		// Mutating one call's result must never affect a later call's result (the bug this replaces:
+		// a public static final field pointing to a single, mutable, shared instance - see audit report).
+		a1.setX(999f);
+		Vector3 a3 = Vector3.xAxis();
+		assertEquals(1f, a3.getX(), 0f);
+
+		assertTrue(Vector3.yAxis().equals(new Vector3(0f,1f,0f)));
+		assertTrue(Vector3.zAxis().equals(new Vector3(0f,0f,1f)));
+		assertTrue(Vector3.xOppAxis().equals(new Vector3(-1f,0f,0f)));
+		assertTrue(Vector3.yOppAxis().equals(new Vector3(0f,-1f,0f)));
+		assertTrue(Vector3.zOppAxis().equals(new Vector3(0f,0f,-1f)));
+		assertTrue(Vector3.zeroVector().equals(new Vector3(0f,0f,0f)));
 	}
 
 }

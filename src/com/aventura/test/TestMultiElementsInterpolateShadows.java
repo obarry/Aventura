@@ -106,7 +106,7 @@ public class TestMultiElementsInterpolateShadows {
 		// Camera
 		Vector4 eye = new Vector4(10,6,3,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestMultiElementsInterpolateShadows test = new TestMultiElementsInterpolateShadows();
 				
@@ -187,9 +187,9 @@ public class TestMultiElementsInterpolateShadows {
 		System.out.println("********* Rendering...");
 		int nb_images = 3600;
 		int speed = 3;
-		Rotation r1 = new Rotation((float)Math.PI*2*speed/(float)nb_images, Vector3.X_AXIS);
-		Rotation r2 = new Rotation((float)Math.PI*2*1.5f*speed/(float)nb_images, Vector3.Y_AXIS);
-		Rotation r3 = new Rotation((float)Math.PI*2*2.5f*speed/(float)nb_images, Vector3.Z_AXIS);
+		Rotation r1 = new Rotation((float)Math.PI*2*speed/(float)nb_images, Vector3.xAxis());
+		Rotation r2 = new Rotation((float)Math.PI*2*1.5f*speed/(float)nb_images, Vector3.yAxis());
+		Rotation r3 = new Rotation((float)Math.PI*2*2.5f*speed/(float)nb_images, Vector3.zAxis());
 		Transformation r = new Transformation(r1.times(r2).times(r3));
 		for (int i=0; i<=nb_images; i++) {
 			world.expandTransformation(r);

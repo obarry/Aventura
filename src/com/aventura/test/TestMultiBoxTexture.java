@@ -100,7 +100,7 @@ public class TestMultiBoxTexture {
 		// Camera
 		Vector4 eye = new Vector4(-6,-12,8,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestMultiBoxTexture test = new TestMultiBoxTexture();
 		
@@ -172,27 +172,27 @@ public class TestMultiBoxTexture {
 		float offset2 = 2*offset1;
 		float distance = 2;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation rx1 = new Rotation(alpha*i, Vector3.X_AXIS);
-			Rotation ry1 = new Rotation(beta*i, Vector3.Y_AXIS);
-			Rotation rz1 = new Rotation(gamma*i, Vector3.Z_AXIS);
-			Rotation rx2 = new Rotation(alpha*i+offset1, Vector3.X_AXIS);
-			Rotation ry2 = new Rotation(beta*i+offset1, Vector3.Y_AXIS);
-			Rotation rz2 = new Rotation(gamma*i+offset1, Vector3.Z_AXIS);
-			Rotation rx3 = new Rotation(alpha*i+offset2, Vector3.X_AXIS);
-			Rotation ry3 = new Rotation(beta*i+offset2, Vector3.Y_AXIS);
-			Rotation rz3 = new Rotation(gamma*i+offset2, Vector3.Z_AXIS);
+			Rotation rx1 = new Rotation(alpha*i, Vector3.xAxis());
+			Rotation ry1 = new Rotation(beta*i, Vector3.yAxis());
+			Rotation rz1 = new Rotation(gamma*i, Vector3.zAxis());
+			Rotation rx2 = new Rotation(alpha*i+offset1, Vector3.xAxis());
+			Rotation ry2 = new Rotation(beta*i+offset1, Vector3.yAxis());
+			Rotation rz2 = new Rotation(gamma*i+offset1, Vector3.zAxis());
+			Rotation rx3 = new Rotation(alpha*i+offset2, Vector3.xAxis());
+			Rotation ry3 = new Rotation(beta*i+offset2, Vector3.yAxis());
+			Rotation rz3 = new Rotation(gamma*i+offset2, Vector3.zAxis());
 			elm1.setTransformation(new Transformation(rx1.times(ry1).times(rz1)));
 			elm2.setTransformation(new Transformation(rx2.times(ry2).times(rz2)));
 			elm3.setTransformation(new Transformation(rx3.times(ry3).times(rz3)));
-			Vector4 orbit1 = new Vector4(Vector4.X_AXIS);
-			Vector4 orbit2 = new Vector4(Vector4.X_AXIS);
-			Vector4 orbit3 = new Vector4(Vector4.X_AXIS);
+			Vector4 orbit1 = new Vector4(Vector4.xAxis());
+			Vector4 orbit2 = new Vector4(Vector4.xAxis());
+			Vector4 orbit3 = new Vector4(Vector4.xAxis());
 			orbit1.timesEquals(distance);
 			orbit2.timesEquals(distance);
 			orbit3.timesEquals(distance);
-			Rotation ro1 = new Rotation(delta*i, Vector3.Z_AXIS);
-			Rotation ro2 = new Rotation(delta*i+offset1, Vector3.Z_AXIS);
-			Rotation ro3 = new Rotation(delta*i+offset2, Vector3.Z_AXIS);
+			Rotation ro1 = new Rotation(delta*i, Vector3.zAxis());
+			Rotation ro2 = new Rotation(delta*i+offset1, Vector3.zAxis());
+			Rotation ro3 = new Rotation(delta*i+offset2, Vector3.zAxis());
 			orbit1.timesEquals(ro1);
 			orbit2.timesEquals(ro2);
 			orbit3.timesEquals(ro3);

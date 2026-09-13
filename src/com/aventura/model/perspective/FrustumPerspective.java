@@ -72,7 +72,7 @@ public class FrustumPerspective extends Perspective {
 		
 		// - The up vector and side vectors
 		Vector4 up = camera.getUp();
-		Vector4 side = fwd.times(up).normalize();
+		Vector4 side = fwd.cross(up).normalize();
 		// - the half width and half eight of the near plane
 		float half_eight_near = this.height/2;
 		float half_width_near = this.width/2;

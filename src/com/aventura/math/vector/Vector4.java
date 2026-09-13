@@ -43,15 +43,75 @@ public class Vector4 {
 	public static final int DISPLAY_EVERY = 10000000; // nb of count between 2 display sessions
 
 	
-    public static final Vector4 X_AXIS = new Vector4(1,0,0,0);
-    public static final Vector4 Y_AXIS = new Vector4(0,1,0,0);
-    public static final Vector4 Z_AXIS = new Vector4(0,0,1,0);
+	// Backing values for the accessors below. Kept private so the mutable-Vector4-as-a-shared-constant
+	// footgun (public static final field pointing to a mutable object - see audit report) cannot happen:
+	// nothing outside this class can ever hold a reference to these particular instances.
+	private static final Vector4 X_AXIS_VALUE = new Vector4(1,0,0,0);
+	private static final Vector4 Y_AXIS_VALUE = new Vector4(0,1,0,0);
+	private static final Vector4 Z_AXIS_VALUE = new Vector4(0,0,1,0);
 
-    public static final Vector4 X_OPP_AXIS = new Vector4(-1,0,0,0);
-    public static final Vector4 Y_OPP_AXIS = new Vector4(0,-1,0,0);
-    public static final Vector4 Z_OPP_AXIS = new Vector4(0,0,-1,0);
-	public static final Vector4 ZERO_VECTOR = new Vector4(0,0,0,0);
-	public static final Vector4 ZERO_POINT = new Vector4(0,0,0,1);
+	private static final Vector4 X_OPP_AXIS_VALUE = new Vector4(-1,0,0,0);
+	private static final Vector4 Y_OPP_AXIS_VALUE = new Vector4(0,-1,0,0);
+	private static final Vector4 Z_OPP_AXIS_VALUE = new Vector4(0,0,-1,0);
+
+	private static final Vector4 ZERO_VECTOR_VALUE = new Vector4(0,0,0,0);
+	private static final Vector4 ZERO_POINT_VALUE = new Vector4(0,0,0,1);
+
+	/**
+	 * @return a new Vector4 (1,0,0,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector4 xAxis() {
+		return new Vector4(X_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector4 (0,1,0,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector4 yAxis() {
+		return new Vector4(Y_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector4 (0,0,1,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector4 zAxis() {
+		return new Vector4(Z_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector4 (-1,0,0,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector4 xOppAxis() {
+		return new Vector4(X_OPP_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector4 (0,-1,0,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector4 yOppAxis() {
+		return new Vector4(Y_OPP_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector4 (0,0,-1,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector4 zOppAxis() {
+		return new Vector4(Z_OPP_AXIS_VALUE);
+	}
+
+	/**
+	 * @return a new Vector4 (0,0,0,0) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector4 zeroVector() {
+		return new Vector4(ZERO_VECTOR_VALUE);
+	}
+
+	/**
+	 * @return a new Vector4 (0,0,0,1) - a fresh copy every call, safe to mutate.
+	 */
+	public static Vector4 zeroPoint() {
+		return new Vector4(ZERO_POINT_VALUE);
+	}
 
     // Components of the Vector
 	protected float x;
@@ -360,6 +420,34 @@ public class Vector4 {
 	}
 
 	/**
+	 * Object contract override (new method - see audit report: equals(Vector4) above is a same-type overload,
+	 * not an override of Object.equals(Object), which silently breaks the general contract). Delegates to
+	 * equals(Vector4) so behavior (including the epsilon tolerance from MathTools) stays identical for callers
+	 * that already use the typed overload.
+	 * Note: because of that epsilon tolerance, equals() is not a strict mathematical equivalence relation, which
+	 * is an inherent tension with the equals()/hashCode() contract when floating-point comparisons use a
+	 * tolerance. This is accepted here as a practical tradeoff, consistent with how equals(Vector4) already worked.
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof Vector4)) return false;
+		return equals((Vector4)o);
+	}
+
+	/**
+	 * Object contract override (new method, paired with equals(Object) above).
+	 */
+	@Override
+	public int hashCode() {
+		int result = Float.floatToIntBits(this.x);
+		result = 31*result + Float.floatToIntBits(this.y);
+		result = 31*result + Float.floatToIntBits(this.z);
+		result = 31*result + Float.floatToIntBits(this.w);
+		return result;
+	}
+
+	/**
 	 * Sum of this Vector4 V and another Vector4 W, returns a newly created Vector4 
 	 * @param w
 	 * @return V+W
@@ -480,11 +568,13 @@ public class Vector4 {
 		
 	/**
 	 * Assuming this Vector 4 is a Vector (t=0), not a point (t<>0)
-	 * V^W : Vector product of this Vector4 with W, another Vector4.
+	 * V^W : Vector (cross) product of this Vector4 with W, another Vector4.
+	 * Named cross() rather than an overload of times() (see audit report - times() otherwise mixes
+	 * scalar multiplication, cross product and matrix multiplication under one name).
 	 * @param w
-	 * @return a new Vector4 corresponding to the product
+	 * @return a new Vector4 corresponding to the cross product (w forced to 0)
 	 */
-	public Vector4 times(Vector4 w) {
+	public Vector4 cross(Vector4 w) {
 		/*
 		 * a=(a1,a2,a3) and b=(b1,b2,b3) then a^b=(a2b3-a3b2, a3b1-a1b3, a1b2-a2b1)
 		 */
@@ -493,23 +583,23 @@ public class Vector4 {
 		r.setY(this.z*w.x-this.x*w.z);
 		r.setZ(this.x*w.y-this.y*w.x);
 		r.setW(0); // Assuming Vector, not Point
-		
+
 		return r;
 	}
-	
+
 	/**
 	 * Assuming this Vector 4 is a Vector (t=0), not a point (t<>0)
-	 * V^W : Vector product of this Vector4 with W, another Vector4.
+	 * V^W : Vector (cross) product of this Vector4 with W, another Vector4.
 	 * This Vector4 is modified and contains the result of the operation.
 	 * @param w
 	 */
-	public void timesEquals(Vector4 w) {
+	public void crossEquals(Vector4 w) {
 		float xp, yp, zp;
 
 		xp = this.y*w.z-this.z*w.y;
 		yp = this.z*w.x-this.x*w.z;
 		zp = this.x*w.y-this.y*w.x;
-		
+
 		this.x = xp;
 		this.y = yp;
 		this.z = zp;
@@ -581,15 +671,6 @@ public class Vector4 {
 		return w != 0 ? true : false;
 	}
 	
-	/**
-	 * @deprecated duplicates vector() exactly (same body); kept as-is for now (no API removal in this pass,
-	 * see audit report) but delegates to vector() to remove the duplicated logic. Prefer vector().
-	 */
-	@Deprecated
-	public void setVector() {
-		vector();
-	}
-
 	public void point() {
 		this.w = 1;
 	}

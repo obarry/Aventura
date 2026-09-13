@@ -68,7 +68,7 @@ public class TestCamera {
 		
 		Vector4 eye = new Vector4(1,0,0,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Vector4 up = Vector4.Z_AXIS;
+		Vector4 up = Vector4.zAxis();
 		
 		System.out.println("Eye: "+eye);
 		System.out.println("PoI: "+poi);

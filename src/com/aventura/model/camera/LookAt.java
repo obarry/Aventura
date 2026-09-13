@@ -151,8 +151,8 @@ public class LookAt extends Matrix4 {
 
 		// Build forward, up and side Vectors
 		f =  (p.minus(e)).normalize();
-		s =  (f.times(u)).normalize();
-		up = (s.times(f)).normalize();
+		s =  (f.cross(u)).normalize();
+		up = (s.cross(f)).normalize();
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Calculated fwd: "+ f);						
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Calculated side: "+ s);								
@@ -192,8 +192,8 @@ public class LookAt extends Matrix4 {
 
 		// From forward vector, build up and side Vectors
 		this.f = fwd.normalize();
-		s =  (f.times(u)).normalize();
-		up = (s.times(f)).normalize();
+		s =  (f.cross(u)).normalize();
+		up = (s.cross(f)).normalize();
 
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Calculated fwd: "+ f);						
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Calculated side: "+ s);								

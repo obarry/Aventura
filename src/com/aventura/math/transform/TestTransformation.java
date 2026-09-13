@@ -28,7 +28,7 @@ public class TestTransformation {
 	public void testTransformEquals() {
 		System.out.println("***** Test Transformation : testTransformEquals *****");
 		
-		Rotation r1 = new Rotation((float)Math.PI/3, Vector3.X_AXIS); 
+		Rotation r1 = new Rotation((float)Math.PI/3, Vector3.xAxis()); 
 		System.out.println("Rotation: "+r1);
 		
 		

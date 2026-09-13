@@ -594,10 +594,10 @@ public class RenderEngine {
 	public void displayLandMarkLines() {
 		// Entirely in world space -- no Model matrix involved (drawVector uses View*Projection
 		// only), so there is no need to reset the Model matrix to identity anymore.
-		Vector4 origin = Vector4.ZERO_POINT;
-		screenLineRenderer.drawVector(origin, Vector3.X_AXIS, renderContext.landmarkXColor);
-		screenLineRenderer.drawVector(origin, Vector3.Y_AXIS, renderContext.landmarkYColor);
-		screenLineRenderer.drawVector(origin, Vector3.Z_AXIS, renderContext.landmarkZColor);
+		Vector4 origin = Vector4.zeroPoint();
+		screenLineRenderer.drawVector(origin, Vector3.xAxis(), renderContext.landmarkXColor);
+		screenLineRenderer.drawVector(origin, Vector3.yAxis(), renderContext.landmarkYColor);
+		screenLineRenderer.drawVector(origin, Vector3.zAxis(), renderContext.landmarkZColor);
 	}
 	
 	public void displayLandMarkLinesInterpolate() {
@@ -608,14 +608,14 @@ public class RenderEngine {
 		final float spear_length = 0.2f;
 		
 		// X axis arrow
-		Rotation r1 = new Rotation((float)Math.PI/2, Vector4.Y_AXIS);
+		Rotation r1 = new Rotation((float)Math.PI/2, Vector4.yAxis());
 		Element e1 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r1);
 		//render(e1, null, renderContext.landmarkXColor);
 		e1.transform();
 		render(e1, renderContext.landmarkXColor);
 		
 		// Y axis arrow
-		Rotation r2 = new Rotation((float)-Math.PI/2, Vector4.X_AXIS);
+		Rotation r2 = new Rotation((float)-Math.PI/2, Vector4.xAxis());
 		Element e2 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r2);	
 		//render(e2, null, renderContext.landmarkYColor);
 		e2.transform();
@@ -624,7 +624,7 @@ public class RenderEngine {
 		// Z axis arrow
 		Rotation r3 = null;
 		try {
-			r3 = new Rotation(Matrix4.IDENTITY);
+			r3 = new Rotation(Matrix4.identity());
 		} catch (NotARotationException e) {
 			// Nothing to do - should never happen
 			e.printStackTrace();
@@ -679,7 +679,7 @@ public class RenderEngine {
 		
 	public void displayLight() {
 		// Entirely in world space now, same simplification as displayLandMarkLines().
-		Vector4 origin = Vector4.ZERO_POINT;
+		Vector4 origin = Vector4.zeroPoint();
 		for (int i=0; i<lighting.getDirectionalLights().size(); i++) {
 			Vector3 lightDirection = lighting.getDirectionalLights().get(i).getLightVectorAtPoint(null);
 			screenLineRenderer.drawVector(origin, lightDirection, renderContext.lightVectorsColor);

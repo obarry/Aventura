@@ -169,7 +169,7 @@ public class TestMultiElements {
 		Vector4 eyeA = new Vector4(60,40,20,1);
 		Vector4 eyeB = new Vector4(4,3,2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eyeA, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eyeA, poi, Vector4.zAxis());		
 				
 		TestMultiElements test = new TestMultiElements();
 				
@@ -188,7 +188,7 @@ public class TestMultiElements {
 		for (int i=0; i<=nb_images; i++) {
 			Vector4 eye = Tools.interpolate(eyeA, eyeB, (float)i/nb_images);
 			System.out.println("Interpolation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			camera.updateCamera(eye, poi, Vector4.zAxis());
 			renderer.render();
 		}
 		
@@ -196,7 +196,7 @@ public class TestMultiElements {
 			float a = (float)Math.PI*2*(float)i/(float)nb_images;
 			Vector4 eye = new Vector4(30*(float)Math.cos(a),15*(float)Math.sin(a),5,1);
 			System.out.println("Rotation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			camera.updateCamera(eye, poi, Vector4.zAxis());
 			renderer.render();
 		}
 		

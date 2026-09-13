@@ -249,7 +249,7 @@ public class Trellis extends Element {
 				yavg = yb.minus(ya);
 								
 				// The normal vector is the cross product of both vectors.
-				Vector4 normal = xavg.times(yavg);
+				Vector4 normal = xavg.cross(yavg);
 				// Need to be normalized
 				rectangleMesh.getVertex(i,j).setNormal(normal.normalize().V3());
 			}

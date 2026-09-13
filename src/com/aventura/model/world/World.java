@@ -244,7 +244,7 @@ public class World {
 	 *         recursively -- see the fix note on the (Vector4) overload below)
 	 */
 	public float getMaxDistance() {
-		return getMaxDistance(Vector4.ZERO_POINT);
+		return getMaxDistance(Vector4.zeroPoint());
 	}
 	
 	/**

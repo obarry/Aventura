@@ -13,11 +13,11 @@ public class TestRotation {
 	@Test
 	public void testRotationDoubleVector3() {
 		System.out.println("***** Test Rotation : testRotationDoubleVector3 *****");
-		Rotation r11 = new Rotation((float)Math.PI/3, Vector3.X_AXIS); 
+		Rotation r11 = new Rotation((float)Math.PI/3, Vector3.xAxis()); 
 		System.out.println("r11 : "+r11);
-		Rotation r12 = new Rotation((float)Math.PI/4, Vector3.Y_AXIS); 
+		Rotation r12 = new Rotation((float)Math.PI/4, Vector3.yAxis()); 
 		System.out.println("r12 : "+r12);
-		Rotation r13 = new Rotation((float)Math.PI/5, Vector3.Z_AXIS);
+		Rotation r13 = new Rotation((float)Math.PI/5, Vector3.zAxis());
 		System.out.println("r13 : "+r13);
 		Rotation r21 = new Rotation();
 		Rotation r22 = new Rotation();
@@ -43,7 +43,7 @@ public class TestRotation {
 	@Test
 	public void testRotationMatrix() {
 		System.out.println("***** Test Rotation : testRotationMatrix *****");
-		Rotation r1 = new Rotation((float)Math.PI/4, Vector3.Y_AXIS); 
+		Rotation r1 = new Rotation((float)Math.PI/4, Vector3.yAxis()); 
 		System.out.println("r1 : "+r1);
 		
 		Rotation r2 = null;

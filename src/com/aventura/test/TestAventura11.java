@@ -105,7 +105,7 @@ public class TestAventura11 {
 		// Translate Elements m1e1 and m1e2 respectively above and below main Element e:
 		Translation t1 = new Translation(new Vector3(0, 0, 2));
 		Translation t2 = new Translation(new Vector3(0, 0, -2));
-		//Rotation r3 = new Rotation(Math.PI/4,Vector3.X_AXIS);
+		//Rotation r3 = new Rotation(Math.PI/4,Vector3.xAxis());
 		Translation t3 = new Translation(new Vector3(0, 4, -2));
 		e1.setTransformation(t1);
 		e2.setTransformation(t2);
@@ -139,7 +139,7 @@ public class TestAventura11 {
 		// Camera
 		Vector4 eye = new Vector4(14,8,4,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestAventura11 test = new TestAventura11();
 		
@@ -164,7 +164,7 @@ public class TestAventura11 {
 			float a = (float)Math.PI*2*(float)i/(float)nb_images;
 			eye = new Vector4(15*(float)Math.cos(a),15*(float)Math.sin(a),4,1);
 			System.out.println("Rotation "+i+"  - Eye: "+eye);
-			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+			camera.updateCamera(eye, poi, Vector4.zAxis());
 			renderer.render();
 		}
 		

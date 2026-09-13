@@ -109,7 +109,7 @@ public class TestShadowMapRasterization {
 		// Camera
 		//Vector4 eye = new Vector4(-8,-2,12,1);
 		//Vector4 poi = new Vector4(0,0,0,1);
-		// camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		// camera = new Camera(eye, poi, Vector4.zAxis());		
 
 		// Camera similar to Light for testing
 		//Vector4 eye = new Vector4(-1,0,0,1);
@@ -117,7 +117,7 @@ public class TestShadowMapRasterization {
 		//Vector4 eye = new Vector4(-8,8,1,1);
 		Vector4 eye = new Vector4(8,8,10,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 
 		
 		TestShadowMapRasterization test = new TestShadowMapRasterization();

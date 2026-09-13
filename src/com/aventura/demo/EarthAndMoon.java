@@ -98,7 +98,7 @@ public class EarthAndMoon {
 		// Camera
 		Vector4 eye = new Vector4(400,3,3,1);
 		Vector4 poi = new Vector4(0,0,-4,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		EarthAndMoon test = new EarthAndMoon();
 		
@@ -145,9 +145,9 @@ public class EarthAndMoon {
 		
 //		System.out.println("********* Rotating...");
 //		int nb_images = 450;
-//		Rotation r = new Rotation(Math.PI*2/(double)nb_images, Vector3.Z_AXIS);
+//		Rotation r = new Rotation(Math.PI*2/(double)nb_images, Vector3.zAxis());
 //		for (int i=0; i<=3*nb_images; i++) {
-//			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+//			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.zAxis());
 //			moon.combineTransformation(r);
 //			//cyl.setTransformation(r);
 //			renderer.render();

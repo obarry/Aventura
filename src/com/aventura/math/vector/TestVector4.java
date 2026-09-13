@@ -83,7 +83,7 @@ public class TestVector4 {
 	public void testVector4_constructor_fromMatrixRowColumn() {
 		System.out.println("***** Test Vector4 : constructor from Matrix4 row/column *****");
 
-		Matrix4 m = new Matrix4(Matrix4.IDENTITY);
+		Matrix4 m = new Matrix4(Matrix4.identity());
 		Vector4 row0 = new Vector4(0, m);
 		assertEquals(1f, row0.getX(), 0f);
 		assertEquals(0f, row0.getY(), 0f);
@@ -232,11 +232,11 @@ public class TestVector4 {
 
 	@Test
 	public void testVector4_crossProduct_forcesW0() {
-		System.out.println("***** Test Vector4 : times(Vector4) cross product forces w=0 *****");
+		System.out.println("***** Test Vector4 : cross(Vector4) cross product forces w=0 *****");
 
 		Vector4 x = new Vector4(1f, 0f, 0f, 0f);
 		Vector4 y = new Vector4(0f, 1f, 0f, 0f);
-		Vector4 z = x.times(y);
+		Vector4 z = x.cross(y);
 
 		assertEquals(0f, z.getX(), 0.00001f);
 		assertEquals(0f, z.getY(), 0.00001f);
@@ -249,10 +249,10 @@ public class TestVector4 {
 		System.out.println("***** Test Vector4 : times(Matrix4) with Identity leaves the vector unchanged *****");
 
 		Vector4 v = new Vector4(3f, -2f, 5f, 1f);
-		Vector4 r = v.times(Matrix4.IDENTITY);
+		Vector4 r = v.times(Matrix4.identity());
 		if (!r.equals(v)) fail("v * Identity should equal v");
 
-		v.timesEquals(Matrix4.IDENTITY);
+		v.timesEquals(Matrix4.identity());
 		if (!v.equals(r)) fail("v after timesEquals(Identity) should equal r");
 	}
 
@@ -269,7 +269,7 @@ public class TestVector4 {
 
 	@Test
 	public void testVector4_pointVectorSemantics() {
-		System.out.println("***** Test Vector4 : isPoint/isVector/point/vector/setVector *****");
+		System.out.println("***** Test Vector4 : isPoint/isVector/point/vector *****");
 
 		Vector4 v = new Vector4(1f, 2f, 3f, 0f);
 		assertTrue(v.isVector());
@@ -285,9 +285,9 @@ public class TestVector4 {
 		v.point();
 		assertTrue(v.isPoint());
 
-		@SuppressWarnings("deprecation")
-		Vector4 same = v; // just to scope the deprecation suppression tightly
-		same.setVector(); // deprecated, must still behave exactly like vector()
+		// setVector() (a duplicate of vector(), kept @Deprecated in phase 1) has been removed in phase 2:
+		// confirmed via a full codebase scan that it had zero callers anywhere.
+		v.vector();
 		assertTrue(v.isVector());
 		assertEquals(0f, v.getW(), 0f);
 	}
@@ -327,5 +327,50 @@ public class TestVector4 {
 		float[] r = v.toArray(dest);
 		assertSame(dest, r); // must fill and return the same array, not allocate a new one
 		assertArrayEquals(new float[]{1f,2f,3f,4f}, dest, 0.00001f);
+	}
+
+	@Test
+	public void testVector4_equalsObject_and_hashCode() {
+		System.out.println("***** Test Vector4 : equals(Object) override + hashCode() (new methods, phase 2) *****");
+
+		Vector4 v1 = new Vector4(1f, 2f, 3f, 4f);
+		Vector4 v2 = new Vector4(1f, 2f, 3f, 4f);
+		Vector4 v3 = new Vector4(9f, 9f, 9f, 9f);
+
+		Object o2 = v2;
+		Object o3 = v3;
+		assertTrue(v1.equals(o2));
+		assertFalse(v1.equals(o3));
+
+		Object nullObj = null;
+		assertFalse(v1.equals(nullObj)); // must go through equals(Object), not the more specific equals(Vector4)
+		assertFalse(v1.equals("not a Vector4"));
+		assertTrue(v1.equals(v1));
+
+		assertEquals(v1.hashCode(), v2.hashCode());
+	}
+
+	@Test
+	public void testVector4_accessorConstants_areFreshIndependentCopies() {
+		System.out.println("***** Test Vector4 : xAxis()/yAxis()/zAxis()/zeroVector()/zeroPoint() etc return fresh, independent copies (new methods, phase 2) *****");
+
+		Vector4 a1 = Vector4.xAxis();
+		Vector4 a2 = Vector4.xAxis();
+		if (a1 == a2) fail("xAxis() should return a fresh instance every call, not a shared one");
+		assertTrue(a1.equals(a2));
+
+		// Mutating one call's result must never affect a later call's result (the bug this replaces:
+		// a public static final field pointing to a single, mutable, shared instance - see audit report).
+		a1.setX(999f);
+		Vector4 a3 = Vector4.xAxis();
+		assertEquals(1f, a3.getX(), 0f);
+
+		assertTrue(Vector4.yAxis().equals(new Vector4(0f,1f,0f,0f)));
+		assertTrue(Vector4.zAxis().equals(new Vector4(0f,0f,1f,0f)));
+		assertTrue(Vector4.xOppAxis().equals(new Vector4(-1f,0f,0f,0f)));
+		assertTrue(Vector4.yOppAxis().equals(new Vector4(0f,-1f,0f,0f)));
+		assertTrue(Vector4.zOppAxis().equals(new Vector4(0f,0f,-1f,0f)));
+		assertTrue(Vector4.zeroVector().equals(new Vector4(0f,0f,0f,0f)));
+		assertTrue(Vector4.zeroPoint().equals(new Vector4(0f,0f,0f,1f)));
 	}
 }

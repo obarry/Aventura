@@ -97,7 +97,7 @@ public class TestBoxRotation {
 		// Camera
 		Vector4 eye = new Vector4(8,3,2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestBoxRotation test = new TestBoxRotation();
 		
@@ -146,14 +146,14 @@ public class TestBoxRotation {
 //			double a = Math.PI*2*(double)i/(double)nb_images;
 //			eye = new Vector4(8*Math.cos(a),8*Math.sin(a),2,1);
 //			//System.out.println("Rotation "+i+"  - Eye: "+eye);
-//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+//			camera.updateCamera(eye, poi, Vector4.zAxis());
 //			renderer.render();
 //		}
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.zAxis());
 			box.setTransformation(r);
 			renderer.render();
 		}
