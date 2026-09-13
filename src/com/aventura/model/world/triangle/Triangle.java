@@ -325,7 +325,7 @@ public class Triangle {
 		Vector3 q = (v3.getPos().minus(v1.getPos())).V3();
 
 		// Calculate the cross product
-		normal = p.times(q);
+		normal = p.cross(q);
 
 		// Normalize the resulting Vector3
 		normal.normalize();

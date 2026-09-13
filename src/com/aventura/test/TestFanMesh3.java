@@ -110,8 +110,8 @@ public class TestFanMesh3 {
 		//Vector4 eye = new Vector4(4,2,3,1);
 		Vector4 eye = new Vector4(0,0,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		//Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
-		Camera camera = new Camera(eye, poi, Vector4.Y_AXIS);		
+		//Camera camera = new Camera(eye, poi, Vector4.zAxis());		
+		Camera camera = new Camera(eye, poi, Vector4.yAxis());		
 				
 		TestFanMesh3 test = new TestFanMesh3();
 		
@@ -192,7 +192,7 @@ public class TestFanMesh3 {
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
 		//for (int i=0; i<=3; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.zAxis());
 			e.setTransformation(r);
 			renderer.render();
 		}

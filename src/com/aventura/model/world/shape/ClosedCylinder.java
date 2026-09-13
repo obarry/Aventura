@@ -60,11 +60,11 @@ public class ClosedCylinder extends Cylinder {
 	
 	protected void createSubElements() {
 		top = new Disc(ray, half_seg);
-		Translation t_top = new Translation(Vector3.Z_AXIS, height/2);
+		Translation t_top = new Translation(Vector3.zAxis(), height/2);
 		top.setTransformation(t_top);
 		
 		bottom = new Disc(ray, half_seg);
-		Translation t_bottom = new Translation(Vector3.Z_AXIS, -height/2);
+		Translation t_bottom = new Translation(Vector3.zAxis(), -height/2);
 		bottom.setTransformation(t_bottom);
 		
 		this.addElement(top);

@@ -37,13 +37,13 @@ import com.aventura.tools.tracing.Tracer;
 public class Scaling extends Matrix4 {
 
 	public Scaling() {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		// TODO Auto-generated constructor stub
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Scaling matrix:\n");
 	}
 	
 	public Scaling(float s) {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		this.array[0][0] = s;
 		this.array[1][1] = s;
 		this.array[2][2] = s;
@@ -51,7 +51,7 @@ public class Scaling extends Matrix4 {
 	}
 
 	public Scaling(float a, float b, float c) {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		this.array[0][0] = a;
 		this.array[1][1] = b;
 		this.array[2][2] = c;

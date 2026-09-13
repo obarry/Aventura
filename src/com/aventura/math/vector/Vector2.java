@@ -174,6 +174,32 @@ public class Vector2 {
 	}
 
 	/**
+	 * Object contract override (new method - see audit report: equals(Vector2) above is a same-type overload,
+	 * not an override of Object.equals(Object), which silently breaks the general contract). Delegates to
+	 * equals(Vector2) so behavior (including the epsilon tolerance from MathTools) stays identical for callers
+	 * that already use the typed overload.
+	 * Note: because of that epsilon tolerance, equals() is not a strict mathematical equivalence relation, which
+	 * is an inherent tension with the equals()/hashCode() contract when floating-point comparisons use a
+	 * tolerance. This is accepted here as a practical tradeoff, consistent with how equals(Vector2) already worked.
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof Vector2)) return false;
+		return equals((Vector2)o);
+	}
+
+	/**
+	 * Object contract override (new method, paired with equals(Object) above).
+	 */
+	@Override
+	public int hashCode() {
+		int result = Float.floatToIntBits(this.x);
+		result = 31*result + Float.floatToIntBits(this.y);
+		return result;
+	}
+
+	/**
 	 * Squared length of the vector (new method, mirrors Vector3.lengthSquared/Vector4.lengthSquared).
 	 * Avoids the sqrt() of length() when only a comparison between lengths is needed.
 	 * @return the squared length (or squared 'norm') of this Vector2

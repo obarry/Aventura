@@ -104,48 +104,48 @@ public class MovingCamera {
 	}
 	
 	public void rotateCameraLeft() {
-		Rotation r = new Rotation(increment_rotation, Vector3.Z_AXIS);
+		Rotation r = new Rotation(increment_rotation, Vector3.zAxis());
 		direction.timesEquals(r);
 		Vector4 poi = new Vector4(eye.plus(direction));
-		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		camera.updateCamera(eye, poi, Vector4.zAxis());
 		renderer.render();
 	}
 
 	public void rotateCameraRight() {
-		Rotation r = new Rotation(-increment_rotation, Vector3.Z_AXIS);
+		Rotation r = new Rotation(-increment_rotation, Vector3.zAxis());
 		direction.timesEquals(r);		
 		Vector4 poi = new Vector4(eye.plus(direction));
-		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		camera.updateCamera(eye, poi, Vector4.zAxis());
 		renderer.render();
 	}
 
 	public void rotateCameraUp() {
-		Rotation r = new Rotation(-increment_rotation, Vector4.Z_AXIS.times(direction));
+		Rotation r = new Rotation(-increment_rotation, Vector4.zAxis().cross(direction));
 		direction.timesEquals(r);
 		Vector4 poi = new Vector4(eye.plus(direction));
-		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		camera.updateCamera(eye, poi, Vector4.zAxis());
 		renderer.render();
 	}
 
 	public void rotateCameraDown() {
-		Rotation r = new Rotation(increment_rotation, Vector4.Z_AXIS.times(direction));
+		Rotation r = new Rotation(increment_rotation, Vector4.zAxis().cross(direction));
 		direction.timesEquals(r);		
 		Vector4 poi = new Vector4(eye.plus(direction));
-		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		camera.updateCamera(eye, poi, Vector4.zAxis());
 		renderer.render();
 	}
 	
 	public void moveCameraFront() {
 		eye.plusEquals(direction.times(increment_direction));
 		Vector4 poi = new Vector4(eye.plus(direction));
-		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		camera.updateCamera(eye, poi, Vector4.zAxis());
 		renderer.render();
 	}
 
 	public void moveCameraBack() {
 		eye.minusEquals(direction.times(increment_direction));
 		Vector4 poi = new Vector4(eye.plus(direction));
-		camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+		camera.updateCamera(eye, poi, Vector4.zAxis());
 		renderer.render();	
 	}
 
@@ -169,7 +169,7 @@ public class MovingCamera {
 		// Camera
 		eye = new Vector4(10,6,3,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		camera = new Camera(eye, poi, Vector4.Z_AXIS);
+		camera = new Camera(eye, poi, Vector4.zAxis());
 		direction = new Vector4(poi.minus(eye));
 		direction.normalize();
 				
@@ -274,16 +274,16 @@ public class MovingCamera {
 		
 //		System.out.println("********* Rendering...");
 //		int nb_images = 360;
-//		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.X_AXIS);
-//		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.Y_AXIS);
-//		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.Z_AXIS);
+//		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.xAxis());
+//		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.yAxis());
+//		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.zAxis());
 //		Vector4 camera_trans = new Vector4(new Vector4(0,-10,-2,1).minus(eye).times((float)1/(nb_images)));
 //		Matrix4 r = r1.times(r2).times(r3);
 //		renderer.render();
 //		for (int i=0; i<=nb_images; i++) {
 //			world.expandTransformation(r);
 //			eye.plusEquals(camera_trans);
-//			camera.updateCamera(eye, poi, Vector4.Z_AXIS);
+//			camera.updateCamera(eye, poi, Vector4.zAxis());
 //			renderer.render();
 //		}
 		System.out.println("********* ENDING APPLICATION *********");

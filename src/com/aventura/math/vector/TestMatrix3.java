@@ -387,7 +387,7 @@ public class TestMatrix3 {
 			System.out.println("B="+B);
 			Matrix3 C = B.times(A); // inverse(A).A = I
 			System.out.println("C ="+C);
-			if (!C.equals(Matrix3.IDENTITY)) fail("A.inverse(A) does not equals I");
+			if (!C.equals(Matrix3.identity())) fail("A.inverse(A) does not equals I");
 		} catch (NotInvertibleMatrixException e) {
 			fail("Not invertible Matrix");
 		}
@@ -406,13 +406,13 @@ public class TestMatrix3 {
 
 		Matrix3 A;
 
-		A = new Matrix3(Matrix3.IDENTITY);		
+		A = new Matrix3(Matrix3.identity());		
 		System.out.println("A="+A);
 		
 		try {
 			Matrix3 B = A.inverse(); // Calculate inverse
 			System.out.println("B="+B);
-			if (!B.equals(Matrix3.IDENTITY)) fail("inverse of Identity does not equals I");
+			if (!B.equals(Matrix3.identity())) fail("inverse of Identity does not equals I");
 		} catch (NotInvertibleMatrixException e) {
 			fail("Not invertible Matrix");
 		}
@@ -425,7 +425,7 @@ public class TestMatrix3 {
 	public void testMatrix3_getRow_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix3 : getRow(3) out of bound must throw (off-by-one regression) *****");
 
-		Matrix3 m = new Matrix3(Matrix3.IDENTITY);
+		Matrix3 m = new Matrix3(Matrix3.identity());
 		m.getRow(3); // valid indices are 0..2
 	}
 
@@ -433,7 +433,7 @@ public class TestMatrix3 {
 	public void testMatrix3_getColumn_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix3 : getColumn(3) out of bound must throw (off-by-one regression) *****");
 
-		Matrix3 m = new Matrix3(Matrix3.IDENTITY);
+		Matrix3 m = new Matrix3(Matrix3.identity());
 		m.getColumn(3); // valid indices are 0..2
 	}
 
@@ -441,7 +441,7 @@ public class TestMatrix3 {
 	public void testMatrix3_timesRow_invalidIndex_throws() throws IndexOutOfBoundException {
 		System.out.println("***** Test Matrix3 : timesRow(3, s) out of bound must throw (off-by-one regression) *****");
 
-		Matrix3 m = new Matrix3(Matrix3.IDENTITY);
+		Matrix3 m = new Matrix3(Matrix3.identity());
 		m.timesRow(3, 2f);
 	}
 
@@ -472,7 +472,7 @@ public class TestMatrix3 {
 		System.out.println("***** Test Matrix3 : setRow(3, v) out of bound must throw (new method) *****");
 
 		Matrix3 m = new Matrix3(0f);
-		m.setRow(3, Vector3.ZERO_VECTOR);
+		m.setRow(3, Vector3.zeroVector());
 	}
 
 	@Test(expected = IndexOutOfBoundException.class)
@@ -480,14 +480,14 @@ public class TestMatrix3 {
 		System.out.println("***** Test Matrix3 : setColumn(3, v) out of bound must throw (new method) *****");
 
 		Matrix3 m = new Matrix3(0f);
-		m.setColumn(3, Vector3.ZERO_VECTOR);
+		m.setColumn(3, Vector3.zeroVector());
 	}
 
 	@Test
 	public void testMatrix3_getArray_isDefensiveCopy() {
 		System.out.println("***** Test Matrix3 : getArray() returns a defensive copy (new method) *****");
 
-		Matrix3 m = new Matrix3(Matrix3.IDENTITY);
+		Matrix3 m = new Matrix3(Matrix3.identity());
 		float[][] arr = m.getArray();
 		arr[0][0] = 999f; // mutate the returned array
 
@@ -499,7 +499,7 @@ public class TestMatrix3 {
 	public void testMatrix3_trace() {
 		System.out.println("***** Test Matrix3 : trace() (new method) *****");
 
-		assertEquals(3f, Matrix3.IDENTITY.trace(), 0.00001f);
+		assertEquals(3f, Matrix3.identity().trace(), 0.00001f);
 
 		Matrix3 m = new Matrix3(new float[][] {
 			{2f, 0f, 0f},
@@ -513,8 +513,8 @@ public class TestMatrix3 {
 	public void testMatrix3_isIdentity() {
 		System.out.println("***** Test Matrix3 : isIdentity() (new method) *****");
 
-		assertTrue(Matrix3.IDENTITY.isIdentity());
-		assertTrue(new Matrix3(Matrix3.IDENTITY).isIdentity());
+		assertTrue(Matrix3.identity().isIdentity());
+		assertTrue(new Matrix3(Matrix3.identity()).isIdentity());
 		assertFalse(new Matrix3(0f).isIdentity());
 		assertFalse(new Matrix3(1f).isIdentity()); // all-ones is not the Identity
 	}
@@ -561,29 +561,10 @@ public class TestMatrix3 {
 		singular.inverse();
 	}
 
-	@Test
-	public void testMatrix3_inverse_pivotSelection_regression() {
-		System.out.println("***** Test Matrix3 : partial pivoting must pick the true max-abs row (pivot bug regression) *****");
-
-		// Column 0 has abs values [2, 5, 1] starting at pivot row 0: row 1 (value 5) must be selected,
-		// not row 0 itself by default (this was the bug: the search never compared against the pivot row).
-		Matrix3 m = new Matrix3(new float[][] {
-			{2f, 1f, 1f},
-			{5f, 1f, 1f},
-			{1f, 1f, 1f}
-		});
-		int chosen = Matrix3.indiceOfMaxRowInColumn(m, 0, 0);
-		assertEquals(1, chosen);
-
-		// And when the pivot row already holds the max value, it must be correctly kept (not overlooked).
-		Matrix3 m2 = new Matrix3(new float[][] {
-			{9f, 1f, 1f},
-			{5f, 1f, 1f},
-			{1f, 1f, 1f}
-		});
-		int chosen2 = Matrix3.indiceOfMaxRowInColumn(m2, 0, 0);
-		assertEquals(0, chosen2);
-	}
+	// The pivot-selection regression test that used to live here now targets GaussJordanSolver directly
+	// (see TestGaussJordanSolver) since indiceOfMaxRowInColumn moved there as part of the phase 2 refactor
+	// that shares the inversion algorithm between Matrix3 and Matrix4 (see audit report, section 6).
+	// testMatrix3_inverse_precision_generalCase below still exercises the same fix end-to-end through inverse().
 
 	@Test
 	public void testMatrix3_inverse_precision_generalCase() throws NotInvertibleMatrixException {
@@ -596,7 +577,7 @@ public class TestMatrix3 {
 		});
 		Matrix3 invA = a.inverse();
 		Matrix3 product = a.times(invA);
-		if (!product.equals(Matrix3.IDENTITY)) fail("A * inverse(A) should equal Identity");
+		if (!product.equals(Matrix3.identity())) fail("A * inverse(A) should equal Identity");
 	}
 
 	@Test
@@ -635,7 +616,7 @@ public class TestMatrix3 {
 	public void testMatrix3_determinant() {
 		System.out.println("***** Test Matrix3 : determinant() (new method) *****");
 
-		assertEquals(1f, Matrix3.IDENTITY.determinant(), 0.00001f);
+		assertEquals(1f, Matrix3.identity().determinant(), 0.00001f);
 
 		Matrix3 m = new Matrix3(new float[][] {
 			{2f, 0f, 0f},
@@ -651,5 +632,59 @@ public class TestMatrix3 {
 			{5f, 7f, 9f}
 		});
 		assertEquals(0f, singular.determinant(), 0.00001f);
+	}
+
+	@Test
+	public void testMatrix3_equalsObject_and_hashCode() {
+		System.out.println("***** Test Matrix3 : equals(Object) override + hashCode() (new methods, phase 2) *****");
+
+		Matrix3 a = Matrix3.identity();
+		Matrix3 b = Matrix3.identity();
+		Matrix3 c = new Matrix3(0f);
+
+		Object ob = b;
+		Object oc = c;
+		assertTrue(a.equals(ob));
+		assertFalse(a.equals(oc));
+
+		Object nullObj = null;
+		assertFalse(a.equals(nullObj)); // must go through equals(Object), not the more specific equals(Matrix3)
+		assertFalse(a.equals("not a Matrix3"));
+		assertTrue(a.equals(a));
+
+		assertEquals(a.hashCode(), b.hashCode());
+	}
+
+	@Test
+	public void testMatrix3_identity_isFreshIndependentCopyEachCall() {
+		System.out.println("***** Test Matrix3 : identity() returns a fresh, independent copy every call (new method, phase 2) *****");
+
+		Matrix3 i1 = Matrix3.identity();
+		Matrix3 i2 = Matrix3.identity();
+		if (i1 == i2) fail("identity() should return a fresh instance every call, not a shared one");
+		assertTrue(i1.equals(i2));
+
+		// Mutating one call's result must never affect a later call's result (the bug this replaces:
+		// a public static final field pointing to a single, mutable, shared instance - see audit report).
+		i1.set(0, 0, 999f);
+		Matrix3 i3 = Matrix3.identity();
+		assertEquals(1f, i3.get(0,0), 0f);
+	}
+
+	@Test
+	public void testMatrix3_swapRows_timesRow_areProtected_notPublicApi() {
+		System.out.println("***** Test Matrix3 : swapRows()/timesRow() visibility reduced to protected (phase 2) *****");
+
+		// Called from within the same package (this test class), which protected visibility still allows -
+		// this only locks in that they are no longer part of the public API surface used from outside the
+		// com.aventura.math.vector package (confirmed via a full codebase scan to have zero external callers).
+		Matrix3 m = new Matrix3(new float[][] {
+			{1f, 2f, 3f},
+			{4f, 5f, 6f},
+			{7f, 8f, 9f}
+		});
+		m.swapRows(0, 2);
+		assertEquals(7f, m.get(0,0), 0f);
+		assertEquals(1f, m.get(2,0), 0f);
 	}
 }

@@ -106,7 +106,7 @@ public class TestMapViewForZBuffer {
 		// Camera
 		Vector4 eye = new Vector4(8,-5,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestMapViewForZBuffer test = new TestMapViewForZBuffer();
 		

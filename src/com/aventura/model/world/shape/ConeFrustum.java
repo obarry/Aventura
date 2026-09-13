@@ -200,8 +200,8 @@ public class ConeFrustum extends Element {
 			
 			// For each bottom and top Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
-			u = (summit.getPos().minus(bottom_center)).times(fullMesh.getMainVertex(i,0).getPos().minus(bottom_center));
-			n = (fullMesh.getMainVertex(i,0).getPos().minus(summit.getPos())).times(u);
+			u = (summit.getPos().minus(bottom_center)).cross(fullMesh.getMainVertex(i,0).getPos().minus(bottom_center));
+			n = (fullMesh.getMainVertex(i,0).getPos().minus(summit.getPos())).cross(u);
 			n.normalize();
 			fullMesh.getMainVertex(i,0).setNormal(n.V3());
 			fullMesh.getMainVertex(i,1).setNormal(n.V3());
@@ -211,11 +211,11 @@ public class ConeFrustum extends Element {
 			// For each middle Vertex
 			if (i==half_seg*2-1) { // Last one
 				//n = vertices[0][2].getPos().minus(vertices[half_seg*2-1][0].getPos()).times(vertices[half_seg*2-1][2].getPos().minus(vertices[0][0].getPos()));				
-				n = fullMesh.getMainVertex(0,1).getPos().minus(fullMesh.getMainVertex(half_seg*2-1,0).getPos()).times(fullMesh.getMainVertex(half_seg*2-1,1).getPos().minus(fullMesh.getMainVertex(0,0).getPos()));				
+				n = fullMesh.getMainVertex(0,1).getPos().minus(fullMesh.getMainVertex(half_seg*2-1,0).getPos()).cross(fullMesh.getMainVertex(half_seg*2-1,1).getPos().minus(fullMesh.getMainVertex(0,0).getPos()));
 				n.normalize();
 			} else {
 				//n = vertices[i+1][2].getPos().minus(vertices[i][0].getPos()).times(vertices[i][2].getPos().minus(vertices[i+1][0].getPos()));
-				n = fullMesh.getMainVertex(i+1,1).getPos().minus(fullMesh.getMainVertex(i,0).getPos()).times(fullMesh.getMainVertex(i,1).getPos().minus(fullMesh.getMainVertex(i+1,0).getPos()));
+				n = fullMesh.getMainVertex(i+1,1).getPos().minus(fullMesh.getMainVertex(i,0).getPos()).cross(fullMesh.getMainVertex(i,1).getPos().minus(fullMesh.getMainVertex(i+1,0).getPos()));
 			}
 			n.normalize();
 			fullMesh.getSecondaryVertex(i,0).setNormal(n.V3());

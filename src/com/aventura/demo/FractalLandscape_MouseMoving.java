@@ -226,8 +226,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         mouse_dragged_Y += e.getY() - mouse_click_Y;
         //System.out.println("Drag X: " + mouse_dragged_X + " Drag Y: " + mouse_dragged_Y);
         
-        Rotation rz = new Rotation((float)Math.PI*(float)mouse_dragged_X/frame.getWidth()/8, Vector3.Z_AXIS);
-        Rotation ry = new Rotation((float)Math.PI*(float)mouse_dragged_Y/frame.getHeight()/16, Vector3.Y_AXIS);
+        Rotation rz = new Rotation((float)Math.PI*(float)mouse_dragged_X/frame.getWidth()/8, Vector3.zAxis());
+        Rotation ry = new Rotation((float)Math.PI*(float)mouse_dragged_Y/frame.getHeight()/16, Vector3.yAxis());
         tre.setTransformation(new Transformation(ry.times(rz)));
         //tre.combineTransformation(ry.times(rz));
 
@@ -418,7 +418,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		//Vector4 eye = new Vector4(16,6,12,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
 		poi = new Vector4(0,0,1.5f,1);
-		camera = new Camera(eye, poi, Vector4.Z_AXIS);
+		camera = new Camera(eye, poi, Vector4.zAxis());
 				
 		System.out.println("********* Creating World");
 		

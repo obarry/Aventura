@@ -46,7 +46,7 @@ public class AmbientLight extends Light {
 	@Override
 	public Vector3 getLightVectorAtPoint(Vector4 point) {
 		// No direction by definition of Ambient Light
-		return new Vector3(Vector3.ZERO_VECTOR);
+		return new Vector3(Vector3.zeroVector());
 	}
 
 	@Override

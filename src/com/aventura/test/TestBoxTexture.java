@@ -104,7 +104,7 @@ public class TestBoxTexture {
 		//Vector4 eye = new Vector4(16,6,12,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestBoxTexture test = new TestBoxTexture();
 		
@@ -164,7 +164,7 @@ public class TestBoxTexture {
 		int statsIntervalFrames = 60; // Print a lightweight progress line every N frames, to avoid flooding the console
 
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.xAxis());
 			elm.setTransformation(r);
 			renderer.render();
 

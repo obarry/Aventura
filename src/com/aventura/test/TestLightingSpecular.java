@@ -104,7 +104,7 @@ public class TestLightingSpecular {
 		Vector4 eye = new Vector4(8,8,8,1);
 		//Vector4 eye = new Vector4(3,2,2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestLightingSpecular test = new TestLightingSpecular();
 		
@@ -167,8 +167,8 @@ public class TestLightingSpecular {
 		int nb_images = 180;
 		//Scaling s = new Scaling(2,2,1);
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r1 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.X_AXIS);
-			Rotation r2 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+			Rotation r1 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.xAxis());
+			Rotation r2 = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.zAxis());
 			Scaling s = new Scaling(1+(float)i/180,1+(float)i/180,1);
 			elm.setTransformation(new Transformation(r1.times(r2.times(s))));
 			//elm.setTransformation(r1.times(r2));

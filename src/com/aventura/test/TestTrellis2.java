@@ -102,7 +102,7 @@ public class TestTrellis2 {
 		Vector4 eye = new Vector4(0,-5,-2,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		
-		Camera cam = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera cam = new Camera(eye, poi, Vector4.zAxis());		
 		
 		return cam;
 	}

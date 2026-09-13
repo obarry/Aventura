@@ -109,7 +109,7 @@ public class TestAventura3 {
 		Vector4 eye = new Vector4(-15,15,20,1);
 		Vector4 poi = new Vector4(-5, -0, 0,1);
 		
-		Camera cam = new Camera(eye, poi, Vector4.Y_AXIS);		
+		Camera cam = new Camera(eye, poi, Vector4.yAxis());		
 		
 		return cam;
 	}

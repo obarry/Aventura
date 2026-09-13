@@ -32,13 +32,23 @@ import com.aventura.tools.tracing.Tracer;
 **/
 public class Matrix4 {
 
-    protected static final float[][] IDENTITY_ARRAY =
+    private static final float[][] IDENTITY_ARRAY =
     		{{1.0f, 0.0f, 0.0f, 0.0f},
     		 {0.0f, 1.0f ,0.0f, 0.0f},
     		 {0.0f, 0.0f, 1.0f, 0.0f},
     		 {0.0f, 0.0f, 0.0f, 1.0f}};
 
-    public static final Matrix4 IDENTITY = new Matrix4(IDENTITY_ARRAY);
+    // Backing value for identity() below. Kept private so the mutable-Matrix4-as-a-shared-constant
+    // footgun (public static final field pointing to a mutable object - see audit report) cannot happen:
+    // nothing outside this class can ever hold a reference to this particular instance.
+    private static final Matrix4 IDENTITY_VALUE = new Matrix4(IDENTITY_ARRAY);
+
+    /**
+     * @return a new Matrix4 equal to the identity matrix - a fresh copy every call, safe to mutate.
+     */
+    public static Matrix4 identity() {
+    	return new Matrix4(IDENTITY_VALUE);
+    }
 
 	protected float[][] array;
 
@@ -285,7 +295,7 @@ public class Matrix4 {
 	 * @return true if this Matrix is the Identity matrix
 	 */
 	public boolean isIdentity() {
-		return this.equals(IDENTITY);
+		return this.equals(IDENTITY_VALUE);
 	}
 
 	/**
@@ -334,13 +344,43 @@ public class Matrix4 {
 	 * @return true if all the elements of this Matrix are equals to the elements of B
 	 */
 	public boolean equals(Matrix4 B) {
-		
+
 		for (int i=0; i<Constants.SIZE_4; i++) {
 			for (int j=0; j<Constants.SIZE_4; j++) {
 				if (Math.abs(this.get(i,j) - B.get(i,j)) > Constants.EPSILON) return false;
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Object contract override (new method - see audit report: equals(Matrix4) above is a same-type overload,
+	 * not an override of Object.equals(Object), which silently breaks the general contract). Delegates to
+	 * equals(Matrix4) so behavior (including the epsilon tolerance) stays identical for callers that already
+	 * use the typed overload.
+	 * Note: because of that epsilon tolerance, equals() is not a strict mathematical equivalence relation, which
+	 * is an inherent tension with the equals()/hashCode() contract when floating-point comparisons use a
+	 * tolerance. This is accepted here as a practical tradeoff, consistent with how equals(Matrix4) already worked.
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof Matrix4)) return false;
+		return equals((Matrix4)o);
+	}
+
+	/**
+	 * Object contract override (new method, paired with equals(Object) above).
+	 */
+	@Override
+	public int hashCode() {
+		int result = 1;
+		for (int i=0; i<Constants.SIZE_4; i++) {
+			for (int j=0; j<Constants.SIZE_4; j++) {
+				result = 31*result + Float.floatToIntBits(this.array[i][j]);
+			}
+		}
+		return result;
 	}
 	
 	/**
@@ -508,11 +548,14 @@ public class Matrix4 {
 	}
 	
 	/**
-	 * Swap rows a and b of the matrix
+	 * Swap rows a and b of the matrix.
+	 * Visibility reduced from public to protected (new - see audit report): this is a row-operation
+	 * implementation detail, not part of the public API. Confirmed via a full scan of the codebase that
+	 * nothing outside this package ever called it.
 	 * @param a first row to swap
 	 * @param b second row to swap
 	 */
-	public void swapRows(int a, int b) {
+	protected void swapRows(int a, int b) {
 		float row_a;
 		for (int j=0; j<Constants.SIZE_4; j++) {
 			row_a = this.array[a][j];
@@ -520,91 +563,35 @@ public class Matrix4 {
 			this.array[b][j] = row_a;
 		}
 	}
-	
+
 	/**
-	 * Multiply entire row a by value s
+	 * Multiply entire row a by value s.
+	 * Visibility reduced from public to protected (new - see audit report): this is a row-operation
+	 * implementation detail, not part of the public API. Confirmed via a full scan of the codebase that
+	 * nothing outside this package ever called it.
 	 * @param a row
 	 * @param s value
 	 * @throws IndexOutOfBoundException
 	 */
-	public void timesRow(int a, float s) throws IndexOutOfBoundException {
+	protected void timesRow(int a, float s) throws IndexOutOfBoundException {
 		if (a<0 || a>=Constants.SIZE_4) throw new IndexOutOfBoundException("Index out of bound while multiplying Row ("+a+") of Matrix4");
-		
+
 		for (int j=0; j<Constants.SIZE_4; j++) {
 			this.array[a][j]*=s;
 		}
 	}
-	
-	public Matrix4 inverse() throws NotInvertibleMatrixException {
-		Matrix4 identity = new Matrix4(IDENTITY);
-		Matrix4 matrix = new Matrix4(this); // copy of the current Matrix to not modify the original
-		
-		// Methode du Pivot de Gauss
-		// From this reference:  https://fr.wikipedia.org/wiki/%C3%89limination_de_Gauss-Jordan
-				
-		int r = 0; // last pivot row
-		float pivot = 0; // Pivot value
-		
-		// Browsing columns one by one
-		for (int j=0; j<Constants.SIZE_4; j++) {
-			int k = indiceOfMaxRowInColumn(matrix,j, r);
-			pivot = matrix.get(k, j); // Pivot
-			//System.out.println("Indice of max row = "+k+" for iteration j="+j+" Pivot = "+pivot);
 
-			// Use an epsilon-based tolerance rather than a strict equality to 0: with accumulated floating point
-			// rounding errors, a near-singular Matrix can have a pivot that is not exactly 0 but numerically
-			// meaningless, which would otherwise silently produce an unstable (Infinity/NaN-laden) result.
-			if (Math.abs(pivot) < Constants.EPSILON) throw new NotInvertibleMatrixException();
-			// Else if pivot is not null then continue
-			
-			// Divide all the row by the pivot to reduce the pivot to 1
-			for (int col=0; col < Constants.SIZE_4; col++) {
-				matrix.set(k,col, matrix.get(k,col)/pivot);
-				identity.set(k,col, identity.get(k,col)/pivot);
-			}
-			// Let's swap the rows k and r
-			if (r != k) {
-				matrix.swapRows(r,k);
-				identity.swapRows(r,k);
-			}
-			for (int i=0; i<Constants.SIZE_4; i++) {
-				if (i != r) {
-					float matrix_ij = matrix.get(i, j);
-					for (int col=0; col < Constants.SIZE_4; col++) {
-						matrix.set(i,col, matrix.get(i,col) - matrix.get(r,col)*matrix_ij);
-						identity.set(i,col, identity.get(i,col) - identity.get(r,col)*matrix_ij);
-					}					
-				}
-			}
-			r++;
-		}
-		
-		//System.out.println("Matrice transformee en I =\n"+matrix);
-
-		return identity;
-	}
-	
-	/** 
-	 * Calculate the indice of the max abs value in column col starting at indice pivot in Matrix m
-	 * @param m
-	 * @param col
-	 * @param pivot
-	 * @return
+	/**
+	 * Invert this Matrix using Gauss-Jordan elimination with partial pivoting.
+	 * The algorithm itself now lives in GaussJordanSolver (new - see audit report), shared with Matrix3
+	 * instead of being duplicated almost identically in both classes. This method's signature and
+	 * behavior (including the NotInvertibleMatrixException on a singular Matrix) are unchanged.
+	 * @return a newly created Matrix, inverse of this Matrix
+	 * @throws NotInvertibleMatrixException if this Matrix is singular (not invertible)
 	 */
-	static protected int indiceOfMaxRowInColumn(Matrix4 m, int col, int pivot) {
-		// Bug fix: the search must also consider the pivot row itself, not only the rows below it,
-		// otherwise the row actually holding the largest absolute value in the column can be missed
-		// and the partial pivoting loses its numerical stability benefit (see audit report).
-		float max = Math.abs(m.get(pivot, col));
-		int indiceMax = pivot;
-		for (int i=pivot+1; i < Constants.SIZE_4; i++) {
-			float val = Math.abs(m.get(i, col));
-			if (max < val) {
-				max = val;
-				indiceMax = i;
-			}
-		}
-		return indiceMax;
+	public Matrix4 inverse() throws NotInvertibleMatrixException {
+		float[][] inv = GaussJordanSolver.invert(this.array, Constants.SIZE_4, Constants.EPSILON);
+		return new Matrix4(inv);
 	}
 
 }

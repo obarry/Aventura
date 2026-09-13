@@ -180,16 +180,16 @@ public class DirectionalLight extends ShadowingLight {
 		// Y_AXIS when forward is (nearly) parallel to Z_AXIS -- this is what used to make side = f×u
 		// collapse to a near-zero vector and blow up normalize() with NaN/Infinity (the
 		// "WARNING BUG MISTAKE ERROR" that used to be flagged here).
-		Vector3 upHint = Vector3.Z_AXIS;
-		if (Math.abs(forward.dot(Vector3.Z_AXIS)) > 0.999f) {
-			upHint = Vector3.Y_AXIS;
+		Vector3 upHint = Vector3.zAxis();
+		if (Math.abs(forward.dot(Vector3.zAxis())) > 0.999f) {
+			upHint = Vector3.yAxis();
 		}
 
 		// Build this light's own orthonormal basis exactly the way LookAt does internally
 		// (side = f x u, up = side x f), so it is guaranteed consistent with the actual camera matrix
 		// built by new Camera(eye, poi, up) below.
-		Vector3 side = forward.times(upHint).normalize();
-		Vector3 up = side.times(forward).normalize();
+		Vector3 side = forward.cross(upHint).normalize();
+		Vector3 up = side.cross(forward).normalize();
 
 		// Gather the 8 corners (world space) of the box to fit, depending on shadowingBox_type.
 		Vector4[] corners = computeBoxCorners(perspectiveWorld, camera_view);

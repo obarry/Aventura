@@ -58,7 +58,7 @@ public class Translation extends Transformation {
 	 * @param v the translation Vector
 	 */
 	public Translation(Vector4 v) {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		createTranslation(v);
 	}
 	
@@ -67,7 +67,7 @@ public class Translation extends Transformation {
 	 * @param v the translation Vector
 	 */
 	public Translation(Vector3 v) {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		createTranslation(v);
 	}
 	
@@ -79,7 +79,7 @@ public class Translation extends Transformation {
 	 * @param l the length
 	 */
 	public Translation(Vector4 direction, float length) {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		Vector3 v = new Vector3(direction);
 		v.normalize();
 		v.timesEquals(length);
@@ -92,7 +92,7 @@ public class Translation extends Transformation {
 	 * @param l the length
 	 */
 	public Translation(Vector3 direction, float length) {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		Vector3 v = new Vector3(direction);
 		v.normalize();
 		v.timesEquals(length);

@@ -102,7 +102,7 @@ public class TestLighting2 {
 		// Camera
 		Vector4 eye = new Vector4(8,-5,5,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestLighting2 test = new TestLighting2();
 		
@@ -155,7 +155,7 @@ public class TestLighting2 {
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
 		for (int i=0; i<=3*nb_images; i++) {
-			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.Z_AXIS);
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.zAxis());
 			trellis.setTransformation(r);
 			cube.setTransformation(new Transformation(r.times(t1)));
 			sphere.setTransformation(new Transformation(r.times(t2)));

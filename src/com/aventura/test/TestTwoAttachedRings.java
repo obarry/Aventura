@@ -95,7 +95,7 @@ public class TestTwoAttachedRings {
 		// Camera
 		Vector4 eye = new Vector4(10,3,8,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestTwoAttachedRings test = new TestTwoAttachedRings();
 		
@@ -107,7 +107,7 @@ public class TestTwoAttachedRings {
 		torus1.setTransformation(new Translation(new Vector4(0,2,0,0)));
 		Torus torus2 = new Torus(2,0.5f,32,16);
 		torus2.setSpecularExp(20);
-		torus2.setTransformation(new Rotation((float)Math.PI/2, Vector4.Y_AXIS));
+		torus2.setTransformation(new Rotation((float)Math.PI/2, Vector4.yAxis()));
 		torus1.setColor(new Color(20,100,100));
 		torus2.setColor(new Color(180,100,20));
 		world.addElement(torus1);
@@ -139,9 +139,9 @@ public class TestTwoAttachedRings {
 		
 		System.out.println("********* Rendering...");
 		int nb_images = 360;
-		Rotation r1 = new Rotation((float)Math.PI*1.1f/(float)nb_images, Vector3.X_AXIS);
-		Rotation r2 = new Rotation((float)Math.PI*2*4.1f/(float)nb_images, Vector3.Y_AXIS);
-		Rotation r3 = new Rotation((float)Math.PI*2*3.3f/(float)nb_images, Vector3.Z_AXIS);
+		Rotation r1 = new Rotation((float)Math.PI*1.1f/(float)nb_images, Vector3.xAxis());
+		Rotation r2 = new Rotation((float)Math.PI*2*4.1f/(float)nb_images, Vector3.yAxis());
+		Rotation r3 = new Rotation((float)Math.PI*2*3.3f/(float)nb_images, Vector3.zAxis());
 		Transformation t = new Transformation(r1.times(r2).times(r3));
 		for (int i=0; i<=nb_images; i++) {
 			world.expandTransformation(t);

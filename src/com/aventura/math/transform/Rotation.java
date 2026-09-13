@@ -44,7 +44,7 @@ import com.aventura.tools.tracing.Tracer;
 public class Rotation extends Transformation {
 
 	public Rotation() {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -54,13 +54,13 @@ public class Rotation extends Transformation {
 	 * @param v the vector representing the axis of rotation
 	 */
 	public Rotation(float a, Vector3 v) {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		initRotation(a, v);
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix:\n");
 	}
 	
 	public Rotation(float a, Vector4 v) {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		initRotation(a, v.V3());
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix:\n");
 	}
@@ -92,7 +92,7 @@ public class Rotation extends Transformation {
 	 * @throws WrongAxisException
 	 */
 	public Rotation(float a, int axis) throws WrongAxisException {
-		super(Matrix4.IDENTITY);
+		super(Matrix4.identity());
 		float cosa = (float)Math.cos(a);
 		float sina = (float)Math.sin(a);
 		// Initialize the array, depending on axis
@@ -177,8 +177,8 @@ public class Rotation extends Transformation {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column Vectors V1 and V2 are not orthogonal. V1: "+v1+" V2: "+v2+" V1.V2: "+v1.dot(v2));
 			return false;
 		}
-		if(!(v1.times(v2)).equals(v3)) {
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "V3 is not equals to V1^V2. V3: "+v3+" V1^V2: "+v1.times(v2));
+		if(!(v1.cross(v2)).equals(v3)) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "V3 is not equals to V1^V2. V3: "+v3+" V1^V2: "+v1.cross(v2));
 			return false;
 		}
 		

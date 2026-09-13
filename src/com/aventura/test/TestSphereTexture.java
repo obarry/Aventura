@@ -105,7 +105,7 @@ public class TestSphereTexture {
 		//Vector4 eye = new Vector4(5,4,0,1);
 		//Vector4 eye = new Vector4(4,4,4,1);
 		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.Z_AXIS);		
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
 				
 		TestSphereTexture test = new TestSphereTexture();
 		
@@ -168,9 +168,9 @@ public class TestSphereTexture {
 
 		System.out.println("********* Rendering...");
 		int nb_images = 180;
-		Rotation r = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.Z_AXIS);
+		Rotation r = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.zAxis());
 		for (int i=0; i<=3*nb_images; i++) {
-			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.Z_AXIS);
+			//Rotation r = new Rotation(Math.PI*2*(double)i/(double)nb_images, Vector3.zAxis());
 			sph.combineTransformation(r);
 			//cyl.setTransformation(r);
 			renderer.render();
