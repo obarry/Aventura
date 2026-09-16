@@ -56,6 +56,56 @@ public class TestRotation {
 		assertFalse(r2==null);
 	}
 
+	// ----- Regression tests for the isRotation() exact-float-equality bug (fixed alongside the phase 2 rework) -----
+	// isRotation() used to compare v1.length()/v2.length()/v3.length() to 1 and v1.dot(v2) to 0 with exact
+	// float equality (!=). Floating-point noise from cos()/sin() or a Matrix4 copy almost never lands on
+	// exactly 1.0f/0.0f, so this could reject perfectly valid rotation matrices (see testRotationMatrix above,
+	// which failed before this fix). It now uses MathTools.equals() (same EPSILON tolerance already used by
+	// Vector3/Vector4.equals() elsewhere in the lib) instead of exact comparison.
+
+	@Test
+	public void testRotationMatrix_toleratesFloatingPointNoise_regression() {
+		System.out.println("***** Test Rotation : isRotation() tolerates noise within EPSILON (regression) *****");
+
+		// An identity rotation matrix with a tiny perturbation (well within Constants.EPSILON = 1e-4) on one
+		// diagonal entry -- mimics the kind of noise cos()/sin() or a Matrix4 copy actually produce.
+		float noise = 3.0e-5f;
+		float array[][] = { {1.0f + noise, 0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f} };
+
+		Rotation r = null;
+		try {
+			r = new Rotation(array);
+		} catch (MatrixArrayWrongSizeException e) {
+			e.printStackTrace();
+			fail("rotation array has wrong size");
+		} catch (NotARotationException e) {
+			e.printStackTrace();
+			fail("a matrix within EPSILON of a valid rotation should not be rejected as NotARotationException");
+		}
+		assertFalse(r == null);
+	}
+
+	@Test
+	public void testRotationMatrix_stillRejectsNoiseBeyondEpsilon_regression() {
+		System.out.println("***** Test Rotation : isRotation() still rejects noise beyond EPSILON (regression) *****");
+
+		// Same shape as above, but the perturbation is well beyond Constants.EPSILON (1e-4) -- must still be
+		// rejected, to confirm the tolerance fix did not loosen the check into a no-op.
+		float noise = 0.01f;
+		float array[][] = { {1.0f + noise, 0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 1.0f} };
+
+		Rotation r = null;
+		try {
+			r = new Rotation(array);
+		} catch (MatrixArrayWrongSizeException e) {
+			e.printStackTrace();
+			fail("rotation array has wrong size");
+		} catch (NotARotationException e) {
+			// Expected
+		}
+		assertTrue(r == null);
+	}
+
 	@Test
 	public void testRotationMatrixFail() {
 		System.out.println("***** Test Rotation : testRotationMatrixFail *****");
