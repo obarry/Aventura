@@ -5,6 +5,7 @@ import com.aventura.math.tools.MathTools;
 import com.aventura.math.vector.IndexOutOfBoundException;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.MatrixArrayWrongSizeException;
+import com.aventura.math.vector.Quaternion;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.tools.tracing.Tracer;
@@ -151,9 +152,20 @@ public class Rotation extends Transformation {
 	
 	public Rotation(float[][] array) throws NotARotationException, MatrixArrayWrongSizeException {
 		super(new Matrix4(array));
-		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+this); 
+		if (!this.isRotation()) throw new NotARotationException("This matrix is not a rotation matrix: "+this);
 	}
-	
+
+	/**
+	 * Build the Rotation equivalent to a Quaternion. Purely additive: does not change how Rotation
+	 * is represented internally (still a Matrix4 under the hood) or how any existing constructor
+	 * behaves - Quaternion is just another way to build or interpolate a rotation.
+	 * @param q the Quaternion representing the rotation (expected to be unit length)
+	 */
+	public Rotation(Quaternion q) {
+		super(q.toMatrix4());
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix from Quaternion:\n");
+	}
+
 	protected boolean isRotation() {
 		
 		Vector4 v1;
