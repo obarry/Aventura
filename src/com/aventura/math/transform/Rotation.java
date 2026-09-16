@@ -1,6 +1,7 @@
 package com.aventura.math.transform;
 
 import com.aventura.math.Constants;
+import com.aventura.math.tools.MathTools;
 import com.aventura.math.vector.IndexOutOfBoundException;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.MatrixArrayWrongSizeException;
@@ -169,11 +170,15 @@ public class Rotation extends Transformation {
 		}
 		
 		// A matrix is a Rotation matrix when the 3 column vectors represent a direct orthonormal basis (length of vectors is 1, 2 first vectors are orthogonal and the 3d 1 is eqals to the vector product of 2 first problems
-		if (v1.length() != 1 || v2.length() !=1 || v3.length() != 1) {
+		// Note: these were exact float comparisons (!=) before this fix -- length() and dot() almost never land on
+		// exactly 1.0f/0.0f after going through cos/sin or a Matrix4 copy, so this rejected valid rotation matrices
+		// on floating-point noise alone (see TestRotation.testRotationMatrix). Now uses the same MathTools.EPSILON
+		// tolerance already used everywhere else in the lib (e.g. Vector3/Vector4.equals()).
+		if (!MathTools.equals(v1.length(), 1f) || !MathTools.equals(v2.length(), 1f) || !MathTools.equals(v3.length(), 1f)) {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column vectors length is not equals to 1. V1 length: "+v1.length()+" V2 length: "+v2.length()+"  V3 length: "+v3.length());
 			return false;
 		}
-		if(v1.dot(v2) != 0) {
+		if(!MathTools.equals(v1.dot(v2), 0f)) {
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column Vectors V1 and V2 are not orthogonal. V1: "+v1+" V2: "+v2+" V1.V2: "+v1.dot(v2));
 			return false;
 		}
