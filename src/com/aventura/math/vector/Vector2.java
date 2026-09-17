@@ -2,6 +2,7 @@ package com.aventura.math.vector;
 
 import com.aventura.math.Constants;
 import com.aventura.math.tools.MathTools;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -139,6 +140,55 @@ public class Vector2 {
 		return r;
 	}
 	
+	/**
+	 * W = A.V; Multiplication of a this Vector2 V by a Matrix2 A (new method, mirrors
+	 * Vector3.times(Matrix3)/Vector4.times(Matrix4) - Vector2 was missing this, an asymmetry
+	 * noted in the audit report, and needed by Matrix2.times(Vector2)).
+	 * @param A the Matrix2
+	 * @return W, a new Vector2, result of the multiplication
+	 */
+	public Vector2 times(Matrix2 A) {
+		Vector2 r = new Vector2();
+
+		for (int i=0; i<Constants.SIZE_2; i++) {
+			for (int j=0; j<Constants.SIZE_2; j++) {
+				try {
+					r.set(i, r.get(i)+A.get(i,j)*this.get(j));
+				} catch (IndexOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector2 and Matrix2)
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();
+				}
+			}
+		}
+		return r;
+	}
+
+	/**
+	 * V = A.V - Multiplication of a this Vector2 V by a Matrix2 (new method, mirrors
+	 * Vector3.timesEquals(Matrix3)/Vector4.timesEquals(Matrix4)).
+	 * This Vector2 is modified and contains the result of the operation.
+	 * @param A the Matrix2
+	 */
+	public void timesEquals(Matrix2 A) {
+		float[] array = new float[Constants.SIZE_2];
+
+		for (int i=0; i<Constants.SIZE_2; i++) {
+			array[i] = 0;
+			for (int j=0; j<Constants.SIZE_2; j++) {
+				try {
+					array[i]+=A.get(i,j)*this.get(j);
+				} catch (IndexOutOfBoundException e) {
+					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector2 and Matrix2)
+					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
+					e.printStackTrace();
+				}
+			}
+		}
+		this.x = array[0];
+		this.y = array[1];
+	}
+
 	/**
 	 * @deprecated this no-arg method does not compare anything: it returns a copy of this Vector2,
 	 * despite its "equals" name. It is a naming bug (see audit report) but is left untouched here to
