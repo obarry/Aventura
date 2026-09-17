@@ -54,6 +54,17 @@ public class ZBuffer {
 	private final int halfWidth;
 	private final int halfHeight;
 
+	// One-entry cache of the last (x, y) -> (bx, by) translation done by test(), reused by update()
+	// (new - see audit report: update() is already documented below to always be called right after
+	// a passing test() for the SAME (x, y, z), so recomputing toBufferX()/toBufferY() a second time
+	// in update() was pure redundant work, done on every single surviving pixel of every frame).
+	// lastValid guards the very first call (no test() has run yet) and any call to update() that
+	// does NOT follow the documented pattern -- in both cases update() falls back to recomputing the
+	// translation itself, so behavior is unchanged for every caller; only the documented
+	// test()-then-update() pattern gets faster.
+	private boolean lastValid = false;
+	private int lastX, lastY, lastBx, lastBy;
+
 	/**
 	 * @param width      buffer width in pixels (storage space, e.g. 2*halfWidth+1)
 	 * @param height     buffer height in pixels (storage space, e.g. 2*halfHeight+1)
@@ -96,6 +107,13 @@ public class ZBuffer {
 	public boolean test(int x, int y, float z) {
 		int bx = toBufferX(x);
 		int by = toBufferY(y);
+
+		lastX = x;
+		lastY = y;
+		lastBx = bx;
+		lastBy = by;
+		lastValid = true;
+
 		if (!inBounds(bx, by)) {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "ZBuffer test: coordinates out of bounds (" + bx + ", " + by + ") for size " + width + "x" + height);
 			return false;
@@ -109,8 +127,18 @@ public class ZBuffer {
 	 * it unconditionally overwrites.
 	 */
 	public void update(int x, int y, float z) {
-		int bx = toBufferX(x);
-		int by = toBufferY(y);
+		int bx, by;
+		if (lastValid && lastX == x && lastY == y) {
+			// The documented common case: this update() follows a test() for this same (x, y) --
+			// reuse its already-computed buffer coordinates instead of translating again.
+			bx = lastBx;
+			by = lastBy;
+		} else {
+			// Not preceded by a matching test() (e.g. called directly, or for a different pixel) --
+			// fall back to computing the translation here, exactly as before this optimization.
+			bx = toBufferX(x);
+			by = toBufferY(y);
+		}
 		if (!inBounds(bx, by)) {
 			if (Tracer.error) Tracer.traceError(this.getClass(), "ZBuffer update: coordinates out of bounds (" + bx + ", " + by + ") for size " + width + "x" + height);
 			return;
