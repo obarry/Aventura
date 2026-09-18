@@ -10,6 +10,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import javax.swing.WindowConstants;
 import java.awt.event.*;
 
@@ -18,6 +19,7 @@ import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Transformation;
+import com.aventura.math.vector.Quaternion;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -105,9 +107,24 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	int mouse_click_X, mouse_click_Y;
 	int mouse_dragged_X = 0;
 	int mouse_dragged_Y = 0;
-	
+
 	// CTRL key + mouse flag
 	boolean key_control = false;
+
+	// Zoom-wheel smoothing (Quaternion/slerp technique adapted for a translation): each mouse wheel
+	// notch used to jump the camera's dolly position straight to its new value. It now eases into
+	// that same target over ZOOM_ANIM_DURATION_MS via linear interpolation, driven by a Swing Timer
+	// firing on the EDT (same thread as mouseWheelMoved(), so no synchronization is needed). Linear
+	// interpolation is used instead of Quaternion.slerp() because zoom is a translation along the
+	// camera's forward vector, not a rotation -- slerp only applies to the mouse-drag rotation below.
+	private static final int ZOOM_ANIM_DURATION_MS = 150;
+	private static final int ZOOM_ANIM_FRAME_MS = 15; // ~60 fps
+
+	Timer zoomAnimTimer;
+	float appliedZoom = 0f; // last applied (possibly mid-animation) zoom value
+	float zoomAnimStartValue;
+	float zoomAnimTargetValue;
+	long zoomAnimStartMillis;
 
 	/**
 	 * Create the gUIView and associate all needed mouse and key listeners for user interaction with screen
@@ -225,31 +242,101 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         mouse_dragged_X += e.getX() - mouse_click_X;
         mouse_dragged_Y += e.getY() - mouse_click_Y;
         //System.out.println("Drag X: " + mouse_dragged_X + " Drag Y: " + mouse_dragged_Y);
-        
-        Rotation rz = new Rotation((float)Math.PI*(float)mouse_dragged_X/frame.getWidth()/8, Vector3.zAxis());
-        Rotation ry = new Rotation((float)Math.PI*(float)mouse_dragged_Y/frame.getHeight()/16, Vector3.yAxis());
-        tre.setTransformation(new Transformation(ry.times(rz)));
-        //tre.combineTransformation(ry.times(rz));
+
+        float angleZ = (float)Math.PI*(float)mouse_dragged_X/frame.getWidth()/8;
+        float angleY = (float)Math.PI*(float)mouse_dragged_Y/frame.getHeight()/16;
+        Rotation r = composeDragRotation(angleZ, angleY);
+        tre.setTransformation(new Transformation(r));
+        //tre.combineTransformation(r);
 
         // Render the updated gUIView after zooming camera and rotating Element
 		renderer.render();
  	}
- 	
+
+	/**
+	 * Composes the two-axis (Z then Y) drag rotation via Quaternion instead of the equivalent
+	 * two-Matrix4 Rotation composition (kept as a comment below for reference): builds one
+	 * Quaternion per axis, composes them with the same "Z applied first, then Y" convention as the
+	 * previous ry.times(rz), and converts the result to a Rotation once via the Rotation(Quaternion)
+	 * constructor. No slerp/easing here on purpose: dragging is continuous, real-time direct
+	 * manipulation, so the element's orientation must keep tracking the mouse position on every
+	 * event with no added latency.
+	 *
+	 * Package-private and static purely so it can be unit-tested (TestFractalLandscape_MouseMoving)
+	 * without a live Camera/RenderEngine/Swing GUIView -- this method touches none of those.
+	 */
+	static Rotation composeDragRotation(float angleZ, float angleY) {
+		Quaternion qz = new Quaternion(Vector3.zAxis(), angleZ);
+		Quaternion qy = new Quaternion(Vector3.yAxis(), angleY);
+		return new Rotation(qy.times(qz));
+	}
+
  	public void mouseMoved(MouseEvent e) {
 		// Do nothing
- 	} 	
+ 	}
 
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		//System.out.println("Mouse wheel moved: " + e.getWheelRotation());
 		// Increment or decrement zoom based on wheel rotation (+1 or -1)
 		zoom-=e.getWheelRotation();
-        // Zoom camera by updating eye on the forward direction
-        camera.updateCamera(eye.plus(camera.getForward().times((float)zoom/10)), poi, camera.getUp());
-        
-        // Render the updated gUIView after zooming camera and rotating Element
-		renderer.render();
+		startZoomAnimation((float)zoom);
 	}
-	
+
+	/**
+	 * Starts (or retargets) the eased transition of the camera's dolly position toward
+	 * targetZoom (the new "zoom" accumulator value), instead of jumping straight to it as before.
+	 * Each wheel notch is a discrete stepped input, similar in character to a keyboard tap, so it
+	 * benefits from the same kind of easing used for MovingCamera's rotation keys -- but zoom is a
+	 * translation along the camera's forward vector, not a rotation, so linear interpolation is
+	 * used here instead of Quaternion.slerp().
+	 *
+	 * If a previous zoom animation is still in progress (e.g. several wheel notches in quick
+	 * succession), this retargets from the CURRENT, already-interpolated zoom value rather than
+	 * restarting from the value before that still-running animation began -- otherwise fast
+	 * scrolling would look like the camera snapping backwards before each new increment.
+	 */
+	private void startZoomAnimation(float targetZoom) {
+		zoomAnimStartValue = appliedZoom;
+		zoomAnimTargetValue = targetZoom;
+		zoomAnimStartMillis = System.currentTimeMillis();
+
+		if (zoomAnimTimer == null) {
+			zoomAnimTimer = new Timer(ZOOM_ANIM_FRAME_MS, e -> stepZoomAnimation());
+		}
+		if (!zoomAnimTimer.isRunning()) {
+			zoomAnimTimer.start();
+		}
+	}
+
+	/** One animation frame: advances the applied zoom value toward its target and renders. */
+	private void stepZoomAnimation() {
+		long elapsed = System.currentTimeMillis() - zoomAnimStartMillis;
+		float t = Math.min(1f, (float) elapsed / ZOOM_ANIM_DURATION_MS);
+
+		appliedZoom = interpolateZoom(zoomAnimStartValue, zoomAnimTargetValue, t);
+
+		// Zoom camera by updating eye on the forward direction
+		camera.updateCamera(eye.plus(camera.getForward().times(appliedZoom/10)), poi, camera.getUp());
+
+		// Render the updated gUIView after zooming camera and rotating Element
+		renderer.render();
+
+		if (t >= 1f) {
+			zoomAnimTimer.stop();
+		}
+	}
+
+	/**
+	 * Linearly interpolates the applied zoom value a fraction t of the way from startValue to
+	 * targetValue. Package-private and static purely so it can be unit-tested
+	 * (TestFractalLandscape_MouseMoving) without a live Camera/RenderEngine/Swing GUIView -- this
+	 * method touches none of those.
+	 */
+	static float interpolateZoom(float startValue, float targetValue, float t) {
+		return startValue + (targetValue - startValue) * t;
+	}
+
+
 
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
