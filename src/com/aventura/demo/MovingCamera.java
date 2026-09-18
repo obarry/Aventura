@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.Toolkit;
 
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import javax.swing.WindowConstants;
 
 import com.aventura.context.PerspectiveContext;
@@ -13,6 +14,7 @@ import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
+import com.aventura.math.vector.Quaternion;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -71,7 +73,21 @@ public class MovingCamera {
 	private static float increment_rotation = (float)Math.PI/180;
 	private static Camera camera;
 	private static RenderEngine renderer;
-	
+
+	// Rotation-key smoothing (new - Quaternion.slerp() integration): each rotateCameraXxx() call
+	// used to snap "direction" straight to its new value with a single Matrix4 Rotation. It now
+	// eases into that same target over ROTATION_ANIM_DURATION_MS via Quaternion.slerp(), driven by
+	// a Swing Timer firing on the EDT (same thread as keyTyped(), so no synchronization is needed
+	// between the two). The rotation angle and axis themselves are unchanged -- only how it's
+	// reached is smoothed.
+	private static final int ROTATION_ANIM_DURATION_MS = 150;
+	private static final int ROTATION_ANIM_FRAME_MS = 15; // ~60 fps
+
+	private static Timer rotationAnimTimer;
+	private static Vector4 rotationAnimStartDirection;
+	private static Quaternion rotationAnimTargetDelta;
+	private static long rotationAnimStartMillis;
+
 	// This method will create a basic Swing gUIView
 	public GUIView createView(PerspectiveContext context) {
 
@@ -104,37 +120,74 @@ public class MovingCamera {
 	}
 	
 	public void rotateCameraLeft() {
-		Rotation r = new Rotation(increment_rotation, Vector3.zAxis());
-		direction.timesEquals(r);
-		Vector4 poi = new Vector4(eye.plus(direction));
-		camera.updateCamera(eye, poi, Vector4.zAxis());
-		renderer.render();
+		startRotationAnimation(increment_rotation, Vector3.zAxis());
 	}
 
 	public void rotateCameraRight() {
-		Rotation r = new Rotation(-increment_rotation, Vector3.zAxis());
-		direction.timesEquals(r);		
-		Vector4 poi = new Vector4(eye.plus(direction));
-		camera.updateCamera(eye, poi, Vector4.zAxis());
-		renderer.render();
+		startRotationAnimation(-increment_rotation, Vector3.zAxis());
 	}
 
 	public void rotateCameraUp() {
-		Rotation r = new Rotation(-increment_rotation, Vector4.zAxis().cross(direction));
-		direction.timesEquals(r);
-		Vector4 poi = new Vector4(eye.plus(direction));
-		camera.updateCamera(eye, poi, Vector4.zAxis());
-		renderer.render();
+		startRotationAnimation(-increment_rotation, Vector4.zAxis().cross(direction).V3());
 	}
 
 	public void rotateCameraDown() {
-		Rotation r = new Rotation(increment_rotation, Vector4.zAxis().cross(direction));
-		direction.timesEquals(r);		
+		startRotationAnimation(increment_rotation, Vector4.zAxis().cross(direction).V3());
+	}
+
+	/**
+	 * Starts (or retargets) the eased rotation of "direction" by angle around axis. Called by each
+	 * rotateCameraXxx() above with exactly the angle/axis it used to apply instantly.
+	 *
+	 * If a previous rotation animation is still in progress (e.g. a key held down, or a different
+	 * rotation key pressed before the last one finished easing in), this retargets from the CURRENT,
+	 * already-interpolated direction rather than restarting from the direction "direction" held
+	 * before that still-running animation began -- otherwise rapid or held key presses would look
+	 * like the camera snapping backwards before each new increment, instead of one continuous ease.
+	 */
+	private void startRotationAnimation(float angle, Vector3 axis) {
+		rotationAnimStartDirection = new Vector4(direction);
+		rotationAnimTargetDelta = new Quaternion(axis, angle);
+		rotationAnimStartMillis = System.currentTimeMillis();
+
+		if (rotationAnimTimer == null) {
+			rotationAnimTimer = new Timer(ROTATION_ANIM_FRAME_MS, e -> stepRotationAnimation());
+		}
+		if (!rotationAnimTimer.isRunning()) {
+			rotationAnimTimer.start();
+		}
+	}
+
+	/** One animation frame: advances "direction" to its slerp-interpolated value and renders. */
+	private void stepRotationAnimation() {
+		long elapsed = System.currentTimeMillis() - rotationAnimStartMillis;
+		float t = Math.min(1f, (float) elapsed / ROTATION_ANIM_DURATION_MS);
+
+		direction = interpolateDirection(rotationAnimStartDirection, rotationAnimTargetDelta, t);
+
 		Vector4 poi = new Vector4(eye.plus(direction));
 		camera.updateCamera(eye, poi, Vector4.zAxis());
 		renderer.render();
+
+		if (t >= 1f) {
+			rotationAnimTimer.stop();
+		}
 	}
-	
+
+	/**
+	 * Computes "direction" eased a fraction t of the way from startDirection to startDirection
+	 * rotated by targetDelta, via Quaternion.slerp() from the identity rotation to targetDelta.
+	 * (slerp(identity, Q(axis,angle), t) is exactly Q(axis, t*angle) -- so this sweeps smoothly
+	 * through the same rotation targetDelta represents, scaled by t, rather than any other path.)
+	 *
+	 * Package-private and static purely so it can be unit-tested (TestMovingCamera) without a live
+	 * Camera/RenderEngine/Swing GUIView -- this method touches none of those.
+	 */
+	static Vector4 interpolateDirection(Vector4 startDirection, Quaternion targetDelta, float t) {
+		Quaternion interpolated = Quaternion.slerp(new Quaternion(), targetDelta, t);
+		return startDirection.times(new Rotation(interpolated));
+	}
+
 	public void moveCameraFront() {
 		eye.plusEquals(direction.times(increment_direction));
 		Vector4 poi = new Vector4(eye.plus(direction));
