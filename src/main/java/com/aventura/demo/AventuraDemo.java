@@ -237,6 +237,7 @@ public class AventuraDemo {
 		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
 		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
 		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
 		renderer.setView(gUIView);
