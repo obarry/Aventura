@@ -1,17 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>Aventura</groupId>
-  <artifactId>Aventura</artifactId>
+
+  <groupId>com.aventura</groupId>
+  <artifactId>aventura</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>Aventura</name>
+  <description>A lightweight 3D rendering engine 100% written in Java (no hardware dependency), with a Java API to build world geometry, define graphic and rendering parameters and render the scene on any Java application display.</description>
+  <url>https://github.com/obarry/Aventura</url>
+  <inceptionYear>2016</inceptionYear>
+
+  <licenses>
+    <license>
+      <name>The MIT License (MIT)</name>
+      <url>https://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Olivier Barry</name>
+      <url>https://github.com/obarry</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <url>https://github.com/obarry/Aventura</url>
+    <connection>scm:git:https://github.com/obarry/Aventura.git</connection>
+    <developerConnection>scm:git:https://github.com/obarry/Aventura.git</developerConnection>
+  </scm>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.compiler.release>21</maven.compiler.release>
+
+    <!-- Defaults for "mvn exec:java" (run a demo). Override on the command line, e.g.
+         mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.AventuraDemo -->
+    <exec.mainClass>com.aventura.demo.EarthAndMoon</exec.mainClass>
+    <!-- "test" scope also puts the visual test programs (com.aventura.test.*) on the classpath -->
+    <exec.classpathScope>test</exec.classpathScope>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
   <build>
-    <sourceDirectory>src</sourceDirectory>
+    <!-- Standard Maven layout:
+           src/main/java  engine, math, model, view and demo applications
+           src/test/java  JUnit 4 unit tests + visual test programs (com.aventura.test.*)
+         Textures are read from ./resources/texture at run time (paths are relative to the
+         project root, so run the demos from the project root). -->
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.13.0</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.2</version>
         <configuration>
-          <release>23</release>
+          <!-- Unit tests must not need a display (CI, servers) -->
+          <argLine>-Djava.awt.headless=true</argLine>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <!-- java -jar target/aventura-*.jar (from the project root) launches this demo -->
+              <mainClass>${exec.mainClass}</mainClass>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.0</version>
       </plugin>
     </plugins>
   </build>

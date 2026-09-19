@@ -2,6 +2,7 @@ package com.aventura.math.transform;
 
 import static org.junit.Assert.*;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.aventura.math.vector.Vector3;
@@ -52,11 +53,13 @@ public class TestTransformation {
 	}
 
 	@Test
+	@Ignore("Not yet implemented")
 	public void testUpdateTransformation() {
 		fail("Not yet implemented");
 	}
 
 	@Test
+	@Ignore("Not yet implemented")
 	public void testTransform() {
 		fail("Not yet implemented");
 	}
