@@ -36,17 +36,31 @@ import com.aventura.tools.tracing.Tracer;
  * - 1 scaling having Origin as center (H)
  * - 1 translation (T)
  * 
+ * Applied in that order -- scaling first, then rotation, then translation -- matching the Model Matrix
+ * pipeline documented on Element (scale, then rotate, then translate) and the order combineTransformation()
+ * produces when called incrementally as setTransformation(scaling) then combineTransformation(rotation)
+ * then combineTransformation(translation).
+ *
  * So that resulting vector Y from the transformation of vector X is:
- * Y = (R.H).X + T
- *  
+ * Y = (T.R.H).X, i.e. Y = T.(R.(H.X))
+ *
+ * FIX (2026): this used to build (H.times(R)).times(T) = H.R.T. Under this library's column-vector
+ * convention (Y = M.X, see Matrix4.times(Vector4)/Vector4.times(Matrix4)), the right-most factor of a
+ * matrix product is the one applied FIRST to X. H.R.T therefore applied Translation first and Scaling
+ * last -- the reverse of the order documented above and on Element -- which would make a rotated/scaled
+ * child orbit around the world origin instead of spinning/scaling in place around its own local center.
+ * Fixed to T.R.H, which applies H (scale) first and T (translate) last, and which now agrees with the
+ * incremental combineTransformation() path for the same three inputs (see
+ * TestTransformation.testTransformation()).
+ *
  * @author  Olivier BARRY
  * @date May 2014
  */
 public class Transformation extends Matrix4 {
-		
+
 	public Transformation(Scaling h, Rotation r, Translation t) {
-		
-		super((h.times(r)).times(t));
+
+		super((t.times(r)).times(h));
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of new Transformation Matrix.\n"+"Scaling:\n"+h+"\nRotation:\n"+r+"\nTranslation:\n"+t);
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of new Transformation Matrix.");
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Transformation:\n"+this);

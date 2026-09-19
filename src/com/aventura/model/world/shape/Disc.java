@@ -33,7 +33,7 @@ import com.aventura.model.world.triangle.CircularMesh;
  * @author Olivier BARRY
  * @since Feb 2018
  */
-public class Disc extends Element {
+public class Disc extends GenerativeElement {
 
 	protected static final String DISC_DEFAULT_NAME = "disc";
 

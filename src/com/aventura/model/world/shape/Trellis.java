@@ -49,7 +49,7 @@ import com.aventura.model.world.triangle.RectangleMesh;
  * @author Olivier BARRY
  * @since May 2016
  */
-public class Trellis extends Element {
+public class Trellis extends GenerativeElement {
 	
 	protected static final String TRELLIS_DEFAULT_NAME = "trellis";
 
@@ -254,7 +254,8 @@ public class Trellis extends Element {
 				rectangleMesh.getVertex(i,j).setNormal(normal.normalize().V3());
 			}
 		}
-		calculateSubNormals();
+		// Sub-Element recursion is build()/rebuild()'s job, not calculateNormals()'s -- see Generable's
+		// Javadoc for the single rule. Calling calculateSubNormals() here used to double-compute it.
 	}
 	
 	/**

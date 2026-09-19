@@ -218,7 +218,14 @@ public class Element implements Transformable, Shape, Generable {
 	
 	public void setParent(Element e) {
 		parent = e;
-		full = new Transformation(e.getTransformation().times(transform));
+		// Recompute "full" for this Element AND recursively for its whole existing subtree (not just
+		// this single level): if this Element already had sub-Elements attached before being (re)parented
+		// (e.g. a standalone sub-group built first, then attached via addElement()), their "full" was
+		// computed relative to the OLD parent chain (or no parent at all) and would otherwise stay stale,
+		// silently producing wrong world positions for grandchildren until some later, unrelated call to
+		// setTransformation()/combineTransformation() happened to refresh the whole subtree as a side
+		// effect. propagateTransformation() already does exactly this recursively -- see its own Javadoc.
+		propagateTransformation();
 	}
 	
 	public Element getParent() {
@@ -477,16 +484,28 @@ public class Element implements Transformable, Shape, Generable {
 			triangles.get(i).calculateNormal();
 		}
 		
-		// Compute normals recursively for Sub Elements
-		//calculateSubNormals(); -> Now calculated through the recursive generate() method
+		// Recursion into sub-Elements is NOT this method's job: it is handled exclusively by
+		// build()/rebuild() via subBuild()/subRebuild(), which call the sub-Element's own build()/
+		// rebuild() (and therefore its own calculateNormals()) for every sub-Element already. A
+		// calculateNormals() override must never call calculateSubNormals() itself -- see Generable's
+		// Javadoc for the single rule this codebase follows, and calculateSubNormals()'s own Javadoc
+		// below for why it still exists despite that.
 	}
-	
+
+	/**
+	 * NOT part of the normal build()/rebuild() pipeline, and NOT called by Element.calculateNormals()
+	 * or by any shape class in this codebase (recursion into sub-Elements is build()/rebuild()'s job
+	 * only, via subBuild()/subRebuild() -- see the single rule documented on Generable.calculateNormals()).
+	 * Kept, rather than removed, only for the narrow case of recomputing sub-Element normals in place
+	 * without regenerating their geometry (i.e. outside of build()/rebuild() entirely); most callers
+	 * should call rebuild() instead.
+	 */
 	protected void calculateSubNormals() {
 		if (subelements != null) {
 			for (int i=0; i<subelements.size(); i++) {
 				subelements.get(i).calculateNormals();
 			}
-		}		
+		}
 	}
 	// ******************************
 	// ***** Normal calculation *****
