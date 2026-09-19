@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.aventura.math.vector.Vector4;
@@ -54,11 +55,13 @@ public class TestCamera {
 	}
 
 	@Test
+	@Ignore("Not yet implemented")
 	public void testCameraLookAt() {
 		fail("Not yet implemented");
 	}
 
 	@Test
+	@Ignore("Not yet implemented")
 	public void testCameraMatrix4() {
 		fail("Not yet implemented");
 	}
@@ -82,6 +85,7 @@ public class TestCamera {
 	}
 
 	@Test
+	@Ignore("Not yet implemented")
 	public void testGetMatrix() {
 		fail("Not yet implemented");
 	}

@@ -148,8 +148,11 @@ public class SwingView extends GUIView {
 		frontbuffer = backbuffer;
 		frontgraph = backgraph;
 		
-		// Repaint the component since the buffer has been updated
-		component.repaint();
+		// Repaint the component (if any) since the buffer has been updated.
+		// A SwingView created without a Component renders off-screen only: use getImageView() to get the image.
+		if (component != null) {
+			component.repaint();
+		}
 	}
 	
 	/**
