@@ -76,9 +76,10 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// GUI Frame and Menus
 	JFrame frame;
 	JMenu menu1, menu2;
-	JMenuItem m1e1, m1e2, m2e1, m2e2, m2e3;
+	JMenuItem m1e1, m1e2, m2e1, m2e2, m2e3, m2e4;
 	boolean texture_menu = false;
 	boolean shading_menu = true;
+	boolean shadow_menu = false;
 
 	// Camera
 	Vector4 eye;
@@ -161,9 +162,12 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	    m2e2.addActionListener(this);
 	    m2e3 = new JMenuItem("Shading on");
 	    m2e3.addActionListener(this);
+	    m2e4 = new JMenuItem("Shadows off");
+	    m2e4.addActionListener(this);
 	    menu2.add(m2e1);
 	    menu2.add(m2e2);
 	    menu2.add(m2e3);
+	    menu2.add(m2e4);
 	    menubar.add(menu2);
 
 	    // Add menu bar to the frame
@@ -395,6 +399,19 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 			m2e3.setText("Shading on");
 			m1e2.setEnabled(true);
 			shading_menu = true;
+		} else if (e.getSource() == m2e4) { // Shadows on/off (toggle)
+
+			if (shadow_menu) {
+				rContext.setShadowing(RenderContext.SHADOWING_DISABLED);
+				renderer.render();
+				m2e4.setText("Shadows off");
+				shadow_menu = false;
+			} else {
+				rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
+				renderer.render();
+				m2e4.setText("Shadows on");
+				shadow_menu = true;
+			}
 		} else {
 			System.out.println("Other Action Event : "+e);			
 		}
