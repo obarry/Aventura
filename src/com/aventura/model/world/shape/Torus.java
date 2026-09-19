@@ -45,7 +45,7 @@ import com.aventura.model.world.triangle.RectangleMesh;
  * @since February 2017
  */
 
-public class Torus extends Element {
+public class Torus extends GenerativeElement {
 
 	protected static final String TORUS_DEFAULT_NAME = "torus";
 
@@ -138,7 +138,8 @@ public class Torus extends Element {
 				rectangleMesh.getVertex(i,j).setNormal(n.V3());
 			}
 		}
-		
-		calculateSubNormals();
+
+		// Sub-Element recursion is build()/rebuild()'s job, not calculateNormals()'s -- see Generable's
+		// Javadoc for the single rule. Calling calculateSubNormals() here used to double-compute it.
 	}
 }

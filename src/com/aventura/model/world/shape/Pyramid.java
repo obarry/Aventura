@@ -37,7 +37,7 @@ import com.aventura.model.world.triangle.RectangleMesh;
  * @author Olivier BARRY
  * @since March 2017
  */
-public class Pyramid extends Element {
+public class Pyramid extends GenerativeElement {
 
 	protected static final String PYRAMID_DEFAULT_NAME = "pyramid";
 	

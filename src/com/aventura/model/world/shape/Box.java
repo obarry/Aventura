@@ -36,7 +36,7 @@ import com.aventura.model.world.triangle.RectangleMesh;
  * @author Olivier BARRY
  * @since May 2016
  */
-public class Box extends Element {
+public class Box extends GenerativeElement {
 	
 	protected static final String BOX_DEFAULT_NAME = "box";
 	

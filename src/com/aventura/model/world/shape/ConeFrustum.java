@@ -45,7 +45,7 @@ import com.aventura.model.world.triangle.FullMesh;
  * @since January 2017
  */
 
-public class ConeFrustum extends Element {
+public class ConeFrustum extends GenerativeElement {
 	
 	protected static final String CONE_FRUSTUME_DEFAULT_NAME = "cone frustum";
 	//protected Vertex[][] vertices;
@@ -220,6 +220,7 @@ public class ConeFrustum extends Element {
 			n.normalize();
 			fullMesh.getSecondaryVertex(i,0).setNormal(n.V3());
 		}
-		calculateSubNormals();
+		// Sub-Element recursion is build()/rebuild()'s job, not calculateNormals()'s -- see Generable's
+		// Javadoc for the single rule. Calling calculateSubNormals() here used to double-compute it.
 	}
 }

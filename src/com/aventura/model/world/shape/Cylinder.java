@@ -44,7 +44,7 @@ import com.aventura.model.world.triangle.RectangleMesh;
  */
 
 
-public class Cylinder extends Element {
+public class Cylinder extends GenerativeElement {
 	
 	protected static final String CYLINDER_DEFAULT_NAME = "cylinder";
 	
@@ -130,7 +130,8 @@ public class Cylinder extends Element {
 			// Same normal vector can be used for the corresponding top Vertex
 			rectangleMesh.getVertex(i,1).setNormal(n);
 		}
-		
-		//calculateSubNormals();
+
+		// Sub-Element recursion is build()/rebuild()'s job, not calculateNormals()'s -- see Generable's
+		// Javadoc for the single rule (this call used to be here, commented out -- now removed for good).
 	}
 }

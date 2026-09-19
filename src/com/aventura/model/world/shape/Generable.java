@@ -44,11 +44,23 @@ public interface Generable {
 	// Low-level services of the interface
 	
 	// Generate vertices as they are hard coded in each Element based on the parameters provided through Constructors (first time generation)
+	// Called by build()/rebuild() before generateTriangles() -- an implementation of generateTriangles()
+	// may assume this has already run and populated whatever fields it needs (e.g. an intermediate mesh
+	// helper); calling generateTriangles() directly, without going through build()/rebuild() first, is
+	// not supported and will typically fail with a NullPointerException rather than a clear error.
 	public void generateVertices();
 	// Generate the Triangles after Vertices are created or re-generate the Triangles after Vertices have been updated
 	public void generateTriangles();
 	// Calculate Normals of Triangles. Needed to be recalculated after a Transformation.
+	//
+	// CONTRACT: an implementation computes normals ONLY for this Element's own Triangles. Recursion into
+	// sub-Elements is handled exclusively by build()/rebuild() (via Element.subBuild()/subRebuild(), which
+	// call each sub-Element's own build()/rebuild() and therefore its own calculateNormals()) -- an
+	// override must NEVER also call Element.calculateSubNormals() or otherwise recurse into subelements
+	// itself, since that would run the sub-Elements' normal calculation twice. (Before 2026 this was
+	// inconsistent across the built-in shape classes -- some called it, one had it commented out -- which
+	// is why this rule is now spelled out here instead of left to each implementation to decide.)
 	public void calculateNormals();
-	
+
 
 }

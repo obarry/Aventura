@@ -44,7 +44,7 @@ import com.aventura.model.world.triangle.FanMesh;
  * @since October 2016
  */
 
-public class Cone extends Element {
+public class Cone extends GenerativeElement {
 	
 	protected static final String CONE_DEFAULT_NAME = "cone";
 
@@ -144,6 +144,7 @@ public class Cone extends Element {
 				mesh.getSummit(i).setNormal(n.V3());
 			}
 		}
-		calculateSubNormals();
+		// Sub-Element recursion is build()/rebuild()'s job, not calculateNormals()'s -- see Generable's
+		// Javadoc for the single rule. Calling calculateSubNormals() here used to double-compute it.
 	}
 }

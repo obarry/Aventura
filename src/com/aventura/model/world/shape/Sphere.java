@@ -60,7 +60,7 @@ import com.aventura.model.world.triangle.RectangleMesh;
  * @author Olivier BARRY
  * @since May 2016
  */
-public class Sphere extends Element {
+public class Sphere extends GenerativeElement {
 	
 	protected static final String SPHERE_DEFAULT_NAME = "sphere";
 
@@ -139,7 +139,8 @@ public class Sphere extends Element {
 				rectangleMesh.getVertex(i,j).setNormal(n.V3());
 			}
 		}
-		calculateSubNormals();
+		// Sub-Element recursion is build()/rebuild()'s job, not calculateNormals()'s -- see Generable's
+		// Javadoc for the single rule. Calling calculateSubNormals() here used to double-compute it.
 	}
 
 }

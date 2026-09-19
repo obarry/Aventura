@@ -6,12 +6,49 @@ import org.junit.Test;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.world.Element;
 
 public class TestTransformation {
 
 	@Test
 	public void testTransformation() {
-		fail("Not yet implemented");
+		System.out.println("***** Test Transformation : testTransformation (Scale/Rotate/Translate application order) *****");
+
+		// The Transformation(Scaling, Rotation, Translation) convenience constructor and the incremental
+		// setTransformation(scaling) + combineTransformation(rotation) + combineTransformation(translation)
+		// path are two ways to build "the same" transformation from the same three ingredients. They must
+		// both apply Scale first, then Rotate, then Translate -- see Transformation's own class Javadoc --
+		// and therefore must agree on the result for the same point.
+		//
+		// REGRESSION (2026): before the constructor's H.R.T -> T.R.H fix, this did NOT hold -- the
+		// constructor applied Translation first and Scaling last (the reverse order), while
+		// combineTransformation() already composed correctly.
+
+		Scaling h = new Scaling(2);
+		Rotation r = new Rotation((float) Math.PI / 2, Vector3.zAxis());
+		Translation t = new Translation(new Vector3(5, 0, 0));
+
+		Transformation viaConstructor = new Transformation(h, r, t);
+
+		Element probe = new Element("probe");
+		// Scaling extends Matrix4 directly (unlike Rotation/Translation, which extend Transformation),
+		// so it must be wrapped to be passed to setTransformation()/combineTransformation().
+		probe.setTransformation(new Transformation(h));
+		probe.combineTransformation(r);
+		probe.combineTransformation(t);
+		Transformation viaCombine = probe.getTransformation(); // probe has no parent: full == its own composed transform
+
+		Vector4 p = new Vector4(1, 0, 0, 1);
+		Vector4 resultConstructor = viaConstructor.transform(p);
+		Vector4 resultCombine = viaCombine.transform(p);
+
+		System.out.println("Result via Transformation(Scaling,Rotation,Translation): " + resultConstructor);
+		System.out.println("Result via setTransformation+combineTransformation:      " + resultCombine);
+
+		assertTrue("Transformation(Scaling,Rotation,Translation) must apply Scale, then Rotate, then "
+				+ "Translate -- matching Element's documented Model Matrix order and "
+				+ "combineTransformation()'s incremental composition -- for the same inputs",
+				resultConstructor.equals(resultCombine));
 	}
 
 	@Test
