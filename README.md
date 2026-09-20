@@ -227,6 +227,7 @@ All demos live in `com.aventura.demo`.
 | `AventuraDemo` | Textured cone, cylinder, sphere, cube, box, trellis and pyramid, spinning in 3D, with the coordinate axes displayed | None: animated |
 | `FractalLandscape_MouseMoving` | A procedural fractal terrain built on a `Trellis` | Drag the mouse to rotate, mouse wheel to zoom; `Run` menu: regenerate, toggle texture; `Rendering` menu: lines, plain, shading, shadows |
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
+| `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 
 The `src/test/java/com/aventura/test` folder holds about sixty additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above.
 
