@@ -158,6 +158,14 @@ public class Lighting {
 		this.shadowingLights.add(pointLight);
 	}
 	
+	/**
+	 * Add a SpotLight. A SpotLight is a PointLight with a direction and a cone, so it is kept in the same
+	 * lists as the Point Lights (and, like them, in the list of Shadowing Lights).
+	 */
+	public void addSpotLight(SpotLight spotLight) {
+		addPointLight(spotLight);
+	}
+	
 	public ArrayList<PointLight> getPointLights() {
 		return pointLights;
 	}

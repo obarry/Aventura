@@ -62,7 +62,7 @@ public class DirectionalLight extends ShadowingLight {
 	 * non-unit-length vector specifically to encode brightness, it needs to move to that
 	 * constructor instead.
 	 *
-	 * @param direction is where the light comes from (vector from viewer to light source)
+	 * @param direction the direction in which the light propagates (from the light towards the scene); the light vector used for shading is its opposite
 	 */
 	public DirectionalLight(Vector3 direction) {
 		super(Light.DEFAULT_LIGHT_INTENSITY);
@@ -72,7 +72,7 @@ public class DirectionalLight extends ShadowingLight {
 	
 	/**
 	 * Create Directional Light using direction as vector of the light and separated scalar for intensity
-	 * @param direction is where the light comes from (vector from viewer to light source)
+	 * @param direction the direction in which the light propagates (from the light towards the scene); the light vector used for shading is its opposite
 	 * @param intensity
 	 */
 	public DirectionalLight(Vector3 direction, float intensity) {
@@ -86,7 +86,7 @@ public class DirectionalLight extends ShadowingLight {
 	 * Create Directional Light using direction as vector of the light, with default intensity.
 	 * See the (Vector3) constructor's Javadoc for why intensity is no longer derived from the
 	 * vector's length.
-	 * @param direction is where the light comes from (vector from viewer to light source)
+	 * @param direction the direction in which the light propagates (from the light towards the scene); the light vector used for shading is its opposite
 	 * @param shadowingBox_type
 	 */
 	public DirectionalLight(Vector3 direction, int shadowingBox_type) {
@@ -97,7 +97,7 @@ public class DirectionalLight extends ShadowingLight {
 	
 	/**
 	 * Create Directional Light using direction as vector of the light and separated scalar for intensity
-	 * @param direction is where the light comes from (vector from viewer to light source)
+	 * @param direction the direction in which the light propagates (from the light towards the scene); the light vector used for shading is its opposite
 	 * @param intensity
 	 * @param shadowingBox_type
 	 */
@@ -111,7 +111,7 @@ public class DirectionalLight extends ShadowingLight {
 //	/**
 //	 * Create Directional Light using direction as vector of the light
 //	 * The intensity of the light will be extrapolate from the norm of the provided direction vector
-//	 * @param direction is where the light comes from (vector from viewer to light source)
+//	 * @param direction the direction in which the light propagates (from the light towards the scene); the light vector used for shading is its opposite
 //	 */
 //	public DirectionalLight(Vector3 direction, World world) {
 //		super(direction.length(), world); // Intensity is taken from the norm of the direction vector
@@ -122,7 +122,7 @@ public class DirectionalLight extends ShadowingLight {
 //	
 //	/**
 //	 * Create Directional Light using direction as vector of the light and separated scalar for intensity
-//	 * @param direction is where the light comes from (vector from viewer to light source)
+//	 * @param direction the direction in which the light propagates (from the light towards the scene); the light vector used for shading is its opposite
 //	 * @param intensity
 //	 */
 //	public DirectionalLight(Vector3 direction, float intensity, World world) {

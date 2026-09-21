@@ -47,6 +47,8 @@ public class PointLight extends ShadowingLight {
 	
 	Vector4 light_point; // The light source
 	float max_distance; // The max distance were this light is generating light
+	// Below this distance from the light source a "light vector" cannot be normalized reliably
+	protected static final float MIN_DISTANCE = 1e-6f;
 	// Intensity : for the PointLight, the intensity is a parameter of the light source.
 	
 	public PointLight(Vector4 point, float max) {
@@ -85,11 +87,24 @@ public class PointLight extends ShadowingLight {
 	@Override
 	public Vector3 getLightVectorAtPoint(Vector4 point) {
 		Vector3 light_dir = new Vector3(point, this.light_point);
-//		float distance = light_dir.length();
-//		light_dir.normalize();
-//		light_dir.timesEquals(attenuationFunc(distance));
-//		return light_dir;
+		float distance = light_dir.length();
+		if (distance < MIN_DISTANCE) {
+			// The lit point is at the light's own position: there is no direction to speak of and
+			// normalizing would give NaN. Return the zero vector: its dot product with any normal is 0,
+			// so Lighting reads it as "not lit by this light" instead of propagating NaN into the shading.
+			return new Vector3(0, 0, 0);
+		}
 		return light_dir.normalize();
+	}
+	
+	/** Position of the light source (world space). */
+	public Vector4 getPosition() {
+		return light_point;
+	}
+	
+	/** Distance beyond which this light does not light anything. */
+	public float getMaxDistance() {
+		return max_distance;
 	}
 	
 	/**

@@ -230,6 +230,16 @@ public abstract class ShadowingLight extends Light {
 	 */
 	public void generateShadowMap(World world) {
 
+		// A light whose initShadowing() does not (yet) set up its light camera/perspective/projection
+		// has no shadow map to generate: leave the map null, which shadowFactorAt() reads as "fully lit".
+		// (This is the case of PointLight and SpotLight until their shadow maps are implemented; before
+		// this guard, asking for shadows with such a light raised a NullPointerException below.)
+		if (perspectiveCtx_light == null || viewProjection_light == null || elementTransform_light == null) {
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "No shadow map generated: this light does not support shadowing yet.");
+			this.map = null;
+			return;
+		}
+
 		// Fresh ZBuffer + TriangleRasterizer for this generation pass -- rebuilt every time rather
 		// than reused across frames, since the shadow map must not carry over stale depth from a
 		// previous frame in a scene with moving lights/geometry. This replaces the old

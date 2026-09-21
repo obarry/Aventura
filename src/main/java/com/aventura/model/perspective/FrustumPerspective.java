@@ -50,10 +50,23 @@ public class FrustumPerspective extends Perspective {
 		
 	}
 	
-	public FrustumPerspective(float top, float bottom, float right, float left, float far, float near) {
+	/**
+	 * Create a Frustum perspective from its six bounds on the near plane and its depth.
+	 * The parameters are declared in the same order as OrthographicPerspective's (and as the call in
+	 * PerspectiveContext), so the same arguments give the same bounds with either perspective type.
+	 * (This constructor used to declare (top, bottom, right, left, far, near) and to pass "top" where
+	 * "left" was expected: any frustum built from it had swapped bounds and an invalid projection matrix.)
+	 * @param left left bound of the near plane
+	 * @param right right bound of the near plane
+	 * @param bottom bottom bound of the near plane
+	 * @param top top bound of the near plane
+	 * @param near distance to the near plane
+	 * @param far distance to the far plane
+	 */
+	public FrustumPerspective(float left, float right, float bottom, float top, float near, float far) {
 		super(top, bottom, right, left, far, near);
 		
-		this.projection = new FrustumProjection(top , right, bottom, top, near, far);
+		this.projection = new FrustumProjection(left , right, bottom, top, near, far);
 		
 	}
 
