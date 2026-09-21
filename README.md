@@ -16,7 +16,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 
 - **Pure Java, zero runtime dependency.** Only the JDK is needed (`java.desktop` for Swing and image loading).
 - **Complete software pipeline.** Model, world and camera transforms, frustum or orthographic projection, triangle rasterization with a Z-buffer and perspective-correct interpolation.
-- **Lighting and shadows.** Ambient, directional, point and spot lights, specular highlights, and shadow mapping.
+- **Lighting and shadows.** Ambient, directional, point and spot lights (a spot has an aimable cone with a soft or sharp edge), specular highlights, and shadow mapping for directional lights (see [Lights and shadows](#lights-and-shadows)).
 - **Textures.** Any image format supported by `ImageIO` (JPEG, PNG, GIF...), with per-face textures on boxes and pyramids and control over mapping direction and orientation.
 - **Ready-made shapes.** Box, cube, sphere, cone, cone frustum, cylinder, disc, pyramid, torus and height-field grids (`Trellis`), plus your own geometry from triangles and meshes.
 - **Hierarchical scene graph.** Elements can contain sub-elements; translations, rotations and scalings compose down the tree.
@@ -31,10 +31,14 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
   <img src="resources/doc/images/aventura_demo.jpg" alt="AventuraDemo: textured shapes" width="400">
 </p>
 <p align="center">
+  <img src="resources/doc/images/urbanscape_street.jpg" alt="UrbanScape: street level" width="400">
+  <img src="resources/doc/images/urbanscape_flight.jpg" alt="UrbanScape: overview with shadows" width="400">
+</p>
+<p align="center">
   <img src="resources/doc/images/fractal_landscape.jpg" alt="FractalLandscape: procedural terrain" width="800">
 </p>
 
-*Left to right, top to bottom: the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, and the `FractalLandscape_MouseMoving` procedural terrain.*
+*Left to right, top to bottom: the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, two frames of the `UrbanScape` helicopter flight (street level, then an overview showing the shadows of the buildings), and the `FractalLandscape_MouseMoving` procedural terrain.*
 
 ## Quick start
 
@@ -65,6 +69,7 @@ mvn test-compile exec:java
 # Any other demo or visual test program
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.AventuraDemo
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.FractalLandscape_MouseMoving
+mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.UrbanScape
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.test.TestSphereTexture
 
 # Or straight from the jar built above (Earth and Moon)
@@ -159,6 +164,39 @@ To show the result in a window instead, create the `SwingView` with a Swing comp
 
 In the demos and in this example, the **Z axis points up** (it is used as the camera's "up" vector).
 
+## Lights and shadows
+
+A `Lighting` system gathers the lights of a scene. Every light has a color and an intensity factor.
+
+| Light | Model | Shadows |
+| --- | --- | --- |
+| `AmbientLight` | Uniform light, without direction | Not applicable |
+| `DirectionalLight` | Parallel rays, like the sun. Built from the direction in which the light **propagates** (from the light towards the scene) | Yes: one orthographic shadow map per light |
+| `PointLight` | Omnidirectional source at a position; the intensity decreases linearly to zero at its maximum distance | Not yet |
+| `SpotLight` | A point light aimed along a direction and limited to a cone: full intensity up to the inner half-angle, smooth fade down to zero at the outer half-angle (a sharp edge if both angles are equal) | Not yet |
+
+A spot light is created from its position, the direction it points to (again the direction of propagation), its maximum distance and its two angles (in radians), and can be re-aimed or reshaped between two renderings:
+
+```java
+Lighting lighting = new Lighting(new AmbientLight(0.05f));
+
+Vector4 position = new Vector4(-4, -4, 4, 1);
+Vector3 direction = new Vector3(position, new Vector4(-1.5f, 0, 0.3f, 1)); // from the spot towards its target
+SpotLight spot = new SpotLight(position, direction, 14, (float) Math.toRadians(30), (float) Math.toRadians(10)); // max distance, outer and inner angles
+lighting.addSpotLight(spot);
+
+spot.setLightVector(newDirection);      // re-aim it...
+spot.setAngles(outerAngle, innerAngle); // ...and open or close the cone
+```
+
+<p align="center">
+  <img src="resources/doc/images/spotlights.jpg" alt="Two spot lights: soft edge and sharp edge" width="600">
+</p>
+
+*Two spot lights (`TestLightingSpot1`): a white one with a soft edge aimed at the sphere and a warm one with a sharp edge aimed at the cube, over a dim ambient light.*
+
+Shadow maps are only computed when shadowing is enabled in the `RenderContext`. For now only directional lights cast shadows: in a scene rendered with shadows, point and spot lights keep lighting everything they reach, without disturbing the shadows of the directional lights.
+
 ## How it works
 
 ### The scene and the engine
@@ -229,7 +267,7 @@ All demos live in `com.aventura.demo`.
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 
-The `src/test/java/com/aventura/test` folder holds about sixty additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above.
+The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows).
 
 ## Tests
 
@@ -237,7 +275,7 @@ The `src/test/java/com/aventura/test` folder holds about sixty additional visual
 mvn test
 ```
 
-The unit tests (JUnit 4, about 280 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements and the pure logic of the interactive demos. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 330 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone), the perspective bounds, a smoke render of every light type with and without shadows, and the pure logic of the interactive demos. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 
@@ -275,7 +313,9 @@ Aventura/
 
 - Aventura is a CPU rasterizer: it is built for clarity, portability and experimentation, not to compete with GPU performance on large scenes.
 - `SwingView` is the only display implementation so far. `GUIView` is the extension point for other backends.
-- A `Lighting` system holds at most one ambient light and one directional light, plus any number of point and spot lights.
+- A `Lighting` system holds at most one ambient light, plus any number of directional, point and spot lights.
+- Only directional lights cast shadows so far. Point and spot lights light the scene but have no shadow map yet: a spot light is planned to use one perspective shadow map, a point light six (one per face of a cube).
+- Lights are not drawn: a point light, a spot light or the sun is invisible even when it is in the field of view (no halo or lens effect yet).
 - Texture files are loaded from file paths (relative to the working directory or absolute), not from the classpath.
 
 ## License
