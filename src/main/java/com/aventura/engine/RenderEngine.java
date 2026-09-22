@@ -127,10 +127,10 @@ public class RenderEngine {
 	private ViewProjection viewProjection;
 	private ElementTransform elementTransform;
 
-	// Former Rasterizer façade, now owned directly by RenderEngine (its sole remaining caller,
-	// since ShadowingLight already builds its own TriangleRasterizer/ZBuffer for shadow maps).
-	// mainZBuffer/triangleRasterizer are built once, here, and reused every frame -- see
-	// initFrameZBuffer() for the per-frame clear() that replaces the old per-frame reallocation.
+	// Main pass rasterization pipeline (the former Rasterizer façade has been removed; ShadowingLight
+	// builds its own TriangleRasterizer/ZBuffer for shadow maps).
+	// mainZBuffer/triangleRasterizer are built once, in the constructor, and reused every frame --
+	// render() only clear()s the ZBuffer at the start of each frame instead of reallocating it.
 	private ZBuffer mainZBuffer;
 	private TriangleRasterizer triangleRasterizer;
 	private RasterizerStats stats = new RasterizerStats();
@@ -383,7 +383,7 @@ public class RenderEngine {
 	 * Rendering a single Triangle.
 	 * 
 	 * This method will calculate transformed triangle (which consists in transforming each vertex) then it delegates
-	 * the low level rasterization of the triangle to the Rasterizer, using appropriate methods based on the type of
+	 * the low level rasterization of the triangle to the TriangleRasterizer (or ScreenLineRenderer for lines), using appropriate methods based on the type of
 	 * rendering that is expected (lines, plain faces, interpolation, etc.). 
 	 * Pre-requisite: This assumes that the initialization of ElementTransform/ViewProjection is already done
 	 * 
@@ -691,7 +691,7 @@ public class RenderEngine {
 
 	}
 
-	/** Direct access to the Rasterizer's RasterizerStats for individual counters (lifetime totals, this-frame deltas). */
+	/** Direct access to the main pass's RasterizerStats for individual counters (lifetime totals, this-frame deltas). */
 	public RasterizerStats getRasterizerStats() {
 		return stats;
 	}

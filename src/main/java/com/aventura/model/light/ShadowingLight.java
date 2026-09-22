@@ -78,9 +78,8 @@ public abstract class ShadowingLight extends Light {
 	// Fields related to Shadow generation
 	protected Camera camera_light; // The corresponding "camera" from Light View's perspective
 	protected PerspectiveContext perspectiveCtx_light; // The perspective from the light to generate the shadow map
-	// NOTE: rasterizer_light (an owned Rasterizer instance) was removed as a persistent field.
-	// TriangleRasterizer is now created fresh inside generateShadowMap(), together with a fresh
-	// ZBuffer for that pass -- see the comment there for why.
+	// No persistent rasterizer: a TriangleRasterizer is created fresh inside generateShadowMap(),
+	// together with a fresh ZBuffer for that pass -- see the comment there for why.
 
 	// Split from the former single ModelViewProjection into its two real roles (see their own
 	// Javadoc): viewProjection_light for the per-fragment shadowFactorAt() test, elementTransform_light
@@ -242,8 +241,7 @@ public abstract class ShadowingLight extends Light {
 
 		// Fresh ZBuffer + TriangleRasterizer for this generation pass -- rebuilt every time rather
 		// than reused across frames, since the shadow map must not carry over stale depth from a
-		// previous frame in a scene with moving lights/geometry. This replaces the old
-		// rasterizer_light.initZBuffer(...) call (which mutated a persistent Rasterizer instance).
+		// previous frame in a scene with moving lights/geometry.
 		int half = map_size / 2;
 		// Orthographic projections in this engine always normalize NDC depth to [0, 1] (see
 		// OrthographicProjection's matrix -- z_ndc = 0 at near, 1 at far, regardless of the actual
