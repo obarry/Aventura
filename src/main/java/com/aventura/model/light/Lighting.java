@@ -43,7 +43,7 @@ import com.aventura.tools.tracing.Tracer;
  * - One (or no) Directional Light for the whole scene (future possible evolution with multiple Directional lights)
  * - Multiple (or no) Point Lights (either pure Point Lights or Spot Lights that are specific Point Lights)
  * 
- * All created Lights should be registered here. This is where Rasterizer will find information about all light sources.
+ * All created Lights should be registered here. This is where the rendering pipeline (ShadingConsumer) will find information about all light sources.
  * This is also where the shadowing (when shadoows are activated) will find the list of Lights to calculate the associated ShadowMaps
  * 
  * Future evolution: Lights should also be part of the "extended" World as they may need to be rendered as well if part of the scene (Point Lights or Spot Lights)
@@ -63,7 +63,7 @@ public class Lighting {
 	protected ArrayList<DirectionalLight> directionalLights = new ArrayList<DirectionalLight>();
 	// Multiple Point Lights (includes Point and Spot Lights since the 2nd one is a sub-classs of the first one).
 	protected ArrayList<PointLight> pointLights = new ArrayList<PointLight>();
-	// All point lights and directional lights are shadowing lights, let's have a list of them (used by Rasterizer)
+	// All point lights and directional lights are shadowing lights, let's have a list of them (used by RenderEngine for shadow maps and by ShadingConsumer)
 	protected ArrayList<ShadowingLight> shadowingLights = new ArrayList<ShadowingLight>();
 
 	// specularLight is a GLOBAL kill switch, complementary to Material's per-surface specular

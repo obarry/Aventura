@@ -1,7 +1,8 @@
 package com.aventura.test;
 
 import com.aventura.context.PerspectiveContext;
-import com.aventura.engine.Rasterizer;
+import com.aventura.engine.TriangleRasterizer;
+import com.aventura.engine.ZBuffer;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -29,7 +30,9 @@ import com.aventura.tools.tracing.Tracer;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  * 
- * This class is a Test class for Rasterizer
+ * Smoke test of the rasterization pipeline set-up: builds the main-pass ZBuffer and its
+ * TriangleRasterizer from a default PerspectiveContext, the same way RenderEngine does.
+ * (Formerly exercised the Rasterizer compatibility façade, now removed.)
  */
 
 public class TestRasterizer1 {
@@ -41,14 +44,19 @@ public class TestRasterizer1 {
 		Tracer.info = true;
 		Tracer.function = true;
 		
-		//PerspectiveContext graphic = PerspectiveContext.PERSPECTIVE_DEFAULT;
-		PerspectiveContext graphic = new PerspectiveContext();
+		// Explicit pixel size: the empty PerspectiveContext() constructor currently leaves pixel width/height at 0
+		// (see the contexts audit, point 2)
+		PerspectiveContext graphic = new PerspectiveContext(1600, 900, 10, 1000, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 100);
 		
 		System.out.println("PerspectiveContext: "+graphic);
 		
-		Rasterizer rasterizer = new Rasterizer(null, graphic, null);
+		int halfWidth = graphic.getPixelHalfWidth();
+		int halfHeight = graphic.getPixelHalfHeight();
+		ZBuffer zBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, graphic.getPerspective().getFar());
+		TriangleRasterizer rasterizer = new TriangleRasterizer(graphic, zBuffer);
 		
-		rasterizer.initZBuffer();
+		System.out.println("ZBuffer: " + zBuffer.getWidth() + " x " + zBuffer.getHeight() + ", init depth: " + zBuffer.get(0, 0));
+		System.out.println("TriangleRasterizer created: " + (rasterizer != null));
 
 		System.out.println("********* ENDING TEST RASTERIZER *********");
 	}

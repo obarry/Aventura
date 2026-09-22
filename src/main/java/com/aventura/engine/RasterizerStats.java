@@ -27,7 +27,7 @@ package com.aventura.engine;
  * 
  * Consolidates diagnostic counters for a rasterization pass. Two usages:
  *
- * - Main render pass (Rasterizer façade): one instance, alive for the whole
+ * - Main render pass (RenderEngine): one instance, alive for the whole
  *   RenderEngine lifetime, fed one triangle at a time via recordTriangle().
  * - Shadow map generation (ShadowingLight): one instance, fed once per
  *   generateShadowMap(World) call via recordBatch(), since triangles aren't
