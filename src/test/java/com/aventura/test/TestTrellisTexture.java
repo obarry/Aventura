@@ -25,6 +25,7 @@ import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -152,19 +153,19 @@ public class TestTrellisTexture {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		//PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 125);
+		//PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveType.ORTHOGRAPHIC, 125);
 		
 		GUIView gUIView = test.createView(pContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		rContext.setTextureProcessing(true);
+		//rContext.setDisplayNormals(true);
+		//rContext.setDisplayLandmark(true);
 
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
-		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
+		//rContext.setRendering(RenderContext.RenderingType.INTERPOLATE);
+		rContext.setShadowing(true);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);

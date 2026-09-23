@@ -26,6 +26,7 @@ import com.aventura.model.world.shape.Box;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.GUIView;
 import com.aventura.view.SwingView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------
@@ -577,14 +578,14 @@ public class UrbanScape {
 
 	static PerspectiveContext createPerspectiveContext() {
 		// 1.6 x 0.9 view plane at distance 1 with 800 pixels per unit -> 1280 x 720 image
-		return new PerspectiveContext(1.6f, 0.9f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 800);
+		return new PerspectiveContext(1.6f, 0.9f, 1, 100, PerspectiveType.FRUSTUM, 800);
 	}
 
 	static RenderContext createRenderContext() {
 		// Smooth shading, shadows enabled, no texture
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_DISABLED);
+		rContext.setShadowing(true);
+		rContext.setTextureProcessing(false);
 		return rContext;
 	}
 

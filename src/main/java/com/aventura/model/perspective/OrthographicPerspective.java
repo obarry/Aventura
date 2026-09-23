@@ -1,8 +1,6 @@
 package com.aventura.model.perspective;
 
 import com.aventura.math.projection.OrthographicProjection;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -29,6 +27,7 @@ import com.aventura.model.camera.Camera;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
+ * Orthographic (parallel projection): the view window has the same size at any distance.
  *
  * @author Olivier BARRY
  * @since June 2024
@@ -39,35 +38,59 @@ public class OrthographicPerspective extends Perspective {
 	
 	public OrthographicPerspective(Perspective persp) {
 		super(persp);
-		this.projection = new OrthographicProjection(persp.projection);
+		this.projection = new OrthographicProjection(left , right, bottom, top, near, far);
 	}
+	
+	/**
+	 * Create a symmetric OrthographicPerspective from its near plane window size, near distance and depth.
+	 * @param width width of the near plane window
+	 * @param height height of the near plane window
+	 * @param dist distance from the eye to the near plane
+	 * @param depth distance from the near plane to the far plane
+	 */
 	public OrthographicPerspective(float width, float height, float dist, float depth) {
 		super(width, height, dist, depth);
-		
 		this.projection = new OrthographicProjection(left , right, bottom, top, near, far);
-		
 	}
-
+	
+	/**
+	 * Create a OrthographicPerspective from its six bounds (possibly asymmetric).
+	 * @param left left bound of the near plane
+	 * @param right right bound of the near plane
+	 * @param bottom bottom bound of the near plane
+	 * @param top top bound of the near plane
+	 * @param near distance to the near plane
+	 * @param far distance to the far plane
+	 */
 	public OrthographicPerspective(float left, float right, float bottom, float top, float near, float far) {
-		super(top, bottom, right, left, far, near);
-		
+		super(left, right, bottom, top, near, far);
 		this.projection = new OrthographicProjection(left , right, bottom, top, near, far);
-		
 	}
 
+	@Override
+	public PerspectiveType getType() {
+		return PerspectiveType.ORTHOGRAPHIC;
+	}
+
+	@Override
+	public Perspective copy() {
+		return new OrthographicPerspective(this);
+	}
+
+	@Override
+	protected float windowScaleAt(float d) {
+		return 1;
+	}
+
+	@Override
 	public void updateProjection() {
 		this.projection = new OrthographicProjection(left , right, bottom, top, near, far);
-	}
-	@Override
-	public Vector4[][] getFrustumFromEye(Camera camera) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 	
 	public String toString() {
 		String p = "***** Orthographic Perspective *****\n";
 		p += super.toString();
-		p += "************************************\n";
+		p += "*******************************\n";
 				
 		return p;
 	}

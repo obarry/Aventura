@@ -19,6 +19,7 @@ import com.aventura.model.world.shape.Cylinder;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -124,7 +125,7 @@ public class TestAventura7 {
 		World world = test.createWorld();
 		Lighting light = test.createLight();
 		Camera camera = test.createCamera();
-		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 10, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 10, PerspectiveType.FRUSTUM, 1000);
 		GUIView gUIView = test.createView(context);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);

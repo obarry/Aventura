@@ -24,6 +24,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Torus;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -121,15 +122,15 @@ public class TestTwoAttachedRings {
 //		Lighting light = new Lighting(dl, al, true);
 		Lighting light = new Lighting(dl, true);
 		
-		PerspectiveContext pContext = new PerspectiveContext(1.2f, 0.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		PerspectiveContext pContext = new PerspectiveContext(1.2f, 0.8f, 1, 100, PerspectiveType.FRUSTUM, 1000);
 		GUIView gUIView = test.createView(pContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
-		//rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
+		//rContext.setDisplayLandmark(true);
+		//rContext.setDisplayLight(true);
+		//rContext.setDisplayNormals(true);
+		//rContext.setBackFaceCulling(false);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);

@@ -24,6 +24,7 @@ import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -149,11 +150,11 @@ public class TestAventura11 {
 		world.build();
 		
 		Lighting light = test.createLight();
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		rContext.setDisplayNormals(true);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);

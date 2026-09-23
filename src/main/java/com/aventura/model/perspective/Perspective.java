@@ -3,6 +3,7 @@ package com.aventura.model.perspective;
 import com.aventura.math.projection.Projection;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.tools.tracing.Tracer;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -29,16 +30,20 @@ import com.aventura.model.camera.Camera;
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  *
+ * A Perspective describes the "lens" of a Camera: the viewing volume (near plane window and
+ * depth) and the corresponding projection matrix. It is expressed in world units, independently
+ * of any pixel resolution (see PerspectiveContext for the pixel side).
+ *
  * Frustum definition:
  * ------------------
  * 
  *     X (or Y)
  *        ^                       +
- *        |     GUIView       -   |
+ *        |     View          -   |
  *        |     Plane     -       |
  *        | (top)     -           |
  *        | right +               |   ^
- *        |   -   |    GUIView    |   |  width
+ *        |   -   |     View      |   |  width
  * Camera +-------+---------------+---+--------------------------> -Z
  *            -   |   Frustum     |   | (height)
  *          left  +               |   v
@@ -50,19 +55,24 @@ import com.aventura.model.camera.Camera;
  *        <-------><-------------->
  *          dist        depth
  * 
- * The gUIView is defined by:
+ * The view volume is defined by:
  *    width  = right - left
  *    height = top - bottom
  *    depth  = far - near
  *    dist   = near - 0
  *  
- * Assuming a symetric gUIView (bottom = -top and left = -right) centered on the origin 
+ * Assuming a symmetric view volume (bottom = -top and left = -right) centered on the axis 
  *    top    = height/2
  *    bottom = -height/2
  *    right  = width/2
  *    left   = -width/2
  *    far    = dist + depth
  *    near   = dist
+ *
+ * Setters: setting one of width/height/dist/depth recomputes the six bounds assuming a SYMMETRIC
+ * volume (an asymmetric one is re-centered); setting one of the six bounds recomputes
+ * width/height/dist/depth. Every setter rebuilds the projection matrix: a new Projection instance
+ * is created, so consumers must re-read getProjection() (ViewProjection does, on refresh()).
  * 
  * ------------------------------------------------------------------------------ 
  *
@@ -91,8 +101,11 @@ public abstract class Perspective {
 	// Projection Matrix
 	Projection projection;
 	
-	
-	public Perspective(Perspective p) {
+	/**
+	 * Copy the dimensions of another perspective (the projection is rebuilt by the subclass).
+	 * @param p the perspective to copy
+	 */
+	protected Perspective(Perspective p) {
 		
 		this.width = p.width;
 		this.height = p.height;
@@ -109,13 +122,13 @@ public abstract class Perspective {
 	}
 	
 	/**
-	 * Create a perspective with the 4 eye-related dimension factors
-	 * @param width
-	 * @param height
-	 * @param depth
-	 * @param dist
+	 * Create a symmetric perspective with the 4 eye-related dimension factors
+	 * @param width width of the near plane window
+	 * @param height height of the near plane window
+	 * @param dist distance from the eye to the near plane
+	 * @param depth distance from the near plane to the far plane
 	 */
-	public Perspective(float width, float height, float dist, float depth) {
+	protected Perspective(float width, float height, float dist, float depth) {
 		
 		this.width = width;
 		this.height = height;
@@ -128,17 +141,17 @@ public abstract class Perspective {
 	}
 	
 	/**
-	 * Create a perspective with the 6 frustum related dimensions
-	 * @param top
-	 * @param bottom
-	 * @param right
-	 * @param left
-	 * @param far
-	 * @param near
+	 * Create a perspective with the 6 frustum related dimensions, in the same (OpenGL-like) order as
+	 * the subclasses' public constructors and the Projection classes.
+	 * Caution: not verified: top > bottom, right > left, far > near >= 0
+	 * @param left left bound of the near plane
+	 * @param right right bound of the near plane
+	 * @param bottom bottom bound of the near plane
+	 * @param top top bound of the near plane
+	 * @param near distance to the near plane
+	 * @param far distance to the far plane
 	 */
-	public Perspective(float top, float bottom, float right, float left, float far, float near) {
-		
-		// Caution : not verified : top > botttom, right > left, far > near >=0
+	protected Perspective(float left, float right, float bottom, float top, float near, float far) {
 		
 		this.top = top;
 		this.bottom = bottom;
@@ -152,7 +165,67 @@ public abstract class Perspective {
 		// The creation of the projection matrix is delegated to the subclasses (Perspective class is abstract)
 	}
 	
-	public abstract Vector4[][] getFrustumFromEye(Camera camera);
+	/**
+	 * @return the type of this perspective (FRUSTUM or ORTHOGRAPHIC)
+	 */
+	public abstract PerspectiveType getType();
+	
+	/**
+	 * @return a new, independent copy of this perspective (same type, same bounds, own projection)
+	 */
+	public abstract Perspective copy();
+	
+	/**
+	 * Ratio between the size of the view window at eye distance d and its size on the near plane.
+	 * d/near for a Frustum (Thales), 1 for an Orthographic perspective (parallel projection).
+	 */
+	protected abstract float windowScaleAt(float d);
+	
+	/**
+	 * Computes the 8 corners (world space) of the view volume of this perspective when used by the
+	 * given camera. Works for both perspective types and for asymmetric volumes (left != -right or
+	 * bottom != -top).
+	 * 
+	 * frustum[0][*] are the corners on the near plane, frustum[1][*] on the far plane, in this
+	 * order: (right, top), (left, top), (left, bottom), (right, bottom).
+	 * 
+	 * @param camera the camera using this perspective
+	 * @return a [2][4] array of world-space points
+	 */
+	public Vector4[][] getFrustumFromEye(Camera camera) {
+		
+		Vector4[][] frustum = new Vector4[2][4];
+		
+		Vector4 eye = camera.getEye();
+		// Camera basis: forward (normalized), up, and side = forward x up (same convention as LookAt,
+		// where side is the +X axis of eye space)
+		Vector4 fwd = camera.getForward().normalize();
+		Vector4 up = camera.getUp();
+		Vector4 side = fwd.cross(up).normalize();
+		
+		float[] planes = { near, far };
+		for (int i = 0; i < 2; i++) {
+			float d = planes[i];
+			float k = windowScaleAt(d);
+			Vector4 center = eye.plus(fwd.times(d));
+			frustum[i][0] = center.plus(up.times(top * k)).plus(side.times(right * k));
+			frustum[i][1] = center.plus(up.times(top * k)).plus(side.times(left * k));
+			frustum[i][2] = center.plus(up.times(bottom * k)).plus(side.times(left * k));
+			frustum[i][3] = center.plus(up.times(bottom * k)).plus(side.times(right * k));
+		}
+		
+		if (Tracer.info) {
+			String s = "";
+			for (int i = 0; i<2; i++) {
+				for (int j = 0; j<4; j++) {
+					s = s + "frustum [" + i + "," + j + "] = " + frustum[i][j] + "\n";
+				}
+			}
+			Tracer.traceInfo(this.getClass(), "Frustum : \n"+s);
+		}
+
+		return frustum;
+	}
 		
 	private void calculateTBRLFN() {
 		
@@ -175,6 +248,9 @@ public abstract class Perspective {
 		
 	}
 	
+	/**
+	 * Rebuilds the projection matrix from the current bounds (a new Projection instance).
+	 */
 	public abstract void updateProjection();
 	
 	public Projection getProjection() {
@@ -288,6 +364,8 @@ public abstract class Perspective {
 	public String toString() {
 		
 		String p = "";
+
+		p += "*** Type  : " + getType() + "\n";
 
 		p += "*** Height: " + height + "\n";
 		p += "*** Width : " + width + "\n";

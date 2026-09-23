@@ -10,6 +10,7 @@ import com.aventura.tools.tracing.Tracer;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -225,7 +226,7 @@ public class TriangleRasterizer {
 			return; // No pixel would be drawn on this line
 		}
 
-		boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM;
+		boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
 
 		// Depth at the 4 corners of this scan line's two edges.
 		// Frustum: W of the projected position (= -Z in camera space before projection).

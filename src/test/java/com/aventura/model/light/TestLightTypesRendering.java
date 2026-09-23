@@ -18,6 +18,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * Smoke tests: every kind of Light, alone or combined, with shadows on and off, must render a frame
@@ -49,7 +50,7 @@ public class TestLightTypesRendering {
 		System.setProperty("java.awt.headless", "true");
 		World world = scene();
 		Camera camera = new Camera(new Vector4(6, -7, 4, 1), new Vector4(0, 0, 0.5f, 1), Vector4.zAxis());
-		PerspectiveContext p = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 200);
+		PerspectiveContext p = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 200);
 		SwingView view = new SwingView(p);
 		RenderEngine engine = new RenderEngine(world, lighting, camera, rc, p);
 		engine.setView(view);
@@ -160,7 +161,7 @@ public class TestLightTypesRendering {
 		Lighting lighting = new Lighting(new AmbientLight(0f));
 		lighting.addSpotLight(new SpotLight(new Vector4(0, 0, 5, 1), new Vector3(0, 0, -1), 20f, outerAngle, innerAngle));
 		Camera camera = new Camera(new Vector4(0, -8, 8, 1), new Vector4(0, 0, 0, 1), Vector4.zAxis());
-		PerspectiveContext p = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 200);
+		PerspectiveContext p = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 200);
 		SwingView view = new SwingView(p);
 		RenderEngine engine = new RenderEngine(world, lighting, camera, RenderContext.RENDER_STANDARD_INTERPOLATE, p);
 		engine.setView(view);

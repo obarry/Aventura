@@ -31,6 +31,7 @@ import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -174,11 +175,11 @@ public class TestMultiElementsInterpolateShadows {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al);
 
-		PerspectiveContext context = new PerspectiveContext(1.5f, 0.9f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		PerspectiveContext context = new PerspectiveContext(1.5f, 0.9f, 1, 100, PerspectiveType.FRUSTUM, 1000);
 		GUIView gUIView = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
-		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
+		rContext.setShadowing(true);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
 		renderer.setView(gUIView);

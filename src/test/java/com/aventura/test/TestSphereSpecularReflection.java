@@ -22,6 +22,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -118,15 +119,15 @@ public class TestSphereSpecularReflection {
 		Lighting light = new Lighting(dl, true);
 		
 		
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.4512f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.4512f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
-		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
-		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
+		rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
+		rContext.setDisplayLight(true);
+		rContext.setDisplayLandmark(false);
+		//rContext.setDisplayNormals(true);
+		//rContext.setRenderingLines(true);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);

@@ -25,6 +25,7 @@ import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -107,7 +108,7 @@ public class TestLightingSpot2 {
 
 	/** Same window and resolution as TestLighting1 and TestLighting2. */
 	public static PerspectiveContext createPerspectiveContext() {
-		return new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		return new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 	}
 
 	public static Camera createCamera() {
@@ -163,7 +164,7 @@ public class TestLightingSpot2 {
 
 	public static RenderContext createRenderContext() {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		rContext.setDisplayLandmark(true);
 		return rContext;
 	}
 

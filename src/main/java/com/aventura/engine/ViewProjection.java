@@ -58,36 +58,61 @@ import com.aventura.tools.tracing.Tracer;
  * RenderEngine.render() (and, for a light, at the top of
  * ShadowingLight.generateShadowMap()).
  *
+ * When built from a (Camera, Perspective) pair, refresh() re-reads BOTH
+ * camera.getMatrix() and perspective.getProjection(): Perspective's setters
+ * (setWidth(), setDist()...) REPLACE the Projection instance rather than
+ * mutating it, so holding on to the Projection captured at construction used
+ * to silently ignore any perspective change (e.g. a zoom) made after the
+ * RenderEngine was created.
+ *
  * @author Olivier BARRY
  * @since 2026 (extracted from ModelViewProjection)
  *
  */
 public class ViewProjection {
 
-	private final Matrix4 view;
-	private final Matrix4 projection;
+	// Live sources, when built from a Camera and a Perspective (null otherwise): re-read on refresh()
+	private final Camera camera;
+	private final Perspective perspective;
+
+	private Matrix4 view;
+	private Matrix4 projection;
 	private Matrix4 vp;
 
+	/**
+	 * Fixed matrices: refresh() recomputes vp from the CONTENT of these same two instances.
+	 */
 	public ViewProjection(Matrix4 view, Matrix4 projection) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ViewProjection(view, projection)");
+		this.camera = null;
+		this.perspective = null;
 		this.view = view;
 		this.projection = projection;
 		this.vp = projection.times(view);
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "VP matrix:\n" + vp);
 	}
 
-	/** Convenience constructor: extracts the view matrix from camera and the projection matrix from perspective. */
+	/**
+	 * Live link to the camera and the perspective: refresh() re-reads camera.getMatrix() and
+	 * perspective.getProjection(), so both camera moves and perspective changes are taken into account.
+	 */
 	public ViewProjection(Camera camera, Perspective perspective) {
-		this(camera.getMatrix(), perspective.getProjection());
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "ViewProjection(camera, perspective)");
+		this.camera = camera;
+		this.perspective = perspective;
+		refresh();
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "VP matrix:\n" + vp);
 	}
 
 	/**
-	 * Recomputes vp from the CURRENT content of view/projection -- call this whenever the
-	 * underlying Camera (or light) may have moved since the last refresh/construction, before
-	 * project()/getMatrix() are relied upon. Cheap (one matrix multiplication): safe to call once
-	 * per frame even when nothing actually moved.
+	 * Recomputes vp from the CURRENT state of the camera/perspective (or view/projection matrices) -- call
+	 * this whenever the underlying Camera (or light) or Perspective may have changed since the last
+	 * refresh/construction, before project()/getMatrix() are relied upon. Cheap (one matrix
+	 * multiplication): safe to call once per frame even when nothing actually changed.
 	 */
 	public void refresh() {
+		if (camera != null) this.view = camera.getMatrix();
+		if (perspective != null) this.projection = perspective.getProjection();
 		this.vp = projection.times(view);
 	}
 

@@ -31,6 +31,7 @@ import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
 import com.aventura.view.MapView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -182,21 +183,21 @@ public class TestShadowMapRasterization {
 		//Lighting light = new Lighting(dl);
 		
 		// Regular frustum perspective
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.8f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		// Perspective Orthographic similar to what is used for Shadow Mapping - For Testing
-		//PerspectiveContext pContext = new PerspectiveContext(6.4f, 3.6f, 0.1f, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 156);
-		//PerspectiveContext pContext = new PerspectiveContext(10, 10, 1, 20, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 100);
+		//PerspectiveContext pContext = new PerspectiveContext(6.4f, 3.6f, 0.1f, 100, PerspectiveType.ORTHOGRAPHIC, 156);
+		//PerspectiveContext pContext = new PerspectiveContext(10, 10, 1, 20, PerspectiveType.ORTHOGRAPHIC, 100);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
-		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
-		rContext.setDisplayLight(RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		rContext.setTextureProcessing(true);
+		rContext.setShadowing(true);
+		//rContext.setDisplayNormals(true);
+		rContext.setDisplayLandmark(true);
+		//rContext.setRenderingLines(true);
+		rContext.setDisplayLight(true);
+		//rContext.setDisplayNormals(true);
 		System.out.println(rContext);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);

@@ -25,6 +25,7 @@ import com.aventura.model.world.shape.Cone;
 
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -140,16 +141,16 @@ public class TestConeTexture {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting light = new Lighting(dl, al, false);
 		
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		GUIView gUIView = test.createView(pContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		rContext.setTextureProcessing(true);
+		//rContext.setDisplayNormals(true);
+		//rContext.setDisplayLandmark(true);
 
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		//rContext.setRendering(RenderContext.RenderingType.INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);

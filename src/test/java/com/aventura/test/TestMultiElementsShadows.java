@@ -30,6 +30,7 @@ import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -175,13 +176,13 @@ public class TestMultiElementsShadows {
 				
 		World world = test.createWorld();
 		Lighting light = test.createLight();
-		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		GUIView gUIView = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
-		rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
-		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
+		//rContext.setRendering(RenderContext.RenderingType.PLAIN);
+		rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
+		rContext.setShadowing(true);
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
 		renderer.setView(gUIView);
 		int nb_images = 180;

@@ -32,6 +32,7 @@ import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -361,12 +362,12 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 			
 			if (shading_menu) {
 				if (texture_menu) {
-					rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_DISABLED);
+					rContext.setTextureProcessing(false);
 					renderer.render();
 					m1e2.setText("Texture off");
 					texture_menu = false;
 				} else {
-					rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
+					rContext.setTextureProcessing(true);
 					renderer.render();
 					m1e2.setText("Texture on");
 					texture_menu = true;
@@ -375,7 +376,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 				// no action
 			}
 		} else if (e.getSource() == m2e1) { // Rendering lines
-			rContext.setRenderingType(RenderContext.RENDERING_TYPE_LINE);
+			rContext.setRenderingType(RenderContext.RenderingType.LINE);
 			renderer.render();
 			m2e1.setText("Lines on");
 			m2e2.setText("Plain off");
@@ -383,7 +384,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 			m1e2.setEnabled(false);
 			shading_menu = false;
 		} else if (e.getSource() == m2e2) { // Rendering Plain
-			rContext.setRenderingType(RenderContext.RENDERING_TYPE_PLAIN);
+			rContext.setRenderingType(RenderContext.RenderingType.PLAIN);
 			renderer.render();
 			m2e1.setText("Lines off");
 			m2e2.setText("Plain on");
@@ -392,7 +393,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 			shading_menu = false;
 			
 		} else if (e.getSource() == m2e3) { // Rendering Shading
-			rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
+			rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
 			renderer.render();
 			m2e1.setText("Lines off");
 			m2e2.setText("Plain off");
@@ -402,12 +403,12 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		} else if (e.getSource() == m2e4) { // Shadows on/off (toggle)
 
 			if (shadow_menu) {
-				rContext.setShadowing(RenderContext.SHADOWING_DISABLED);
+				rContext.setShadowing(false);
 				renderer.render();
 				m2e4.setText("Shadows off");
 				shadow_menu = false;
 			} else {
-				rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
+				rContext.setShadowing(true);
 				renderer.render();
 				m2e4.setText("Shadows on");
 				shadow_menu = true;
@@ -572,8 +573,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		Lighting light = new Lighting(dl, al, false);
 		
 		// Graphic Context
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
-		//PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 125);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1250);
+		//PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveType.ORTHOGRAPHIC, 125);
 		
 		// Create gUIView
 		GUIView gUIView = this.createView(pContext);
@@ -581,11 +582,11 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		// Rendering context
 		//rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_DISABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_ENABLED);
+		rContext.setTextureProcessing(false);
+		//rContext.setDisplayNormals(true);
+		//rContext.setDisplayLandmark(true);
 
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		//rContext.setRendering(RenderContext.RenderingType.INTERPOLATE);
 		
 		// Initialize Render Engine and render a first gUIView
 		renderer = new RenderEngine(world, light, camera, rContext, pContext);

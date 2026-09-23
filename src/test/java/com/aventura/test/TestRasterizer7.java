@@ -21,6 +21,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -122,11 +123,11 @@ public class TestRasterizer7 {
 		Lighting light = new Lighting(dl);
 		
 		
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.4512f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.4512f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
-		rContext.setRenderingType(RenderContext.RENDERING_TYPE_PLAIN);
+		rContext.setRenderingType(RenderContext.RenderingType.PLAIN);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);

@@ -23,6 +23,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -142,12 +143,12 @@ public class TestRasterizer5 {
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,-3,0));
 		Lighting light = new Lighting(dl);
 		
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		rContext.setRenderingType(RenderContext.RENDERING_TYPE_PLAIN);
+		//rContext.setDisplayNormals(true);
+		rContext.setRenderingType(RenderContext.RenderingType.PLAIN);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);
