@@ -259,7 +259,7 @@ Two engine classes own this maths:
 
 | Class | Role |
 |---|---|
-| `ViewProjection` | Pure `P · V` projector, refreshed once per frame. Also reused by shadow lookup and debug-vector drawing. |
+| `ViewProjection` | Pure `P · V` projector, refreshed once per frame from the **current** camera matrix and perspective projection (so camera moves and perspective changes such as a zoom are both picked up). Also reused by shadow lookup and debug-vector drawing. |
 | `ElementTransform` | Per-element `P · V · M` plus the **normal matrix** (`M` itself if orthogonal, `(Mᵀ)⁻¹` otherwise, so non-uniform scaling keeps normals correct). `setModel()` computes everything atomically. |
 
 ### One frame, step by step
@@ -528,14 +528,14 @@ textures and shadows.
 flowchart TB
     subgraph PC["PerspectiveContext — how to project"]
         direction LR
-        p1["type: FRUSTUM | ORTHOGRAPHIC"]
+        p1["PerspectiveType: FRUSTUM | ORTHOGRAPHIC"]
         p2["view-plane width × height"]
         p3["near · far"]
         p4["pixels per unit → image size"]
     end
     subgraph RC["RenderContext — how to rasterize"]
         direction LR
-        r1["type: LINE | PLAIN | FLAT | INTERPOLATE"]
+        r1["RenderingType: LINE | PLAIN | FLAT | INTERPOLATE"]
         r2["textures on/off"]
         r3["shadows on/off"]
         r4["back-face culling on/off"]
@@ -547,13 +547,21 @@ flowchart TB
 
 | Rendering type | Normals used | Look | Relative cost |
 |---|---|---|---|
-| `RENDERING_TYPE_LINE` | none | wireframe | ● |
-| `RENDERING_TYPE_FLAT` | one per face | faceted | ●●● |
-| `RENDERING_TYPE_PLAIN` | per vertex unless face normal | legacy mode | ●●● |
-| `RENDERING_TYPE_INTERPOLATE` | per vertex, per pixel | smooth | ●●●● |
+| `RenderingType.LINE` | none | wireframe | ● |
+| `RenderingType.FLAT` | one per face | faceted | ●●● |
+| `RenderingType.PLAIN` | per vertex unless face normal | legacy mode | ●●● |
+| `RenderingType.INTERPOLATE` | per vertex, per pixel | smooth | ●●●● |
 
+The on/off options are booleans with chainable setters (`setShadowing(true).setTextureProcessing(true)`).
 Presets cover common cases, for example `RENDER_STANDARD_INTERPOLATE`,
-`RENDER_STANDARD_INTERPOLATE_SHADOWS` and `RENDER_STANDARD_PLAIN`.
+`RENDER_STANDARD_INTERPOLATE_SHADOWS` and `RENDER_STANDARD_PLAIN`. They are **immutable**
+(setters throw `IllegalStateException`): copy one with `new RenderContext(preset)` to customize it.
+
+`PerspectiveContext` currently holds both the lens (the `Perspective`: view volume and projection,
+in world units) and the raster size (pixels, derived through a pixels-per-unit ratio). The pixel
+size is fixed at construction; changing the `Perspective` afterwards (e.g. `setWidth()` to zoom)
+maps the new volume onto the same image. Splitting it into a `Perspective` and a `Viewport` is
+planned (see the roadmap).
 
 ---
 
@@ -663,7 +671,8 @@ xychart-beta
 | Lights | Not drawn in the scene (no halo or lens effect) |
 | Display | `SwingView` is the only backend |
 | Assets | Textures loaded from file paths, not from the classpath |
-| API | `RENDERING_TYPE_MONOCHROME` declared but not implemented |
+| API | `RenderingType.MONOCHROME` declared but not implemented |
+| API | `PerspectiveContext` mixes lens and pixel size (see §8) |
 
 ### Roadmap (candidate items)
 
@@ -673,6 +682,7 @@ flowchart LR
         n1[Spot light shadows<br/>perspective shadow map]
         n2[Soft shadows · PCF]
         n3[Shadow-map size in<br/>RenderContext]
+        n4[Perspective / Viewport<br/>split]
     end
     subgraph NEXT["Mid term"]
         m1[Point light shadows<br/>cube map, 6 faces]
@@ -696,8 +706,9 @@ flowchart LR
 - **New shapes extend `GenerativeElement`**, not `Element`, so missing geometry methods fail at compile time.
 - **Never retain a `Fragment`** (or its vectors) after `consume()` returns; copy values out.
 - **Transform order is S → R → T** (`M = T · R · S`), composed parent-first down the tree.
-- **Refresh, don't cache:** `Camera.updateCamera()` mutates its matrix in place, so derived
-  matrices go through `ViewProjection.refresh()` once per frame.
+- **Refresh, don't cache:** `Camera.updateCamera()` mutates its matrix in place and
+  `Perspective` setters replace its projection, so derived matrices go through
+  `ViewProjection.refresh()` once per frame.
 - **Run demos from the project root**: texture paths are relative to the working directory.
 - **Tests must run headless**: Surefire sets `-Djava.awt.headless=true`.
 

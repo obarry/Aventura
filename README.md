@@ -98,6 +98,7 @@ import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
@@ -140,7 +141,7 @@ public class HelloAventura {
 		Camera camera = new Camera(new Vector4(6, -7, 4, 1), new Vector4(0, 0, 0.5f, 1), Vector4.zAxis());
 
 		// 4. Display geometry: 0.8 x 0.45 view plane at distance 1, 1000 pixels per unit => 800x450 image
-		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1000);
 		SwingView view = new SwingView(perspective); // off-screen: no window needed
 
 		// 5. Render (smooth shading + shadows) and save
@@ -240,16 +241,24 @@ For each frame, every element's vertices are moved through its transformation ch
 
 ### Rendering options
 
-| Option (`RenderContext`) | Values |
-| --- | --- |
-| Rendering type | `RENDERING_TYPE_LINE` (wireframe), `RENDERING_TYPE_PLAIN` (one color per triangle), `RENDERING_TYPE_FLAT` (faceted), `RENDERING_TYPE_INTERPOLATE` (smooth, per-pixel) |
-| Textures | `TEXTURE_PROCESSING_ENABLED` / `_DISABLED` |
-| Shadows | `SHADOWING_ENABLED` / `_DISABLED` (disabled by default) |
-| Back-face culling | `BACKFACE_CULLING_ENABLED` / `_DISABLED` (applies to closed elements) |
-| Wireframe overlay | `RENDERING_LINES_ENABLED` / `_DISABLED` |
-| Debug overlays | `DISPLAY_LANDMARK_*` (axes), `DISPLAY_NORMALS_*`, `DISPLAY_LIGHT_VECTORS_*` |
+| Option (`RenderContext`) | Setter | Values |
+| --- | --- | --- |
+| Rendering type | `setRenderingType(RenderingType)` | `LINE` (wireframe), `PLAIN` (one color per triangle), `FLAT` (faceted), `INTERPOLATE` (smooth, per-pixel, default) |
+| Textures | `setTextureProcessing(boolean)` | disabled by default |
+| Shadows | `setShadowing(boolean)` | disabled by default |
+| Back-face culling | `setBackFaceCulling(boolean)` | enabled by default (applies to closed elements) |
+| Wireframe overlay | `setRenderingLines(boolean)` | disabled by default |
+| Debug overlays | `setDisplayLandmark(boolean)` (axes), `setDisplayNormals(boolean)`, `setDisplayLight(boolean)` | disabled by default |
 
-Common combinations are available as presets such as `RenderContext.RENDER_STANDARD_INTERPOLATE`, `RENDER_STANDARD_INTERPOLATE_SHADOWS` or `RENDER_STANDARD_PLAIN`.
+Common combinations are available as presets such as `RenderContext.RENDER_STANDARD_INTERPOLATE`, `RENDER_STANDARD_INTERPOLATE_SHADOWS` or `RENDER_STANDARD_PLAIN`. Presets are immutable: copy one, then chain the setters to customize it:
+
+```java
+RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE)
+        .setTextureProcessing(true)
+        .setShadowing(true);
+```
+
+The projection type of a `PerspectiveContext` is given by the `PerspectiveType` enum (`FRUSTUM` or `ORTHOGRAPHIC`).
 
 ### Building your own geometry
 
