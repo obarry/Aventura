@@ -34,6 +34,7 @@ import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -313,14 +314,14 @@ public class MovingCamera {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		PerspectiveContext context = new PerspectiveContext(1.5f, 0.9f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1000);
+		PerspectiveContext context = new PerspectiveContext(1.5f, 0.9f, 1, 100, PerspectiveType.FRUSTUM, 1000);
 		GUIView gUIView = appli.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		rContext.setShadowing(RenderContext.SHADOWING_ENABLED);
+		rContext.setTextureProcessing(true);
+		//rContext.setRenderingLines(true);
+		//rContext.setDisplayNormals(true);
+		rContext.setShadowing(true);
 		
 		renderer = new RenderEngine(world, lighting, camera, rContext, context);
 		renderer.setView(gUIView);

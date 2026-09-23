@@ -10,6 +10,7 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
 import com.aventura.model.world.World;
 import com.aventura.tools.tracing.Tracer;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -270,7 +271,7 @@ public class DirectionalLight extends ShadowingLight {
 		float width = right - left;
 		float height = top - bottom;
 		float depth = far - near;
-		perspectiveCtx_light = new PerspectiveContext(DEFAULT_SHADOW_MAP_DIMENSION, width, height, near, depth, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC);
+		perspectiveCtx_light = new PerspectiveContext(DEFAULT_SHADOW_MAP_DIMENSION, width, height, near, depth, PerspectiveType.ORTHOGRAPHIC);
 
 		map_size = perspectiveCtx_light.getPixelWidth();
 		if (perspectiveCtx_light.getPixelWidth() != perspectiveCtx_light.getPixelHeight()) {

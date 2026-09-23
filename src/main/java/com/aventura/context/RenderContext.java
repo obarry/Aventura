@@ -27,19 +27,31 @@ import java.awt.Color;
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
  * 
+ * The RenderContext describes the information and parameters to be used by the RenderEngine to render the World properly.
+ * This is all parameters not directly related to the World, the Lighting or the Camera nor the Display (that is defined
+ * in PerspectiveContext). It can be to force the rendering to be plain or lines, to use or not textures, etc...
  * 
- * The RenderContext describes the information and parameters to be used by the RenderEngine to render the World properly
- * This is all parameters not directly related to the World, the Lighting or the Camera nor the Display that is defined in PerspectiveContext
- * It can be to force the rendering to be plain or lines, to use or not textures, etc...
+ * The RenderContext is passed as a parameter of the RenderEngine before asking him to render the World.
+ * The application may create several RenderContext instances to render differently a same World. It is read by the
+ * RenderEngine at each frame, so it can also be modified between two frames (e.g. toggling textures from the GUI).
  * 
- * The RenderContext is passed as a parameter of the RenderEngine before asking him to render the World 
- * The application may create Several RenderContex instances to render differently a same World
+ * Several pre-built-in default contexts are accessible as constants (RENDER_*) to perform standard rendering.
+ * These presets are IMMUTABLE (any setter throws an IllegalStateException): to customize one, duplicate it first:
  * 
- * Several pre-built-in default contexts are accessible as constants to perform standard rendering.
+ *     RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE)
+ *                                  .setTextureProcessing(true)
+ *                                  .setShadowing(true);
+ * 
+ * All setters return this RenderContext, so they can be chained as above.
+ * 
+ * Evolutions :
+ * ----------
+ * Sep-2026 : int constants replaced by the RenderingType enum and booleans, private fields with accessors,
+ * immutable presets, fluent setters, complete copy constructor. DISPLAY_LANDMARK_ENABLED_ARROW / _3D removed
+ * (never implemented).
  * 
  * Future Evolution :
- * - The RenderContext should remain as independent as possible on the display and windowing technology (e.g. Swing or SWT). Another
- * class (PerspectiveContext) should handle these specifics.
+ * - The RenderContext should remain as independent as possible on the display and windowing technology (e.g. Swing or SWT).
  * - The RenderContext could also be used to define a parameter to trigger between using or not HW graphic acceleration
  * 
  * @author Olivier BARRY
@@ -48,300 +60,265 @@ import java.awt.Color;
  */
 public class RenderContext {
 	
-	public static final int RENDERING_TYPE_LINE = 1;				// Draw only lines
-	public static final int RENDERING_TYPE_MONOCHROME = 2;  		// Draw lines and fill with monochrome color each triangle
-	public static final int RENDERING_TYPE_PLAIN = 3;				// Fill each triangle with one color depending on Lighting and orientation
-	public static final int RENDERING_TYPE_INTERPOLATE = 4; 		// Fill each triangle by interpolating each pixel's color
-	public static final int RENDERING_TYPE_FLAT = 5;				// Fill each triangle using a single normal for the whole face (faceted look),
-																	// regardless of whether the triangle/mesh also has per-vertex normals --
-																	// unlike PLAIN, which only looks "flat" incidentally when the mesh happens
-																	// to carry an explicit per-triangle normal (Triangle.isTriangleNormal())
-
-	public static final int RENDERING_LINES_DISABLED = 0;
-	public static final int RENDERING_LINES_ENABLED = 1;
-
-	public static final int DISPLAY_LANDMARK_DISABLED = 0;
-	public static final int DISPLAY_LANDMARK_ENABLED = 1;
-	public static final int DISPLAY_LANDMARK_ENABLED_ARROW = 2;
-	public static final int DISPLAY_LANDMARK_ENABLED_3D = 3;
-	
-	public static final int DISPLAY_NORMALS_DISABLED = 0;
-	public static final int DISPLAY_NORMALS_ENABLED = 1;
-	
-	public static final int DISPLAY_LIGHT_VECTORS_DISABLED = 0;
-	public static final int DISPLAY_LIGHT_VECTORS_ENABLED = 1;
-	
-	public static final int BACKFACE_CULLING_DISABLED = 0;
-	public static final int BACKFACE_CULLING_ENABLED = 1;
-	
-	public static final int TEXTURE_PROCESSING_DISABLED = 0;
-	public static final int TEXTURE_PROCESSING_ENABLED = 1;
-	
-	public static final int SHADOWING_DISABLED = 0;
-	public static final int SHADOWING_ENABLED = 1;
+	/**
+	 * How the triangles are drawn.
+	 */
+	public enum RenderingType {
+		/** Draw only lines (wireframe), no ZBuffer */
+		LINE,
+		/** Fill each triangle with its color, no shading -- NOT IMPLEMENTED YET (draws nothing) */
+		MONOCHROME,
+		/** Fill each triangle with shading, texture always processed when the triangle has one (legacy behavior) */
+		PLAIN,
+		/** Fill each triangle by interpolating each pixel's normal/color (Gouraud/Phong-like) */
+		INTERPOLATE,
+		/** Fill each triangle using a single normal for the whole face (faceted look), regardless of whether
+		 * the triangle/mesh also has per-vertex normals -- unlike PLAIN, which only looks "flat" incidentally
+		 * when the mesh happens to carry an explicit per-triangle normal (Triangle.isTriangleNormal()) */
+		FLAT
+	}
 	
 	// ------------------------
 	// RenderContext Attributes
 	// ------------------------
 	
-	// Display elements in the scene
-	public int displayLandmark = DISPLAY_LANDMARK_DISABLED; // by default
-	public int displayNormals = DISPLAY_NORMALS_DISABLED;  // by default
-	public int displayLight = DISPLAY_LIGHT_VECTORS_DISABLED; // by default
-
 	// Rendering
-	public int renderingType = 0;
-	public int renderingLines = RENDERING_LINES_DISABLED; // To show lines even with other types of Rendering. Disabled by default
+	private RenderingType renderingType = RenderingType.INTERPOLATE;
+	private boolean renderingLines = false; // To show lines even with other types of Rendering
+	
+	// Display elements in the scene
+	private boolean displayLandmark = false;
+	private boolean displayNormals = false;
+	private boolean displayLight = false; // Light vectors
 	
 	// Backface Culling
-	public int backfaceCulling = BACKFACE_CULLING_ENABLED; // Default
+	private boolean backfaceCulling = true;
 	
 	// Texture processing
-	public int textureProcessing = TEXTURE_PROCESSING_DISABLED; // Default
+	private boolean textureProcessing = false;
 	
-	// Shading
-	public int shadowing = SHADOWING_DISABLED; // Default
+	// Shadowing
+	private boolean shadowing = false;
 	
-	// --------------
-	// Default colors
-	// --------------
+	// Colors of the debug displays
+	private Color landmarkXColor = Color.RED;
+	private Color landmarkYColor = Color.GREEN;
+	private Color landmarkZColor = Color.BLUE;
+	private Color normalsColor = Color.WHITE;
+	private Color lightVectorsColor = Color.YELLOW;
 	
-	public Color landmarkXColor = Color.RED;
-	public Color landmarkYColor = Color.GREEN;
-	public Color landmarkZColor = Color.BLUE;
-	public Color normalsColor = Color.WHITE;
-	public Color lightVectorsColor = Color.YELLOW;
+	// Immutable flag, set on the presets below
+	private boolean frozen = false;
 
 	
-	// Default RenderContext to be used for easy display
-	public static RenderContext RENDER_STANDARD_PLAIN = new RenderContext(RenderContext.RENDERING_TYPE_PLAIN, RenderContext.DISPLAY_LANDMARK_DISABLED);
-	public static RenderContext RENDER_STANDARD_PLAIN_SHADOWS = new RenderContext(RenderContext.RENDERING_TYPE_PLAIN, RenderContext.DISPLAY_LANDMARK_DISABLED, RenderContext.SHADOWING_ENABLED);
-	public static RenderContext RENDER_STANDARD_PLAIN_WITH_LANDMARKS = new RenderContext(RenderContext.RENDERING_TYPE_PLAIN, RenderContext.DISPLAY_LANDMARK_ENABLED);
-	public static RenderContext RENDER_STANDARD_INTERPOLATE = new RenderContext(RENDERING_TYPE_INTERPOLATE, DISPLAY_LANDMARK_DISABLED);
-	public static RenderContext RENDER_STANDARD_INTERPOLATE_SHADOWS = new RenderContext(RENDERING_TYPE_INTERPOLATE, DISPLAY_LANDMARK_DISABLED, RenderContext.SHADOWING_ENABLED);
-	public static RenderContext RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS = new RenderContext(RENDERING_TYPE_INTERPOLATE, DISPLAY_LANDMARK_ENABLED);
-	public static RenderContext RENDER_DEFAULT = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED);
-	public static RenderContext RENDER_DEFAULT_ALL_ENABLED = new RenderContext(RENDERING_TYPE_LINE, DISPLAY_LANDMARK_ENABLED, DISPLAY_NORMALS_ENABLED, DISPLAY_LIGHT_VECTORS_ENABLED);
+	// Default (immutable) RenderContexts to be used for easy display -- duplicate them to customize
+	public static final RenderContext RENDER_STANDARD_PLAIN = new RenderContext(RenderingType.PLAIN).freeze();
+	public static final RenderContext RENDER_STANDARD_PLAIN_SHADOWS = new RenderContext(RenderingType.PLAIN).setShadowing(true).freeze();
+	public static final RenderContext RENDER_STANDARD_PLAIN_WITH_LANDMARKS = new RenderContext(RenderingType.PLAIN).setDisplayLandmark(true).freeze();
+	public static final RenderContext RENDER_STANDARD_INTERPOLATE = new RenderContext(RenderingType.INTERPOLATE).freeze();
+	public static final RenderContext RENDER_STANDARD_INTERPOLATE_SHADOWS = new RenderContext(RenderingType.INTERPOLATE).setShadowing(true).freeze();
+	public static final RenderContext RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS = new RenderContext(RenderingType.INTERPOLATE).setDisplayLandmark(true).freeze();
+	public static final RenderContext RENDER_DEFAULT = new RenderContext(RenderingType.LINE).setDisplayLandmark(true).freeze();
+	public static final RenderContext RENDER_DEFAULT_ALL_ENABLED = new RenderContext(RenderingType.LINE).setDisplayLandmark(true).setDisplayNormals(true).setDisplayLight(true).freeze();
 	
 	/**
-	 * Empty constructor
+	 * Default RenderContext: INTERPOLATE rendering, backface culling enabled, everything else disabled.
 	 */
 	public RenderContext() {
-		// To be used when creating manually PerspectiveContext by using setter/getters
 	}
 	
 	/**
-	 * To duplicate a standard RenderContext before customizing it
+	 * Default RenderContext with the given rendering type.
+	 */
+	public RenderContext(RenderingType type) {
+		setRenderingType(type);
+	}
+	
+	/**
+	 * To duplicate a RenderContext (typically a standard, immutable one) before customizing it.
+	 * The copy is always mutable.
 	 */
 	public RenderContext(RenderContext r) {
+		this.renderingType = r.renderingType;
+		this.renderingLines = r.renderingLines;
 		this.displayLandmark = r.displayLandmark;
 		this.displayNormals = r.displayNormals;
 		this.displayLight = r.displayLight;
-		this.renderingType = r.renderingType;
 		this.backfaceCulling = r.backfaceCulling;
 		this.textureProcessing = r.textureProcessing;
+		this.shadowing = r.shadowing;
+		this.landmarkXColor = r.landmarkXColor;
+		this.landmarkYColor = r.landmarkYColor;
+		this.landmarkZColor = r.landmarkZColor;
+		this.normalsColor = r.normalsColor;
+		this.lightVectorsColor = r.lightVectorsColor;
 	}
 	
-	public RenderContext(int type, int display_landmark) {
-		this.renderingType = type;
-		this.displayLandmark = display_landmark;
+	/**
+	 * Makes this RenderContext immutable: any further setter call throws an IllegalStateException.
+	 * @return this RenderContext
+	 */
+	public RenderContext freeze() {
+		this.frozen = true;
+		return this;
 	}
+	
+	/**
+	 * @return true if this RenderContext is immutable (e.g. one of the RENDER_* presets)
+	 */
+	public boolean isFrozen() {
+		return frozen;
+	}
+	
+	private void checkNotFrozen() {
+		if (frozen) throw new IllegalStateException("This RenderContext is immutable (e.g. a RENDER_* preset): duplicate it first with new RenderContext(preset)");
+	}
+	
+	// -------------------
+	// Accessors (fluent)
+	// -------------------
 		
-	public RenderContext(int type, int display_landmark, int shadowing) {
+	public RenderContext setRenderingType(RenderingType type) {
+		checkNotFrozen();
+		if (type == null) throw new IllegalArgumentException("RenderContext: rendering type must not be null");
 		this.renderingType = type;
-		this.displayLandmark = display_landmark;
-		this.shadowing = shadowing;
+		return this;
+	}
+	
+	public RenderingType getRenderingType() {
+		return renderingType;
+	}
+	
+	/** Superimpose the triangles' edges (lines) on the other rendering types */
+	public RenderContext setRenderingLines(boolean renderingLines) {
+		checkNotFrozen();
+		this.renderingLines = renderingLines;
+		return this;
 	}
 
-	public RenderContext(int type, int display_landmark, int display_normals, int display_light) {
-		this.renderingType = type;
-		this.displayLandmark = display_landmark;
-		this.displayNormals = display_normals;
-		this.displayLight = display_light;
-	}
-		
-	public RenderContext(int type, int display_landmark, int display_normals, int display_light, int backfaceCulling) {
-		this.renderingType = type;
-		this.displayLandmark = display_landmark;
-		this.displayNormals = display_normals;
-		this.displayLight = display_light;
-		this.backfaceCulling = backfaceCulling;
-	}
-		
-	public RenderContext(int type, int display_landmark, int display_normals, int display_light, int backfaceCulling, int textureProcessing) {
-		this.renderingType = type;
-		this.displayLandmark = display_landmark;
-		this.displayNormals = display_normals;
-		this.displayLight = display_light;
-		this.backfaceCulling = backfaceCulling;
-		this.textureProcessing = textureProcessing;
-	}
-		
-	public void setRenderingType(int type) {
-		this.renderingType = type;
-	}
-	
-	public int getRenderingType() {
-		return this.renderingType;
-	}
-	
-	public int getRenderingLines() {
+	public boolean isRenderingLines() {
 		return renderingLines;
 	}
 
-	public void setRenderingLines(int renderingLines) {
-		this.renderingLines = renderingLines;
+	/** Display the X, Y, Z axis of the World */
+	public RenderContext setDisplayLandmark(boolean displayLandmark) {
+		checkNotFrozen();
+		this.displayLandmark = displayLandmark;
+		return this;
+	}
+	
+	public boolean isDisplayLandmark() {
+		return displayLandmark;
 	}
 
-	public void setDisplayLandmark(int landmark) {
-		this.displayLandmark = landmark;
+	/** Display the normal vectors of the triangles (or vertices) */
+	public RenderContext setDisplayNormals(boolean displayNormals) {
+		checkNotFrozen();
+		this.displayNormals = displayNormals;
+		return this;
 	}
 	
-	public int getDisplayLandmark() {
-		return this.displayLandmark;
+	public boolean isDisplayNormals() {
+		return displayNormals;
 	}
 
-	public void setDisplayNormals(int display_normals) {
-		this.displayNormals = display_normals;
+	/** Display the light vectors of the directional lights */
+	public RenderContext setDisplayLight(boolean displayLight) {
+		checkNotFrozen();
+		this.displayLight = displayLight;
+		return this;
 	}
 	
-	public int getDisplayNormals() {
-		return this.displayNormals;
+	public boolean isDisplayLight() {
+		return displayLight;
+	}
+	
+	/** Back face culling (applies to closed Elements only) */
+	public RenderContext setBackFaceCulling(boolean backfaceCulling) {
+		checkNotFrozen();
+		this.backfaceCulling = backfaceCulling;
+		return this;
+	}
+	
+	public boolean isBackFaceCulling() {
+		return backfaceCulling;
 	}
 
-	public void setDisplayLight(int display_light) {
-		this.displayLight = display_light;
+	public RenderContext setTextureProcessing(boolean textureProcessing) {
+		checkNotFrozen();
+		this.textureProcessing = textureProcessing;
+		return this;
 	}
 	
-	public int getDisplayLight() {
-		return this.displayLight;
-	}
-	
-	public void setBackFaceCulling(int bfc) {
-		this.backfaceCulling = bfc;
-	}
-	
-	public int getBackFaceCulling() {
-		return this.backfaceCulling;
+	public boolean isTextureProcessing() {
+		return textureProcessing;
 	}
 
-	public void setTextureProcessing(int tp) {
-		this.textureProcessing = tp;
+	public RenderContext setShadowing(boolean shadowing) {
+		checkNotFrozen();
+		this.shadowing = shadowing;
+		return this;
 	}
 	
-	public int getTextureProcessing() {
-		return this.textureProcessing;
+	public boolean isShadowing() {
+		return shadowing;
+	}
+	
+	public Color getLandmarkXColor() {
+		return landmarkXColor;
 	}
 
-	public void setShadowing(int tp) {
-		this.shadowing = tp;
+	public Color getLandmarkYColor() {
+		return landmarkYColor;
+	}
+
+	public Color getLandmarkZColor() {
+		return landmarkZColor;
+	}
+
+	/** Colors of the X, Y and Z axis when the landmark is displayed */
+	public RenderContext setLandmarkColors(Color x, Color y, Color z) {
+		checkNotFrozen();
+		this.landmarkXColor = x;
+		this.landmarkYColor = y;
+		this.landmarkZColor = z;
+		return this;
+	}
+
+	public Color getNormalsColor() {
+		return normalsColor;
+	}
+
+	public RenderContext setNormalsColor(Color normalsColor) {
+		checkNotFrozen();
+		this.normalsColor = normalsColor;
+		return this;
+	}
+
+	public Color getLightVectorsColor() {
+		return lightVectorsColor;
+	}
+
+	public RenderContext setLightVectorsColor(Color lightVectorsColor) {
+		checkNotFrozen();
+		this.lightVectorsColor = lightVectorsColor;
+		return this;
 	}
 	
-	public int getShadowing() {
-		return this.shadowing;
+	private static String onOff(boolean b) {
+		return b ? "ENABLED" : "DISABLED";
 	}
 	
 	public String toString() {
-		String renderContext = "Render Context:\n";
-		
-		renderContext += "* Rendering type:        ";
-		switch (getRenderingType()) {
-		case RENDERING_TYPE_LINE:
-			renderContext += "LINE";
-			break;
-		case RENDERING_TYPE_MONOCHROME:
-			renderContext += "MONOCHROME";
-			break;
-		case RENDERING_TYPE_PLAIN:
-			renderContext += "PLAIN";
-			break;
-		case RENDERING_TYPE_INTERPOLATE:
-			renderContext += "INTERPOLATE";
-			break;
-		case RENDERING_TYPE_FLAT:
-			renderContext += "FLAT";
-			break;
-		}
-		renderContext += "\n";
-		
-		renderContext += "* Rendering lines:       ";
-		switch (getRenderingLines()) {
-		case RENDERING_LINES_DISABLED:
-			renderContext += "DISABLED";
-			break;
-		case RENDERING_LINES_ENABLED:
-			renderContext += "ENABLED";
-			break;
-		}
-		renderContext += "\n";
-		
-		renderContext += "* Display landmark:      ";
-		switch (getDisplayLandmark()) {
-		case DISPLAY_LANDMARK_DISABLED:
-			renderContext += "DISABLED";
-			break;
-		case DISPLAY_LANDMARK_ENABLED:
-			renderContext += "ENABLED";
-			break;
-		}
-		renderContext += "\n";
-
-		renderContext += "* Display normals:       ";
-		switch (getDisplayNormals()) {
-		case DISPLAY_NORMALS_DISABLED:
-			renderContext += "DISABLED";
-			break;
-		case DISPLAY_NORMALS_ENABLED:
-			renderContext += "ENABLED";
-			break;
-		}
-		renderContext += "\n";
-
-		renderContext += "* Display light vectors: ";
-		switch (getDisplayLight()) {
-		case DISPLAY_LIGHT_VECTORS_DISABLED:
-			renderContext += "DISABLED";
-			break;
-		case DISPLAY_LIGHT_VECTORS_ENABLED:
-			renderContext += "ENABLED";
-			break;
-		}
-		renderContext += "\n";
-
-		renderContext += "* Backface culling:      ";
-		switch (getBackFaceCulling()) {
-		case BACKFACE_CULLING_DISABLED:
-			renderContext += "DISABLED";
-			break;
-		case BACKFACE_CULLING_ENABLED:
-			renderContext += "ENABLED";
-			break;
-		}
-		renderContext += "\n";
-
-		renderContext += "* Texture processing:    ";
-		switch (getTextureProcessing()) {
-		case TEXTURE_PROCESSING_DISABLED:
-			renderContext += "DISABLED";
-			break;
-		case TEXTURE_PROCESSING_ENABLED:
-			renderContext += "ENABLED";
-			break;
-		}
-		renderContext += "\n";
-
-		renderContext += "* Shadowing:             ";
-		switch (getShadowing()) {
-		case SHADOWING_DISABLED:
-			renderContext += "DISABLED";
-			break;
-		case SHADOWING_ENABLED:
-			renderContext += "ENABLED";
-			break;
-		}
-		renderContext += "\n";
-		
-		return renderContext;
+		return "Render Context" + (frozen ? " (immutable)" : "") + ":\n"
+				+ "* Rendering type:        " + renderingType + "\n"
+				+ "* Rendering lines:       " + onOff(renderingLines) + "\n"
+				+ "* Display landmark:      " + onOff(displayLandmark) + "\n"
+				+ "* Display normals:       " + onOff(displayNormals) + "\n"
+				+ "* Display light vectors: " + onOff(displayLight) + "\n"
+				+ "* Backface culling:      " + onOff(backfaceCulling) + "\n"
+				+ "* Texture processing:    " + onOff(textureProcessing) + "\n"
+				+ "* Shadowing:             " + onOff(shadowing) + "\n";
 	}
 
 }

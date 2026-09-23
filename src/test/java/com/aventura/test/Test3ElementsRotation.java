@@ -27,6 +27,7 @@ import com.aventura.model.world.shape.Cube;
 import com.aventura.model.world.shape.Cylinder;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -151,11 +152,11 @@ public class Test3ElementsRotation {
 		System.out.println(world);
 
 		Lighting light = test.createLight();
-		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		GUIView gUIView = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
+		rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
 		renderer.setView(gUIView);

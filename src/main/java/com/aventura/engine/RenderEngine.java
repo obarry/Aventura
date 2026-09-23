@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
+import com.aventura.context.RenderContext.RenderingType;
 import com.aventura.math.transform.NotARotationException;
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
@@ -166,10 +167,10 @@ public class RenderEngine {
 		this.camera = camera;
 				
 		// Create the pure View*Projection projector (for debug vectors) and the per-Element
-		// mutation pipeline (for the main render loop) -- view/projection are constant for this
-		// RenderEngine's whole lifetime (built for a single Camera), computed once, here, and
-		// shared between the two (ElementTransform reuses viewProjection's matrix rather than
-		// recomputing it).
+		// mutation pipeline (for the main render loop), shared between the two (ElementTransform
+		// reuses viewProjection's matrix rather than recomputing it). viewProjection keeps a live
+		// link to the Camera and the Perspective: render() refreshes it every frame, so camera moves
+		// AND perspective changes (e.g. zoom via getPerspective().setWidth()) are taken into account.
 		this.viewProjection = new ViewProjection(camera, perspectiveCtx.getPerspective());
 		this.elementTransform = new ElementTransform(viewProjection);
 
@@ -236,22 +237,22 @@ public class RenderEngine {
 		// cleared here, every frame, rather than reallocated (as the legacy per-frame
 		// rasterizer.initZBuffer() call used to do).
 		MapView zBuffer = null;
-		if (renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
+		if (renderContext.getRenderingType() != RenderingType.LINE) {
 			mainZBuffer.clear(perspectiveContext.getPerspective().getFar());
 			zBuffer = mainZBuffer.getMapView();
 		}
 		
 		// Shadowing initialization and Shadow map(s) calculation
-		if (renderContext.shadowing == RenderContext.SHADOWING_ENABLED) {
+		if (renderContext.isShadowing()) {
 			
 			// To calculate the projection matrix (or matrices if several light sources) :
 			// - Need to define the bounding box in which the elements will be used to calculate the shadow map
-			// 		* By default it could be a box containing just the gUIView frustum of the eye camera
+			// 		* By default it could be a box containing just the view frustum of the eye camera
 			// 		* But there is a risk that elements outside of this box could generate shadows inside the box
 			// 		* A costly solution could be to define a box containing all elements of the scene
 			// 		* Otherwise some algorithm could be used for later improvement
 			// - Then create the matrix
-			// 		* LookAt from light source (GUIView matrix)
+			// 		* LookAt from light source (View matrix)
 			//		* Orthographic projection Matrix
 			//		* GUIView * Projection matrix
 			//
@@ -294,11 +295,11 @@ public class RenderEngine {
 			render(e, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 		
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in GUIView Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
 
 		// Display the landmarks if enabled (RenderContext)
-		if (renderContext.getDisplayLandmark() == RenderContext.DISPLAY_LANDMARK_ENABLED) {
-			if (renderContext.getRenderingType() == RenderContext.RENDERING_TYPE_INTERPOLATE) {
+		if (renderContext.isDisplayLandmark()) {
+			if (renderContext.getRenderingType() == RenderingType.INTERPOLATE) {
 				displayLandMarkLinesInterpolate();							
 			} else { // Default
 				displayLandMarkLines();			
@@ -306,7 +307,7 @@ public class RenderEngine {
 		}
 
 		// Display the Light vectors if enabled (RenderContext)
-		if (renderContext.getDisplayLight() == RenderContext.DISPLAY_LIGHT_VECTORS_ENABLED) {
+		if (renderContext.isDisplayLight()) {
 			displayLight();
 		}
 
@@ -362,7 +363,7 @@ public class RenderEngine {
 			// Render triangle 
 			render(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor(), e.isClosed());
 			
-			// Count Triangles stats (total, all triangles whatever in or out gUIView frustum)
+			// Count Triangles stats (total, all triangles whatever in or out view frustum)
 			nbt++;
 		}
 	
@@ -392,7 +393,7 @@ public class RenderEngine {
 	 * @param se the specular exponent of the Element
 	 * @param sc the specular color of the Element
 	 * @param isClosedElement a boolean to indicate if the Element to which triangle belongs is closed or not (to activate backface culling or not) 
-	 * @return false if triangle is outside the GUIView Frustum, else true
+	 * @return false if triangle is outside the View Frustum, else true
 	 */
 	public void render(Triangle t, Color c, float se, Color sc, boolean isClosedElement) {
 		
@@ -403,22 +404,22 @@ public class RenderEngine {
 		if (color == null) color = c;
 		
 		// Back Face Culling if defined in RenderContext AND the Element is Closed
-		boolean backfaceCulling = (renderContext.backfaceCulling == RenderContext.BACKFACE_CULLING_ENABLED) && isClosedElement;
+		boolean backfaceCulling = renderContext.isBackFaceCulling() && isClosedElement;
 		
 		// Scissor test for the triangle
-		// If triangle is totally or partially in the GUIView Frustum
+		// If triangle is totally or partially in the View Frustum
 		// Then renderContext its fragments in the GUIView
 		if (t.isInViewFrustum()) { // Render triangle
 			
 			// If triangle normal then transform triangle normal
-			if (renderContext.renderingType != RenderContext.RENDERING_TYPE_INTERPOLATE || t.isTriangleNormal() || backfaceCulling) {
+			if (renderContext.getRenderingType() != RenderingType.INTERPOLATE || t.isTriangleNormal() || backfaceCulling) {
 				// Calculate normal if not calculated
 				if (t.getNormal()==null) t.calculateNormal();
 				elementTransform.transformNormal(t);
 			}
 			
 			// If RENDERING_TYPE_LINE then no backface culling
-			if (renderContext.renderingType == RenderContext.RENDERING_TYPE_LINE) {
+			if (renderContext.getRenderingType() == RenderingType.LINE) {
 				screenLineRenderer.drawTriangleEdges(t, color);
 				nbt_in++;
 
@@ -428,40 +429,40 @@ public class RenderEngine {
 				if (backfaceCulling && isBackFace(t)) {
 
 					// Do not renderContext this triangle
-					// Count Triangles stats (out gUIView frustum)
+					// Count Triangles stats (out view frustum)
 					nbt_bf++;
 					nbt_out++;
 
 				} else { // Generic case
 
-					switch (renderContext.renderingType) {
-					case RenderContext.RENDERING_TYPE_MONOCHROME:
+					switch (renderContext.getRenderingType()) {
+					case MONOCHROME:
 						//TODO To be implemented
 						//TODO To be renamed into NO_SHADING ?
 						// Render faces with only face (or default) color + plain lines to show the faces
 						// No shading
 						break;
-					case RenderContext.RENDERING_TYPE_PLAIN:
+					case PLAIN:
 						// NOTE: kept exactly as before (interpolate=true, texture forced on
 						// unconditionally) for backward compatibility -- despite its name and
 						// original comment, this does NOT actually force a single flat normal
 						// unless the triangle happens to have isTriangleNormal() set; see
 						// RENDERING_TYPE_FLAT below for a mode that genuinely always does.
-						rasterizeShadedTriangle(t, color, se, sc, true, true, renderContext.shadowing == RenderContext.SHADOWING_ENABLED);
+						rasterizeShadedTriangle(t, color, se, sc, true, true, renderContext.isShadowing());
 						break;
-					case RenderContext.RENDERING_TYPE_FLAT:
+					case FLAT:
 						// Always uses the triangle's single flat normal (interpolate=false),
 						// regardless of isTriangleNormal() -- genuine faceted/angular shading.
 						// Respects textureProcessing the same way INTERPOLATE does, for consistency.
 						rasterizeShadedTriangle(t, color, se, sc, false,
-								renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED,
-								renderContext.shadowing == RenderContext.SHADOWING_ENABLED);
+								renderContext.isTextureProcessing(),
+								renderContext.isShadowing());
 						break;
-					case RenderContext.RENDERING_TYPE_INTERPOLATE:
+					case INTERPOLATE:
 						// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
 						rasterizeShadedTriangle(t, color, se, sc, true,
-								renderContext.textureProcessing == RenderContext.TEXTURE_PROCESSING_ENABLED,
-								renderContext.shadowing == RenderContext.SHADOWING_ENABLED);
+								renderContext.isTextureProcessing(),
+								renderContext.isShadowing());
 						break;
 					default:
 						// Invalid rendering type
@@ -469,22 +470,22 @@ public class RenderEngine {
 					}
 
 					// Superimpose lines when enabled in the previous modes
-					if (renderContext.renderingLines == RenderContext.RENDERING_LINES_ENABLED && renderContext.renderingType != RenderContext.RENDERING_TYPE_LINE) {
+					if (renderContext.isRenderingLines() && renderContext.getRenderingType() != RenderingType.LINE) {
 						screenLineRenderer.drawTriangleEdges(t, color);				
 					}
 
 					// If DISPLAY_NORMALS is activated then renderContext normals
-					if (renderContext.displayNormals == RenderContext.DISPLAY_NORMALS_ENABLED) {
+					if (renderContext.isDisplayNormals()) {
 						displayNormalVectors(t);
 					}
-					// Count Triangles stats (in gUIView)
+					// Count Triangles stats (in view frustum)
 					nbt_in++;
 				}
 			}
 
 		} else {
 			// Do not renderContext this triangle
-			// Count Triangles stats (out gUIView frustum)
+			// Count Triangles stats (out view frustum)
 			nbt_out++;
 		}
 	}
@@ -534,6 +535,12 @@ public class RenderEngine {
 
 		ShadingConsumer consumer = new ShadingConsumer(material, lighting, camera, mainZBuffer, gUIView, shadows);
 
+		// TriangleRasterizer's pixel counters accumulate until reset: reset them for each triangle so that
+		// recordTriangle() below receives THIS triangle's counts (as the former Rasterizer facade did).
+		// Without it, every triangle re-added all the pixels of the previous ones (quadratic inflation of
+		// the pixel statistics, e.g. 5 billion "rendered pixels" for a single 1280x720 frame).
+		triangleRasterizer.resetStats();
+
 		if (useTexture) {
 			triangleRasterizer.rasterize(t, normal1, normal2, normal3, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
 		} else {
@@ -555,11 +562,11 @@ public class RenderEngine {
 
 			if (t.isTriangleNormal()) {
 				switch (perspectiveContext.getPerspectiveType()) {
-				case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM:
+				case FRUSTUM:
 					// Take any vertex of the triangle -> same result as a triangle is a plan
 					Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
 					return t.getWorldNormal().dot(ey)>0;
-				case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+				case ORTHOGRAPHIC:
 					// Need only to test the normal in homogeneous coordinate has a non-null positive Z component (hence pointing behind camera)
 					return elementTransform.projectNormal(t).getZ()>0;
 				default:
@@ -570,10 +577,10 @@ public class RenderEngine {
 				return elementTransform.projectNormal(t).getZ()>0;
 			} else {
 				switch (perspectiveContext.getPerspectiveType()) {
-				case PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM:
+				case FRUSTUM:
 					// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
 					return t.getV1().getWorldNormal().dot(t.getV1().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV2().getWorldNormal().dot(t.getV2().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV3().getWorldNormal().dot(t.getV3().getWorldPos().minus(camera.getEye()).V3())>0;
-				case PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+				case ORTHOGRAPHIC:
 					return t.getV1().getProjNormal().getZ() > 0 && t.getV2().getProjNormal().getZ() > 0 && t.getV3().getProjNormal().getZ() > 0;
 				default:
 					// Should never happen
@@ -595,9 +602,9 @@ public class RenderEngine {
 		// Entirely in world space -- no Model matrix involved (drawVector uses View*Projection
 		// only), so there is no need to reset the Model matrix to identity anymore.
 		Vector4 origin = Vector4.zeroPoint();
-		screenLineRenderer.drawVector(origin, Vector3.xAxis(), renderContext.landmarkXColor);
-		screenLineRenderer.drawVector(origin, Vector3.yAxis(), renderContext.landmarkYColor);
-		screenLineRenderer.drawVector(origin, Vector3.zAxis(), renderContext.landmarkZColor);
+		screenLineRenderer.drawVector(origin, Vector3.xAxis(), renderContext.getLandmarkXColor());
+		screenLineRenderer.drawVector(origin, Vector3.yAxis(), renderContext.getLandmarkYColor());
+		screenLineRenderer.drawVector(origin, Vector3.zAxis(), renderContext.getLandmarkZColor());
 	}
 	
 	public void displayLandMarkLinesInterpolate() {
@@ -610,16 +617,16 @@ public class RenderEngine {
 		// X axis arrow
 		Rotation r1 = new Rotation((float)Math.PI/2, Vector4.yAxis());
 		Element e1 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r1);
-		//render(e1, null, renderContext.landmarkXColor);
+		//render(e1, null, renderContext.getLandmarkXColor());
 		e1.transform();
-		render(e1, renderContext.landmarkXColor);
+		render(e1, renderContext.getLandmarkXColor());
 		
 		// Y axis arrow
 		Rotation r2 = new Rotation((float)-Math.PI/2, Vector4.xAxis());
 		Element e2 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r2);	
-		//render(e2, null, renderContext.landmarkYColor);
+		//render(e2, null, renderContext.getLandmarkYColor());
 		e2.transform();
-		render(e2, renderContext.landmarkYColor);
+		render(e2, renderContext.getLandmarkYColor());
 	
 		// Z axis arrow
 		Rotation r3 = null;
@@ -630,9 +637,9 @@ public class RenderEngine {
 			e.printStackTrace();
 		}
 		Element e3 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r3);		
-		//render(e3, null, renderContext.landmarkZColor);
+		//render(e3, null, renderContext.getLandmarkZColor());
 		e3.transform();
-		render(e3, renderContext.landmarkZColor);
+		render(e3, renderContext.getLandmarkZColor());
 
 	}
 	
@@ -662,7 +669,7 @@ public class RenderEngine {
 		
 		if (t.isTriangleNormal()) { // Normal at Triangle level
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Triangle level. Normal: "+t.getNormal());
-			screenLineRenderer.drawVector(t.getCenterWorldPos(), t.getWorldNormal(), renderContext.normalsColor);
+			screenLineRenderer.drawVector(t.getCenterWorldPos(), t.getWorldNormal(), renderContext.getNormalsColor());
 
 		} else { // Normals at Vertex level
 
@@ -671,9 +678,9 @@ public class RenderEngine {
 			Vertex p3 = t.getV3();
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Normal at Vertex level. V1 normal: " + p1.getNormal() + " V2 normal: " + p2.getNormal() + " V3 normal: " + p3.getNormal());
 
-			screenLineRenderer.drawVector(p1.getWorldPos(), p1.getWorldNormal(), renderContext.normalsColor);
-			screenLineRenderer.drawVector(p2.getWorldPos(), p2.getWorldNormal(), renderContext.normalsColor);
-			screenLineRenderer.drawVector(p3.getWorldPos(), p3.getWorldNormal(), renderContext.normalsColor);
+			screenLineRenderer.drawVector(p1.getWorldPos(), p1.getWorldNormal(), renderContext.getNormalsColor());
+			screenLineRenderer.drawVector(p2.getWorldPos(), p2.getWorldNormal(), renderContext.getNormalsColor());
+			screenLineRenderer.drawVector(p3.getWorldPos(), p3.getWorldNormal(), renderContext.getNormalsColor());
 		}
 	}
 		
@@ -682,7 +689,7 @@ public class RenderEngine {
 		Vector4 origin = Vector4.zeroPoint();
 		for (int i=0; i<lighting.getDirectionalLights().size(); i++) {
 			Vector3 lightDirection = lighting.getDirectionalLights().get(i).getLightVectorAtPoint(null);
-			screenLineRenderer.drawVector(origin, lightDirection, renderContext.lightVectorsColor);
+			screenLineRenderer.drawVector(origin, lightDirection, renderContext.getLightVectorsColor());
 		}
 	}
 	

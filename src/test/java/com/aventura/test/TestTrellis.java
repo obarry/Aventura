@@ -18,6 +18,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -119,7 +120,7 @@ public class TestTrellis {
 		Camera camera = test.createCamera();
 		
 		//PerspectiveContext context = PerspectiveContext.PERSPECTIVE_DEFAULT;
-		PerspectiveContext context = new PerspectiveContext(10f,6f,10f,1000f, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 100);
+		PerspectiveContext context = new PerspectiveContext(10f,6f,10f,1000f, PerspectiveType.FRUSTUM, 100);
 //		context.getPerspective().setHeight(6);
 //		context.getPerspective().setWidth(10);
 		//context.computePerspective();

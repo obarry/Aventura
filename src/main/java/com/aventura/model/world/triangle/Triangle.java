@@ -332,18 +332,18 @@ public class Triangle {
 	}
 	
 	/**
-	 * Is true if at least one Vertex of the Triangle is in the GUIView Frustum in homogeneous coordinates
+	 * Is true if at least one Vertex of the Triangle is in the View Frustum in homogeneous coordinates
 	 * Assumes that the projection of the vertices has been done previously
 	 * 
 	 * Caution this algorithm have limitations : the 3 vertices can be outside the View Frustum while the triangle stil have a portion of it inside...
 	 * TODO : look at the literature for a better scissor test alogorithm
 	 * 
 	 * @param t the Triangle
-	 * @return true if triangle is at least partially inside the GUIView Frustum, else false
+	 * @return true if triangle is at least partially inside the View Frustum, else false
 	 */
 	public boolean isInViewFrustum() {
 
-		// Need at least one vertice to be in the gUIView frustum
+		// Need at least one vertice to be in the view frustum
 		if (v1.isInViewFrustum() || v2.isInViewFrustum() || v3.isInViewFrustum())
 			return true;
 		else

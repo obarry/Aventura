@@ -25,6 +25,7 @@ import com.aventura.model.world.shape.Cube;
 //import com.aventura.model.world.shape.Cylinder;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -134,17 +135,17 @@ public class TestCubeRotationTexture {
 		AmbientLight al = new AmbientLight(0.5f);
 		Lighting light = new Lighting(dl,al);
 		
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		GUIView gUIView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
-		rContext.setRenderingType(RenderContext.RENDERING_TYPE_INTERPOLATE);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		rContext.setDisplayLandmark(RenderContext.DISPLAY_LANDMARK_DISABLED);
-		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_ENABLED);
-		//rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
+		//rContext.setDisplayNormals(true);
+		//rContext.setRendering(RenderContext.RenderingType.PLAIN);
+		rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
+		rContext.setTextureProcessing(true);
+		rContext.setDisplayLandmark(false);
+		//rContext.setBackFaceCulling(true);
+		//rContext.setRenderingLines(true);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(gUIView);

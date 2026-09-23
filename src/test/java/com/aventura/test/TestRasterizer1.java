@@ -4,6 +4,7 @@ import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.TriangleRasterizer;
 import com.aventura.engine.ZBuffer;
 import com.aventura.tools.tracing.Tracer;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -46,7 +47,7 @@ public class TestRasterizer1 {
 		
 		// Explicit pixel size: the empty PerspectiveContext() constructor currently leaves pixel width/height at 0
 		// (see the contexts audit, point 2)
-		PerspectiveContext graphic = new PerspectiveContext(1600, 900, 10, 1000, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 100);
+		PerspectiveContext graphic = new PerspectiveContext(1600, 900, 10, 1000, PerspectiveType.FRUSTUM, 100);
 		
 		System.out.println("PerspectiveContext: "+graphic);
 		

@@ -32,6 +32,7 @@ import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -239,16 +240,16 @@ public class TestMultiElementsTextureOrtho {
 		AmbientLight al = new AmbientLight(0.3f);
 		Lighting lighting = new Lighting(dl, al, true);
 
-		PerspectiveContext context = new PerspectiveContext(8f, 6f, 1f, 100f, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 150);
-		//PerspectiveContext context = new PerspectiveContext(3.0f, 1.8f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 400);
+		PerspectiveContext context = new PerspectiveContext(8f, 6f, 1f, 100f, PerspectiveType.ORTHOGRAPHIC, 150);
+		//PerspectiveContext context = new PerspectiveContext(3.0f, 1.8f, 1, 100, PerspectiveType.FRUSTUM, 400);
 		GUIView gUIView = test.createView(context);
 		System.out.println(context.getPerspective().getProjection());
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		//rContext.setBackFaceCulling(RenderContext.BACKFACE_CULLING_DISABLED);
-		rContext.setTextureProcessing(RenderContext.TEXTURE_PROCESSING_ENABLED);
-		rContext.setRenderingLines(RenderContext.RENDERING_LINES_ENABLED);
-		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
+		//rContext.setBackFaceCulling(false);
+		rContext.setTextureProcessing(true);
+		rContext.setRenderingLines(true);
+		rContext.setDisplayNormals(true);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
 		renderer.setView(gUIView);

@@ -3,6 +3,7 @@ package com.aventura.context;
 import com.aventura.model.perspective.FrustumPerspective;
 import com.aventura.model.perspective.OrthographicPerspective;
 import com.aventura.model.perspective.Perspective;
+import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -36,61 +37,30 @@ import com.aventura.tools.tracing.Tracer;
  * 15-Jun-2024 : Evolution by delegating all the Perspective management to a new Perspective class (and subclasses) in new package :
  * com.aventura.model.perspective. It should allow to bring new services in this class to calculate the Frustum related informations
  * required for example by the ShadowingLight class and related to identify the area where to cast shadows.
- * As a consequence, the width, height, dist, depth, top, bottom, left, right, far, near information are now stored in Perspetive. 
+ * As a consequence, the width, height, dist, depth, top, bottom, left, right, far, near information are now stored in Perspective. 
+ * Sep-2026 : perspective type is now the PerspectiveType enum (former PERSPECTIVE_TYPE_* int constants), owned by the Perspective.
+ * Planned : split into a Perspective (lens, world units) and a Viewport (pixels) -- separate evolution.
  * -------------------------------------------------------------------
  * 
- * The PerspectiveContext is a parameter class containing all information allowing to display the world
- * This is where the gUIView frustum planes are defined and also where the rasterizing definition (pixel per unit)
- * is also set.
- * At last this is where the projection Matrix is built and stored using the perspective parameters of the PerspectiveContext.
- * The resulting projection Matrix can be obtained using the corresponding getter.
+ * The PerspectiveContext is a parameter class containing all information allowing to display the world:
+ * - the Perspective (view volume and projection matrix, in world units, see Perspective for the frustum definition)
+ * - the raster definition: pixel width and height of the image, and PPU (Pixel Per Unit) used to derive
+ *   one from the other.
  * 
- * The PerspectiveContext is passed as a parameter of the RenderEngine before asking him to render the World
+ * The PerspectiveContext is passed as a parameter of the RenderEngine before asking him to render the World.
  * As a "parameter" object, the application using Aventura API can prepare several PerspectiveContext and switch from one to another
- * 
- * Frustum definition:
- * ------------------
- * 
- *     X (or Y)
- *        ^                       +
- *        |     GUIView       -   |
- *        |     Plane     -       |
- *        | (top)     -           |
- *        | right +               |   ^
- *        |   -   |   GUIView     |   |  width
- * Camera +-------+---------------+---+--------------------------> -Z
- *            -   |   Frustum     |   | (height)
- *          left  +               |   v
- *        (bottom)    -           |
- *                        -       |
- *                            -   |
- *                                +
- *        0      near            far 
- *        <-------><-------------->
- *          dist        depth
- * 
- * The gUIView is defined by:
- *    width  = right - left
- *    height = top - bottom
- *    depth  = far - near
- *    dist   = near - 0
- *  
- * Assuming a symetric gUIView (bottom = -top and left = -right) centered on the origin 
- *    top    = height/2
- *    bottom = -height/2
- *    right  = width/2
- *    left   = -width/2
- *    far    = dist + depth
- *    near   = dist
- * 
- * ------------------------------------------------------------------------------ 
+ * (one RenderEngine per PerspectiveContext).
  * 
  * PPU - Pixel Per Unit
- * The above data (width, height, depth, dist) are given in (camera) coordinates (floating point)
+ * The Perspective dimensions (width, height, depth, dist) are given in (camera) coordinates (floating point)
  * in a given Unit (can be meter or millimeter or whatever unit).
  * The size of the screen is thus defined in this unit.
  * To define the number of pixel, a ratio should be provided: the number of pixel per unit: PPU
  * 
+ * Pixel dimensions are FIXED at construction (the RenderEngine allocates its ZBuffer, and the View its image,
+ * from them). The Perspective can still be modified afterwards through getPerspective() (e.g. setWidth() to zoom):
+ * the image keeps its pixel size and the new view volume is mapped onto it (the PPU value then only reflects
+ * the construction-time ratio).
  * 
  * @author Olivier BARRY
  * @since May 2016
@@ -98,15 +68,12 @@ import com.aventura.tools.tracing.Tracer;
  */
 public class PerspectiveContext {
 	
-	public static final int PERSPECTIVE_TYPE_FRUSTUM = 1;
-	public static final int PERSPECTIVE_TYPE_ORTHOGRAPHIC = 2;
-	
-	public static final String PERSPECTIVE_TYPE_FRUSTUM_STRING = "PERSPECTIVE_TYPE_FRUSTUM";
-	public static final String PERSPECTIVE_TYPE_ORTHOGRAPHIC_STRING = "PERSPECTIVE_TYPE_ORTHOGRAPHIC";
-		
-	// Projection type
-	int p_type = 0; // uninitialized
-
+	// Default perspective (see empty constructor): 8 x 4.5 units (16/9), near at 10, depth 1000, 100 pixels per unit
+	public static final float DEFAULT_WIDTH = 8f;
+	public static final float DEFAULT_HEIGHT = 4.5f;
+	public static final float DEFAULT_DIST = 10f;
+	public static final float DEFAULT_DEPTH = 1000f;
+	public static final int DEFAULT_PPU = 100;
 
 	// ViewPort related attributes (pixel related)
 	// Pixel Per Unit
@@ -119,173 +86,147 @@ public class PerspectiveContext {
 	// Perspective
 	Perspective perspective; // link to the perspective that this PerspectiveContext is defining
 
-	// A Default context that can then be modified using accessors
-	// Now replaced by empty constructor
-	//public static PerspectiveContext PERSPECTIVE_DEFAULT = new PerspectiveContext(8,4.5f,10,1000, PERSPECTIVE_TYPE_FRUSTUM, 100); // Width/Height ratio = 16/9
-
 	
 	/**
-	 * Empty constructor -> Default Perspective
+	 * Empty constructor -> Default Perspective: FRUSTUM, 8 x 4.5 units (16/9), near at 10, depth 1000, 100 PPU,
+	 * i.e. an 800 x 450 pixels image.
 	 */
 	public PerspectiveContext() {
-		// To be used when creating manually PerspectiveContext by using setter/getters
-		this.ppu = 100;
-		createPerspective(PERSPECTIVE_TYPE_FRUSTUM, 8,4.5f,10,1000); // Width/Height ratio = 16/9
+		this(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_DIST, DEFAULT_DEPTH, PerspectiveType.FRUSTUM, DEFAULT_PPU);
 	}
 		
 	/**
-	 * Duplicate PerspectiveContext(e.g. to start from default and update it)
+	 * Duplicate PerspectiveContext (e.g. to start from another one and update it). The Perspective is deep copied.
 	 * @param c the PerspectiveContext to duplicate
 	 */
 	public PerspectiveContext(PerspectiveContext c) {
-		// To be used when creating manually PerspectiveContext by using setter/getters
-		this.p_type = c.p_type;
-					
+		this.ppu = c.ppu;
 		this.pixelWidth = c.pixelWidth;
 		this.pixelHeight = c.pixelHeight;
 		this.pixelHalfWidth = c.pixelHalfWidth;
 		this.pixelHalfHeight = c.pixelHalfHeight;
-
-		// Generate the perspective using the parameters of the other PerspectiveContext
-		switch (p_type) {
-		case PERSPECTIVE_TYPE_FRUSTUM:
-			this.perspective = new FrustumPerspective(c.perspective);
-			break;
-		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
-			this.perspective = new OrthographicPerspective(c.perspective);
-			break;
-		default:
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+p_type);
-		}
+		this.perspective = c.perspective.copy();
 	}
 	
 	/**
+	 * Pixel-based constructor: the world-unit window size is derived as pixel size / ppu.
+	 * Caution: with int literals for the first 2 arguments, this constructor is selected instead of the
+	 * (float width, float height, ...) one -- e.g. (10, 10, ...) means 10 x 10 PIXELS here.
+	 * 
 	 * @param pixel_width number of pixel for the width of this perspective
 	 * @param pixel_height number of pixel for the height of this perspective
-	 * @param dist
-	 * @param depth
-	 * @param perspective type of perspective (Orthographic or Frustum)
-	 * @param ppu point per unit
+	 * @param dist distance from the eye to the near plane
+	 * @param depth distance from the near plane to the far plane
+	 * @param type type of perspective (Orthographic or Frustum)
+	 * @param ppu pixel per unit
 	 */
-	public PerspectiveContext(int pixel_width, int pixel_height, float dist, float depth, int perspective, int ppu) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: pixel width: " + pixel_width + " pixel height:" + pixel_height + " dist: " + dist + " depth: " + depth +" ppu: " + ppu + " type: "+getTypeString(perspective));
+	public PerspectiveContext(int pixel_width, int pixel_height, float dist, float depth, PerspectiveType type, int ppu) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: pixel width: " + pixel_width + " pixel height:" + pixel_height + " dist: " + dist + " depth: " + depth +" ppu: " + ppu + " type: " + type);
 
-		this.p_type = perspective;
 		this.ppu = ppu;
-
-		this.pixelWidth = pixel_width;
-		this.pixelHeight = pixel_height;
-		this.pixelHalfWidth = pixelWidth/2;
-		this.pixelHalfHeight = pixelHeight/2;
+		setPixelDimensions(pixel_width, pixel_height);
 		
-		createPerspective(perspective, pixel_width/ppu , pixel_height/ppu, dist, depth);
+		// float division: an int division here used to truncate the window size (e.g. 1000/300 -> 3)
+		createPerspective(type, (float)pixel_width/ppu , (float)pixel_height/ppu, dist, depth);
 	}
 	
-	public PerspectiveContext(int pixel_width, float width, float height, float dist, float depth, int perspective) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: pixel width: "+pixel_width+" width: "+width+" height:"+height+" dist: "+dist+" depth: "+depth+" type: "+getTypeString(perspective));
+	/**
+	 * Constructor with an exact pixel width (the pixel height is derived from the width/height ratio).
+	 * Used e.g. for shadow maps, where the pixel resolution is imposed regardless of the world-space extent.
+	 * 
+	 * @param pixel_width number of pixel for the width
+	 * @param width width of the near plane window
+	 * @param height height of the near plane window
+	 * @param dist distance from the eye to the near plane
+	 * @param depth distance from the near plane to the far plane
+	 * @param type type of perspective (Orthographic or Frustum)
+	 */
+	public PerspectiveContext(int pixel_width, float width, float height, float dist, float depth, PerspectiveType type) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: pixel width: "+pixel_width+" width: "+width+" height:"+height+" dist: "+dist+" depth: "+depth+" type: "+type);
 
-		this.p_type = perspective;
 		this.ppu = (int)(pixel_width/width);
 
-		this.pixelWidth = pixel_width;
 		// BUGFIX: this used to be (int)(height*ppu) -- going through ppu (an int, already
 		// truncated from pixel_width/width) compounds a second truncation on top of the first.
 		// Even when height == width EXACTLY (as DirectionalLight.initShadowing() guarantees for
 		// its square-footprint shadow box), the two independent truncations could disagree --
 		// e.g. width=10.733126, pixel_width=500 gave ppu=(int)46.58=46, then
 		// pixelHeight=(int)(10.733126*46)=493, while pixelWidth stayed the exact requested 500.
-		// That single-pixel-class mismatch was enough to desynchronize ShadowingLight's ZBuffer
-		// half-height (derived from pixelWidth alone) from TriangleRasterizer's actual
-		// getPixelHalfHeight() (derived from this pixelHeight), producing a small constant
-		// vertical write/read offset in shadow map sampling -- see the accompanying message for
-		// the full trace that led here.
 		// Fix: derive pixelHeight from pixelWidth and the exact (float) height/width ratio in a
 		// single rounding step, instead of round-tripping through the separately-truncated ppu.
 		// When height == width bit-for-bit, this reduces to exactly pixel_width, no exceptions.
-		this.pixelHeight = Math.round(pixel_width * (height / width));
-		this.pixelHalfWidth = pixelWidth/2;
-		this.pixelHalfHeight = pixelHeight/2;
+		setPixelDimensions(pixel_width, Math.round(pixel_width * (height / width)));
 		
-		createPerspective(perspective, width , height, dist, depth);
+		createPerspective(type, width , height, dist, depth);
 	}
 
 	/**
-	 * @param width 
-	 * @param height
-	 * @param dist
-	 * @param depth
-	 * @param perspective
-	 * @param ppu
+	 * World-unit constructor: the pixel size is derived as window size * ppu.
+	 * @param width width of the near plane window
+	 * @param height height of the near plane window
+	 * @param dist distance from the eye to the near plane
+	 * @param depth distance from the near plane to the far plane
+	 * @param type type of perspective (Orthographic or Frustum)
+	 * @param ppu pixel per unit
 	 */
-	public PerspectiveContext(float width, float height, float dist, float depth, int perspective, int ppu) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: width: "+width+" height:"+height+" dist: "+dist+" depth: "+depth+" ppu: "+ppu+" type: "+getTypeString(perspective));
+	public PerspectiveContext(float width, float height, float dist, float depth, PerspectiveType type, int ppu) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: width: "+width+" height:"+height+" dist: "+dist+" depth: "+depth+" ppu: "+ppu+" type: "+type);
 
-		this.p_type = perspective;
 		this.ppu = ppu;
-
-		this.pixelWidth = (int)(width*ppu);
-		this.pixelHeight = (int)(height*ppu);
-		this.pixelHalfWidth = pixelWidth/2;
-		this.pixelHalfHeight = pixelHeight/2;
+		setPixelDimensions((int)(width*ppu), (int)(height*ppu));
 		
-		createPerspective(perspective, width , height, dist, depth);
+		createPerspective(type, width , height, dist, depth);
 	}
 
 	/**
-	 * @param top
-	 * @param bottom
-	 * @param right
-	 * @param left
-	 * @param far
-	 * @param near
-	 * @param perspective
-	 * @param ppu
+	 * Six-bounds constructor (possibly asymmetric volume).
+	 * Caution: the bounds are in (top, bottom, right, left, far, near) order here, unlike Perspective's
+	 * subclasses and Projection classes which use (left, right, bottom, top, near, far). Kept as is for
+	 * compatibility; to be revisited with the Perspective / Viewport split.
+	 * 
+	 * @param top top bound of the near plane
+	 * @param bottom bottom bound of the near plane
+	 * @param right right bound of the near plane
+	 * @param left left bound of the near plane
+	 * @param far distance to the far plane
+	 * @param near distance to the near plane
+	 * @param type type of perspective (Orthographic or Frustum)
+	 * @param ppu pixel per unit
 	 */
-	public PerspectiveContext(float top, float bottom, float right, float left, float far, float near, int perspective, int ppu) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: top: "+top+" bottom: "+bottom+" right: "+right+" left: "+left+" far: "+far+" near: "+near+" ppu: "+ppu+" type: "+getTypeString(perspective));
+	public PerspectiveContext(float top, float bottom, float right, float left, float far, float near, PerspectiveType type, int ppu) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New perspectiveContext: top: "+top+" bottom: "+bottom+" right: "+right+" left: "+left+" far: "+far+" near: "+near+" ppu: "+ppu+" type: "+type);
 		
-		this.pixelWidth = (int)((right-left)*ppu);
-		this.pixelHeight = (int)((top-bottom)*ppu);
-		this.pixelHalfWidth = pixelWidth/2;
-		this.pixelHalfHeight = pixelHeight/2;
-		
-		this.p_type = perspective;
 		this.ppu = ppu;
+		setPixelDimensions((int)((right-left)*ppu), (int)((top-bottom)*ppu));
 		
-		createPerspective(perspective, left , right, bottom, top, near, far);
+		createPerspective(type, left , right, bottom, top, near, far);
 	}
 	
-	public String perspectiveString(int perspective) {
-		switch (perspective) {
-			case PERSPECTIVE_TYPE_FRUSTUM:
-				return PERSPECTIVE_TYPE_FRUSTUM_STRING;
-			case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
-				return PERSPECTIVE_TYPE_ORTHOGRAPHIC_STRING;
-			default:
-				return "Undefined perspective: "+perspective;
-		}
+	private void setPixelDimensions(int pixel_width, int pixel_height) {
+		this.pixelWidth = pixel_width;
+		this.pixelHeight = pixel_height;
+		this.pixelHalfWidth = pixelWidth/2;
+		this.pixelHalfHeight = pixelHeight/2;
+	}
+	
+	private static void checkType(PerspectiveType type) {
+		if (type == null) throw new IllegalArgumentException("PerspectiveContext: perspective type must not be null");
 	}
 	
 	/**
 	 * Create a Perspective with width, height, dist and depth
-	 * @param p_type type of perspective (Orthographic or Frustum)
-	 * @param width
-	 * @param height
-	 * @param dist
-	 * @param depth
 	 */
-	protected void createPerspective(int p_type, float width, float height, float dist, float depth) {
+	protected void createPerspective(PerspectiveType type, float width, float height, float dist, float depth) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: width: "+width+" height: "+height+" dist: "+dist+" depth: "+depth);
+		checkType(type);
 		
-		switch (p_type) {
-		case PERSPECTIVE_TYPE_FRUSTUM:
+		switch (type) {
+		case FRUSTUM:
 			this.perspective = new FrustumPerspective(width , height, dist, depth);
 			break;
-		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+		case ORTHOGRAPHIC:
 			this.perspective = new OrthographicPerspective(width , height, dist, depth);
 			break;
-		default:
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+p_type);
 		}
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Created perspective : \n" + this.perspective);	
@@ -293,33 +234,25 @@ public class PerspectiveContext {
 	
 	/**
 	 * Create a Perspective with left, right bottom, top, near far
-	 * @param p_type type of perspective (Orthographic or Frustum)
-	 * @param left
-	 * @param right
-	 * @param bottom
-	 * @param top
-	 * @param near
-	 * @param far
 	 */
-	protected void createPerspective(int p_type, float left, float right, float bottom, float top, float near, float far) {
+	protected void createPerspective(PerspectiveType type, float left, float right, float bottom, float top, float near, float far) {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating perspective: top: "+top+" bottom: "+bottom+" right: "+right+" left: "+left+" far: "+far+" near: "+near);
+		checkType(type);
 		
-		switch (p_type) {
-		case PERSPECTIVE_TYPE_FRUSTUM:
+		switch (type) {
+		case FRUSTUM:
 			this.perspective = new FrustumPerspective(left , right, bottom, top, near, far);
 			break;
-		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
+		case ORTHOGRAPHIC:
 			this.perspective = new OrthographicPerspective(left , right, bottom, top, near, far);
 			break;
-		default:
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Undefined perspective: "+p_type);
 		}
 
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Created perspective : \n" + this.perspective);
 	}
 		
 	public String toString() {
-		return "PerspectiveContext:\n* Perpective type: "+perspectiveString(p_type)+"\n* Width: "+perspective.getWidth()+"\n* Height: "+perspective.getHeight()+"\n* Dist: "+perspective.getDist()+"\n* Depth: "+perspective.getDepth()+"\n* PPU: "+ppu+"\n* Pixel width: "+pixelWidth+"\n* Pixel height: "+pixelHeight;
+		return "PerspectiveContext:\n* Perpective type: "+getPerspectiveType()+"\n* Width: "+perspective.getWidth()+"\n* Height: "+perspective.getHeight()+"\n* Dist: "+perspective.getDist()+"\n* Depth: "+perspective.getDepth()+"\n* PPU: "+ppu+"\n* Pixel width: "+pixelWidth+"\n* Pixel height: "+pixelHeight;
 	}
 	
 	public int getPixelWidth() {
@@ -329,7 +262,6 @@ public class PerspectiveContext {
 	public int getPixelHeight() {
 		return pixelHeight;
 	}
-	
 
 	public int getPixelHalfWidth() {
 		return pixelHalfWidth;
@@ -339,32 +271,22 @@ public class PerspectiveContext {
 		return pixelHalfHeight;
 	}
 	
-	public int getPerspectiveType() {
-		return p_type;
+	/**
+	 * @return the type of the Perspective (FRUSTUM or ORTHOGRAPHIC)
+	 */
+	public PerspectiveType getPerspectiveType() {
+		return perspective.getType();
 	}
 	
 	public Perspective getPerspective() {
 		return perspective;
 	}
-		
-	public void setPPU(int ppu) {
-		this.ppu = ppu;
-	}
 	
+	/**
+	 * @return the Pixel Per Unit ratio used at construction (see class Javadoc)
+	 */
 	public int getPPU() {
 		return ppu;
-	}
-	
-	public String getTypeString(int p_type) {
-		switch (p_type) {
-		case PERSPECTIVE_TYPE_FRUSTUM:
-			return "PERSPECTIVE_TYPE_FRUSTUM";
-		case PERSPECTIVE_TYPE_ORTHOGRAPHIC:
-			return "PERSPECTIVE_TYPE_ORTHOGRAPHIC";
-		default:
-			return "WRONG perspective type";
-		}
-
 	}
 	
 }

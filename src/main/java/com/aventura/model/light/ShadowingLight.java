@@ -51,7 +51,7 @@ import com.aventura.view.MapView;
  * is used for the projection.
  * 
  * In this abstract class will be found all the necessary attributes and tools for Shadow generation as the Camera corresponding to the Light
- * the ModelViewProjection projection for this Light (should be Orthographic for a DirectionalLight), the gUIView frustrum and the Shadow Map itself.
+ * the ModelViewProjection projection for this Light (should be Orthographic for a DirectionalLight), the view frustum and the Shadow Map itself.
  *
  * @author Olivier BARRY
  * @since April 2022
@@ -90,7 +90,7 @@ public abstract class ShadowingLight extends Light {
 	protected ViewProjection viewProjection_light;
 	protected ElementTransform elementTransform_light;
 
-	// GUIView Frustum
+	// View Frustum
 	//protected Vector4[][] frustum;
 	//protected Vector4 frustumCenter;
 	
@@ -312,7 +312,7 @@ public abstract class ShadowingLight extends Light {
 		// Process each Triangle (this will update the shadow map's ZBuffer)
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			Triangle t = e.getTriangle(j);
-			// Scissor test: only shadow-map triangles at least partially in the GUIView Frustum
+			// Scissor test: only shadow-map triangles at least partially in the View Frustum
 			if (t.isInViewFrustum()) {
 				// Depth-only pass: no normal/world-position interpolation is done at all (see
 				// TriangleRasterizer's depth-only rasterize() overload) -- convenient, since

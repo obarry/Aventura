@@ -7,6 +7,7 @@ import org.junit.Test;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.perspective.Perspective;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * Tests for PerspectiveContext's six-bounds constructor (top, bottom, right, left, far, near, type, ppu),
@@ -20,7 +21,7 @@ public class TestPerspectiveContext {
 	private static final float DELTA = 1e-5f;
 
 	private Perspective frustum(float top, float bottom, float right, float left, float far, float near) {
-		return new PerspectiveContext(top, bottom, right, left, far, near, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 100).getPerspective();
+		return new PerspectiveContext(top, bottom, right, left, far, near, PerspectiveType.FRUSTUM, 100).getPerspective();
 	}
 
 	@Test
@@ -42,7 +43,7 @@ public class TestPerspectiveContext {
 		System.out.println("***** Test PerspectiveContext : FRUSTUM and ORTHOGRAPHIC agree on the bounds for the same arguments *****");
 
 		Perspective f = frustum(0.5f, -0.5f, 0.5f, -0.5f, 100f, 1f);
-		Perspective o = new PerspectiveContext(0.5f, -0.5f, 0.5f, -0.5f, 100f, 1f, PerspectiveContext.PERSPECTIVE_TYPE_ORTHOGRAPHIC, 100).getPerspective();
+		Perspective o = new PerspectiveContext(0.5f, -0.5f, 0.5f, -0.5f, 100f, 1f, PerspectiveType.ORTHOGRAPHIC, 100).getPerspective();
 
 		assertEquals(o.getLeft(), f.getLeft(), DELTA);
 		assertEquals(o.getRight(), f.getRight(), DELTA);
@@ -81,6 +82,49 @@ public class TestPerspectiveContext {
 		Vector4 left = m.times(new Vector4(-0.5f, 0, -1f, 1));
 		assertEquals(1f, right.getX() / right.getW(), 1e-3f);
 		assertEquals(-1f, left.getX() / left.getW(), 1e-3f);
+	}
+
+	@Test
+	public void testDefaultConstructor_hasPixelDimensions() {
+		System.out.println("***** Test PerspectiveContext : default constructor gives an 800 x 450 image (used to be 0 x 0) *****");
+		PerspectiveContext c = new PerspectiveContext();
+		assertEquals(800, c.getPixelWidth());
+		assertEquals(450, c.getPixelHeight());
+		assertEquals(400, c.getPixelHalfWidth());
+		assertEquals(225, c.getPixelHalfHeight());
+		assertEquals(100, c.getPPU());
+		assertEquals(PerspectiveType.FRUSTUM, c.getPerspectiveType());
+		assertEquals(8f, c.getPerspective().getWidth(), DELTA);
+		assertEquals(4.5f, c.getPerspective().getHeight(), DELTA);
+	}
+
+	@Test
+	public void testPixelConstructor_noIntegerTruncation() {
+		System.out.println("***** Test PerspectiveContext : pixel constructor computes the window size with a float division *****");
+		PerspectiveContext c = new PerspectiveContext(1000, 600, 1, 100, PerspectiveType.FRUSTUM, 300);
+		assertEquals(1000, c.getPixelWidth());
+		assertEquals(600, c.getPixelHeight());
+		assertEquals(1000f / 300f, c.getPerspective().getWidth(), DELTA); // used to be 3 (int division)
+		assertEquals(2f, c.getPerspective().getHeight(), DELTA);
+	}
+
+	@Test
+	public void testCopyConstructor_copiesEverythingAndDeepCopiesPerspective() {
+		System.out.println("***** Test PerspectiveContext : copy constructor copies ppu, pixels, type and deep copies the perspective *****");
+		PerspectiveContext o = new PerspectiveContext(8f, 6f, 1f, 100f, PerspectiveType.ORTHOGRAPHIC, 150);
+		PerspectiveContext c = new PerspectiveContext(o);
+		assertEquals(150, c.getPPU()); // used to be 0
+		assertEquals(o.getPixelWidth(), c.getPixelWidth());
+		assertEquals(o.getPixelHeight(), c.getPixelHeight());
+		assertEquals(PerspectiveType.ORTHOGRAPHIC, c.getPerspectiveType());
+		assertNotSame(o.getPerspective(), c.getPerspective());
+		c.getPerspective().setWidth(16f);
+		assertEquals(8f, o.getPerspective().getWidth(), DELTA);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testNullTypeRejected() {
+		new PerspectiveContext(8f, 6f, 1f, 100f, null, 150);
 	}
 
 	private static void assertFinite(Vector4 v) {

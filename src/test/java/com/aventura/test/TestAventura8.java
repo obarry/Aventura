@@ -20,6 +20,7 @@ import com.aventura.model.world.shape.Cone;
 import com.aventura.tools.tracing.Tracer;
 import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
 
 /**
  * ------------------------------------------------------------------------------ 
@@ -130,12 +131,12 @@ public class TestAventura8 {
 		System.out.println(world);
 		Lighting light = test.createLight();
 		Camera camera = test.createCamera();
-		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveContext.PERSPECTIVE_TYPE_FRUSTUM, 1250);
+		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 		GUIView gUIView = test.createView(context);
 		
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		rContext.setDisplayNormals(RenderContext.DISPLAY_NORMALS_ENABLED);
-		//rContext.setRendering(RenderContext.RENDERING_TYPE_PLAIN);
+		rContext.setDisplayNormals(true);
+		//rContext.setRendering(RenderContext.RenderingType.PLAIN);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
 		renderer.setView(gUIView);
