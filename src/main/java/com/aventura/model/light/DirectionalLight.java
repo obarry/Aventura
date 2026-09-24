@@ -42,6 +42,11 @@ import com.aventura.model.perspective.PerspectiveType;
  * Since they have no position in space, directional directional have infinite range and the intensity
  * of light they radiate does not diminish over distance.
  *
+ * Shadows: a Directional Light casts shadows through an orthographic shadow map fitted to the area
+ * to cover (see ShadowingLight's SHADOWING_BOX_* types). Its resolution defaults to
+ * ShadowingLight.DEFAULT_SHADOW_MAP_SIZE (1000 pixels on the longest side, the map being rectangular
+ * when the area is) and can be changed with setShadowMapSize().
+ *
  * @author Olivier BARRY
  * @since July 2016
  * 
@@ -227,25 +232,39 @@ public class DirectionalLight extends ShadowingLight {
 		float eyeT = tmin - margin;
 
 		float near = margin;                // = tmin - eyeT
-		float far = (tmax - tmin) + margin; // = tmax - eyeT
+		// Margin on BOTH sides of the box: with the margin on the near side only, a flat scene lit
+		// along its normal (tmax == tmin, e.g. a floor under a vertical sun) gave far == near, a zero
+		// depth range and a NaN projection matrix (nothing rendered in the shadow map).
+		float far = (tmax - tmin) + 2 * margin; // = tmax - eyeT + margin
 		float left = smin - sCenter;
 		float right = smax - sCenter;
 		float bottom = umin - uCenter;
 		float top = umax - uCenter;
 
-		// ShadowingLight.generateShadowMap() always allocates a SQUARE ZBuffer (map_size x
-		// map_size, both taken from perspectiveCtx_light.getPixelWidth() alone) -- so the
-		// left/right and bottom/top spans below MUST match, or pixels whose Y falls outside the
-		// (differently-sized) actual pixelHeight get silently lost. The previous WORLD box was
-		// always an exact cube (min=-max on all 3 axes) so this held by accident; a real AABB's
-		// footprint in the light's basis essentially never is. Pad the smaller span to match the
-		// larger, keeping the box centered (left=-right and bottom=-top already hold from the
-		// AABB symmetry above, so this just takes the max of the two half-extents).
-		float halfExtent = Math.max(right, top);
-		left = -halfExtent;
-		right = halfExtent;
-		bottom = -halfExtent;
-		top = halfExtent;
+		// The shadow map is RECTANGULAR (see ShadowingLight.setShadowMapSize()): the light box keeps
+		// the exact proportions of the footprint, no padding to a square anymore (which wasted up to
+		// most of the map for an elongated scene). Only guard against a degenerate footprint (e.g. a
+		// flat scene seen exactly edge-on, or an empty world): each side is at least one texel of
+		// the longest one, and never 0.
+		// The short side is also padded (by less than one texel) so that the map is an exact whole
+		// number of square texels: getShadowMapSize() pixels on the longest side exactly, and the
+		// same texel size on both axes.
+		int size = getShadowMapSize();
+		float halfLong = Math.max(Math.max(right, top), 1e-3f);
+		int pixelWidth, pixelHeight;
+		if (right >= top) {
+			pixelWidth = size;
+			pixelHeight = shortSidePixels(size, top / halfLong);
+			right = halfLong;
+			top = halfLong * pixelHeight / size;
+		} else {
+			pixelHeight = size;
+			pixelWidth = shortSidePixels(size, right / halfLong);
+			top = halfLong;
+			right = halfLong * pixelWidth / size;
+		}
+		left = -right;
+		bottom = -top;
 
 		// eye = boxCenter shifted along forward only, so its own (side, up) coordinates match
 		// boxCenter's -- which is exactly what makes left/right/bottom/top above (computed
@@ -260,29 +279,22 @@ public class DirectionalLight extends ShadowingLight {
 		camera_light = new Camera(eye, poi, up.V4());
 
 		// At last initialize the Orthographic projection using the exact extents computed above.
-		// Fixed PIXEL resolution (DEFAULT_SHADOW_MAP_DIMENSION), not a fixed ppu -- ppu would make
-		// map resolution scale with the light box's world-space extent (huge maps for big scenes,
-		// tiny/blank-looking ones for small scenes, as found when this was first tried). left/right
-		// and bottom/top are equal at this point (square footprint, see above), so width == height
-		// here and this stays a square map, matching ShadowingLight.generateShadowMap()'s square
-		// ZBuffer allocation.
-		// TODO: DEFAULT_SHADOW_MAP_DIMENSION is not yet exposed through PerspectiveContext /
-		// RenderContext's configuration surface -- backlog item, not part of this patch.
+		// Fixed PIXEL resolution (getShadowMapSize() pixels on the longest side, the other one in
+		// proportion), not a fixed ppu -- ppu would make map resolution scale with the light box's
+		// world-space extent (huge maps for big scenes, tiny/blank-looking ones for small scenes).
 		float width = right - left;
 		float height = top - bottom;
 		float depth = far - near;
-		perspectiveCtx_light = new PerspectiveContext(DEFAULT_SHADOW_MAP_DIMENSION, width, height, near, depth, PerspectiveType.ORTHOGRAPHIC);
-
-		map_size = perspectiveCtx_light.getPixelWidth();
-		if (perspectiveCtx_light.getPixelWidth() != perspectiveCtx_light.getPixelHeight()) {
-			// Should never happen
-			if (Tracer.error) Tracer.traceError(this.getClass(), "perspectiveLight pixel width: " + perspectiveCtx_light.getPixelWidth() + " is different than pixel height: " + perspectiveCtx_light.getPixelHeight());			
+		perspectiveCtx_light = new PerspectiveContext(pixelWidth, width, height, near, depth, PerspectiveType.ORTHOGRAPHIC);
+		// width/height has exactly the pixelWidth/pixelHeight ratio (see above), so the context derives
+		// exactly pixelHeight -- checked here since the whole shadow map sampling relies on it
+		if (perspectiveCtx_light.getPixelHeight() != pixelHeight && Tracer.error) {
+			Tracer.traceError(this.getClass(), "Shadow map height: " + perspectiveCtx_light.getPixelHeight() + " instead of " + pixelHeight);
 		}
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Shadow map size: " + perspectiveCtx_light.getPixelWidth() + " x " + perspectiveCtx_light.getPixelHeight());
 
-		// NOTE: rasterizer_light is no longer constructed here. TriangleRasterizer needs a ZBuffer
-		// at construction time, and that ZBuffer should be fresh for every shadow map generation
-		// (not reused stale across frames for a moving scene) -- so it's now built inside
-		// ShadowingLight.generateShadowMap(), right when map_size is used, instead of here.
+		// The ZBuffer and TriangleRasterizer of the shadow map are built in
+		// ShadowingLight.generateShadowMap(), fresh for each generation.
 
 		// Create the MVP using this orthographic projection matrix
 		// Both constructed once, here, for this light's lifetime -- see their fields' Javadoc on
@@ -291,6 +303,15 @@ public class DirectionalLight extends ShadowingLight {
 		viewProjection_light = new ViewProjection(camera_light, perspectiveCtx_light.getPerspective());
 		elementTransform_light = new ElementTransform(viewProjection_light);
 		
+	}
+
+	/**
+	 * Number of pixels of the short side of a map whose long side has size pixels, for a
+	 * short/long ratio: rounded UP (the world extent is then padded by less than one texel to match),
+	 * so that no part of the area to cover is lost; at least 1.
+	 */
+	static int shortSidePixels(int size, float ratio) {
+		return Math.max(1, (int) Math.ceil(size * ratio - 1e-3f));
 	}
 
 	/**

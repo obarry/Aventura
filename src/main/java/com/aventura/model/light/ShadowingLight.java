@@ -59,12 +59,18 @@ import com.aventura.view.MapView;
  */
 public abstract class ShadowingLight extends Light {
 	
-	// Default Shadow Map dimension (Shadow Map is Square)
-	// Used by DirectionalLight.initShadowing() as a fixed pixel resolution for the shadow map,
-	// independent of the light box's world-space extent (see the "TODO PPU calculation" removed
-	// from there -- this constant is that fix). Not yet exposed through PerspectiveContext /
-	// RenderContext's configuration surface -- see the backlog note on that method.
-	public static final int DEFAULT_SHADOW_MAP_DIMENSION = 1000;
+	/**
+	 * Default shadow map size, in pixels, of the LONGEST side of the map (see setShadowMapSize()).
+	 * This is the default of the ShadowingLight types that do not declare their own: a subclass
+	 * needing another default declares its own DEFAULT_SHADOW_MAP_SIZE constant and overrides
+	 * getDefaultShadowMapSize() (e.g. planned for PointLight, whose cube map will need 6 maps).
+	 * The resolution is a fixed number of pixels, independent of the light box's world-space
+	 * extent (a fixed ppu would give huge maps for big scenes and tiny ones for small scenes).
+	 */
+	public static final int DEFAULT_SHADOW_MAP_SIZE = 1000;
+	
+	/** Smallest accepted shadow map size (pixels). */
+	public static final int MIN_SHADOW_MAP_SIZE = 2;
 	
 	// Parameter for Shadow Mapping "box" definition (used for Light's camera and perspective calculation)
 	public static final int SHADOWING_BOX_WORLD = 1; // Use the World's max dimensions to calculate the Light's view box
@@ -97,8 +103,8 @@ public abstract class ShadowingLight extends Light {
 	// World that can cast shadows with that Light, only needed starting ShadowingLight in the class hierarchy
 	World world = null;
 	
-	// Shadow map
-	int map_size = 0;
+	// Shadow map size requested through setShadowMapSize(), 0 = use getDefaultShadowMapSize()
+	private int shadowMapSize = 0;
 	protected MapView map; // As an attribute of the (Shadowing)Light, there will be multiple maps if multiple lights
 
 	// Diagnostics for shadow map generation: reuses RasterizerStats (see its Javadoc) to give
@@ -131,6 +137,9 @@ public abstract class ShadowingLight extends Light {
 	// backlog note about grouping this with SHADOW_BIAS_WORLD and other hardcoded tuning
 	// constants once we revisit making them configurable.
 	protected static final float DOT_NL_FLOOR = 0.1f;
+
+	// Minimum base bias as a fraction of the world size of one shadow map texel (see generateShadowMap())
+	protected static final float SHADOW_BIAS_TEXEL_FACTOR = 0.5f;
 
 	// Base bias in NDC depth units (SHADOW_BIAS_WORLD converted using this light's CURRENT
 	// (far-near) depth range), BEFORE the per-fragment slope scaling above is applied.
@@ -242,7 +251,13 @@ public abstract class ShadowingLight extends Light {
 		// Fresh ZBuffer + TriangleRasterizer for this generation pass -- rebuilt every time rather
 		// than reused across frames, since the shadow map must not carry over stale depth from a
 		// previous frame in a scene with moving lights/geometry.
-		int half = map_size / 2;
+		// Map size from this light's perspective context, as set by initShadowing(): width x height
+		// pixels, possibly rectangular (see setShadowMapSize()). The ZBuffer covers the centered
+		// screen space [-half, half] on each axis, hence 2*half+1 cells (same convention as the
+		// main pass in RenderEngine) -- the former width = 2*half allocation made the last column
+		// and row (x = +half, y = +half, accepted by TriangleRasterizer) fall out of the buffer.
+		int halfWidth = perspectiveCtx_light.getPixelHalfWidth();
+		int halfHeight = perspectiveCtx_light.getPixelHalfHeight();
 		// Orthographic projections in this engine always normalize NDC depth to [0, 1] (see
 		// OrthographicProjection's matrix -- z_ndc = 0 at near, 1 at far, regardless of the actual
 		// near/far world-space values chosen). Float.MAX_VALUE used to be used here as a generic
@@ -260,7 +275,7 @@ public abstract class ShadowingLight extends Light {
 		// Orthographic) projection, re-check whether their NDC depth convention is also [0,1] --
 		// this constant assumes it is.
 		final float SHADOW_MAP_FAR_NDC = 1.0f + 1e-4f;
-		ZBuffer shadowZBuffer = new ZBuffer(map_size, map_size, half, half, SHADOW_MAP_FAR_NDC);
+		ZBuffer shadowZBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, SHADOW_MAP_FAR_NDC);
 		this.map = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
 		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx_light, shadowZBuffer);
 		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
@@ -271,7 +286,16 @@ public abstract class ShadowingLight extends Light {
 		// This is the BASE bias only -- shadowFactorAt() further scales it per-fragment by the
 		// surface's slope relative to this light (see DOT_NL_FLOOR's Javadoc).
 		float depthRange = perspectiveCtx_light.getPerspective().getDepth();
-		ndcShadowBiasBase = depthRange > 0 ? SHADOW_BIAS_WORLD / depthRange : SHADOW_BIAS_WORLD;
+		// The base world bias also grows with the size of a texel (world size covered by one shadow
+		// map pixel): with a coarse map (small setShadowMapSize(), or a huge scene) the depth of a
+		// tilted surface varies within one texel by more than a fixed bias, which produced massive
+		// acne (e.g. the whole ground in shadow at 250 pixels). At the default resolution of the
+		// demo scenes the fixed SHADOW_BIAS_WORLD still dominates, so their rendering is unchanged.
+		Perspective lightPerspective = perspectiveCtx_light.getPerspective();
+		float texelWorldSize = Math.max(lightPerspective.getWidth() / perspectiveCtx_light.getPixelWidth(),
+				lightPerspective.getHeight() / perspectiveCtx_light.getPixelHeight());
+		float worldBias = Math.max(SHADOW_BIAS_WORLD, SHADOW_BIAS_TEXEL_FACTOR * texelWorldSize);
+		ndcShadowBiasBase = depthRange > 0 ? worldBias / depthRange : worldBias;
 
 		// Recompute this light's View*Projection from its camera's CURRENT state, in case the
 		// light itself moved since the last generation (same reasoning as
@@ -354,8 +378,19 @@ public abstract class ShadowingLight extends Light {
 
 		Vector4 posInLightSpace = viewProjection_light.project(worldPosition);
 
-		// Map is stored in [0, 1] while clip-space coordinates are in [-1, 1].
-		float depth = map.getInterpolation((posInLightSpace.getX() + 1) / 2, (posInLightSpace.getY() + 1) / 2);
+		// Sample the map where the rasterizer wrote this position: TriangleRasterizer stores the
+		// fragment at centered pixel (int)(x_ndc * halfWidth), i.e. buffer cell k holds the depths of
+		// the continuous positions [k, k+1) (for x >= 0), whose center is k + 0.5. Bilinear sampling
+		// at continuous position p = x_ndc * halfWidth + halfWidth therefore reads index p - 0.5.
+		// getInterpolation() takes normalized coordinates s with index = s * width - 0.5, hence
+		// s = p / width. (This is the exact alignment the former (x_ndc + 1) / 2 formula had with a
+		// 2*half wide map; the map is now 2*half+1 wide, see generateShadowMap(), and may be
+		// rectangular, so the formula is written per axis.)
+		int halfWidth = perspectiveCtx_light.getPixelHalfWidth();
+		int halfHeight = perspectiveCtx_light.getPixelHalfHeight();
+		float s = (posInLightSpace.getX() * halfWidth + halfWidth) / map.getViewWidth();
+		float t = (posInLightSpace.getY() * halfHeight + halfHeight) / map.getViewHeight();
+		float depth = map.getInterpolation(s, t);
 
 		// Slope-scaled epsilon bias to avoid "shadow acne" (self-shadowing) -- see
 		// DOT_NL_FLOOR's Javadoc for why a single fixed bias (ndcShadowBiasBase alone) isn't
@@ -367,6 +402,66 @@ public abstract class ShadowingLight extends Light {
 			return 0f;
 		}
 		return 1f;
+	}
+
+	// ------------------------------------------------------------------
+	// Shadow map size
+	// ------------------------------------------------------------------
+
+	/**
+	 * Default shadow map size of this type of light: DEFAULT_SHADOW_MAP_SIZE (1000 pixels) unless
+	 * the light class declares its own default (check this method or the class Javadoc).
+	 * @return the default size, in pixels, of the longest side of the shadow map
+	 */
+	public int getDefaultShadowMapSize() {
+		return DEFAULT_SHADOW_MAP_SIZE;
+	}
+
+	/**
+	 * Sets the resolution of this light's shadow map: size is the number of pixels of its LONGEST
+	 * side. The other side is derived from the proportions of the area the light has to cover
+	 * (recomputed at each frame), so the map is rectangular when that area is: no pixel is wasted
+	 * and the texel density is the same on both axes. Higher values give sharper shadows at the cost
+	 * of memory (width x height floats) and shadow map generation time.
+	 * Taken into account from the next rendered frame.
+	 *
+	 * @param size number of pixels of the longest side, at least MIN_SHADOW_MAP_SIZE
+	 * @throws IllegalArgumentException if size < MIN_SHADOW_MAP_SIZE
+	 */
+	public void setShadowMapSize(int size) {
+		if (size < MIN_SHADOW_MAP_SIZE) {
+			throw new IllegalArgumentException("Shadow map size must be at least " + MIN_SHADOW_MAP_SIZE + " pixels: " + size);
+		}
+		this.shadowMapSize = size;
+	}
+
+	/**
+	 * Goes back to the default shadow map size of this type of light (see getDefaultShadowMapSize()).
+	 */
+	public void resetShadowMapSize() {
+		this.shadowMapSize = 0;
+	}
+
+	/**
+	 * @return the shadow map size in use: the one set by setShadowMapSize(), or the default of this
+	 *         type of light (getDefaultShadowMapSize()) if none was set
+	 */
+	public int getShadowMapSize() {
+		return shadowMapSize > 0 ? shadowMapSize : getDefaultShadowMapSize();
+	}
+
+	/**
+	 * @return the pixel width of the current shadow map (as computed by the last initShadowing()), 0 if none yet
+	 */
+	public int getShadowMapWidth() {
+		return perspectiveCtx_light != null ? perspectiveCtx_light.getPixelWidth() : 0;
+	}
+
+	/**
+	 * @return the pixel height of the current shadow map (as computed by the last initShadowing()), 0 if none yet
+	 */
+	public int getShadowMapHeight() {
+		return perspectiveCtx_light != null ? perspectiveCtx_light.getPixelHeight() : 0;
 	}
 
 	public float getMap(int x, int y) {
