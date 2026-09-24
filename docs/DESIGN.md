@@ -485,7 +485,7 @@ flowchart LR
         direction TB
         A1["initShadowing()<br/>fit an orthographic box<br/>around the scene"] --> A2["light Camera +<br/>ViewProjection_light"]
         A2 --> A3["rasterize every triangle<br/>with DepthOnlyConsumer"]
-        A3 --> A4[("shadow map<br/>1000 × 1000 depths")]
+        A3 --> A4[("shadow map<br/>size × (≤ size) depths")]
     end
     subgraph P2["Pass 2 · from the camera"]
         direction TB
@@ -504,12 +504,20 @@ corners of the chosen bounding box onto it, and derives a tight orthographic vol
 the whole world (default), the view frustum, one element or a user-defined box
 (`SHADOWING_BOX_*`).
 
-**Fighting shadow acne.** The depth bias is expressed as a **world-space distance** (0.02 units),
-converted to NDC for the current box, and **slope-scaled** by `1 / max(N·L, floor)` so grazing
-surfaces (such as a floor under a low sun) get more tolerance than surfaces facing the light.
+**Map resolution.** Each light has its own shadow map size (`setShadowMapSize()`, default given by
+`getDefaultShadowMapSize()`: `DEFAULT_SHADOW_MAP_SIZE` = 1000 for a directional light). It is the
+number of pixels of the **longest** side; the other side follows the proportions of the light box
+(rounded up, the box being padded by less than one texel), so the map is rectangular for an
+elongated scene, with square texels and no wasted pixels. The depth buffer is stored centered, with
+`2·half + 1` cells per axis like the main pass.
 
-**Current trade-offs:** hard shadows (factor 0 or 1, no PCF), fixed map resolution, and point and
-spot lights do not cast shadows yet (they still light the scene correctly when shadows are enabled).
+**Fighting shadow acne.** The depth bias is expressed as a **world-space distance** (0.02 units, or
+half a texel if the map is coarser than that), converted to NDC for the current box, and
+**slope-scaled** by `1 / max(N·L, floor)` so grazing surfaces (such as a floor under a low sun) get
+more tolerance than surfaces facing the light.
+
+**Current trade-offs:** hard shadows (factor 0 or 1, no PCF), and point and spot lights do not cast
+shadows yet (they still light the scene correctly when shadows are enabled).
 
 <p align="center">
   <img src="../resources/doc/images/urbanscape_flight.jpg" alt="UrbanScape overview with building shadows" width="560"><br/>
@@ -667,7 +675,7 @@ xychart-beta
 | Area | Current state |
 |---|---|
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
-| Shadows | Directional lights only; hard edges; fixed 1000² map |
+| Shadows | Directional lights only; hard edges |
 | Lights | Not drawn in the scene (no halo or lens effect) |
 | Display | `SwingView` is the only backend |
 | Assets | Textures loaded from file paths, not from the classpath |
@@ -681,7 +689,6 @@ flowchart LR
     subgraph NOW["Near term"]
         n1[Spot light shadows<br/>perspective shadow map]
         n2[Soft shadows · PCF]
-        n3[Shadow-map size in<br/>RenderContext]
         n4[Perspective / Viewport<br/>split]
     end
     subgraph NEXT["Mid term"]

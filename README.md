@@ -198,6 +198,17 @@ spot.setAngles(outerAngle, innerAngle); // ...and open or close the cone
 
 Shadow maps are only computed when shadowing is enabled in the `RenderContext`. For now only directional lights cast shadows: in a scene rendered with shadows, point and spot lights keep lighting everything they reach, without disturbing the shadows of the directional lights.
 
+The resolution of a light's shadow map can be set per light. The size is the number of pixels of the **longest** side of the map; the other side follows the proportions of the area the light covers, so an elongated scene gets a rectangular map with no wasted pixels:
+
+```java
+DirectionalLight sun = new DirectionalLight(new Vector3(-1, 0.6f, -0.6f), 1.0f);
+sun.setShadowMapSize(2048);  // sharper shadows (default: 1000)
+sun.resetShadowMapSize();    // back to the default of this type of light
+int size = sun.getShadowMapSize(); // size in use (set or default)
+```
+
+The default size depends on the type of light: `getDefaultShadowMapSize()` returns it, and each light class documents its own. It is `ShadowingLight.DEFAULT_SHADOW_MAP_SIZE` (1000 pixels) for directional lights.
+
 ## How it works
 
 ### The scene and the engine
