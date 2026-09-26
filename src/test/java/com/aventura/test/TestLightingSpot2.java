@@ -83,7 +83,7 @@ public class TestLightingSpot2 {
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -186,10 +186,10 @@ public class TestLightingSpot2 {
 		Lighting lighting = createLighting(spot);
 
 		PerspectiveContext pContext = createPerspectiveContext();
-		GUIView gUIView = test.createView(pContext);
+		GUIView guiView = test.createView(pContext);
 
 		RenderEngine renderer = new RenderEngine(world, lighting, createCamera(), createRenderContext(), pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		renderer.render();
 
 		System.out.println("********* Rendering...");

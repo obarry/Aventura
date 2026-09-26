@@ -69,7 +69,7 @@ public class Test3StonesRotation {
 		// Set the size of the frame
 		frame.setSize(1500,900);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -150,7 +150,7 @@ public class Test3StonesRotation {
 		Lighting light = new Lighting(dl, al, false);
 		
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250+625);
-		GUIView gUIView = test.createView(pContext);
+		GUIView guiView = test.createView(pContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
@@ -162,7 +162,7 @@ public class Test3StonesRotation {
 		//rContext.setRenderingLines(true);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		//renderer.render();
 
 		System.out.println("********* Rendering...");

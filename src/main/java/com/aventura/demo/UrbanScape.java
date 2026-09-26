@@ -435,7 +435,9 @@ public class UrbanScape {
 		double e = Math.toRadians(elevation);
 		// The direction is the one of the rays, from the sun to the scene: it goes down (-z)
 		Vector3 direction = new Vector3((float) (Math.cos(e) * Math.cos(h)), (float) (Math.cos(e) * Math.sin(h)), (float) -Math.sin(e));
-		return new DirectionalLight(direction, intensity);
+		DirectionalLight dl = new DirectionalLight(direction, intensity);
+		dl.setShadowMapSize(2000);
+		return dl;
 	}
 
 	static final float SUN_HEADING = 65f;   // degrees, from +X axis towards +Y axis
@@ -610,7 +612,7 @@ public class UrbanScape {
 		// Create the frame of the application
 		frame = new JFrame(TITLE);
 
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 
 		// Create a panel showing the image, sized so that the whole image is visible, and add it to the frame
@@ -661,10 +663,10 @@ public class UrbanScape {
 		RenderContext rContext = createRenderContext();
 
 		UrbanScape appli = new UrbanScape();
-		GUIView gUIView = appli.createView(pContext);
+		GUIView guiView = appli.createView(pContext);
 
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 
 		System.out.println("********* Flying around the scene: " + FLIGHT_LAPS + " laps");
 		float lap = (float) (2 * Math.PI);

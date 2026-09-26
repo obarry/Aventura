@@ -31,15 +31,19 @@ import com.aventura.context.PerspectiveContext;
 * 
 * GUIView is the (abstract) class handled by the rendering engine to display the pixels while rendering elements (rasterization)
 * 
-* A typical 'session' of creating a gUIView is to:
-* 	1) initializing gUIView, this will setup a new image buffer of the size to be rendered
+* A typical 'session' of rendering a frame in a view is to:
+* 	1) initialize the view, this will setup a new image buffer of the size to be rendered
 * 		initView()
 * 	2) display pixels (lines, pixels, surfaces, with colors etc.)
 * 		drawPixel(), drawLine(), etc.
-* 	3) allowing to render the image, this will copy the buffer image into the graphic buffer of the GUI interface
+* 	3) render the image, e.g. swap the back buffer to the front buffer and notify the GUI
+* 		renderView()
 * 
-* The abstract class GUIView remains GUI type independent.
-* This class should be derived to create a display specific class (e.g. SWING or SWT or any display device)
+* The abstract class GUIView remains GUI type independent. Implementations:
+* - ImageView: concrete and GUI-independent, double buffered BufferedImage images; usable headless
+*   (e.g. image files) or with any GUI toolkit through its frame listener;
+* - SwingView: an ImageView that also repaints a Swing Component after each frame.
+* Other display technologies can derive from ImageView (simplest) or directly from GUIView.
 * 
 */
 public abstract class GUIView extends View {
@@ -55,7 +59,7 @@ public abstract class GUIView extends View {
 	}
 	
 	/**
-	 * Create the gUIView based on PerspectiveContext to get width and height information of the view frustum
+	 * Create the view based on PerspectiveContext to get its pixel width and height
 	 * Indeed the GUIView is expected to match exactly these dimensions. 
 	 * 
 	 * @param context

@@ -76,7 +76,7 @@ public class TestMultiElementsTexture {
 		// Set the size of the frame
 		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -222,7 +222,7 @@ public class TestMultiElementsTexture {
 		Lighting lighting = new Lighting(dl, al, true);
 
 		PerspectiveContext context = new PerspectiveContext(1.5f, 0.9f, 1, 100, PerspectiveType.FRUSTUM, 1000);
-		GUIView gUIView = test.createView(context);
+		GUIView guiView = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
 		rContext.setTextureProcessing(true);
@@ -230,7 +230,7 @@ public class TestMultiElementsTexture {
 		//rContext.setDisplayNormals(true);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		renderer.render();
 		
 		System.out.println("********* Rendering...");

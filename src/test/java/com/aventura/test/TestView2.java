@@ -43,7 +43,7 @@ import com.aventura.view.MapView;
 
 public class TestView2 {
 	
-	// Create the gUIView to be displayed
+	// Create the view to be displayed
 	private SwingView view;
 	JFrame frame;
 	
@@ -54,7 +54,7 @@ public class TestView2 {
 		// Set the size of the frame
 		frame.setSize(800,500);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -94,9 +94,9 @@ public class TestView2 {
 			}
 		}
 
-		GUIView gUIView = test.createView(new PerspectiveContext());
-		gUIView.initView(mapView);
-		gUIView.renderView();
+		GUIView guiView = test.createView(new PerspectiveContext());
+		guiView.initView(mapView);
+		guiView.renderView();
 		
 	}
 

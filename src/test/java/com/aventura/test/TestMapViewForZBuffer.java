@@ -71,7 +71,7 @@ public class TestMapViewForZBuffer {
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -144,7 +144,7 @@ public class TestMapViewForZBuffer {
 		light.addPointLight(pl);
 		
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
-		GUIView gUIView = test.createView(pContext);
+		GUIView guiView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(true);
@@ -152,7 +152,7 @@ public class TestMapViewForZBuffer {
 		//rContext.setDisplayLandmark(true);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		MapView mapView = renderer.render();
 		
 		Scanner sc = new Scanner(System.in);
@@ -161,11 +161,11 @@ public class TestMapViewForZBuffer {
 		sc.close();
 
 		System.out.println("Now rendering normalized map...");
-		//GUIView gUIView = test.createView(PerspectiveContext.PERSPECTIVE_DEFAULT);
+		//GUIView view = test.createView(PerspectiveContext.PERSPECTIVE_DEFAULT);
 		mapView.removeFar(pContext.getPerspective().getFar(), 0);
 		mapView.normalizeMap();
-		gUIView.initView(mapView);
-		gUIView.renderView();
+		guiView.initView(mapView);
+		guiView.renderView();
 
 		System.out.println("********* ENDING APPLICATION *********");
 	}

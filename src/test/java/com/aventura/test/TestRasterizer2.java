@@ -64,7 +64,7 @@ public class TestRasterizer2 {
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -144,14 +144,14 @@ public class TestRasterizer2 {
 		light.setAmbientLight(al);
 		
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
-		GUIView gUIView = test.createView(pContext);
+		GUIView guiView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setDisplayNormals(true);
 		rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		renderer.render();
 
 		int nb_images = 360;

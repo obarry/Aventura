@@ -50,7 +50,7 @@ import com.aventura.model.perspective.PerspectiveType;
 
 public class TestTrellis {
 	
-	// Create the gUIView to be displayed
+	// Create the view to be displayed
 	private SwingView view;
 	
 	public GUIView createView(PerspectiveContext context) {
@@ -60,7 +60,7 @@ public class TestTrellis {
 		// Set the size of the frame
 		frame.setSize(1010,630);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -126,9 +126,9 @@ public class TestTrellis {
 		//context.computePerspective();
 		System.out.println(context);
 		
-		GUIView gUIView = test.createView(context);
+		GUIView guiView = test.createView(context);
 		RenderEngine renderer = new RenderEngine(world, light, camera, RenderContext.RENDER_DEFAULT, context);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		renderer.render();
 		
 	}

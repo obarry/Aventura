@@ -70,7 +70,7 @@ public class Test3StonesRotationShadows {
 		// Set the size of the frame
 		frame.setSize(1500,900);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -115,7 +115,7 @@ public class Test3StonesRotationShadows {
 		World world = new World();
 		
 		Trellis trellis = new Trellis(5, 5, 10, 10, tex);
-		trellis.setColor(new Color(170, 170, 180));
+		trellis.setColor(new Color(210, 180, 150));
 		trellis.setTransformation(new Translation(new Vector3(0,0,-1.5f)));
 		world.addElement(trellis);
 		
@@ -156,7 +156,7 @@ public class Test3StonesRotationShadows {
 		Lighting light = new Lighting(dl, al, false);
 		
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250+625);
-		GUIView gUIView = test.createView(pContext);
+		GUIView guiView = test.createView(pContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
@@ -169,7 +169,7 @@ public class Test3StonesRotationShadows {
 		rContext.setShadowing(true);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		//renderer.render();
 
 		System.out.println("********* Rendering...");

@@ -74,7 +74,7 @@ public class TestMultiElementsTextureOrtho {
 		// Set the size of the frame
 		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -130,8 +130,8 @@ public class TestMultiElementsTextureOrtho {
 	
 		// Camera
 		//Vector4 eye = new Vector4(10,6,3,1);
-		Vector4 eye = new Vector4(10,0,3,1); // Orthographic gUIView
-		//Vector4 eye = new Vector4(4,0,1,1); // Frustum gUIView
+		Vector4 eye = new Vector4(10,0,3,1); // Orthographic view
+		//Vector4 eye = new Vector4(4,0,1,1); // Frustum view
 		//Vector4 eye = new Vector4(10,0,0,1);
 		Vector4 poi = new Vector4(0,0,0,1);
 		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
@@ -242,7 +242,7 @@ public class TestMultiElementsTextureOrtho {
 
 		PerspectiveContext context = new PerspectiveContext(8f, 6f, 1f, 100f, PerspectiveType.ORTHOGRAPHIC, 150);
 		//PerspectiveContext context = new PerspectiveContext(3.0f, 1.8f, 1, 100, PerspectiveType.FRUSTUM, 400);
-		GUIView gUIView = test.createView(context);
+		GUIView guiView = test.createView(context);
 		System.out.println(context.getPerspective().getProjection());
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
@@ -252,7 +252,7 @@ public class TestMultiElementsTextureOrtho {
 		rContext.setDisplayNormals(true);
 		
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		renderer.render();
 		
 		System.out.println("********* Rendering...");

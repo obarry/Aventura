@@ -66,7 +66,7 @@ public class EarthAndMoon {
 		// Set the size of the frame
 		frame.setSize(1500,880);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -131,14 +131,14 @@ public class EarthAndMoon {
 		Lighting light = new Lighting(dl, al, true);
 		
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 1000, PerspectiveType.FRUSTUM, 1250+625);
-		GUIView gUIView = test.createView(pContext);
+		GUIView guiView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(true);
 		//rContext.setRenderingLines(true);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		
 		System.out.println("********* Rendering");
 		renderer.render();

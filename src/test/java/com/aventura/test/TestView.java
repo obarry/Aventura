@@ -43,7 +43,7 @@ import com.aventura.view.GUIView;
 
 public class TestView {
 	
-	// Create the gUIView to be displayed
+	// Create the view to be displayed
 	private SwingView view;
 	JFrame frame;
 	
@@ -54,7 +54,7 @@ public class TestView {
 		// Set the size of the frame
 		frame.setSize(800,500);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -84,42 +84,42 @@ public class TestView {
 		
 		TestView test = new TestView();
 
-		GUIView gUIView = test.createView(new PerspectiveContext());
+		GUIView guiView = test.createView(new PerspectiveContext());
 
 		for (int i=0; i<20; i++) {
 
-			// Test of the gUIView
-			gUIView.initView();
-			gUIView.setColor(Color.WHITE);
-			gUIView.drawLine(-250, -100, 250, 100);
-			gUIView.drawLine(-250, 100, 250, -100);
-			gUIView.setColor(Color.RED);
-			gUIView.drawLine(-250, 0, 250, 0);
-			gUIView.setColor(Color.BLUE);
-			gUIView.drawLine(0, -100, 0, 100);
-			gUIView.setColor(Color.YELLOW);
-			gUIView.drawLine(-250, 50, 250, 75);
-			gUIView.drawLine(-250, -50, 250, -25);
-			gUIView.renderView();
+			// Test of the view
+			guiView.initView();
+			guiView.setColor(Color.WHITE);
+			guiView.drawLine(-250, -100, 250, 100);
+			guiView.drawLine(-250, 100, 250, -100);
+			guiView.setColor(Color.RED);
+			guiView.drawLine(-250, 0, 250, 0);
+			guiView.setColor(Color.BLUE);
+			guiView.drawLine(0, -100, 0, 100);
+			guiView.setColor(Color.YELLOW);
+			guiView.drawLine(-250, 50, 250, 75);
+			guiView.drawLine(-250, -50, 250, -25);
+			guiView.renderView();
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			// Test of the gUIView
-			gUIView.initView();
-			gUIView.setColor(Color.GREEN);
-			gUIView.drawLine(-250, -100, 250, 100);
-			gUIView.drawLine(-250, 100, 250, -100);
-			gUIView.setColor(Color.WHITE);
-			gUIView.drawLine(-250, 0, 250, 0);
-			gUIView.setColor(Color.BLUE);
-			gUIView.drawLine(0, -100, 0, 100);
-			gUIView.setColor(Color.CYAN);
-			gUIView.drawLine(50, -100, 75, 100);
-			gUIView.drawLine(-50, -100, -25, 100);
-			gUIView.renderView();
+			// Test of the view
+			guiView.initView();
+			guiView.setColor(Color.GREEN);
+			guiView.drawLine(-250, -100, 250, 100);
+			guiView.drawLine(-250, 100, 250, -100);
+			guiView.setColor(Color.WHITE);
+			guiView.drawLine(-250, 0, 250, 0);
+			guiView.setColor(Color.BLUE);
+			guiView.drawLine(0, -100, 0, 100);
+			guiView.setColor(Color.CYAN);
+			guiView.drawLine(50, -100, 75, 100);
+			guiView.drawLine(-50, -100, -25, 100);
+			guiView.renderView();
 			//test.frame.repaint();
 			
 			try {

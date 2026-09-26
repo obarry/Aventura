@@ -73,7 +73,7 @@ public class TestShadowMapRasterization {
 		// Set the size of the frame
 		frame.setSize(1000,1000);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -187,7 +187,7 @@ public class TestShadowMapRasterization {
 		// Perspective Orthographic similar to what is used for Shadow Mapping - For Testing
 		//PerspectiveContext pContext = new PerspectiveContext(6.4f, 3.6f, 0.1f, 100, PerspectiveType.ORTHOGRAPHIC, 156);
 		//PerspectiveContext pContext = new PerspectiveContext(10, 10, 1, 20, PerspectiveType.ORTHOGRAPHIC, 100);
-		GUIView gUIView = test.createView(pContext);
+		GUIView guiView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
@@ -201,7 +201,7 @@ public class TestShadowMapRasterization {
 		System.out.println(rContext);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		MapView map = renderer.render();
 		System.out.println("ZBuffer min: "+map.getMin() + ", ZBuffer max: "+map.getMax() + ", ZBuffer avg: " + map.getAverage() + ". Nb of Pixels around min: " + map.getNbOfPixelsInRange(map.getMin(), map.getMin()+0.01f*(map.getMax()-map.getMin())) + ". Nb of Pixels around max: " + map.getNbOfPixelsInRange(map.getMax()-0.01f*(map.getMax()-map.getMin()), map.getMax())+ ". Nb of Pixels in map: " + map.getNbOfPixels());
 		System.out.println(renderer.renderStats());
@@ -246,9 +246,9 @@ public class TestShadowMapRasterization {
 			if (mapView != null) {
 				System.out.println("ShadowMap min: "+mapView.getMin() + ", ShadowMap max: "+mapView.getMax() + ", ShadowMap avg: " + mapView.getAverage() + ". Nb of Pixels around min: " + mapView.getNbOfPixelsInRange(mapView.getMin(), mapView.getMin()+0.01f*(mapView.getMax()-mapView.getMin())) + ". Nb of Pixels around max: " + mapView.getNbOfPixelsInRange(mapView.getMax()-0.01f*(mapView.getMax()-mapView.getMin()), mapView.getMax())+ ". Nb of Pixels in map: " + mapView.getNbOfPixels());
 				mapView.normalizeMap();
-				gUIView.setDimensions(mapView.getViewWidth(), mapView.getViewHeight());
-				gUIView.initView(mapView);
-				gUIView.renderView();
+				guiView.setDimensions(mapView.getViewWidth(), mapView.getViewHeight());
+				guiView.initView(mapView);
+				guiView.renderView();
 			} else {
 
 				System.out.println("No shadow map to display.\n");
