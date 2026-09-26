@@ -81,7 +81,7 @@ flowchart TB
         MATH["math.vector · math.transform · math.projection<br/>Vector2/3/4 · Matrix2/3/4 · Quaternion"]
         TOOLS["tools<br/>ColorTools · RGBAccumulator · Tracer"]
     end
-    VIEW["view<br/>GUIView (abstract) → SwingView"]
+    VIEW["view<br/>GUIView (abstract) → ImageView → SwingView"]
 
     APP --> ENGINE
     APP --> MODEL
@@ -116,7 +116,7 @@ pie showData
 | `model.camera`, `model.perspective` | `Camera` / `LookAt`, `FrustumPerspective`, `OrthographicPerspective` |
 | `context` | `RenderContext` (how to rasterize) and `PerspectiveContext` (how to project) |
 | `engine` | The pipeline itself |
-| `view` | `GUIView` abstraction and `SwingView` implementation |
+| `view` | `GUIView` abstraction, `ImageView` (GUI-independent double buffer) and `SwingView`; `MapView` (maps of values, displayable in a view) |
 
 ---
 
@@ -603,7 +603,7 @@ flowchart LR
 | A shape | `GenerativeElement` | `generateVertices()`, `generateTriangles()` (compiler-enforced); override `calculateNormals()` for smooth shapes | `Sphere`, `Torus`, `Trellis` |
 | A material | `Material` | `baseColorAt(Fragment)` etc.; the fragment gives position and normal for triplanar, Fresnel… | `TexturedMaterial` |
 | A pass | `FragmentConsumer` | `consume(Fragment)` — e.g. a normal buffer, an ID buffer for picking | `DepthOnlyConsumer` |
-| A display | `GUIView` | `initView`, `drawPixel`, `drawLine`, `renderView` | `SwingView` |
+| A display | `ImageView` (or `GUIView`) | `frameRendered` (or `initView`, `drawPixel`, `drawLine`, `renderView`) | `SwingView` |
 | A light | `Light` or `ShadowingLight` | `getLightVectorAtPoint`, `getIntensity` (+ shadow map) | `SpotLight` |
 
 Custom geometry without subclassing is also possible: feed `Element.addVertex()` and
@@ -677,12 +677,14 @@ xychart-beta
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
 | Shadows | Directional lights only; hard edges |
 | Lights | Not drawn in the scene (no halo or lens effect) |
-| Display | `SwingView` is the only backend |
+| Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
 | API | `RenderingType.MONOCHROME` declared but not implemented |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |
 
 ### Roadmap (candidate items)
+
+The detailed list of identified but not yet handled items is kept in [BACKLOG.md](BACKLOG.md).
 
 ```mermaid
 flowchart LR

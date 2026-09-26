@@ -35,11 +35,15 @@ public class MapView extends View {
 	
 	protected float[][] map;
 	
+	/**
+	 * Wraps an existing array, indexed map[x][y] (like every accessor of this class): width = map.length,
+	 * height = map[0].length. (Width and height used to be swapped here, and a 1 column map crashed.)
+	 */
 	public MapView(float[][] map) {
 		this.map = map;
 		
-		this.width = map[1].length;
-		this.height = map.length;
+		this.width = map.length;
+		this.height = map.length > 0 ? map[0].length : 0;
 	}
 	
 	// Recopy constructor
@@ -70,17 +74,15 @@ public class MapView extends View {
 		}
 	}
 	
+	/**
+	 * Changes the dimensions of this map (a new array is allocated) and initializes it with 0.
+	 * (It used to keep the old array: a larger size raised an ArrayIndexOutOfBoundsException.)
+	 */
 	@Override
 	public void initView(int width, int height) {
 		this.width = width;
 		this.height = height;
-		
-		
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				map[i][j] = 0;
-			}
-		}
+		this.map = new float[width][height]; // Java initializes it with 0
 	}
 
 	public void initView(float f) {
@@ -156,9 +158,15 @@ public class MapView extends View {
 	}
 	
 	// To normalize between 0 and 1 so that the map can be used for Colors
+	// A uniform map (max == min) becomes all 0 (it used to become all NaN, division by 0)
 	public void normalizeMap() {
 		float max = this.getMax();
 		float min = this.getMin();
+		
+		if (max == min) {
+			initView();
+			return;
+		}
 		
 		for (int i=0; i<width; i++) {
 			for (int j=0; j<height; j++) {

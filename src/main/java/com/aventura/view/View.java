@@ -25,17 +25,10 @@ package com.aventura.view;
 * SOFTWARE.
 * ------------------------------------------------------------------------------
 * 
-* GUIView is the (abstract) class handled by the rendering engine to display the pixels while rendering elements (rasterization)
-* 
-* A typical 'session' of creating a gUIView is to:
-* 	1) initializing gUIView, this will setup a new image buffer of the size to be rendered
-* 		initView()
-* 	2) display pixels (lines, pixels, surfaces, with colors etc.)
-* 		drawPixel(), drawLine(), etc.
-* 	3) allowing to render the image, this will copy the buffer image into the graphic buffer of the GUI interface
-* 
-* The abstract class GUIView remains GUI type independent.
-* This class should be derived to create a display specific class (e.g. SWING or SWT or any display device)
+* View is the root (abstract) class of anything having a pixel width and height that can be initialized:
+* - GUIView (and its implementations ImageView, SwingView): the images the RenderEngine draws into;
+* - MapView: a 2D map of float values (depth buffer, shadow map...), which can itself be displayed in
+*   a GUIView (GUIView.initView(MapView)).
 * 
 */
 public abstract class View {

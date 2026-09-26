@@ -22,7 +22,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 - **Hierarchical scene graph.** Elements can contain sub-elements; translations, rotations and scalings compose down the tree.
 - **A math library you can reuse.** `Vector2/3/4`, `Matrix2/3/4`, `Quaternion` (with `slerp`), a Gauss-Jordan solver and geometry helpers, all unit-tested.
 - **Several rendering modes on the same scene.** Wireframe, flat, plain and smooth (per-pixel) shading, with or without textures and shadows, plus debug overlays (axes, normals, light vectors).
-- **Display-agnostic.** The engine renders to an abstract `GUIView`; `SwingView` is provided and can be used on-screen or off-screen.
+- **Display-agnostic.** The engine renders to an abstract `GUIView`. `ImageView` renders into double-buffered `BufferedImage`s with no GUI dependency (image files, headless servers, or any GUI toolkit through a frame listener); `SwingView` adds the repaint of a Swing component.
 
 ## Gallery
 
@@ -89,8 +89,6 @@ The following program builds a small scene, renders it **off-screen** with shado
 import java.awt.Color;
 import java.io.File;
 
-import javax.imageio.ImageIO;
-
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
@@ -106,7 +104,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Cone;
 import com.aventura.model.world.shape.Sphere;
 import com.aventura.model.world.shape.Trellis;
-import com.aventura.view.SwingView;
+import com.aventura.view.ImageView;
 
 public class HelloAventura {
 
@@ -142,14 +140,14 @@ public class HelloAventura {
 
 		// 4. Display geometry: 0.8 x 0.45 view plane at distance 1, 1000 pixels per unit => 800x450 image
 		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1000);
-		SwingView view = new SwingView(perspective); // off-screen: no window needed
+		ImageView view = new ImageView(perspective); // off-screen: no GUI needed
 
 		// 5. Render (smooth shading + shadows) and save
 		RenderEngine engine = new RenderEngine(world, lighting, camera, RenderContext.RENDER_STANDARD_INTERPOLATE_SHADOWS, perspective);
 		engine.setView(view);
 		engine.render();
 
-		ImageIO.write(view.getImageView(), "png", new File("hello.png"));
+		view.saveImage(new File("hello.png"), "png");
 	}
 }
 ```
@@ -161,7 +159,7 @@ javac -cp target/classes HelloAventura.java
 java -Djava.awt.headless=true -cp target/classes:. HelloAventura
 ```
 
-To show the result in a window instead, create the `SwingView` with a Swing component (`new SwingView(perspective, frame)`) and draw `view.getImageView()` in its `paintComponent()`, as `EarthAndMoon` does. To use textures, pass a `Texture` to the shape constructor, e.g. `new Sphere(1f, 48, new Texture("resources/texture/texture_moon_2048x1024.jpg"))`.
+To show the result in a Swing window instead, use a `SwingView` created with a Swing component (`new SwingView(perspective, frame)`) and draw `view.getImageView()` in its `paintComponent()`, as `EarthAndMoon` does. With another GUI toolkit, keep the `ImageView` and register a listener called with each new frame: `view.setFrameListener(image -> ...)`. To use textures, pass a `Texture` to the shape constructor, e.g. `new Sphere(1f, 48, new Texture("resources/texture/texture_moon_2048x1024.jpg"))`.
 
 In the demos and in this example, the **Z axis points up** (it is used as the camera's "up" vector).
 
@@ -227,7 +225,7 @@ flowchart LR
     RC[RenderContext] --> RE
     RE["RenderEngine<br/>ElementTransform · ViewProjection"] --> R["TriangleRasterizer<br/>+ ZBuffer"]
     R --> F["Fragment consumers<br/>(shading, textures, shadow lookup)"]
-    F --> V["GUIView<br/>(SwingView)"]
+    F --> V["GUIView<br/>(ImageView, SwingView)"]
 ```
 
 For each frame, every element's vertices are moved through its transformation chain into camera space and then projected. Triangles that are visible are rasterized pixel by pixel: attributes (position, normal, texture coordinates) are interpolated with perspective correction, depth-tested against the Z-buffer, and each surviving fragment is passed to a consumer that computes its color from the material, texture and lights. Shadow maps are produced with the same rasterizer, using a depth-only consumer from the light's point of view.
@@ -247,7 +245,7 @@ For each frame, every element's vertices are moved through its transformation ch
 | `com.aventura.model.material`, `com.aventura.model.texture` | Solid and textured materials, image textures |
 | `com.aventura.context` | `RenderContext` and `PerspectiveContext` |
 | `com.aventura.engine` | `RenderEngine`, `TriangleRasterizer`, `ZBuffer`, fragment consumers |
-| `com.aventura.view` | `GUIView` (abstract display) and `SwingView` |
+| `com.aventura.view` | `GUIView` (abstract display), `ImageView` (GUI-independent images), `SwingView`, `MapView` (maps of values) |
 | `com.aventura.demo` | Demo applications |
 
 ### Rendering options
@@ -332,7 +330,7 @@ Aventura/
 ## Current scope and limitations
 
 - Aventura is a CPU rasterizer: it is built for clarity, portability and experimentation, not to compete with GPU performance on large scenes.
-- `SwingView` is the only display implementation so far. `GUIView` is the extension point for other backends.
+- Only Swing has a dedicated view so far (`SwingView`); other GUI toolkits can use `ImageView` with a frame listener, or extend `ImageView` or `GUIView`.
 - A `Lighting` system holds at most one ambient light, plus any number of directional, point and spot lights.
 - Only directional lights cast shadows so far. Point and spot lights light the scene but have no shadow map yet: a spot light is planned to use one perspective shadow map, a point light six (one per face of a cube).
 - Lights are not drawn: a point light, a spot light or the sun is invisible even when it is in the field of view (no halo or lens effect yet).

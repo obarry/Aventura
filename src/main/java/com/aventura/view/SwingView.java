@@ -1,12 +1,9 @@
 package com.aventura.view;
 
 import java.awt.Component;
-import java.awt.Graphics2D;
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 
 import com.aventura.context.PerspectiveContext;
-import com.aventura.tools.tracing.Tracer;
 
 /**
 * ------------------------------------------------------------------------------ 
@@ -33,13 +30,13 @@ import com.aventura.tools.tracing.Tracer;
 * SOFTWARE.
 * ------------------------------------------------------------------------------
 * 
-* This class manages the front and back buffer image.
-* While the back buffer image is being drawn, the front image can be safely displayed/rendered.
-* As the rendering of the GUI is not under the control of the API, this method is safer and 
-* avoids calculating the same image each time the display should be rendered (e.g. window moved).
+* Swing specialization of ImageView: same double buffer images, plus a repaint of the associated
+* Swing Component after each rendered frame. The component's paint method just draws getImageView():
 * 
-*  The implementation of this class is SWING based and specific, but the public methods are generic
-*  and inherited from the abstract GUIView class.
+*     graphics.drawImage(view.getImageView(), 0, 0, null);
+* 
+* A SwingView created without a Component behaves exactly like an ImageView (off-screen rendering);
+* prefer ImageView in that case, which does not suggest a Swing dependency.
 * 
 *       Warning! SWING Graphic coords on screen are as follows:
 *    
@@ -51,200 +48,52 @@ import com.aventura.tools.tracing.Tracer;
 *                      v
 *                      
 *                      Y
+* 
+* The conversion from Aventura's centered, Y axis up coordinates is done by ImageView.
 */
 
-public class SwingView extends GUIView {
+public class SwingView extends ImageView {
 
-	// Swing component to which this GUIView is associated. Used to pro-actively repaint when needed.
-	Component component = null;
-	
-	// buffer image #1 to be displayed
-	BufferedImage frontbuffer;
-	Graphics2D frontgraph;
-	
-	// back buffer image #2 to be used while creating the gUIView
-	BufferedImage backbuffer;
-	Graphics2D backgraph;
-	
+	// Swing component to which this SwingView is associated. Used to pro-actively repaint when needed.
+	protected Component component = null;
 	
 	public SwingView(PerspectiveContext context) {
 		super(context);
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView. Width: "+width+", Height: "+height);
-		
-		initFront();
 	}
 
 	public SwingView(int width, int height) {
 		super(width, height);
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView. Width: "+width+", Height: "+height);
-
-		initFront();
 	}
 
 	public SwingView(PerspectiveContext context, Component comp) {
 		super(context);
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView with Swing Component. Width: "+width+", Height: "+height);
-
-		initFront();
-		
-		// Initialize the Component/JComponent to which this gUIView is associated
-		component = comp;
+		this.component = comp;
 	}
 
 	public SwingView(int width, int height, Component comp) {
 		super(width, height);
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creating new SwingView with Swing Component. Width: "+width+", Height: "+height);
-
-		initFront();
-		
-		// Initialize the Component/JComponent to which this gUIView is associated
-		component = comp;
+		this.component = comp;
+	}
+	
+	/**
+	 * Associates (or replaces, or removes with null) the Swing Component to repaint after each frame.
+	 */
+	public void setComponent(Component comp) {
+		this.component = comp;
+	}
+	
+	public Component getComponent() {
+		return component;
 	}
 
+	/**
+	 * After each swap: notifies the frame listener (if any) then requests a repaint of the component (if any).
+	 */
 	@Override
-	public void initView() {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Initializing SwingView");
-		
-		initBack();
-	}
-	
-	@Override
-	public void initView(int width, int height) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Initializing SwingView");
-		
-		this.width  = width;
-		this.height = height;
-		
-		initBack();
-	}
-	
-	protected void initFront() {
-		frontbuffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		frontgraph = (Graphics2D)frontbuffer.getGraphics();
-	
-        // Translate origin of the graphic
-		frontgraph.translate(width/2, height/2);
-	}
-	
-	protected void initBack() {
-		// Reinitialize the back buffer image #2 - need to define color of the back as per Graphic context definition
-		backbuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
-		backgraph = (Graphics2D)backbuffer.getGraphics();
-		// Fill image with background color pixels
-        backgraph.setColor(backgroundColor);
-        backgraph.fillRect(backbuffer.getMinX(), backbuffer.getMinY(), backbuffer.getWidth(), backbuffer.getHeight());
-
-
-        // Translate origin of the graphic
-		backgraph.translate(width/2, height/2);		
-	}
-
-
-	@Override
-	public void renderView() {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render SwingView");
-
-		// Swap : copy the back buffer image #2 into #1 
-		frontbuffer = backbuffer;
-		frontgraph = backgraph;
-		
-		// Repaint the component (if any) since the buffer has been updated.
-		// A SwingView created without a Component renders off-screen only: use getImageView() to get the image.
+	protected void frameRendered(BufferedImage image) {
+		super.frameRendered(image);
 		if (component != null) {
 			component.repaint();
-		}
-	}
-	
-	/**
-	 * This method should be called by the UI 'paint component' method to get the latest generated buffered image
-	 * In background, the back buffer is being built.
-	 * The 'paint component' method is triggered by the renderView() method that is called by render engine when gUIView is computed.
-	 * @return the Front Buffer image
-	 */
-	public BufferedImage getImageView() {
-		return frontbuffer;
-	}
-
-	@Override
-	public void setColor(Color c) {
-		// TODO Auto-generated method stub
-		backgraph.setColor(c);
-	}
-	
-	public void setBackgroundColor(Color c) {
-		this.backgroundColor = c;
-	}
-	
-	@Override
-	public void drawPixel(int x, int y) {
-		drawSwingLine(x,y,x,y);
-	}
-
-	/**
-	 * This method convert from coordinates with Y axis up to Y axis down (SWING)
-	 * 
-	 *   ^ Y			  +------> X
-	 *   |				  |
-	 *   |			-->   |  (SWING coordinates)
-	 *   |				  |
-	 *   +------> X       v Y
-	 * 
-	 * @param x
-	 * @param y (Y axis up)
-	 * @param c the Color of the pixel to draw
-	 */
-	public void drawPixel(int x, int y, Color c) {
-		if (x>=-width/2 && x<width/2 && y<=height/2 && y>-height/2) backbuffer.setRGB(x+width/2, -y+height/2, c.getRGB());
-	}
-	
-
-	@Override
-	public void drawLine(int x1, int y1, int x2, int y2) {
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "drawLine(x1:"+x1+", y1:"+y1+", x2:"+x2+", y2:"+y2);
-		drawSwingLine(x1,y1,x2,y2);
-	}
-	
-	/**
-	 * This method convert from coordinates with Y axis up to Y axis down (SWING)
-	 * 
-	 *   ^ Y			  +------> X
-	 *   |				  |
-	 *   |			-->   |  (SWING coordinates)
-	 *   |				  |
-	 *   +------> X       v Y
-	 * 
-	 * @param x1
-	 * @param y1 (Y axis up)
-	 * @param x2
-	 * @param y2 (Y axis up)
-	 */
-	protected void drawSwingLine(int x1, int y1, int x2, int y2) {
-		backgraph.drawLine(x1,-y1,x2,-y2);
-	}
-
-	@Override
-	public Color getPixel(int x, int y) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	// Caution : MapView should be normalized (using the appropriate method) before the call
-	public void initView(MapView map) {
-		
-		initBack();
-		
-		// Fill the back buffer with the content of the map view
-		// Take the min size of either the map or this view in width and height. That means that if map is larger than view, it will be cropped
-		int minX = map.width < this.width ? map.width : this.width;
-		int minY = map.height < this.height ? map.height : this.height;
-
-		// Loop on x and y on the window defined by the 2 mins
-		for (int x=0; x<minX; x++ ) {
-			for (int y=0; y<minY; y++) {		
-				Color c = new Color(map.get(x,y),  map.get(x,y),  map.get(x,y));
-				//drawPixel(x, y, c);
-				backbuffer.setRGB(x, minY-y-1, c.getRGB());
-			}
 		}
 	}
 

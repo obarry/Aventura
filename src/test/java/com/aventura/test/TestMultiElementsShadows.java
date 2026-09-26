@@ -72,7 +72,7 @@ public class TestMultiElementsShadows {
 		// Set the size of the frame
 		frame.setSize(1000,600);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -177,14 +177,14 @@ public class TestMultiElementsShadows {
 		World world = test.createWorld();
 		Lighting light = test.createLight();
 		PerspectiveContext context = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
-		GUIView gUIView = test.createView(context);
+		GUIView guiView = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		//rContext.setRendering(RenderContext.RenderingType.PLAIN);
 		rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
 		rContext.setShadowing(true);
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		int nb_images = 180;
 		for (int i=0; i<=nb_images; i++) {
 			Vector4 eye = Tools.interpolate(eyeA, eyeB, (float)i/nb_images);

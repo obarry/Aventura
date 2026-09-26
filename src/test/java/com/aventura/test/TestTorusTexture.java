@@ -67,7 +67,7 @@ public class TestTorusTexture {
 		// Set the size of the frame
 		frame.setSize(1200,800);
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -137,7 +137,7 @@ public class TestTorusTexture {
 		Lighting light = new Lighting(dl, al, true);
 		
 		PerspectiveContext pContext = new PerspectiveContext(1.2f, 0.8f, 1, 100, PerspectiveType.FRUSTUM, 1000);
-		GUIView gUIView = test.createView(pContext);
+		GUIView guiView = test.createView(pContext);
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
@@ -148,7 +148,7 @@ public class TestTorusTexture {
 		//rContext.setRenderingLines(true);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		renderer.render();
 
 		System.out.println("********* Rendering...");

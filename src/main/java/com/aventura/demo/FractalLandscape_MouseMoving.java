@@ -129,8 +129,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	long zoomAnimStartMillis;
 
 	/**
-	 * Create the gUIView and associate all needed mouse and key listeners for user interaction with screen
-	 * The renderer will then be called each time Mouse generates a move to the gUIView and a new updated gUIView will be displayed
+	 * Create the view and associate all needed mouse and key listeners for user interaction with screen
+	 * The renderer will then be called each time Mouse generates a move to the view and a new updated view will be displayed
 	 * 
 	 * @param context the PerspectiveContext to be used to create the GUIView
 	 * @return
@@ -175,7 +175,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	    frame.setJMenuBar(menubar);
 
 		
-		// Create the gUIView to be displayed
+		// Create the view to be displayed
 		SwingView view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
@@ -254,7 +254,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         tre.setTransformation(new Transformation(r));
         //tre.combineTransformation(r);
 
-        // Render the updated gUIView after zooming camera and rotating Element
+        // Render the updated view after zooming camera and rotating Element
 		renderer.render();
  	}
 
@@ -323,7 +323,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		// Zoom camera by updating eye on the forward direction
 		camera.updateCamera(eye.plus(camera.getForward().times(appliedZoom/10)), poi, camera.getUp());
 
-		// Render the updated gUIView after zooming camera and rotating Element
+		// Render the updated view after zooming camera and rotating Element
 		renderer.render();
 
 		if (t >= 1f) {
@@ -512,8 +512,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 
 	/**
 	 * Create the World and Camera, generate a Treillis based on Fractal recursivity to create a Landscape
-	 * Create the Graphic Swing gUIView by calling the createView method that will associate mouse Listners to the panel so that user can 
-	 * interact with the gUIView and move it or zomm in it.
+	 * Create the Graphic Swing view by calling the createView method that will associate mouse Listners to the panel so that user can 
+	 * interact with the view and move it or zomm in it.
 	 */
 	public void run() {
 		
@@ -576,8 +576,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1250);
 		//PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveType.ORTHOGRAPHIC, 125);
 		
-		// Create gUIView
-		GUIView gUIView = this.createView(pContext);
+		// Create view
+		GUIView guiView = this.createView(pContext);
 
 		// Rendering context
 		//rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
@@ -588,9 +588,9 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 
 		//rContext.setRendering(RenderContext.RenderingType.INTERPOLATE);
 		
-		// Initialize Render Engine and render a first gUIView
+		// Initialize Render Engine and render a first view
 		renderer = new RenderEngine(world, light, camera, rContext, pContext);
-		renderer.setView(gUIView);
+		renderer.setView(guiView);
 		renderer.render();
 		
 		System.out.println("********* APPLICATION LAUNCHED *********");

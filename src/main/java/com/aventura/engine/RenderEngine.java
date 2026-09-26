@@ -68,7 +68,7 @@ import com.aventura.view.MapView;
  * - 2 Contexts allowing to define all parameters before calling API methodsand passed to the API before rendering. These contexts can be pre-built and
  *   allow to render the same World differently e.g. with more or less time-consuming capabilities (texture, shading, shaodwing etc.) or different
  *   Geometry (projection, view frustum, etc.) :
- * 		* a Graphic or Geometry Context to provide information on how to show the world in the gUIView (perspective and projection, frustum, etc.)
+ * 		* a Graphic or Geometry Context to provide information on how to show the world in the view (perspective and projection, frustum, etc.)
  * 		* a Render Context to provide information on how to render the world (Rasterization), including activation/deactivation of shading, shadowing,
  *        textures, etc.
  * 
@@ -119,7 +119,7 @@ public class RenderEngine {
 	private Camera camera;
 	
 	// GUIView
-	private GUIView gUIView;
+	private GUIView guiView;
 	
 	// Split from the former single ModelViewProjection class into its two real roles:
 	// - viewProjection: pure View*Projection projector, used by ScreenLineRenderer for debug vectors
@@ -184,7 +184,7 @@ public class RenderEngine {
 		
 
 	public void setView(GUIView v) {
-		gUIView = v;
+		guiView = v;
 		screenLineRenderer = new ScreenLineRenderer(perspectiveContext, viewProjection, v);
 	}
 	
@@ -230,8 +230,8 @@ public class RenderEngine {
 		world.worldProject(); // To be done before potential Light's cameras calculation (need full world geometry available to calculate bounding boxes etc.)
 		
 		// Initialize backbuffer in the GUIView
-		gUIView.setBackgroundColor(world.getBackgroundColor());
-		gUIView.initView();
+		guiView.setBackgroundColor(world.getBackgroundColor());
+		guiView.initView();
 		
 		// zBuffer clear (if applicable) -- mainZBuffer is built once, in the constructor; only
 		// cleared here, every frame, rather than reallocated (as the legacy per-frame
@@ -312,7 +312,7 @@ public class RenderEngine {
 		}
 
 		// Switch back and front buffers and request GUI repaint
-		gUIView.renderView();
+		guiView.renderView();
 
 		// Snapshot this frame's diagnostic deltas (RasterizerStats) -- see its Javadoc.
 		stats.endFrame();
@@ -533,7 +533,7 @@ public class RenderEngine {
 				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY)
 				: new SolidMaterial(color != null ? color : Color.WHITE, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY);
 
-		ShadingConsumer consumer = new ShadingConsumer(material, lighting, camera, mainZBuffer, gUIView, shadows);
+		ShadingConsumer consumer = new ShadingConsumer(material, lighting, camera, mainZBuffer, guiView, shadows);
 
 		// TriangleRasterizer's pixel counters accumulate until reset: reset them for each triangle so that
 		// recordTriangle() below receives THIS triangle's counts (as the former Rasterizer facade did).
