@@ -282,7 +282,7 @@ All demos live in `com.aventura.demo`.
 | --- | --- | --- |
 | `EarthAndMoon` | Two textured spheres, a directional light and specular highlights (the picture at the top of this page) | None: renders a still frame |
 | `AventuraDemo` | Textured cone, cylinder, sphere, cube, box, trellis and pyramid, spinning in 3D, with the coordinate axes displayed | None: animated |
-| `FractalLandscape_MouseMoving` | A procedural fractal terrain built on a `Trellis` | Drag the mouse to rotate, mouse wheel to zoom; `Run` menu: regenerate, toggle texture; `Rendering` menu: lines, monochrome, unlit, flat, shading, shadows |
+| `FractalLandscape_MouseMoving` | A procedural fractal terrain built on a `Trellis` | Drag the mouse to rotate, mouse wheel to zoom; `Run` menu: regenerate, toggle texture, toggle shadows; `Rendering` menu: lines, monochrome, unlit, flat, shading |
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 

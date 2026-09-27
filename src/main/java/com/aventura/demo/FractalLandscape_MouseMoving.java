@@ -77,7 +77,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// GUI Frame and Menus
 	JFrame frame;
 	JMenu menu1, menu2;
-	JMenuItem m1e1, m1e2, m2e1, m2e2, m2e3, m2e4, m2e5, m2e6;
+	JMenuItem m1e1, m1e2, m1e3, m2e1, m2e2, m2e3, m2e5, m2e6;
 	boolean texture_menu = false;
 	boolean shading_menu = true;
 	boolean shadow_menu = false;
@@ -156,8 +156,12 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	    m1e1.addActionListener(this);
 	    m1e2 = new JMenuItem("Texture off");
 	    m1e2.addActionListener(this);
+	    // Texture and shadows are options independent of the rendering type (Rendering menu)
+	    m1e3 = new JMenuItem("Shadows off");
+	    m1e3.addActionListener(this);
 	    menu1.add(m1e1); 
 	    menu1.add(m1e2); 
+	    menu1.add(m1e3); 
 	    menubar.add(menu1);
 	    
 	    // Create menu2
@@ -172,14 +176,11 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	    m2e2.addActionListener(this);
 	    m2e3 = new JMenuItem("Shading on");
 	    m2e3.addActionListener(this);
-	    m2e4 = new JMenuItem("Shadows off");
-	    m2e4.addActionListener(this);
 	    menu2.add(m2e1);
 	    menu2.add(m2e5);
 	    menu2.add(m2e6);
 	    menu2.add(m2e2);
 	    menu2.add(m2e3);
-	    menu2.add(m2e4);
 	    menubar.add(menu2);
 
 	    // Add menu bar to the frame
@@ -367,8 +368,9 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 
 
 	/**
-	 * Switches the rendering type, updates the Rendering menu labels and renders. The texture toggle is only
-	 * available for the rendering types that process textures (UNLIT, FLAT, INTERPOLATE).
+	 * Switches the rendering type, updates the Rendering menu labels and renders. The texture toggle (Run menu)
+	 * is only available for the rendering types that process textures (UNLIT, FLAT, INTERPOLATE), the shadows
+	 * toggle for the ones that use the lights (FLAT, INTERPOLATE).
 	 */
 	private void selectRendering(RenderContext.RenderingType type) {
 		rContext.setRenderingType(type);
@@ -381,6 +383,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		shading_menu = type == RenderContext.RenderingType.UNLIT || type == RenderContext.RenderingType.FLAT
 				|| type == RenderContext.RenderingType.INTERPOLATE;
 		m1e2.setEnabled(shading_menu);
+		m1e3.setEnabled(type == RenderContext.RenderingType.FLAT || type == RenderContext.RenderingType.INTERPOLATE);
 	}
 
 	public void actionPerformed(ActionEvent e) {
@@ -425,17 +428,17 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 			selectRendering(RenderContext.RenderingType.FLAT);
 		} else if (e.getSource() == m2e3) { // Rendering Shading
 			selectRendering(RenderContext.RenderingType.INTERPOLATE);
-		} else if (e.getSource() == m2e4) { // Shadows on/off (toggle)
+		} else if (e.getSource() == m1e3) { // Shadows on/off (toggle)
 
 			if (shadow_menu) {
 				rContext.setShadowing(false);
 				renderer.render();
-				m2e4.setText("Shadows off");
+				m1e3.setText("Shadows off");
 				shadow_menu = false;
 			} else {
 				rContext.setShadowing(true);
 				renderer.render();
-				m2e4.setText("Shadows on");
+				m1e3.setText("Shadows on");
 				shadow_menu = true;
 			}
 		} else {
