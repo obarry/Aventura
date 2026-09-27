@@ -106,9 +106,14 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	int zoom = 0;
 	static int NB_ROTATIONS = 90;
 	
-	int mouse_click_X, mouse_click_Y;
+	// Mouse drag: last known position (updated on each event) and total displacement over all drags so far
+	int mouse_last_X, mouse_last_Y;
 	int mouse_dragged_X = 0;
 	int mouse_dragged_Y = 0;
+	// Drag sensitivity: dragging across the whole window width rotates by DRAG_ANGLE_PER_WIDTH radians
+	// (around Z), across the whole height by DRAG_ANGLE_PER_HEIGHT radians (around Y)
+	static final float DRAG_ANGLE_PER_WIDTH = (float) Math.PI;
+	static final float DRAG_ANGLE_PER_HEIGHT = (float) Math.PI / 2;
 
 	// CTRL key + mouse flag
 	boolean key_control = false;
@@ -228,9 +233,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	}
 	
 	public void mousePressed(MouseEvent e) {
-		// Store the location when mouse is clicked, it will be used during mouse is dragged to calculate the x and y variations
-		// and rotate the Element accordingly3
-		mouse_click_X = e.getX(); mouse_click_Y = e.getY();
+		// Store the location when mouse is clicked: mouseDragged() accumulates the displacement from one event to the next
+		mouse_last_X = e.getX(); mouse_last_Y = e.getY();
 	}
 
      public void mouseEntered(MouseEvent e) {
@@ -250,12 +254,17 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
      }
 
  	public void mouseDragged(MouseEvent e) {
-        mouse_dragged_X += e.getX() - mouse_click_X;
-        mouse_dragged_Y += e.getY() - mouse_click_Y;
+        // Accumulate the displacement since the PREVIOUS event (not since the click): the total, hence the angle,
+        // only depends on the mouse movement, whatever the number of events. Swing coalesces the drag events
+        // while a (slow, e.g. zoomed-in) frame is rendered: adding the offset since the click at each event
+        // made the rotation depend on the rendering speed, and not come back when the mouse did.
+        mouse_dragged_X += e.getX() - mouse_last_X;
+        mouse_dragged_Y += e.getY() - mouse_last_Y;
+        mouse_last_X = e.getX(); mouse_last_Y = e.getY();
         //System.out.println("Drag X: " + mouse_dragged_X + " Drag Y: " + mouse_dragged_Y);
 
-        float angleZ = (float)Math.PI*(float)mouse_dragged_X/frame.getWidth()/8;
-        float angleY = (float)Math.PI*(float)mouse_dragged_Y/frame.getHeight()/16;
+        float angleZ = dragAngle(mouse_dragged_X, frame.getWidth(), DRAG_ANGLE_PER_WIDTH);
+        float angleY = dragAngle(mouse_dragged_Y, frame.getHeight(), DRAG_ANGLE_PER_HEIGHT);
         Rotation r = composeDragRotation(angleZ, angleY);
         tre.setTransformation(new Transformation(r));
         //tre.combineTransformation(r);
@@ -263,6 +272,14 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         // Render the updated view after zooming camera and rotating Element
 		renderer.render();
  	}
+
+	/**
+	 * Rotation angle for a total mouse displacement: proportional to the displacement, anglePerSize radians
+	 * for a displacement of the whole window size. Package-private and static so it can be unit-tested.
+	 */
+	static float dragAngle(int displacement, int windowSize, float anglePerSize) {
+		return anglePerSize * displacement / windowSize;
+	}
 
 	/**
 	 * Composes the two-axis (Z then Y) drag rotation via Quaternion instead of the equivalent

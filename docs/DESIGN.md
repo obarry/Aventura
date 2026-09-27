@@ -644,7 +644,7 @@ pie showData
     title JUnit test methods by area
     "Math: vectors, matrices, quaternions" : 244
     "Lighting (point, spot, shadow maps, smoke renders)" : 35
-    "Demo logic (camera, flight path…)" : 33
+    "Demo logic (camera, flight path, mouse drag…)" : 34
     "Rendering (context, rendering types, views)" : 25
     "Camera, perspective, elements" : 18
     "Transforms (T, R, S)" : 13
