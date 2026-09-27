@@ -20,6 +20,16 @@ import com.aventura.math.vector.Vector4;
 public class TestFractalLandscape_MouseMoving {
 
 	@Test
+	public void testDragAngle_isProportionalToTheDisplacement() {
+		System.out.println("***** Test FractalLandscape_MouseMoving : dragAngle() is proportional to the displacement *****");
+
+		float perWidth = FractalLandscape_MouseMoving.DRAG_ANGLE_PER_WIDTH;
+		assertEquals(0f, FractalLandscape_MouseMoving.dragAngle(0, 1000, perWidth), 0f);
+		assertEquals(perWidth, FractalLandscape_MouseMoving.dragAngle(1000, 1000, perWidth), 1e-6f);
+		assertEquals(-perWidth / 4, FractalLandscape_MouseMoving.dragAngle(-250, 1000, perWidth), 1e-6f);
+	}
+
+	@Test
 	public void testComposeDragRotation_atZeroAngles_isIdentity() {
 		System.out.println("***** Test FractalLandscape_MouseMoving : composeDragRotation(0,0) is a no-op *****");
 
