@@ -21,7 +21,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 - **Ready-made shapes.** Box, cube, sphere, cone, cone frustum, cylinder, disc, pyramid, torus and height-field grids (`Trellis`), plus your own geometry from triangles and meshes.
 - **Hierarchical scene graph.** Elements can contain sub-elements; translations, rotations and scalings compose down the tree.
 - **A math library you can reuse.** `Vector2/3/4`, `Matrix2/3/4`, `Quaternion` (with `slerp`), a Gauss-Jordan solver and geometry helpers, all unit-tested.
-- **Several rendering modes on the same scene.** Wireframe, flat, plain and smooth (per-pixel) shading, with or without textures and shadows, plus debug overlays (axes, normals, light vectors).
+- **Several rendering modes on the same scene.** Wireframe (with or without hidden lines), unlit colors or textures, flat (faceted) and smooth (per-pixel) shading, with or without textures and shadows, plus debug overlays (axes, normals, light vectors).
 - **Display-agnostic.** The engine renders to an abstract `GUIView`. `ImageView` renders into double-buffered `BufferedImage`s with no GUI dependency (image files, headless servers, or any GUI toolkit through a frame listener); `SwingView` adds the repaint of a Swing component.
 
 ## Gallery
@@ -214,7 +214,7 @@ The default size depends on the type of light: `getDefaultShadowMapSize()` retur
 A `RenderEngine` renders one `World` seen through one `Camera`, lit by one `Lighting` system. Two context objects carry every parameter, so the same scene can be rendered cheaply or richly just by swapping contexts:
 
 - `PerspectiveContext`: how the world is projected on screen (frustum or orthographic, view plane size, near and far distances, pixels per unit);
-- `RenderContext`: how it is rasterized (wireframe, flat, plain or smooth shading; textures; shadows; back-face culling; debug overlays).
+- `RenderContext`: how it is rasterized (wireframe, hidden-line, unlit, flat or smooth shading; textures; shadows; back-face culling; debug overlays).
 
 ```mermaid
 flowchart LR
@@ -294,7 +294,7 @@ The `src/test/java/com/aventura/test` folder holds about seventy additional visu
 mvn test
 ```
 
-The unit tests (JUnit 4, about 330 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone), the perspective bounds, a smoke render of every light type with and without shadows, and the pure logic of the interactive demos. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 370 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, and the pure logic of the interactive demos. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 

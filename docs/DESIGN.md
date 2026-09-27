@@ -7,7 +7,7 @@
 |---|---|
 | **What** | A software 3D rendering engine: scene API → CPU rasterizer → pixels |
 | **Language** | Java 21, JDK only (`java.desktop`), no native code, no GPU |
-| **Size** | ~20 k lines in `src/main`, ~97 test classes, ~336 JUnit tests |
+| **Size** | ~20 k lines in `src/main`, ~105 test classes, ~375 JUnit tests |
 | **License** | MIT |
 | **Status** | `0.0.1-SNAPSHOT` — stable core, lighting & shadows actively evolving |
 
@@ -273,14 +273,14 @@ sequenceDiagram
     participant SL as ShadowingLight(s)
     participant ET as ElementTransform
     participant TR as TriangleRasterizer
-    participant SC as ShadingConsumer
+    participant SC as ShadingConsumer / UnlitConsumer
     participant V as GUIView
 
     App->>RE: render()
     RE->>RE: viewProjection.refresh()
     RE->>W: worldProject()
     RE->>V: initView() · clear Z-buffer
-    opt shadows enabled
+    opt shadows enabled (FLAT, INTERPOLATE)
         loop each shadowing light
             RE->>SL: initShadowing(perspective, camera, world)
             RE->>SL: generateShadowMap(world)
@@ -642,17 +642,21 @@ Two complementary test families run from Maven:
 ```mermaid
 pie showData
     title JUnit test methods by area
-    "Math: vectors, matrices, quaternions" : 242
+    "Math: vectors, matrices, quaternions" : 244
+    "Lighting (point, spot, shadow maps, smoke renders)" : 35
     "Demo logic (camera, flight path…)" : 33
-    "Lighting (point, spot, smoke renders)" : 28
+    "Rendering (context, rendering types, views)" : 25
+    "Camera, perspective, elements" : 18
     "Transforms (T, R, S)" : 13
     "Z-buffer" : 8
-    "Camera, perspective, elements, tools" : 12
 ```
 
 The math library is the most heavily tested part because every other stage depends on it.
 Lighting has both analytical tests (attenuation curves, cone factor) and **smoke renders** of each
-light type with and without shadows. Diagnostic counters (`RasterizerStats`, triangle
+light type with and without shadows. The rendering types are checked on **off-screen renders**,
+pixel by pixel (for example: `UNLIT` gives exactly the base colour, `MONOCHROME` hides the edges
+that `LINE` shows, `FLAT` follows the texture option); `TestRenderingModes` shows them all by eye.
+Diagnostic counters (`RasterizerStats`, triangle
 in/out/back-face counts, shadow-map stats) and the `Tracer` utility help investigate regressions.
 
 ---
@@ -676,7 +680,8 @@ timeline
          : Shadow-map depth fixes
     2026 : Fragment/Consumer rasterizer, Material
          : Quaternion + slerp, Matrix2, Maven layout
-         : SpotLight, UrbanScape, 330+ unit tests
+         : SpotLight, UrbanScape, 370+ unit tests
+         : Rendering types: MONOCHROME (hidden-line), UNLIT
 ```
 
 Commit activity reflects this: two intense phases (2016–2017 and 2024–2026) around a quieter period.
