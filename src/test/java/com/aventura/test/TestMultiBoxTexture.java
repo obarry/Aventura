@@ -152,7 +152,7 @@ public class TestMultiBoxTexture {
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_FLAT);
 		rContext.setTextureProcessing(true);
 		//rContext.setDisplayNormals(true);
 		//rContext.setDisplayLandmark(true);

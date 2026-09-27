@@ -24,13 +24,15 @@ public class TestRenderContext {
 		assertFalse(r.isDisplayLight());
 		assertFalse(r.isTextureProcessing());
 		assertFalse(r.isShadowing());
+		assertNull(r.getMonochromeColor()); // null = the World's background color
 		assertFalse(r.isFrozen());
 	}
 
 	@Test
 	public void testPresetsAreImmutable() {
-		RenderContext[] presets = { RenderContext.RENDER_STANDARD_PLAIN, RenderContext.RENDER_STANDARD_PLAIN_SHADOWS,
-				RenderContext.RENDER_STANDARD_PLAIN_WITH_LANDMARKS, RenderContext.RENDER_STANDARD_INTERPOLATE,
+		RenderContext[] presets = { RenderContext.RENDER_STANDARD_FLAT, RenderContext.RENDER_STANDARD_FLAT_SHADOWS,
+				RenderContext.RENDER_STANDARD_FLAT_WITH_LANDMARKS, RenderContext.RENDER_STANDARD_UNLIT,
+				RenderContext.RENDER_MONOCHROME, RenderContext.RENDER_STANDARD_INTERPOLATE,
 				RenderContext.RENDER_STANDARD_INTERPOLATE_SHADOWS, RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS,
 				RenderContext.RENDER_DEFAULT, RenderContext.RENDER_DEFAULT_ALL_ENABLED };
 		for (RenderContext preset : presets) {
@@ -54,6 +56,16 @@ public class TestRenderContext {
 		assertTrue(RenderContext.RENDER_DEFAULT_ALL_ENABLED.isDisplayLandmark());
 		assertTrue(RenderContext.RENDER_DEFAULT_ALL_ENABLED.isDisplayNormals());
 		assertTrue(RenderContext.RENDER_DEFAULT_ALL_ENABLED.isDisplayLight());
+		assertEquals(RenderingType.FLAT, RenderContext.RENDER_STANDARD_FLAT_SHADOWS.getRenderingType());
+		assertTrue(RenderContext.RENDER_STANDARD_FLAT_SHADOWS.isShadowing());
+		assertEquals(RenderingType.UNLIT, RenderContext.RENDER_STANDARD_UNLIT.getRenderingType());
+		assertEquals(RenderingType.MONOCHROME, RenderContext.RENDER_MONOCHROME.getRenderingType());
+		assertNull(RenderContext.RENDER_MONOCHROME.getMonochromeColor());
+	}
+
+	@Test(expected = IllegalStateException.class)
+	public void testMonochromeColorOfPresetNotModifiable() {
+		RenderContext.RENDER_MONOCHROME.setMonochromeColor(Color.WHITE);
 	}
 
 	@Test
@@ -72,7 +84,7 @@ public class TestRenderContext {
 
 	@Test
 	public void testCopyConstructorCopiesEverything() {
-		RenderContext r = new RenderContext(RenderingType.PLAIN)
+		RenderContext r = new RenderContext(RenderingType.MONOCHROME)
 				.setRenderingLines(true)
 				.setDisplayLandmark(true)
 				.setDisplayNormals(true)
@@ -82,9 +94,10 @@ public class TestRenderContext {
 				.setShadowing(true)
 				.setLandmarkColors(Color.CYAN, Color.MAGENTA, Color.ORANGE)
 				.setNormalsColor(Color.PINK)
-				.setLightVectorsColor(Color.GRAY);
+				.setLightVectorsColor(Color.GRAY)
+				.setMonochromeColor(Color.LIGHT_GRAY);
 		RenderContext c = new RenderContext(r);
-		assertEquals(RenderingType.PLAIN, c.getRenderingType());
+		assertEquals(RenderingType.MONOCHROME, c.getRenderingType());
 		assertTrue(c.isRenderingLines());
 		assertTrue(c.isDisplayLandmark());
 		assertTrue(c.isDisplayNormals());
@@ -97,6 +110,7 @@ public class TestRenderContext {
 		assertEquals(Color.ORANGE, c.getLandmarkZColor());
 		assertEquals(Color.PINK, c.getNormalsColor());
 		assertEquals(Color.GRAY, c.getLightVectorsColor());
+		assertEquals(Color.LIGHT_GRAY, c.getMonochromeColor());
 		assertEquals(r.toString(), c.toString());
 	}
 

@@ -49,6 +49,8 @@ import java.awt.Color;
  * Sep-2026 : int constants replaced by the RenderingType enum and booleans, private fields with accessors,
  * immutable presets, fluent setters, complete copy constructor. DISPLAY_LANDMARK_ENABLED_ARROW / _3D removed
  * (never implemented).
+ * Sep-2026 : rendering types reworked (backlog #5): PLAIN removed (use FLAT), UNLIT added, MONOCHROME implemented
+ * (hidden-line rendering) with setMonochromeColor(). Texture processing is honored by every filled type.
  * 
  * Future Evolution :
  * - The RenderContext should remain as independent as possible on the display and windowing technology (e.g. Swing or SWT).
@@ -61,21 +63,25 @@ import java.awt.Color;
 public class RenderContext {
 	
 	/**
-	 * How the triangles are drawn.
+	 * How the triangles are drawn. Textures (setTextureProcessing) and shadows (setShadowing) are separate
+	 * options: textures apply to UNLIT, FLAT and INTERPOLATE, shadows to FLAT and INTERPOLATE only.
 	 */
 	public enum RenderingType {
-		/** Draw only lines (wireframe), no ZBuffer */
+		/** Draw only the triangles' edges (wireframe), no ZBuffer: hidden edges are visible */
 		LINE,
-		/** Fill each triangle with its color, no shading -- NOT IMPLEMENTED YET (draws nothing) */
+		/** Hidden-line wireframe: faces filled with a single color (see setMonochromeColor, default: the World's
+		 * background color) only to hide what is behind them, edges always drawn in the triangle/Element color
+		 * and depth-tested. No lighting, no texture, no shadow. */
 		MONOCHROME,
-		/** Fill each triangle with shading, texture always processed when the triangle has one (legacy behavior) */
-		PLAIN,
-		/** Fill each triangle by interpolating each pixel's normal/color (Gouraud/Phong-like) */
-		INTERPOLATE,
-		/** Fill each triangle using a single normal for the whole face (faceted look), regardless of whether
-		 * the triangle/mesh also has per-vertex normals -- unlike PLAIN, which only looks "flat" incidentally
-		 * when the mesh happens to carry an explicit per-triangle normal (Triangle.isTriangleNormal()) */
-		FLAT
+		/** Fill each triangle with its own base color (triangle or Element color, or texture sample if texture
+		 * processing is enabled) without any lighting: no shading, no shadow. Edges only if setRenderingLines(true). */
+		UNLIT,
+		/** Shading with a single normal for the whole face (faceted look), regardless of whether the triangle/mesh
+		 * also has per-vertex normals */
+		FLAT,
+		/** Shading by interpolating each pixel's normal (Phong-like), unless the triangle forces its own normal
+		 * (Triangle.isTriangleNormal()) */
+		INTERPOLATE
 	}
 	
 	// ------------------------
@@ -107,17 +113,22 @@ public class RenderContext {
 	private Color normalsColor = Color.WHITE;
 	private Color lightVectorsColor = Color.YELLOW;
 	
+	// Fill color of the MONOCHROME rendering type, null means "the World's background color"
+	private Color monochromeColor = null;
+	
 	// Immutable flag, set on the presets below
 	private boolean frozen = false;
 
 	
 	// Default (immutable) RenderContexts to be used for easy display -- duplicate them to customize
-	public static final RenderContext RENDER_STANDARD_PLAIN = new RenderContext(RenderingType.PLAIN).freeze();
-	public static final RenderContext RENDER_STANDARD_PLAIN_SHADOWS = new RenderContext(RenderingType.PLAIN).setShadowing(true).freeze();
-	public static final RenderContext RENDER_STANDARD_PLAIN_WITH_LANDMARKS = new RenderContext(RenderingType.PLAIN).setDisplayLandmark(true).freeze();
+	public static final RenderContext RENDER_STANDARD_FLAT = new RenderContext(RenderingType.FLAT).freeze();
+	public static final RenderContext RENDER_STANDARD_FLAT_SHADOWS = new RenderContext(RenderingType.FLAT).setShadowing(true).freeze();
+	public static final RenderContext RENDER_STANDARD_FLAT_WITH_LANDMARKS = new RenderContext(RenderingType.FLAT).setDisplayLandmark(true).freeze();
 	public static final RenderContext RENDER_STANDARD_INTERPOLATE = new RenderContext(RenderingType.INTERPOLATE).freeze();
 	public static final RenderContext RENDER_STANDARD_INTERPOLATE_SHADOWS = new RenderContext(RenderingType.INTERPOLATE).setShadowing(true).freeze();
 	public static final RenderContext RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS = new RenderContext(RenderingType.INTERPOLATE).setDisplayLandmark(true).freeze();
+	public static final RenderContext RENDER_STANDARD_UNLIT = new RenderContext(RenderingType.UNLIT).freeze();
+	public static final RenderContext RENDER_MONOCHROME = new RenderContext(RenderingType.MONOCHROME).freeze();
 	public static final RenderContext RENDER_DEFAULT = new RenderContext(RenderingType.LINE).setDisplayLandmark(true).freeze();
 	public static final RenderContext RENDER_DEFAULT_ALL_ENABLED = new RenderContext(RenderingType.LINE).setDisplayLandmark(true).setDisplayNormals(true).setDisplayLight(true).freeze();
 	
@@ -152,6 +163,7 @@ public class RenderContext {
 		this.landmarkZColor = r.landmarkZColor;
 		this.normalsColor = r.normalsColor;
 		this.lightVectorsColor = r.lightVectorsColor;
+		this.monochromeColor = r.monochromeColor;
 	}
 	
 	/**
@@ -305,6 +317,24 @@ public class RenderContext {
 		return this;
 	}
 	
+	/**
+	 * @return the fill color of the MONOCHROME rendering type, or null if it is the World's background color
+	 */
+	public Color getMonochromeColor() {
+		return monochromeColor;
+	}
+
+	/**
+	 * Fill color of the faces in MONOCHROME rendering (edges keep the triangle/Element color).
+	 * @param monochromeColor the fill color, or null (default) to use the World's background color, which gives
+	 *                        the classic hidden-line look (faces blend into the background)
+	 */
+	public RenderContext setMonochromeColor(Color monochromeColor) {
+		checkNotFrozen();
+		this.monochromeColor = monochromeColor;
+		return this;
+	}
+	
 	private static String onOff(boolean b) {
 		return b ? "ENABLED" : "DISABLED";
 	}
@@ -318,7 +348,8 @@ public class RenderContext {
 				+ "* Display light vectors: " + onOff(displayLight) + "\n"
 				+ "* Backface culling:      " + onOff(backfaceCulling) + "\n"
 				+ "* Texture processing:    " + onOff(textureProcessing) + "\n"
-				+ "* Shadowing:             " + onOff(shadowing) + "\n";
+				+ "* Shadowing:             " + onOff(shadowing) + "\n"
+				+ "* Monochrome color:      " + (monochromeColor == null ? "World background" : monochromeColor) + "\n";
 	}
 
 }

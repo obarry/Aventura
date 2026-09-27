@@ -156,7 +156,7 @@ public class TestSphereTexture {
 
 		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		//rContext.setBackFaceCulling(false);
-		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_FLAT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(true);
 		//rContext.setRenderingLines(true);

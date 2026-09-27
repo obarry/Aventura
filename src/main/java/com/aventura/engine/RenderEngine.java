@@ -242,8 +242,9 @@ public class RenderEngine {
 			zBuffer = mainZBuffer.getMapView();
 		}
 		
-		// Shadowing initialization and Shadow map(s) calculation
-		if (renderContext.isShadowing()) {
+		// Shadowing initialization and Shadow map(s) calculation -- only for the lit rendering types
+		// (LINE, MONOCHROME and UNLIT do not use any light, so shadow maps would be computed for nothing)
+		if (renderContext.isShadowing() && isLitRenderingType(renderContext.getRenderingType())) {
 			
 			// To calculate the projection matrix (or matrices if several light sources) :
 			// - Need to define the bounding box in which the elements will be used to calculate the shadow map
@@ -437,23 +438,23 @@ public class RenderEngine {
 
 					switch (renderContext.getRenderingType()) {
 					case MONOCHROME:
-						//TODO To be implemented
-						//TODO To be renamed into NO_SHADING ?
-						// Render faces with only face (or default) color + plain lines to show the faces
-						// No shading
+						// Hidden-line wireframe: faces filled with a single color (default: the World's background
+						// color) only to hide what is behind them, then edges always drawn, depth-tested.
+						Color fill = renderContext.getMonochromeColor() != null ? renderContext.getMonochromeColor() : world.getBackgroundColor();
+						rasterizeUnlitTriangle(t, fill, false);
+						screenLineRenderer.drawTriangleEdgesDepthTested(t, color != null ? color : Color.WHITE, mainZBuffer);
 						break;
-					case PLAIN:
-						// NOTE: kept exactly as before (interpolate=true, texture forced on
-						// unconditionally) for backward compatibility -- despite its name and
-						// original comment, this does NOT actually force a single flat normal
-						// unless the triangle happens to have isTriangleNormal() set; see
-						// RENDERING_TYPE_FLAT below for a mode that genuinely always does.
-						rasterizeShadedTriangle(t, color, se, sc, true, true, renderContext.isShadowing());
+					case UNLIT:
+						// Base color (or texture) without any lighting; edges only if enabled, depth-tested, and
+						// darker than the face color (with no shading, edges of the face color would be invisible).
+						rasterizeUnlitTriangle(t, color, renderContext.isTextureProcessing());
+						if (renderContext.isRenderingLines()) {
+							screenLineRenderer.drawTriangleEdgesDepthTested(t, (color != null ? color : Color.WHITE).darker(), mainZBuffer);
+						}
 						break;
 					case FLAT:
 						// Always uses the triangle's single flat normal (interpolate=false),
 						// regardless of isTriangleNormal() -- genuine faceted/angular shading.
-						// Respects textureProcessing the same way INTERPOLATE does, for consistency.
 						rasterizeShadedTriangle(t, color, se, sc, false,
 								renderContext.isTextureProcessing(),
 								renderContext.isShadowing());
@@ -469,8 +470,8 @@ public class RenderEngine {
 						break;
 					}
 
-					// Superimpose lines when enabled in the previous modes
-					if (renderContext.isRenderingLines() && renderContext.getRenderingType() != RenderingType.LINE) {
+					// Superimpose lines when enabled on the lit rendering types (not depth-tested, as before)
+					if (renderContext.isRenderingLines() && isLitRenderingType(renderContext.getRenderingType())) {
 						screenLineRenderer.drawTriangleEdges(t, color);				
 					}
 
@@ -490,6 +491,51 @@ public class RenderEngine {
 		}
 	}
 		
+	/**
+	 * Returns the face normal flipped if it points against the triangle's vertex normals (FLAT rendering of a
+	 * mesh whose triangles are wound the other way, e.g. Sphere: its face normals point inwards while its
+	 * vertex normals point outwards, which made a FLAT sphere unlit). Unchanged if the vertices have no normal.
+	 */
+	private static Vector3 orientLikeVertexNormals(Vector3 faceNormal, Triangle t) {
+		Vector3 n1 = t.getV1().getWorldNormal(), n2 = t.getV2().getWorldNormal(), n3 = t.getV3().getWorldNormal();
+		if (faceNormal == null || n1 == null || n2 == null || n3 == null) return faceNormal;
+		return faceNormal.dot(n1.plus(n2).plus(n3)) < 0 ? faceNormal.times(-1) : faceNormal;
+	}
+
+	/**
+	 * @return true for the rendering types that use the lights (and shadows): FLAT and INTERPOLATE
+	 */
+	private static boolean isLitRenderingType(RenderingType type) {
+		return type == RenderingType.FLAT || type == RenderingType.INTERPOLATE;
+	}
+
+	/**
+	 * Rasterizes t without any lighting (UNLIT and MONOCHROME rendering types): each pixel gets the
+	 * base color of the Material (UnlitConsumer). No normal is interpolated.
+	 *
+	 * @param t       the triangle to rasterize
+	 * @param color   the surface color, tinting the texture sample if textured; may be null (white)
+	 * @param texture whether to sample t's texture (if it has one)
+	 */
+	private void rasterizeUnlitTriangle(Triangle t, Color color, boolean texture) {
+
+		boolean useTexture = texture && t.getTexture() != null;
+		Material material = useTexture
+				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, DEFAULT_SPECULAR_COLOR, 0, LEGACY_AMBIENT_REFLECTIVITY)
+				: new SolidMaterial(color != null ? color : Color.WHITE, DEFAULT_SPECULAR_COLOR, 0, LEGACY_AMBIENT_REFLECTIVITY);
+
+		UnlitConsumer consumer = new UnlitConsumer(material, mainZBuffer, guiView);
+
+		triangleRasterizer.resetStats(); // see rasterizeShadedTriangle()
+		if (useTexture) {
+			// Null normals: no normal or world position interpolation, only the texture coordinates
+			triangleRasterizer.rasterize(t, null, null, null, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
+		} else {
+			triangleRasterizer.rasterize(t, consumer);
+		}
+		stats.recordTriangle(triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
+	}
+
 	/**
 	 * Resolves a Material and the right normals from (color, se, sc, interpolate, texture),
 	 * then rasterizes t through the direct pipeline (TriangleRasterizer + ShadingConsumer) --
@@ -514,6 +560,7 @@ public class RenderEngine {
 		Vector3 normal1, normal2, normal3;
 		if (!interpolate || t.isTriangleNormal()) {
 			Vector3 flat = t.getWorldNormal();
+			if (!t.isTriangleNormal()) flat = orientLikeVertexNormals(flat, t);
 			normal1 = flat;
 			normal2 = flat;
 			normal3 = flat;

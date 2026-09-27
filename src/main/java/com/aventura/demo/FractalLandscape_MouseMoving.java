@@ -77,7 +77,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// GUI Frame and Menus
 	JFrame frame;
 	JMenu menu1, menu2;
-	JMenuItem m1e1, m1e2, m2e1, m2e2, m2e3, m2e4;
+	JMenuItem m1e1, m1e2, m2e1, m2e2, m2e3, m2e4, m2e5, m2e6;
 	boolean texture_menu = false;
 	boolean shading_menu = true;
 	boolean shadow_menu = false;
@@ -159,13 +159,19 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	    menu2 = new JMenu("Rendering");
 	    m2e1 = new JMenuItem("Lines off");
 	    m2e1.addActionListener(this);
-	    m2e2 = new JMenuItem("Plain off");
+	    m2e5 = new JMenuItem("Monochrome off");
+	    m2e5.addActionListener(this);
+	    m2e6 = new JMenuItem("Unlit off");
+	    m2e6.addActionListener(this);
+	    m2e2 = new JMenuItem("Flat off");
 	    m2e2.addActionListener(this);
 	    m2e3 = new JMenuItem("Shading on");
 	    m2e3.addActionListener(this);
 	    m2e4 = new JMenuItem("Shadows off");
 	    m2e4.addActionListener(this);
 	    menu2.add(m2e1);
+	    menu2.add(m2e5);
+	    menu2.add(m2e6);
 	    menu2.add(m2e2);
 	    menu2.add(m2e3);
 	    menu2.add(m2e4);
@@ -343,6 +349,23 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 
 
 
+	/**
+	 * Switches the rendering type, updates the Rendering menu labels and renders. The texture toggle is only
+	 * available for the rendering types that process textures (UNLIT, FLAT, INTERPOLATE).
+	 */
+	private void selectRendering(RenderContext.RenderingType type) {
+		rContext.setRenderingType(type);
+		renderer.render();
+		m2e1.setText(type == RenderContext.RenderingType.LINE ? "Lines on" : "Lines off");
+		m2e5.setText(type == RenderContext.RenderingType.MONOCHROME ? "Monochrome on" : "Monochrome off");
+		m2e6.setText(type == RenderContext.RenderingType.UNLIT ? "Unlit on" : "Unlit off");
+		m2e2.setText(type == RenderContext.RenderingType.FLAT ? "Flat on" : "Flat off");
+		m2e3.setText(type == RenderContext.RenderingType.INTERPOLATE ? "Shading on" : "Shading off");
+		shading_menu = type == RenderContext.RenderingType.UNLIT || type == RenderContext.RenderingType.FLAT
+				|| type == RenderContext.RenderingType.INTERPOLATE;
+		m1e2.setEnabled(shading_menu);
+	}
+
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
 
@@ -376,30 +399,15 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 				// no action
 			}
 		} else if (e.getSource() == m2e1) { // Rendering lines
-			rContext.setRenderingType(RenderContext.RenderingType.LINE);
-			renderer.render();
-			m2e1.setText("Lines on");
-			m2e2.setText("Plain off");
-			m2e3.setText("Shading off");
-			m1e2.setEnabled(false);
-			shading_menu = false;
-		} else if (e.getSource() == m2e2) { // Rendering Plain
-			rContext.setRenderingType(RenderContext.RenderingType.PLAIN);
-			renderer.render();
-			m2e1.setText("Lines off");
-			m2e2.setText("Plain on");
-			m2e3.setText("Shading off");
-			m1e2.setEnabled(false);
-			shading_menu = false;
-			
+			selectRendering(RenderContext.RenderingType.LINE);
+		} else if (e.getSource() == m2e5) { // Rendering monochrome (hidden-line wireframe)
+			selectRendering(RenderContext.RenderingType.MONOCHROME);
+		} else if (e.getSource() == m2e6) { // Rendering unlit (colors or texture, no lighting)
+			selectRendering(RenderContext.RenderingType.UNLIT);
+		} else if (e.getSource() == m2e2) { // Rendering flat (faceted shading)
+			selectRendering(RenderContext.RenderingType.FLAT);
 		} else if (e.getSource() == m2e3) { // Rendering Shading
-			rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
-			renderer.render();
-			m2e1.setText("Lines off");
-			m2e2.setText("Plain off");
-			m2e3.setText("Shading on");
-			m1e2.setEnabled(true);
-			shading_menu = true;
+			selectRendering(RenderContext.RenderingType.INTERPOLATE);
 		} else if (e.getSource() == m2e4) { // Shadows on/off (toggle)
 
 			if (shadow_menu) {

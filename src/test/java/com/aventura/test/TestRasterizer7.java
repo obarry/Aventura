@@ -127,7 +127,7 @@ public class TestRasterizer7 {
 		GUIView guiView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT_ALL_ENABLED);
-		rContext.setRenderingType(RenderContext.RenderingType.PLAIN);
+		rContext.setRenderingType(RenderContext.RenderingType.FLAT); // was PLAIN (removed, backlog #5)
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(guiView);

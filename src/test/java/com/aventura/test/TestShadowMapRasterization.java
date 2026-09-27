@@ -190,7 +190,7 @@ public class TestShadowMapRasterization {
 		GUIView guiView = test.createView(pContext);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_FLAT);
 		rContext.setTextureProcessing(true);
 		rContext.setShadowing(true);
 		//rContext.setDisplayNormals(true);
