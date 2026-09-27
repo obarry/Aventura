@@ -107,7 +107,7 @@ import com.aventura.model.world.triangle.Triangle;
  *             |     1 Element contains [0..n] Triangles
  *             | n
  *     +---------------+    Color attribute -> overrides Element's color if set
- *     |    Triangle   |    Normal attribute -> to be used if specifically indicated (flag triangleNormal set to true) or if PLAIN rendering
+ *     |    Triangle   |    Normal attribute -> to be used if specifically indicated (flag triangleNormal set to true) or if FLAT rendering
  *     +---------------+
  *             ^ 1
  *             |     1 Triangle contains exactly 3 Vertices

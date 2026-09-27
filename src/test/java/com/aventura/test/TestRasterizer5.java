@@ -148,7 +148,7 @@ public class TestRasterizer5 {
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		//rContext.setDisplayNormals(true);
-		rContext.setRenderingType(RenderContext.RenderingType.PLAIN);
+		rContext.setRenderingType(RenderContext.RenderingType.FLAT); // was PLAIN (removed, backlog #5)
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(guiView);

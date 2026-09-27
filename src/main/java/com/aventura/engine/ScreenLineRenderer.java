@@ -3,6 +3,7 @@ package com.aventura.engine;
 import java.awt.Color;
 
 import com.aventura.context.PerspectiveContext;
+import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Vertex;
@@ -83,6 +84,87 @@ public class ScreenLineRenderer {
 		drawLine(t.getV1(), t.getV2(), c);
 		drawLine(t.getV2(), t.getV3(), c);
 		drawLine(t.getV3(), t.getV1(), c);
+	}
+
+	//
+	// Depth-tested triangle edges (hidden-line rendering: MONOCHROME, UNLIT)
+	//
+
+	/**
+	 * Relative depth tolerance of the depth-tested edges under a FRUSTUM projection (depth = eye distance W):
+	 * an edge pixel is drawn if its depth is at most (1 + bias) times the ZBuffer depth. The edges lie on the
+	 * faces themselves, so without this tolerance they would flicker against their own face (z-fighting).
+	 */
+	public static final float EDGE_DEPTH_BIAS_FRUSTUM = 0.01f;
+
+	/**
+	 * Absolute depth tolerance of the depth-tested edges under an ORTHOGRAPHIC projection (depth = NDC z).
+	 */
+	public static final float EDGE_DEPTH_BIAS_ORTHOGRAPHIC = 0.002f;
+
+	/**
+	 * Draws the 3 edges of a (filled) triangle, testing each pixel against the ZBuffer: edges hidden by
+	 * faces already drawn are not displayed (hidden-line rendering). Each drawn pixel also writes its depth
+	 * into the ZBuffer (if nearer), so that a face drawn later behind it does not overwrite the edge.
+	 * Must be called AFTER the triangle itself has been rasterized.
+	 */
+	public void drawTriangleEdgesDepthTested(Triangle t, Color c, ZBuffer zBuffer) {
+		drawLineDepthTested(t.getV1(), t.getV2(), c, zBuffer);
+		drawLineDepthTested(t.getV2(), t.getV3(), c, zBuffer);
+		drawLineDepthTested(t.getV3(), t.getV1(), c, zBuffer);
+	}
+
+	private void drawLineDepthTested(Vertex v1, Vertex v2, Color c, ZBuffer zBuffer) {
+
+		boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
+		// Same depth convention as TriangleRasterizer: W (eye distance) for a frustum, Z for orthographic
+		float z1 = frustum ? v1.getProjPos().getW() : v1.getProjPos().getZ();
+		float z2 = frustum ? v2.getProjPos().getW() : v2.getProjPos().getZ();
+		if (frustum && (z1 <= 0 || z2 <= 0)) return; // Behind the eye: not handled (no clipping), as for triangles
+
+		int halfWidth = perspectiveCtx.getPixelHalfWidth();
+		int halfHeight = perspectiveCtx.getPixelHalfHeight();
+		float x1 = v1.getProjPos().get3DX() * halfWidth, y1 = v1.getProjPos().get3DY() * halfHeight;
+		float dx = v2.getProjPos().get3DX() * halfWidth - x1, dy = v2.getProjPos().get3DY() * halfHeight - y1;
+
+		// Clip the parameter range {tMin, tMax} of the segment to the screen (Liang-Barsky)
+		float[] range = { 0, 1 };
+		if (!clip(-dx, x1 + halfWidth, range) || !clip(dx, halfWidth - x1, range)
+				|| !clip(-dy, y1 + halfHeight, range) || !clip(dy, halfHeight - y1, range)) {
+			return; // Entirely outside the screen
+		}
+
+		int steps = (int) Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) * (range[1] - range[0]));
+		for (int i = 0; i <= steps; i++) {
+			float t = steps == 0 ? range[0] : range[0] + (range[1] - range[0]) * i / steps;
+			// (int) truncation: same pixel convention as TriangleRasterizer
+			int x = (int) (x1 + t * dx);
+			int y = (int) (y1 + t * dy);
+			if (Math.abs(x) > halfWidth || Math.abs(y) > halfHeight) continue;
+
+			// Depth: 1/W is linear on screen for a frustum (perspective-correct), Z is linear for orthographic
+			float z = frustum ? 1 / ((1 - t) / z1 + t / z2) : z1 + t * (z2 - z1);
+			float stored = zBuffer.get(x, y);
+			boolean visible = frustum ? z <= stored * (1 + EDGE_DEPTH_BIAS_FRUSTUM) : z <= stored + EDGE_DEPTH_BIAS_ORTHOGRAPHIC;
+			if (visible) {
+				view.drawPixel(x, y, c);
+				if (z < stored) zBuffer.update(x, y, z);
+			}
+		}
+	}
+
+	/** One Liang-Barsky clipping step on range = {tMin, tMax}; returns false if nothing is left. */
+	private static boolean clip(float p, float q, float[] range) {
+		if (p == 0) return q >= 0; // Parallel to this boundary: entirely inside or outside
+		float r = q / p;
+		if (p < 0) {
+			if (r > range[1]) return false;
+			if (r > range[0]) range[0] = r;
+		} else {
+			if (r < range[0]) return false;
+			if (r < range[1]) range[1] = r;
+		}
+		return true;
 	}
 
 	public void drawLine(Vertex v1, Vertex v2, Color c) {

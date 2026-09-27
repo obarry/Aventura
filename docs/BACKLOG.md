@@ -58,9 +58,24 @@ be factored at the same time.
 
 ## 5. Rendering options
 
-- `RenderingType.MONOCHROME` is declared but not implemented (it draws nothing).
-- `RenderingType.PLAIN` always processes textures, whatever `setTextureProcessing()` says (legacy
-  behavior, documented).
+**Done (September 2026).** `RenderingType` is now `LINE`, `MONOCHROME` (hidden-line wireframe, fill
+color set by `RenderContext.setMonochromeColor()`, default the `World` background), `UNLIT` (no
+lighting), `FLAT` (faceted shading) and `INTERPOLATE`. `PLAIN` was removed (its uses moved to `FLAT`),
+and textures stay a separate option, honored by `UNLIT`, `FLAT` and `INTERPOLATE`. See
+[DESIGN.md §8](DESIGN.md#8-configuration-the-two-contexts).
+
+Follow-ups identified while doing it:
+
+- `Sphere` triangles are wound inwards: their face normal (`Triangle.calculateNormal()`) points
+  inside while the vertex normals point outside (all other shapes are consistent). `FLAT` now
+  re-orients the face normal along the vertex normals (`RenderEngine.orientLikeVertexNormals()`),
+  but the root cause is the vertex order of the mesh in `Sphere.generateVertices()`; fixing it
+  there changes the texture mapping, so it must be checked with the textured sphere tests.
+- Depth-tested edges (`MONOCHROME`, `UNLIT` with lines): the tolerances
+  `ScreenLineRenderer.EDGE_DEPTH_BIAS_FRUSTUM` (1 %) and `EDGE_DEPTH_BIAS_ORTHOGRAPHIC` are empirical.
+  Edges on faces seen at a grazing angle may look dashed.
+- The overlay lines of `FLAT` and `INTERPOLATE` (`setRenderingLines(true)`) are still drawn without
+  depth test, as before: they could use the depth-tested edges too.
 
 ## 6. Views
 

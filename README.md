@@ -21,7 +21,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 - **Ready-made shapes.** Box, cube, sphere, cone, cone frustum, cylinder, disc, pyramid, torus and height-field grids (`Trellis`), plus your own geometry from triangles and meshes.
 - **Hierarchical scene graph.** Elements can contain sub-elements; translations, rotations and scalings compose down the tree.
 - **A math library you can reuse.** `Vector2/3/4`, `Matrix2/3/4`, `Quaternion` (with `slerp`), a Gauss-Jordan solver and geometry helpers, all unit-tested.
-- **Several rendering modes on the same scene.** Wireframe, flat, plain and smooth (per-pixel) shading, with or without textures and shadows, plus debug overlays (axes, normals, light vectors).
+- **Several rendering modes on the same scene.** Wireframe (with or without hidden lines), unlit colors or textures, flat (faceted) and smooth (per-pixel) shading, with or without textures and shadows, plus debug overlays (axes, normals, light vectors).
 - **Display-agnostic.** The engine renders to an abstract `GUIView`. `ImageView` renders into double-buffered `BufferedImage`s with no GUI dependency (image files, headless servers, or any GUI toolkit through a frame listener); `SwingView` adds the repaint of a Swing component.
 
 ## Gallery
@@ -214,7 +214,7 @@ The default size depends on the type of light: `getDefaultShadowMapSize()` retur
 A `RenderEngine` renders one `World` seen through one `Camera`, lit by one `Lighting` system. Two context objects carry every parameter, so the same scene can be rendered cheaply or richly just by swapping contexts:
 
 - `PerspectiveContext`: how the world is projected on screen (frustum or orthographic, view plane size, near and far distances, pixels per unit);
-- `RenderContext`: how it is rasterized (wireframe, flat, plain or smooth shading; textures; shadows; back-face culling; debug overlays).
+- `RenderContext`: how it is rasterized (wireframe, hidden-line, unlit, flat or smooth shading; textures; shadows; back-face culling; debug overlays).
 
 ```mermaid
 flowchart LR
@@ -252,14 +252,15 @@ For each frame, every element's vertices are moved through its transformation ch
 
 | Option (`RenderContext`) | Setter | Values |
 | --- | --- | --- |
-| Rendering type | `setRenderingType(RenderingType)` | `LINE` (wireframe), `PLAIN` (one color per triangle), `FLAT` (faceted), `INTERPOLATE` (smooth, per-pixel, default) |
-| Textures | `setTextureProcessing(boolean)` | disabled by default |
-| Shadows | `setShadowing(boolean)` | disabled by default |
+| Rendering type | `setRenderingType(RenderingType)` | `LINE` (wireframe, hidden edges visible), `MONOCHROME` (hidden-line wireframe: faces filled with a single color, edges in the element color), `UNLIT` (element colors or textures, no lighting), `FLAT` (shaded, faceted), `INTERPOLATE` (shaded, smooth per-pixel, default) |
+| Textures | `setTextureProcessing(boolean)` | disabled by default; used by `UNLIT`, `FLAT` and `INTERPOLATE` |
+| Shadows | `setShadowing(boolean)` | disabled by default; used by `FLAT` and `INTERPOLATE` |
 | Back-face culling | `setBackFaceCulling(boolean)` | enabled by default (applies to closed elements) |
-| Wireframe overlay | `setRenderingLines(boolean)` | disabled by default |
+| Wireframe overlay | `setRenderingLines(boolean)` | disabled by default (always on in `MONOCHROME`) |
+| Monochrome fill color | `setMonochromeColor(Color)` | `null` by default: the `World` background color |
 | Debug overlays | `setDisplayLandmark(boolean)` (axes), `setDisplayNormals(boolean)`, `setDisplayLight(boolean)` | disabled by default |
 
-Common combinations are available as presets such as `RenderContext.RENDER_STANDARD_INTERPOLATE`, `RENDER_STANDARD_INTERPOLATE_SHADOWS` or `RENDER_STANDARD_PLAIN`. Presets are immutable: copy one, then chain the setters to customize it:
+Common combinations are available as presets such as `RenderContext.RENDER_STANDARD_INTERPOLATE`, `RENDER_STANDARD_INTERPOLATE_SHADOWS`, `RENDER_STANDARD_FLAT`, `RENDER_STANDARD_UNLIT` or `RENDER_MONOCHROME`. Presets are immutable: copy one, then chain the setters to customize it:
 
 ```java
 RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE)
@@ -281,11 +282,11 @@ All demos live in `com.aventura.demo`.
 | --- | --- | --- |
 | `EarthAndMoon` | Two textured spheres, a directional light and specular highlights (the picture at the top of this page) | None: renders a still frame |
 | `AventuraDemo` | Textured cone, cylinder, sphere, cube, box, trellis and pyramid, spinning in 3D, with the coordinate axes displayed | None: animated |
-| `FractalLandscape_MouseMoving` | A procedural fractal terrain built on a `Trellis` | Drag the mouse to rotate, mouse wheel to zoom; `Run` menu: regenerate, toggle texture; `Rendering` menu: lines, plain, shading, shadows |
+| `FractalLandscape_MouseMoving` | A procedural fractal terrain built on a `Trellis` | Drag the mouse to rotate, mouse wheel to zoom; `Run` menu: regenerate, toggle texture; `Rendering` menu: lines, monochrome, unlit, flat, shading, shadows |
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 
-The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows).
+The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
 
 ## Tests
 
@@ -293,7 +294,7 @@ The `src/test/java/com/aventura/test` folder holds about seventy additional visu
 mvn test
 ```
 
-The unit tests (JUnit 4, about 330 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone), the perspective bounds, a smoke render of every light type with and without shadows, and the pure logic of the interactive demos. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 370 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, and the pure logic of the interactive demos. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 

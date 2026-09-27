@@ -135,7 +135,7 @@ public class TestRasterizer3 {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		//rContext.setDisplayNormals(true);
 		rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
-		//rContext.setRendering(RenderContext.RenderingType.PLAIN);
+		//rContext.setRendering(RenderContext.RenderingType.FLAT);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(guiView);

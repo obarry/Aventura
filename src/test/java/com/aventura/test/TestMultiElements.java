@@ -180,7 +180,7 @@ public class TestMultiElements {
 		GUIView guiView = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setRendering(RenderContext.RenderingType.PLAIN);
+		//rContext.setRendering(RenderContext.RenderingType.FLAT);
 		rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
 		
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);

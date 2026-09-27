@@ -124,7 +124,7 @@ public class TestSphereTexture3 {
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250+625);
 		GUIView guiView = test.createView(pContext);
 
-		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_PLAIN);
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_FLAT);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(true);
 		//rContext.setRenderingLines(true);

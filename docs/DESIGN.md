@@ -7,7 +7,7 @@
 |---|---|
 | **What** | A software 3D rendering engine: scene API → CPU rasterizer → pixels |
 | **Language** | Java 21, JDK only (`java.desktop`), no native code, no GPU |
-| **Size** | ~20 k lines in `src/main`, ~97 test classes, ~336 JUnit tests |
+| **Size** | ~20 k lines in `src/main`, ~105 test classes, ~375 JUnit tests |
 | **License** | MIT |
 | **Status** | `0.0.1-SNAPSHOT` — stable core, lighting & shadows actively evolving |
 
@@ -69,7 +69,7 @@ flowchart TB
     end
     subgraph ENGINE["Engine layer"]
         CTX["context<br/>RenderContext · PerspectiveContext"]
-        ENG["engine<br/>RenderEngine · TriangleRasterizer · ZBuffer<br/>ShadingConsumer · DepthOnlyConsumer"]
+        ENG["engine<br/>RenderEngine · TriangleRasterizer · ZBuffer<br/>ShadingConsumer · UnlitConsumer · DepthOnlyConsumer"]
     end
     subgraph MODEL["Model layer"]
         WORLD["model.world (+ shape, triangle)<br/>World · Element · Triangle · Vertex"]
@@ -273,14 +273,14 @@ sequenceDiagram
     participant SL as ShadowingLight(s)
     participant ET as ElementTransform
     participant TR as TriangleRasterizer
-    participant SC as ShadingConsumer
+    participant SC as ShadingConsumer / UnlitConsumer
     participant V as GUIView
 
     App->>RE: render()
     RE->>RE: viewProjection.refresh()
     RE->>W: worldProject()
     RE->>V: initView() · clear Z-buffer
-    opt shadows enabled
+    opt shadows enabled (FLAT, INTERPOLATE)
         loop each shadowing light
             RE->>SL: initShadowing(perspective, camera, world)
             RE->>SL: generateShadowMap(world)
@@ -315,11 +315,14 @@ flowchart TD
     Q2 -- no --> Q3{Back-face culling on<br/>AND element closed<br/>AND facing away?}
     Q3 -- yes --> BF[Skip · count nbt_bf]
     Q3 -- no --> Q4{Rendering type}
+    Q4 -- MONOCHROME / UNLIT --> U1[No normal<br/>UnlitConsumer]
     Q4 -- FLAT --> N1[Face normal ×3]
-    Q4 -- PLAIN / INTERPOLATE --> N2[Vertex normals<br/>unless triangle-level normal]
+    Q4 -- INTERPOLATE --> N2[Vertex normals<br/>unless triangle-level normal]
     N1 --> MAT[Resolve Material<br/>Solid or Textured]
     N2 --> MAT
+    U1 --> RAST
     MAT --> RAST[TriangleRasterizer.rasterize]
+    RAST --> EDG[MONOCHROME, or UNLIT with lines:<br/>depth-tested edges]
 ```
 
 ---
@@ -356,6 +359,9 @@ classDiagram
     class ShadingConsumer {
       Material, Lighting, Camera
     }
+    class UnlitConsumer {
+      Material
+    }
     class DepthOnlyConsumer
     class Material {
       <<interface>>
@@ -368,8 +374,10 @@ classDiagram
     TriangleRasterizer --> Fragment : fills
     TriangleRasterizer --> FragmentConsumer : one call per pixel
     FragmentConsumer <|.. ShadingConsumer
+    FragmentConsumer <|.. UnlitConsumer
     FragmentConsumer <|.. DepthOnlyConsumer
     ShadingConsumer --> Material
+    UnlitConsumer --> Material
     Material <|.. SolidMaterial
     Material <|.. TexturedMaterial
 ```
@@ -380,12 +388,13 @@ normal and texture coordinates are interpolated **with perspective correction**.
 is depth-tested (`ZBuffer.test`) *before* the consumer runs, so no shading work is spent on
 hidden pixels.
 
-**One rasterizer, two passes.** The same `TriangleRasterizer` serves both passes; only the
+**One rasterizer, several passes.** The same `TriangleRasterizer` serves both passes; only the
 consumer changes:
 
 | Pass | Consumer | Interpolates | Writes |
 |---|---|---|---|
-| Main camera | `ShadingConsumer` | position, normal, UV | colour + depth |
+| Main camera, lit (`FLAT`, `INTERPOLATE`) | `ShadingConsumer` | position, normal, UV | colour + depth |
+| Main camera, unlit (`UNLIT`, `MONOCHROME`) | `UnlitConsumer` | UV only | base colour + depth |
 | Shadow map (per light) | `DepthOnlyConsumer` | depth only | depth |
 
 **Zero allocation per pixel.** A single `Fragment` instance is mutated in place for every pixel,
@@ -543,7 +552,7 @@ flowchart TB
     end
     subgraph RC["RenderContext — how to rasterize"]
         direction LR
-        r1["RenderingType: LINE | PLAIN | FLAT | INTERPOLATE"]
+        r1["RenderingType: LINE | MONOCHROME | UNLIT | FLAT | INTERPOLATE"]
         r2["textures on/off"]
         r3["shadows on/off"]
         r4["back-face culling on/off"]
@@ -555,14 +564,25 @@ flowchart TB
 
 | Rendering type | Normals used | Look | Relative cost |
 |---|---|---|---|
-| `RenderingType.LINE` | none | wireframe | ● |
-| `RenderingType.FLAT` | one per face | faceted | ●●● |
-| `RenderingType.PLAIN` | per vertex unless face normal | legacy mode | ●●● |
-| `RenderingType.INTERPOLATE` | per vertex, per pixel | smooth | ●●●● |
+| `RenderingType.LINE` | none | wireframe, hidden edges visible | ● |
+| `RenderingType.MONOCHROME` | none | hidden-line wireframe: single fill colour, depth-tested edges | ●● |
+| `RenderingType.UNLIT` | none | element colours or textures, no lighting | ●● |
+| `RenderingType.FLAT` | one per face | shaded, faceted | ●●● |
+| `RenderingType.INTERPOLATE` | per vertex, per pixel | shaded, smooth | ●●●● |
+
+Textures (`setTextureProcessing`) and shadows (`setShadowing`) are options, not rendering types:
+textures apply to `UNLIT`, `FLAT` and `INTERPOLATE`, shadows to `FLAT` and `INTERPOLATE` (no shadow
+map is computed for the other types). `MONOCHROME` fills the faces with `setMonochromeColor()`
+(default `null`: the `World` background colour, the classic hidden-line look) and always draws the
+edges in the element colour. Its edges, and those of `UNLIT` with `setRenderingLines(true)`, are
+**depth-tested** (`ScreenLineRenderer.drawTriangleEdgesDepthTested`, with a small depth tolerance
+against z-fighting); the overlay lines of `FLAT` and `INTERPOLATE` are not, as before.
+The former `PLAIN` type (interpolated normals, texture always forced) was removed in September 2026:
+use `FLAT` for a faceted look, or `INTERPOLATE` with `setTextureProcessing(true)`.
 
 The on/off options are booleans with chainable setters (`setShadowing(true).setTextureProcessing(true)`).
 Presets cover common cases, for example `RENDER_STANDARD_INTERPOLATE`,
-`RENDER_STANDARD_INTERPOLATE_SHADOWS` and `RENDER_STANDARD_PLAIN`. They are **immutable**
+`RENDER_STANDARD_INTERPOLATE_SHADOWS`, `RENDER_STANDARD_FLAT` and `RENDER_MONOCHROME`. They are **immutable**
 (setters throw `IllegalStateException`): copy one with `new RenderContext(preset)` to customize it.
 
 `PerspectiveContext` currently holds both the lens (the `Perspective`: view volume and projection,
@@ -622,17 +642,21 @@ Two complementary test families run from Maven:
 ```mermaid
 pie showData
     title JUnit test methods by area
-    "Math: vectors, matrices, quaternions" : 242
+    "Math: vectors, matrices, quaternions" : 244
+    "Lighting (point, spot, shadow maps, smoke renders)" : 35
     "Demo logic (camera, flight path…)" : 33
-    "Lighting (point, spot, smoke renders)" : 28
+    "Rendering (context, rendering types, views)" : 25
+    "Camera, perspective, elements" : 18
     "Transforms (T, R, S)" : 13
     "Z-buffer" : 8
-    "Camera, perspective, elements, tools" : 12
 ```
 
 The math library is the most heavily tested part because every other stage depends on it.
 Lighting has both analytical tests (attenuation curves, cone factor) and **smoke renders** of each
-light type with and without shadows. Diagnostic counters (`RasterizerStats`, triangle
+light type with and without shadows. The rendering types are checked on **off-screen renders**,
+pixel by pixel (for example: `UNLIT` gives exactly the base colour, `MONOCHROME` hides the edges
+that `LINE` shows, `FLAT` follows the texture option); `TestRenderingModes` shows them all by eye.
+Diagnostic counters (`RasterizerStats`, triangle
 in/out/back-face counts, shadow-map stats) and the `Tracer` utility help investigate regressions.
 
 ---
@@ -656,7 +680,8 @@ timeline
          : Shadow-map depth fixes
     2026 : Fragment/Consumer rasterizer, Material
          : Quaternion + slerp, Matrix2, Maven layout
-         : SpotLight, UrbanScape, 330+ unit tests
+         : SpotLight, UrbanScape, 370+ unit tests
+         : Rendering types: MONOCHROME (hidden-line), UNLIT
 ```
 
 Commit activity reflects this: two intense phases (2016–2017 and 2024–2026) around a quieter period.
@@ -679,7 +704,6 @@ xychart-beta
 | Lights | Not drawn in the scene (no halo or lens effect) |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
-| API | `RenderingType.MONOCHROME` declared but not implemented |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |
 
 ### Roadmap (candidate items)

@@ -180,7 +180,7 @@ public class TestMultiElementsShadows {
 		GUIView guiView = test.createView(context);
 
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
-		//rContext.setRendering(RenderContext.RenderingType.PLAIN);
+		//rContext.setRendering(RenderContext.RenderingType.FLAT);
 		rContext.setRenderingType(RenderContext.RenderingType.INTERPOLATE);
 		rContext.setShadowing(true);
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);

@@ -136,7 +136,7 @@ public class TestAventura8 {
 		
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext.setDisplayNormals(true);
-		//rContext.setRendering(RenderContext.RenderingType.PLAIN);
+		//rContext.setRendering(RenderContext.RenderingType.FLAT);
 
 		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, context);
 		renderer.setView(guiView);
