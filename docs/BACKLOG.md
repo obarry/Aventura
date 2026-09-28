@@ -50,11 +50,13 @@ be factored at the same time.
 
 ## 4. Rasterization
 
-- `TriangleRasterizer` converts to pixels with `(int)` casts, which truncate toward zero: column 0
-  and row 0 cover twice the width of the others. Use `floor` or a pixel-center convention. Shadow
-  map sampling could then be aligned exactly (today it keeps the former alignment, which is exact
-  for x >= 0 only).
-- `RasterizerStats`: "rendered with lines" is always 0 (lines are not counted).
+**Done (September 2026).** `TriangleRasterizer` follows a pixel-center convention: a pixel is drawn
+when its center (integer coordinates) is inside the triangle, with half-open bounds, and depth and
+attributes are sampled at that center. Column and row 0 now have the same size as the others, and
+`ScreenLineRenderer` rounds to the nearest pixel center. Shadow map sampling is aligned exactly
+for every sign of x and y. `RasterizerStats` counts the triangles rendered with lines (rows inside
+the screen, `TriangleRasterizer.getRasterizedLines()`), for the main pass and, now triangle by
+triangle, for the shadow maps. See [DESIGN.md §5](DESIGN.md#5-rasterization-and-fragments).
 
 ## 5. Rendering options
 

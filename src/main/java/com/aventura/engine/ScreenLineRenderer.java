@@ -137,9 +137,9 @@ public class ScreenLineRenderer {
 		int steps = (int) Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) * (range[1] - range[0]));
 		for (int i = 0; i <= steps; i++) {
 			float t = steps == 0 ? range[0] : range[0] + (range[1] - range[0]) * i / steps;
-			// (int) truncation: same pixel convention as TriangleRasterizer
-			int x = (int) (x1 + t * dx);
-			int y = (int) (y1 + t * dy);
+			// Rounding to the nearest pixel center: same pixel convention as TriangleRasterizer
+			int x = Math.round(x1 + t * dx);
+			int y = Math.round(y1 + t * dy);
 			if (Math.abs(x) > halfWidth || Math.abs(y) > halfHeight) continue;
 
 			// Depth: 1/W is linear on screen for a frustum (perspective-correct), Z is linear for orthographic
@@ -177,11 +177,11 @@ public class ScreenLineRenderer {
 	}
 
 	private int screenX(Vertex v) {
-		return (int) (v.getProjPos().get3DX() * perspectiveCtx.getPixelHalfWidth());
+		return Math.round(v.getProjPos().get3DX() * perspectiveCtx.getPixelHalfWidth());
 	}
 
 	private int screenY(Vertex v) {
-		return (int) (v.getProjPos().get3DY() * perspectiveCtx.getPixelHalfHeight());
+		return Math.round(v.getProjPos().get3DY() * perspectiveCtx.getPixelHalfHeight());
 	}
 
 	//
@@ -205,11 +205,11 @@ public class ScreenLineRenderer {
 
 	private int screenXWorld(Vector4 worldPoint) {
 		Vector4 clip = viewProjection.project(worldPoint);
-		return (int) (clip.get3DX() * perspectiveCtx.getPixelHalfWidth());
+		return Math.round(clip.get3DX() * perspectiveCtx.getPixelHalfWidth());
 	}
 
 	private int screenYWorld(Vector4 worldPoint) {
 		Vector4 clip = viewProjection.project(worldPoint);
-		return (int) (clip.get3DY() * perspectiveCtx.getPixelHalfHeight());
+		return Math.round(clip.get3DY() * perspectiveCtx.getPixelHalfHeight());
 	}
 }
