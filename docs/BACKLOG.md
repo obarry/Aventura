@@ -73,6 +73,14 @@ Follow-ups identified while doing it:
   re-orients the face normal along the vertex normals (`RenderEngine.orientLikeVertexNormals()`),
   but the root cause is the vertex order of the mesh in `Sphere.generateVertices()`; fixing it
   there changes the texture mapping, so it must be checked with the textured sphere tests.
+  Its vertex normals are not unit either (`Vector4.normalize()` applied to a point, `w = 1`, so their
+  length depends on the radius): harmless today since lighting renormalizes per pixel, but to fix
+  with the winding. Both are reported by the cookbook's `ElementContractChecker`.
+- `Triangle.setRectoVerso()` is set by the meshes but not used by the renderer, and
+  `Vertex.setColor()` is ignored (colors resolve from the triangle, then the elements): implement
+  or remove.
+- `ElementContractChecker` (cookbook, test code) could move to the main code as a public validation
+  tool for user-defined shapes.
 - Depth-tested edges (`MONOCHROME`, `UNLIT` with lines): the tolerances
   `ScreenLineRenderer.EDGE_DEPTH_BIAS_FRUSTUM` (1 %) and `EDGE_DEPTH_BIAS_ORTHOGRAPHIC` are empirical.
   Edges on faces seen at a grazing angle may look dashed.
@@ -87,7 +95,7 @@ Follow-ups identified while doing it:
 
 ## 7. Repository housekeeping
 
-- Remove `aventura_export_tmp.tar.gz` (untracked) and the `Claude outputs` folders (at the project
-  root and under `src/`), left over by earlier working sessions.
+- Remove the `Claude outputs` folders (at the project root and under `src/`), left over by earlier
+  working sessions.
 - Run `mvn test` locally: during these sessions, the code was compiled and tested with `javac` and
   JUnit directly, because Maven could not download its plugins.

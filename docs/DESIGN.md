@@ -636,7 +636,8 @@ flowchart LR
 | A light | `Light` or `ShadowingLight` | `getLightVectorAtPoint`, `getIntensity` (+ shadow map) | `SpotLight` |
 
 Custom geometry without subclassing is also possible: feed `Element.addVertex()` and
-`Element.addTriangle()` directly.
+`Element.addTriangle()` directly. The [Geometry Cookbook](GEOMETRY_COOKBOOK.md) details the
+contracts of a new shape, inheritance and assembly, with tested examples.
 
 ---
 

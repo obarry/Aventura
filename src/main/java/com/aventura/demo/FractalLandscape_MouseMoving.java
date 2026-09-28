@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Toolkit;
+import java.util.Random;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -451,6 +452,18 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	 * @param n the number of segments (should be a power of 2)
 	 */
 	public void createLandscape(float[][] array_land, float size, int n) {
+		createLandscape(array_land, size, n, new Random());
+	}
+
+	/**
+	 * Same, with a given random generator: a Random created with a fixed seed always gives the same landscape
+	 * (used to regenerate the image of the documentation, see DocumentationImages in the test sources).
+	 *
+	 * @param size the size of the trellis
+	 * @param n the number of segments (should be a power of 2)
+	 * @param random the source of the random variations of the altitudes
+	 */
+	public static void createLandscape(float[][] array_land, float size, int n, Random random) {
 		
 		float array[][] = new float[n+1][n+1]; // Temporary array to be used for the Treillis generation
 		
@@ -458,10 +471,10 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 
 		int ix = n; // Start from the largest dimension of the Treillis
 		// Initialize the 4 corners
-		array[0][0] = (float)Math.random()*mult*size/2;
-		array[0][ix] = (float)Math.random()*mult*size/2;
-		array[ix][0] = (float)Math.random()*mult*size/2;
-		array[ix][ix] = (float)Math.random()*mult*size/2;
+		array[0][0] = (float)random.nextDouble()*mult*size/2;
+		array[0][ix] = (float)random.nextDouble()*mult*size/2;
+		array[ix][0] = (float)random.nextDouble()*mult*size/2;
+		array[ix][ix] = (float)random.nextDouble()*mult*size/2;
 		
 		// Recursion loop on i that will be divided by 2 at each iteration until it is equal to 1
 		while (ix>1) {
@@ -489,12 +502,12 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 					// M = Middle of each segment of the square
 					
 					// For each calculation, add a random value multiplied by the loop factor calculated above (hence proportional to the size of the square)
-					array[ix/2+j*ix][ix/2+k*ix] = center + (float)Math.random()*factor;
+					array[ix/2+j*ix][ix/2+k*ix] = center + (float)random.nextDouble()*factor;
 					// Use average of other points : 2 Corners + Center of the square for the middle segments
-					array[ix/2+j*ix][0+k*ix] = (array[0+j*ix][0+k*ix] + array[ix+j*ix][0+k*ix] + center)/3 + (float)Math.random()*factor;;
-					array[0+j*ix][ix/2+k*ix] = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
-					array[ix+j*ix][ix/2+k*ix] = (array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
-					array[ix/2+j*ix][ix+k*ix] = (array[0+j*ix][ix+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)Math.random()*factor;;
+					array[ix/2+j*ix][0+k*ix] = (array[0+j*ix][0+k*ix] + array[ix+j*ix][0+k*ix] + center)/3 + (float)random.nextDouble()*factor;;
+					array[0+j*ix][ix/2+k*ix] = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + center)/3 + (float)random.nextDouble()*factor;;
+					array[ix+j*ix][ix/2+k*ix] = (array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)random.nextDouble()*factor;;
+					array[ix/2+j*ix][ix+k*ix] = (array[0+j*ix][ix+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)random.nextDouble()*factor;;
 				}
 			}
 			ix/=2; // Divide i by 2 (i remains a power of 2)
@@ -528,6 +541,11 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	}
 
 	protected void updateTrianglesColorTrellis() {
+		colorTrianglesByAltitude(tre);
+	}
+
+	/** Colors each triangle of the trellis according to its average altitude: blue (lowest) to yellow-green (highest). */
+	public static void colorTrianglesByAltitude(Trellis tre) {
 		float max_alt = tre.getMaxZ();
 		float min_alt = tre.getMinZ();
 		int t = 0;
@@ -537,6 +555,12 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		}
 	}
 
+
+	public static Lighting createLighting() {
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.7f);
+		AmbientLight al = new AmbientLight(0.3f);
+		return new Lighting(dl, al, false);
+	}
 
 	/**
 	 * Create the World and Camera, generate a Treillis based on Fractal recursivity to create a Landscape
@@ -596,9 +620,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 //		world.update();
 
 		// Lighting initialization
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.7f);
-		AmbientLight al = new AmbientLight(0.3f);
-		Lighting light = new Lighting(dl, al, false);
+		Lighting light = createLighting();
 		
 		// Graphic Context
 		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1250);
