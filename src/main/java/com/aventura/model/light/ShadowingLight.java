@@ -113,7 +113,6 @@ public abstract class ShadowingLight extends Light {
 	// quick way to spot an empty/all-far shadow map (a very common shadow-mapping bug) while the
 	// shadow-calculation rework mentioned in the backlog is still pending.
 	protected RasterizerStats shadowMapStats = new RasterizerStats();
-	private int trianglesThisGeneration = 0; // reset at the start of each generateShadowMap(World) call
 
 	// Anti-acne depth bias, expressed as a WORLD-space distance (a physically meaningful depth
 	// tolerance, independent of how tight or loose this light's box happens to be) rather than a
@@ -304,18 +303,14 @@ public abstract class ShadowingLight extends Light {
 		// per generation regardless of whether this light actually moved.
 		viewProjection_light.refresh();
 
-		trianglesThisGeneration = 0;
-
 		// For each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
 			generateShadowMap(e, rasterizer, consumer); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
 
-		// Diagnostics: recorded as a single batch since TriangleRasterizer's pixel counters
-		// accumulate over the whole pass (never reset per-triangle here), unlike the main render
-		// pass which resets and reads them triangle by triangle.
-		shadowMapStats.recordBatch(trianglesThisGeneration, rasterizer.getRenderedPixels(), rasterizer.getDiscardedPixels());
+		// Diagnostics: each triangle was recorded by generateShadowMap(Element, ...); snapshot this
+		// generation's deltas.
 		shadowMapStats.endFrame();
 	}
 
@@ -342,8 +337,11 @@ public abstract class ShadowingLight extends Light {
 				// TriangleRasterizer's depth-only rasterize() overload) -- convenient, since
 				// normals aren't even computed for this triangle during shadow map generation
 				// (transformElement(e, false) above deliberately skips that).
+				// Counters reset per triangle so that recordTriangle() gets THIS triangle's counts
+				// (same pattern as the main render pass in RenderEngine).
+				rasterizer.resetStats();
 				rasterizer.rasterize(t, consumer);
-				trianglesThisGeneration++;
+				shadowMapStats.recordTriangle(rasterizer.getRasterizedLines(), rasterizer.getRenderedPixels(), rasterizer.getDiscardedPixels());
 			}
 		}
 
@@ -378,18 +376,17 @@ public abstract class ShadowingLight extends Light {
 
 		Vector4 posInLightSpace = viewProjection_light.project(worldPosition);
 
-		// Sample the map where the rasterizer wrote this position: TriangleRasterizer stores the
-		// fragment at centered pixel (int)(x_ndc * halfWidth), i.e. buffer cell k holds the depths of
-		// the continuous positions [k, k+1) (for x >= 0), whose center is k + 0.5. Bilinear sampling
-		// at continuous position p = x_ndc * halfWidth + halfWidth therefore reads index p - 0.5.
-		// getInterpolation() takes normalized coordinates s with index = s * width - 0.5, hence
-		// s = p / width. (This is the exact alignment the former (x_ndc + 1) / 2 formula had with a
-		// 2*half wide map; the map is now 2*half+1 wide, see generateShadowMap(), and may be
-		// rectangular, so the formula is written per axis.)
+		// Sample the map where the rasterizer wrote this position. TriangleRasterizer follows the
+		// pixel-center convention: centered pixel x holds the depth sampled exactly at the
+		// continuous position x = x_ndc * halfWidth, and is stored in buffer cell k = x + halfWidth
+		// (see ZBuffer). So continuous position p = x_ndc * halfWidth + halfWidth falls exactly on
+		// cell index p, for any sign of x. getInterpolation() takes normalized coordinates s with
+		// index = s * width - 0.5, hence s = (p + 0.5) / width. Written per axis since the map may
+		// be rectangular (see generateShadowMap()).
 		int halfWidth = perspectiveCtx_light.getPixelHalfWidth();
 		int halfHeight = perspectiveCtx_light.getPixelHalfHeight();
-		float s = (posInLightSpace.getX() * halfWidth + halfWidth) / map.getViewWidth();
-		float t = (posInLightSpace.getY() * halfHeight + halfHeight) / map.getViewHeight();
+		float s = (posInLightSpace.getX() * halfWidth + halfWidth + 0.5f) / map.getViewWidth();
+		float t = (posInLightSpace.getY() * halfHeight + halfHeight + 0.5f) / map.getViewHeight();
 		float depth = map.getInterpolation(s, t);
 
 		// Slope-scaled epsilon bias to avoid "shadow acne" (self-shadowing) -- see

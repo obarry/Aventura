@@ -388,6 +388,13 @@ normal and texture coordinates are interpolated **with perspective correction**.
 is depth-tested (`ZBuffer.test`) *before* the consumer runs, so no shading work is spent on
 hidden pixels.
 
+**Pixel-center convention.** Screen pixel `(x, y)` is the unit square centered on the integer
+point `(x, y)`, and it is drawn when its center lies inside the triangle; depth and attributes are
+sampled exactly at that center. Bounds are half-open (`left ≤ x < right`, `bottom ≤ y < top`), so
+a pixel on an edge shared by two triangles is drawn once. Every pixel has the same size, including
+column and row 0, and the `2·half + 1` pixels per axis cover `[-half - ½, half + ½]` symmetrically.
+Lines (`ScreenLineRenderer`) round to the nearest pixel center, following the same convention.
+
 **One rasterizer, several passes.** The same `TriangleRasterizer` serves both passes; only the
 consumer changes:
 
@@ -518,7 +525,9 @@ the whole world (default), the view frustum, one element or a user-defined box
 number of pixels of the **longest** side; the other side follows the proportions of the light box
 (rounded up, the box being padded by less than one texel), so the map is rectangular for an
 elongated scene, with square texels and no wasted pixels. The depth buffer is stored centered, with
-`2·half + 1` cells per axis like the main pass.
+`2·half + 1` cells per axis like the main pass. Since cell `x + half` holds the depth sampled at the
+pixel center `x` (see §5), `shadowFactorAt()` bilinearly samples the map exactly at the projected
+position, for positive and negative coordinates alike.
 
 **Fighting shadow acne.** The depth bias is expressed as a **world-space distance** (0.02 units, or
 half a texel if the map is coarser than that), converted to NDC for the current box, and

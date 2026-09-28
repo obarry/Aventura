@@ -73,6 +73,7 @@ public class TriangleRasterizer {
 	// Minimal pixel statistics for now; extended in the tactical clean-up phase.
 	private int renderedPixels = 0;
 	private int discardedPixels = 0;
+	private int rasterizedLines = 0; // scan lines (rows) inside the screen, whether or not they cover a pixel center
 
 	public TriangleRasterizer(PerspectiveContext perspectiveCtx, ZBuffer zBuffer) {
 		this.perspectiveCtx = perspectiveCtx;
@@ -88,6 +89,15 @@ public class TriangleRasterizer {
 	}
 
 	/**
+	 * @return the number of scan lines (screen rows) processed since the last resetStats(), same
+	 *         meaning as the legacy Rasterizer's rasterized_lines: rows of the triangle inside the
+	 *         screen, including those on which no pixel center is covered.
+	 */
+	public int getRasterizedLines() {
+		return rasterizedLines;
+	}
+
+	/**
 	 * Resets the pixel counters to zero. The legacy Rasterizer used to do this at the start of
 	 * every rasterizeTriangle() call, giving per-triangle stats; call this at the same point if
 	 * you need to preserve that granularity across multiple rasterize() calls sharing one
@@ -96,6 +106,7 @@ public class TriangleRasterizer {
 	public void resetStats() {
 		renderedPixels = 0;
 		discardedPixels = 0;
+		rasterizedLines = 0;
 	}
 
 	/**
@@ -174,8 +185,17 @@ public class TriangleRasterizer {
 			dP1P3 = Float.MAX_VALUE;
 		}
 
+		// Pixel-center convention: pixel (x, y) is the unit square centered on the integer point
+		// (x, y), i.e. it covers [x - 0.5, x + 0.5) x [y - 0.5, y + 0.5), and it belongs to the
+		// triangle if its CENTER does. Rows are the y with y1 <= y < y3 (half-open, so a row
+		// exactly on the edge shared by two stacked triangles is drawn once, not twice), clipped
+		// to the screen. This replaces the former (int) truncation toward zero, which made row 0
+		// (and column 0, see rasterizeScanLine) cover [-1, 1): twice the size of the others.
+		int yStart = Math.max((int) Math.ceil(yScreen(v1.vertex)), -perspectiveCtx.getPixelHalfHeight());
+		int yEnd = Math.min((int) Math.ceil(yScreen(v3.vertex)), perspectiveCtx.getPixelHalfHeight() + 1); // exclusive
+
 		if (dP1P2 > dP1P3) {
-			for (int y = (int) yScreen(v1.vertex); y <= (int) yScreen(v3.vertex); y++) {
+			for (int y = yStart; y < yEnd; y++) {
 				if (y < yScreen(v2.vertex)) {
 					rasterizeScanLine(y, v1, v3, v1, v2, consumer);
 				} else {
@@ -183,7 +203,7 @@ public class TriangleRasterizer {
 				}
 			}
 		} else {
-			for (int y = (int) yScreen(v1.vertex); y <= (int) yScreen(v3.vertex); y++) {
+			for (int y = yStart; y < yEnd; y++) {
 				if (y < yScreen(v2.vertex)) {
 					rasterizeScanLine(y, v1, v2, v1, v3, consumer);
 				} else {
@@ -200,9 +220,9 @@ public class TriangleRasterizer {
 	 */
 	private void rasterizeScanLine(int y, RasterVertex va, RasterVertex vb, RasterVertex vc, RasterVertex vd, FragmentConsumer consumer) {
 
-		if (!isInScreenY(y)) {
-			return;
-		}
+		// Screen-row clipping is done by rasterize() (row range), so every call here is a row of
+		// the screen: counted as a rasterized line (diagnostics, see RasterizerStats).
+		rasterizedLines++;
 
 		float ya = yScreen(va.vertex), yb = yScreen(vb.vertex);
 		float yc = yScreen(vc.vertex), yd = yScreen(vd.vertex);
@@ -212,18 +232,22 @@ public class TriangleRasterizer {
 		float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
 		float gradient2 = yc != yd ? (y - yc) / (yd - yc) : 1;
 
-		int sx = (int) Tools.interpolate(xa, xb, gradient1);
-		int ex = (int) Tools.interpolate(xc, xd, gradient2);
+		// Continuous (sub-pixel) X of the two edges on this row, kept as floats: they are both
+		// the coverage bounds and the reference points of the attribute interpolation below.
+		// Clamped to each edge's own X range to guard against extrapolation (float rounding of
+		// the gradients at the very ends of an edge).
+		float sx = clamp(Tools.interpolate(xa, xb, gradient1), Math.min(xa, xb), Math.max(xa, xb));
+		float ex = clamp(Tools.interpolate(xc, xd, gradient2), Math.min(xc, xd), Math.max(xc, xd));
 
-		int smin = (int) Math.min(xa, xb), smax = (int) Math.max(xa, xb);
-		int emin = (int) Math.min(xc, xd), emax = (int) Math.max(xc, xd);
-		if (sx < smin) sx = smin;
-		if (sx > smax) sx = smax;
-		if (ex < emin) ex = emin;
-		if (ex > emax) ex = emax;
+		// Pixel-center convention (see rasterize()): the pixels whose center x satisfies
+		// left <= x < right, i.e. [ceil(left), ceil(right)) -- half-open so that a pixel center
+		// exactly on the edge shared by two side-by-side triangles is drawn once -- clipped to
+		// the screen.
+		int startX = Math.max((int) Math.ceil(Math.min(sx, ex)), -perspectiveCtx.getPixelHalfWidth());
+		int endX = Math.min((int) Math.ceil(Math.max(sx, ex)), perspectiveCtx.getPixelHalfWidth() + 1); // exclusive
 
-		if (sx == ex) {
-			return; // No pixel would be drawn on this line
+		if (startX >= endX) {
+			return; // No pixel center on this line
 		}
 
 		boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
@@ -274,16 +298,13 @@ public class TriangleRasterizer {
 			texEdge2 = Tools.interpolate(vc.texCoord.times(wc), vd.texCoord.times(wd), gradient2);
 		}
 
-		int startX = Math.min(sx, ex);
-		int endX = Math.max(sx, ex);
+		float invSpan = 1 / (ex - sx); // ex != sx here, otherwise startX >= endX above
 
 		for (int x = startX; x < endX; x++) {
 
-			if (!isInScreenX(x)) {
-				continue;
-			}
-
-			float gradient = (float) (x - sx) / (float) (ex - sx);
+			// Position of this pixel's center between the two edges (0 at sx, 1 at ex): exact
+			// sub-pixel interpolation of depth and attributes at the sampled point.
+			float gradient = (x - sx) * invSpan;
 
 			float z = frustum
 					? 1 / Tools.interpolate(1 / z1, 1 / z2, gradient)
@@ -343,12 +364,8 @@ public class TriangleRasterizer {
 		return v.getProjPos().get3DY() * perspectiveCtx.getPixelHalfHeight();
 	}
 
-	private boolean isInScreenX(int x) {
-		return Math.abs(x) <= perspectiveCtx.getPixelHalfWidth();
-	}
-
-	private boolean isInScreenY(int y) {
-		return Math.abs(y) <= perspectiveCtx.getPixelHalfHeight();
+	private static float clamp(float v, float min, float max) {
+		return v < min ? min : (v > max ? max : v);
 	}
 
 	/**

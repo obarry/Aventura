@@ -533,7 +533,7 @@ public class RenderEngine {
 		} else {
 			triangleRasterizer.rasterize(t, consumer);
 		}
-		stats.recordTriangle(triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
+		stats.recordTriangle(triangleRasterizer.getRasterizedLines(), triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
 	}
 
 	/**
@@ -594,7 +594,7 @@ public class RenderEngine {
 			triangleRasterizer.rasterize(t, normal1, normal2, normal3, consumer);
 		}
 
-		stats.recordTriangle(triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
+		stats.recordTriangle(triangleRasterizer.getRasterizedLines(), triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
 	}
 
 	/**

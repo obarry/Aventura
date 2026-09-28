@@ -29,9 +29,8 @@ package com.aventura.engine;
  *
  * - Main render pass (RenderEngine): one instance, alive for the whole
  *   RenderEngine lifetime, fed one triangle at a time via recordTriangle().
- * - Shadow map generation (ShadowingLight): one instance, fed once per
- *   generateShadowMap(World) call via recordBatch(), since triangles aren't
- *   tracked individually there.
+ * - Shadow map generation (ShadowingLight): one instance per light, also fed
+ *   one triangle at a time via recordTriangle().
  *
  * Two complementary views are kept:
  * - LIFETIME totals (renderedTriangles, totalRenderedPixels, ...): accumulate
@@ -42,10 +41,11 @@ package com.aventura.engine;
  *   pass) or once per shadow map generation (shadow pass) — whichever this
  *   instance is tracking.
  *
- * NOTE: trianglesWithLines is always 0 today. The legacy counter it mirrors
- * (triangles_with_lines) was derived from rasterized_lines, a per-scanline
- * count the new TriangleRasterizer pipeline doesn't track. Diagnostics-only,
- * no functional impact — see the backlog item about it.
+ * trianglesWithLines counts the triangles having at least one scan line
+ * inside the screen (TriangleRasterizer.getRasterizedLines() > 0), as the
+ * legacy triangles_with_lines did; trianglesWithPixels those having at least
+ * one rendered pixel. A triangle with lines but no pixel is a sliver whose
+ * rows cover no pixel center, or one entirely hidden by the depth test.
  *
  * @author Olivier BARRY
  * @since 2026
@@ -71,27 +71,19 @@ public class RasterizerStats {
 	private long discardedPixelsThisFrame = 0;
 
 	/**
-	 * Records one triangle's contribution -- used by the main render pass, where triangles are
-	 * rasterized (and their pixel counts known) one at a time.
+	 * Records one triangle's contribution: pass the TriangleRasterizer counters read right after
+	 * rasterizing it (counters reset before each triangle, see TriangleRasterizer.resetStats()).
 	 */
-	public void recordTriangle(int renderedPixelsForThisTriangle, int discardedPixelsForThisTriangle) {
+	public void recordTriangle(int rasterizedLinesForThisTriangle, int renderedPixelsForThisTriangle, int discardedPixelsForThisTriangle) {
 		renderedTriangles++;
+		if (rasterizedLinesForThisTriangle > 0) {
+			trianglesWithLines++;
+		}
 		if (renderedPixelsForThisTriangle > 0) {
 			trianglesWithPixels++;
 		}
 		totalRenderedPixels += renderedPixelsForThisTriangle;
 		totalDiscardedPixels += discardedPixelsForThisTriangle;
-	}
-
-	/**
-	 * Records a whole batch of triangles at once -- used by shadow map generation, where
-	 * TriangleRasterizer's pixel counters accumulate over every triangle of the pass rather than
-	 * being read (and reset) triangle by triangle.
-	 */
-	public void recordBatch(int trianglesProcessed, int renderedPixelsInBatch, int discardedPixelsInBatch) {
-		renderedTriangles += trianglesProcessed;
-		totalRenderedPixels += renderedPixelsInBatch;
-		totalDiscardedPixels += discardedPixelsInBatch;
 	}
 
 	/**
