@@ -102,9 +102,18 @@ public class AventuraDemo {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	// Camera: from EYE_START, it moves in a straight line towards EYE_END during the animation, always looking at POI
+	static final Vector4 EYE_START = new Vector4(10, 6, 3, 1);
+	static final Vector4 EYE_END = new Vector4(0, -10, -2, 1);
+	static final Vector4 POI = new Vector4(0, 0, 0, 1);
+	// Number of images of the animation
+	static final int NB_IMAGES = 360;
 
-		System.out.println("********* STARTING APPLICATION *********");
+	/**
+	 * The World of the demo: 8 textured shapes at the corners of a cube (cone, closed cylinder, sphere, cube, box,
+	 * trellis, pyramid, then a cone again). The textures are read from resources/texture: run from the project root.
+	 */
+	public static World createWorld() {
 
 		//Texture texbricks = new Texture("resources/texture/texture_bricks_204x204.jpg");
 		//Texture texblue = new Texture("resources/texture/texture_blueground_204x204.jpg");
@@ -128,16 +137,7 @@ public class AventuraDemo {
 		Texture texmetalplate = new Texture("resources/texture/texture_multimetal_500x600.jpg");
 		Texture texcarpet = new Texture("resources/texture/texture_painting_2_596x460.jpg");
 		Texture texgrass = new Texture("resources/texture/texture_stone_1706x1279.jpg");
-	
-		// Camera
-		Vector4 eye = new Vector4(10,6,3,1);
-		Vector4 poi = new Vector4(0,0,0,1);
-		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
-				
-		AventuraDemo demo = new AventuraDemo();
-				
-		// Create a new World
-		System.out.println("********* Creating World");
+
 		World world = new World();
 		world.setBackgroundColor(Color.BLACK);
 		Element e;
@@ -217,45 +217,81 @@ public class AventuraDemo {
 				}
 			}
 		}
-		
-		System.out.println(world);
-		for (int i=0; i<world.getNbElements(); i++)
-			System.out.println(world.getElement(i));
 
 		// Calculate normals
 		world.build();
 
-		// Create lighting
-		System.out.println("********* Creating Lighting");
+		return world;
+	}
+
+	public static Lighting createLighting() {
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,0.5f,-0.5f), 0.7f);
 		AmbientLight al = new AmbientLight(0.3f);
-		Lighting lighting = new Lighting(dl, al, true);
+		return new Lighting(dl, al, true);
+	}
 
-		PerspectiveContext context = new PerspectiveContext(1.5f, 0.9f, 1, 100, PerspectiveType.FRUSTUM, 1000);
-		GUIView guiView = demo.createView(context);
+	public static PerspectiveContext createPerspectiveContext() {
+		return new PerspectiveContext(1.5f, 0.9f, 1, 100, PerspectiveType.FRUSTUM, 1000);
+	}
 
+	public static RenderContext createRenderContext() {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
 		rContext.setTextureProcessing(true);
 		//rContext.setRenderingLines(true);
 		//rContext.setDisplayNormals(true);
 		rContext.setShadowing(true);
+		return rContext;
+	}
+
+	/** The rotation applied to the whole World at each image of the animation. */
+	public static Transformation createImageRotation() {
+		Rotation r1 = new Rotation((float)Math.PI*2/(float)NB_IMAGES, Vector3.xAxis());
+		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)NB_IMAGES, Vector3.yAxis());
+		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)NB_IMAGES, Vector3.zAxis());
+		return new Transformation(r1.times(r2).times(r3));
+	}
+
+	/** The position of the camera at a given image of the animation (0: start, NB_IMAGES: end). */
+	public static Vector4 getEye(int image) {
+		return EYE_START.plus(EYE_END.minus(EYE_START).times((float) image / NB_IMAGES));
+	}
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+
+		System.out.println("********* STARTING APPLICATION *********");
+
+		Camera camera = new Camera(getEye(0), POI, Vector4.zAxis());
+				
+		AventuraDemo demo = new AventuraDemo();
+				
+		// Create a new World
+		System.out.println("********* Creating World");
+		World world = createWorld();
 		
-		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, context);
+		System.out.println(world);
+		for (int i=0; i<world.getNbElements(); i++)
+			System.out.println(world.getElement(i));
+
+		// Create lighting
+		System.out.println("********* Creating Lighting");
+		Lighting lighting = createLighting();
+
+		PerspectiveContext context = createPerspectiveContext();
+		GUIView guiView = demo.createView(context);
+
+		RenderEngine renderer = new RenderEngine(world, lighting, camera, createRenderContext(), context);
 		renderer.setView(guiView);
 		renderer.render();
 		
 		System.out.println("********* Rendering...");
-		int nb_images = 360;
-		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.xAxis());
-		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.yAxis());
-		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.zAxis());
-		Vector4 camera_trans = new Vector4(new Vector4(0,-10,-2,1).minus(eye).times((float)1/(nb_images)));
-		Transformation r = new Transformation(r1.times(r2).times(r3));
+		Transformation r = createImageRotation();
 		renderer.render();
-		for (int i=0; i<=nb_images; i++) {
+		for (int i=0; i<=NB_IMAGES; i++) {
 			world.expandTransformation(r);
-			eye.plusEquals(camera_trans);
-			camera.updateCamera(eye, poi, Vector4.zAxis());
+			camera.updateCamera(getEye(i+1), POI, Vector4.zAxis());
 			renderer.render();
 		}
 

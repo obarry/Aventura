@@ -40,6 +40,15 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 
 *Left to right, top to bottom: the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, two frames of the `UrbanScape` helicopter flight (street level, then an overview showing the shadows of the buildings), and the `FractalLandscape_MouseMoving` procedural terrain.*
 
+The images of the documentation are rendered off-screen from the scenes of these programs by `com.aventura.demo.DocumentationImages` (in the test sources). Run it from the project root to regenerate them, for instance after a change of the engine:
+
+```bash
+mvn test-compile
+java -Djava.awt.headless=true -cp target/classes:target/test-classes com.aventura.demo.DocumentationImages
+```
+
+It writes all the images to `resources/doc/images`; a directory and image names can be given to regenerate only some of them, or to write them elsewhere for a comparison (see its Javadoc).
+
 ## Quick start
 
 ### Requirements
@@ -152,7 +161,7 @@ public class HelloAventura {
 }
 ```
 
-Compile and run it against the classes built by Maven (use `;` instead of `:` on Windows):
+This program is also in the test sources (`com.aventura.demo.HelloAventura`, where the output file can be given as argument). Compile and run it against the classes built by Maven (use `;` instead of `:` on Windows):
 
 ```bash
 javac -cp target/classes HelloAventura.java
@@ -274,6 +283,8 @@ The projection type of a `PerspectiveContext` is given by the `PerspectiveType` 
 
 A shape is a set of triangles. To add a new one, extend `GenerativeElement` and implement `generateVertices()` and `generateTriangles()` (the compiler will remind you if you forget); `build()` and `rebuild()` take care of the rest, including normals. Or skip subclassing and feed `Element.addVertex()` / `Element.addTriangle()` directly. `Trellis` shows how to drive a grid from a height array (see `FractalLandscape_MouseMoving`).
 
+The [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) covers it in depth: the contracts a new element must fulfill, a new primitive written from scratch, an existing shape enriched by inheritance, and complex objects assembled from sub-elements, with tested examples.
+
 ## Demos
 
 All demos live in `com.aventura.demo`.
@@ -294,7 +305,7 @@ The `src/test/java/com/aventura/test` folder holds about seventy additional visu
 mvn test
 ```
 
-The unit tests (JUnit 4, about 370 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, and the pure logic of the interactive demos. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 390 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 

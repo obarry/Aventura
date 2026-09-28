@@ -2,7 +2,7 @@ package com.aventura.model.world.shape;
 
 import java.awt.Color;
 
-import com.aventura.math.transform.Transformation;
+import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.model.texture.Texture;
@@ -62,8 +62,11 @@ public class ClosedCone extends Cone {
 	protected void createSubElements() {
 		
 		bottom = new Disc(ray, half_seg);
-		Translation t_bottom = new Translation(Vector3.zAxis(), -height/2);
-		bottom.setTransformation((Transformation)t_bottom);
+		// A Disc faces +Z (its triangles are wound counter-clockwise seen from +Z): the bottom cap is
+		// first turned upside down (half-turn around X) so that it faces outwards (-Z), then moved down.
+		// It used to be only translated, so it faced the inside of the shape.
+		bottom.setTransformation(new Rotation((float) Math.PI, Vector3.xAxis()));
+		bottom.combineTransformation(new Translation(Vector3.zAxis(), -height/2));
 		
 		this.addElement(bottom);
 		

@@ -168,12 +168,13 @@ public class CircularMesh extends Mesh {
 					// Invalid type
 					return;
 				}
-				
-				// Add newly created triangle to the reporting Element
-				t.setColor(this.col);
-				elm.addTriangle(t);
 			}
 
+			// Add newly created triangle to the reporting Element -- with or without texture (this
+			// used to be inside the "if (tex!=null)" block above, so an untextured Disc had no
+			// triangle at all, and an untextured ClosedCylinder or ClosedCone had no caps).
+			t.setColor(this.col);
+			elm.addTriangle(t);
 		}
 	}
 	
