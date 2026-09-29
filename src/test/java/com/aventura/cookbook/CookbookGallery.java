@@ -5,12 +5,11 @@ import java.io.File;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
-import com.aventura.engine.RenderEngine;
+import com.aventura.demo.DemoScene;
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
@@ -95,15 +94,18 @@ public class CookbookGallery {
 		return world;
 	}
 
-	public static ImageView render(int pixelsPerUnit) {
-		World world = createWorld();
+	/** The gallery scene, to be rendered off-screen (render()) or shown in a window (SceneViewer) */
+	public static DemoScene createScene(int pixelsPerUnit) {
 		Lighting lighting = new Lighting(new DirectionalLight(new Vector3(-0.8f, 0.9f, -0.9f), 1.0f), new AmbientLight(0.2f), true);
-		Camera camera = new Camera(new Vector4(4.5f, -8.5f, 4.2f, 1), new Vector4(0.6f, 0.6f, 1.0f, 1), Vector4.zAxis());
 		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, pixelsPerUnit);
-		ImageView view = new ImageView(perspective);
-		RenderEngine engine = new RenderEngine(world, lighting, camera, RenderContext.RENDER_STANDARD_INTERPOLATE_SHADOWS, perspective);
-		engine.setView(view);
-		engine.render();
+		return new DemoScene(createWorld(), lighting, new Vector4(4.5f, -8.5f, 4.2f, 1), new Vector4(0.6f, 0.6f, 1.0f, 1),
+				RenderContext.RENDER_STANDARD_INTERPOLATE_SHADOWS, perspective);
+	}
+
+	public static ImageView render(int pixelsPerUnit) {
+		DemoScene scene = createScene(pixelsPerUnit);
+		ImageView view = new ImageView(scene.getPerspective());
+		scene.createEngine(scene.createCamera(), view).render();
 		return view;
 	}
 

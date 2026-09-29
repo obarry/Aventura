@@ -721,6 +721,11 @@ does not change when you add sub-elements that should close the shape.
 A test can render at low resolution and check pixel colors; a program can save a PNG
 (`view.saveImage(...)`) to look at.
 
+To look at a shape from every side, wrap its scene in a `DemoScene` and add it to
+`DocumentationImages.scenes()`, like `CookbookGallery.createScene()`: the `SceneViewer` then shows it
+in a window, with the camera turned by the mouse and the rendering types in a menu
+(`java -cp target/classes:target/test-classes com.aventura.demo.SceneViewer cookbook_gallery`).
+
 ### Looking for problems by eye
 
 | Setting (`RenderContext`) | Shows |

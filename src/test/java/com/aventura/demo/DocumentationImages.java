@@ -15,17 +15,13 @@ import javax.imageio.ImageIO;
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.cookbook.CookbookGallery;
-import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Transformation;
 import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
-import com.aventura.model.light.Lighting;
 import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.test.TestLightingSpot1;
-import com.aventura.view.ImageView;
 
 /**
  * ------------------------------------------------------------------------------
@@ -93,18 +89,31 @@ public class DocumentationImages {
 	 */
 	static final long FRACTAL_SEED = 1862;
 
-	// ***** The images *****
+	// ***** The scenes and the images *****
 
-	/** The images, by file name, in the order of generation */
+	/**
+	 * The scenes of the images, by image file name, in the order of generation. They can also be shown in a window,
+	 * with a camera moved by the mouse: see SceneViewer. hello_aventura.png is not a scene: HelloAventura is the
+	 * README's program, kept as is (see images()).
+	 */
+	public static Map<String, Supplier<DemoScene>> scenes() {
+		Map<String, Supplier<DemoScene>> scenes = new LinkedHashMap<>();
+		scenes.put("aventura_demo.jpg", () -> aventuraDemo(AVENTURA_DEMO_IMAGE, 800));
+		scenes.put("urbanscape_street.jpg", () -> urbanScape(URBANSCAPE_STREET_ANGLE, 500));
+		scenes.put("urbanscape_flight.jpg", () -> urbanScape(URBANSCAPE_FLIGHT_ANGLE, 500));
+		scenes.put("fractal_landscape.jpg", () -> fractalLandscape(FRACTAL_SEED));
+		scenes.put("spotlights.jpg", () -> spotLights(1000));
+		scenes.put("cookbook_gallery.png", () -> CookbookGallery.createScene(1000));
+		return scenes;
+	}
+
+	/** The images, by file name, in the order of generation: the README's program, then the scenes rendered off-screen */
 	static Map<String, Supplier<BufferedImage>> images() {
 		Map<String, Supplier<BufferedImage>> images = new LinkedHashMap<>();
 		images.put("hello_aventura.png", DocumentationImages::helloAventura);
-		images.put("aventura_demo.jpg", () -> aventuraDemo(AVENTURA_DEMO_IMAGE, 800));
-		images.put("urbanscape_street.jpg", () -> urbanScape(URBANSCAPE_STREET_ANGLE, 500));
-		images.put("urbanscape_flight.jpg", () -> urbanScape(URBANSCAPE_FLIGHT_ANGLE, 500));
-		images.put("fractal_landscape.jpg", () -> fractalLandscape(FRACTAL_SEED));
-		images.put("spotlights.jpg", () -> spotLights(1000));
-		images.put("cookbook_gallery.png", () -> CookbookGallery.render(1000).getImageView());
+		for (Map.Entry<String, Supplier<DemoScene>> scene : scenes().entrySet()) {
+			images.put(scene.getKey(), () -> scene.getValue().get().render());
+		}
 		return images;
 	}
 
@@ -127,15 +136,15 @@ public class DocumentationImages {
 	 * @param image number of the image in the animation
 	 * @param width width of the image in pixels (the demo's 1.5 x 0.9 view plane gives the height)
 	 */
-	static BufferedImage aventuraDemo(int image, int width) {
+	static DemoScene aventuraDemo(int image, int width) {
 		World world = AventuraDemo.createWorld();
 		Transformation rotation = AventuraDemo.createImageRotation();
 		for (int i = 0; i < image; i++) {
 			world.expandTransformation(rotation);
 		}
-		Camera camera = new Camera(AventuraDemo.getEye(image), AventuraDemo.POI, Vector4.zAxis());
 		PerspectiveContext perspective = new PerspectiveContext(width, 1.5f, 0.9f, 1, 100, PerspectiveType.FRUSTUM);
-		return render(world, AventuraDemo.createLighting(), camera, AventuraDemo.createRenderContext(), perspective);
+		return new DemoScene(world, AventuraDemo.createLighting(), AventuraDemo.getEye(image), AventuraDemo.POI,
+				AventuraDemo.createRenderContext(), perspective);
 	}
 
 	/**
@@ -144,20 +153,20 @@ public class DocumentationImages {
 	 * @param angle         angle traveled since the start of the flight, in degrees (0: in front of the buildings, low)
 	 * @param pixelsPerUnit resolution: the demo's 1.6 x 0.9 view plane gives 800 x 450 pixels at 500
 	 */
-	static BufferedImage urbanScape(float angle, int pixelsPerUnit) {
+	static DemoScene urbanScape(float angle, int pixelsPerUnit) {
 		World world = UrbanScape.createWorld();
 		UrbanScape.HelicopterFlight flight = UrbanScape.createFlight(world);
-		Camera camera = new Camera(flight.getEye((float) Math.toRadians(angle)), flight.getFocus(), Vector4.zAxis());
 		PerspectiveContext perspective = new PerspectiveContext(1.6f, 0.9f, 1, 100, PerspectiveType.FRUSTUM, pixelsPerUnit);
-		return render(world, UrbanScape.createLighting(), camera, UrbanScape.createRenderContext(), perspective);
+		return new DemoScene(world, UrbanScape.createLighting(), flight.getEye((float) Math.toRadians(angle)), flight.getFocus(),
+				UrbanScape.createRenderContext(), perspective);
 	}
 
 	/**
 	 * The fractal landscape of FractalLandscape_MouseMoving (same size, resolution, sea level, colors and light),
 	 * generated from a fixed seed, seen from farther than the demo's initial position so that it is fully visible
-	 * (1280 x 720 pixels), and cropped to the 960 x 260 band around it.
+	 * (1280 x 720 pixels). The image of the documentation is the 960 x 260 band around it (crop).
 	 */
-	static BufferedImage fractalLandscape(long seed) {
+	static DemoScene fractalLandscape(long seed) {
 		float size = 4;
 		int n = 128;
 		float[][] altitudes = new float[n + 1][n + 1];
@@ -174,38 +183,23 @@ public class DocumentationImages {
 		world.build();
 		FractalLandscape_MouseMoving.colorTrianglesByAltitude(trellis);
 
-		Camera camera = new Camera(new Vector4(7, -2, 2.4f, 1), new Vector4(0, 0, 1.3f, 1), Vector4.zAxis());
 		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1600);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(false);
-		BufferedImage image = render(world, FractalLandscape_MouseMoving.createLighting(), camera, rContext, perspective);
-		return crop(image, 241, 190, 960, 260);
+		return new DemoScene(world, FractalLandscape_MouseMoving.createLighting(), new Vector4(7, -2, 2.4f, 1), new Vector4(0, 0, 1.3f, 1),
+				rContext, perspective).crop(241, 190, 960, 260);
 	}
 
 	/** The scene of TestLightingSpot1: two spot lights (soft and sharp edge) and a point light, without landmarks. */
-	static BufferedImage spotLights(int pixelsPerUnit) {
+	static DemoScene spotLights(int pixelsPerUnit) {
 		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, pixelsPerUnit);
 		RenderContext rContext = new RenderContext(TestLightingSpot1.createRenderContext());
 		rContext.setDisplayLandmark(false);
-		return render(TestLightingSpot1.createWorld(), TestLightingSpot1.createLighting(), TestLightingSpot1.createCamera(), rContext, perspective);
+		return new DemoScene(TestLightingSpot1.createWorld(), TestLightingSpot1.createLighting(), TestLightingSpot1.EYE, TestLightingSpot1.POI,
+				rContext, perspective);
 	}
 
 	// ***** Tools *****
-
-	static BufferedImage render(World world, Lighting lighting, Camera camera, RenderContext rContext, PerspectiveContext perspective) {
-		ImageView view = new ImageView(perspective);
-		RenderEngine engine = new RenderEngine(world, lighting, camera, rContext, perspective);
-		engine.setView(view);
-		engine.render();
-		return view.getImageView();
-	}
-
-	/** The width x height part of the image whose top left corner is (x, y) */
-	static BufferedImage crop(BufferedImage image, int x, int y, int width, int height) {
-		BufferedImage cropped = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		cropped.getGraphics().drawImage(image.getSubimage(x, y, width, height), 0, 0, null);
-		return cropped;
-	}
 
 	static void save(BufferedImage image, File file) throws IOException {
 		String name = file.getName();
