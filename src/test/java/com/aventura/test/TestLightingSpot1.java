@@ -109,10 +109,12 @@ public class TestLightingSpot1 {
 		return new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250);
 	}
 
+	/** Position of the camera and point it looks at (also used by DocumentationImages and SceneViewer) */
+	public static final Vector4 EYE = new Vector4(8,-5,5,1);
+	public static final Vector4 POI = new Vector4(0,0,0,1);
+
 	public static Camera createCamera() {
-		Vector4 eye = new Vector4(8,-5,5,1);
-		Vector4 poi = new Vector4(0,0,0,1);
-		return new Camera(eye, poi, Vector4.zAxis());
+		return new Camera(new Vector4(EYE), new Vector4(POI), Vector4.zAxis());
 	}
 
 	public static World createWorld() {

@@ -67,8 +67,8 @@ public class TestDocumentationImages {
 	public void testFractalLandscapeIsReproducible() {
 		System.out.println("***** Test DocumentationImages : the fractal landscape is the same for the same seed *****");
 
-		BufferedImage a = DocumentationImages.fractalLandscape(DocumentationImages.FRACTAL_SEED);
-		BufferedImage b = DocumentationImages.fractalLandscape(DocumentationImages.FRACTAL_SEED);
+		BufferedImage a = DocumentationImages.fractalLandscape(DocumentationImages.FRACTAL_SEED).render();
+		BufferedImage b = DocumentationImages.fractalLandscape(DocumentationImages.FRACTAL_SEED).render();
 		for (int x = 0; x < a.getWidth(); x += 4) {
 			for (int y = 0; y < a.getHeight(); y += 4) {
 				assertEquals(a.getRGB(x, y), b.getRGB(x, y));

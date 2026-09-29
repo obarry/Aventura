@@ -49,6 +49,14 @@ java -Djava.awt.headless=true -cp target/classes:target/test-classes com.aventur
 
 It writes all the images to `resources/doc/images`; a directory and image names can be given to regenerate only some of them, or to write them elsewhere for a comparison (see its Javadoc).
 
+The same scenes can be explored in a Swing window with `com.aventura.demo.SceneViewer` (with a display, so without the `headless` option):
+
+```bash
+java -cp target/classes:target/test-classes com.aventura.demo.SceneViewer urbanscape_flight
+```
+
+Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, textures and landmarks options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
+
 ## Quick start
 
 ### Requirements
