@@ -11,6 +11,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.perspective.Perspective;
+import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.World;
 import com.aventura.model.world.triangle.Triangle;
@@ -140,12 +141,16 @@ public abstract class ShadowingLight extends Light {
 	// Minimum base bias as a fraction of the world size of one shadow map texel (see generateShadowMap())
 	protected static final float SHADOW_BIAS_TEXEL_FACTOR = 0.5f;
 
-	// Base bias in NDC depth units (SHADOW_BIAS_WORLD converted using this light's CURRENT
-	// (far-near) depth range), BEFORE the per-fragment slope scaling above is applied.
+	// Base bias, BEFORE the per-fragment slope scaling above is applied, in whichever unit this
+	// light's shadow map stores its depth in: for an orthographic light (DirectionalLight), the
+	// map stores a [0,1]-normalized depth, so this is SHADOW_BIAS_WORLD converted using this
+	// light's CURRENT (far-near) depth range; for a frustum light (Spot/Point, once their shadow
+	// maps exist), the map stores the LINEAR view-space depth W directly (world units already),
+	// so this stays a plain world-space distance -- see generateShadowMap()'s frustum branch.
 	// (Re)computed once per generateShadowMap(World) call (perspectiveCtx_light is only valid
 	// after initShadowing() has run), then reused -- with a different slope factor each time --
 	// by every shadowFactorAt() call for that frame.
-	protected float ndcShadowBiasBase = 0f;
+	protected float shadowBiasBase = 0f;
 	
 	// Default constructor
 	public ShadowingLight() {
@@ -257,6 +262,8 @@ public abstract class ShadowingLight extends Light {
 		// and row (x = +half, y = +half, accepted by TriangleRasterizer) fall out of the buffer.
 		int halfWidth = perspectiveCtx_light.getPixelHalfWidth();
 		int halfHeight = perspectiveCtx_light.getPixelHalfHeight();
+		Perspective lightPerspective = perspectiveCtx_light.getPerspective();
+		boolean frustum = perspectiveCtx_light.getPerspectiveType() == PerspectiveType.FRUSTUM;
 		// Orthographic projections in this engine always normalize NDC depth to [0, 1] (see
 		// OrthographicProjection's matrix -- z_ndc = 0 at near, 1 at far, regardless of the actual
 		// near/far world-space values chosen). Float.MAX_VALUE used to be used here as a generic
@@ -270,31 +277,43 @@ public abstract class ShadowingLight extends Light {
 		// A small margin above 1.0 guards against a fragment exactly at the box's far corner
 		// (z_ndc mathematically == 1.0, see DirectionalLight.initShadowing()'s far/near derivation)
 		// failing the depth test (z <= stored) purely from floating-point rounding.
-		// TODO: if/when PointLight/SpotLight shadow maps are implemented with a Frustum (not
-		// Orthographic) projection, re-check whether their NDC depth convention is also [0,1] --
-		// this constant assumes it is.
-		final float SHADOW_MAP_FAR_NDC = 1.0f + 1e-4f;
-		ZBuffer shadowZBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, SHADOW_MAP_FAR_NDC);
+		// Frustum projections (Spot/Point, once their shadow maps are implemented) store the LINEAR
+		// view-space depth W instead of a normalized NDC z (see shadowFactorAt() below, and the
+		// pipeline-generalization table in the audit doc): "far" is then simply this light's far
+		// plane distance, with the same small relative margin.
+		final float SHADOW_MAP_FAR_VALUE = frustum ? lightPerspective.getFar() * (1.0f + 1e-4f) : 1.0f + 1e-4f;
+		ZBuffer shadowZBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, SHADOW_MAP_FAR_VALUE);
 		this.map = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
 		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx_light, shadowZBuffer);
 		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
 
 		// See SHADOW_BIAS_WORLD's Javadoc: converts the fixed world-space bias into this frame's
-		// NDC depth units, using this light's CURRENT (far-near) depth range -- so the physical
+		// depth units. Orthographic stores a [0,1]-normalized depth, so dividing by the (far-near)
+		// depth range turns the world-space bias into that same normalized unit -- so the physical
 		// tolerance stays constant even as initShadowing() recomputes a tighter or looser box.
-		// This is the BASE bias only -- shadowFactorAt() further scales it per-fragment by the
-		// surface's slope relative to this light (see DOT_NL_FLOOR's Javadoc).
-		float depthRange = perspectiveCtx_light.getPerspective().getDepth();
+		// Frustum stores the linear W directly (already world units), so the bias is used as-is --
+		// see shadowBiasBase's Javadoc. This is the BASE bias only -- shadowFactorAt() further
+		// scales it per-fragment by the surface's slope relative to this light (see DOT_NL_FLOOR's
+		// Javadoc).
 		// The base world bias also grows with the size of a texel (world size covered by one shadow
 		// map pixel): with a coarse map (small setShadowMapSize(), or a huge scene) the depth of a
 		// tilted surface varies within one texel by more than a fixed bias, which produced massive
 		// acne (e.g. the whole ground in shadow at 250 pixels). At the default resolution of the
 		// demo scenes the fixed SHADOW_BIAS_WORLD still dominates, so their rendering is unchanged.
-		Perspective lightPerspective = perspectiveCtx_light.getPerspective();
+		// lightPerspective.getWidth()/getHeight() are the NEAR-plane extent for a frustum, so this
+		// currently measures the texel at its smallest (nearest the light); a texel covers
+		// proportionally more world space further away, which shadowFactorAt() does not yet
+		// compensate for -- a refinement left for when Spot/Point shadows are exercised (phase 4/5),
+		// conservative (too small, not too large) until then.
 		float texelWorldSize = Math.max(lightPerspective.getWidth() / perspectiveCtx_light.getPixelWidth(),
 				lightPerspective.getHeight() / perspectiveCtx_light.getPixelHeight());
 		float worldBias = Math.max(SHADOW_BIAS_WORLD, SHADOW_BIAS_TEXEL_FACTOR * texelWorldSize);
-		ndcShadowBiasBase = depthRange > 0 ? worldBias / depthRange : worldBias;
+		if (frustum) {
+			shadowBiasBase = worldBias;
+		} else {
+			float depthRange = lightPerspective.getDepth();
+			shadowBiasBase = depthRange > 0 ? worldBias / depthRange : worldBias;
+		}
 
 		// Recompute this light's View*Projection from its camera's CURRENT state, in case the
 		// light itself moved since the last generation (same reasoning as
@@ -376,6 +395,28 @@ public abstract class ShadowingLight extends Light {
 
 		Vector4 posInLightSpace = viewProjection_light.project(worldPosition);
 
+		// Orthographic: w is always 1, so x/y/z are already the final coordinates -- no divide
+		// needed, and z is the stored (normalized) depth. Frustum: x and y need the perspective
+		// divide to land in [-1, 1]; the depth compared against the map is w itself (linear
+		// view-space depth), NOT z/w (which would be the non-linear NDC depth) -- see the
+		// pipeline-generalization table in the audit doc.
+		boolean frustum = perspectiveCtx_light.getPerspectiveType() == PerspectiveType.FRUSTUM;
+		float w = posInLightSpace.getW();
+		float xNdc = frustum ? posInLightSpace.getX() / w : posInLightSpace.getX();
+		float yNdc = frustum ? posInLightSpace.getY() / w : posInLightSpace.getY();
+		float depthValue = frustum ? w : posInLightSpace.getZ();
+
+		// Bounds test: a point projecting outside this light's box/frustum is not something this
+		// light can shadow -- treat it as unshadowed by THIS light rather than sampling a repeated
+		// edge texel (MapView.getInterpolation() clamps s/t, which would silently borrow whatever
+		// depth happens to sit on the map's border). Harmless today: the orthographic box already
+		// encloses the whole scene it was built from. Load-bearing once a Spot/Point frustum is
+		// tighter than the scene (phase 4/5): outside its cone/range, a point must read as lit by
+		// this light's shadow test, not shadowed by whatever the border texel happens to hold.
+		if (xNdc < -1f || xNdc > 1f || yNdc < -1f || yNdc > 1f) {
+			return 1f;
+		}
+
 		// Sample the map where the rasterizer wrote this position. TriangleRasterizer follows the
 		// pixel-center convention: centered pixel x holds the depth sampled exactly at the
 		// continuous position x = x_ndc * halfWidth, and is stored in buffer cell k = x + halfWidth
@@ -385,17 +426,17 @@ public abstract class ShadowingLight extends Light {
 		// be rectangular (see generateShadowMap()).
 		int halfWidth = perspectiveCtx_light.getPixelHalfWidth();
 		int halfHeight = perspectiveCtx_light.getPixelHalfHeight();
-		float s = (posInLightSpace.getX() * halfWidth + halfWidth + 0.5f) / map.getViewWidth();
-		float t = (posInLightSpace.getY() * halfHeight + halfHeight + 0.5f) / map.getViewHeight();
+		float s = (xNdc * halfWidth + halfWidth + 0.5f) / map.getViewWidth();
+		float t = (yNdc * halfHeight + halfHeight + 0.5f) / map.getViewHeight();
 		float depth = map.getInterpolation(s, t);
 
 		// Slope-scaled epsilon bias to avoid "shadow acne" (self-shadowing) -- see
-		// DOT_NL_FLOOR's Javadoc for why a single fixed bias (ndcShadowBiasBase alone) isn't
+		// DOT_NL_FLOOR's Javadoc for why a single fixed bias (shadowBiasBase alone) isn't
 		// enough across every incidence angle.
 		float dotNL = getLightVectorAtPoint(worldPosition).dot(normal.normalize());
-		float ndcShadowBias = ndcShadowBiasBase / Math.max(dotNL, DOT_NL_FLOOR);
+		float shadowBias = shadowBiasBase / Math.max(dotNL, DOT_NL_FLOOR);
 
-		if (posInLightSpace.getZ() > depth + ndcShadowBias) {
+		if (depthValue > depth + shadowBias) {
 			return 0f;
 		}
 		return 1f;
