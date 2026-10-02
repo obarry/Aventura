@@ -97,6 +97,30 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.5.0</version>
       </plugin>
+      <!-- Javadoc: "mvn javadoc:javadoc" generates the HTML API docs in target/reports/apidocs
+           ("mvn package" also builds target/aventura-*-javadoc.jar) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.11.2</version>
+        <configuration>
+          <doctitle>Aventura ${project.version} API</doctitle>
+          <windowtitle>Aventura ${project.version} API</windowtitle>
+          <!-- Do not fail the build on missing or malformed Javadoc comments -->
+          <doclint>none</doclint>
+          <failOnError>false</failOnError>
+          <quiet>true</quiet>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>
