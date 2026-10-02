@@ -1,7 +1,13 @@
 package com.aventura.model.light;
 
+import com.aventura.context.PerspectiveContext;
+import com.aventura.engine.ElementTransform;
+import com.aventura.engine.ViewProjection;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
+import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.world.World;
 
 
@@ -47,8 +53,13 @@ import com.aventura.model.world.World;
  * So it inherits from PointLight from a class standpoint: the light vector at a point, the distance
  * attenuation and the intensity setter are the ones of PointLight.
  *
- * Shadows: a Spot Light does not cast shadows yet (its shadow map, a single frustum projection, is the
- * next step): shadowFactorAt() returns 1 (fully lit) for every point.
+ * Shadows: a Spot Light casts shadows through a single Frustum shadow map (see initShadowing()):
+ * the light camera sits at the light's position, looks along its direction (the cone's axis), and its
+ * field of view is set from the OUTER angle, so the near plane's EDGE (not just its corner) lands
+ * exactly on the cone boundary -- reusing the shared Frustum pipeline already generalized in
+ * ShadowingLight/NearPlaneClipper (phases 2/3), nothing Spot-specific needed there. The depth range
+ * runs from a small near plane out to max_distance, beyond which PointLight's attenuation already
+ * zeroes the light out, so nothing meaningful could be in shadow past it anyway.
  *
  * @author Olivier BARRY
  * @since July 2016
@@ -225,10 +236,63 @@ public class SpotLight extends PointLight {
 		return super.getIntensity(point) * coneFactor;
 	}
 
-	// getLightVectorAtPoint(), setIntensity() and initShadowing() are the ones of PointLight.
+	// getLightVectorAtPoint(), setIntensity() are the ones of PointLight.
 	// getLightColorAtPoint() removed: was a broken stub returning null, now covered by Light's
 	// default implementation.
 	// setLightColor(Color) removed: was an empty override silently no-op'ing Light's working
 	// implementation -- same bug as the one found and fixed in AmbientLight.
+
+	/**
+	 * Builds this Spot Light's shadow camera/frustum/projection: eye at the light's position,
+	 * looking along direction (the cone's axis), field of view = 2 x outerAngle on both axes (a
+	 * square frustum -- the cone, being rotationally symmetric, inscribes within it; the square's
+	 * corners see a little beyond the cone, which is harmless since getIntensity()'s cone factor
+	 * already zeroes those points out regardless of the shadow test).
+	 *
+	 * near is a small, fixed-ish fraction of max_distance (not a physically meaningful bound --
+	 * just far enough from the apex to keep the projection well-conditioned); far is max_distance
+	 * itself, since PointLight.attenuationFunc() already zeroes this light's contribution beyond
+	 * it. Same robust up-vector hint as DirectionalLight.initShadowing() (Z axis, falling back to Y
+	 * when the cone points along Z) so LookAt never collapses side = forward x up to near zero.
+	 */
+	@Override
+	public void initShadowing(Perspective perspective, Camera camera_view, World world) {
+		this.world = world;
+		initShadowing(perspective, camera_view);
+	}
+
+	@Override
+	public void initShadowing(Perspective perspective, Camera camera_view) {
+		Vector3 forward = getDirection(); // already a unit vector (setDirection() normalizes it)
+
+		Vector3 upHint = Vector3.zAxis();
+		if (Math.abs(forward.dot(Vector3.zAxis())) > 0.999f) {
+			upHint = Vector3.yAxis();
+		}
+
+		Vector4 eye = getPosition();
+		Vector4 poi = eye.plus(forward); // any point further along forward works, LookAt only needs the direction
+		camera_light = new Camera(eye, poi, upHint.V4());
+
+		float far = getMaxDistance();
+		float near = Math.max(0.01f, 0.01f * far);
+		if (near >= far) {
+			near = far * 0.5f;
+		}
+
+		// Near-plane half extent so the square frustum's EDGE reaches the outer angle exactly:
+		// halfExtent = near * tan(outerAngle) (not the corner/diagonal, which would need a larger
+		// angle and let the cone touch past the window's edges).
+		float halfExtent = near * (float) Math.tan(getOuterAngle());
+		float size = 2f * halfExtent;
+
+		// Fixed PIXEL resolution regardless of the (tiny, by construction) near-plane window's
+		// world-space size -- same reasoning as DirectionalLight.initShadowing(); square map since
+		// the frustum itself is square here (unlike Directional's scene-fitted rectangular box).
+		perspectiveCtx_light = new PerspectiveContext(getShadowMapSize(), size, size, near, far - near, PerspectiveType.FRUSTUM);
+
+		viewProjection_light = new ViewProjection(camera_light, perspectiveCtx_light.getPerspective());
+		elementTransform_light = new ElementTransform(viewProjection_light);
+	}
 
 }

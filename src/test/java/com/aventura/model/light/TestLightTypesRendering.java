@@ -122,13 +122,18 @@ public class TestLightTypesRendering {
 
 	@Test
 	public void testRender_spot_shadows() {
-		System.out.println("***** Test rendering : SpotLight, shadows on (no shadow of its own yet: it must stay fully lit) *****");
+		System.out.println("***** Test rendering : SpotLight, shadows on (phase 4: it now casts its own shadow) *****");
 		Lighting l = ambientOnly();
 		SpotLight s = spot();
 		l.addSpotLight(s);
 		render(l, RenderContext.RENDER_STANDARD_INTERPOLATE_SHADOWS);
-		// Until the spot light's own shadow map exists (audit phase 4), it must not produce shadows
-		assertEquals(1f, s.shadowFactorAt(new Vector4(0, 0, 0, 1), Vector3.zAxis()), 0f);
+		// Since phase 4, the spot light builds and uses its own shadow map (see TestSpotLightShadows
+		// for the dedicated, hand-calculated geometry). This particular point -- (0,0,0), where the
+		// ball sits on the floor -- is genuinely inside the ball's own shadow from this light's
+		// position: the line from (0,0,0) to LIGHT_POS=(2,-2,3) passes about 0.55 units from the
+		// ball's center (0,0,0.8), well inside its 0.8 radius. This replaces the old assertion, which
+		// only ever checked the pre-phase-4 "always fully lit" stub.
+		assertEquals(0f, s.shadowFactorAt(new Vector4(0, 0, 0, 1), Vector3.zAxis()), 0f);
 	}
 
 	@Test
