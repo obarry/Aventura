@@ -3,6 +3,7 @@ package com.aventura.model.light;
 import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.DepthOnlyConsumer;
 import com.aventura.engine.ElementTransform;
+import com.aventura.engine.NearPlaneClipper;
 import com.aventura.engine.RasterizerStats;
 import com.aventura.engine.TriangleRasterizer;
 import com.aventura.engine.ViewProjection;
@@ -347,6 +348,13 @@ public abstract class ShadowingLight extends Light {
 		// Calculate projection for all vertices of this Element
 		elementTransform_light.transformElement(e, false); // Calculate prj_pos of each vertex of this Element
 
+		// Near-plane clipping (phase 3): only meaningful for a Frustum projection -- see
+		// NearPlaneClipper's class Javadoc for why Orthographic (w always 1) never needs it. No-op
+		// for DirectionalLight today (always Orthographic), exercised once Spot/Point shadows use a
+		// Frustum perspectiveCtx_light (phase 4/5).
+		boolean frustum = perspectiveCtx_light.getPerspectiveType() == PerspectiveType.FRUSTUM;
+		float near = frustum ? perspectiveCtx_light.getPerspective().getNear() : 0f;
+
 		// Process each Triangle (this will update the shadow map's ZBuffer)
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			Triangle t = e.getTriangle(j);
@@ -359,7 +367,14 @@ public abstract class ShadowingLight extends Light {
 				// Counters reset per triangle so that recordTriangle() gets THIS triangle's counts
 				// (same pattern as the main render pass in RenderEngine).
 				rasterizer.resetStats();
-				rasterizer.rasterize(t, consumer);
+				if (frustum) {
+					for (NearPlaneClipper.ClippedTriangle ct : NearPlaneClipper.clip(
+							t.getV1(), t.getV2(), t.getV3(), null, null, null, null, null, null, near)) {
+						rasterizer.rasterize(ct.v1, ct.v2, ct.v3, null, null, null, null, null, null, consumer);
+					}
+				} else {
+					rasterizer.rasterize(t, consumer);
+				}
 				shadowMapStats.recordTriangle(rasterizer.getRasterizedLines(), rasterizer.getRenderedPixels(), rasterizer.getDiscardedPixels());
 			}
 		}

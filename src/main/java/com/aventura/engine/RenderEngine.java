@@ -15,6 +15,7 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowingLight;
+import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.material.Material;
 import com.aventura.model.material.SolidMaterial;
 import com.aventura.model.material.TexturedMaterial;
@@ -529,9 +530,9 @@ public class RenderEngine {
 		triangleRasterizer.resetStats(); // see rasterizeShadedTriangle()
 		if (useTexture) {
 			// Null normals: no normal or world position interpolation, only the texture coordinates
-			triangleRasterizer.rasterize(t, null, null, null, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
+			rasterizeClipped(t, null, null, null, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
 		} else {
-			triangleRasterizer.rasterize(t, consumer);
+			rasterizeClipped(t, null, null, null, null, null, null, consumer);
 		}
 		stats.recordTriangle(triangleRasterizer.getRasterizedLines(), triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
 	}
@@ -589,12 +590,40 @@ public class RenderEngine {
 		triangleRasterizer.resetStats();
 
 		if (useTexture) {
-			triangleRasterizer.rasterize(t, normal1, normal2, normal3, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
+			rasterizeClipped(t, normal1, normal2, normal3, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
 		} else {
-			triangleRasterizer.rasterize(t, normal1, normal2, normal3, consumer);
+			rasterizeClipped(t, normal1, normal2, normal3, null, null, null, consumer);
 		}
 
 		stats.recordTriangle(triangleRasterizer.getRasterizedLines(), triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
+	}
+
+	/**
+	 * Rasterizes t's face through triangleRasterizer, clipping it against the near plane first
+	 * when the camera uses a Frustum projection -- see NearPlaneClipper's class Javadoc for why
+	 * Orthographic never needs it (w is always 1, no perspective divide to blow up). Shared by
+	 * rasterizeUnlitTriangle() and rasterizeShadedTriangle() so the textured/untextured and
+	 * shaded/unlit variants can't drift on this (phase 3 of the Lighting/Shadows plan: the same
+	 * latent near-plane defect fixed in ShadowingLight's shadow pass, phase 2, applies here too).
+	 *
+	 * @param t        the un-clipped triangle (used for its 3 corners; color/material/backface
+	 *                 culling are resolved by the caller from this SAME unclipped triangle --
+	 *                 clipping only cuts geometry, it does not change facing or material)
+	 * @param n1,n2,n3 per-corner normals, or null (all three) for a depth/unlit pass -- see
+	 *                 TriangleRasterizer.rasterize()'s Javadoc
+	 * @param tx1,tx2,tx3 per-corner texture coordinates, or null (all three) if untextured
+	 * @param consumer receives one Fragment per surviving pixel of every resulting sub-triangle
+	 */
+	private void rasterizeClipped(Triangle t, Vector3 n1, Vector3 n2, Vector3 n3, Vector4 tx1, Vector4 tx2, Vector4 tx3, FragmentConsumer consumer) {
+		if (perspectiveContext.getPerspectiveType() == PerspectiveType.FRUSTUM) {
+			float near = perspectiveContext.getPerspective().getNear();
+			for (NearPlaneClipper.ClippedTriangle ct : NearPlaneClipper.clip(
+					t.getV1(), t.getV2(), t.getV3(), n1, n2, n3, tx1, tx2, tx3, near)) {
+				triangleRasterizer.rasterize(ct.v1, ct.v2, ct.v3, ct.n1, ct.n2, ct.n3, ct.t1, ct.t2, ct.t3, consumer);
+			}
+		} else {
+			triangleRasterizer.rasterize(t, n1, n2, n3, tx1, tx2, tx3, consumer);
+		}
 	}
 
 	/**

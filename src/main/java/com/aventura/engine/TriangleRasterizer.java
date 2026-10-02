@@ -124,7 +124,7 @@ public class TriangleRasterizer {
 	 * into the reused Fragment instance) and must not be relied upon.
 	 */
 	public void rasterize(Triangle t, FragmentConsumer consumer) {
-		rasterize(t, null, null, null, null, null, null, consumer);
+		rasterize(t.getV1(), t.getV2(), t.getV3(), null, null, null, null, null, null, consumer);
 	}
 
 	/**
@@ -133,7 +133,7 @@ public class TriangleRasterizer {
 	 * the full overload with a null texture coordinate for all 3 corners.
 	 */
 	public void rasterize(Triangle t, Vector3 normal1, Vector3 normal2, Vector3 normal3, FragmentConsumer consumer) {
-		rasterize(t, normal1, normal2, normal3, null, null, null, consumer);
+		rasterize(t.getV1(), t.getV2(), t.getV3(), normal1, normal2, normal3, null, null, null, consumer);
 	}
 
 	/**
@@ -141,6 +141,9 @@ public class TriangleRasterizer {
 	 * handing it to consumer.
 	 *
 	 * @param t				the triangle to rasterize (used for screen/world vertex positions and texture)
+	 *						Deprecated as the primary entry point in favor of the Vertex-based overload below
+	 *						(e.g. NearPlaneClipper's clipped corners aren't backed by a Triangle); kept for
+	 *						callers that already have one.
 	 * @param normal1..3	per-corner normals to interpolate; pass each vertex's own normal for
 	 *						smooth shading, or the same face normal 3 times for flat shading —
 	 *						this class does not distinguish between the two cases. Pass null for
@@ -159,12 +162,42 @@ public class TriangleRasterizer {
 			Vector3 normal1, Vector3 normal2, Vector3 normal3,
 			Vector4 texCoord1, Vector4 texCoord2, Vector4 texCoord3,
 			FragmentConsumer consumer) {
+		rasterize(t.getV1(), t.getV2(), t.getV3(), normal1, normal2, normal3, texCoord1, texCoord2, texCoord3, consumer);
+	}
+
+	/**
+	 * Rasterizes a triangle given its 3 corners directly as Vertex (rather than through a
+	 * Triangle), producing one Fragment per covered, depth-test-passing pixel and handing it to
+	 * consumer. This is the primary implementation -- the Triangle-based overloads above just
+	 * extract t.getV1()/getV2()/getV3() and delegate here. The Vertex-based entry point exists for
+	 * callers that build their own corners without a backing Triangle, e.g. NearPlaneClipper's
+	 * clipped sub-triangles (new, temporary Vertex instances at a cut corner, carrying
+	 * interpolated position/world position/normal/texture coordinate, exactly like a real one).
+	 *
+	 * @param v1,v2,v3    the triangle's 3 corners (projected: getProjPos() already set)
+	 * @param normal1..3  per-corner normals to interpolate; pass each vertex's own normal for
+	 *                    smooth shading, or the same face normal 3 times for flat shading --
+	 *                    this class does not distinguish between the two cases. Pass null for
+	 *                    all three to skip normal AND world position interpolation entirely for
+	 *                    a pure depth-only pass.
+	 * @param texCoord1..3 per-corner homogeneous texture coordinates, or null (all three) if this
+	 *                    triangle has no texture. Interpolated here with perspective correction
+	 *                    but left UN-divided by W -- Fragment exposes the raw (u, v, w), and it's
+	 *                    up to Material (which knows the texture's orientation) to apply the right
+	 *                    projective divide. This class has no notion of texture orientation at all.
+	 * @param consumer    receives one Fragment per surviving pixel
+	 */
+	public void rasterize(
+			Vertex pv1, Vertex pv2, Vertex pv3,
+			Vector3 normal1, Vector3 normal2, Vector3 normal3,
+			Vector4 texCoord1, Vector4 texCoord2, Vector4 texCoord3,
+			FragmentConsumer consumer) {
 
 		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterizing triangle.");
 
-		RasterVertex a = new RasterVertex(t.getV1(), normal1, texCoord1);
-		RasterVertex b = new RasterVertex(t.getV2(), normal2, texCoord2);
-		RasterVertex c = new RasterVertex(t.getV3(), normal3, texCoord3);
+		RasterVertex a = new RasterVertex(pv1, normal1, texCoord1);
+		RasterVertex b = new RasterVertex(pv2, normal2, texCoord2);
+		RasterVertex c = new RasterVertex(pv3, normal3, texCoord3);
 
 		RasterVertex[] ordered = sortByScreenY(a, b, c);
 		RasterVertex v1 = ordered[0];
