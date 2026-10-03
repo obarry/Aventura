@@ -1,10 +1,4 @@
-package com.aventura.model.material;
-
-import java.awt.Color;
-
-import com.aventura.engine.Fragment;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -28,7 +22,14 @@ import com.aventura.engine.Fragment;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.model.material;
+
+import java.awt.Color;
+
+import com.aventura.engine.Fragment;
+
+/**
  * A Material answers a single question: what is the base (diffuse) color of a
  * surface at a given Fragment, before any light is applied, and how does that
  * surface react to light (specular color and exponent, ambient reflectivity)?

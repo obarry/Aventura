@@ -1,18 +1,4 @@
-package com.aventura.model.light;
-
-import com.aventura.context.PerspectiveContext;
-import com.aventura.engine.ElementTransform;
-import com.aventura.engine.ViewProjection;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
-import com.aventura.model.perspective.Perspective;
-import com.aventura.model.perspective.PerspectiveType;
-import com.aventura.model.world.World;
-import com.aventura.tools.tracing.Tracer;
-import com.aventura.view.MapView;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -36,7 +22,22 @@ import com.aventura.view.MapView;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.light;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.engine.ElementTransform;
+import com.aventura.engine.ViewProjection;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
+import com.aventura.model.perspective.PerspectiveType;
+import com.aventura.model.world.World;
+import com.aventura.tools.tracing.Tracer;
+import com.aventura.view.MapView;
+
+/**
  * Point Light source is one that radiates light equally in every direction from a single point in space.
  * 
  * For a Point Light, the intensity is a parameter of the light source and it is a general multiplication factor.

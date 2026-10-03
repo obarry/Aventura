@@ -1,12 +1,4 @@
-package com.aventura.math.transform;
-
-import com.aventura.tools.tracing.Tracer;
-import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector4;
-import com.aventura.math.vector.Vector3;
-
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -30,7 +22,16 @@ import com.aventura.math.vector.Vector3;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- *
+ */
+package com.aventura.math.transform;
+
+import com.aventura.tools.tracing.Tracer;
+import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector4;
+import com.aventura.math.vector.Vector3;
+
+
+/**
  * This class is a transformation that represents a translation through a Matrix 4
  * To initialize the translation, the translation Vector can be provided either through a Vector3 or Vector4.
  * The last coordinate (w) of a Vector4 is ignored; hence if this is a Point (w=1) it is simply ignored and

@@ -1,8 +1,4 @@
-package com.aventura.model.perspective;
-
-import com.aventura.math.projection.FrustumProjection;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -26,7 +22,12 @@ import com.aventura.math.projection.FrustumProjection;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.perspective;
+
+import com.aventura.math.projection.FrustumProjection;
+
+/**
  * Frustum (perspective projection): the view window grows linearly with the distance to the eye (Thales).
  *
  * @author Olivier BARRY

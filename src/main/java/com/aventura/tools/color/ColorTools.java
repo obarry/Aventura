@@ -1,10 +1,4 @@
-package com.aventura.tools.color;
-
-import java.awt.Color;
-
-import com.aventura.math.vector.Tools;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -28,7 +22,14 @@ import com.aventura.math.vector.Tools;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.tools.color;
+
+import java.awt.Color;
+
+import com.aventura.math.vector.Tools;
+
+/**
  * This static class provides low level color services on top of the java.awt.Color class
  * It allows to add, multiply (modulation) 2 or more colors and provides the resulting color.
  * It also provides services to increment all component of a color or to multiply them by a scalar

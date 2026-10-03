@@ -1,6 +1,4 @@
-package com.aventura.engine;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -24,7 +22,10 @@ package com.aventura.engine;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.engine;
+
+/**
  * A FragmentConsumer receives one Fragment per pixel produced by
  * TriangleRasterizer and decides what to do with it — compute and draw a
  * shaded color (ShadingConsumer), or only record depth for a shadow map

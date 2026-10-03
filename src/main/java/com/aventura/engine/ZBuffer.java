@@ -1,9 +1,4 @@
-package com.aventura.engine;
-
-import com.aventura.tools.tracing.Tracer;
-import com.aventura.view.MapView;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -27,6 +22,13 @@ import com.aventura.view.MapView;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
+ */
+package com.aventura.engine;
+
+import com.aventura.tools.tracing.Tracer;
+import com.aventura.view.MapView;
+
+/**
  * Depth buffer, decoupled from any specific rendering pass.
  *
  * A single ZBuffer instance can be used interchangeably for the main render

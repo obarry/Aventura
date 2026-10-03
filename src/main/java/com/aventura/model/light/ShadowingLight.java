@@ -1,26 +1,4 @@
-package com.aventura.model.light;
-
-import com.aventura.context.PerspectiveContext;
-import com.aventura.engine.DepthOnlyConsumer;
-import com.aventura.engine.ElementTransform;
-import com.aventura.engine.NearPlaneClipper;
-import com.aventura.engine.RasterizerStats;
-import com.aventura.engine.TriangleRasterizer;
-import com.aventura.engine.ViewProjection;
-import com.aventura.engine.ZBuffer;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
-import com.aventura.model.perspective.Perspective;
-import com.aventura.model.perspective.PerspectiveType;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.World;
-import com.aventura.model.world.triangle.Triangle;
-import com.aventura.tools.tracing.Tracer;
-import com.aventura.view.MapView;
-
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -44,7 +22,30 @@ import com.aventura.view.MapView;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.light;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.engine.DepthOnlyConsumer;
+import com.aventura.engine.ElementTransform;
+import com.aventura.engine.NearPlaneClipper;
+import com.aventura.engine.RasterizerStats;
+import com.aventura.engine.TriangleRasterizer;
+import com.aventura.engine.ViewProjection;
+import com.aventura.engine.ZBuffer;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
+import com.aventura.model.perspective.PerspectiveType;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.World;
+import com.aventura.model.world.triangle.Triangle;
+import com.aventura.tools.tracing.Tracer;
+import com.aventura.view.MapView;
+
+
+/**
  * ShadowingLight is a type of light that can generate Shadows by opposite of other type of Lights e.g. Ambientlight
  * It is also this type of light that can generate "Shaded" light on the surface of World's Elements.
  * The method used for Light calculation is Shadow Mapping hence we will need to have a "Camera Light" that means a Camera corresponding to the Light direction and source

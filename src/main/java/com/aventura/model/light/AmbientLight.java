@@ -1,9 +1,4 @@
-package com.aventura.model.light;
-
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -27,7 +22,13 @@ import com.aventura.math.vector.Vector4;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.light;
+
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+
+/**
  * Ambient Light appears to come from every direction with equal intensity in any point of space
  *
  *

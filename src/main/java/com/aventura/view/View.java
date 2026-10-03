@@ -1,6 +1,4 @@
-package com.aventura.view;
-
-/**
+/*
 * ------------------------------------------------------------------------------ 
 * MIT License
 * 
@@ -24,13 +22,16 @@ package com.aventura.view;
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 * ------------------------------------------------------------------------------
-* 
+ */
+package com.aventura.view;
+
+/**
 * View is the root (abstract) class of anything having a pixel width and height that can be initialized:
 * - GUIView (and its implementations ImageView, SwingView): the images the RenderEngine draws into;
 * - MapView: a 2D map of float values (depth buffer, shadow map...), which can itself be displayed in
 *   a GUIView (GUIView.initView(MapView)).
 * 
-*/
+ */
 public abstract class View {
 	
 	protected int width;

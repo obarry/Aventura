@@ -1,9 +1,4 @@
-package com.aventura.math.transform;
-
-import com.aventura.math.vector.Matrix4;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -27,7 +22,13 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- *
+ */
+package com.aventura.math.transform;
+
+import com.aventura.math.vector.Matrix4;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * This class is a transformation that represents a scaling (or homothety) having its center at origin O through a Matrix 4
  * The translation is formalized by a diagonal matrix.
  * 

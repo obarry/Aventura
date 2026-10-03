@@ -1,8 +1,4 @@
-package com.aventura.math.projection;
-
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -26,7 +22,12 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- 
+ */
+package com.aventura.math.projection;
+
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * Orthographic Projection Matrix
  * 
  * @author Olivier BARRY

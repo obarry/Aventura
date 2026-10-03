@@ -1,11 +1,4 @@
-package com.aventura.math.vector;
-
-import java.util.Arrays;
-
-import com.aventura.math.Constants;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -29,7 +22,14 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
-**/
+ */
+package com.aventura.math.vector;
+
+import java.util.Arrays;
+
+import com.aventura.math.Constants;
+import com.aventura.tools.tracing.Tracer;
+
 public class Matrix4 {
 
     private static final float[][] IDENTITY_ARRAY =

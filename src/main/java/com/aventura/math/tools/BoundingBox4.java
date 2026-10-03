@@ -1,11 +1,4 @@
-package com.aventura.math.tools;
-
-import java.util.Arrays;
-
-import com.aventura.math.Constants;
-import com.aventura.math.vector.Vector4;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -29,7 +22,15 @@ import com.aventura.math.vector.Vector4;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.math.tools;
+
+import java.util.Arrays;
+
+import com.aventura.math.Constants;
+import com.aventura.math.vector.Vector4;
+
+/**
  * Build a box surrounding a set of points
  * This box's faces are aligned to coordinate axis
  * 

@@ -1,9 +1,4 @@
-package com.aventura.engine;
-
-import com.aventura.model.material.Material;
-import com.aventura.view.GUIView;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -27,7 +22,13 @@ import com.aventura.view.GUIView;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.engine;
+
+import com.aventura.model.material.Material;
+import com.aventura.view.GUIView;
+
+/**
  * FragmentConsumer without any lighting: each fragment gets the Material's base color as is (the surface
  * color, or the texture sample tinted by it for a TexturedMaterial), then the ZBuffer is updated.
  * 

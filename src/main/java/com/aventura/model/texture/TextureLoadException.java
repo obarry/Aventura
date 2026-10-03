@@ -1,6 +1,4 @@
-package com.aventura.model.texture;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -24,7 +22,10 @@ package com.aventura.model.texture;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.model.texture;
+
+/**
  * Thrown when a Texture cannot be loaded from a file -- either because the file
  * itself couldn't be read (IOException), or because it was read but isn't a
  * recognized image format (ImageIO.read() returns null in that case, with no

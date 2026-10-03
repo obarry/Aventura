@@ -1,10 +1,4 @@
-package com.aventura.model.material;
-
-import java.awt.Color;
-
-import com.aventura.engine.Fragment;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -28,7 +22,14 @@ import com.aventura.engine.Fragment;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.model.material;
+
+import java.awt.Color;
+
+import com.aventura.engine.Fragment;
+
+/**
  * A Material with a uniform, flat color across the whole surface — no
  * texture. The Fragment is deliberately ignored by baseColorAt()/
  * specularColorAt(): the color is always the same regardless of where on the

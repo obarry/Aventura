@@ -1,18 +1,4 @@
-package com.aventura.view;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.function.Consumer;
-
-import javax.imageio.ImageIO;
-
-import com.aventura.context.PerspectiveContext;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
 * ------------------------------------------------------------------------------ 
 * MIT License
 * 
@@ -36,7 +22,22 @@ import com.aventura.tools.tracing.Tracer;
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 * ------------------------------------------------------------------------------
-* 
+ */
+package com.aventura.view;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.function.Consumer;
+
+import javax.imageio.ImageIO;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.tools.tracing.Tracer;
+
+/**
 * ImageView is a concrete, GUI-independent GUIView: it renders into java.awt.image.BufferedImage
 * images (no Swing, no window), using the double buffer technique:
 * - the RenderEngine draws the new frame into the BACK buffer (initView(), drawPixel(), drawLine()...);
@@ -54,7 +55,7 @@ import com.aventura.tools.tracing.Tracer;
 * 
 * @author Olivier BARRY
 * @since September 2026 (extracted from SwingView)
-*/
+ */
 public class ImageView extends GUIView {
 
 	// Front buffer: the last complete frame, never modified after the swap (volatile: read by other threads)

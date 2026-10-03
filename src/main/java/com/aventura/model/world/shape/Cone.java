@@ -1,13 +1,4 @@
-package com.aventura.model.world.shape;
-
-
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.triangle.FanMesh;
-
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -31,7 +22,17 @@ import com.aventura.model.world.triangle.FanMesh;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
+ */
+package com.aventura.model.world.shape;
 
+
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.triangle.FanMesh;
+
+
+/**
  * Create a Cone made of 1 summit and a base, a circle around Z axis
  * Summit is at z = height / 2
  * Circle is at z = -height / 2

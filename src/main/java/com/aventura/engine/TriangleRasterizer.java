@@ -1,18 +1,4 @@
-package com.aventura.engine;
-
-import com.aventura.context.PerspectiveContext;
-import com.aventura.math.vector.Tools;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Vertex;
-import com.aventura.model.world.triangle.Triangle;
-import com.aventura.tools.tracing.Tracer;
-
-import java.util.Arrays;
-import java.util.Comparator;
-import com.aventura.model.perspective.PerspectiveType;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -36,7 +22,22 @@ import com.aventura.model.perspective.PerspectiveType;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.engine;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.math.vector.Tools;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.world.Vertex;
+import com.aventura.model.world.triangle.Triangle;
+import com.aventura.tools.tracing.Tracer;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import com.aventura.model.perspective.PerspectiveType;
+
+/**
  * TriangleRasterizer is the pure geometric core of the rendering pipeline: it
  * knows how to walk the pixels covered by a triangle on screen, interpolate
  * per-vertex attributes (world position, normal, texture coordinates) with

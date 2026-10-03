@@ -1,12 +1,4 @@
-package com.aventura.model.world.triangle;
-
-import java.awt.Color;
-
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -30,7 +22,16 @@ import com.aventura.model.world.Element;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.triangle;
+
+import java.awt.Color;
+
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+
+
+/**
  * Superclass for a Mesh of vertices with same Texture to create a surface part of an Element
  * A Mesh does not generate the geometry of the surface, this is the user of this class who needs to set the position of each Vertex in the space.
  * 

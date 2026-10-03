@@ -1,8 +1,4 @@
-package com.aventura.model.world.shape;
-
-import com.aventura.model.world.Element;
-
-/**
+/*
  * ------------------------------------------------------------------------------
  * MIT License
  *
@@ -26,7 +22,12 @@ import com.aventura.model.world.Element;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.world.shape;
+
+import com.aventura.model.world.Element;
+
+/**
  * Base class for an Element that generates its OWN geometry from constructor parameters (a Sphere, a
  * Box, a Cylinder...), as opposed to a plain Element used as a group/container node with no geometry of
  * its own (which stays a perfectly valid, supported use of Element directly -- see its own Javadoc).

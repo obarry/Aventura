@@ -1,12 +1,4 @@
-package com.aventura.model.camera;
-
-import com.aventura.math.transform.Translation;
-import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -30,7 +22,16 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.model.camera;
+
+import com.aventura.math.transform.Translation;
+import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * LookAt camera Matrix
  * ====================
  * 

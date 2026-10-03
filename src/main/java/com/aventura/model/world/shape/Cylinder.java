@@ -1,12 +1,4 @@
-package com.aventura.model.world.shape;
-
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.triangle.RectangleMesh;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -30,7 +22,16 @@ import com.aventura.model.world.triangle.RectangleMesh;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.shape;
+
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.triangle.RectangleMesh;
+
+/**
  * Create a Cylinder made of 2 circles around Z axis
  * Top circle is at z = height / 2
  * Bottom circle is at z = -height / 2

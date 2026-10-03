@@ -1,6 +1,4 @@
-package com.aventura.math.vector;
-
-/**
+/*
  * ------------------------------------------------------------------------------
  * MIT License
  *
@@ -24,7 +22,10 @@ package com.aventura.math.vector;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.math.vector;
+
+/**
  * New class (phase 2 - see audit report, section 6 "Inversion de matrice").
  *
  * Internal Gauss-Jordan elimination solver with partial pivoting, generalized to any square matrix

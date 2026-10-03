@@ -1,8 +1,4 @@
-package com.aventura.math.vector;
-
-import com.aventura.math.Constants;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -26,7 +22,12 @@ import com.aventura.math.Constants;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.math.vector;
+
+import com.aventura.math.Constants;
+
+/**
  * Generic Geometry Tool Box
  * 
  * @author Olivier BARRY

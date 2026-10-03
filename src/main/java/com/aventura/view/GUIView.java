@@ -1,10 +1,4 @@
-package com.aventura.view;
-
-import java.awt.Color;
-
-import com.aventura.context.PerspectiveContext;
-
-/**
+/*
 * ------------------------------------------------------------------------------ 
 * MIT License
 * 
@@ -28,7 +22,14 @@ import com.aventura.context.PerspectiveContext;
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 * ------------------------------------------------------------------------------
-* 
+ */
+package com.aventura.view;
+
+import java.awt.Color;
+
+import com.aventura.context.PerspectiveContext;
+
+/**
 * GUIView is the (abstract) class handled by the rendering engine to display the pixels while rendering elements (rasterization)
 * 
 * A typical 'session' of rendering a frame in a view is to:
@@ -45,7 +46,7 @@ import com.aventura.context.PerspectiveContext;
 * - SwingView: an ImageView that also repaints a Swing Component after each frame.
 * Other display technologies can derive from ImageView (simplest) or directly from GUIView.
 * 
-*/
+ */
 public abstract class GUIView extends View {
 	
 	// Static data

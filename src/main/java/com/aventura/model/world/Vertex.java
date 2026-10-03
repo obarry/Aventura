@@ -1,9 +1,4 @@
-package com.aventura.model.world;
-
-import java.awt.Color;
-import com.aventura.math.vector.*;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -27,7 +22,13 @@ import com.aventura.math.vector.*;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world;
+
+import java.awt.Color;
+import com.aventura.math.vector.*;
+
+/**
  * A generic Vertex
  * 
  * @author Olivier BARRY

@@ -1,11 +1,4 @@
-package com.aventura.model.perspective;
-
-import com.aventura.math.projection.Projection;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -29,7 +22,15 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.perspective;
+
+import com.aventura.math.projection.Projection;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * A Perspective describes the "lens" of a Camera: the viewing volume (near plane window and
  * depth) and the corresponding projection matrix. It is expressed in world units, independently
  * of any pixel resolution (see PerspectiveContext for the pixel side).
@@ -74,7 +75,6 @@ import com.aventura.tools.tracing.Tracer;
  * width/height/dist/depth. Every setter rebuilds the projection matrix: a new Projection instance
  * is created, so consumers must re-read getProjection() (ViewProjection does, on refresh()).
  * 
- * ------------------------------------------------------------------------------ 
  *
  * @author Olivier BARRY
  * @since June 2024

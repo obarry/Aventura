@@ -1,11 +1,4 @@
-package com.aventura.demo;
-
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-
-import javax.swing.JFrame;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -29,7 +22,15 @@ import javax.swing.JFrame;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.demo;
+
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+import javax.swing.JFrame;
+
+/**
  * This class is the JFrame container for the MovingCamera demo application allowing using keyboard interaction to move
  * camera through the 3D landscape.
  */

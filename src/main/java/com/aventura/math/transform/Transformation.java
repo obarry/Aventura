@@ -1,10 +1,4 @@
-package com.aventura.math.transform;
-
-import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector4;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -28,7 +22,14 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- *
+ */
+package com.aventura.math.transform;
+
+import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector4;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * This class is a transformation that represents a rotation having its center at origin O through a Matrix 4
  * This class intends to represent a complete transformation for a 3D element (either simple or complex/agglomerated) through a Matrix4.
  * It is made  * of a combination of:

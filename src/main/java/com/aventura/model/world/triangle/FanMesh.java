@@ -1,12 +1,4 @@
-package com.aventura.model.world.triangle;
-
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.Vertex;
-
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -30,7 +22,16 @@ import com.aventura.model.world.Vertex;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.triangle;
+
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Vertex;
+
+
+/**
  * A Fan Mesh of vertices with same Texture to create a surface part of an Element
  * A Fan of triangles is made of a set of triangles all sharing 1 vertice hence creating a Fan.
  * This class creates properly the array of Vertices and proposes services to create the list of Triangle for the fan of triangles and wrap a texture to it.

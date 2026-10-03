@@ -1,13 +1,4 @@
-package com.aventura.engine;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Vertex;
-
-/**
+/*
  * ------------------------------------------------------------------------------
  * MIT License
  *
@@ -31,7 +22,17 @@ import com.aventura.model.world.Vertex;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.engine;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.world.Vertex;
+
+/**
  * Clips a triangle against the single near plane w = near, in homogeneous (clip)
  * space, BEFORE the perspective divide. Needed only for a FRUSTUM projection:
  * under Orthographic, w is always 1 and get3DX()/get3DY()/get3DZ() -- the divide

@@ -1,14 +1,4 @@
-package com.aventura.model.material;
-
-import java.awt.Color;
-
-import com.aventura.engine.Fragment;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.triangle.Triangle;
-import com.aventura.tools.color.ColorTools;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -32,7 +22,18 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.model.material;
+
+import java.awt.Color;
+
+import com.aventura.engine.Fragment;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.triangle.Triangle;
+import com.aventura.tools.color.ColorTools;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * A Material backed by a Texture, tinted by a diffuse color — matching the
  * legacy Rasterizer's behavior where the surface color (D) is ALWAYS
  * multiplied with the texture sample (T), never replaced by it: final base

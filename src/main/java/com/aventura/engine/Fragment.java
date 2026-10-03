@@ -1,9 +1,4 @@
-package com.aventura.engine;
-
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -27,7 +22,13 @@ import com.aventura.math.vector.Vector4;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.engine;
+
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+
+/**
  * A Fragment carries the interpolated per-pixel attributes produced while a
  * TriangleRasterizer walks a triangle: screen position, depth, and — when
  * relevant to the current pass — world-space position, normal, and texture

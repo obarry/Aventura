@@ -1,6 +1,4 @@
-package com.aventura.math.transform;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -24,8 +22,8 @@ package com.aventura.math.transform;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- *
  */
+package com.aventura.math.transform;
 
 public interface Transformable {
 	

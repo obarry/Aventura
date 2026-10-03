@@ -1,8 +1,4 @@
-package com.aventura.math.transform;
-
-import com.aventura.math.vector.Vector3DException;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -26,8 +22,12 @@ import com.aventura.math.vector.Vector3DException;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- *
- * 
+ */
+package com.aventura.math.transform;
+
+import com.aventura.math.vector.Vector3DException;
+
+/**
  * @author Olivier BARRY
  */
 
