@@ -155,6 +155,17 @@ public class PointLight extends ShadowingLight {
 	public Vector4 getPosition() {
 		return light_point;
 	}
+
+	/**
+	 * Repositions this light (e.g. to animate it). Takes effect from the next render()/
+	 * generateShadowMap(World) call: like the main camera, this light's shadow camera(s) are rebuilt
+	 * from its CURRENT position every frame by initShadowing(), called once per frame by
+	 * RenderEngine before generateShadowMap() -- see ShadowingLight's Javadoc.
+	 * @param point new position of the light source
+	 */
+	public void setPosition(Vector4 point) {
+		this.light_point = point;
+	}
 	
 	/** Distance beyond which this light does not light anything. */
 	public float getMaxDistance() {
