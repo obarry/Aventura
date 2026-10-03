@@ -1,6 +1,4 @@
-package com.aventura.math.vector;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -24,7 +22,9 @@ package com.aventura.math.vector;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
-**/
+ */
+package com.aventura.math.vector;
+
 public class Vector3DException extends Exception {
 
 	public Vector3DException() {

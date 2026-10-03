@@ -1,16 +1,4 @@
-package com.aventura.math.transform;
-
-import com.aventura.math.Constants;
-import com.aventura.math.tools.MathTools;
-import com.aventura.math.vector.IndexOutOfBoundException;
-import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.MatrixArrayWrongSizeException;
-import com.aventura.math.vector.Quaternion;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -34,7 +22,20 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- *
+ */
+package com.aventura.math.transform;
+
+import com.aventura.math.Constants;
+import com.aventura.math.tools.MathTools;
+import com.aventura.math.vector.IndexOutOfBoundException;
+import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.MatrixArrayWrongSizeException;
+import com.aventura.math.vector.Quaternion;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * This class is a transformation that represents a rotation having its center at origin O through a Matrix 4
  * The rotation is implemented in the 3x3 upper left part of the 4x4 Matrix
  * 

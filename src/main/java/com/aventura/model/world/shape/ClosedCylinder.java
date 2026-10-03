@@ -1,14 +1,4 @@
-package com.aventura.model.world.shape;
-
-import java.awt.Color;
-
-import com.aventura.math.transform.Rotation;
-import com.aventura.math.transform.Translation;
-import com.aventura.math.vector.Vector3;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -32,7 +22,18 @@ import com.aventura.model.world.Element;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.shape;
+
+import java.awt.Color;
+
+import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Translation;
+import com.aventura.math.vector.Vector3;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+
+/**
  * A Cylinder, closed at top and bottom like a can
  * 
  * @author Olivier BARRY

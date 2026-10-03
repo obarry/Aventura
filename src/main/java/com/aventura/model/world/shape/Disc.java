@@ -1,11 +1,4 @@
-package com.aventura.model.world.shape;
-
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.triangle.CircularMesh;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -29,7 +22,15 @@ import com.aventura.model.world.triangle.CircularMesh;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.shape;
+
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.triangle.CircularMesh;
+
+/**
  * @author Olivier BARRY
  * @since Feb 2018
  */

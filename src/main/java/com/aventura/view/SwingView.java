@@ -1,11 +1,4 @@
-package com.aventura.view;
-
-import java.awt.Component;
-import java.awt.image.BufferedImage;
-
-import com.aventura.context.PerspectiveContext;
-
-/**
+/*
 * ------------------------------------------------------------------------------ 
 * MIT License
 * 
@@ -29,7 +22,15 @@ import com.aventura.context.PerspectiveContext;
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 * ------------------------------------------------------------------------------
-* 
+ */
+package com.aventura.view;
+
+import java.awt.Component;
+import java.awt.image.BufferedImage;
+
+import com.aventura.context.PerspectiveContext;
+
+/**
 * Swing specialization of ImageView: same double buffer images, plus a repaint of the associated
 * Swing Component after each rendered frame. The component's paint method just draws getImageView():
 * 
@@ -50,7 +51,7 @@ import com.aventura.context.PerspectiveContext;
 *                      Y
 * 
 * The conversion from Aventura's centered, Y axis up coordinates is done by ImageView.
-*/
+ */
 
 public class SwingView extends ImageView {
 

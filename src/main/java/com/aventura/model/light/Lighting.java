@@ -1,16 +1,4 @@
-package com.aventura.model.light;
-
-import java.awt.Color;
-import java.util.ArrayList;
-
-import com.aventura.engine.Fragment;
-import com.aventura.math.vector.Vector3;
-import com.aventura.model.material.Material;
-import com.aventura.tools.color.RGBAccumulator;
-import com.aventura.tools.tracing.Tracer;
-
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -34,7 +22,20 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.light;
+
+import java.awt.Color;
+import java.util.ArrayList;
+
+import com.aventura.engine.Fragment;
+import com.aventura.math.vector.Vector3;
+import com.aventura.model.material.Material;
+import com.aventura.tools.color.RGBAccumulator;
+import com.aventura.tools.tracing.Tracer;
+
+
+/**
  * Central system and management of all Lighting in Aventura
  * 
  * The lighting system is centralizing all Lights of a scene. Multiple lighting systems are required to render multiple scenes.

@@ -1,6 +1,4 @@
-package com.aventura.model.world;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -24,7 +22,9 @@ package com.aventura.model.world;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
-**/
+ */
+package com.aventura.model.world;
+
 public class WrongArraySizeException extends Exception {
 
 	/**

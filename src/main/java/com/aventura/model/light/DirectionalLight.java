@@ -1,18 +1,4 @@
-package com.aventura.model.light;
-
-import com.aventura.context.PerspectiveContext;
-import com.aventura.engine.ElementTransform;
-import com.aventura.engine.ViewProjection;
-import com.aventura.math.tools.BoundingBox4;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
-import com.aventura.model.perspective.Perspective;
-import com.aventura.model.world.World;
-import com.aventura.tools.tracing.Tracer;
-import com.aventura.model.perspective.PerspectiveType;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -36,7 +22,22 @@ import com.aventura.model.perspective.PerspectiveType;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.model.light;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.engine.ElementTransform;
+import com.aventura.engine.ViewProjection;
+import com.aventura.math.tools.BoundingBox4;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
+import com.aventura.model.world.World;
+import com.aventura.tools.tracing.Tracer;
+import com.aventura.model.perspective.PerspectiveType;
+
+/**
  * Directional Light also known as an infinite light source, radiates light in a single direction
  * from infinitely far away e.g. sun, whose rays can be considered parallel.
  * Since they have no position in space, directional directional have infinite range and the intensity

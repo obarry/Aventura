@@ -1,10 +1,4 @@
-package com.aventura.math.vector;
-
-import com.aventura.math.Constants;
-import com.aventura.math.tools.MathTools;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------
  * MIT License
  *
@@ -28,7 +22,14 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.math.vector;
+
+import com.aventura.math.Constants;
+import com.aventura.math.tools.MathTools;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * A Quaternion (x,y,z,w) represents a rotation: w is the scalar (real) part, (x,y,z) is the
  * vector (imaginary) part. Component order follows Vector4's (x,y,z,w), scalar last, for
  * visual/indexing consistency with the rest of this lib (and with the OpenGL/GLM convention).

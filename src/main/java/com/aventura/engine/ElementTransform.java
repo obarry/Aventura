@@ -1,15 +1,4 @@
-package com.aventura.engine;
-
-import com.aventura.math.vector.Matrix3;
-import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.NotInvertibleMatrixException;
-import com.aventura.math.vector.Vector3;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.Vertex;
-import com.aventura.model.world.triangle.Triangle;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -33,7 +22,19 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.engine;
+
+import com.aventura.math.vector.Matrix3;
+import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.NotInvertibleMatrixException;
+import com.aventura.math.vector.Vector3;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Vertex;
+import com.aventura.model.world.triangle.Triangle;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * The mutating per-Element transformation pipeline: given a fixed view +
  * projection pair (constant for this object's lifetime) and a current Model
  * matrix (changes for every Element, potentially every frame), computes each

@@ -1,13 +1,4 @@
-package com.aventura.model.world;
-
-import java.awt.Color;
-import java.util.ArrayList;
-
-import com.aventura.math.transform.Transformation;
-import com.aventura.math.vector.Vector4;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -31,7 +22,17 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world;
+
+import java.awt.Color;
+import java.util.ArrayList;
+
+import com.aventura.math.transform.Transformation;
+import com.aventura.math.vector.Vector4;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * World is the root class for all the hierarchy of Elements containing world geometry
  * World can only contain Elements that contain Vertices and Triangles
  * Elments can contain other Elements recursively, creating a tree where World is the root

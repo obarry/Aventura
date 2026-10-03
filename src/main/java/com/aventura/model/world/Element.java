@@ -1,18 +1,4 @@
-package com.aventura.model.world;
-
-import java.awt.Color;
-import java.util.ArrayList;
-
-import com.aventura.math.transform.Transformable;
-import com.aventura.math.transform.Transformation;
-import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.shape.Generable;
-import com.aventura.model.world.shape.Shape;
-import com.aventura.model.world.triangle.Triangle;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -36,7 +22,22 @@ import com.aventura.model.world.triangle.Triangle;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world;
+
+import java.awt.Color;
+import java.util.ArrayList;
+
+import com.aventura.math.transform.Transformable;
+import com.aventura.math.transform.Transformation;
+import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.shape.Generable;
+import com.aventura.model.world.shape.Shape;
+import com.aventura.model.world.triangle.Triangle;
+
+/**
  * This class is the class representing a base element of the world. An element can be a Sphere, a Box, a Cube or a much complex thing.
  * This element is made of multiple Triangles all made of Vertices.
  * 

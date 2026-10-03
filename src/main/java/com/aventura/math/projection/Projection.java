@@ -1,8 +1,4 @@
-package com.aventura.math.projection;
-
-import com.aventura.math.vector.Matrix4;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -26,7 +22,12 @@ import com.aventura.math.vector.Matrix4;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.math.projection;
+
+import com.aventura.math.vector.Matrix4;
+
+/**
  Abstract class for all Projection Matrices
  * 
  * @author Olivier BARRY

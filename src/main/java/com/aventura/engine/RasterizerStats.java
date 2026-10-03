@@ -1,6 +1,4 @@
-package com.aventura.engine;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -24,7 +22,10 @@ package com.aventura.engine;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.engine;
+
+/**
  * Consolidates diagnostic counters for a rasterization pass. Two usages:
  *
  * - Main render pass (RenderEngine): one instance, alive for the whole

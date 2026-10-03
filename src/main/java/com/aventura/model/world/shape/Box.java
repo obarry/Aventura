@@ -1,14 +1,4 @@
-package com.aventura.model.world.shape;
-
-import java.awt.Color;
-
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.Vertex;
-import com.aventura.model.world.triangle.RectangleMesh;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -32,7 +22,18 @@ import com.aventura.model.world.triangle.RectangleMesh;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.shape;
+
+import java.awt.Color;
+
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Vertex;
+import com.aventura.model.world.triangle.RectangleMesh;
+
+/**
  * @author Olivier BARRY
  * @since May 2016
  */

@@ -1,6 +1,4 @@
-package com.aventura.model.perspective;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -24,7 +22,10 @@ package com.aventura.model.perspective;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.perspective;
+
+/**
  * Type of a Perspective, i.e. of its projection:
  * - FRUSTUM: perspective projection (vanishing point, objects shrink with distance). The depth
  *   stored in the ZBuffer is the eye-space distance (w after projection).

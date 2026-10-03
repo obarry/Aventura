@@ -1,8 +1,4 @@
-package com.aventura.model.perspective;
-
-import com.aventura.math.projection.OrthographicProjection;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -26,7 +22,12 @@ import com.aventura.math.projection.OrthographicProjection;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.perspective;
+
+import com.aventura.math.projection.OrthographicProjection;
+
+/**
  * Orthographic (parallel projection): the view window has the same size at any distance.
  *
  * @author Olivier BARRY

@@ -1,10 +1,4 @@
-package com.aventura.math.vector;
-
-import com.aventura.math.Constants;
-import com.aventura.math.tools.MathTools;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -28,7 +22,14 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.math.vector;
+
+import com.aventura.math.Constants;
+import com.aventura.math.tools.MathTools;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * A Vector 4 in 3D Graphics is a Vector 3 (x,y,z) + w, a fourth component that represent the point information: if null this is a Vector, else a Point
  * 
  * @author Olivier BARRY

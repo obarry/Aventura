@@ -1,13 +1,4 @@
-package com.aventura.model.world.shape;
-
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.Vertex;
-import com.aventura.model.world.triangle.FullMesh;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -31,7 +22,17 @@ import com.aventura.model.world.triangle.FullMesh;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.shape;
+
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Vertex;
+import com.aventura.model.world.triangle.FullMesh;
+
+/**
  * Create a frustum of Cone made of 2 circles around Z axis
  * Bottom circle is at z = -cone_height / 2
  * Virtual summit is at z = cone_height / 2

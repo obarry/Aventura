@@ -1,8 +1,4 @@
-package com.aventura.tools.tracing;
-
-import java.io.*;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -26,7 +22,12 @@ import java.io.*;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.tools.tracing;
+
+import java.io.*;
+
+/**
  * New Tracer implementation.
  * Static methods
  * Allow to test activation at tracing stage

@@ -1,17 +1,4 @@
-package com.aventura.engine;
-
-import java.awt.Color;
-
-import com.aventura.context.PerspectiveContext;
-import com.aventura.model.perspective.PerspectiveType;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.world.Vertex;
-import com.aventura.model.world.shape.Segment;
-import com.aventura.model.world.triangle.Triangle;
-import com.aventura.view.GUIView;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -35,7 +22,21 @@ import com.aventura.view.GUIView;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.engine;
+
+import java.awt.Color;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.model.perspective.PerspectiveType;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.world.Vertex;
+import com.aventura.model.world.shape.Segment;
+import com.aventura.model.world.triangle.Triangle;
+import com.aventura.view.GUIView;
+
+/**
  * Draws lines on screen for two related but distinct needs:
  * - Triangle wireframe edges, from Vertex data already projected by the ongoing
  *   per-Element Model*View*Projection pipeline (getProjPos()).

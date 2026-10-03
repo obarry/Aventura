@@ -1,14 +1,4 @@
-package com.aventura.engine;
-
-import com.aventura.math.vector.Vector3;
-import com.aventura.model.camera.Camera;
-import com.aventura.model.light.Lighting;
-import com.aventura.model.light.ShadowingLight;
-import com.aventura.model.material.Material;
-import com.aventura.tools.color.RGBAccumulator;
-import com.aventura.view.GUIView;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -32,7 +22,18 @@ import com.aventura.view.GUIView;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.engine;
+
+import com.aventura.math.vector.Vector3;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.light.Lighting;
+import com.aventura.model.light.ShadowingLight;
+import com.aventura.model.material.Material;
+import com.aventura.tools.color.RGBAccumulator;
+import com.aventura.view.GUIView;
+
+/**
  * The "normal rendering" FragmentConsumer: for each fragment, combines the
  * ambient contribution with each ShadowingLight's diffuse + specular
  * contribution (optionally weighted by that light's shadow factor), draws the

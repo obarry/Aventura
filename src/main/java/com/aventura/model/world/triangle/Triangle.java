@@ -1,13 +1,4 @@
-package com.aventura.model.world.triangle;
-
-import java.awt.Color;
-
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Vertex;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -31,7 +22,17 @@ import com.aventura.model.world.Vertex;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.triangle;
+
+import java.awt.Color;
+
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Vertex;
+
+/**
  * Most basic surface element, the Triangle can be rendered autonomously without any other information
  * than those contained in its attributes.
  * 

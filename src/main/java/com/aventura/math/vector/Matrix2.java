@@ -1,10 +1,4 @@
-package com.aventura.math.vector;
-
-import java.util.Arrays;
-
-import com.aventura.math.Constants;
-
-/**
+/*
  * ------------------------------------------------------------------------------
  * MIT License
  *
@@ -28,7 +22,14 @@ import com.aventura.math.Constants;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.math.vector;
+
+import java.util.Arrays;
+
+import com.aventura.math.Constants;
+
+/**
  * New class: the 2x2 counterpart to Matrix3/Matrix4, closing the last gap in this lib's Vector2/3/4
  * + Matrix2/3/4 family (see audit report - Matrix2 was deferred to its own phase). Mirrors Matrix3's
  * public surface and conventions exactly (identity() static accessor rather than a public mutable

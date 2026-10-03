@@ -1,6 +1,4 @@
-package com.aventura.model.world.shape;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -24,7 +22,10 @@ package com.aventura.model.world.shape;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.shape;
+
+/**
  * This interface provides methods related to behavior "Generaable" of the Element's geometry
  * Implementing this behavior will become generioc to all Elements allowing to generate World's geometry but also update it.
  * 

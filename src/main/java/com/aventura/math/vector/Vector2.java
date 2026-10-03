@@ -1,10 +1,4 @@
-package com.aventura.math.vector;
-
-import com.aventura.math.Constants;
-import com.aventura.math.tools.MathTools;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -28,11 +22,18 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.math.vector;
+
+import com.aventura.math.Constants;
+import com.aventura.math.tools.MathTools;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * @author Olivier BARRY
  * @date March 2016
  *
-**/
+ */
 public class Vector2 {
 	
 	protected float x;

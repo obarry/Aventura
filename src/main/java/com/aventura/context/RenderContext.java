@@ -1,8 +1,4 @@
-package com.aventura.context;
-
-import java.awt.Color;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -26,7 +22,12 @@ import java.awt.Color;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.context;
+
+import java.awt.Color;
+
+/**
  * The RenderContext describes the information and parameters to be used by the RenderEngine to render the World properly.
  * This is all parameters not directly related to the World, the Lighting or the Camera nor the Display (that is defined
  * in PerspectiveContext). It can be to force the rendering to be plain or lines, to use or not textures, etc...

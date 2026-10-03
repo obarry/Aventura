@@ -1,6 +1,4 @@
-package com.aventura.view;
-
-/**
+/*
 * ------------------------------------------------------------------------------ 
 * MIT License
 * 
@@ -24,12 +22,15 @@ package com.aventura.view;
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 * ------------------------------------------------------------------------------
-* 
+ */
+package com.aventura.view;
+
+/**
 * MapView is a simple Map (array of values, generally int) adapted to the GUIView interface defined by the abstract class GUIView
 * It is used as storage by ZBuffer (depth buffer of the main pass, shadow maps), filled by TriangleRasterizer.
 * It is e.g. used for Shadow mapping rendering but could be used for any purpose when a Map needs to be rendered.
 * 
-*/
+ */
 
 public class MapView extends View {
 	

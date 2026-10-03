@@ -1,11 +1,4 @@
-package com.aventura.model.world.triangle;
-
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-import com.aventura.model.world.Vertex;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -29,7 +22,15 @@ import com.aventura.model.world.Vertex;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.triangle;
+
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.Vertex;
+
+/**
  * A rectangle Mesh of vertices with same Texture to create a surface part of an Element
  * This class creates properly the array of Vertices and proposes services to create the list of Triangle in different ways to rectangleMesh the surface.
  * This class does not generate the geometry of the surface, this is the user of this class who needs to set the position of each Vertex in the space.

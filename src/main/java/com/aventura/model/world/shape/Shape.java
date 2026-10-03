@@ -1,11 +1,4 @@
-package com.aventura.model.world.shape;
-
-import java.awt.Color;
-
-import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Element;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -29,7 +22,15 @@ import com.aventura.model.world.Element;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.shape;
+
+import java.awt.Color;
+
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+
+/**
  * This interface provides generic method signatures for all Elements
  * Each specific element should implement all or part of these methods, depending on its shape.
  * 

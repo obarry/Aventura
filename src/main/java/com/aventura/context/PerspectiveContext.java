@@ -1,12 +1,4 @@
-package com.aventura.context;
-
-import com.aventura.model.perspective.FrustumPerspective;
-import com.aventura.model.perspective.OrthographicPerspective;
-import com.aventura.model.perspective.Perspective;
-import com.aventura.model.perspective.PerspectiveType;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -30,7 +22,16 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.context;
+
+import com.aventura.model.perspective.FrustumPerspective;
+import com.aventura.model.perspective.OrthographicPerspective;
+import com.aventura.model.perspective.Perspective;
+import com.aventura.model.perspective.PerspectiveType;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * Evolutions :
  * ----------
  * 6-Oct-2023 : Proposal to rename GraphicContext into GeometryContext - DONE 27-Jan-2025 renamed into PerspectiveContext (more appropriate)

@@ -1,6 +1,4 @@
-package com.aventura.engine;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -24,7 +22,10 @@ package com.aventura.engine;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.engine;
+
+/**
  * A FragmentConsumer that only records depth, without computing any color.
  * Used for shadow map generation: TriangleRasterizer.rasterize() is called
  * exactly the same way as for normal rendering, just with this consumer

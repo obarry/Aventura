@@ -1,8 +1,4 @@
-package com.aventura.model.world.shape;
-
-import com.aventura.model.texture.Texture;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -26,7 +22,12 @@ import com.aventura.model.texture.Texture;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------ 
- * 
+ */
+package com.aventura.model.world.shape;
+
+import com.aventura.model.texture.Texture;
+
+/**
  * @author Olivier BARRY
  * @since May 2016
  */

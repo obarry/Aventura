@@ -1,11 +1,4 @@
-package com.aventura.model.light;
-
-import java.awt.Color;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.tools.color.ColorTools;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -29,7 +22,15 @@ import com.aventura.tools.color.ColorTools;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.light;
+
+import java.awt.Color;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.tools.color.ColorTools;
+
+/**
  * @author Olivier BARRY
  * @since July 2016
  * 

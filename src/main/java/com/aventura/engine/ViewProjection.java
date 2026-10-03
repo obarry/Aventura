@@ -1,12 +1,4 @@
-package com.aventura.engine;
-
-import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
-import com.aventura.model.perspective.Perspective;
-import com.aventura.tools.tracing.Tracer;
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -30,7 +22,16 @@ import com.aventura.tools.tracing.Tracer;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- * 
+ */
+package com.aventura.engine;
+
+import com.aventura.math.vector.Matrix4;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
+import com.aventura.tools.tracing.Tracer;
+
+/**
  * A pure View*Projection projector: combines a Camera's view matrix and a
  * Perspective's projection matrix into a single transformation that maps a
  * world-space point directly to clip space -- no Model matrix involved,

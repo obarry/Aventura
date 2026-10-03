@@ -1,17 +1,4 @@
-package com.aventura.model.light;
-
-import com.aventura.context.PerspectiveContext;
-import com.aventura.engine.ElementTransform;
-import com.aventura.engine.ViewProjection;
-import com.aventura.math.vector.Vector3;
-import com.aventura.math.vector.Vector4;
-import com.aventura.model.camera.Camera;
-import com.aventura.model.perspective.Perspective;
-import com.aventura.model.perspective.PerspectiveType;
-import com.aventura.model.world.World;
-
-
-/**
+/*
  * ------------------------------------------------------------------------------ 
  * MIT License
  * 
@@ -35,7 +22,21 @@ import com.aventura.model.world.World;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * ------------------------------------------------------------------------------
- *
+ */
+package com.aventura.model.light;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.engine.ElementTransform;
+import com.aventura.engine.ViewProjection;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.perspective.Perspective;
+import com.aventura.model.perspective.PerspectiveType;
+import com.aventura.model.world.World;
+
+
+/**
  * A Spot Light is a Point Light with a preferred direction of radiation: it lights a cone, whose apex is
  * the light source, around a direction (the axis of the cone).
  *
