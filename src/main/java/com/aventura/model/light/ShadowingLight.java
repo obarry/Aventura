@@ -235,13 +235,30 @@ public abstract class ShadowingLight extends Light {
 	//public abstract void calculateCameraLight(Perspective perspective, Camera camera_view); 
 	
 	/**
-	 * This method will generate the shadow map for the elements of the world passed in parameter with the camera light previously
-	 * initiated and light matrix calculated.
-	 * It will use similar recursive algorithm than RenderEngine algorithm for rendering world but will only calculate a shadow map without
-	 * any more rendering or rasterization calculation.
+	 * Generates the shadow map(s) for this light against the given world. For a light with a
+	 * single shadow camera (DirectionalLight, SpotLight) this fills in the single
+	 * camera_light/perspectiveCtx_light/viewProjection_light/elementTransform_light/map/
+	 * shadowBiasBase fields below, via generateShadowMapFace() -- the parameterized core this
+	 * method and PointLight's six-face override both call (see that method's Javadoc; the
+	 * extraction is phase 5's refactor, with no behavior change for Directional/Spot).
 	 * @param world
 	 */
 	public void generateShadowMap(World world) {
+		generateSingleShadowMap(world);
+	}
+
+	/**
+	 * The actual single-map generation body (DirectionalLight, SpotLight): package-visible via
+	 * "final" rather than inlined directly into generateShadowMap(World) above, so that a
+	 * ShadowingLight subclass whose OWN superclass is not ShadowingLight directly -- namely
+	 * SpotLight, whose superclass PointLight overrides generateShadowMap(World) for its own
+	 * six-face cube map -- can still reach this exact, unmodified single-map behavior by calling
+	 * this method from its own override, instead of inheriting PointLight's cube-map one (see
+	 * SpotLight.generateShadowMap(World) for why that override is necessary). "final" because no
+	 * subclass has a reason to further customize the single-map algorithm itself -- only whether to
+	 * use it at all (PointLight does not).
+	 */
+	protected final void generateSingleShadowMap(World world) {
 
 		// A light whose initShadowing() does not (yet) set up its light camera/perspective/projection
 		// has no shadow map to generate: leave the map null, which shadowFactorAt() reads as "fully lit".
@@ -253,83 +270,11 @@ public abstract class ShadowingLight extends Light {
 			return;
 		}
 
-		// Fresh ZBuffer + TriangleRasterizer for this generation pass -- rebuilt every time rather
-		// than reused across frames, since the shadow map must not carry over stale depth from a
-		// previous frame in a scene with moving lights/geometry.
-		// Map size from this light's perspective context, as set by initShadowing(): width x height
-		// pixels, possibly rectangular (see setShadowMapSize()). The ZBuffer covers the centered
-		// screen space [-half, half] on each axis, hence 2*half+1 cells (same convention as the
-		// main pass in RenderEngine) -- the former width = 2*half allocation made the last column
-		// and row (x = +half, y = +half, accepted by TriangleRasterizer) fall out of the buffer.
-		int halfWidth = perspectiveCtx_light.getPixelHalfWidth();
-		int halfHeight = perspectiveCtx_light.getPixelHalfHeight();
-		Perspective lightPerspective = perspectiveCtx_light.getPerspective();
-		boolean frustum = perspectiveCtx_light.getPerspectiveType() == PerspectiveType.FRUSTUM;
-		// Orthographic projections in this engine always normalize NDC depth to [0, 1] (see
-		// OrthographicProjection's matrix -- z_ndc = 0 at near, 1 at far, regardless of the actual
-		// near/far world-space values chosen). Float.MAX_VALUE used to be used here as a generic
-		// "further than anything real" sentinel, but it is NOT close to 1 -- so any part of the
-		// map never touched by a triangle (e.g. the square map's corners outside a diamond-shaped
-		// Trellis footprint) stayed at Float.MAX_VALUE, which then dominated
-		// MapView.normalizeMap()'s min/max range so completely that every REAL depth value (0..1)
-		// collapsed to ~0 (solid black, no visible gradient) when displayed -- purely a display
-		// artifact of the debug shadow map view, NOT a bug in shadowFactorAt() itself (which reads
-		// raw depth values directly, not normalized ones, so it was never affected).
-		// A small margin above 1.0 guards against a fragment exactly at the box's far corner
-		// (z_ndc mathematically == 1.0, see DirectionalLight.initShadowing()'s far/near derivation)
-		// failing the depth test (z <= stored) purely from floating-point rounding.
-		// Frustum projections (Spot/Point, once their shadow maps are implemented) store the LINEAR
-		// view-space depth W instead of a normalized NDC z (see shadowFactorAt() below, and the
-		// pipeline-generalization table in the audit doc): "far" is then simply this light's far
-		// plane distance, with the same small relative margin.
-		final float SHADOW_MAP_FAR_VALUE = frustum ? lightPerspective.getFar() * (1.0f + 1e-4f) : 1.0f + 1e-4f;
-		ZBuffer shadowZBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, SHADOW_MAP_FAR_VALUE);
-		this.map = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
-		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx_light, shadowZBuffer);
-		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
+		ShadowMapFace face = generateShadowMapFace(world, camera_light, perspectiveCtx_light, viewProjection_light, elementTransform_light);
+		this.map = face.map;
+		this.shadowBiasBase = face.shadowBiasBase;
 
-		// See SHADOW_BIAS_WORLD's Javadoc: converts the fixed world-space bias into this frame's
-		// depth units. Orthographic stores a [0,1]-normalized depth, so dividing by the (far-near)
-		// depth range turns the world-space bias into that same normalized unit -- so the physical
-		// tolerance stays constant even as initShadowing() recomputes a tighter or looser box.
-		// Frustum stores the linear W directly (already world units), so the bias is used as-is --
-		// see shadowBiasBase's Javadoc. This is the BASE bias only -- shadowFactorAt() further
-		// scales it per-fragment by the surface's slope relative to this light (see DOT_NL_FLOOR's
-		// Javadoc).
-		// The base world bias also grows with the size of a texel (world size covered by one shadow
-		// map pixel): with a coarse map (small setShadowMapSize(), or a huge scene) the depth of a
-		// tilted surface varies within one texel by more than a fixed bias, which produced massive
-		// acne (e.g. the whole ground in shadow at 250 pixels). At the default resolution of the
-		// demo scenes the fixed SHADOW_BIAS_WORLD still dominates, so their rendering is unchanged.
-		// lightPerspective.getWidth()/getHeight() are the NEAR-plane extent for a frustum, so this
-		// currently measures the texel at its smallest (nearest the light); a texel covers
-		// proportionally more world space further away, which shadowFactorAt() does not yet
-		// compensate for -- a refinement left for when Spot/Point shadows are exercised (phase 4/5),
-		// conservative (too small, not too large) until then.
-		float texelWorldSize = Math.max(lightPerspective.getWidth() / perspectiveCtx_light.getPixelWidth(),
-				lightPerspective.getHeight() / perspectiveCtx_light.getPixelHeight());
-		float worldBias = Math.max(SHADOW_BIAS_WORLD, SHADOW_BIAS_TEXEL_FACTOR * texelWorldSize);
-		if (frustum) {
-			shadowBiasBase = worldBias;
-		} else {
-			float depthRange = lightPerspective.getDepth();
-			shadowBiasBase = depthRange > 0 ? worldBias / depthRange : worldBias;
-		}
-
-		// Recompute this light's View*Projection from its camera's CURRENT state, in case the
-		// light itself moved since the last generation (same reasoning as
-		// RenderEngine.render()'s viewProjection.refresh() call -- see ViewProjection's Javadoc
-		// for why a cached vp can silently go stale after Camera.updateCamera()). Cheap; done once
-		// per generation regardless of whether this light actually moved.
-		viewProjection_light.refresh();
-
-		// For each element of the world
-		for (int i=0; i<world.getElements().size(); i++) {			
-			Element e = world.getElement(i);
-			generateShadowMap(e, rasterizer, consumer); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
-		}
-
-		// Diagnostics: each triangle was recorded by generateShadowMap(Element, ...); snapshot this
+		// Diagnostics: each triangle was recorded by generateShadowMapElement(); snapshot this
 		// generation's deltas.
 		shadowMapStats.endFrame();
 	}
@@ -338,22 +283,143 @@ public abstract class ShadowingLight extends Light {
 		return shadowMapStats;
 	}
 
+	/**
+	 * Result of generating one shadow map "face": the filled-in depth map and the base anti-acne
+	 * bias to use when sampling it (see shadowBiasBase's Javadoc). Introduced in phase 5
+	 * (PointLight's six-face cube map) so that generateShadowMapFace() can hand back a fresh
+	 * map+bias pair without writing into this class's single camera_light/.../shadowBiasBase
+	 * fields -- those stay exactly as before for DirectionalLight/SpotLight (see
+	 * generateShadowMap(World) above), while PointLight keeps its own six-element arrays instead.
+	 */
+	protected static final class ShadowMapFace {
+		protected final MapView map;
+		protected final float shadowBiasBase;
+		protected ShadowMapFace(MapView map, float shadowBiasBase) {
+			this.map = map;
+			this.shadowBiasBase = shadowBiasBase;
+		}
+	}
+
+	/**
+	 * Generates ONE shadow map by rasterizing world's elements, depth-only, from the given
+	 * camera/perspective/view-projection/element-transform -- the parameterized core extracted
+	 * from the former (single-map) generateShadowMap(World) body, so that:
+	 * - generateShadowMap(World) above calls it once, with this light's own single
+	 *   camera_light/perspectiveCtx_light/viewProjection_light/elementTransform_light (Directional, Spot);
+	 * - PointLight.generateShadowMap(World) calls it up to six times, once per cube face, with
+	 *   that face's own camera/perspective/view-projection/element-transform.
+	 * Behavior, bias formula and diagnostics (shadowMapStats) are exactly the ones already proven
+	 * in phases 2-4 -- only the source of the camera/perspective/etc. moved from "this light's
+	 * fields" to explicit parameters. Does NOT call shadowMapStats.endFrame(): the caller does
+	 * that once, after every face it needs has been generated (so a six-face PointLight reports
+	 * one frame's totals across all of its faces, not six separate "frames").
+	 */
+	protected ShadowMapFace generateShadowMapFace(World world, Camera camera, PerspectiveContext perspectiveCtx,
+			ViewProjection viewProjection, ElementTransform elementTransform) {
+
+		// Fresh ZBuffer + TriangleRasterizer for this generation pass -- rebuilt every time rather
+		// than reused across frames, since the shadow map must not carry over stale depth from a
+		// previous frame in a scene with moving lights/geometry.
+		// Map size from this face's perspective context: width x height pixels, possibly
+		// rectangular (see setShadowMapSize()). The ZBuffer covers the centered screen space
+		// [-half, half] on each axis, hence 2*half+1 cells (same convention as the main pass in
+		// RenderEngine) -- the former width = 2*half allocation made the last column and row
+		// (x = +half, y = +half, accepted by TriangleRasterizer) fall out of the buffer.
+		int halfWidth = perspectiveCtx.getPixelHalfWidth();
+		int halfHeight = perspectiveCtx.getPixelHalfHeight();
+		Perspective lightPerspective = perspectiveCtx.getPerspective();
+		boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
+		// Orthographic projections in this engine always normalize NDC depth to [0, 1] (see
+		// OrthographicProjection's matrix -- z_ndc = 0 at near, 1 at far, regardless of the actual
+		// near/far world-space values chosen). A small margin above 1.0 guards against a fragment
+		// exactly at the box's far corner (z_ndc mathematically == 1.0) failing the depth test
+		// (z <= stored) purely from floating-point rounding.
+		// Frustum projections (Spot, Point) store the LINEAR view-space depth W instead of a
+		// normalized NDC z (see shadowFactorAt() below, and the pipeline-generalization table in
+		// the audit doc): "far" is then simply this face's far plane distance, with the same
+		// small relative margin.
+		final float SHADOW_MAP_FAR_VALUE = frustum ? lightPerspective.getFar() * (1.0f + 1e-4f) : 1.0f + 1e-4f;
+		ZBuffer shadowZBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, SHADOW_MAP_FAR_VALUE);
+		MapView faceMap = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
+		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx, shadowZBuffer);
+		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
+
+		// See SHADOW_BIAS_WORLD's Javadoc: converts the fixed world-space bias into this frame's
+		// depth units. Orthographic stores a [0,1]-normalized depth, so dividing by the (far-near)
+		// depth range turns the world-space bias into that same normalized unit. Frustum stores the
+		// linear W directly (already world units), so the bias is used as-is -- see
+		// shadowBiasBase's Javadoc. This is the BASE bias only -- shadowFactorAt() further scales it
+		// per-fragment by the surface's slope relative to this light (see DOT_NL_FLOOR's Javadoc).
+		// The base world bias also grows with the size of a texel (world size covered by one shadow
+		// map pixel): with a coarse map the depth of a tilted surface varies within one texel by
+		// more than a fixed bias, which produces acne. lightPerspective.getWidth()/getHeight() are
+		// the NEAR-plane extent for a frustum, so this measures the texel at its smallest (nearest
+		// the light); a texel covers proportionally more world space further away, which
+		// shadowFactorAt() does not compensate for.
+		float texelWorldSize = Math.max(lightPerspective.getWidth() / perspectiveCtx.getPixelWidth(),
+				lightPerspective.getHeight() / perspectiveCtx.getPixelHeight());
+		float worldBias = Math.max(SHADOW_BIAS_WORLD, SHADOW_BIAS_TEXEL_FACTOR * texelWorldSize);
+		float faceBiasBase;
+		if (frustum) {
+			faceBiasBase = worldBias;
+		} else {
+			float depthRange = lightPerspective.getDepth();
+			faceBiasBase = depthRange > 0 ? worldBias / depthRange : worldBias;
+		}
+
+		// Recompute this face's View*Projection from its camera's CURRENT state, in case the light
+		// itself moved since the last generation (same reasoning as RenderEngine.render()'s
+		// viewProjection.refresh() call -- see ViewProjection's Javadoc). Cheap; done once per
+		// generation regardless of whether this light actually moved.
+		viewProjection.refresh();
+
+		// For each element of the world
+		for (int i=0; i<world.getElements().size(); i++) {
+			Element e = world.getElement(i);
+			generateShadowMapElement(e, rasterizer, consumer, elementTransform, perspectiveCtx); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+		}
+
+		return new ShadowMapFace(faceMap, faceBiasBase);
+	}
+
+	/**
+	 * Legacy single-map entry point: generates this light's single shadow map Element pass using
+	 * its own camera_light/perspectiveCtx_light/elementTransform_light. Kept as a thin wrapper
+	 * (phase 5) over the parameterized generateShadowMapElement() below, for any external caller
+	 * relying on this exact signature (none in this codebase currently, but this is a protected
+	 * method of a public API).
+	 * @param e
+	 * @param rasterizer
+	 * @param consumer
+	 */
 	protected void generateShadowMap(Element e, TriangleRasterizer rasterizer, DepthOnlyConsumer consumer) {
+		generateShadowMapElement(e, rasterizer, consumer, elementTransform_light, perspectiveCtx_light);
+	}
+
+	/**
+	 * Parameterized recursive Element pass for ONE shadow map face: transforms e (and its
+	 * sub-Elements) through elementTransform, clips/rasterizes each in-frustum Triangle depth-only
+	 * into rasterizer/consumer. Extracted (phase 5) from the former generateShadowMap(Element, ...)
+	 * so both the single-map path (via the thin wrapper above) and PointLight's six-face path can
+	 * share it, each with their own elementTransform/perspectiveCtx -- see generateShadowMapFace().
+	 */
+	protected void generateShadowMapElement(Element e, TriangleRasterizer rasterizer, DepthOnlyConsumer consumer,
+			ElementTransform elementTransform, PerspectiveContext perspectiveCtx) {
 
 		// Single call replaces the legacy setModel()+calculateMVPMatrix() pair -- withNormals=false
 		// since shadow map generation never needs normals (matches the legacy behavior, which
 		// never called calculateNormalMatrix() for mvp_light either).
-		elementTransform_light.setModel(e.getTransformation(), false);
+		elementTransform.setModel(e.getTransformation(), false);
 
 		// Calculate projection for all vertices of this Element
-		elementTransform_light.transformElement(e, false); // Calculate prj_pos of each vertex of this Element
+		elementTransform.transformElement(e, false); // Calculate prj_pos of each vertex of this Element
 
 		// Near-plane clipping (phase 3): only meaningful for a Frustum projection -- see
 		// NearPlaneClipper's class Javadoc for why Orthographic (w always 1) never needs it. No-op
-		// for DirectionalLight today (always Orthographic), exercised once Spot/Point shadows use a
-		// Frustum perspectiveCtx_light (phase 4/5).
-		boolean frustum = perspectiveCtx_light.getPerspectiveType() == PerspectiveType.FRUSTUM;
-		float near = frustum ? perspectiveCtx_light.getPerspective().getNear() : 0f;
+		// for DirectionalLight today (always Orthographic), exercised for Spot (phase 4) and
+		// PointLight's six Frustum faces (phase 5).
+		boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
+		float near = frustum ? perspectiveCtx.getPerspective().getNear() : 0f;
 
 		// Process each Triangle (this will update the shadow map's ZBuffer)
 		for (int j=0; j<e.getTriangles().size(); j++) {
@@ -382,7 +448,7 @@ public abstract class ShadowingLight extends Light {
 		// Do a recursive call for SubElements
 		if (!e.isLeaf()) {
 			for (int i=0; i<e.getSubElements().size(); i++) {
-				generateShadowMap(e.getSubElements().get(i), rasterizer, consumer);
+				generateShadowMapElement(e.getSubElements().get(i), rasterizer, consumer, elementTransform, perspectiveCtx);
 			}
 		}
 	}
@@ -401,6 +467,17 @@ public abstract class ShadowingLight extends Light {
 	 * @return 1.0 if fully lit, 0.0 if in shadow
 	 */
 	public float shadowFactorAt(Vector4 worldPosition, Vector3 normal) {
+		return singleShadowFactorAt(worldPosition, normal);
+	}
+
+	/**
+	 * The actual single-map sampling body (DirectionalLight, SpotLight) -- see
+	 * generateSingleShadowMap()'s Javadoc for why this needs to be its own, non-overridden ("final")
+	 * method rather than inlined into shadowFactorAt(Vector4, Vector3) above: SpotLight's own
+	 * override calls this directly, to use ShadowingLight's single-map behavior instead of
+	 * inheriting PointLight's six-face one.
+	 */
+	protected final float singleShadowFactorAt(Vector4 worldPosition, Vector3 normal) {
 
 		if (map == null) {
 			// No shadow map generated (yet) for this light -- treat as fully lit rather than
@@ -408,26 +485,42 @@ public abstract class ShadowingLight extends Light {
 			return 1f;
 		}
 
-		Vector4 posInLightSpace = viewProjection_light.project(worldPosition);
+		return shadowFactorAt(map, viewProjection_light, perspectiveCtx_light, shadowBiasBase, worldPosition, normal);
+	}
+
+	/**
+	 * Parameterized core of shadowFactorAt(Vector4, Vector3): samples the given map (as generated
+	 * by generateShadowMapFace() from the given viewProjection/perspectiveCtx/shadowBiasBase) at
+	 * worldPosition. Extracted (phase 5) so PointLight.shadowFactorAt() can reuse it once it has
+	 * picked, via its own face-selection logic, which of its six faces to sample -- see
+	 * PointLight.selectFace(). map is assumed non-null: callers check that first (see the
+	 * single-map overload above, and PointLight.shadowFactorAt()).
+	 */
+	protected float shadowFactorAt(MapView map, ViewProjection viewProjection, PerspectiveContext perspectiveCtx,
+			float shadowBiasBase, Vector4 worldPosition, Vector3 normal) {
+
+		Vector4 posInLightSpace = viewProjection.project(worldPosition);
 
 		// Orthographic: w is always 1, so x/y/z are already the final coordinates -- no divide
 		// needed, and z is the stored (normalized) depth. Frustum: x and y need the perspective
 		// divide to land in [-1, 1]; the depth compared against the map is w itself (linear
 		// view-space depth), NOT z/w (which would be the non-linear NDC depth) -- see the
 		// pipeline-generalization table in the audit doc.
-		boolean frustum = perspectiveCtx_light.getPerspectiveType() == PerspectiveType.FRUSTUM;
+		boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
 		float w = posInLightSpace.getW();
 		float xNdc = frustum ? posInLightSpace.getX() / w : posInLightSpace.getX();
 		float yNdc = frustum ? posInLightSpace.getY() / w : posInLightSpace.getY();
 		float depthValue = frustum ? w : posInLightSpace.getZ();
 
 		// Bounds test: a point projecting outside this light's box/frustum is not something this
-		// light can shadow -- treat it as unshadowed by THIS light rather than sampling a repeated
-		// edge texel (MapView.getInterpolation() clamps s/t, which would silently borrow whatever
-		// depth happens to sit on the map's border). Harmless today: the orthographic box already
-		// encloses the whole scene it was built from. Load-bearing once a Spot/Point frustum is
-		// tighter than the scene (phase 4/5): outside its cone/range, a point must read as lit by
-		// this light's shadow test, not shadowed by whatever the border texel happens to hold.
+		// light (or, for PointLight, this face) can shadow -- treat it as unshadowed by THIS light
+		// rather than sampling a repeated edge texel (MapView.getInterpolation() clamps s/t, which
+		// would silently borrow whatever depth happens to sit on the map's border). Harmless for
+		// DirectionalLight (its orthographic box already encloses the whole scene it was built
+		// from). Load-bearing for Spot (its frustum is tighter than the scene) and for PointLight:
+		// selectFace() already guarantees worldPosition falls within the chosen face's 90-degree
+		// frustum (modulo floating-point at the exact seam -- see selectFace()'s Javadoc), so this
+		// branch is not expected to trigger there either, but stays as the same safety net.
 		if (xNdc < -1f || xNdc > 1f || yNdc < -1f || yNdc > 1f) {
 			return 1f;
 		}
@@ -438,9 +531,9 @@ public abstract class ShadowingLight extends Light {
 		// (see ZBuffer). So continuous position p = x_ndc * halfWidth + halfWidth falls exactly on
 		// cell index p, for any sign of x. getInterpolation() takes normalized coordinates s with
 		// index = s * width - 0.5, hence s = (p + 0.5) / width. Written per axis since the map may
-		// be rectangular (see generateShadowMap()).
-		int halfWidth = perspectiveCtx_light.getPixelHalfWidth();
-		int halfHeight = perspectiveCtx_light.getPixelHalfHeight();
+		// be rectangular (see generateShadowMapFace()).
+		int halfWidth = perspectiveCtx.getPixelHalfWidth();
+		int halfHeight = perspectiveCtx.getPixelHalfHeight();
 		float s = (xNdc * halfWidth + halfWidth + 0.5f) / map.getViewWidth();
 		float t = (yNdc * halfHeight + halfHeight + 0.5f) / map.getViewHeight();
 		float depth = map.getInterpolation(s, t);

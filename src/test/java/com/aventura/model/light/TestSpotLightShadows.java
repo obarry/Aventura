@@ -104,4 +104,16 @@ public class TestSpotLightShadows {
 		assertEquals(1f, spot.shadowFactorAt(farAside, Vector3.zAxis()), 0f);
 		System.out.println("PASS testShadowFactorAt_pointOutsideThisLightsFrustum_isTreatedAsUnshadowed");
 	}
+
+	@Test
+	public void testGetDefaultShadowMapSize_isShadowingLightsOwn_notPointLightsSixFaceOne() {
+		System.out.println("***** Test SpotLight shadows : default shadow map size is ShadowingLight's single-map default (1000), not PointLight's per-face one (512) *****");
+		// SpotLight extends PointLight, which (phase 5) overrides getDefaultShadowMapSize() to 512 --
+		// SpotLight must reassert ShadowingLight.DEFAULT_SHADOW_MAP_SIZE for its own single map (see
+		// SpotLight.getDefaultShadowMapSize()'s Javadoc).
+		SpotLight spot = new SpotLight(new Vector4(0, 0, 10, 1), new Vector3(0, 0, -1), 20f, (float) Math.toRadians(45));
+		assertEquals(ShadowingLight.DEFAULT_SHADOW_MAP_SIZE, spot.getDefaultShadowMapSize());
+		assertEquals(ShadowingLight.DEFAULT_SHADOW_MAP_SIZE, spot.getShadowMapSize());
+		System.out.println("PASS testGetDefaultShadowMapSize_isShadowingLightsOwn_notPointLightsSixFaceOne");
+	}
 }

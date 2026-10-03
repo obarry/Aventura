@@ -111,13 +111,19 @@ public class TestLightTypesRendering {
 
 	@Test
 	public void testRender_point_shadows() {
-		System.out.println("***** Test rendering : PointLight, shadows on (no shadow of its own yet: it must stay fully lit) *****");
+		System.out.println("***** Test rendering : PointLight, shadows on (phase 5: it now casts its own six-face shadow) *****");
 		Lighting l = ambientOnly();
 		PointLight p = new PointLight(LIGHT_POS, 10f);
 		l.addPointLight(p);
 		render(l, RenderContext.RENDER_STANDARD_INTERPOLATE_SHADOWS);
-		// Until the point light's own shadow maps exist (audit phase 5), it must not produce shadows
-		assertEquals(1f, p.shadowFactorAt(new Vector4(0, 0, 0, 1), Vector3.zAxis()), 0f);
+		// Since phase 5, the point light builds and uses its own six-face cube shadow map (see
+		// TestPointLightShadows for the dedicated, hand-calculated geometry). Same LIGHT_POS as
+		// testRender_spot_shadows() below, and the same geometric reasoning: (0,0,0), where the ball
+		// sits on the floor, is genuinely inside the ball's own shadow from this light's position --
+		// the line from (0,0,0) to LIGHT_POS=(2,-2,3) passes about 0.55 units from the ball's center
+		// (0,0,0.8), well inside its 0.8 radius. This replaces the old assertion, which only ever
+		// checked the pre-phase-5 "always fully lit" stub.
+		assertEquals(0f, p.shadowFactorAt(new Vector4(0, 0, 0, 1), Vector3.zAxis()), 0f);
 	}
 
 	@Test
