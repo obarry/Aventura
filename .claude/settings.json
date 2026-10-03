@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn compile*)",
+      "Bash(mvn test-compile*)",
+      "Bash(mvn test*)",
+      "Bash(mvn javadoc:javadoc*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)"
+    ],
+    "ask": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ],
+    "deny": [
+      "Read(./target/**)",
+      "Read(./bin/**)",
+      "Edit(./.project)",
+      "Edit(./.classpath)",
+      "Edit(./.settings/**)"
+    ]
+  }
+}

@@ -1,3 +1,4 @@
 /bin/
 /target/
 /Claude outputs/
+/.claude/settings.local.json

@@ -295,4 +295,52 @@ public class SpotLight extends PointLight {
 		elementTransform_light = new ElementTransform(viewProjection_light);
 	}
 
+	/**
+	 * Re-asserts ShadowingLight's single-map shadow generation: without this override, SpotLight
+	 * would inherit generateShadowMap(World) from its OWN superclass PointLight, which (phase 5)
+	 * overrides it for PointLight's six-face cube map -- the wrong model for a SpotLight, whose
+	 * shadow is the single Frustum map built by initShadowing() above. generateSingleShadowMap() is
+	 * the exact, unmodified single-map body (see its Javadoc in ShadowingLight).
+	 */
+	@Override
+	public void generateShadowMap(World world) {
+		generateSingleShadowMap(world);
+	}
+
+	/**
+	 * Re-asserts ShadowingLight's single-map shadow sampling -- see generateShadowMap(World)
+	 * above for why this override is needed (PointLight, SpotLight's superclass, overrides this
+	 * method too, for its own six-face cube map).
+	 */
+	@Override
+	public float shadowFactorAt(Vector4 worldPosition, Vector3 normal) {
+		return singleShadowFactorAt(worldPosition, normal);
+	}
+
+	/**
+	 * Re-asserts ShadowingLight's own default shadow map size (1000 px): without this override,
+	 * SpotLight would inherit PointLight's getDefaultShadowMapSize() override (512 px, sized for
+	 * ONE of six cube faces -- see its Javadoc), which has no bearing on a SpotLight's single map.
+	 */
+	@Override
+	public int getDefaultShadowMapSize() {
+		return ShadowingLight.DEFAULT_SHADOW_MAP_SIZE;
+	}
+
+	/**
+	 * Re-asserts ShadowingLight's own single-map width/height accessors: without these overrides,
+	 * SpotLight would inherit PointLight's (reading its faceXxx arrays, which a SpotLight never
+	 * populates -- they would silently read as 0). perspectiveCtx_light is the single Frustum this
+	 * class's own initShadowing() builds.
+	 */
+	@Override
+	public int getShadowMapWidth() {
+		return perspectiveCtx_light != null ? perspectiveCtx_light.getPixelWidth() : 0;
+	}
+
+	@Override
+	public int getShadowMapHeight() {
+		return perspectiveCtx_light != null ? perspectiveCtx_light.getPixelHeight() : 0;
+	}
+
 }
