@@ -460,8 +460,8 @@ Specular has two switches: a global one on `Lighting` (a "fast mode") and a per-
 |---|---|---|---|
 | `AmbientLight` | none | constant | n/a |
 | `DirectionalLight` | constant (sun) | constant | ✅ orthographic shadow map |
-| `PointLight` | towards its position | linear fall-off to 0 at `maxDistance` | ⏳ planned (cube map) |
-| `SpotLight` | towards its position | point fall-off × **cone factor** | ⏳ planned (perspective map) |
+| `PointLight` | towards its position | linear fall-off to 0 at `maxDistance` | ✅ cube map: six perspective shadow maps |
+| `SpotLight` | towards its position | point fall-off × **cone factor** | ✅ one perspective shadow map |
 
 The two attenuation laws, for a light with `maxDistance = 10` and a spot with inner half-angle
 10° and outer half-angle 30°:
@@ -493,7 +493,7 @@ xychart-beta
 
 ## 7. Shadow mapping
 
-Shadows use classic **two-pass shadow mapping**. Only directional lights cast shadows today.
+Shadows use classic **two-pass shadow mapping**. Every kind of light casts shadows: directional lights through an orthographic map, spot lights through one perspective map and point lights through a cube of six perspective maps.
 
 ```mermaid
 flowchart LR
@@ -534,8 +534,54 @@ half a texel if the map is coarser than that), converted to NDC for the current 
 **slope-scaled** by `1 / max(N·L, floor)` so grazing surfaces (such as a floor under a low sun) get
 more tolerance than surfaces facing the light.
 
-**Current trade-offs:** hard shadows (factor 0 or 1, no PCF), and point and spot lights do not cast
-shadows yet (they still light the scene correctly when shadows are enabled).
+### Spot and point lights
+
+A spot or point light looks at the scene through a **perspective** (`Frustum`) map instead of an
+orthographic box. Such a map stores the **linear view-space depth** (world units) rather than a
+[0, 1] normalized depth, because a perspective depth is far too non-linear to compare with a
+constant bias. Triangles crossing the near plane of the light are clipped before rasterization
+(`NearPlaneClipper`), and a point outside the frustum of the map reads as lit.
+
+- **`SpotLight`** has one square map. Its field of view follows the outer angle of the cone
+  (`halfExtent = near · tan(outerAngle)`), its far plane is `maxDistance` and its near plane is
+  `max(0.01, 0.01 · far)`. Default size: 1000 pixels (`DEFAULT_SHADOW_MAP_SIZE`).
+- **`PointLight`** has a **cube map** of six square faces (+X, −X, +Y, −Y, +Z, −Z), each with an exact
+  90° field of view, so the six pyramids tile the whole sphere with no gap and no overlap. Default
+  size: 512 pixels **per face** (`PointLight.DEFAULT_SHADOW_MAP_SIZE`). To shade a point, the face is
+  chosen from the largest absolute component of the light-to-point vector (ties go to X, then Y, then
+  Z, `selectFace()`), and its map is sampled like any other perspective map.
+- **Empty faces are skipped.** Each frame, `PointLight.facesNeeded(World)` tests the bounding box of
+  the world against the pyramid of each face; a face no object can reach is not rendered, its map
+  stays `null` and its points read as lit. It relies on the world bounds computed by
+  `World.worldProject()`, which `RenderEngine` calls at every frame.
+- **Moving lights** need no special case: the engine calls `initShadowing()` then `generateShadowMap()`
+  for each shadowing light at every frame, so `setPosition()`, `setLightVector()` and `setAngles()`
+  take effect on the next render.
+
+`ShadowingLight` factors what the three kinds of light share: a nested `ShadowMapFace` (a map and the
+base bias that goes with it), and parameterized `generateShadowMapFace()` / `shadowFactorAt()` helpers
+working on **one** map. The public `generateShadowMap(World)` and `shadowFactorAt(...)` delegate to
+`final` single-map versions for the directional and spot lights, while `PointLight` overrides them to
+loop over its six faces. A trap of the hierarchy: `SpotLight extends PointLight` (to reuse its
+position and attenuation), so it re-asserts the single-map behavior explicitly; tests lock it in.
+
+**Bias for perspective maps.** The same slope-scaled bias is used, with a base of
+`max(0.02, 0.5 · texel)` in world units, the texel being measured at the near plane. It does not grow
+with the distance to the light, so acne may show on very distant surfaces (see the
+[backlog](BACKLOG.md#3-shadows)).
+
+<p align="center">
+  <img src="../resources/doc/images/spot_shadows.jpg" alt="A spot light and a dim moonlight casting shadows" width="560"><br/>
+  <em>One perspective shadow map for a spot light — <code>TestLightingSpot3Shadows</code>.</em>
+</p>
+
+<p align="center">
+  <img src="../resources/doc/images/point_shadows.jpg" alt="A point light in an open-top room casting shadows on the floor and walls" width="560"><br/>
+  <em>A cube map of six faces for a point light, shadows climbing the walls — <code>TestLightingPoint1Shadows</code>.</em>
+</p>
+
+**Current trade-offs:** hard shadows (factor 0 or 1, no PCF), and a fixed set of tuning constants for
+the bias. A point light costs up to six shadow passes per frame, fewer when some faces are empty.
 
 <p align="center">
   <img src="../resources/doc/images/urbanscape_flight.jpg" alt="UrbanScape overview with building shadows" width="560"><br/>
@@ -653,17 +699,18 @@ Two complementary test families run from Maven:
 pie showData
     title JUnit test methods by area
     "Math: vectors, matrices, quaternions" : 244
-    "Lighting (point, spot, shadow maps, smoke renders)" : 35
-    "Demo logic (camera, flight path, mouse drag…)" : 34
-    "Rendering (context, rendering types, views)" : 25
-    "Camera, perspective, elements" : 18
+    "Lighting (point, spot, shadow maps, smoke renders)" : 49
+    "Rendering (context, rendering types, rasterizer, views)" : 45
+    "Demo logic (camera, flight path, mouse drag…)" : 44
     "Transforms (T, R, S)" : 13
+    "Geometry Cookbook examples" : 13
+    "Camera, perspective, elements" : 10
     "Z-buffer" : 8
 ```
 
 The math library is the most heavily tested part because every other stage depends on it.
-Lighting has both analytical tests (attenuation curves, cone factor) and **smoke renders** of each
-light type with and without shadows. The rendering types are checked on **off-screen renders**,
+Lighting has both analytical tests (attenuation curves, cone factor, cube-face selection and skipping,
+Spot/Point hierarchy) and **smoke renders** of each light type with and without shadows. The rendering types are checked on **off-screen renders**,
 pixel by pixel (for example: `UNLIT` gives exactly the base colour, `MONOCHROME` hides the edges
 that `LINE` shows, `FLAT` follows the texture option); `TestRenderingModes` shows them all by eye.
 Diagnostic counters (`RasterizerStats`, triangle
@@ -691,6 +738,7 @@ timeline
     2026 : Fragment/Consumer rasterizer, Material
          : Quaternion + slerp, Matrix2, Maven layout
          : SpotLight, UrbanScape, 370+ unit tests
+         : Spot and point light shadows (perspective and cube maps), 420+ unit tests
          : Rendering types: MONOCHROME (hidden-line), UNLIT
 ```
 
@@ -710,7 +758,7 @@ xychart-beta
 | Area | Current state |
 |---|---|
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
-| Shadows | Directional lights only; hard edges |
+| Shadows | All lights (orthographic, perspective and cube maps); hard edges, no PCF |
 | Lights | Not drawn in the scene (no halo or lens effect) |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
@@ -723,12 +771,12 @@ The detailed list of identified but not yet handled items is kept in [BACKLOG.md
 ```mermaid
 flowchart LR
     subgraph NOW["Near term"]
-        n1[Spot light shadows<br/>perspective shadow map]
-        n2[Soft shadows · PCF]
+        n1[Soft shadows · PCF]
+        n2[Bias growing with distance<br/>for perspective maps]
         n4[Perspective / Viewport<br/>split]
     end
     subgraph NEXT["Mid term"]
-        m1[Point light shadows<br/>cube map, 6 faces]
+        m1[Distance culling of<br/>cube map faces]
         m2[Classpath texture loading]
         m3[Multi-threaded rasterization<br/>by screen tiles]
     end

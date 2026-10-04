@@ -16,7 +16,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 
 - **Pure Java, zero runtime dependency.** Only the JDK is needed (`java.desktop` for Swing and image loading).
 - **Complete software pipeline.** Model, world and camera transforms, frustum or orthographic projection, triangle rasterization with a Z-buffer and perspective-correct interpolation.
-- **Lighting and shadows.** Ambient, directional, point and spot lights (a spot has an aimable cone with a soft or sharp edge), specular highlights, and shadow mapping for directional lights (see [Lights and shadows](#lights-and-shadows)).
+- **Lighting and shadows.** Ambient, directional, point and spot lights (a spot has an aimable cone with a soft or sharp edge), specular highlights, and shadow mapping for every kind of light: orthographic maps for directional lights, perspective maps for spot lights, and a six-face cube map for point lights (see [Lights and shadows](#lights-and-shadows)).
 - **Textures.** Any image format supported by `ImageIO` (JPEG, PNG, GIF...), with per-face textures on boxes and pyramids and control over mapping direction and orientation.
 - **Ready-made shapes.** Box, cube, sphere, cone, cone frustum, cylinder, disc, pyramid, torus and height-field grids (`Trellis`), plus your own geometry from triangles and meshes.
 - **Hierarchical scene graph.** Elements can contain sub-elements; translations, rotations and scalings compose down the tree.
@@ -188,8 +188,8 @@ A `Lighting` system gathers the lights of a scene. Every light has a color and a
 | --- | --- | --- |
 | `AmbientLight` | Uniform light, without direction | Not applicable |
 | `DirectionalLight` | Parallel rays, like the sun. Built from the direction in which the light **propagates** (from the light towards the scene) | Yes: one orthographic shadow map per light |
-| `PointLight` | Omnidirectional source at a position; the intensity decreases linearly to zero at its maximum distance | Not yet |
-| `SpotLight` | A point light aimed along a direction and limited to a cone: full intensity up to the inner half-angle, smooth fade down to zero at the outer half-angle (a sharp edge if both angles are equal) | Not yet |
+| `PointLight` | Omnidirectional source at a position; the intensity decreases linearly to zero at its maximum distance | Yes: a cube map of six perspective shadow maps (one per face), 512 pixels per face by default; faces that no object can reach are skipped |
+| `SpotLight` | A point light aimed along a direction and limited to a cone: full intensity up to the inner half-angle, smooth fade down to zero at the outer half-angle (a sharp edge if both angles are equal) | Yes: one perspective shadow map, built from its position, direction and outer angle (1000 pixels by default) |
 
 A spot light is created from its position, the direction it points to (again the direction of propagation), its maximum distance and its two angles (in radians), and can be re-aimed or reshaped between two renderings:
 
@@ -211,7 +211,21 @@ spot.setAngles(outerAngle, innerAngle); // ...and open or close the cone
 
 *Two spot lights (`TestLightingSpot1`): a white one with a soft edge aimed at the sphere and a warm one with a sharp edge aimed at the cube, over a dim ambient light.*
 
-Shadow maps are only computed when shadowing is enabled in the `RenderContext`. For now only directional lights cast shadows: in a scene rendered with shadows, point and spot lights keep lighting everything they reach, without disturbing the shadows of the directional lights.
+Shadow maps are only computed when shadowing is enabled in the `RenderContext`. Every kind of light then casts shadows, and each one keeps its own shadow map: the shadows of a sun, of a spot light and of a point light add up in the same scene.
+
+<p align="center">
+  <img src="resources/doc/images/spot_shadows.jpg" alt="A spot light casting the shadows of a column and a cone" width="600">
+</p>
+
+*A moving spot light with a dim directional moonlight (`TestLightingSpot3Shadows`): the spot lights only part of the floor, and the column and the cone cast their own shadow across it.*
+
+A spot light looks at the scene through one perspective shadow map, whose field of view follows its outer angle. A point light shines in every direction, so it renders six maps, one for each face of a cube centered on it (+X, -X, +Y, -Y, +Z, -Z), and every point of the scene reads the map of the face it lies in. A light can be moved between two renderings (`setPosition`, `setLightVector`, `setAngles`) and its shadows follow:
+
+<p align="center">
+  <img src="resources/doc/images/point_shadows.jpg" alt="A point light in an open-top room casting shadows on the floor and the walls" width="600">
+</p>
+
+*A point light orbiting in an open-top room (`TestLightingPoint1Shadows`): the shadows of the column, the sphere, the cone and the cube spread on the floor and climb the walls.*
 
 The resolution of a light's shadow map can be set per light. The size is the number of pixels of the **longest** side of the map; the other side follows the proportions of the area the light covers, so an elongated scene gets a rectangular map with no wasted pixels:
 
@@ -222,7 +236,7 @@ sun.resetShadowMapSize();    // back to the default of this type of light
 int size = sun.getShadowMapSize(); // size in use (set or default)
 ```
 
-The default size depends on the type of light: `getDefaultShadowMapSize()` returns it, and each light class documents its own. It is `ShadowingLight.DEFAULT_SHADOW_MAP_SIZE` (1000 pixels) for directional lights.
+The default size depends on the type of light: `getDefaultShadowMapSize()` returns it, and each light class documents its own. It is `ShadowingLight.DEFAULT_SHADOW_MAP_SIZE` (1000 pixels) for directional and spot lights, and `PointLight.DEFAULT_SHADOW_MAP_SIZE` (512 pixels **per face**, six maps in all) for point lights.
 
 ## How it works
 
@@ -305,7 +319,7 @@ All demos live in `com.aventura.demo`.
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 
-The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
+The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
 
 ## Tests
 
@@ -313,7 +327,7 @@ The `src/test/java/com/aventura/test` folder holds about seventy additional visu
 mvn test
 ```
 
-The unit tests (JUnit 4, about 390 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 420 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 
@@ -352,7 +366,7 @@ Aventura/
 - Aventura is a CPU rasterizer: it is built for clarity, portability and experimentation, not to compete with GPU performance on large scenes.
 - Only Swing has a dedicated view so far (`SwingView`); other GUI toolkits can use `ImageView` with a frame listener, or extend `ImageView` or `GUIView`.
 - A `Lighting` system holds at most one ambient light, plus any number of directional, point and spot lights.
-- Only directional lights cast shadows so far. Point and spot lights light the scene but have no shadow map yet: a spot light is planned to use one perspective shadow map, a point light six (one per face of a cube).
+- Shadows are hard-edged (a point is either lit or in shadow, no soft penumbra), and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
 - Lights are not drawn: a point light, a spot light or the sun is invisible even when it is in the field of view (no halo or lens effect yet).
 - Texture files are loaded from file paths (relative to the working directory or absolute), not from the classpath.
 
