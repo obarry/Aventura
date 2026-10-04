@@ -152,6 +152,14 @@ public class PointLight extends ShadowingLight {
 		return light_dir.normalize();
 	}
 	
+	/**
+	 * A PointLight, and so a SpotLight, shows as a glowing halo by default (when the lights are made visible).
+	 */
+	@Override
+	public LightGlowMode getDefaultGlowMode() {
+		return LightGlowMode.HALO;
+	}
+
 	/** Position of the light source (world space). */
 	public Vector4 getPosition() {
 		return light_point;

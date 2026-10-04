@@ -47,6 +47,32 @@ public abstract class Light {
 	protected Color lightColor = DEFAULT_LIGHT_COLOR;
 	protected float intensity = DEFAULT_LIGHT_INTENSITY;
 
+	// How this light shows in the picture, null = as the RenderContext and the default of its type say (see LightAppearance)
+	private LightAppearance appearance = null;
+
+	/**
+	 * @return the look of this light in the picture, null if it was not set (see LightAppearance, LightGlowMode)
+	 */
+	public LightAppearance getAppearance() {
+		return appearance;
+	}
+
+	/**
+	 * @param appearance the look of this light in the picture, null to follow the RenderContext and the defaults of its type.
+	 *                   Only used when the lights are made visible (RenderContext.setLightGlow(true)).
+	 */
+	public void setAppearance(LightAppearance appearance) {
+		this.appearance = appearance;
+	}
+
+	/**
+	 * Default way this type of light shows in the picture, when neither the light nor the RenderContext say anything:
+	 * NONE, for the types that do not declare their own.
+	 */
+	public LightGlowMode getDefaultGlowMode() {
+		return LightGlowMode.NONE;
+	}
+
 	
 	// Get light vector (or null vector for ambient light) at a given point of world space
 	public abstract Vector3 getLightVectorAtPoint(Vector4 point);

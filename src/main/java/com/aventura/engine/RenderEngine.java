@@ -146,6 +146,9 @@ public class RenderEngine {
 	// Wireframe / debug vector drawing -- constructed once GUIView is known (see setView())
 	private ScreenLineRenderer screenLineRenderer;
 	
+	// Visible lights (glow) -- constructed together with the ScreenLineRenderer, used if RenderContext.isLightGlow()
+	private LightGlowRenderer lightGlowRenderer;
+	
 	/**
 	 * Create a Rendering Engine with required dependencies and context
 	 * There should be a Rendering Engine for a single World, a single (consolidated) Lighting, a single Camera
@@ -187,6 +190,7 @@ public class RenderEngine {
 	public void setView(GUIView v) {
 		guiView = v;
 		screenLineRenderer = new ScreenLineRenderer(perspectiveContext, viewProjection, v);
+		lightGlowRenderer = new LightGlowRenderer(perspectiveContext, viewProjection, v);
 	}
 	
 	/**
@@ -311,6 +315,12 @@ public class RenderEngine {
 		// Display the Light vectors if enabled (RenderContext)
 		if (renderContext.isDisplayLight()) {
 			displayLight();
+		}
+
+		// Make the lights visible if enabled (RenderContext): needs the depth of the objects to hide the lights
+		// behind them, so not available in LINE rendering (no ZBuffer)
+		if (renderContext.isLightGlow() && renderContext.getRenderingType() != RenderingType.LINE) {
+			lightGlowRenderer.render(lighting, camera, renderContext, mainZBuffer);
 		}
 
 		// Switch back and front buffers and request GUI repaint

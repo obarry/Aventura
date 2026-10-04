@@ -146,6 +146,19 @@ public class TestSceneViewer {
 	}
 
 	@Test
+	public void testViewState_lightGlowOptionIsKeptAndDefaulted() {
+		System.out.println("***** Test SceneViewer : the light glow option follows the other changes, and the scene fills it only when undefined *****");
+		SceneViewer.ViewState s = SceneViewer.ViewState.of("urbanscape_street");
+		assertNull(s.lightGlow);
+		SceneViewer.ViewState chosen = s.withLightGlow(true).withCamera(1, 2, 3).withSoftShadows(true).withOptions(RenderingType.FLAT, true, true, true);
+		assertEquals(Boolean.TRUE, chosen.lightGlow);
+		assertEquals(Boolean.TRUE, chosen.withLightGlowDefault(false).lightGlow);
+		assertEquals(Boolean.FALSE, s.withLightGlowDefault(false).lightGlow);
+		assertEquals(Boolean.TRUE, s.withLightGlowDefault(true).lightGlow);
+		assertEquals("Soft shadows are kept", Boolean.TRUE, chosen.withLightGlow(false).softShadows);
+	}
+
+	@Test
 	public void testSoftShadows_appliedToEveryShadowingLight() {
 		System.out.println("***** Test SceneViewer : the soft shadows option sets the filter of every light casting shadows *****");
 

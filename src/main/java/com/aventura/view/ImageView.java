@@ -225,6 +225,20 @@ public class ImageView extends GUIView {
 	}
 
 	/**
+	 * Direct (no Color allocation) version of GUIView.addPixel() on the back buffer.
+	 */
+	@Override
+	public void addPixel(int x, int y, float r, float g, float b) {
+		if (backbuffer == null || !inImage(x, y)) return;
+		int ix = x + width / 2, iy = -y + height / 2;
+		int p = backbuffer.getRGB(ix, iy);
+		int pr = Math.min(255, ((p >> 16) & 255) + Math.round(r * 255));
+		int pg = Math.min(255, ((p >> 8) & 255) + Math.round(g * 255));
+		int pb = Math.min(255, (p & 255) + Math.round(b * 255));
+		backbuffer.setRGB(ix, iy, (pr << 16) | (pg << 8) | pb);
+	}
+
+	/**
 	 * Fill the back buffer with the content of a MapView, as grey levels. Caution: the MapView should be
 	 * normalized (values in [0, 1], see MapView.normalizeMap()) before the call. If the map is larger than
 	 * the view, it is cropped.
