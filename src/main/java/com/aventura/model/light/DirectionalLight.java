@@ -148,6 +148,15 @@ public class DirectionalLight extends ShadowingLight {
 		return this.light_vector;
 	}
 	
+	/**
+	 * A Directional Light stands for a far away source such as the Sun: its default appearance is SUN
+	 * (not drawn yet: the light stays invisible until that mode is implemented).
+	 */
+	@Override
+	public LightGlowMode getDefaultGlowMode() {
+		return LightGlowMode.SUN;
+	}
+	
 	@Override
 	public float getIntensity(Vector4 point) {
 		// Same intensity in any point of world space as Directional light have infinite range

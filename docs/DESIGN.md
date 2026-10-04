@@ -489,6 +489,52 @@ xychart-beta
   <em>Soft-edged (white) and sharp-edged (warm) spot lights — <code>TestLightingSpot1</code>.</em>
 </p>
 
+### Visible lights
+
+A light only illuminates by default: nothing in the picture shows where it is. With
+`RenderContext.setLightGlow(true)` (off by default, so existing renderings are untouched), a post-process
+draws the lights on the finished frame: `RenderEngine` calls `LightGlowRenderer` after the landmarks and
+the light vectors and just before `renderView()`, with the main Z-buffer still holding the depth of the
+frame. The pass is skipped in `LINE` rendering (no Z-buffer) and under an orthographic perspective.
+
+```mermaid
+flowchart LR
+    A["Light<br/>getAppearance()"] --> M{"LightGlowMode?"}
+    B["RenderContext<br/>getLightGlowMode()"] --> M
+    C["Light<br/>getDefaultGlowMode()"] --> M
+    M -->|HALO / EMISSIVE| P["Project the position<br/>(View·Projection)"]
+    P --> V["Visibility:<br/>32 depth samples<br/>on the core disc"]
+    V --> D["Core (depth-tested)<br/>+ additive halo"]
+    D --> G["GUIView.addPixel()"]
+```
+
+- **Which mode.** `LightGlowMode` is `NONE`, `EMISSIVE` (core only), `HALO` (core and halo) or `SUN`
+  (directional lights; not drawn yet). The first defined of: the mode of the light's `LightAppearance`, the
+  one forced by the `RenderContext`, then `Light.getDefaultGlowMode()` (`HALO` for point and spot lights,
+  `SUN` for directional ones, `NONE` for the ambient light). `LightGlowRenderer.resolveMode()` applies
+  that order.
+- **Size in world units.** `LightAppearance` (color, core radius, glow radius, gain) is given in world
+  units, so the halo shrinks with the distance like any object: a length `L` at eye distance `w` measures
+  `L · f / w` pixels, with `f = pixelHalfWidth · 2 · near / viewWidth`. The core never gets smaller than
+  1.5 pixels, so that a far light stays a dot.
+- **Visibility is an occlusion query.** The depth of the light (its `w`) is compared with the Z-buffer
+  (which stores linear eye depth) on 32 samples spread over the disc of the core (golden-angle spiral). A
+  sample is visible if the buffer is at least `w − 0.03` there, or if it is outside of the screen (a light
+  just out of the image keeps its glow in it). The visible share scales the halo, so the light fades while
+  an edge goes over it instead of popping. The core pixels are also tested one by one.
+- **Additive, on the finished image.** `GUIView.addPixel(x, y, r, g, b)` adds a contribution to a pixel and
+  saturates (generic version through `getPixel`/`drawPixel`; `ImageView` overrides it on the back buffer).
+  The halo is `0.55·exp(−(d/R)²) + 0.25/(1 + (d/0.7R)²)`, a soft peak with a longer tail, tinted by the
+  color of the light and brought to zero at 3.5 R; a spot light's halo is also scaled by its cone factor
+  seen from the camera.
+- **Cost.** One projection and 32 depth reads per light, plus one write per pixel of the halo: about 5–10 ms
+  for a big halo on a 1000×560 image, up to ~18 ms when it fills the screen.
+
+Not done yet, planned one effect at a time (see [BACKLOG.md](BACKLOG.md)): the sun (`SUN`: the disc and the
+halo of a directional light at infinity, `w = 0` projection of the opposite of its direction), the lens flare
+(ghosts on the axis between the light and the center of the screen), the light shafts (radial blur of the
+visible sky), and emissive geometry beyond the core.
+
 ---
 
 ## 7. Shadow mapping
@@ -796,7 +842,7 @@ xychart-beta
 |---|---|
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
 | Shadows | All lights (orthographic, perspective and cube maps); hard edges by default, optional PCF 3×3 with a fixed-width penumbra |
-| Lights | Not drawn in the scene (no halo or lens effect) |
+| Lights | Invisible by default; optional halo of point and spot lights (`setLightGlow`), hidden by the objects. No sun, lens flare or light shafts yet |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |
@@ -819,7 +865,7 @@ flowchart LR
     end
     subgraph LATER["Ideas"]
         l1[Other GUIView backends<br/>JavaFX, image sequence]
-        l2[Visible light sources]
+        l2[Sun, lens flare and<br/>light shafts]
         l3[Model import<br/>OBJ]
     end
     NOW --> NEXT --> LATER

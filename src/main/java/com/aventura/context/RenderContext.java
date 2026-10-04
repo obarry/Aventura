@@ -27,6 +27,8 @@ package com.aventura.context;
 
 import java.awt.Color;
 
+import com.aventura.model.light.LightGlowMode;
+
 /**
  * The RenderContext describes the information and parameters to be used by the RenderEngine to render the World properly.
  * This is all parameters not directly related to the World, the Lighting or the Camera nor the Display (that is defined
@@ -107,6 +109,10 @@ public class RenderContext {
 	// Shadowing
 	private boolean shadowing = false;
 	
+	// Visible lights (glow / halos)
+	private boolean lightGlow = false;
+	private LightGlowMode lightGlowMode = null; // null = not forced: each Light's own appearance, or its default
+	
 	// Colors of the debug displays
 	private Color landmarkXColor = Color.RED;
 	private Color landmarkYColor = Color.GREEN;
@@ -159,6 +165,8 @@ public class RenderContext {
 		this.backfaceCulling = r.backfaceCulling;
 		this.textureProcessing = r.textureProcessing;
 		this.shadowing = r.shadowing;
+		this.lightGlow = r.lightGlow;
+		this.lightGlowMode = r.lightGlowMode;
 		this.landmarkXColor = r.landmarkXColor;
 		this.landmarkYColor = r.landmarkYColor;
 		this.landmarkZColor = r.landmarkZColor;
@@ -277,6 +285,49 @@ public class RenderContext {
 		return shadowing;
 	}
 	
+	/**
+	 * Master switch of the visible lights: when enabled, the lights are made visible in the image (halo around
+	 * a Point or Spot light, see LightGlowMode), hidden by the objects standing in front of them. Disabled by
+	 * default: nothing changes for the existing renderings. Only available for the lit and unlit rendering
+	 * types under a frustum perspective (nothing is drawn in LINE rendering or under an orthographic perspective).
+	 */
+	public RenderContext setLightGlow(boolean lightGlow) {
+		checkNotFrozen();
+		this.lightGlow = lightGlow;
+		return this;
+	}
+	
+	public boolean isLightGlow() {
+		return lightGlow;
+	}
+	
+	/**
+	 * Forces the same LightGlowMode for all the lights that do not define their own one in their LightAppearance
+	 * (which takes precedence). Resolution order: the Light's appearance, then this RenderContext, then the
+	 * default mode of the type of the Light (see Light.getDefaultGlowMode()).
+	 * 
+	 * @param mode the mode to force, null to cancel (see resetLightGlowMode())
+	 */
+	public RenderContext setLightGlowMode(LightGlowMode mode) {
+		checkNotFrozen();
+		this.lightGlowMode = mode;
+		return this;
+	}
+	
+	/**
+	 * Cancels setLightGlowMode(): each Light uses its default mode again.
+	 */
+	public RenderContext resetLightGlowMode() {
+		return setLightGlowMode(null);
+	}
+	
+	/**
+	 * @return the forced LightGlowMode, or null if none is forced
+	 */
+	public LightGlowMode getLightGlowMode() {
+		return lightGlowMode;
+	}
+	
 	public Color getLandmarkXColor() {
 		return landmarkXColor;
 	}
@@ -350,6 +401,7 @@ public class RenderContext {
 				+ "* Backface culling:      " + onOff(backfaceCulling) + "\n"
 				+ "* Texture processing:    " + onOff(textureProcessing) + "\n"
 				+ "* Shadowing:             " + onOff(shadowing) + "\n"
+				+ "* Light glow:            " + onOff(lightGlow) + (lightGlowMode == null ? "" : " (forced mode: " + lightGlowMode + ")") + "\n"
 				+ "* Monochrome color:      " + (monochromeColor == null ? "World background" : monochromeColor) + "\n";
 	}
 

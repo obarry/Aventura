@@ -71,6 +71,28 @@ be factored at the same time.
   performance audit, see [PERFORMANCE_AUDIT.md](PERFORMANCE_AUDIT.md) (§R9, R10). A point light costs up to six
   shadow passes per frame, and a soft shadow filter more texel reads per pixel.
 
+## 3b. Visible lights
+
+- **Done (October 2026): the foundation and the halo of point and spot lights.** `RenderContext.setLightGlow()`
+  (master switch, off by default), `LightGlowMode` (`NONE`, `EMISSIVE`, `HALO`, `SUN`), `LightAppearance`
+  (per light: mode, color, core and glow radius, gain), `LightGlowRenderer` (post-process on the finished
+  frame, visibility measured in the Z-buffer), `GUIView.addPixel()`, a "Light glow" option in the SceneViewer
+  and the demos `TestLightingGlow` and `TestLightingSun`. See [DESIGN.md, Visible lights](DESIGN.md#visible-lights).
+  Follow-ups, one effect at a time:
+  - **The sun** (`LightGlowMode.SUN`, directional lights): disc and halo at the projection of the direction
+    towards the sun (`w = 0` point), visibility read in the Z-buffer where the sky is (depth = far).
+    `TestLightingSun` is the scene to check it (the sun crosses the edges of the buildings).
+  - **Lens flare**: ghosts (discs and rings) along the axis from the sun to the center of the screen, faded
+    with the visibility and with the distance of the sun to the center.
+  - **Light shafts**: radial blur of the visible sky from the sun (screen space), added to the image; costs
+    about 64 samples per pixel, so it will need a lower resolution mask or an option.
+  - **Emissive geometry** beyond the core of the light (a lamp mesh that glows by itself).
+  - The glow of a point light is not scaled by its `intensity` or its range (only by `LightAppearance.gain`);
+    a halo that fades with the distance to the camera, and a visibility measured on the whole halo (an edge
+    that covers only the core makes the whole halo vanish) could be tried.
+  - Not available in `LINE` rendering and under an orthographic perspective; a light behind the near plane
+    is not drawn even if its halo would reach the image.
+
 ## 4. Rasterization
 
 **Done (September 2026).** `TriangleRasterizer` follows a pixel-center convention: a pixel is drawn

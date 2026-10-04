@@ -55,7 +55,7 @@ The same scenes can be explored in a Swing window with `com.aventura.demo.SceneV
 java -cp target/classes:target/test-classes com.aventura.demo.SceneViewer urbanscape_flight
 ```
 
-Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures and landmarks options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
+Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures, landmarks and light glow options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
 
 ## Quick start
 
@@ -250,6 +250,21 @@ int size = sun.getShadowMapSize(); // size in use (set or default)
 
 The default size depends on the type of light: `getDefaultShadowMapSize()` returns it, and each light class documents its own. It is `ShadowingLight.DEFAULT_SHADOW_MAP_SIZE` (1000 pixels) for directional and spot lights, and `PointLight.DEFAULT_SHADOW_MAP_SIZE` (512 pixels **per face**, six maps in all) for point lights.
 
+### Visible lights
+
+By default a light is only a source of illumination: a point or spot light in the field of view is invisible, you only see what it lights. `RenderContext.setLightGlow(true)` makes the lights visible: a bright core and a soft halo are drawn around each point and spot light, and the objects in front of a light hide it, progressively when only part of it is covered (the share of the core still visible is measured in the depth buffer). The halos are drawn on the finished image, so nothing else in the picture changes, and the option is off by default.
+
+```java
+RenderContext rc = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE).setLightGlow(true);
+
+PointLight lamp = new PointLight(new Vector4(0, 0, 2, 1), 10);
+lamp.setAppearance(new LightAppearance()   // everything is optional
+        .setColor(new Color(255, 200, 120)) // default: the color of the light
+        .setGlowRadius(0.7f));              // in world units: the halo shrinks with the distance
+```
+
+What is drawn is set by a `LightGlowMode`: `HALO` (core and halo, the default of point and spot lights), `EMISSIVE` (the core only), `NONE`, and `SUN` (reserved for directional lights, **not drawn yet**). The mode is the one of the light's `LightAppearance` if it has one, else the one forced for all the lights by `RenderContext.setLightGlowMode()`, else the default of the type of light. The halo of a spot light is dimmer when it is seen from outside its cone. Only lit and unlit rendering types are concerned (not `LINE`), under a frustum perspective, and a light behind the camera is not drawn. A big halo costs a few milliseconds per light on a 1000×560 image. `TestLightingGlow` shows a lamp circling around the objects of the spot light scene, passing behind them, with the visible lights switched on and off in turn; `TestLightingSun` is the scene prepared for the sun and its effects (disc and halo, lens flare, light shafts), which are added one at a time.
+
 ## How it works
 
 ### The scene and the engine
@@ -331,7 +346,7 @@ All demos live in `com.aventura.demo`.
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 
-The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
+The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows), `TestLightingGlow` (a lamp with a visible halo, hidden behind the objects) and `TestLightingSun` (a street where the camera turns to bring the sun behind the buildings, ready for the effects of the sun). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
 
 ## Tests
 
@@ -339,7 +354,7 @@ The `src/test/java/com/aventura/test` folder holds about seventy additional visu
 mvn test
 ```
 
-The unit tests (JUnit 4, about 430 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, and the soft shadow filter), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 450 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, and the visible lights), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 
@@ -379,7 +394,7 @@ Aventura/
 - Only Swing has a dedicated view so far (`SwingView`); other GUI toolkits can use `ImageView` with a frame listener, or extend `ImageView` or `GUIView`.
 - A `Lighting` system holds at most one ambient light, plus any number of directional, point and spot lights.
 - Soft shadows have a penumbra of a fixed width of a few texels (no wider penumbra far from the object that casts the shadow), they are off by default, and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
-- Lights are not drawn: a point light, a spot light or the sun is invisible even when it is in the field of view (no halo or lens effect yet).
+- Lights are invisible by default. `RenderContext.setLightGlow(true)` draws a halo around point and spot lights (hidden by the objects in front of them); the sun (directional lights), the lens flare and the light shafts are not drawn yet, and the halos are not drawn in `LINE` rendering nor under an orthographic perspective.
 - Texture files are loaded from file paths (relative to the working directory or absolute), not from the classpath.
 
 ## License

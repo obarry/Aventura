@@ -93,5 +93,20 @@ public abstract class GUIView extends View {
 	
 	public abstract void drawPixel(int x, int y, Color c);
 	public abstract void drawLine(int x1, int y1, int x2, int y2);
+	
+	/**
+	 * Adds a light contribution to a pixel (centered coordinates, Y axis up): each channel of the current pixel
+	 * is increased by the given amount (0 = nothing, 1 = full scale) and saturates at full scale. Pixels outside
+	 * of the image are ignored. Generic implementation based on getPixel() / drawPixel(); the specializations
+	 * may provide a faster one.
+	 */
+	public void addPixel(int x, int y, float r, float g, float b) {
+		Color c = getPixel(x, y);
+		if (c == null) return;
+		drawPixel(x, y, new Color(
+				Math.min(255, c.getRed() + Math.round(r * 255)),
+				Math.min(255, c.getGreen() + Math.round(g * 255)),
+				Math.min(255, c.getBlue() + Math.round(b * 255))));
+	}
 
 }
