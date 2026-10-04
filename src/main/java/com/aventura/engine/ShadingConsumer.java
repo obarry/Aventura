@@ -86,16 +86,17 @@ public class ShadingConsumer implements FragmentConsumer {
 		if (lighting.getShadowingLights() != null) {
 			for (ShadowingLight light : lighting.getShadowingLights()) {
 
-				if (shadowsEnabled && light.shadowFactorAt(fragment.getWorldPosition(), fragment.getNormal()) <= 0) {
-					// Fully in shadow for this light -- nothing to add. NOTE: shadowFactorAt()
-					// today only ever returns 0 or 1 (hard shadows, no PCF/soft shadows yet -- see
-					// its Javadoc), so a binary skip-or-include here is sufficient; if soft shadows
-					// are added later, this will need to become a scaled accumulation instead of a
-					// skip, which would need a per-light scratch accumulator.
-					continue;
+				float lightFactor = 1f;
+				if (shadowsEnabled) {
+					lightFactor = light.shadowFactorAt(fragment.getWorldPosition(), fragment.getNormal());
+					if (lightFactor <= 0) {
+						// Fully in shadow for this light -- nothing to add.
+						continue;
+					}
 				}
 
-				lighting.accumulateContribution(light, fragment, viewerDirection, material, accumulator);
+				// lightFactor is 1 for a lit point, and between 0 and 1 at the edge of a soft shadow (see ShadowFilter)
+				lighting.accumulateContribution(light, fragment, viewerDirection, material, accumulator, lightFactor);
 			}
 		}
 

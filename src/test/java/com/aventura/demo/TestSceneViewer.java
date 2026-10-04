@@ -8,7 +8,13 @@ import java.util.function.Supplier;
 import org.junit.Test;
 
 import com.aventura.context.RenderContext.RenderingType;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.light.AmbientLight;
+import com.aventura.model.light.DirectionalLight;
+import com.aventura.model.light.Lighting;
+import com.aventura.model.light.PointLight;
+import com.aventura.model.light.ShadowFilter;
 
 /**
  * ------------------------------------------------------------------------------
@@ -123,6 +129,44 @@ public class TestSceneViewer {
 		assertEquals(Boolean.FALSE, d.textures);
 		assertEquals(Boolean.TRUE, d.landmarks);
 		assertEquals("scene", d.scene);
+	}
+
+	@Test
+	public void testViewState_softShadowsOptionIsKeptAndDefaulted() {
+		System.out.println("***** Test SceneViewer : the soft shadows option follows the camera and options changes, and the scene fills it only when undefined *****");
+
+		SceneViewer.ViewState s = SceneViewer.ViewState.of("scene");
+		assertNull(s.softShadows);
+		SceneViewer.ViewState chosen = s.withSoftShadows(true).withCamera(1, 2, 3).withOptions(RenderingType.FLAT, true, true, true)
+				.withDefaults(RenderingType.INTERPOLATE, false, false, false);
+		assertEquals(Boolean.TRUE, chosen.softShadows);
+		assertEquals(Boolean.TRUE, chosen.withSoftShadowsDefault(false).softShadows);
+		assertEquals(Boolean.FALSE, s.withSoftShadowsDefault(false).softShadows);
+		assertEquals(Boolean.TRUE, s.withSoftShadowsDefault(true).softShadows);
+	}
+
+	@Test
+	public void testSoftShadows_appliedToEveryShadowingLight() {
+		System.out.println("***** Test SceneViewer : the soft shadows option sets the filter of every light casting shadows *****");
+
+		DirectionalLight sun = new DirectionalLight(new Vector3(0, 0, -1), 1f);
+		PointLight lamp = new PointLight(new Vector4(0, 0, 5, 1), 20f);
+		Lighting lighting = new Lighting(sun, new AmbientLight(0.1f));
+		lighting.addPointLight(lamp);
+		assertFalse("hard by default", SceneViewer.hasSoftShadows(lighting));
+
+		SceneViewer.applySoftShadows(lighting, null);
+		assertEquals(ShadowFilter.HARD, sun.getShadowFilter());
+		SceneViewer.applySoftShadows(lighting, true);
+		assertEquals(ShadowFilter.PCF_3X3, sun.getShadowFilter());
+		assertEquals(ShadowFilter.PCF_3X3, lamp.getShadowFilter());
+		assertTrue(SceneViewer.hasSoftShadows(lighting));
+		lamp.setShadowFilter(ShadowFilter.HARD);
+		assertFalse("not every light filters its shadows", SceneViewer.hasSoftShadows(lighting));
+		SceneViewer.applySoftShadows(lighting, false);
+		assertEquals(ShadowFilter.HARD, sun.getShadowFilter());
+		assertFalse(SceneViewer.hasSoftShadows(null));
+		assertFalse(SceneViewer.hasSoftShadows(new Lighting(new AmbientLight(0.1f))));
 	}
 
 	@Test

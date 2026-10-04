@@ -45,6 +45,7 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Box;
@@ -438,6 +439,7 @@ public class UrbanScape {
 		Vector3 direction = new Vector3((float) (Math.cos(e) * Math.cos(h)), (float) (Math.cos(e) * Math.sin(h)), (float) -Math.sin(e));
 		DirectionalLight dl = new DirectionalLight(direction, intensity);
 		dl.setShadowMapSize(2000);
+		dl.setShadowFilter(ShadowFilter.PCF_3X3);
 		return dl;
 	}
 

@@ -12,6 +12,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,6 +40,9 @@ import com.aventura.context.RenderContext.RenderingType;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.Lighting;
+import com.aventura.model.light.ShadowFilter;
+import com.aventura.model.light.ShadowingLight;
 import com.aventura.view.SwingView;
 
 /**
@@ -78,8 +82,9 @@ import com.aventura.view.SwingView;
  *
  * - Mouse drag: turns the camera around the point it looks at (left/right: around the vertical axis, up/down:
  *   higher or lower, up to 89 degrees). Mouse wheel: closer or farther.
- * - Rendering menu: the rendering types, and the shadows, textures and landmarks options (initially as the scene
- *   defines them). View menu: back to the scene's camera (Ctrl+R), save the image shown (Ctrl+S).
+ * - Rendering menu: the rendering types, and the shadows, soft shadows, textures and landmarks options (initially as
+ *   the scene defines them). Soft shadows sets the filter of the shadow map of every light that casts shadows
+ *   (ShadowFilter.PCF_3X3, or HARD when unchecked); it only shows when Shadows is on. View menu: back to the scene's camera (Ctrl+R), save the image shown (Ctrl+S).
  *
  * Threads: the Swing thread (EDT) only records what the user asks for, in an immutable ViewState, and requests a
  * rendering. The rendering (and the loading of a scene, which may take a moment) is done by a single background
@@ -167,8 +172,15 @@ public class SceneViewer {
 		final int zoomNotches;
 		final RenderingType type;
 		final Boolean shadows, textures, landmarks;
+		/** Soft shadows (ShadowFilter.PCF_3X3 on every shadowing light), null = as the scene's lights define them */
+		final Boolean softShadows;
 
 		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks) {
+			this(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, null);
+		}
+
+		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks,
+				Boolean softShadows) {
 			this.scene = scene;
 			this.yaw = yaw;
 			this.pitch = pitch;
@@ -177,6 +189,7 @@ public class SceneViewer {
 			this.shadows = shadows;
 			this.textures = textures;
 			this.landmarks = landmarks;
+			this.softShadows = softShadows;
 		}
 
 		/** A scene seen from its own camera, with its own options */
@@ -185,11 +198,20 @@ public class SceneViewer {
 		}
 
 		ViewState withCamera(float yaw, float pitch, int zoomNotches) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows);
 		}
 
 		ViewState withOptions(RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows);
+		}
+
+		ViewState withSoftShadows(Boolean softShadows) {
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows);
+		}
+
+		/** The soft shadows option, if still undefined, takes the given (scene's) value */
+		ViewState withSoftShadowsDefault(boolean softShadows) {
+			return this.softShadows != null ? this : withSoftShadows(softShadows);
 		}
 
 		/** The options still undefined take the given (scene's) values */
@@ -219,6 +241,7 @@ public class SceneViewer {
 	private String loadedScene = null;
 	private DemoScene scene;
 	private RenderContext sceneDefaults; // copy of the scene's own options, before any change
+	private boolean sceneSoftShadows; // whether the scene's own lights filter their shadows (all of them, at least one)
 	private Camera camera;
 	private RenderEngine engine;
 	// Written by the rendering thread, read by the EDT (paint, save, pitch limit)
@@ -230,7 +253,7 @@ public class SceneViewer {
 	private JPanel panel;
 	private final Map<String, JRadioButtonMenuItem> sceneItems = new LinkedHashMap<>();
 	private final Map<RenderingType, JRadioButtonMenuItem> typeItems = new LinkedHashMap<>();
-	private JCheckBoxMenuItem shadowsItem, texturesItem, landmarksItem;
+	private JCheckBoxMenuItem shadowsItem, softShadowsItem, texturesItem, landmarksItem;
 	private int lastX, lastY;
 
 	public SceneViewer(Map<String, Supplier<DemoScene>> scenesByImageName, String firstScene) {
@@ -334,11 +357,14 @@ public class SceneViewer {
 		renderingMenu.addSeparator();
 		shadowsItem = new JCheckBoxMenuItem("Shadows");
 		shadowsItem.addActionListener(e -> update(s -> s.withOptions(s.type, shadowsItem.isSelected(), s.textures, s.landmarks)));
+		softShadowsItem = new JCheckBoxMenuItem("Soft shadows");
+		softShadowsItem.addActionListener(e -> update(s -> s.withSoftShadows(softShadowsItem.isSelected())));
 		texturesItem = new JCheckBoxMenuItem("Textures");
 		texturesItem.addActionListener(e -> update(s -> s.withOptions(s.type, s.shadows, texturesItem.isSelected(), s.landmarks)));
 		landmarksItem = new JCheckBoxMenuItem("Landmarks");
 		landmarksItem.addActionListener(e -> update(s -> s.withOptions(s.type, s.shadows, s.textures, landmarksItem.isSelected())));
 		renderingMenu.add(shadowsItem);
+		renderingMenu.add(softShadowsItem);
 		renderingMenu.add(texturesItem);
 		renderingMenu.add(landmarksItem);
 		bar.add(renderingMenu);
@@ -364,6 +390,7 @@ public class SceneViewer {
 		if (sceneItem != null) sceneItem.setSelected(true);
 		if (s.type != null) typeItems.get(s.type).setSelected(true);
 		if (s.shadows != null) shadowsItem.setSelected(s.shadows);
+		if (s.softShadows != null) softShadowsItem.setSelected(s.softShadows);
 		if (s.textures != null) texturesItem.setSelected(s.textures);
 		if (s.landmarks != null) landmarksItem.setSelected(s.landmarks);
 	}
@@ -394,6 +421,7 @@ public class SceneViewer {
 			// The options not chosen by the user are the scene's own ones
 			ViewState s = state.updateAndGet(st -> st.scene.equals(loadedScene)
 					? st.withDefaults(sceneDefaults.getRenderingType(), sceneDefaults.isShadowing(), sceneDefaults.isTextureProcessing(), sceneDefaults.isDisplayLandmark())
+							.withSoftShadowsDefault(sceneSoftShadows)
 					: st);
 			if (!s.scene.equals(loadedScene)) {
 				return; // another scene was chosen meanwhile: it has already been requested
@@ -404,6 +432,7 @@ public class SceneViewer {
 			options.setShadowing(s.shadows);
 			options.setTextureProcessing(s.textures);
 			options.setDisplayLandmark(s.landmarks);
+			applySoftShadows(scene.getLighting(), s.softShadows);
 			Vector4 poi = scene.getPoi();
 			camera.updateCamera(orbitEye(scene.getEye(), poi, s.yaw, s.pitch, zoomFactor(s.zoomNotches)), poi, Vector4.zAxis());
 
@@ -417,6 +446,30 @@ public class SceneViewer {
 		}
 	}
 
+	/** True if the lighting has at least one light casting shadows, and every one of them filters its shadow map (PCF_3X3 or more) */
+	static boolean hasSoftShadows(Lighting lighting) {
+		List<ShadowingLight> lights = lighting == null ? null : lighting.getShadowingLights();
+		if (lights == null || lights.isEmpty()) {
+			return false;
+		}
+		for (ShadowingLight light : lights) {
+			if (light.getShadowFilter() == ShadowFilter.HARD) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** Sets the shadow filter of every light casting shadows: soft (PCF_3X3) or hard. Does nothing for a null option. */
+	static void applySoftShadows(Lighting lighting, Boolean soft) {
+		if (soft == null || lighting == null || lighting.getShadowingLights() == null) {
+			return;
+		}
+		for (ShadowingLight light : lighting.getShadowingLights()) {
+			light.setShadowFilter(soft ? ShadowFilter.PCF_3X3 : ShadowFilter.HARD);
+		}
+	}
+
 	/** Rendering thread: creates the scene, its camera, a SwingView of its size and the engine */
 	private void load(String name) {
 		SwingUtilities.invokeLater(() -> frame.setTitle(TITLE + " - loading " + name + "..."));
@@ -426,6 +479,7 @@ public class SceneViewer {
 		camera = newScene.createCamera();
 		engine = newScene.createEngine(camera, newView);
 		sceneDefaults = new RenderContext(newScene.getRenderContext());
+		sceneSoftShadows = hasSoftShadows(newScene.getLighting());
 		loadedScene = name;
 		sceneElevation = elevation(newScene.getEye(), newScene.getPoi());
 		view = newView;

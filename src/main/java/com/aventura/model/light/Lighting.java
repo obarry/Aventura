@@ -211,6 +211,18 @@ public class Lighting {
 	 * @param out              accumulator to add this light's contribution into
 	 */
 	public void accumulateContribution(Light light, Fragment fragment, Vector3 viewerDirection, Material material, RGBAccumulator out) {
+		accumulateContribution(light, fragment, viewerDirection, material, out, 1f);
+	}
+
+	/**
+	 * Same as accumulateContribution(Light, Fragment, Vector3, Material, RGBAccumulator), with the
+	 * diffuse and specular contributions of this light multiplied by a factor: the fraction of the light
+	 * that reaches the fragment, e.g. ShadowingLight.shadowFactorAt() when the edge of a shadow is
+	 * filtered (soft shadows).
+	 *
+	 * @param lightFactor fraction of the light received, between 0 (nothing added) and 1 (the full contribution)
+	 */
+	public void accumulateContribution(Light light, Fragment fragment, Vector3 viewerDirection, Material material, RGBAccumulator out, float lightFactor) {
 
 		Color baseColor = material.baseColorAt(fragment);
 		Vector3 normal = fragment.getNormal().normalize();
@@ -228,7 +240,7 @@ public class Lighting {
 		Color lightColor = light.getLightColorAtPoint(fragment.getWorldPosition());
 
 		// Diffuse term: Ci . D.T . dotNL
-		out.addProduct(lightColor, baseColor, dotNL);
+		out.addProduct(lightColor, baseColor, dotNL * lightFactor);
 
 		if (hasSpecular() && material.specularExponent() > 0) {
 			// Reflection vector R = 2N.dotNL - L
@@ -242,7 +254,7 @@ public class Lighting {
 				if (specularColor != null) {
 					// Ci . Si (kept as a separate term from the diffuse one, per the documented
 					// formula -- see the earlier discussion about the legacy code's coupling bug)
-					out.addProduct(lightColor, specularColor, specularFactor);
+					out.addProduct(lightColor, specularColor, specularFactor * lightFactor);
 				}
 			}
 		}
