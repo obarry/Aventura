@@ -21,7 +21,11 @@ import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
+import com.aventura.model.light.PointLight;
+import com.aventura.model.light.SpotLight;
+import com.aventura.test.TestLightingPoint1Shadows;
 import com.aventura.test.TestLightingSpot1;
+import com.aventura.test.TestLightingSpot3Shadows;
 
 /**
  * ------------------------------------------------------------------------------
@@ -58,6 +62,8 @@ import com.aventura.test.TestLightingSpot1;
  *     urbanscape_flight.jpg   UrbanScape, camera high on the side (shadows of the buildings)
  *     fractal_landscape.jpg   FractalLandscape_MouseMoving, landscape from a fixed random seed, seen from afar
  *     spotlights.jpg          TestLightingSpot1
+ *     spot_shadows.jpg        TestLightingSpot3Shadows, one image of its animation (shadows of a SpotLight)
+ *     point_shadows.jpg       TestLightingPoint1Shadows, one image of its animation (cube-map shadows of a PointLight)
  *     cookbook_gallery.png    CookbookGallery (the examples of the Geometry Cookbook)
  *
  * Run it from the project root (the textures are read from resources/texture), headless:
@@ -88,6 +94,9 @@ public class DocumentationImages {
 	 * would show its edge, with nothing below it.
 	 */
 	static final long FRACTAL_SEED = 1862;
+	/** Images of the TestLightingSpot3Shadows and TestLightingPoint1Shadows animations (0 .. NB_IMAGES) */
+	static final int SPOT_SHADOWS_IMAGE = 20;
+	static final int POINT_SHADOWS_IMAGE = 45;
 
 	// ***** The scenes and the images *****
 
@@ -103,6 +112,8 @@ public class DocumentationImages {
 		scenes.put("urbanscape_flight.jpg", () -> urbanScape(URBANSCAPE_FLIGHT_ANGLE, 500));
 		scenes.put("fractal_landscape.jpg", () -> fractalLandscape(FRACTAL_SEED));
 		scenes.put("spotlights.jpg", () -> spotLights(1000));
+		scenes.put("spot_shadows.jpg", () -> spotShadows(SPOT_SHADOWS_IMAGE, 1000));
+		scenes.put("point_shadows.jpg", () -> pointShadows(POINT_SHADOWS_IMAGE, 1000));
 		scenes.put("cookbook_gallery.png", () -> CookbookGallery.createScene(1000));
 		return scenes;
 	}
@@ -197,6 +208,28 @@ public class DocumentationImages {
 		rContext.setDisplayLandmark(false);
 		return new DemoScene(TestLightingSpot1.createWorld(), TestLightingSpot1.createLighting(), TestLightingSpot1.EYE, TestLightingSpot1.POI,
 				rContext, perspective);
+	}
+
+	/** The scene of TestLightingSpot3Shadows: a spot light (and a dim moonlight) sweeping a floor of five objects, at image i of the animation. */
+	static DemoScene spotShadows(int image, int pixelsPerUnit) {
+		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, pixelsPerUnit);
+		RenderContext rContext = new RenderContext(TestLightingSpot3Shadows.createRenderContext());
+		rContext.setDisplayLandmark(false);
+		SpotLight spot = TestLightingSpot3Shadows.createSpot();
+		TestLightingSpot3Shadows.aimSpot(spot, image);
+		return new DemoScene(TestLightingSpot3Shadows.createWorld(), TestLightingSpot3Shadows.createLighting(spot), new Vector4(9, -7, 6, 1),
+				new Vector4(0, 0, 0, 1), rContext, perspective);
+	}
+
+	/** The scene of TestLightingPoint1Shadows: a point light orbiting in an open-top room with four objects, at image i of the animation. */
+	static DemoScene pointShadows(int image, int pixelsPerUnit) {
+		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, pixelsPerUnit);
+		RenderContext rContext = new RenderContext(TestLightingPoint1Shadows.createRenderContext());
+		rContext.setDisplayLandmark(false);
+		PointLight light = TestLightingPoint1Shadows.createPointLight();
+		TestLightingPoint1Shadows.moveLight(light, image);
+		return new DemoScene(TestLightingPoint1Shadows.createWorld(), TestLightingPoint1Shadows.createLighting(light), new Vector4(10, -10, 18, 1),
+				new Vector4(0, 0, 1, 1), rContext, perspective);
 	}
 
 	// ***** Tools *****

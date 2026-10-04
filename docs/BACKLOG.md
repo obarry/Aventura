@@ -1,7 +1,8 @@
 # Aventura backlog
 
 Items identified during the September 2026 clean-up phase (Rasterizer removal, contexts audit,
-configurable shadow maps, GUI-independent view) and deliberately **not** handled yet.
+configurable shadow maps, GUI-independent view) and the October 2026 spot and point light shadows,
+and deliberately **not** handled yet.
 See also the roadmap in [DESIGN.md](DESIGN.md#11-history-limitations-and-roadmap).
 
 ## 1. Perspective / Viewport split
@@ -35,12 +36,19 @@ be factored at the same time.
 
 ## 3. Shadows
 
-- **Spot light shadows**: one perspective (frustum) shadow map. `SHADOW_MAP_FAR_NDC` in
-  `ShadowingLight.generateShadowMap()` assumes the orthographic [0, 1] depth convention, so it must
-  be re-checked for a frustum projection.
-- **Point light shadows**: a cube map (6 faces). Default resolution planned at **512 per face**,
-  exposed through a `PointLight.DEFAULT_SHADOW_MAP_SIZE` constant and an override of
-  `getDefaultShadowMapSize()` (the mechanism is in place).
+- **Done (October 2026): spot and point light shadows.** A `SpotLight` has one perspective (frustum)
+  shadow map built from its position, direction and outer angle (1000 pixels by default); a `PointLight`
+  has a cube map of six frustum faces (512 pixels per face by default) with exact 90° faces, a face
+  chosen from the largest component of the light-to-point vector, and an exact skip of the faces no
+  object can reach. See [DESIGN.md §7](DESIGN.md#7-shadow-mapping). Follow-ups:
+  - The shadow bias of a frustum map is sized from a texel at the **near plane** and does not grow with
+    the distance to the light, while a texel covers more and more world space farther away: acne may
+    appear on distant surfaces. A bias growing with the depth of the fragment would fix it.
+  - The cube faces are not culled by distance: a face is skipped only when the world bounding box does
+    not intersect its pyramid, not when everything in it is beyond `maxDistance`.
+  - `SpotLight extends PointLight` forces `SpotLight` to re-assert the single-map behavior
+    (`generateShadowMap`, `shadowFactorAt`, default and current map size). A shared abstract parent
+    (point-like light) with two siblings would remove this trap.
 - `SHADOWING_BOX_ELEMENT` and `SHADOWING_BOX_SPECIFIC` are not implemented (they fall back to
   `SHADOWING_BOX_WORLD`). The `SHADOWING_BOX_*` int constants could become an enum, like
   `RenderingType`. Also, `ShadowingLight(int)` (box type) and `ShadowingLight(float)` (intensity) are
@@ -96,6 +104,7 @@ Follow-ups identified while doing it:
 ## 7. Repository housekeeping
 
 - Remove the `Claude outputs` folders (at the project root and under `src/`), left over by earlier
-  working sessions.
+  working sessions. They are not tracked: both are ignored by `.gitignore` and `src/.gitignore`, so
+  they only exist in local working copies (the one under `src/` holds old shape sources and zip files).
 - Run `mvn test` locally: during these sessions, the code was compiled and tested with `javac` and
   JUnit directly, because Maven could not download its plugins.
