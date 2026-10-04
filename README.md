@@ -16,7 +16,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 
 - **Pure Java, zero runtime dependency.** Only the JDK is needed (`java.desktop` for Swing and image loading).
 - **Complete software pipeline.** Model, world and camera transforms, frustum or orthographic projection, triangle rasterization with a Z-buffer and perspective-correct interpolation.
-- **Lighting and shadows.** Ambient, directional, point and spot lights (a spot has an aimable cone with a soft or sharp edge), specular highlights, and shadow mapping for every kind of light: orthographic maps for directional lights, perspective maps for spot lights, and a six-face cube map for point lights (see [Lights and shadows](#lights-and-shadows)).
+- **Lighting and shadows.** Ambient, directional, point and spot lights (a spot has an aimable cone with a soft or sharp edge), specular highlights, and shadow mapping for every kind of light: orthographic maps for directional lights, perspective maps for spot lights, and a six-face cube map for point lights, with optional soft edges (see [Lights and shadows](#lights-and-shadows)).
 - **Textures.** Any image format supported by `ImageIO` (JPEG, PNG, GIF...), with per-face textures on boxes and pyramids and control over mapping direction and orientation.
 - **Ready-made shapes.** Box, cube, sphere, cone, cone frustum, cylinder, disc, pyramid, torus and height-field grids (`Trellis`), plus your own geometry from triangles and meshes.
 - **Hierarchical scene graph.** Elements can contain sub-elements; translations, rotations and scalings compose down the tree.
@@ -55,7 +55,7 @@ The same scenes can be explored in a Swing window with `com.aventura.demo.SceneV
 java -cp target/classes:target/test-classes com.aventura.demo.SceneViewer urbanscape_flight
 ```
 
-Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, textures and landmarks options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
+Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures and landmarks options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
 
 ## Quick start
 
@@ -227,6 +227,18 @@ A spot light looks at the scene through one perspective shadow map, whose field 
 
 *A point light orbiting in an open-top room (`TestLightingPoint1Shadows`): the shadows of the column, the sphere, the cone and the cube spread on the floor and climb the walls.*
 
+By default the edges of a shadow are hard: a point is either lit or in shadow, which shows as stair steps when the shadow map is coarse. A light can filter its map (percentage-closer filtering, `ShadowFilter.PCF_3X3`): the depths of the 3×3 texels around the point are compared with the depth of the point and the shadow factor is their weighted average, so the edge becomes a penumbra two or three texels wide. It works for every kind of light and costs a few more map lookups per pixel, and it lets a light keep a smaller map without stair steps:
+
+```java
+spot.setShadowFilter(ShadowFilter.PCF_3X3); // soft edges (default: ShadowFilter.HARD)
+```
+
+<p align="center">
+  <img src="resources/doc/images/soft_shadows.png" alt="Hard shadows on the left, soft shadows on the right" width="720">
+</p>
+
+*The same spot light with a coarse shadow map (200 pixels), with hard shadows on the left and `PCF_3X3` on the right (`TestLightingSoftShadows`). The moonlight, whose filter is left to its default, keeps its hard edge.*
+
 The resolution of a light's shadow map can be set per light. The size is the number of pixels of the **longest** side of the map; the other side follows the proportions of the area the light covers, so an elongated scene gets a rectangular map with no wasted pixels:
 
 ```java
@@ -319,7 +331,7 @@ All demos live in `com.aventura.demo`.
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 
-The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
+The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
 
 ## Tests
 
@@ -327,7 +339,7 @@ The `src/test/java/com/aventura/test` folder holds about seventy additional visu
 mvn test
 ```
 
-The unit tests (JUnit 4, about 420 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 430 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, and the soft shadow filter), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 
@@ -366,7 +378,7 @@ Aventura/
 - Aventura is a CPU rasterizer: it is built for clarity, portability and experimentation, not to compete with GPU performance on large scenes.
 - Only Swing has a dedicated view so far (`SwingView`); other GUI toolkits can use `ImageView` with a frame listener, or extend `ImageView` or `GUIView`.
 - A `Lighting` system holds at most one ambient light, plus any number of directional, point and spot lights.
-- Shadows are hard-edged (a point is either lit or in shadow, no soft penumbra), and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
+- Soft shadows have a penumbra of a fixed width of a few texels (no wider penumbra far from the object that casts the shadow), they are off by default, and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
 - Lights are not drawn: a point light, a spot light or the sun is invisible even when it is in the field of view (no halo or lens effect yet).
 - Texture files are loaded from file paths (relative to the working directory or absolute), not from the classpath.
 

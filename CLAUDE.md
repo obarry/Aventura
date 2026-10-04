@@ -14,7 +14,7 @@ no third-party runtime library (only the JDK; JUnit 4 for tests). Java 21, Maven
 ## Build, test, run
 
 - Compile: `mvn compile` (tests: `mvn test-compile`)
-- Unit tests (JUnit 4, ~420, headless): `mvn test`
+- Unit tests (JUnit 4, ~430, headless): `mvn test`
   - Single class: `mvn test -Dtest=Matrix4Test`
 - Run a demo (from the project root, textures are read from `./resources/texture`):
   `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.AventuraDemo`

@@ -580,8 +580,45 @@ with the distance to the light, so acne may show on very distant surfaces (see t
   <em>A cube map of six faces for a point light, shadows climbing the walls — <code>TestLightingPoint1Shadows</code>.</em>
 </p>
 
-**Current trade-offs:** hard shadows (factor 0 or 1, no PCF), and a fixed set of tuning constants for
-the bias. A point light costs up to six shadow passes per frame, fewer when some faces are empty.
+### Soft shadows (percentage-closer filtering)
+
+`ShadowingLight.setShadowFilter()` chooses how the map is read (`ShadowFilter`, per light, valid for
+every kind of light, `HARD` by default). `HARD` is the single comparison above: the shadow factor is 0
+or 1. `PCF_3X3` computes the **fraction of the 3×3 texels around the sampled position that see the point
+lit**: each texel is compared on its own stored depth, and the comparison results (never the depths, nor
+the final image) are weighted bilinearly like a depth would be, so the factor changes continuously when
+the point moves across the map. In practice this is a weight on each texel of a 4×4 block (the first and
+last rows and columns weighted by the fractional part of the position, the middle ones by 1), divided by 9.
+The edge of a shadow becomes a penumbra two or three texels wide, without stair steps.
+
+- **Receiver plane depth bias.** Texels of the block are up to two texels away from the point, where a
+  tilted surface is deeper (or less deep) than at the point: compared as is, the surface would shadow
+  itself (acne). Multiplying the bias to hide it detaches the shadows of the small reliefs (window sills,
+  cornices) from their casters, as soon as the bias exceeds their thickness: that was the first version,
+  and what UrbanScape showed. The depth expected at each texel is now that of the **plane of the
+  receiving surface**: the depth of the point plus the depth gradient of the plane per texel of the
+  map, times the offset to that texel. The gradient is measured by projecting the point moved by about
+  one texel along the two tangents of the surface (from its normal), which works the same way for an
+  orthographic and a perspective map. The correction of a texel is limited to twice the bias (past the
+  edge of a small surface, the plane no longer exists), and a surface seen edge-on from the light, whose
+  gradient cannot be measured, falls back on a bias `2 · (r + 1)` times larger.
+- **Cube seams.** A texel beyond the edge of a face reads the edge texel of that face (clamped), which is
+  the depth of the same surface: no light leaks through the seam between two faces of a point light.
+- **From the factor to the pixel.** `ShadingConsumer` no longer skips a light or not: it passes the factor
+  to `Lighting.accumulateContribution(…, lightFactor)`, which scales the diffuse and specular terms of
+  that light (ambient light is not shadowed). A factor of 0 still skips the light.
+- **Cost.** Sixteen texel reads per lookup instead of one bilinear read (four texels), and two more
+  projections to measure the gradient of the surface.
+
+<p align="center">
+  <img src="../resources/doc/images/soft_shadows.png" alt="Hard shadows on the left, soft shadows on the right" width="560"><br/>
+  <em>Hard (left) and <code>PCF_3X3</code> (right) shadows of a spot light with a coarse map — <code>TestLightingSoftShadows</code>.</em>
+</p>
+
+**Current trade-offs:** the penumbra has a fixed width of a few texels (no wider penumbra far from the
+object, which would need a search of the occluder, as in PCSS), the soft filter is off by default, and the
+tuning constants of the bias are fixed. A point light costs up to six shadow passes per frame, fewer when
+some faces are empty.
 
 <p align="center">
   <img src="../resources/doc/images/urbanscape_flight.jpg" alt="UrbanScape overview with building shadows" width="560"><br/>
@@ -699,7 +736,7 @@ Two complementary test families run from Maven:
 pie showData
     title JUnit test methods by area
     "Math: vectors, matrices, quaternions" : 244
-    "Lighting (point, spot, shadow maps, smoke renders)" : 49
+    "Lighting (point, spot, shadow maps, smoke renders)" : 55
     "Rendering (context, rendering types, rasterizer, views)" : 45
     "Demo logic (camera, flight path, mouse drag…)" : 44
     "Transforms (T, R, S)" : 13
@@ -738,7 +775,7 @@ timeline
     2026 : Fragment/Consumer rasterizer, Material
          : Quaternion + slerp, Matrix2, Maven layout
          : SpotLight, UrbanScape, 370+ unit tests
-         : Spot and point light shadows (perspective and cube maps), 420+ unit tests
+         : Spot and point light shadows (perspective and cube maps), soft shadows (PCF), 430+ unit tests
          : Rendering types: MONOCHROME (hidden-line), UNLIT
 ```
 
@@ -758,7 +795,7 @@ xychart-beta
 | Area | Current state |
 |---|---|
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
-| Shadows | All lights (orthographic, perspective and cube maps); hard edges, no PCF |
+| Shadows | All lights (orthographic, perspective and cube maps); hard edges by default, optional PCF 3×3 with a fixed-width penumbra |
 | Lights | Not drawn in the scene (no halo or lens effect) |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
@@ -771,7 +808,7 @@ The detailed list of identified but not yet handled items is kept in [BACKLOG.md
 ```mermaid
 flowchart LR
     subgraph NOW["Near term"]
-        n1[Soft shadows · PCF]
+        n1[Variable penumbra<br/>PCSS-like]
         n2[Bias growing with distance<br/>for perspective maps]
         n4[Perspective / Viewport<br/>split]
     end

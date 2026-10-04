@@ -22,6 +22,7 @@ import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.model.light.PointLight;
+import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.light.SpotLight;
 import com.aventura.test.TestLightingPoint1Shadows;
 import com.aventura.test.TestLightingSpot1;
@@ -63,6 +64,7 @@ import com.aventura.test.TestLightingSpot3Shadows;
  *     fractal_landscape.jpg   FractalLandscape_MouseMoving, landscape from a fixed random seed, seen from afar
  *     spotlights.jpg          TestLightingSpot1
  *     spot_shadows.jpg        TestLightingSpot3Shadows, one image of its animation (shadows of a SpotLight)
+ *     soft_shadows.png        TestLightingSpot3Shadows, hard (left) and PCF 3x3 (right) shadows with a small shadow map
  *     point_shadows.jpg       TestLightingPoint1Shadows, one image of its animation (cube-map shadows of a PointLight)
  *     cookbook_gallery.png    CookbookGallery (the examples of the Geometry Cookbook)
  *
@@ -97,6 +99,8 @@ public class DocumentationImages {
 	/** Images of the TestLightingSpot3Shadows and TestLightingPoint1Shadows animations (0 .. NB_IMAGES) */
 	static final int SPOT_SHADOWS_IMAGE = 20;
 	static final int POINT_SHADOWS_IMAGE = 45;
+	/** Size of the shadow map of the spot light in the soft shadows image: coarse on purpose, to make the filtering visible */
+	static final int SOFT_SHADOWS_MAP_SIZE = 200;
 
 	// ***** The scenes and the images *****
 
@@ -122,6 +126,7 @@ public class DocumentationImages {
 	static Map<String, Supplier<BufferedImage>> images() {
 		Map<String, Supplier<BufferedImage>> images = new LinkedHashMap<>();
 		images.put("hello_aventura.png", DocumentationImages::helloAventura);
+		images.put("soft_shadows.png", DocumentationImages::softShadows);
 		for (Map.Entry<String, Supplier<DemoScene>> scene : scenes().entrySet()) {
 			images.put(scene.getKey(), () -> scene.getValue().get().render());
 		}
@@ -212,13 +217,43 @@ public class DocumentationImages {
 
 	/** The scene of TestLightingSpot3Shadows: a spot light (and a dim moonlight) sweeping a floor of five objects, at image i of the animation. */
 	static DemoScene spotShadows(int image, int pixelsPerUnit) {
+		return spotShadows(image, pixelsPerUnit, ShadowFilter.HARD, 0);
+	}
+
+	/** Same scene with the given filter on the shadow map of the spot, and the given shadow map size (0 = the default one) */
+	static DemoScene spotShadows(int image, int pixelsPerUnit, ShadowFilter filter, int shadowMapSize) {
 		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, pixelsPerUnit);
 		RenderContext rContext = new RenderContext(TestLightingSpot3Shadows.createRenderContext());
 		rContext.setDisplayLandmark(false);
 		SpotLight spot = TestLightingSpot3Shadows.createSpot();
 		TestLightingSpot3Shadows.aimSpot(spot, image);
+		spot.setShadowFilter(filter);
+		if (shadowMapSize > 0) {
+			spot.setShadowMapSize(shadowMapSize);
+		}
 		return new DemoScene(TestLightingSpot3Shadows.createWorld(), TestLightingSpot3Shadows.createLighting(spot), new Vector4(9, -7, 6, 1),
 				new Vector4(0, 0, 0, 1), rContext, perspective);
+	}
+
+	/**
+	 * Hard shadows (left) and soft shadows with a 3x3 percentage-closer filter (right) of the same spot light, on the same crop of the
+	 * TestLightingSpot3Shadows scene. A small shadow map (SOFT_SHADOWS_MAP_SIZE) makes the texels of the map visible, which is where the
+	 * filter helps: it lets a light use a smaller map without staircase edges.
+	 */
+	static BufferedImage softShadows() {
+		BufferedImage hard = spotShadows(SPOT_SHADOWS_IMAGE, 1000, ShadowFilter.HARD, SOFT_SHADOWS_MAP_SIZE).render();
+		BufferedImage soft = spotShadows(SPOT_SHADOWS_IMAGE, 1000, ShadowFilter.PCF_3X3, SOFT_SHADOWS_MAP_SIZE).render();
+		int x = 430, y = 100, w = 370, h = 230;
+		int scale = 2;
+		int gap = 6;
+		BufferedImage out = new BufferedImage(2 * w * scale + gap, h * scale, BufferedImage.TYPE_INT_RGB);
+		java.awt.Graphics2D g = out.createGraphics();
+		g.setColor(java.awt.Color.WHITE);
+		g.fillRect(0, 0, out.getWidth(), out.getHeight());
+		g.drawImage(hard.getSubimage(x, y, w, h), 0, 0, w * scale, h * scale, null);
+		g.drawImage(soft.getSubimage(x, y, w, h), w * scale + gap, 0, w * scale, h * scale, null);
+		g.dispose();
+		return out;
 	}
 
 	/** The scene of TestLightingPoint1Shadows: a point light orbiting in an open-top room with four objects, at image i of the animation. */

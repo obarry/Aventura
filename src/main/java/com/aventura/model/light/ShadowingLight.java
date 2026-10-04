@@ -108,6 +108,8 @@ public abstract class ShadowingLight extends Light {
 	
 	// Shadow map size requested through setShadowMapSize(), 0 = use getDefaultShadowMapSize()
 	private int shadowMapSize = 0;
+	// Filtering of the shadow map lookup, HARD (0 or 1) unless set through setShadowFilter()
+	private ShadowFilter shadowFilter = ShadowFilter.HARD;
 	protected MapView map; // As an attribute of the (Shadowing)Light, there will be multiple maps if multiple lights
 
 	// Diagnostics for shadow map generation: reuses RasterizerStats (see its Javadoc) to give
@@ -139,6 +141,15 @@ public abstract class ShadowingLight extends Light {
 	// backlog note about grouping this with SHADOW_BIAS_WORLD and other hardcoded tuning
 	// constants once we revisit making them configurable.
 	protected static final float DOT_NL_FLOOR = 0.1f;
+
+	// Soft shadows: below this determinant (in texels), the receiving surface is seen too edge-on from the
+	// light to measure its depth gradient (see shadowFactorAt()), and a wider bias is used instead
+	protected static final float MIN_PLANE_DETERMINANT = 0.05f;
+
+	// Soft shadows: the correction of the depth of a texel by the plane of the receiving surface is limited to this multiple
+	// of the bias. Beyond the edge of a small surface (sill, ledge), the plane no longer exists: its extension would make
+	// the neighbor texels look like occluders and the lit surface speckled.
+	protected static final float PCF_MAX_PLANE_OFFSET = 2f;
 
 	// Minimum base bias as a fraction of the world size of one shadow map texel (see generateShadowMap())
 	protected static final float SHADOW_BIAS_TEXEL_FACTOR = 0.5f;
@@ -465,7 +476,8 @@ public abstract class ShadowingLight extends Light {
 	 * @param worldPosition world-space position to test (e.g. Fragment.getWorldPosition())
 	 * @param normal        world-space surface normal at worldPosition (e.g. Fragment.getNormal()),
 	 *                      used to slope-scale the anti-acne bias -- see DOT_NL_FLOOR's Javadoc.
-	 * @return 1.0 if fully lit, 0.0 if in shadow
+	 * @return 1.0 if fully lit, 0.0 if in shadow, and, with a soft shadow filter (see
+	 *         setShadowFilter()), any value in between at the edge of a shadow
 	 */
 	public float shadowFactorAt(Vector4 worldPosition, Vector3 normal) {
 		return singleShadowFactorAt(worldPosition, normal);
@@ -545,10 +557,123 @@ public abstract class ShadowingLight extends Light {
 		float dotNL = getLightVectorAtPoint(worldPosition).dot(normal.normalize());
 		float shadowBias = shadowBiasBase / Math.max(dotNL, DOT_NL_FLOOR);
 
-		if (depthValue > depth + shadowBias) {
-			return 0f;
+		int radius = shadowFilter.getRadius();
+		if (radius == 0) {
+			if (depthValue > depth + shadowBias) {
+				return 0f;
+			}
+			return 1f;
 		}
-		return 1f;
+
+		// Percentage-closer filtering (PCF): the fraction of the texels around the sampled position that
+		// see the point lit. Only the RESULTS of the depth comparisons are averaged: each texel is
+		// compared on its own stored depth (no interpolation of depths), and a comparison result is
+		// weighted bilinearly like a depth would be, so that the factor changes smoothly, not by steps
+		// of one texel, when the point moves across the map.
+		//
+		// Written as the sum, over the (2r+1)^2 taps at whole-texel offsets from the sampled position,
+		// of one bilinear lookup of comparison results (the 4 texels around the tap); grouped by texel,
+		// this is a weight wx(cx) * wy(cy) on each texel of a (2r+2)^2 block, with wx = 1 - fu on the
+		// first column, fu on the last, and 1 on the others (fu: fractional part of the position), the
+		// total weight being (2r+1)^2.
+		//
+		// A texel of the block is up to r + 1 texels away from the point, where a tilted surface is
+		// deeper (or less deep) than at the point. Comparing the depth of the point with those texels
+		// would then make a tilted surface shadow itself (acne). Multiplying the bias to hide it would
+		// detach the shadows of the small reliefs (window sills, cornices) from their casters, since
+		// the bias would exceed their thickness. Instead, the depth expected at each texel is that of
+		// the plane of the receiving surface (receiver plane depth bias): the depth of the point plus
+		// the depth gradient of the plane, per texel of the map, times the offset to that texel. The
+		// bias of the single test (shadowBias) is then enough, as for hard shadows.
+		float u = s * map.getViewWidth() - 0.5f;
+		float v = t * map.getViewHeight() - 0.5f;
+		float gradX = 0f, gradY = 0f; // depth change per texel along the map axes
+		float pcfBias = shadowBias;
+		Vector3 n = normal.normalize();
+		Vector3 helper = Math.abs(n.getZ()) < 0.9f ? Vector3.zAxis() : Vector3.xAxis();
+		Vector3 t1 = n.cross(helper).normalize();
+		Vector3 t2 = n.cross(t1).normalize();
+		// A step of about one texel along each tangent of the plane, in world units at the depth of the point
+		Perspective lightPerspective = perspectiveCtx.getPerspective();
+		float texelWorld = Math.max(lightPerspective.getWidth() / perspectiveCtx.getPixelWidth(),
+				lightPerspective.getHeight() / perspectiveCtx.getPixelHeight());
+		float step = frustum ? texelWorld * w / lightPerspective.getNear() : texelWorld;
+		Vector4 p1 = posInLightSpace1(viewProjection, worldPosition, t1, step);
+		Vector4 p2 = posInLightSpace1(viewProjection, worldPosition, t2, step);
+		if (!frustum || (p1.getW() > 0f && p2.getW() > 0f)) {
+			float tx1 = ((frustum ? p1.getX() / p1.getW() : p1.getX()) - xNdc) * halfWidth;
+			float ty1 = ((frustum ? p1.getY() / p1.getW() : p1.getY()) - yNdc) * halfHeight;
+			float tx2 = ((frustum ? p2.getX() / p2.getW() : p2.getX()) - xNdc) * halfWidth;
+			float ty2 = ((frustum ? p2.getY() / p2.getW() : p2.getY()) - yNdc) * halfHeight;
+			float dd1 = (frustum ? p1.getW() : p1.getZ()) - depthValue;
+			float dd2 = (frustum ? p2.getW() : p2.getZ()) - depthValue;
+			float det = tx1 * ty2 - ty1 * tx2;
+			if (Math.abs(det) > MIN_PLANE_DETERMINANT) {
+				gradX = (dd1 * ty2 - ty1 * dd2) / det;
+				gradY = (tx1 * dd2 - dd1 * tx2) / det;
+			} else {
+				// A surface seen edge-on from the light: its depth gradient cannot be measured, the
+				// wide bias of the previous version is the fallback
+				pcfBias = shadowBias * 2 * (radius + 1);
+			}
+		}
+		float fu = u - (float) Math.floor(u);
+		float fv = v - (float) Math.floor(v);
+		int x0 = (int) Math.floor(u);
+		int y0 = (int) Math.floor(v);
+		int maxX = map.getViewWidth() - 1;
+		int maxY = map.getViewHeight() - 1;
+		float litWeight = 0f;
+		for (int j = -radius; j <= radius + 1; j++) {
+			float wy = (j == -radius) ? 1f - fv : (j == radius + 1 ? fv : 1f);
+			int cy = Math.min(Math.max(y0 + j, 0), maxY);
+			for (int i = -radius; i <= radius + 1; i++) {
+				float wx = (i == -radius) ? 1f - fu : (i == radius + 1 ? fu : 1f);
+				int cx = Math.min(Math.max(x0 + i, 0), maxX);
+				// Depth expected at this texel if the surface continues as a plane (receiver plane depth bias)
+				float offset = gradX * (x0 + i - u) + gradY * (y0 + j - v);
+				float maxOffset = PCF_MAX_PLANE_OFFSET * shadowBias;
+				float expected = depthValue + (offset > maxOffset ? maxOffset : (offset < -maxOffset ? -maxOffset : offset));
+				if (expected <= map.get(cx, cy) + pcfBias) {
+					litWeight += wx * wy;
+				}
+			}
+		}
+		int taps = (2 * radius + 1) * (2 * radius + 1);
+		return Math.min(litWeight / taps, 1f);
+	}
+
+	/** Light-space position (see ViewProjection.project()) of the world point moved by step along the direction */
+	private static Vector4 posInLightSpace1(ViewProjection viewProjection, Vector4 worldPosition, Vector3 direction, float step) {
+		return viewProjection.project(new Vector4(worldPosition.getX() + direction.getX() * step, worldPosition.getY() + direction.getY() * step,
+				worldPosition.getZ() + direction.getZ() * step, 1f));
+	}
+
+	// ------------------------------------------------------------------
+	// Shadow filtering
+	// ------------------------------------------------------------------
+
+	/**
+	 * Sets how the shadow map of this light is filtered (see ShadowFilter): HARD (the default) gives
+	 * sharp shadow edges, PCF_3X3 a penumbra two or three texels wide, at the cost of sixteen texel reads per lookup instead of one bilinear one.
+	 * Taken into account from the next rendered frame, and valid for every kind of light, including
+	 * the six faces of a PointLight.
+	 *
+	 * @param filter the filter, not null
+	 * @throws IllegalArgumentException if filter is null
+	 */
+	public void setShadowFilter(ShadowFilter filter) {
+		if (filter == null) {
+			throw new IllegalArgumentException("Shadow filter must not be null");
+		}
+		this.shadowFilter = filter;
+	}
+
+	/**
+	 * @return the filter of this light's shadow map, ShadowFilter.HARD unless set otherwise
+	 */
+	public ShadowFilter getShadowFilter() {
+		return shadowFilter;
 	}
 
 	// ------------------------------------------------------------------

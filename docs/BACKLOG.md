@@ -54,7 +54,22 @@ be factored at the same time.
   `RenderingType`. Also, `ShadowingLight(int)` (box type) and `ShadowingLight(float)` (intensity) are
   easy to confuse.
 - Tuning constants are hard-coded: `SHADOW_BIAS_WORLD`, `DOT_NL_FLOOR`, `SHADOW_BIAS_TEXEL_FACTOR`.
-- Soft shadows (PCF).
+- **Done (October 2026): soft shadows**, `ShadowFilter.PCF_3X3` (per light, off by default). Follow-ups:
+  - A wider penumbra far from the object that casts the shadow (PCSS: search of the occluder, then a
+    filter size that depends on the distance), and bigger kernels (`PCF_5X5`: the filter is already
+    written for any radius, only the enum constant and a re-check of the bias are missing).
+  - A switch in `RenderContext` that sets the filter of every light at once, and the choice of making
+    `PCF_3X3` the default once the extra cost is measured (see the performance audit).
+  - The filtered lookup uses a receiver plane depth bias (the depth gradient of the surface is measured
+    per pixel, so the bias of the single test is enough). A wide constant bias detached the shadows of the
+    window sills and floor lines of UrbanScape. On the top of the sills, next to the glass, a faint grain
+    remains where the hard shadows already show a few specks (very thin gaps): a smaller or smarter
+    clamp of the plane correction, or a gradient computed from the geometry instead of two projections,
+    could be tried.
+- **Performance of the shadows** (cache of the shadow maps with a change flag, a `castShadows` switch per
+  light, reuse of the buffers, timing before and after on UrbanScape) is not handled here: it belongs to the
+  performance audit, see [PERFORMANCE_AUDIT.md](PERFORMANCE_AUDIT.md) (§R9, R10). A point light costs up to six
+  shadow passes per frame, and a soft shadow filter more texel reads per pixel.
 
 ## 4. Rasterization
 
