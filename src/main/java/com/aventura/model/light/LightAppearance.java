@@ -49,6 +49,8 @@ public class LightAppearance {
 	public static final float DEFAULT_SUN_DISC_ANGLE = 1.6f;
 	/** Angular radius of the glow of the sun (SUN mode), in degrees */
 	public static final float DEFAULT_SUN_GLOW_ANGLE = 9f;
+	/** Brightness factor of the lens flare of the sun (SUN mode): 1 = normal, 0 = no lens flare */
+	public static final float DEFAULT_FLARE_GAIN = 1f;
 
 	private LightGlowMode mode = null; // null = not set: the RenderContext, then the default of the type of light
 	private Color color = null; // null = the color of the light
@@ -57,6 +59,7 @@ public class LightAppearance {
 	private float gain = DEFAULT_GAIN;
 	private float sunDiscAngle = DEFAULT_SUN_DISC_ANGLE;
 	private float sunGlowAngle = DEFAULT_SUN_GLOW_ANGLE;
+	private float flareGain = DEFAULT_FLARE_GAIN;
 
 	public LightAppearance() {
 	}
@@ -140,6 +143,23 @@ public class LightAppearance {
 	public LightAppearance setSunGlowAngle(float degrees) {
 		if (!(degrees > 0 && degrees < 45)) throw new IllegalArgumentException("Sun glow angle must be in ]0, 45[ degrees: " + degrees);
 		this.sunGlowAngle = degrees;
+		return this;
+	}
+
+	public float getFlareGain() {
+		return flareGain;
+	}
+
+	/**
+	 * The lens flare is the series of ghosts (rings and discs) that a camera lens makes of a bright light in
+	 * the field of view, aligned on the axis between the light and the center of the image. It is drawn for the
+	 * sun (SUN mode) only, and fades when the sun gets near the edge of the image or is hidden.
+	 *
+	 * @param gain brightness factor of the lens flare, not negative: 1 by default, 0 for no lens flare at all
+	 */
+	public LightAppearance setFlareGain(float gain) {
+		if (!(gain >= 0)) throw new IllegalArgumentException("Flare gain must not be negative: " + gain);
+		this.flareGain = gain;
 		return this;
 	}
 }

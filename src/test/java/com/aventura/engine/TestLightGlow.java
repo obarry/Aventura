@@ -349,7 +349,7 @@ public class TestLightGlow {
 	@Test
 	public void testSun_colorGainAndModes() {
 		DirectionalLight warm = sunInFront();
-		warm.setAppearance(new LightAppearance().setColor(new Color(255, 160, 0)));
+		warm.setAppearance(new LightAppearance().setColor(new Color(255, 160, 0)).setFlareGain(0f)); // no flare: its colors would mix in
 		BufferedImage img = renderSun(new World(), warm, GLOW);
 		Color c = new Color(img.getRGB(80 + 20, 45));
 		assertTrue("Orange halo: " + c, c.getRed() > c.getGreen() && c.getGreen() > c.getBlue() && c.getBlue() == 0);
@@ -414,12 +414,85 @@ public class TestLightGlow {
 	public void testSun_discIsNeverDrawnOverAnObject() {
 		// A small sphere (about 5 pixels of radius) in front of the center, and no halo (gain 0) to see the disc alone
 		DirectionalLight sun = sunInFront();
-		sun.setAppearance(new LightAppearance().setGain(0f));
+		sun.setAppearance(new LightAppearance().setGain(0f).setFlareGain(0f));
 		BufferedImage img = renderSun(sphereAt(0, -3, 0, 0.1f), sun, GLOW);
 		BufferedImage sphere = renderSun(sphereAt(0, -3, 0, 0.1f), sunInFront(), NO_GLOW);
 		assertEquals("The pixels covered by the object keep the object's color", bright(sphere, 0, 0), bright(img, 0, 0));
 		assertTrue("The object is there", bright(sphere, 0, 0) < 3 * 255);
 		assertTrue("The part of the disc that is not hidden is drawn", bright(img, 4, 0) >= 3 * 250);
+	}
+
+	// ------------
+	// The lens flare of the sun
+	// ------------
+
+	/** A sun that shows at the given pixel (x to the right, y up) of the 160 x 90 image, 200 pixels of focal length */
+	private static DirectionalLight sunAt(float pixelX, float pixelY, float flareGain) {
+		Vector3 toSun = new Vector3(pixelX / 200f, 1f, pixelY / 200f).normalize();
+		DirectionalLight sun = new DirectionalLight(toSun.times(-1), 1f);
+		sun.setAppearance(new LightAppearance().setFlareGain(flareGain));
+		return sun;
+	}
+
+	private static int added(BufferedImage with, BufferedImage without, int dx, int dy) {
+		return bright(with, dx, dy) - bright(without, dx, dy);
+	}
+
+	@Test
+	public void testFlare_ghostsOnTheAxisThroughTheCenter() {
+		// Sun at (40, 0): ghosts at 0.45 x 40 = 18 (disc), at the center (ring of 17.6 pixels), at -18 (disc) and at -40 (ring of 12)
+		BufferedImage flare = renderSun(new World(), sunAt(40, 0, 1f), GLOW);
+		BufferedImage none = renderSun(new World(), sunAt(40, 0, 0f), GLOW);
+		assertTrue("Ring around the center", added(flare, none, 17, 0) > 100 && added(flare, none, -17, 0) > 100);
+		assertTrue("Ring opposite to the sun (radius 12 pixels, centered on -40)", added(flare, none, -28, 0) > 20);
+		assertEquals("Nothing off the axis", 0, added(flare, none, 0, 40));
+		assertEquals("Nothing off the axis", 0, added(flare, none, 0, -40));
+		assertEquals("The sun itself is the same", bright(none, 40, 0), bright(flare, 40, 0) - added(flare, none, 40, 0));
+	}
+
+	@Test
+	public void testFlare_ghostsMoveOppositeToTheSun() {
+		BufferedImage right = renderSun(new World(), sunAt(40, 0, 1f), GLOW);
+		BufferedImage rightNone = renderSun(new World(), sunAt(40, 0, 0f), GLOW);
+		BufferedImage left = renderSun(new World(), sunAt(-40, 0, 1f), GLOW);
+		BufferedImage leftNone = renderSun(new World(), sunAt(-40, 0, 0f), GLOW);
+		assertTrue(added(right, rightNone, -28, 0) > 20 && added(right, rightNone, 28, 0) == 0);
+		assertTrue(added(left, leftNone, 28, 0) > 20 && added(left, leftNone, -28, 0) == 0);
+		BufferedImage up = renderSun(new World(), sunAt(0, 30, 1f), GLOW);
+		BufferedImage upNone = renderSun(new World(), sunAt(0, 30, 0f), GLOW);
+		assertTrue("Sun above the center: a ghost below it", added(up, upNone, 12, -30) > 20);
+	}
+
+	@Test
+	public void testFlare_fadesTowardsTheEdgeAndDisappearsWhenHidden() {
+		int nearCenter = added(renderSun(new World(), sunAt(40, 0, 1f), GLOW), renderSun(new World(), sunAt(40, 0, 0f), GLOW), 17, 0);
+		BufferedImage edge = renderSun(new World(), sunAt(70, 0, 1f), GLOW);
+		int towardsEdge = added(edge, renderSun(new World(), sunAt(70, 0, 0f), GLOW), 17, 0);
+		System.out.println("Flare ring: sun at 40 px " + nearCenter + ", at 70 px " + towardsEdge);
+		assertTrue("Fainter when the sun is near the edge", towardsEdge < nearCenter && towardsEdge >= 0);
+
+		// A sphere hides the whole image: no sun, no flare
+		BufferedImage hidden = renderSun(sphereAt(0, 0, 0, 5f), sunAt(40, 0, 1f), GLOW);
+		BufferedImage off = renderSun(sphereAt(0, 0, 0, 5f), sunAt(40, 0, 1f), NO_GLOW);
+		assertEquals(0, differences(hidden, off));
+	}
+
+	@Test
+	public void testFlare_gain() {
+		BufferedImage none = renderSun(new World(), sunAt(40, 0, 0f), GLOW);
+		int normal = added(renderSun(new World(), sunAt(40, 0, 1f), GLOW), none, 17, 0);
+		int strong = added(renderSun(new World(), sunAt(40, 0, 2f), GLOW), none, 17, 0);
+		assertTrue("Stronger flare with a larger gain: " + normal + " -> " + strong, strong > normal);
+		assertEquals("Default is a normal flare", LightAppearance.DEFAULT_FLARE_GAIN, new LightAppearance().getFlareGain(), 0f);
+		try { new LightAppearance().setFlareGain(-1f); fail("expected IllegalArgumentException"); } catch (IllegalArgumentException expected) { }
+	}
+
+	@Test
+	public void testFlare_isForTheSunOnly() {
+		// A point light in the image has a halo, but no ghosts at the other side of the center
+		BufferedImage img = render(new PointLight(new Vector4(1.6f, 0, 0, 1), 30), GLOW); // At 40 pixels to the right
+		assertEquals(0, bright(img, -40, 0));
+		assertEquals(0, bright(img, -18, 0));
 	}
 
 	@Test

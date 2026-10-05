@@ -272,7 +272,13 @@ DirectionalLight sun = new DirectionalLight(new Vector3(0.3f, -1, -0.16f), 1f);
 sun.setAppearance(new LightAppearance().setColor(new Color(255, 235, 180))); // warm halo
 ```
 
-`TestLightingGlow` shows a lamp circling around the objects of the spot light scene, passing behind them, with the visible lights switched on and off in turn; `TestLightingSun` is a street where the camera turns to bring the sun behind the buildings (the lens flare and the light shafts, which come next, will show there too).
+The sun also makes a lens flare, the ghosts that a camera lens makes of a bright light in the field of view: four discs and rings of different colors on the line from the sun through the center of the image, so they move opposite to the sun when the camera turns. They are brighter when more of the sun is visible, fade when the sun gets near the edge of the image, and disappear when it is hidden. `setFlareGain()` adjusts them (1 by default, 0 for none).
+
+```java
+sun.setAppearance(new LightAppearance().setFlareGain(0.5f)); // fainter ghosts; 0 = no lens flare
+```
+
+`TestLightingGlow` shows a lamp circling around the objects of the spot light scene, passing behind them, with the visible lights switched on and off in turn; `TestLightingSun` is a street where the camera turns to bring the sun behind the buildings (with its lens flare; the light shafts, which come next, will show there too).
 
 ## How it works
 
@@ -403,7 +409,7 @@ Aventura/
 - Only Swing has a dedicated view so far (`SwingView`); other GUI toolkits can use `ImageView` with a frame listener, or extend `ImageView` or `GUIView`.
 - A `Lighting` system holds at most one ambient light, plus any number of directional, point and spot lights.
 - Soft shadows have a penumbra of a fixed width of a few texels (no wider penumbra far from the object that casts the shadow), they are off by default, and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
-- Lights are invisible by default. `RenderContext.setLightGlow(true)` draws a halo around point and spot lights (hidden by the objects in front of them); the sun (directional lights) is drawn as a disc and a halo in the sky; the lens flare and the light shafts are not drawn yet, and the halos are not drawn in `LINE` rendering nor under an orthographic perspective.
+- Lights are invisible by default. `RenderContext.setLightGlow(true)` draws a halo around point and spot lights (hidden by the objects in front of them); the sun (directional lights) is drawn as a disc and a halo in the sky, with a lens flare; the light shafts are not drawn yet, and the halos are not drawn in `LINE` rendering nor under an orthographic perspective.
 - Texture files are loaded from file paths (relative to the working directory or absolute), not from the classpath.
 
 ## License

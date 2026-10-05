@@ -541,9 +541,18 @@ through the sky only, hidden by anything in front of it, and fades progressively
 (`0.75·exp(−(d/R)²) + 0.18/(1 + (d/0.5R)²)`, brought to zero at 2.6 R) is added over the whole image, objects
 included, like a glow in the air, and the white disc is only drawn on the sky.
 
-Not done yet, planned one effect at a time (see [BACKLOG.md](BACKLOG.md)): the lens flare (ghosts on the axis
-between the light and the center of the screen), the light shafts (radial blur of the visible sky), and
-emissive geometry beyond the core.
+**The lens flare.** After the disc and the halo, the sun draws four ghosts (two discs, two rings, bluish,
+orange, green and violet) on the line from the sun through the center of the image: at `s·(1 − k)` for the
+sun at screen position `s` and `k` = 0.55, 1.0, 1.45 and 2.0 (so a ghost sits in the center for `k = 1`, and
+the last one is the mirror image of the sun), with radii of 5, 11, 4.5 and 7.5 % of the width of the image.
+They are an effect of the lens, so they are drawn whatever stands in front of them, but their strength is the
+visibility of the sun (hidden sun, no flare), times a fade that goes from 1 when the sun is in the center to 0
+at 90 % of the half diagonal, times `LightAppearance.getFlareGain()` (1 by default, 0 for none). Cost: four
+additive blits, about 3 ms on a 1000×562 image (the disc and the halo of the sun cost about 10 ms there, since
+the glow of 9° spreads over a large part of the image).
+
+Not done yet, planned one effect at a time (see [BACKLOG.md](BACKLOG.md)): the light shafts (radial blur of
+the visible sky), and emissive geometry beyond the core.
 
 ---
 
@@ -852,7 +861,7 @@ xychart-beta
 |---|---|
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
 | Shadows | All lights (orthographic, perspective and cube maps); hard edges by default, optional PCF 3×3 with a fixed-width penumbra |
-| Lights | Invisible by default; optional halo of point and spot lights and disc and halo of the sun (`setLightGlow`), hidden by the objects. No lens flare or light shafts yet |
+| Lights | Invisible by default; optional halo of point and spot lights, and disc, halo and lens flare of the sun (`setLightGlow`), hidden by the objects. No light shafts yet |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |

@@ -86,8 +86,11 @@ be factored at the same time.
     visibility is measured on the disc only (an edge that covers the disc makes the whole halo vanish, where a
     real sun would keep a glow around the building). The color of the halo is the one of the light or of its
     appearance: it does not turn orange near the horizon.
-  - **Lens flare**: ghosts (discs and rings) along the axis from the sun to the center of the screen, faded
-    with the visibility and with the distance of the sun to the center.
+  - **Done (October 2026): lens flare** of the sun: four ghosts (discs and rings) along the axis from the sun
+    through the center of the screen, faded with the visibility and with the distance of the sun to the
+    center, `LightAppearance.setFlareGain()`. Follow-ups: the ghosts have fixed colors, positions and sizes
+    (no per-light shapes, no dirt or starburst), and they are on by default for the sun; a flare for point
+    and spot lights, and for a sun just out of the image (it fades before the edge), could be added.
   - **Light shafts**: radial blur of the visible sky from the sun (screen space), added to the image; costs
     about 64 samples per pixel, so it will need a lower resolution mask or an option.
   - **Emissive geometry** beyond the core of the light (a lamp mesh that glows by itself).
