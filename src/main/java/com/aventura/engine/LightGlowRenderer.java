@@ -62,6 +62,9 @@ import com.aventura.view.GUIView;
  *   (LightAppearance.setSunDiscAngle(), setSunGlowAngle());
  * - NONE: nothing.
  *
+ * The sun also makes a lens flare (see drawLensFlare()): ghosts on the axis between the sun and the center of the
+ * screen, adjustable or removable with LightAppearance.setFlareGain().
+ *
  * The sizes of the lights with a position are given in world units (LightAppearance), so that the picture of
  * a light shrinks with the distance like any object. Only the frustum perspective is handled (lights are not drawn for an
  * orthographic perspective), and the lights behind the near plane are not drawn.
@@ -275,7 +278,68 @@ public class LightGlowRenderer {
 				}
 			}
 		}
+		if (appearance.getFlareGain() > 0f) {
+			drawLensFlare(sx, sy, visibility * appearance.getFlareGain());
+		}
 		return true;
+	}
+
+	// Ghosts of the lens flare: position along the axis (1 = center of the image, 0 = the sun itself, 2 = the opposite
+	// of the sun), radius as a share of the width of the image, color, ring or disc
+	private static final float[] FLARE_POSITION = { 0.55f, 1.0f, 1.45f, 2.0f };
+	private static final float[] FLARE_RADIUS = { 0.05f, 0.11f, 0.045f, 0.075f };
+	private static final float[][] FLARE_COLOR = { { 0.35f, 0.65f, 1f }, { 1f, 0.75f, 0.35f }, { 0.5f, 1f, 0.55f }, { 0.9f, 0.45f, 1f } };
+	private static final boolean[] FLARE_RING = { false, true, false, true };
+
+	// The ghosts fade as the sun gets away from the center: nothing is left past this share of the half diagonal
+	private static final float FLARE_FADE_DISTANCE = 1f / 0.9f;
+	private static final float FLARE_AMPLITUDE = 0.9f;
+
+	/**
+	 * The lens flare of the sun: a few ghosts (discs and rings of different colors) on the line from the sun
+	 * through the center of the image, at the same place whatever the objects in front (it is an effect of the
+	 * lens, not of the scene). They are drawn additively, brighter when more of the sun is visible, and fade
+	 * as the sun goes towards the edge of the image.
+	 *
+	 * @param sx x of the sun on the screen, in pixels (centered coordinates)
+	 * @param sy y of the sun on the screen
+	 * @param strength visibility of the sun times the flare gain
+	 */
+	private void drawLensFlare(float sx, float sy, float strength) {
+		int halfWidth = perspectiveCtx.getPixelHalfWidth();
+		int halfHeight = perspectiveCtx.getPixelHalfHeight();
+		float distance = (float) Math.sqrt(sx * sx + sy * sy);
+		float halfDiagonal = (float) Math.sqrt((double) halfWidth * halfWidth + (double) halfHeight * halfHeight);
+		float fade = Math.max(0f, 1f - Math.min(1f, distance / halfDiagonal / FLARE_FADE_DISTANCE));
+		float amplitude = strength * fade * FLARE_AMPLITUDE;
+		if (amplitude <= 0f) return;
+
+		for (int g = 0; g < FLARE_POSITION.length; g++) {
+			float gx = sx * (1f - FLARE_POSITION[g]);
+			float gy = sy * (1f - FLARE_POSITION[g]);
+			float radius = FLARE_RADIUS[g] * 2 * halfWidth;
+			int extent = (int) Math.ceil(radius * 1.6f);
+			int cx = Math.round(gx), cy = Math.round(gy);
+			int x0 = Math.max(cx - extent, -halfWidth), x1 = Math.min(cx + extent, halfWidth);
+			int y0 = Math.max(cy - extent, -halfHeight), y1 = Math.min(cy + extent, halfHeight);
+			float[] c = FLARE_COLOR[g];
+			for (int y = y0; y <= y1; y++) {
+				for (int x = x0; x <= x1; x++) {
+					if (!inScreen(x, y)) continue;
+					float dx = x - gx, dy = y - gy;
+					float d = (float) Math.sqrt(dx * dx + dy * dy);
+					float intensity;
+					if (FLARE_RING[g]) {
+						float t = (d - radius) / (0.18f * radius);
+						intensity = 0.7f * (float) Math.exp(-t * t);
+					} else {
+						intensity = 0.45f * smoothstep(radius, 0.5f * radius, d);
+					}
+					intensity *= amplitude;
+					if (intensity > 0.002f) view.addPixel(x, y, c[0] * intensity, c[1] * intensity, c[2] * intensity);
+				}
+			}
+		}
 	}
 
 	// Same bounds as the images centered on the origin (see ImageView.inImage())

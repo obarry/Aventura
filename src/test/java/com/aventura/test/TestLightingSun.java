@@ -37,7 +37,7 @@ import com.aventura.view.SwingView;
  *
  * STATE OF THE VISIBLE SUN: the effects of the sun are added one at a time (see the Lighting plan, phase 8):
  * - the disc and the halo of the sun (LightGlowMode.SUN) -- done;
- * - the lens flare (ghosts aligned on the axis sun - center of the screen) -- not implemented yet;
+ * - the lens flare (ghosts aligned on the axis sun - center of the screen) -- done;
  * - the light shafts (crepuscular rays through the gaps between the buildings) -- not implemented yet.
  * This demo will show each new effect as soon as it is available, without any change.
  *
@@ -48,11 +48,13 @@ import com.aventura.view.SwingView;
  *   turn, not with its position;
  * - the halo is added over the buildings too (a glow in the air in front of them), but the disc is never drawn
  *   over a building;
- * - the buildings, the ground and the sky are unchanged outside of the sun.
+ * - the ghosts of the lens flare (rings and discs of different colors) are aligned on the line from the sun through
+ *   the center of the screen, move opposite to the sun when the camera turns, fade when the sun gets near the edge
+ *   of the image and disappear when it is hidden behind a building;
+ * - the buildings, the ground and the sky are unchanged outside of the sun and of its effects.
  *
- * Once the lens flare and the light shafts are there, the ghosts of the lens flare should move opposite to the
- * sun, through the center of the screen, and fade when the sun goes out of the image or behind a building, and the
- * light shafts should start from the sun and be visible in the gaps between the buildings only.
+ * Once the light shafts are there, they should start from the sun and be visible in the gaps between the buildings
+ * only.
  *
  * Run with: mvn test-compile exec:java -Dexec.mainClass=com.aventura.test.TestLightingSun
  */

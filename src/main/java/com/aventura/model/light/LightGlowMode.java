@@ -38,7 +38,8 @@ package com.aventura.model.light;
  * <li>SUN: the disc and the halo of a light infinitely far away, for a DirectionalLight, at the place of the
  * sky where its direction points (seen only where the sky is visible, so hidden by the buildings and the
  * hills in front of it). The size is an angle (LightAppearance.setSunDiscAngle(), setSunGlowAngle()). The
- * default of DirectionalLight.</li>
+ * default of DirectionalLight. A lens flare (ghosts on the axis between the sun and the center of the screen) is
+ * drawn with it, see LightAppearance.setFlareGain().</li>
  * </ul>
  *
  * The mode in use for a light is the first one defined among: its own LightAppearance, the RenderContext
