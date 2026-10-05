@@ -150,7 +150,7 @@ public class DirectionalLight extends ShadowingLight {
 	
 	/**
 	 * A Directional Light stands for a far away source such as the Sun: its default appearance is SUN
-	 * (not drawn yet: the light stays invisible until that mode is implemented).
+	 * (disc and halo in the sky, see LightGlowRenderer).
 	 */
 	@Override
 	public LightGlowMode getDefaultGlowMode() {

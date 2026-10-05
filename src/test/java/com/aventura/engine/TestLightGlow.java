@@ -225,7 +225,7 @@ public class TestLightGlow {
 		assertEquals("Mode forced by the RenderContext", 0, differences(emissive, forced));
 
 		BufferedImage sun = render(withAppearance(lightAtOrigin(), new LightAppearance().setMode(LightGlowMode.SUN)), GLOW);
-		assertEquals("SUN is not drawn yet", 0, differences(background, sun));
+		assertEquals("SUN is for the lights at infinity: a Point light is not drawn with it", 0, differences(background, sun));
 	}
 
 	@Test
@@ -287,6 +287,139 @@ public class TestLightGlow {
 		BufferedImage ortho = render(new World(), lightAtOrigin(), GLOW, PerspectiveType.ORTHOGRAPHIC);
 		BufferedImage orthoOff = render(new World(), lightAtOrigin(), new RenderContext(RenderingType.INTERPOLATE), PerspectiveType.ORTHOGRAPHIC);
 		assertEquals(0, differences(ortho, orthoOff));
+	}
+
+	// ------------
+	// The sun (Directional light)
+	// ------------
+
+	/** A sun in the direction the camera looks at (the center of the image, at (0, -8, 0) looking along +y) unless told otherwise */
+	private static DirectionalLight sunInFront() {
+		return new DirectionalLight(new Vector3(0, -1, 0), 1f);
+	}
+
+	private static BufferedImage renderSun(World world, DirectionalLight sun, RenderContext rc, Vector4 eye, Vector4 poi) {
+		System.setProperty("java.awt.headless", "true");
+		PerspectiveContext p = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 200);
+		world.setBackgroundColor(BACKGROUND);
+		world.build();
+		Lighting lighting = new Lighting(sun, new AmbientLight(0.2f));
+		SwingView view = new SwingView(p);
+		RenderEngine engine = new RenderEngine(world, lighting, new Camera(eye, poi, Vector4.zAxis()), rc, p);
+		engine.setView(view);
+		engine.render();
+		return view.getImageView();
+	}
+
+	private static BufferedImage renderSun(World world, DirectionalLight sun, RenderContext rc) {
+		return renderSun(world, sun, rc, new Vector4(0, -8, 0, 1), new Vector4(0, 0, 0, 1));
+	}
+
+	private static final RenderContext NO_GLOW = new RenderContext(RenderingType.INTERPOLATE).freeze();
+
+	@Test
+	public void testSun_discAndHaloInTheSky() {
+		assertEquals(LightGlowMode.SUN, LightGlowRenderer.resolveMode(sunInFront(), GLOW));
+		BufferedImage off = renderSun(new World(), sunInFront(), NO_GLOW);
+		assertEquals("Invisible without the option", 0, bright(off, 0, 0));
+		BufferedImage img = renderSun(new World(), sunInFront(), GLOW);
+		int center = bright(img, 0, 0), disc = bright(img, 4, 0), near = bright(img, 15, 0), mid = bright(img, 40, 0), far = bright(img, 79, 0);
+		System.out.println("Sun profile: " + center + ", " + disc + ", " + near + ", " + mid + ", " + far);
+		assertEquals("White disc", 3 * 255, center);
+		assertTrue(disc >= 3 * 200);
+		assertTrue("Halo around the disc", center > near && near > mid && mid > 0);
+		assertEquals("Symmetric", bright(img, 15, 0), bright(img, -15, 0), 3);
+		assertEquals("Symmetric", bright(img, 0, 15), bright(img, 0, -15), 3);
+	}
+
+	@Test
+	public void testSun_sizeIsAnAngle() {
+		LightAppearance wide = new LightAppearance().setSunDiscAngle(4f).setSunGlowAngle(15f);
+		DirectionalLight sun = sunInFront();
+		sun.setAppearance(wide);
+		BufferedImage big = renderSun(new World(), sun, GLOW);
+		BufferedImage normal = renderSun(new World(), sunInFront(), GLOW);
+		assertTrue("Larger disc (4 degrees = 14 pixels) covers pixel 10", bright(big, 10, 0) >= 3 * 250);
+		assertTrue(bright(normal, 10, 0) < 3 * 250);
+		assertTrue("Larger glow reaches further", bright(big, 60, 0) > bright(normal, 60, 0) + 20);
+		try { wide.setSunDiscAngle(0f); fail("expected IllegalArgumentException"); } catch (IllegalArgumentException expected) { }
+		try { wide.setSunGlowAngle(60f); fail("expected IllegalArgumentException"); } catch (IllegalArgumentException expected) { }
+	}
+
+	@Test
+	public void testSun_colorGainAndModes() {
+		DirectionalLight warm = sunInFront();
+		warm.setAppearance(new LightAppearance().setColor(new Color(255, 160, 0)));
+		BufferedImage img = renderSun(new World(), warm, GLOW);
+		Color c = new Color(img.getRGB(80 + 20, 45));
+		assertTrue("Orange halo: " + c, c.getRed() > c.getGreen() && c.getGreen() > c.getBlue() && c.getBlue() == 0);
+
+		DirectionalLight dim = sunInFront();
+		dim.setAppearance(new LightAppearance().setGain(0.4f));
+		assertTrue(bright(renderSun(new World(), dim, GLOW), 20, 0) < bright(renderSun(new World(), sunInFront(), GLOW), 20, 0));
+
+		BufferedImage none = renderSun(new World(), sunInFront(), new RenderContext(GLOW).setLightGlowMode(LightGlowMode.NONE));
+		assertEquals("Mode forced to NONE", 0, differences(none, renderSun(new World(), sunInFront(), NO_GLOW)));
+		DirectionalLight off = sunInFront();
+		off.setAppearance(new LightAppearance().setMode(LightGlowMode.NONE));
+		assertEquals("NONE on the light", 0, differences(renderSun(new World(), off, GLOW), renderSun(new World(), sunInFront(), NO_GLOW)));
+		BufferedImage halo = renderSun(new World(), sunInFront(), new RenderContext(GLOW).setLightGlowMode(LightGlowMode.HALO));
+		assertEquals("A direction has no position: HALO does not apply", 0, differences(halo, renderSun(new World(), sunInFront(), NO_GLOW)));
+	}
+
+	@Test
+	public void testSun_hiddenBehindAnObject() {
+		// A sphere filling the whole image in front of the sun: nothing of the sun can be seen
+		BufferedImage hidden = renderSun(sphereAt(0, 0, 0, 5f), sunInFront(), GLOW);
+		BufferedImage off = renderSun(sphereAt(0, 0, 0, 5f), sunInFront(), NO_GLOW);
+		assertEquals(0, differences(hidden, off));
+	}
+
+	@Test
+	public void testSun_behindTheCamera_isNotDrawn() {
+		DirectionalLight behind = new DirectionalLight(new Vector3(0, 1, 0), 1f); // The sun is in the back of the camera
+		assertEquals(0, differences(renderSun(new World(), behind, GLOW), renderSun(new World(), behind, NO_GLOW)));
+	}
+
+	@Test
+	public void testSun_isAtInfinity_cameraMovesDoNotMoveIt() {
+		BufferedImage a = renderSun(new World(), sunInFront(), GLOW);
+		BufferedImage b = renderSun(new World(), sunInFront(), GLOW, new Vector4(30, -8, 5, 1), new Vector4(30, 0, 5, 1));
+		assertEquals("Same place on the screen after a translation of the camera", 0, differences(a, b));
+		// Turning the camera moves it: 10 degrees to the right puts the sun 35 pixels to the left
+		float yaw = (float) Math.toRadians(10);
+		BufferedImage turned = renderSun(new World(), sunInFront(), GLOW, new Vector4(0, -8, 0, 1),
+				new Vector4(8 * (float) Math.sin(yaw), -8 + 8 * (float) Math.cos(yaw), 0, 1));
+		assertEquals("Disc moved to the left", 3 * 255, bright(turned, -35, 0));
+		assertTrue(bright(turned, 0, 0) < 3 * 255);
+	}
+
+	@Test
+	public void testSun_partiallyHidden_fadesProgressively() {
+		BufferedImage clear = renderSun(new World(), sunInFront(), GLOW);
+		float[] edges = { 1.0f, 1.5f, 2.5f }; // Sphere (60 pixels of radius) whose edge moves away from the sun
+		int[] values = new int[3];
+		for (int i = 0; i < edges.length; i++) {
+			BufferedImage img = renderSun(sphereAt(edges[i], -3, 0, 1.5f), sunInFront(), GLOW);
+			BufferedImage sphere = renderSun(sphereAt(edges[i], -3, 0, 1.5f), sunInFront(), NO_GLOW);
+			values[i] = bright(img, -20, 0) - bright(sphere, -20, 0);
+		}
+		System.out.println("Sun visibility ramp: clear " + bright(clear, -20, 0) + " -> " + values[0] + ", " + values[1] + ", " + values[2]);
+		assertEquals("Fully hidden: no glow", 0, values[0]);
+		assertTrue("Partly hidden: dimmer than clear but visible", values[1] > 0 && values[1] < bright(clear, -20, 0));
+		assertEquals("Free sun: full glow", bright(clear, -20, 0), values[2], 1);
+	}
+
+	@Test
+	public void testSun_discIsNeverDrawnOverAnObject() {
+		// A small sphere (about 5 pixels of radius) in front of the center, and no halo (gain 0) to see the disc alone
+		DirectionalLight sun = sunInFront();
+		sun.setAppearance(new LightAppearance().setGain(0f));
+		BufferedImage img = renderSun(sphereAt(0, -3, 0, 0.1f), sun, GLOW);
+		BufferedImage sphere = renderSun(sphereAt(0, -3, 0, 0.1f), sunInFront(), NO_GLOW);
+		assertEquals("The pixels covered by the object keep the object's color", bright(sphere, 0, 0), bright(img, 0, 0));
+		assertTrue("The object is there", bright(sphere, 0, 0) < 3 * 255);
+		assertTrue("The part of the disc that is not hidden is drawn", bright(img, 4, 0) >= 3 * 250);
 	}
 
 	@Test

@@ -35,8 +35,10 @@ package com.aventura.model.light;
  * apply to a DirectionalLight.</li>
  * <li>HALO: the core and a soft glow around it, fading when an object passes in front of the light. The
  * default of PointLight and SpotLight.</li>
- * <li>SUN: the disc and the halo of a light infinitely far away, for a DirectionalLight. Not implemented
- * yet: the light stays invisible.</li>
+ * <li>SUN: the disc and the halo of a light infinitely far away, for a DirectionalLight, at the place of the
+ * sky where its direction points (seen only where the sky is visible, so hidden by the buildings and the
+ * hills in front of it). The size is an angle (LightAppearance.setSunDiscAngle(), setSunGlowAngle()). The
+ * default of DirectionalLight.</li>
  * </ul>
  *
  * The mode in use for a light is the first one defined among: its own LightAppearance, the RenderContext

@@ -509,7 +509,7 @@ flowchart LR
 ```
 
 - **Which mode.** `LightGlowMode` is `NONE`, `EMISSIVE` (core only), `HALO` (core and halo) or `SUN`
-  (directional lights; not drawn yet). The first defined of: the mode of the light's `LightAppearance`, the
+  (directional lights, at infinity). The first defined of: the mode of the light's `LightAppearance`, the
   one forced by the `RenderContext`, then `Light.getDefaultGlowMode()` (`HALO` for point and spot lights,
   `SUN` for directional ones, `NONE` for the ambient light). `LightGlowRenderer.resolveMode()` applies
   that order.
@@ -530,10 +530,20 @@ flowchart LR
 - **Cost.** One projection and 32 depth reads per light, plus one write per pixel of the halo: about 5–10 ms
   for a big halo on a 1000×560 image, up to ~18 ms when it fills the screen.
 
-Not done yet, planned one effect at a time (see [BACKLOG.md](BACKLOG.md)): the sun (`SUN`: the disc and the
-halo of a directional light at infinity, `w = 0` projection of the opposite of its direction), the lens flare
-(ghosts on the axis between the light and the center of the screen), the light shafts (radial blur of the
-visible sky), and emissive geometry beyond the core.
+**The sun (`SUN`).** A `DirectionalLight` has no position, only a direction: the unit vector towards the light
+`l` is projected as the homogeneous vector `(l, 0)` by the View·Projection of the camera, which applies the
+rotation of the camera and the projection but not its translation. The sun therefore turns with the camera
+and does not move when the camera moves. Behind the camera (`w ≤ 0`) it is not drawn. Its size is an angle
+(`LightAppearance.setSunDiscAngle()` 1.6° and `setSunGlowAngle()` 9° by default), converted in pixels with
+the focal length (`tan(angle) · f`). The visibility is the share of 48 samples, spread on a disc 2.2 times
+larger than the sun, where nothing was drawn (the Z-buffer still holds the far distance): the sun is seen
+through the sky only, hidden by anything in front of it, and fades progressively behind an edge. The halo
+(`0.75·exp(−(d/R)²) + 0.18/(1 + (d/0.5R)²)`, brought to zero at 2.6 R) is added over the whole image, objects
+included, like a glow in the air, and the white disc is only drawn on the sky.
+
+Not done yet, planned one effect at a time (see [BACKLOG.md](BACKLOG.md)): the lens flare (ghosts on the axis
+between the light and the center of the screen), the light shafts (radial blur of the visible sky), and
+emissive geometry beyond the core.
 
 ---
 
@@ -842,7 +852,7 @@ xychart-beta
 |---|---|
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
 | Shadows | All lights (orthographic, perspective and cube maps); hard edges by default, optional PCF 3×3 with a fixed-width penumbra |
-| Lights | Invisible by default; optional halo of point and spot lights (`setLightGlow`), hidden by the objects. No sun, lens flare or light shafts yet |
+| Lights | Invisible by default; optional halo of point and spot lights and disc and halo of the sun (`setLightGlow`), hidden by the objects. No lens flare or light shafts yet |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |
