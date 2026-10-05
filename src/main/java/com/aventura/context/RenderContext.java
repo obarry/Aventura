@@ -112,6 +112,7 @@ public class RenderContext {
 	// Visible lights (glow / halos)
 	private boolean lightGlow = false;
 	private LightGlowMode lightGlowMode = null; // null = not forced: each Light's own appearance, or its default
+	private Boolean lightShafts = null; // null = not forced: the shafts gain of each Light's appearance
 	
 	// Colors of the debug displays
 	private Color landmarkXColor = Color.RED;
@@ -167,6 +168,7 @@ public class RenderContext {
 		this.shadowing = r.shadowing;
 		this.lightGlow = r.lightGlow;
 		this.lightGlowMode = r.lightGlowMode;
+		this.lightShafts = r.lightShafts;
 		this.landmarkXColor = r.landmarkXColor;
 		this.landmarkYColor = r.landmarkYColor;
 		this.landmarkZColor = r.landmarkZColor;
@@ -327,6 +329,26 @@ public class RenderContext {
 	public LightGlowMode getLightGlowMode() {
 		return lightGlowMode;
 	}
+
+	/**
+	 * Forces the light shafts of the sun (see LightAppearance.setShaftsGain()) on or off for all the lights, whatever
+	 * their own appearance says. When forced on, a light that has no shafts gain of its own uses a gain of 1. They are only
+	 * drawn if the light glow is enabled (setLightGlow()).
+	 * 
+	 * @param lightShafts true to force the light shafts, false to remove them, null to cancel (each Light's own gain applies)
+	 */
+	public RenderContext setLightShafts(Boolean lightShafts) {
+		checkNotFrozen();
+		this.lightShafts = lightShafts;
+		return this;
+	}
+
+	/**
+	 * @return true if the light shafts are forced on, false if they are forced off, null if each Light's own appearance decides
+	 */
+	public Boolean getLightShafts() {
+		return lightShafts;
+	}
 	
 	public Color getLandmarkXColor() {
 		return landmarkXColor;
@@ -402,6 +424,7 @@ public class RenderContext {
 				+ "* Texture processing:    " + onOff(textureProcessing) + "\n"
 				+ "* Shadowing:             " + onOff(shadowing) + "\n"
 				+ "* Light glow:            " + onOff(lightGlow) + (lightGlowMode == null ? "" : " (forced mode: " + lightGlowMode + ")") + "\n"
+				+ "* Light shafts:          " + (lightShafts == null ? "per light" : onOff(lightShafts)) + "\n"
 				+ "* Monochrome color:      " + (monochromeColor == null ? "World background" : monochromeColor) + "\n";
 	}
 

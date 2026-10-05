@@ -27,6 +27,7 @@ import com.aventura.model.light.SpotLight;
 import com.aventura.test.TestLightingPoint1Shadows;
 import com.aventura.test.TestLightingSpot1;
 import com.aventura.test.TestLightingSpot3Shadows;
+import com.aventura.test.TestLightingSun;
 
 /**
  * ------------------------------------------------------------------------------
@@ -66,6 +67,7 @@ import com.aventura.test.TestLightingSpot3Shadows;
  *     spot_shadows.jpg        TestLightingSpot3Shadows, one image of its animation (shadows of a SpotLight)
  *     soft_shadows.png        TestLightingSpot3Shadows, hard (left) and PCF 3x3 (right) shadows with a small shadow map
  *     point_shadows.jpg       TestLightingPoint1Shadows, one image of its animation (cube-map shadows of a PointLight)
+ *     sun_street.jpg          TestLightingSun, the visible sun (disc, halo, lens flare, light shafts) in a street between tower blocks
  *     cookbook_gallery.png    CookbookGallery (the examples of the Geometry Cookbook)
  *
  * Run it from the project root (the textures are read from resources/texture), headless:
@@ -99,6 +101,8 @@ public class DocumentationImages {
 	/** Images of the TestLightingSpot3Shadows and TestLightingPoint1Shadows animations (0 .. NB_IMAGES) */
 	static final int SPOT_SHADOWS_IMAGE = 20;
 	static final int POINT_SHADOWS_IMAGE = 45;
+	/** Angle of the camera of the TestLightingSun sweep (degrees, from -30 to +5): the sun is partly hidden by a building, with its flare and shafts */
+	static final float SUN_STREET_YAW = -12.5f;
 	/** Size of the shadow map of the spot light in the soft shadows image: coarse on purpose, to make the filtering visible */
 	static final int SOFT_SHADOWS_MAP_SIZE = 200;
 
@@ -118,6 +122,7 @@ public class DocumentationImages {
 		scenes.put("spotlights.jpg", () -> spotLights(1000));
 		scenes.put("spot_shadows.jpg", () -> spotShadows(SPOT_SHADOWS_IMAGE, 1000));
 		scenes.put("point_shadows.jpg", () -> pointShadows(POINT_SHADOWS_IMAGE, 1000));
+		scenes.put("sun_street.jpg", () -> sunStreet(SUN_STREET_YAW, 1250));
 		scenes.put("cookbook_gallery.png", () -> CookbookGallery.createScene(1000));
 		return scenes;
 	}
@@ -212,6 +217,17 @@ public class DocumentationImages {
 		RenderContext rContext = new RenderContext(TestLightingSpot1.createRenderContext());
 		rContext.setDisplayLandmark(false);
 		return new DemoScene(TestLightingSpot1.createWorld(), TestLightingSpot1.createLighting(), TestLightingSpot1.EYE, TestLightingSpot1.POI,
+				rContext, perspective);
+	}
+
+	/**
+	 * The scene of TestLightingSun: a street between tower blocks with a low sun (disc, halo, lens flare and light shafts), seen from a
+	 * camera turned by the given angle (degrees) around the vertical axis.
+	 */
+	static DemoScene sunStreet(float yawDegrees, int pixelsPerUnit) {
+		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, pixelsPerUnit);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE).setLightGlow(true);
+		return new DemoScene(TestLightingSun.createWorld(), TestLightingSun.createLighting(), TestLightingSun.EYE, TestLightingSun.poiForYaw(yawDegrees),
 				rContext, perspective);
 	}
 

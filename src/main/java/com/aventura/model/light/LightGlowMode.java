@@ -39,7 +39,7 @@ package com.aventura.model.light;
  * sky where its direction points (seen only where the sky is visible, so hidden by the buildings and the
  * hills in front of it). The size is an angle (LightAppearance.setSunDiscAngle(), setSunGlowAngle()). The
  * default of DirectionalLight. A lens flare (ghosts on the axis between the sun and the center of the screen) is
- * drawn with it, see LightAppearance.setFlareGain().</li>
+ * drawn with it, see LightAppearance.setFlareGain(), and optionally light shafts, see LightAppearance.setShaftsGain().</li>
  * </ul>
  *
  * The mode in use for a light is the first one defined among: its own LightAppearance, the RenderContext

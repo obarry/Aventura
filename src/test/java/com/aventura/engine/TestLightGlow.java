@@ -495,6 +495,101 @@ public class TestLightGlow {
 		assertEquals(0, bright(img, -18, 0));
 	}
 
+	// ------------
+	// The light shafts of the sun
+	// ------------
+
+	/** A sun at the given pixel, with no lens flare (to measure the shafts alone) and the given gain of the shafts */
+	private static DirectionalLight sunWithShafts(float pixelX, float pixelY, float shaftsGain) {
+		DirectionalLight sun = sunAt(pixelX, pixelY, 0f);
+		sun.setAppearance(new LightAppearance().setFlareGain(0f).setShaftsGain(shaftsGain));
+		return sun;
+	}
+
+	@Test
+	public void testShafts_offByDefault() {
+		assertEquals(0f, new LightAppearance().getShaftsGain(), 0f);
+		BufferedImage defaultSun = renderSun(new World(), sunAt(0, 0, 0f), GLOW);
+		BufferedImage explicit = renderSun(new World(), sunWithShafts(0, 0, 0f), GLOW);
+		assertEquals(0, differences(defaultSun, explicit));
+		try { new LightAppearance().setShaftsGain(-1f); fail("expected IllegalArgumentException"); } catch (IllegalArgumentException expected) { }
+	}
+
+	@Test
+	public void testShafts_onlyAddLightAroundTheSun() {
+		// No halo (gain 0) so that it does not saturate the pixels near the sun and hide the shafts
+		DirectionalLight noShafts = sunWithShafts(0, 0, 0f), withShafts = sunWithShafts(0, 0, 1f);
+		noShafts.setAppearance(new LightAppearance().setGain(0f).setFlareGain(0f));
+		withShafts.setAppearance(new LightAppearance().setGain(0f).setFlareGain(0f).setShaftsGain(1f));
+		BufferedImage none = renderSun(new World(), noShafts, GLOW);
+		BufferedImage shafts = renderSun(new World(), withShafts, GLOW);
+		int brighter = 0;
+		for (int y = 0; y < none.getHeight(); y++) {
+			for (int x = 0; x < none.getWidth(); x++) {
+				Color a = new Color(none.getRGB(x, y)), b = new Color(shafts.getRGB(x, y));
+				assertTrue("Light is only added", b.getRed() >= a.getRed() && b.getGreen() >= a.getGreen() && b.getBlue() >= a.getBlue());
+				if (b.getRGB() != a.getRGB()) brighter++;
+			}
+		}
+		System.out.println("Shafts: " + brighter + " pixels changed of " + none.getWidth() * none.getHeight());
+		assertTrue("The sky around the sun is lit", added(shafts, none, 50, 0) > 0 && added(shafts, none, 0, 30) > 0);
+		assertTrue("Brighter near the sun than far from it", added(shafts, none, 20, 0) > added(shafts, none, 70, 0));
+	}
+
+	@Test
+	public void testShafts_gain() {
+		BufferedImage none = renderSun(new World(), sunWithShafts(0, 0, 0f), GLOW);
+		int normal = added(renderSun(new World(), sunWithShafts(0, 0, 1f), GLOW), none, 40, 0);
+		int strong = added(renderSun(new World(), sunWithShafts(0, 0, 2f), GLOW), none, 40, 0);
+		assertTrue("Stronger shafts with a larger gain: " + normal + " -> " + strong, strong > normal && normal > 0);
+	}
+
+	@Test
+	public void testShafts_objectsCastDarkRays() {
+		// A sphere (about 16 pixels of radius) at 20 pixels to the right of the sun: the rays behind it are cut
+		BufferedImage none = renderSun(sphereAt(0.5f, -3, 0, 0.4f), sunWithShafts(0, 0, 0f), GLOW);
+		BufferedImage shafts = renderSun(sphereAt(0.5f, -3, 0, 0.4f), sunWithShafts(0, 0, 1f), GLOW);
+		int behind = added(shafts, none, 55, 0); // On the line from the sun through the sphere
+		int free = added(shafts, none, -55, 0); // Same distance on the other side
+		System.out.println("Shafts behind the sphere " + behind + ", free side " + free);
+		assertTrue("Free side is lit", free > 0);
+		assertTrue("The rays are dimmer behind the object", behind < free * 0.8);
+	}
+
+	@Test
+	public void testShafts_forcedByTheRenderContext() {
+		RenderContext forcedOn = new RenderContext(GLOW).setLightShafts(true);
+		RenderContext forcedOff = new RenderContext(GLOW).setLightShafts(false);
+		assertNull(GLOW.getLightShafts());
+		assertEquals(Boolean.TRUE, forcedOn.getLightShafts());
+		// Gain of the appearance, unless forced
+		LightAppearance none = new LightAppearance(), two = new LightAppearance().setShaftsGain(2f);
+		assertEquals(0f, LightGlowRenderer.resolveShaftsGain(none, GLOW), 0f);
+		assertEquals(2f, LightGlowRenderer.resolveShaftsGain(two, GLOW), 0f);
+		assertEquals("Forced on: gain 1 if the light has none", 1f, LightGlowRenderer.resolveShaftsGain(none, forcedOn), 0f);
+		assertEquals("Forced on: the gain of the light if it has one", 2f, LightGlowRenderer.resolveShaftsGain(two, forcedOn), 0f);
+		assertEquals(0f, LightGlowRenderer.resolveShaftsGain(two, forcedOff), 0f);
+
+		// Same pictures as with the gain set in the light itself
+		BufferedImage withoutOption = renderSun(new World(), sunWithShafts(0, 0, 0f), GLOW);
+		BufferedImage forced = renderSun(new World(), sunWithShafts(0, 0, 0f), forcedOn);
+		BufferedImage asked = renderSun(new World(), sunWithShafts(0, 0, 1f), GLOW);
+		assertTrue("Shafts appear when forced", differences(withoutOption, forced) > 0);
+		assertEquals("Forced on = a gain of 1", 0, differences(forced, asked));
+		BufferedImage removed = renderSun(new World(), sunWithShafts(0, 0, 1f), forcedOff);
+		assertEquals("Forced off = no shafts", 0, differences(withoutOption, removed));
+	}
+
+	@Test
+	public void testShafts_hiddenSunHasNone() {
+		BufferedImage hidden = renderSun(sphereAt(0, 0, 0, 5f), sunWithShafts(0, 0, 1f), GLOW);
+		BufferedImage off = renderSun(sphereAt(0, 0, 0, 5f), sunWithShafts(0, 0, 1f), NO_GLOW);
+		assertEquals(0, differences(hidden, off));
+		DirectionalLight behind = new DirectionalLight(new Vector3(0, 1, 0), 1f); // behind the camera
+		behind.setAppearance(new LightAppearance().setShaftsGain(1f));
+		assertEquals(0, differences(renderSun(new World(), behind, GLOW), renderSun(new World(), behind, NO_GLOW)));
+	}
+
 	@Test
 	public void testSpot_dimsOutsideOfItsCone() {
 		Vector4 pos = new Vector4(0, 0, 0, 1);

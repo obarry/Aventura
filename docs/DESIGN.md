@@ -551,8 +551,19 @@ at 90 % of the half diagonal, times `LightAppearance.getFlareGain()` (1 by defau
 additive blits, about 3 ms on a 1000×562 image (the disc and the halo of the sun cost about 10 ms there, since
 the glow of 9° spreads over a large part of the image).
 
-Not done yet, planned one effect at a time (see [BACKLOG.md](BACKLOG.md)): the light shafts (radial blur of
-the visible sky), and emissive geometry beyond the core.
+**The light shafts.** Off by default (`LightAppearance.setShaftsGain()`, 0; `RenderContext.setLightShafts()` forces them on or off
+for every sun, which the SceneViewer uses), because they cost about 15 ms on a 1000×562 image. They are a radial blur of the visible sky towards the sun (the technique of GPU Gems 3,
+chapter 13): a **mask** holds 1 where the Z-buffer still has the far distance (the sky), brighter near the sun
+(a Gaussian of radius 55 % of the width of the image), 0 on the objects; each point of the image then
+gathers the mask along the line to the sun, 64 steps over 95 % of the way, each one weaker than the previous
+one (decay 0.97), with a jitter of the start to hide the steps. A point seen through a gap between buildings
+gathers sky and is lit, a point behind a building gathers the building, so the beams spread behind the gaps
+and the buildings cast dark rays. To keep the cost down, the mask and the blur are computed on a grid with a
+point every 4 pixels (16 times fewer points, 4 pixels of the Z-buffer averaged for each), and the result is
+spread over the image by bilinear interpolation and added, tinted by the color of the sun and scaled by its
+visibility. Like the halo, the beams are added over the objects too.
+
+Not done yet (see [BACKLOG.md](BACKLOG.md)): emissive geometry beyond the core of the light.
 
 ---
 
@@ -861,7 +872,7 @@ xychart-beta
 |---|---|
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
 | Shadows | All lights (orthographic, perspective and cube maps); hard edges by default, optional PCF 3×3 with a fixed-width penumbra |
-| Lights | Invisible by default; optional halo of point and spot lights, and disc, halo and lens flare of the sun (`setLightGlow`), hidden by the objects. No light shafts yet |
+| Lights | Invisible by default; optional halo of point and spot lights, and disc, halo, lens flare and optional light shafts of the sun (`setLightGlow`), hidden by the objects |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |

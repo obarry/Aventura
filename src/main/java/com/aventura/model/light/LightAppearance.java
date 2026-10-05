@@ -51,6 +51,8 @@ public class LightAppearance {
 	public static final float DEFAULT_SUN_GLOW_ANGLE = 9f;
 	/** Brightness factor of the lens flare of the sun (SUN mode): 1 = normal, 0 = no lens flare */
 	public static final float DEFAULT_FLARE_GAIN = 1f;
+	/** Brightness factor of the light shafts of the sun (SUN mode): 0 = no light shafts, the default (they cost more than the other effects) */
+	public static final float DEFAULT_SHAFTS_GAIN = 0f;
 
 	private LightGlowMode mode = null; // null = not set: the RenderContext, then the default of the type of light
 	private Color color = null; // null = the color of the light
@@ -60,6 +62,7 @@ public class LightAppearance {
 	private float sunDiscAngle = DEFAULT_SUN_DISC_ANGLE;
 	private float sunGlowAngle = DEFAULT_SUN_GLOW_ANGLE;
 	private float flareGain = DEFAULT_FLARE_GAIN;
+	private float shaftsGain = DEFAULT_SHAFTS_GAIN;
 
 	public LightAppearance() {
 	}
@@ -160,6 +163,24 @@ public class LightAppearance {
 	public LightAppearance setFlareGain(float gain) {
 		if (!(gain >= 0)) throw new IllegalArgumentException("Flare gain must not be negative: " + gain);
 		this.flareGain = gain;
+		return this;
+	}
+
+	public float getShaftsGain() {
+		return shaftsGain;
+	}
+
+	/**
+	 * The light shafts (crepuscular rays) are the beams that seem to spread from the sun through the gaps between
+	 * the buildings or the clouds. They are drawn for the sun (SUN mode) only, from the part of the sky that is
+	 * visible around it, and cost more than the other effects: they are off by default.
+	 *
+	 * @param gain brightness factor of the light shafts, not negative: 0 by default (no light shafts), 1 for
+	 *        normal rays
+	 */
+	public LightAppearance setShaftsGain(float gain) {
+		if (!(gain >= 0)) throw new IllegalArgumentException("Shafts gain must not be negative: " + gain);
+		this.shaftsGain = gain;
 		return this;
 	}
 }
