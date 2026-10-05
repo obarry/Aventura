@@ -29,8 +29,10 @@ import java.awt.Color;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Light;
 import com.aventura.model.light.LightAppearance;
 import com.aventura.model.light.LightGlowMode;
@@ -54,10 +56,14 @@ import com.aventura.view.GUIView;
  * What is drawn depends on the LightGlowMode of each light (see resolveMode()):
  * - HALO (default for Point and Spot lights): a bright core and a soft glow around it;
  * - EMISSIVE: the bright core only;
- * - NONE and SUN: nothing (SUN, for Directional lights, is not implemented yet).
+ * - SUN (default for Directional lights): the disc and the halo of a light infinitely far away, at the point of the
+ *   sky where its direction points. It is seen only where the sky is visible (nothing stored in the ZBuffer),
+ *   so the buildings and the hills in front of it hide it, progressively on an edge, and its size is an angle
+ *   (LightAppearance.setSunDiscAngle(), setSunGlowAngle());
+ * - NONE: nothing.
  *
- * The sizes are given in world units (LightAppearance), so that the picture of a light shrinks with the
- * distance like any object. Only the frustum perspective is handled (lights are not drawn for an
+ * The sizes of the lights with a position are given in world units (LightAppearance), so that the picture of
+ * a light shrinks with the distance like any object. Only the frustum perspective is handled (lights are not drawn for an
  * orthographic perspective), and the lights behind the near plane are not drawn.
  *
  * @author Olivier BARRY
@@ -77,6 +83,12 @@ public class LightGlowRenderer {
 	// Golden angle, in radians: spreads the samples regularly over the disc
 	private static final double GOLDEN_ANGLE = 2.399963229728653;
 
+	/** Number of samples of the visibility measure of the sun */
+	public static final int SUN_VISIBILITY_SAMPLES = 48;
+
+	// The glow of the sun is drawn up to this number of glow radii
+	private static final float SUN_GLOW_EXTENT = 2.6f;
+
 	// The glow is drawn up to this number of glow radii (its long tail is brought smoothly to zero there)
 	private static final float GLOW_EXTENT = 3.5f;
 
@@ -89,6 +101,12 @@ public class LightGlowRenderer {
 		this.viewProjection = viewProjection;
 		this.view = view;
 	}
+
+	// The sun is seen where the ZBuffer still holds the far distance (nothing was drawn there), within this tolerance
+	private static final float SKY_DEPTH_TOLERANCE = 1e-3f;
+
+	// A direction at less than this w (distance in front of the eye plane of a unit vector) is not in front of the camera
+	private static final float SUN_MIN_W = 1e-4f;
 
 	/**
 	 * The mode that applies to a light: its own appearance if it defines a mode, else the one forced by the
@@ -115,6 +133,10 @@ public class LightGlowRenderer {
 			LightGlowMode mode = resolveMode(light, renderContext);
 			if (mode != LightGlowMode.HALO && mode != LightGlowMode.EMISSIVE) continue;
 			if (drawPointLight(light, mode, camera, zBuffer)) drawn++;
+		}
+		for (DirectionalLight light : lighting.getDirectionalLights()) {
+			if (resolveMode(light, renderContext) != LightGlowMode.SUN) continue;
+			if (drawSun(light, zBuffer)) drawn++;
 		}
 		return drawn;
 	}
@@ -181,6 +203,75 @@ public class LightGlowRenderer {
 					float c = smoothstep(coreRadius * 1.4f, coreRadius * 0.6f, d);
 					// The core is whitish, tinted by the color of the light
 					view.addPixel(x, y, c * (0.35f + 0.65f * cr), c * (0.35f + 0.65f * cg), c * (0.35f + 0.65f * cb));
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Disc and halo of a Directional light, at the point of the screen where its direction (towards the light)
+	 * projects: a point at infinity, so the homogeneous vector (x, y, z, 0), which the View*Projection maps like
+	 * any point but without the translation of the camera: the sun does not move when the camera moves, only when
+	 * it turns. The sizes are angles, converted in pixels with the focal length, and the visibility is the share of
+	 * the disc (a little larger than the sun) where nothing was drawn (depth = far), so the sun is hidden by
+	 * anything in front of the sky.
+	 */
+	private boolean drawSun(DirectionalLight light, ZBuffer zBuffer) {
+		LightAppearance appearance = light.getAppearance() != null ? light.getAppearance() : new LightAppearance();
+
+		Vector3 toSun = light.getLightVectorAtPoint(null); // unit vector, from the scene towards the light
+		Vector4 clip = viewProjection.getMatrix().times(new Vector4(toSun.getX(), toSun.getY(), toSun.getZ(), 0));
+		float w = clip.getW();
+		if (w <= SUN_MIN_W) return false; // Behind the camera
+
+		int halfWidth = perspectiveCtx.getPixelHalfWidth();
+		int halfHeight = perspectiveCtx.getPixelHalfHeight();
+		float focal = halfWidth * 2f * perspectiveCtx.getPerspective().getNear()
+				/ (perspectiveCtx.getPerspective().getRight() - perspectiveCtx.getPerspective().getLeft());
+		float sx = clip.getX() / w * halfWidth;
+		float sy = clip.getY() / w * halfHeight;
+		float discRadius = Math.max(MIN_CORE_RADIUS_PIXELS, (float) Math.tan(Math.toRadians(appearance.getSunDiscAngle())) * focal);
+		float glowRadius = Math.max(2f * discRadius, (float) Math.tan(Math.toRadians(appearance.getSunGlowAngle())) * focal);
+		float far = perspectiveCtx.getPerspective().getFar();
+
+		// Visibility on a disc 2.2 times larger than the sun, so that the glow fades as the disc approaches an edge
+		int visible = 0;
+		for (int i = 0; i < SUN_VISIBILITY_SAMPLES; i++) {
+			double r = 2.2 * discRadius * Math.sqrt((i + 0.5) / SUN_VISIBILITY_SAMPLES);
+			double a = i * GOLDEN_ANGLE;
+			int px = Math.round(sx + (float) (r * Math.cos(a)));
+			int py = Math.round(sy + (float) (r * Math.sin(a)));
+			if (!inScreen(px, py) || zBuffer.get(px, py) >= far - SKY_DEPTH_TOLERANCE) visible++;
+		}
+		float visibility = visible / (float) SUN_VISIBILITY_SAMPLES;
+		if (visibility == 0f) return false;
+
+		Color color = appearance.getColor() != null ? appearance.getColor() : light.getLightColor();
+		float cr = color.getRed() / 255f, cg = color.getGreen() / 255f, cb = color.getBlue() / 255f;
+		float gain = appearance.getGain();
+
+		float extent = SUN_GLOW_EXTENT * glowRadius;
+		int cx = Math.round(sx), cy = Math.round(sy);
+		int x0 = Math.max(cx - (int) Math.ceil(extent), -halfWidth), x1 = Math.min(cx + (int) Math.ceil(extent), halfWidth);
+		int y0 = Math.max(cy - (int) Math.ceil(extent), -halfHeight), y1 = Math.min(cy + (int) Math.ceil(extent), halfHeight);
+
+		for (int y = y0; y <= y1; y++) {
+			for (int x = x0; x <= x1; x++) {
+				if (!inScreen(x, y)) continue;
+				float dx = x - sx, dy = y - sy;
+				float d = (float) Math.sqrt(dx * dx + dy * dy);
+				if (d < extent) {
+					float g = d / glowRadius;
+					float t = d / (0.5f * glowRadius);
+					float window = 1f - smoothstep(0.7f * extent, extent, d);
+					float intensity = gain * visibility * window * (0.75f * (float) Math.exp(-g * g) + 0.18f / (1f + t * t));
+					if (intensity > 0f) view.addPixel(x, y, cr * intensity, cg * intensity, cb * intensity);
+				}
+				// Disc: only on the sky
+				if (d <= discRadius * 1.3f && zBuffer.get(x, y) >= far - SKY_DEPTH_TOLERANCE) {
+					float c = smoothstep(discRadius * 1.3f, discRadius * 0.7f, d);
+					view.addPixel(x, y, c, c, c);
 				}
 			}
 		}

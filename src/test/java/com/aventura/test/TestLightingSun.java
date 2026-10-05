@@ -18,6 +18,7 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
+import com.aventura.model.light.LightAppearance;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.world.World;
@@ -35,19 +36,23 @@ import com.aventura.view.SwingView;
  * is printed in the console when it changes.
  *
  * STATE OF THE VISIBLE SUN: the effects of the sun are added one at a time (see the Lighting plan, phase 8):
- * - the disc and the halo of the sun (LightGlowMode.SUN) -- NOT IMPLEMENTED YET: the sun is still invisible;
+ * - the disc and the halo of the sun (LightGlowMode.SUN) -- done;
  * - the lens flare (ghosts aligned on the axis sun - center of the screen) -- not implemented yet;
  * - the light shafts (crepuscular rays through the gaps between the buildings) -- not implemented yet.
- * Until then, this demo only shows the scene, lit by the sun, with the sky and the buildings, and it will show each
- * effect as soon as it is available, without any change.
+ * This demo will show each new effect as soon as it is available, without any change.
  *
- * What to check by eye, once the effects are there:
- * - the sun is a bright disc with a soft halo, and it is hidden progressively by the edge of a building (the
- *   share of the disc still visible gives the brightness of the halo and of the effects that follow it);
- * - the ghosts of the lens flare move opposite to the sun, through the center of the screen, and fade when the sun
- *   goes out of the image or behind a building;
- * - the light shafts start from the sun and are visible in the gaps between the buildings only;
- * - the buildings, the ground and the sky are unchanged outside of the effects.
+ * What to check by eye:
+ * - the sun is a bright disc with a soft warm halo, and it is hidden progressively by the edge of a building (the
+ *   share of the disc still visible gives the brightness of the halo), and it shows again as soon as it clears it;
+ * - the sun stays at the same place of the sky when the camera turns only a little: it moves with the camera's
+ *   turn, not with its position;
+ * - the halo is added over the buildings too (a glow in the air in front of them), but the disc is never drawn
+ *   over a building;
+ * - the buildings, the ground and the sky are unchanged outside of the sun.
+ *
+ * Once the lens flare and the light shafts are there, the ghosts of the lens flare should move opposite to the
+ * sun, through the center of the screen, and fade when the sun goes out of the image or behind a building, and the
+ * light shafts should start from the sun and be visible in the gaps between the buildings only.
  *
  * Run with: mvn test-compile exec:java -Dexec.mainClass=com.aventura.test.TestLightingSun
  */
@@ -61,6 +66,9 @@ public class TestLightingSun {
 
 	private static final Vector4 EYE = new Vector4(0, -14, 1.8f, 1);
 	private static final float VIEW_DISTANCE = 24f;
+
+	/** Color of the disc and of the halo of the sun */
+	public static final Color SUN_COLOR = new Color(255, 235, 180);
 
 	/** Sky color: the background color of the World */
 	public static final Color SKY = new Color(96, 150, 215);
@@ -123,6 +131,7 @@ public class TestLightingSun {
 	/** The sun: a Directional light shining from TO_SUN, with a soft ambient light for the shaded sides. */
 	public static Lighting createLighting() {
 		DirectionalLight sun = new DirectionalLight(new Vector3(-TO_SUN.getX(), -TO_SUN.getY(), -TO_SUN.getZ()), 1f);
+		sun.setAppearance(new LightAppearance().setColor(SUN_COLOR)); // warm halo, the light itself stays white
 		return new Lighting(sun, new AmbientLight(0.35f));
 	}
 
