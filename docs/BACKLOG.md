@@ -91,8 +91,13 @@ be factored at the same time.
     center, `LightAppearance.setFlareGain()`. Follow-ups: the ghosts have fixed colors, positions and sizes
     (no per-light shapes, no dirt or starburst), and they are on by default for the sun; a flare for point
     and spot lights, and for a sun just out of the image (it fades before the edge), could be added.
-  - **Light shafts**: radial blur of the visible sky from the sun (screen space), added to the image; costs
-    about 64 samples per pixel, so it will need a lower resolution mask or an option.
+  - **Done (October 2026): light shafts** of the sun: radial blur of the visible sky towards the sun (64
+    steps, mask on a grid four times smaller), added to the image, off by default
+    (`LightAppearance.setShaftsGain()`), about 15 ms on a 1000×562 image. Follow-ups: the cost is mostly the
+    last pass that spreads the grid over the whole image (a lower resolution of the result, or a pass
+    restricted to the pixels the beams reach, could halve it); the beams are computed from the sky only (no
+    clouds or fog density), and the fixed constants (decay, weight, exposure, radius of the bright sky) are not
+    adjustable per light.
   - **Emissive geometry** beyond the core of the light (a lamp mesh that glows by itself).
   - The glow of a point light is not scaled by its `intensity` or its range (only by `LightAppearance.gain`);
     a halo that fades with the distance to the camera, and a visibility measured on the whole halo (an edge

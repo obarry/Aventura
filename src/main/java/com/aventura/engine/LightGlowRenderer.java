@@ -63,7 +63,8 @@ import com.aventura.view.GUIView;
  * - NONE: nothing.
  *
  * The sun also makes a lens flare (see drawLensFlare()): ghosts on the axis between the sun and the center of the
- * screen, adjustable or removable with LightAppearance.setFlareGain().
+ * screen, adjustable or removable with LightAppearance.setFlareGain(), and, if LightAppearance.setShaftsGain()
+ * asks for them, light shafts (see drawLightShafts()).
  *
  * The sizes of the lights with a position are given in world units (LightAppearance), so that the picture of
  * a light shrinks with the distance like any object. Only the frustum perspective is handled (lights are not drawn for an
@@ -112,6 +113,17 @@ public class LightGlowRenderer {
 	private static final float SUN_MIN_W = 1e-4f;
 
 	/**
+	 * Gain of the light shafts of a sun: the one of its appearance, unless RenderContext.setLightShafts() forces the
+	 * shafts on (the gain of the appearance, or 1 if it has none) or off (0).
+	 */
+	public static float resolveShaftsGain(LightAppearance appearance, RenderContext renderContext) {
+		Boolean forced = renderContext == null ? null : renderContext.getLightShafts();
+		if (forced == null) return appearance.getShaftsGain();
+		if (!forced) return 0f;
+		return appearance.getShaftsGain() > 0f ? appearance.getShaftsGain() : 1f;
+	}
+
+	/**
 	 * The mode that applies to a light: its own appearance if it defines a mode, else the one forced by the
 	 * RenderContext if any, else the default mode of its type.
 	 */
@@ -139,7 +151,7 @@ public class LightGlowRenderer {
 		}
 		for (DirectionalLight light : lighting.getDirectionalLights()) {
 			if (resolveMode(light, renderContext) != LightGlowMode.SUN) continue;
-			if (drawSun(light, zBuffer)) drawn++;
+			if (drawSun(light, renderContext, zBuffer)) drawn++;
 		}
 		return drawn;
 	}
@@ -220,7 +232,7 @@ public class LightGlowRenderer {
 	 * the disc (a little larger than the sun) where nothing was drawn (depth = far), so the sun is hidden by
 	 * anything in front of the sky.
 	 */
-	private boolean drawSun(DirectionalLight light, ZBuffer zBuffer) {
+	private boolean drawSun(DirectionalLight light, RenderContext renderContext, ZBuffer zBuffer) {
 		LightAppearance appearance = light.getAppearance() != null ? light.getAppearance() : new LightAppearance();
 
 		Vector3 toSun = light.getLightVectorAtPoint(null); // unit vector, from the scene towards the light
@@ -281,7 +293,99 @@ public class LightGlowRenderer {
 		if (appearance.getFlareGain() > 0f) {
 			drawLensFlare(sx, sy, visibility * appearance.getFlareGain());
 		}
+		float shaftsGain = resolveShaftsGain(appearance, renderContext);
+		if (shaftsGain > 0f) {
+			drawLightShafts(sx, sy, visibility * shaftsGain, cr, cg, cb, zBuffer);
+		}
 		return true;
+	}
+
+	/** The light shafts are computed on a mask this many times smaller than the image (in each direction), then spread over the image */
+	public static final int SHAFTS_DOWNSCALE = 4;
+
+	/** Number of steps of the radial blur of the light shafts */
+	public static final int SHAFTS_SAMPLES = 64;
+
+	private static final float SHAFTS_DENSITY = 0.95f; // Share of the way to the sun covered by the blur
+	private static final float SHAFTS_DECAY = 0.97f; // Loss of each step
+	private static final float SHAFTS_WEIGHT = 0.03f; // Weight of each step
+	private static final float SHAFTS_EXPOSURE = 0.7f;
+	private static final float SHAFTS_MASK_RADIUS = 0.55f; // Radius of the bright sky around the sun, as a share of the width of the image
+
+	/**
+	 * The light shafts of the sun: a radial blur of the visible sky, towards the sun. The sky (nothing drawn in the
+	 * ZBuffer) is bright, more around the sun, and the objects are dark: each point of the image gathers the sky
+	 * seen on the way to the sun, so a beam appears behind each gap between objects, and the objects cast
+	 * the dark rays. The computation is done on a mask 4 times smaller in each direction (16 times fewer points),
+	 * and the result is spread bilinearly over the image, so the cost stays a few milliseconds.
+	 *
+	 * @param sx x of the sun on the screen, in pixels (centered coordinates)
+	 * @param sy y of the sun on the screen
+	 * @param strength visibility of the sun times the gain of the shafts
+	 */
+	private void drawLightShafts(float sx, float sy, float strength, float cr, float cg, float cb, ZBuffer zBuffer) {
+		int halfWidth = perspectiveCtx.getPixelHalfWidth();
+		int halfHeight = perspectiveCtx.getPixelHalfHeight();
+		float far = perspectiveCtx.getPerspective().getFar();
+		int s = SHAFTS_DOWNSCALE;
+		int gw = (2 * halfWidth) / s + 2, gh = (2 * halfHeight) / s + 2; // Grid point (i, j) is the pixel (-halfWidth + i s, -halfHeight + j s)
+		float maskRadius = SHAFTS_MASK_RADIUS * 2 * halfWidth;
+
+		// Mask: the sky, brighter near the sun (average of 4 pixels around the grid point, to avoid aliasing)
+		float[] mask = new float[gw * gh];
+		for (int j = 0; j < gh; j++) {
+			for (int i = 0; i < gw; i++) {
+				int x = -halfWidth + i * s, y = -halfHeight + j * s;
+				int sky = 0;
+				for (int k = 0; k < 4; k++) {
+					int px = Math.max(-halfWidth, Math.min(halfWidth, x + (k & 1) * 2 - 1));
+					int py = Math.max(-halfHeight, Math.min(halfHeight, y + (k >> 1) * 2 - 1));
+					if (zBuffer.get(px, py) >= far - SKY_DEPTH_TOLERANCE) sky++;
+				}
+				if (sky == 0) continue;
+				float dx = x - sx, dy = y - sy;
+				mask[j * gw + i] = sky / 4f * (float) Math.exp(-(dx * dx + dy * dy) / (maskRadius * maskRadius));
+			}
+		}
+
+		// Radial blur towards the sun, in grid units, with a jitter of the start to hide the steps
+		float[] shafts = new float[gw * gh];
+		float gsx = (sx + halfWidth) / s, gsy = (sy + halfHeight) / s; // The sun in grid coordinates
+		for (int j = 0; j < gh; j++) {
+			for (int i = 0; i < gw; i++) {
+				float stepX = (gsx - i) * SHAFTS_DENSITY / SHAFTS_SAMPLES;
+				float stepY = (gsy - j) * SHAFTS_DENSITY / SHAFTS_SAMPLES;
+				float jitter = ((i * 73856093 ^ j * 19349663) & 1023) / 1023f;
+				float cx = i + stepX * jitter, cy = j + stepY * jitter;
+				float illumination = 1f, sum = 0f;
+				for (int n = 0; n < SHAFTS_SAMPLES; n++) {
+					cx += stepX;
+					cy += stepY;
+					int ix = Math.round(cx), iy = Math.round(cy);
+					if (ix >= 0 && ix < gw && iy >= 0 && iy < gh) sum += mask[iy * gw + ix] * illumination * SHAFTS_WEIGHT;
+					illumination *= SHAFTS_DECAY;
+				}
+				shafts[j * gw + i] = sum * SHAFTS_EXPOSURE * strength;
+			}
+		}
+
+		// Spread over the image (bilinear interpolation of the grid), added to the pixels
+		for (int y = -halfHeight; y <= halfHeight; y++) {
+			float v = (float) (y + halfHeight) / s;
+			int j0 = (int) v;
+			float fy = v - j0;
+			int j1 = Math.min(j0 + 1, gh - 1);
+			for (int x = -halfWidth; x <= halfWidth; x++) {
+				float u = (float) (x + halfWidth) / s;
+				int i0 = (int) u;
+				float fx = u - i0;
+				int i1 = Math.min(i0 + 1, gw - 1);
+				float top = shafts[j0 * gw + i0] * (1 - fx) + shafts[j0 * gw + i1] * fx;
+				float bottom = shafts[j1 * gw + i0] * (1 - fx) + shafts[j1 * gw + i1] * fx;
+				float intensity = top * (1 - fy) + bottom * fy;
+				if (intensity > 0.002f) view.addPixel(x, y, cr * intensity, cg * intensity, cb * intensity);
+			}
+		}
 	}
 
 	// Ghosts of the lens flare: position along the axis (1 = center of the image, 0 = the sun itself, 2 = the opposite

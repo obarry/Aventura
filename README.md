@@ -55,7 +55,7 @@ The same scenes can be explored in a Swing window with `com.aventura.demo.SceneV
 java -cp target/classes:target/test-classes com.aventura.demo.SceneViewer urbanscape_flight
 ```
 
-Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures, landmarks and light glow options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
+Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures, landmarks, light glow and light shafts options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
 
 ## Quick start
 
@@ -278,7 +278,17 @@ The sun also makes a lens flare, the ghosts that a camera lens makes of a bright
 sun.setAppearance(new LightAppearance().setFlareGain(0.5f)); // fainter ghosts; 0 = no lens flare
 ```
 
-`TestLightingGlow` shows a lamp circling around the objects of the spot light scene, passing behind them, with the visible lights switched on and off in turn; `TestLightingSun` is a street where the camera turns to bring the sun behind the buildings (with its lens flare; the light shafts, which come next, will show there too).
+The sun can also make light shafts (crepuscular rays): beams that seem to spread from the sun through the gaps between the buildings. They are a radial blur of the visible sky towards the sun, computed on a mask four times smaller than the image and spread over it, and they cost more than the other effects (about 15 ms on a 1000×562 image), so they are **off by default**: `setShaftsGain(1f)` turns them on, and `RenderContext.setLightShafts(true)` forces them on every sun (`false` removes them, `null` leaves each light's own gain).
+
+```java
+sun.setAppearance(new LightAppearance().setShaftsGain(1f)); // 0 (default) = no light shafts
+```
+
+<p align="center">
+  <img src="resources/doc/images/sun_street.jpg" alt="TestLightingSun: the sun behind a building, with its halo, lens flare and light shafts" width="600">
+</p>
+
+`TestLightingGlow` shows a lamp circling around the objects of the spot light scene, passing behind them, with the visible lights switched on and off in turn; `TestLightingSun` is a street where the camera turns to bring the sun behind the buildings (with its lens flare and its light shafts); the same scene is `sun_street` in the SceneViewer, where the camera can be moved with the mouse.
 
 ## How it works
 
@@ -369,7 +379,7 @@ The `src/test/java/com/aventura/test` folder holds about seventy additional visu
 mvn test
 ```
 
-The unit tests (JUnit 4, about 450 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, and the visible lights), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 470 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, and the visible lights), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 
@@ -409,7 +419,7 @@ Aventura/
 - Only Swing has a dedicated view so far (`SwingView`); other GUI toolkits can use `ImageView` with a frame listener, or extend `ImageView` or `GUIView`.
 - A `Lighting` system holds at most one ambient light, plus any number of directional, point and spot lights.
 - Soft shadows have a penumbra of a fixed width of a few texels (no wider penumbra far from the object that casts the shadow), they are off by default, and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
-- Lights are invisible by default. `RenderContext.setLightGlow(true)` draws a halo around point and spot lights (hidden by the objects in front of them); the sun (directional lights) is drawn as a disc and a halo in the sky, with a lens flare; the light shafts are not drawn yet, and the halos are not drawn in `LINE` rendering nor under an orthographic perspective.
+- Lights are invisible by default. `RenderContext.setLightGlow(true)` draws a halo around point and spot lights (hidden by the objects in front of them); the sun (directional lights) is drawn as a disc and a halo in the sky, with a lens flare, and optionally light shafts; and the halos are not drawn in `LINE` rendering nor under an orthographic perspective.
 - Texture files are loaded from file paths (relative to the working directory or absolute), not from the classpath.
 
 ## License

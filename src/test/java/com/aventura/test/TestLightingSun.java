@@ -32,8 +32,8 @@ import com.aventura.view.SwingView;
  * eight tower blocks under a blue sky, seen by a camera that slowly turns left and right, so that the sun, low on
  * the horizon, crosses the field of view and passes behind the edges of the buildings.
  *
- * The visible lights are off during the first sweep of the camera, on during the second one, and so on; the state
- * is printed in the console when it changes.
+ * The visible lights are always on here. The camera makes NB_SWEEPS slow sweeps (left to right and back), to leave
+ * the time to look at each effect.
  *
  * STATE OF THE VISIBLE SUN: the effects of the sun are added one at a time (see the Lighting plan, phase 8):
  * - the disc and the halo of the sun (LightGlowMode.SUN) -- done;
@@ -61,12 +61,16 @@ import com.aventura.view.SwingView;
 public class TestLightingSun {
 
 	/** Images per sweep of the camera (left to right and back) */
-	public static final int NB_IMAGES = 240;
+	public static final int NB_IMAGES = 300;
+
+	/** Number of sweeps of the camera */
+	public static final int NB_SWEEPS = 6;
 
 	/** Direction towards the sun (it is the opposite of the direction of its light), low on the horizon, a little to the left of the street */
 	private static final Vector3 TO_SUN = new Vector3(-0.30f, 1f, 0.16f).normalize();
 
-	private static final Vector4 EYE = new Vector4(0, -14, 1.8f, 1);
+	/** Position of the camera (it is only turned around the vertical axis during the demo) */
+	public static final Vector4 EYE = new Vector4(0, -14, 1.8f, 1);
 	private static final float VIEW_DISTANCE = 24f;
 
 	/** Color of the disc and of the halo of the sun */
@@ -86,7 +90,6 @@ public class TestLightingSun {
 	public GUIView createView(PerspectiveContext context) {
 
 		JFrame frame = new JFrame("Test Lighting Sun");
-		frame.setSize(1000, 600);
 
 		view = new SwingView(context, frame);
 
@@ -96,7 +99,11 @@ public class TestLightingSun {
 				graph.drawImage(view.getImageView(), 0, 0, null);
 			}
 		};
+		// The window fits the image exactly: the panel has the size of the viewport and the frame is packed around it
+		panel.setPreferredSize(new Dimension(context.getPixelWidth(), context.getPixelHeight()));
 		frame.getContentPane().add(panel);
+		frame.setResizable(false);
+		frame.pack();
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
@@ -107,7 +114,7 @@ public class TestLightingSun {
 	}
 
 	public static PerspectiveContext createPerspectiveContext() {
-		return new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1000);
+		return new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250); // 1000 x 562 pixels
 	}
 
 	public static World createWorld() {
@@ -133,7 +140,7 @@ public class TestLightingSun {
 	/** The sun: a Directional light shining from TO_SUN, with a soft ambient light for the shaded sides. */
 	public static Lighting createLighting() {
 		DirectionalLight sun = new DirectionalLight(new Vector3(-TO_SUN.getX(), -TO_SUN.getY(), -TO_SUN.getZ()), 1f);
-		sun.setAppearance(new LightAppearance().setColor(SUN_COLOR)); // warm halo, the light itself stays white
+		sun.setAppearance(new LightAppearance().setColor(SUN_COLOR).setShaftsGain(1f)); // warm halo (the light itself stays white) and light shafts
 		return new Lighting(sun, new AmbientLight(0.35f));
 	}
 
@@ -148,19 +155,19 @@ public class TestLightingSun {
 		return -30 + 35 * phase;
 	}
 
-	/** The point the camera looks at, at image i: the camera, always at the same place, is turned by yawAt(i) around the vertical axis (at 0 degrees it looks along +y). */
-	public static Vector4 poiAt(int i) {
-		double yaw = Math.toRadians(yawAt(i));
+	/** The point the camera looks at when it is turned by the given angle (degrees, positive to the right) around the vertical axis: at 0 degrees it looks along +y. */
+	public static Vector4 poiForYaw(double degrees) {
+		double yaw = Math.toRadians(degrees);
 		return new Vector4(EYE.getX() + (float) (VIEW_DISTANCE * Math.sin(yaw)), EYE.getY() + (float) (VIEW_DISTANCE * Math.cos(yaw)), EYE.getZ(), 1);
+	}
+
+	/** The point the camera looks at, at image i: the camera, always at the same place, is turned by yawAt(i). */
+	public static Vector4 poiAt(int i) {
+		return poiForYaw(yawAt(i));
 	}
 
 	public static Camera createCamera() {
 		return new Camera(EYE, poiAt(0), Vector4.zAxis());
-	}
-
-	/** The visible lights are off on the even sweeps, on on the odd ones. */
-	public static boolean glowAt(int i) {
-		return (i / NB_IMAGES) % 2 == 1;
 	}
 
 	public static void main(String[] args) {
@@ -175,18 +182,11 @@ public class TestLightingSun {
 		GUIView guiView = test.createView(pContext);
 
 		Camera camera = createCamera();
-		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE).setLightGlow(true);
 		RenderEngine renderer = new RenderEngine(world, lighting, camera, rContext, pContext);
 		renderer.setView(guiView);
 
-		Boolean current = null;
-		for (int i = 0; i <= 4 * NB_IMAGES; i++) {
-			boolean glow = glowAt(i);
-			if (current == null || glow != current) {
-				current = glow;
-				rContext.setLightGlow(glow);
-				System.out.println("********* Visible lights: " + (glow ? "ON" : "OFF"));
-			}
+		for (int i = 0; i <= NB_SWEEPS * NB_IMAGES; i++) {
 			camera.updateCamera(EYE, poiAt(i), Vector4.zAxis());
 			renderer.render();
 		}

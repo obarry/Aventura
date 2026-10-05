@@ -40,6 +40,7 @@ import com.aventura.context.RenderContext.RenderingType;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.light.ShadowingLight;
@@ -85,7 +86,8 @@ import com.aventura.view.SwingView;
  * - Rendering menu: the rendering types, and the shadows, soft shadows, textures and landmarks options (initially as
  *   the scene defines them). Soft shadows sets the filter of the shadow map of every light that casts shadows
  *   (ShadowFilter.PCF_3X3, or HARD when unchecked); it only shows when Shadows is on. Light glow makes the lights visible
- *   (a halo around the Point and Spot lights, hidden by the objects in front of them). View menu: back to the scene's camera (Ctrl+R), save the image shown (Ctrl+S).
+ *   (a halo around the Point and Spot lights, hidden by the objects in front of them, a disc and a halo for the sun). Light shafts adds
+ *   the light shafts of the sun (checked at the start if the scene's sun has some; it only shows when Light glow is on and the sun is in the field of view). View menu: back to the scene's camera (Ctrl+R), save the image shown (Ctrl+S).
  *
  * Threads: the Swing thread (EDT) only records what the user asks for, in an immutable ViewState, and requests a
  * rendering. The rendering (and the loading of a scene, which may take a moment) is done by a single background
@@ -177,6 +179,8 @@ public class SceneViewer {
 		final Boolean softShadows;
 		/** Visible lights (RenderContext.setLightGlow()), null = as the scene defines it */
 		final Boolean lightGlow;
+		/** Light shafts of the sun (RenderContext.setLightShafts()), null = as the scene's lights define them */
+		final Boolean lightShafts;
 
 		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks) {
 			this(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, null);
@@ -189,6 +193,11 @@ public class SceneViewer {
 
 		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks,
 				Boolean softShadows, Boolean lightGlow) {
+			this(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, null);
+		}
+
+		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks,
+				Boolean softShadows, Boolean lightGlow, Boolean lightShafts) {
 			this.scene = scene;
 			this.yaw = yaw;
 			this.pitch = pitch;
@@ -199,6 +208,7 @@ public class SceneViewer {
 			this.landmarks = landmarks;
 			this.softShadows = softShadows;
 			this.lightGlow = lightGlow;
+			this.lightShafts = lightShafts;
 		}
 
 		/** A scene seen from its own camera, with its own options */
@@ -207,15 +217,15 @@ public class SceneViewer {
 		}
 
 		ViewState withCamera(float yaw, float pitch, int zoomNotches) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
 		}
 
 		ViewState withOptions(RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
 		}
 
 		ViewState withSoftShadows(Boolean softShadows) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
 		}
 
 		/** The soft shadows option, if still undefined, takes the given (scene's) value */
@@ -224,12 +234,21 @@ public class SceneViewer {
 		}
 
 		ViewState withLightGlow(Boolean lightGlow) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
 		}
 
 		/** The light glow option, if still undefined, takes the given (scene's) value */
 		ViewState withLightGlowDefault(boolean lightGlow) {
 			return this.lightGlow != null ? this : withLightGlow(lightGlow);
+		}
+
+		ViewState withLightShafts(Boolean lightShafts) {
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
+		}
+
+		/** The light shafts option, if still undefined, takes the given (scene's) value */
+		ViewState withLightShaftsDefault(boolean lightShafts) {
+			return this.lightShafts != null ? this : withLightShafts(lightShafts);
 		}
 
 		/** The options still undefined take the given (scene's) values */
@@ -259,6 +278,7 @@ public class SceneViewer {
 	private String loadedScene = null;
 	private DemoScene scene;
 	private RenderContext sceneDefaults; // copy of the scene's own options, before any change
+	private boolean sceneLightShafts; // whether the scene's own sun has light shafts
 	private boolean sceneSoftShadows; // whether the scene's own lights filter their shadows (all of them, at least one)
 	private Camera camera;
 	private RenderEngine engine;
@@ -271,7 +291,7 @@ public class SceneViewer {
 	private JPanel panel;
 	private final Map<String, JRadioButtonMenuItem> sceneItems = new LinkedHashMap<>();
 	private final Map<RenderingType, JRadioButtonMenuItem> typeItems = new LinkedHashMap<>();
-	private JCheckBoxMenuItem shadowsItem, softShadowsItem, texturesItem, landmarksItem, lightGlowItem;
+	private JCheckBoxMenuItem shadowsItem, softShadowsItem, texturesItem, landmarksItem, lightGlowItem, lightShaftsItem;
 	private int lastX, lastY;
 
 	public SceneViewer(Map<String, Supplier<DemoScene>> scenesByImageName, String firstScene) {
@@ -388,6 +408,9 @@ public class SceneViewer {
 		lightGlowItem.addActionListener(e -> update(s -> s.withLightGlow(lightGlowItem.isSelected())));
 		renderingMenu.add(landmarksItem);
 		renderingMenu.add(lightGlowItem);
+		lightShaftsItem = new JCheckBoxMenuItem("Light shafts");
+		lightShaftsItem.addActionListener(e -> update(s -> s.withLightShafts(lightShaftsItem.isSelected())));
+		renderingMenu.add(lightShaftsItem);
 		bar.add(renderingMenu);
 
 		JMenu viewMenu = new JMenu("View");
@@ -415,6 +438,7 @@ public class SceneViewer {
 		if (s.textures != null) texturesItem.setSelected(s.textures);
 		if (s.landmarks != null) landmarksItem.setSelected(s.landmarks);
 		if (s.lightGlow != null) lightGlowItem.setSelected(s.lightGlow);
+		if (s.lightShafts != null) lightShaftsItem.setSelected(s.lightShafts);
 	}
 
 	/** Changes the state (EDT) and requests a rendering */
@@ -445,6 +469,7 @@ public class SceneViewer {
 					? st.withDefaults(sceneDefaults.getRenderingType(), sceneDefaults.isShadowing(), sceneDefaults.isTextureProcessing(), sceneDefaults.isDisplayLandmark())
 							.withSoftShadowsDefault(sceneSoftShadows)
 							.withLightGlowDefault(sceneDefaults.isLightGlow())
+							.withLightShaftsDefault(sceneLightShafts)
 					: st);
 			if (!s.scene.equals(loadedScene)) {
 				return; // another scene was chosen meanwhile: it has already been requested
@@ -456,6 +481,7 @@ public class SceneViewer {
 			options.setTextureProcessing(s.textures);
 			options.setDisplayLandmark(s.landmarks);
 			options.setLightGlow(s.lightGlow);
+			options.setLightShafts(s.lightShafts);
 			applySoftShadows(scene.getLighting(), s.softShadows);
 			Vector4 poi = scene.getPoi();
 			camera.updateCamera(orbitEye(scene.getEye(), poi, s.yaw, s.pitch, zoomFactor(s.zoomNotches)), poi, Vector4.zAxis());
@@ -484,6 +510,19 @@ public class SceneViewer {
 		return true;
 	}
 
+	/** True if at least one directional light of the scene asks for light shafts in its appearance (LightAppearance.setShaftsGain()) */
+	static boolean hasLightShafts(Lighting lighting) {
+		if (lighting == null) {
+			return false;
+		}
+		for (DirectionalLight light : lighting.getDirectionalLights()) {
+			if (light.getAppearance() != null && light.getAppearance().getShaftsGain() > 0f) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/** Sets the shadow filter of every light casting shadows: soft (PCF_3X3) or hard. Does nothing for a null option. */
 	static void applySoftShadows(Lighting lighting, Boolean soft) {
 		if (soft == null || lighting == null || lighting.getShadowingLights() == null) {
@@ -504,6 +543,7 @@ public class SceneViewer {
 		engine = newScene.createEngine(camera, newView);
 		sceneDefaults = new RenderContext(newScene.getRenderContext());
 		sceneSoftShadows = hasSoftShadows(newScene.getLighting());
+		sceneLightShafts = hasLightShafts(newScene.getLighting());
 		loadedScene = name;
 		sceneElevation = elevation(newScene.getEye(), newScene.getPoi());
 		view = newView;

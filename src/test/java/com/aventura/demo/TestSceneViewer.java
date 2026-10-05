@@ -159,6 +159,25 @@ public class TestSceneViewer {
 	}
 
 	@Test
+	public void testLightShafts_optionAndSceneDefault() {
+		System.out.println("***** Test SceneViewer : the light shafts option follows the other changes, and the scene fills it only when undefined *****");
+		SceneViewer.ViewState s = SceneViewer.ViewState.of("sun_street");
+		assertNull(s.lightShafts);
+		SceneViewer.ViewState chosen = s.withLightShafts(false).withCamera(1, 2, 3).withLightGlow(true).withOptions(RenderingType.FLAT, true, true, true);
+		assertEquals(Boolean.FALSE, chosen.lightShafts);
+		assertEquals(Boolean.FALSE, chosen.withLightShaftsDefault(true).lightShafts);
+		assertEquals(Boolean.TRUE, s.withLightShaftsDefault(true).lightShafts);
+		assertEquals("Light glow is kept", Boolean.TRUE, chosen.withLightShafts(true).lightGlow);
+
+		DirectionalLight sun = new DirectionalLight(new Vector3(0, 0, -1), 1f);
+		Lighting lighting = new Lighting(sun, new AmbientLight(0.1f));
+		assertFalse(SceneViewer.hasLightShafts(lighting));
+		sun.setAppearance(new com.aventura.model.light.LightAppearance().setShaftsGain(1f));
+		assertTrue(SceneViewer.hasLightShafts(lighting));
+		assertFalse(SceneViewer.hasLightShafts(null));
+	}
+
+	@Test
 	public void testSoftShadows_appliedToEveryShadowingLight() {
 		System.out.println("***** Test SceneViewer : the soft shadows option sets the filter of every light casting shadows *****");
 
