@@ -852,6 +852,7 @@ timeline
          : Quaternion + slerp, Matrix2, Maven layout
          : SpotLight, UrbanScape, 370+ unit tests
          : Spot and point light shadows (perspective and cube maps), soft shadows (PCF), 430+ unit tests
+         : Visible lights: halos, sun with lens flare and light shafts, 470+ unit tests
          : Rendering types: MONOCHROME (hidden-line), UNLIT
 ```
 
