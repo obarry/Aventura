@@ -136,7 +136,6 @@ public class PerfBench {
 		engine.setView(view);
 
 		com.sun.management.ThreadMXBean threads = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
-		long threadId = Thread.currentThread().getId();
 
 		int nbPhases = FrameTimer.Phase.values().length;
 		float[] frameMillis = new float[frames];
@@ -153,11 +152,11 @@ public class PerfBench {
 			}
 			camera.updateCamera(eye, focus, Vector4.zAxis());
 
-			long allocatedBefore = threads.getThreadAllocatedBytes(threadId);
+			long allocatedBefore = threads.getCurrentThreadAllocatedBytes();
 			engine.render();
 			if (i >= warmup) {
 				int k = i - warmup;
-				allocated += threads.getThreadAllocatedBytes(threadId) - allocatedBefore;
+				allocated += threads.getCurrentThreadAllocatedBytes() - allocatedBefore;
 				FrameTimer timer = engine.getFrameTimer();
 				frameMillis[k] = timer.getFrameMillis();
 				for (FrameTimer.Phase phase : FrameTimer.Phase.values()) {

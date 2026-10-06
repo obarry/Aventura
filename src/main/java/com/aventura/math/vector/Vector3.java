@@ -37,11 +37,6 @@ import com.aventura.tools.tracing.Tracer;
  */
 public class Vector3 {
 	
-	// *** Instrumentation ***
-	public static int nb_vectors = 0; // count the number of created instances
-	public static int nb_to_display = 0; // count before next display session
-	public static final int DISPLAY_EVERY = 1000000; // nb of count between 2 display sessions
-
 	// Backing values for the accessors below. Kept private so the mutable-Vector3-as-a-shared-constant
 	// footgun (public static final field pointing to a mutable object - see audit report) cannot happen:
 	// nothing outside this class can ever hold a reference to these particular instances.
@@ -113,21 +108,18 @@ public class Vector3 {
 		this.x = 0;
 		this.y = 0;
 		this.z = 0;
-		count();
 	}
 
 	public Vector3(float v) {
 		this.x = v;
 		this.y = v;
 		this.z = v;
-		count();
 	}
 	
 	public Vector3(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;		
-		count();
 	}
 		
 	public Vector3(float[] array) throws VectorArrayWrongSizeException {
@@ -135,14 +127,12 @@ public class Vector3 {
 		this.x = array[0];
 		this.y = array[1];
 		this.z = array[2];
-		count();
 	}
 	
 	public Vector3(Vector3 v) {
 		this.x = v.x;
 		this.y = v.y;
 		this.z = v.z;
-		count();
 	}
 
 	public Vector3(Vector4 v) {
@@ -150,7 +140,6 @@ public class Vector3 {
 		this.y = v.y;
 		this.z = v.z;
 		// Ignore latest coordinate
-		count();
 	}
 	
 	/**
@@ -163,30 +152,18 @@ public class Vector3 {
 		this.y = b.y - a.y;
 		this.z = b.z - a.z;
 		// Ignore latest coordinates of the 2 Vector4 as we are creating a Vector3 and anyway the 2 Vectors are supposed to be points (w = 1) so neutralizes eachother
-		count();
 	}
 
 	public Vector3(int r, Matrix3 A) {
 		this.x = A.get(r, 0);
 		this.y = A.get(r, 1);
 		this.z = A.get(r, 2);
-		count();
 	}
 	
 	public Vector3(Matrix3 A, int c) {
 		this.x = A.get(0, c);
 		this.y = A.get(1, c);
 		this.z = A.get(2, c);
-		count();
-	}
-	
-	private static void count() {
-		nb_vectors++;
-		nb_to_display++;
-		if (nb_to_display>=DISPLAY_EVERY) {
-			if (Tracer.object) Tracer.traceObject(Vector3.class, "***** NB OF VECTOR3 (created since begining): "+nb_vectors);
-			nb_to_display=0;
-		}
 	}
 	
 	@Override
