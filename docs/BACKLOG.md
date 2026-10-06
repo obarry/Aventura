@@ -144,6 +144,41 @@ Follow-ups identified while doing it:
 - The overlay lines of `FLAT` and `INTERPOLATE` (`setRenderingLines(true)`) are still drawn without
   depth test, as before: they could use the depth-tested edges too.
 
+## 5b. Atmospheric perspective (distance fog)
+
+**Idea (October 2026).** Give an impression of distance like in a real landscape: with the distance to the
+camera, the contrasts weaken and the colors fade towards the color of the air (haze), so that far hills are
+paler and bluer than near objects. In practice, each pixel is blended with a **fog color** by a factor that
+grows with its distance to the camera: `color = lerp(color, fog, f(distance))`. It is cheap, and it also hides
+the far plane clipping.
+
+Possible design, to be refined:
+
+- **Where.** Two options. In the fragment consumers (`ShadingConsumer`, `UnlitConsumer`), where the view depth
+  is already known per pixel: simple, but every consumer must do it, and the cost is paid on pixels that are
+  later hidden. Or as a post-process on the finished image using the main Z-buffer (linear view depth W, far
+  for the sky), like `LightGlowRenderer`: one pass for every rendering type, but it needs to read and write the
+  color buffer (`GUIView` only has an additive `addPixel()` today). The post-process would run before the
+  visible lights, so that the sun, its disc and its flare are not faded by the fog.
+- **Model of the factor** `f(d)`: linear between a start and an end distance (the easiest to tune), or
+  exponential (`1 - exp(-density * d)`, more natural) or exponential squared (clear air near the camera, then a
+  quick fading). Parameters in `RenderContext` (off by default, so the existing renderings do not change):
+  the model, the distances or the density, the fog color and a maximum factor (so that the far objects keep
+  a trace of their color).
+- **Fog color.** By default the background color of the `World` (the sky), so that the far objects melt into it
+  without a visible edge. A slightly bluer fog than the sky, or a color depending on the direction of the sun
+  (warmer towards the sun, like the halo), would be more realistic.
+- **Refinements for later.** A different extinction per color channel (red lost first, so the distance turns
+  blue), a fog that fades with the altitude (valleys filled with mist), a fog density per `World` (or per
+  scene) rather than per `RenderContext`.
+- **Interactions to check.** The sky pixels (depth = far) must not turn into a different color than the
+  background; the light shafts and the halos are computed from the sky and must stay consistent; `LINE`
+  rendering and the edge lines (`MONOCHROME`, overlay lines) should fade like the surfaces or not at all; the
+  shadows are unchanged (they are computed in the light space).
+- **Demo and tests.** `FractalLandscape_MouseMoving` and `UrbanScape` (a long street) are the natural scenes; a
+  "Fog" option in the `SceneViewer`; unit tests of the factor of each model and pixel tests (a far object is
+  closer to the fog color than a near one, the sky stays unchanged, off by default changes nothing).
+
 ## 6. Views
 
 - `ImageView` allocates a new `BufferedImage` for each frame, which keeps the front image immutable

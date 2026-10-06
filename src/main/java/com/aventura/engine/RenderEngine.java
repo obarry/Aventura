@@ -136,6 +136,8 @@ public class RenderEngine {
 	private ZBuffer mainZBuffer;
 	private TriangleRasterizer triangleRasterizer;
 	private RasterizerStats stats = new RasterizerStats();
+	// Time of each phase of the last frame (see FrameTimer and docs/PERFORMANCE_AUDIT.md)
+	private final FrameTimer frameTimer = new FrameTimer();
 
 	// Legacy-parity constants, formerly on the Rasterizer façade -- see their original comments
 	// there for why: no separate Ka coefficient existed, and a missing specular color fell back
@@ -217,7 +219,7 @@ public class RenderEngine {
 	public MapView render() {
 		
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Start rendering...");
-		long start_millisec = System.currentTimeMillis();
+		frameTimer.startFrame();
 		nbt = 0;
 		nbt_in = 0;
 		nbt_out = 0;
@@ -246,6 +248,7 @@ public class RenderEngine {
 			mainZBuffer.clear(perspectiveContext.getPerspective().getFar());
 			zBuffer = mainZBuffer.getMapView();
 		}
+		frameTimer.endPhase(FrameTimer.Phase.SETUP);
 		
 		// Shadowing initialization and Shadow map(s) calculation -- only for the lit rendering types
 		// (LINE, MONOCHROME and UNLIT do not use any light, so shadow maps would be computed for nothing)
@@ -294,6 +297,8 @@ public class RenderEngine {
 			}
 		}
 
+		frameTimer.endPhase(FrameTimer.Phase.SHADOWS);
+
 		// MAIN LOOP : for each element of the world
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
@@ -302,6 +307,8 @@ public class RenderEngine {
 		}
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
+
+		frameTimer.endPhase(FrameTimer.Phase.MAIN_PASS);
 
 		// Display the landmarks if enabled (RenderContext)
 		if (renderContext.isDisplayLandmark()) {
@@ -323,17 +330,18 @@ public class RenderEngine {
 			lightGlowRenderer.render(lighting, camera, renderContext, mainZBuffer);
 		}
 
+		frameTimer.endPhase(FrameTimer.Phase.OVERLAYS);
+
 		// Switch back and front buffers and request GUI repaint
 		guiView.renderView();
+		frameTimer.endPhase(FrameTimer.Phase.PRESENT);
 
 		// Snapshot this frame's diagnostic deltas (RasterizerStats) -- see its Javadoc.
 		stats.endFrame();
 		
-		long end_millisec = System.currentTimeMillis();
-		
-		long duration_millisec = end_millisec - start_millisec;
-		if (Tracer.stats) Tracer.traceStats(this.getClass(), "Rendering duration : " + duration_millisec + " millisec, FPS : " + (float)1000/duration_millisec);			
-		
+		frameTimer.endFrame();
+		if (Tracer.stats) Tracer.traceStats(this.getClass(), frameTimer + ", FPS: " + String.format("%.1f", 1000 / Math.max(frameTimer.getFrameMillis(), 1e-3f)));
+
 		return zBuffer;
 	}
 	
@@ -782,6 +790,13 @@ public class RenderEngine {
 	public String renderStats() {		
 		return "Render Engine - Processed: elements: "+nbe+", triangles: "+nbt+". Triangles: displayed: "+nbt_in+", not displayed: "+nbt_out+", backfacing: "+nbt_bf+"\n"+stats.toString();
 
+	}
+
+	/**
+	 * @return the time of each phase of the last frame rendered (see FrameTimer)
+	 */
+	public FrameTimer getFrameTimer() {
+		return frameTimer;
 	}
 
 	/** Direct access to the main pass's RasterizerStats for individual counters (lifetime totals, this-frame deltas). */

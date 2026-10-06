@@ -351,8 +351,8 @@ devraient pas faire partie de l'API, ou demandent une décision.
 
 19 champs `public static` non `final`, visibles et modifiables par tout utilisateur :
 
-- `Vector3.nb_vectors`, `Vector4.nb_vectors`, `nb_to_display` : compteurs d'instrumentation, dont l'audit de
-  performance (D1) recommande déjà la suppression.
+- ~~`Vector3.nb_vectors`, `Vector4.nb_vectors`, `nb_to_display`~~ : compteurs d'instrumentation, **supprimés**
+  (octobre 2026, audit de performance D1).
 - `Light.DEFAULT_LIGHT_INTENSITY` : une constante **non `final`**, qu'un utilisateur peut changer pour tout le
   moteur. À rendre `final`.
 - Les drapeaux de `Tracer` (`function`, `error`, `exception`…) : à cacher derrière des méthodes, ou à sortir de
