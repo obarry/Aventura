@@ -1,6 +1,15 @@
 # Aventura — Audit de performance
 
-*Septembre 2026. Périmètre : `src/main` (moteur, modèle, maths, vues), pur Java, rendu CPU.*
+*Version 1 : 30 septembre 2026. **Version 2 : 6 octobre 2026**, mise à jour sur la branche `Refactoring`
+(commit `d3a2a47`, tag `v2-3-0`). Périmètre : `src/main` (moteur, modèle, maths, vues), pur Java, rendu CPU.*
+
+> **Ce qui change dans la version 2.** Depuis la version 1, le moteur a gagné les ombres des spots (shadow map en
+> perspective) et des lumières ponctuelles (cube map à 6 faces), le clipping du plan proche, les ombres douces
+> (PCF 3 × 3, désormais activées par défaut dans `UrbanScape`) et les lumières visibles (halo, soleil, lens flare,
+> rayons de lumière). Le chemin par pixel du moteur, lui, n'a pas changé : **tous les constats de la version 1
+> restent valables**. La version 2 ajoute le **coût mesuré des nouvelles fonctions**, de nouvelles propositions
+> (N1 à N7) et l'**état d'avancement** de chaque proposition : voir le [§10](#10-mise-à-jour-du-6-octobre-2026--nouvelles-fonctions-et-état-davancement).
+> Les §0 à §9 sont ceux de la version 1, complétés par des encadrés « **v2** » là où la situation a changé.
 
 L'objectif est d'accélérer le moteur **sans le rendre illisible** : chaque proposition indique son gain (mesuré
 quand c'était possible), son coût et son effet sur la lisibilité. Les identifiants (A1, D3, R5…) sont repris dans
@@ -18,6 +27,7 @@ la feuille de route du §8.
 7. [Tracer et instrumentation](#7-tracer-et-instrumentation)
 8. [Feuille de route proposée](#8-feuille-de-route-proposée)
 9. [Ce qu'il vaut mieux ne pas faire](#9-ce-quil-vaut-mieux-ne-pas-faire)
+10. [Mise à jour du 6 octobre 2026 : nouvelles fonctions et état d'avancement](#10-mise-à-jour-du-6-octobre-2026--nouvelles-fonctions-et-état-davancement)
 
 ---
 
@@ -61,6 +71,14 @@ Ces mesures ont été prises sur une machine à **2 cœurs** (Xeon 2,8 GHz, Java
 différentes sur ton portable ; ce sont les tendances qui comptent. Sur 8 à 12 threads, un gain de **×3 à ×5** sur
 l'étape pixels est réaliste après les phases 1 et 2.
 
+> **v2 — synthèse au 6 octobre.** Les nouvelles fonctions ont **déplacé le coût vers les ombres** : avec PCF 3 × 3
+> (défaut d'UrbanScape), une image coûte environ **3,4 fois** une image sans ombres (contre 2 fois en ombres dures).
+> Une lumière ponctuelle ou un spot avec ombres ajoute chacun environ 60 % au temps de l'image. Les mêmes
+> 4 gains rapides (D1, D6, D7, A4) donnent aujourd'hui **−13 à −19 % avec ombres** et divisent par 2 le coût des
+> lumières visibles. Les nouvelles propositions les plus rentables sont le **gradient du PCF par triangle** (N1),
+> l'**élimination, la réutilisation et le cache des passes d'ombre** (N4) et le **calcul unique de la direction et
+> de la distance des lumières** (N3). Détails au [§10](#10-mise-à-jour-du-6-octobre-2026--nouvelles-fonctions-et-état-davancement).
+
 ---
 
 ## 1. Méthode et mesures
@@ -71,6 +89,8 @@ l'étape pixels est réaliste après les phases 1 et 2.
   dans une `ImageView` pendant 40 à 80 images le long du vol d'hélicoptère. La moyenne est prise sur les
   dernières images, une fois le JIT chaud (les premières images prennent 700 à 1 000 ms).
 - Deux configurations : `INTERPOLATE` + spéculaire, avec et sans ombres (shadow map 2000 × 2000).
+- **v2** : `PerfBench2` (même dossier) ajoute les modes `hard`, `pcf`, `point`, `spot`, `sunview` et `sunglow`
+  (§10.2).
 - Profilage avec **Java Flight Recorder** (`-XX:StartFlightRecording`), échantillonnage CPU et allocations.
 - Le benchmark calcule une **somme de contrôle de l'image** : le prototype multithread produit une image
   identique au bit près à la version mono-thread.
@@ -246,6 +266,11 @@ utiliser un `LongAdder`. C'est exactement le cas « Tracer devenu pénalisant »
 n'est pas `Tracer` lui-même qui coûte, mais cette instrumentation qui s'exécute même quand la trace est
 désactivée. **Effort** S · **Lisibilité** +.
 
+> **v2 — toujours présent, et plus coûteux.** Les nouvelles fonctions créent encore plus de vecteurs par pixel
+> (PCF : 2 projections supplémentaires, des produits vectoriels et des normalisations ; lumières ponctuelles et
+> spots : un `new Vector3` à chaque calcul de direction ou de distance). Chacune de ces allocations écrit dans ces
+> deux compteurs partagés. C'est toujours le **prérequis n° 1 du multithreading**.
+
 ### D2. `java.awt.Color` comme type de couleur interne
 
 `Color` est immuable (chaque opération alloue), `getRGBColorComponents(null)` alloue un `float[]`, et le
@@ -254,6 +279,26 @@ allocations** mesurées. Cela lie aussi le modèle à AWT.
 **Proposition** : dans le pipeline, les couleurs circulent en trois `float` (accumulateur) ou en `int` RGB compacté.
 `Color` reste le type de l'**API publique** (`Element.setColor()`, lumières), converti **une fois** à l'entrée
 (préparation de l'image ou du matériau). **Effort** M · **Lisibilité** = (les signatures publiques ne changent pas).
+
+> **v2 — D2 est découpé en deux étapes.**
+>
+> **D2a — gain rapide (phase 1).** Deux changements locaux qui ne touchent aucune API publique :
+> - la **couleur des lumières dont l'intensité ne dépend pas du point** (ambiante, directionnelle) est calculée une
+>   seule fois au lieu d'un `ColorTools.multColor()` par pixel et par lumière. Dans la version finale, cette
+>   préparation se fait au début de l'image (`Lighting.prepareFrame()`) plutôt que dans un cache paresseux, pour
+>   respecter « Refresh, don't cache » et rester sûre en multithread ;
+> - `RGBAccumulator.toRGB()` produit directement un `int` RGB, écrit par un nouveau
+>   `GUIView.drawPixel(x, y, int rgb)` dans le `int[]` de l'image (complète D6). La conversion arrondit comme
+>   `new Color(float, float, float)`, d'où une image identique au bit près.
+>
+> **Mesuré** (§10.3) : les allocations passent de **134 à 21 Mo par image**, il y a presque 3 fois moins de GC, et
+> une image sans ombres coûte **≈ 30 % de moins** que l'image avec les seuls 4 gains rapides.
+> **Effort** S · **Lisibilité** =.
+>
+> **D2b — refactoring (phase 2).** `Material`, `Texture` et `Light` fournissent leurs composantes en `float` (dans un
+> accumulateur fourni par l'appelant) au lieu de renvoyer une `Color`. C'est nécessaire pour les **textures** (un
+> échantillon bilinéaire produit aujourd'hui une ou deux `Color`) et pour les **lumières ponctuelles et spots**, dont
+> la couleur change à chaque pixel avec l'atténuation, ce qu'aucun cache ne peut éviter. **Effort** M.
 
 ### D3. Matériaux et consumers créés pour chaque triangle
 
@@ -302,6 +347,11 @@ de lisibilité et un risque de course de données.
 `GUIView.drawPixel(int x, int y, int rgb)` à côté de la version `Color`.
 **Gain** m : −11 ms · **Effort** S · **Lisibilité** =.
 
+> **v2.** La nouvelle méthode `ImageView.addPixel()` (lumières visibles) évite bien l'allocation de `Color`, mais
+> elle fait un `getRGB()` puis un `setRGB()` par pixel. Dans une vue tournée vers le soleil avec les rayons de
+> lumière, ces deux appels représentent **41 % du temps de l'effet**, qui touche presque tout l'écran. Écrire dans le
+> `int[]` corrige les deux méthodes à la fois (voir N6 au §10).
+
 ### D7. `MapView` en `float[][]` par colonnes → `FloatMap` en `float[]` 1D par lignes
 
 *`MapView` l. 36, utilisé par `ZBuffer` et les shadow maps*
@@ -344,6 +394,10 @@ C'est le découpage « vertex processing → primitive assembly → rasterizatio
 et les événements s'accumulent. `UrbanScape` fait déjà le rendu dans sa propre boucle.
 **Proposition** : une boucle de rendu dédiée (ou un `SwingWorker`) qui ne rend que le **dernier** état de caméra
 demandé. **Effort** S · **Lisibilité** +.
+
+> **v2.** `SceneViewer` (code de test) montre le bon modèle : un thread de rendu dédié qui lit le dernier état
+> demandé. `MovingCamera` et `FractalLandscape_MouseMoving` rendent toujours sur l'EDT : il suffit de reprendre ce
+> modèle.
 
 ---
 
@@ -388,6 +442,13 @@ De plus, il fait 3 divisions par sommet, **refaites pour chaque triangle** qui p
   bords sont déjà gérés par le rasterizer, qui limite lignes et colonnes à l'écran (principe de la « guard band »).
 
 **Effort** M · **Lisibilité** + (un algorithme classique, bien documenté).
+
+> **v2 — partiellement fait.** `NearPlaneClipper` (octobre 2026) clippe désormais les triangles contre le plan proche
+> en perspective, dans la passe principale et dans les shadow maps des spots et des lumières ponctuelles : les
+> triangles derrière la caméra ne produisent plus de coordonnées absurdes. Restent à faire : le **test de frustum
+> par outcodes** (`Triangle.isInViewFrustum()` est inchangé, donc les grands triangles qui traversent l'écran avec
+> leurs 3 sommets dehors sont toujours rejetés), et un **chemin rapide** dans le clipper, qui alloue aujourd'hui
+> 5 à 7 objets pour chaque triangle, même entièrement devant le plan proche (voir N5 au §10).
 
 ### R3. Back-face culling dans l'espace écran
 
@@ -466,11 +527,23 @@ multithreading par tuiles a besoin (§6).
 - Note de qualité : `shadowFactorAt()` interpole bilinéairement les **profondeurs**, ce qui n'est pas du PCF (qui
   interpole les **résultats des comparaisons**, BACKLOG §3).
 
+> **v2.** Le PCF est maintenant implémenté correctement (pondération des comparaisons, `ShadowFilter.PCF_3X3`).
+> L'enjeu de cette section est **multiplié** : il y a maintenant jusqu'à trois types de shadow maps (orthographique,
+> perspective, cube map à 6 faces), et chaque `PointLight` peut coûter 6 passes d'ombre par image. Aucune des
+> propositions ci-dessus n'est encore faite. Voir N4 au §10.
+
 ### R10. Sortir tôt de l'éclairage
 
 Tester `dotNL <= 0` **avant** `shadowFactorAt()` : un pixel qui tourne le dos à la lumière n'est pas éclairé par
 elle, qu'il soit dans l'ombre ou non. On économise une projection et une lecture bilinéaire de la shadow map pour
 environ la moitié des pixels. **Effort** S · **Lisibilité** +.
+
+> **v2 — mesuré, et estimation corrigée.** Le prototype (test de `dotNL` puis de l'intensité de la lumière avant
+> `shadowFactorAt()`, image identique au bit près) ne donne **pas de gain mesurable sur UrbanScape** : le back-face
+> culling a déjà retiré les faces tournées vers l'arrière, et le soleil éclaire la plupart des faces visibles.
+> « La moitié des pixels » était trop optimiste pour cette scène. R10 reste juste et peu coûteux à écrire, mais son
+> gain dépend de la scène : il devient important pour un **spot étroit** ou une **lumière ponctuelle de faible
+> portée**, dont la plupart des pixels sont hors du cône ou hors de portée (voir N2 au §10).
 
 ---
 
@@ -604,6 +677,13 @@ variables locales ajoutées au total en fin de tâche.
 5. **Recouvrement entre images** : rendre l'image N+1 pendant que l'interface affiche l'image N (avec le pool
    d'images de D6).
 
+> **v2.** Deux nouvelles sources de parallélisme faciles :
+> - les **6 faces de la cube map** d'une `PointLight` sont 6 rendus indépendants, de même que les shadow maps de
+>   plusieurs lumières. Il faut d'abord que chaque passe ait ses propres sorties de sommets (D4), car toutes
+>   écrivent aujourd'hui dans `Vertex.prj_position` ;
+> - le **post-traitement des lumières visibles** (`LightGlowRenderer` : halo, rayons de lumière) travaille pixel
+>   par pixel sur l'image terminée, et se découpe donc en bandes sans aucune difficulté.
+
 Sur une machine à 8 à 12 threads logiques, la loi d'Amdahl donne un maximum d'environ ×6 à ×8 pour 95 % de code
 parallèle. En pratique, la bande passante mémoire, l'hyperthreading et le déséquilibre de charge ramènent cela à
 **×3 à ×5**. Tu verras alors le moteur utiliser 60 à 90 % du CPU au lieu de 8 %.
@@ -688,3 +768,238 @@ Principe directeur : **optimiser les chemins de données, pas les concepts**. `F
 `Material`, `TriangleRasterizer` et les deux contextes gardent leur rôle. Ce qui change, c'est *comment* les
 données circulent à l'intérieur. Chaque optimisation mérite un commentaire qui donne son équivalent GPU : c'est
 là que le projet reste didactique.
+
+---
+
+## 10. Mise à jour du 6 octobre 2026 : nouvelles fonctions et état d'avancement
+
+### 10.1 Ce qui a changé dans le code
+
+Entre la version 1 (commit `6d7a016`) et la branche `Refactoring` actuelle (`d3a2a47`), les commits concernant le
+moteur sont :
+
+- **shadow maps en perspective** (`ShadowingLight` généralisé) et **ombres des spots** ;
+- **ombres des lumières ponctuelles** : cube map à 6 faces (`PointLight`, 512 × 512 par face par défaut). Seules
+  les faces qui voient une partie de la scène sont calculées ;
+- **clipping du plan proche** (`NearPlaneClipper`), dans la passe principale et dans les passes d'ombre en
+  perspective ;
+- **ombres douces PCF 3 × 3** (`ShadowFilter`), avec un *receiver plane depth bias* calculé à chaque pixel. Elles
+  sont activées par défaut pour le soleil d'`UrbanScape` ;
+- **lumières visibles** (`LightGlowRenderer`) : halo des lumières ponctuelles et des spots, disque et halo du
+  soleil, lens flare, rayons de lumière (*light shafts*), en post-traitement sur l'image terminée ;
+- le reste du diff (environ 100 fichiers) est l'en-tête de licence et la documentation.
+
+Le **chemin par pixel de la passe principale n'a pas changé** : sans ombres, l'image produite est identique au bit
+près à celle de la version 1, et le temps est le même. Aucune des propositions des phases 1 à 3 n'a encore été
+réalisée, à part le clipping du plan proche (R2, en partie).
+
+### 10.2 Mesures
+
+Même benchmark qu'au §1 (`UrbanScape`, 1280 × 720, 8 912 triangles, `INTERPOLATE` + spéculaire). Médianes de 2 ou 3
+exécutions alternées, 40 images, sur 2 cœurs.
+
+⚠ La machine de test était **environ 1,8 fois plus lente** que le 30 septembre, et plus bruitée (±10 %) : l'ancien
+code, mesuré à nouveau dans la même session, donne 214 ms sans ombres et 413 ms avec. Comparer les colonnes
+**entre elles**, pas avec les chiffres du §0.
+
+| Configuration | Temps par image | Par rapport à « sans ombres » |
+|---|---:|---:|
+| Version 1, sans ombres | 214 ms | — |
+| **Actuel, sans ombres** | **≈ 210 ms** | ×1 (image identique) |
+| Version 1, soleil avec ombres | 413 ms | ×1,9 |
+| Actuel, soleil, ombres dures (`HARD`) | ≈ 430 ms | ×2,1 |
+| **Actuel, soleil, PCF 3 × 3** (défaut d'`UrbanScape`) | **≈ 720 ms** | **×3,4** (+65 % par rapport à `HARD`) |
+| Actuel, soleil `HARD` + **1 lumière ponctuelle** avec ombres | ≈ 680 ms | ×3,2 (+250 ms) |
+| Actuel, soleil `HARD` + **1 spot** avec ombres | ≈ 680 ms | ×3,2 (+250 ms) |
+| Vue tournée vers le soleil, sans lumières visibles | ≈ 40 ms | — |
+| La même vue, avec halo, disque et rayons de lumière | ≈ 120 ms | +80 ms pour l'effet |
+
+Où va le temps (JFR, part des échantillons) :
+
+| Configuration | Passes d'ombre | `shadowFactorAt()` | Autres points notables |
+|---|---:|---:|---|
+| Soleil `HARD` | ≈ 30 % | 34 % | écriture de la shadow map (`MapView.set`) en tête des méthodes les plus chères |
+| Soleil PCF 3 × 3 | ≈ 15-20 % (même coût absolu qu'en `HARD`) | **59 %** | dont **23 %** pour les 2 projections supplémentaires par pixel (`posInLightSpace1`) |
+| + lumière ponctuelle | ≈ 26 % | 43 % | jusqu'à 6 passes d'ombre ; direction et distance de la lumière recalculées plusieurs fois par pixel |
+| + spot | ≈ 36 % | 42 % | la shadow map est consultée même pour les pixels hors du cône |
+| Lumières visibles | — | — | rayons de lumière **73 %** de l'effet, `addPixel()` (via `getRGB`/`setRGB`) **41 %** |
+
+### 10.3 Gains rapides, mesurés à nouveau sur le code actuel
+
+Prototype sur une copie jetable : **D1** (compteurs), **D7** (`MapView` en `float[]` 1D), **D6** (`int[]` direct,
+y compris dans `addPixel()`) et **A4** (`Matrix4 × Vector4` déroulé). Les images sont identiques au bit près dans
+les six configurations.
+
+| Configuration | Actuel | Avec les 4 gains rapides | Gain |
+|---|---:|---:|---:|
+| Sans ombres | ≈ 218 ms | ≈ 207 ms | −5 % (dans le bruit ce jour-là ; −26 % le 30 septembre avec A2 en plus) |
+| Soleil `HARD` | ≈ 427 ms | ≈ 373 ms | −13 % |
+| Soleil PCF 3 × 3 | ≈ 772 ms | ≈ 625 ms | **−19 %** |
+| + lumière ponctuelle | ≈ 665 ms | ≈ 557 ms | −16 % |
+| + spot | ≈ 695 ms | ≈ 650 ms | −7 % (mesure très bruitée) |
+| Vue vers le soleil avec lumières visibles | ≈ 118 ms | ≈ 79 ms | −33 % (le coût de l'effet est divisé par 2) |
+
+Ces quatre changements sont petits, sans effet sur la lisibilité, et ils profitent davantage aux nouvelles
+fonctions qu'à l'ancienne passe principale.
+
+#### Avec D2a en plus (couleurs des lumières préparées une fois, accumulateur → `int` direct)
+
+Mesuré dans une seconde série alternée (même jour, mêmes réserves sur le bruit), images toujours identiques au bit
+près :
+
+| Configuration | Actuel | 4 gains rapides | **+ D2a** | Gain total |
+|---|---:|---:|---:|---:|
+| Sans ombres | ≈ 222 ms | ≈ 173 ms | **≈ 122 ms** | **−45 %** |
+| Soleil PCF 3 × 3 | ≈ 659 ms | ≈ 581 ms | ≈ 557 ms | −15 % |
+| + lumière ponctuelle | ≈ 677 ms | ≈ 616 ms | ≈ 532 ms | −21 % |
+
+| Allocations, sans ombres | 4 gains rapides | + D2a |
+|---|---:|---:|
+| Mémoire allouée par image | ≈ 134 Mo | **≈ 21 Mo** |
+| dont `Color` et leurs `float[]` | ≈ 87 Mo | ≈ 1 Mo |
+| Nombre de GC (40 images) | 47 | 17 |
+
+Lecture :
+
+- dans cette série, les 4 gains rapides donnent −22 % sans ombres. Le −5 % du tableau précédent était dû au bruit
+  de la machine ;
+- **D2a est le gain rapide le plus rentable de tous** sur la passe principale : il supprime presque toutes les
+  allocations restantes ;
+- avec PCF, le gain de D2a est plus faible (−4 %) : le temps y est dominé par `shadowFactorAt()` (N1). Avec une
+  lumière ponctuelle, il reste −14 %, parce que la lumière ambiante et le soleil n'allouent plus rien. La couleur
+  atténuée de la lumière ponctuelle, elle, est toujours recréée à chaque pixel, ce que corrigera D2b.
+
+### 10.4 Nouvelles propositions
+
+#### N1. PCF : calculer le plan du récepteur une fois par triangle, pas à chaque pixel
+
+*`ShadowingLight.shadowFactorAt(MapView, …)`, `posInLightSpace1()`*
+
+Pour son *receiver plane depth bias*, le PCF mesure à chaque pixel le gradient de profondeur de la surface :
+2 tangentes (produits vectoriels et normalisations), puis **2 projections supplémentaires** dans l'espace de la
+lumière par le chemin lent de `Matrix4 × Vector4`, soit environ 10 allocations par pixel et par lumière. C'est 23 %
+du temps total d'une image en PCF.
+
+Or, sur un triangle plat, **ce gradient est constant** : il ne dépend que du plan du triangle et de la matrice de la
+lumière. Il peut être calculé **une fois par triangle et par lumière** (au moment où le triangle est préparé), à
+partir des 3 sommets projetés dans l'espace de la lumière. Le BACKLOG le pressent déjà (« a gradient computed from
+the geometry instead of two projections »). Pour les surfaces lisses (`INTERPOLATE`), le plan du triangle reste une
+excellente approximation à l'échelle d'un texel.
+
+Deux détails en plus :
+
+- dans le chemin PCF, `map.getInterpolation(s, t)` (lecture bilinéaire de 4 texels) est calculé puis **jamais
+  utilisé** (il ne sert qu'à `HARD`) ;
+- le noyau « 3 × 3 » lit en réalité **16 texels** (4 × 4 pondérés de façon bilinéaire), ce qui est correct pour la
+  qualité. On peut ajouter une **sortie anticipée** classique : lire d'abord les 4 coins, et s'ils donnent tous
+  « éclairé » ou tous « dans l'ombre », ne pas lire les 12 autres. C'est le cas de la grande majorité des pixels,
+  loin des bords d'ombre.
+
+**Gain** e : important en PCF (de l'ordre de −30 %) · **Effort** M · **Lisibilité** + (un calcul géométrique nommé,
+au lieu d'une mesure par différences finies).
+
+#### N2. Ne pas consulter la shadow map d'une lumière qui n'éclaire pas le pixel
+
+*`ShadingConsumer.consume()`*
+
+C'est R10 élargi aux nouvelles lumières. Aujourd'hui, `shadowFactorAt()` est appelé **avant** de savoir si la
+lumière contribue au pixel : un pixel **hors du cône d'un spot** ou **hors de portée d'une lumière ponctuelle**
+(intensité nulle) paie quand même la projection, la sélection de la face et la lecture de la shadow map (16 texels en
+PCF). Il faut tester dans cet ordre, du moins cher au plus cher : intensité > 0 (portée, cône), puis
+`dotNL > 0`, puis l'ombre.
+**Gain** : dans UrbanScape, le spot de test éclaire une grande partie de l'écran, et le gain est resté dans le
+bruit. Il sera **proportionnel à la part de l'écran hors du cône ou hors de portée** : élevé pour un lampadaire ou un
+spot de scène · **Effort** S · **Lisibilité** +.
+
+#### N3. Lumières ponctuelles et spots : un seul calcul de direction et de distance par pixel
+
+Pour une `PointLight` ou un `SpotLight`, un même pixel calcule le vecteur lumière → point **3 ou 4 fois**, avec à
+chaque fois un `new Vector3`, une racine carrée et une normalisation : dans `getIntensity()` (atténuation),
+`getLightVectorAtPoint()` (éclairage), `coneFactor()` (spot, qui appelle à nouveau les deux précédents) et
+`shadowFactorAt()` (sélection de la face, puis encore `getLightVectorAtPoint()` pour le biais).
+**Proposition** : un petit objet réutilisable `LightSample` (direction unitaire, distance, atténuation, facteur de
+cône), calculé une fois par pixel et par lumière, puis passé à l'éclairage et à l'ombre. Le code devient en plus
+plus lisible : il dit clairement ce qui est calculé une fois.
+**Gain** e : moyen · **Effort** S à M · **Lisibilité** +.
+
+#### N4. Passes d'ombre : éliminer, mettre en cache, réutiliser
+
+La passe d'ombre représente maintenant 25 à 35 % du temps, et une `PointLight` peut en faire 6 par image. Chacune
+de ces passes :
+
+- transforme **tous les sommets** et parcourt **tous les triangles** de la scène, sans élimination par élément ;
+- alloue un **nouveau `ZBuffer`** (6 × 513² floats, soit environ 6 Mo par image et par lumière ponctuelle ; 4 Mo pour
+  un spot en 1000²) ;
+- recalcule tout, même quand ni la lumière ni la scène n'ont bougé.
+
+Propositions, par ordre de simplicité :
+
+1. **Réutiliser les buffers** d'une image à l'autre (S).
+2. **Élimination par portée** : un élément entièrement hors de la sphère de portée d'une lumière ponctuelle (ou du
+   cône d'un spot) ne peut pas faire d'ombre sur un point que cette lumière éclaire, puisque le segment lumière →
+   point reste dans la sphère. On peut donc l'ignorer dans la passe d'ombre. Avec des sphères englobantes (R1),
+   c'est un test par élément (M).
+3. **Élimination par face** de la cube map (R1 dans le frustum de chaque face) (M).
+4. **Cache avec indicateur de changement** (D8, déjà noté dans le BACKLOG) : une lampe fixe dans une scène fixe
+   n'a besoin de sa cube map qu'**une seule fois** (M).
+5. Le **`castShadows` par élément** prévu dans le BACKLOG (S).
+
+#### N5. `NearPlaneClipper` : chemin rapide
+
+`NearPlaneClipper.clip()` alloue 3 `Corner`, 2 `ArrayList`, au moins un `ClippedTriangle` et un itérateur **pour
+chaque triangle** rendu en perspective, alors que dans la quasi-totalité des cas les 3 sommets sont devant le plan
+proche et que rien n'est clippé.
+**Proposition** : si les 3 `w` sont au-dessus du plan proche, rasteriser directement le triangle d'origine. Une
+ligne, sans effet sur le reste. Le coût mesuré est faible (≈ 0,1 %), mais c'est du bruit d'allocation en moins et
+cela prépare le test par outcodes (R2), qui donne le même résultat sans aucune division.
+**Effort** S · **Lisibilité** =.
+
+#### N6. Lumières visibles : écrire dans le `int[]`, et paralléliser plus tard
+
+`LightGlowRenderer` est bien conçu pour la performance : calculs sur des `float`, rayons de lumière calculés à 1/4 de
+la résolution puis interpolés, visibilité estimée avec 32 à 48 échantillons du Z-buffer. Son coût vient
+surtout de l'écriture : `addPixel()` passe par `getRGB()`/`setRGB()` pour presque chaque pixel de l'écran (rayons de
+lumière). Avec un accès direct au `int[]` (D6), le coût de l'effet est **divisé par 2** environ (mesuré : de ≈ 80 à ≈ 40 ms). Le
+masque des rayons lit aussi le Z-buffer 4 fois par point de grille, via le stockage par colonnes (D7).
+Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
+
+#### N7. Éclairage : ce que les nouvelles fonctions ajoutent à A2 et D5
+
+- `shadowFactorAt()` appelle `normal.normalize()`, qui **modifie la normale du fragment** (D5) : le résultat est
+  correct aujourd'hui, mais c'est un effet de bord à supprimer avant le multithreading.
+- Avec le PCF, `shadowFactorAt()` renvoie une valeur entre 0 et 1, et la contribution est multipliée par ce facteur.
+  La structure de `ShadingConsumer` (une boucle sur les lumières) se prête bien à la réorganisation proposée en A2,
+  N2 et N3 : **calculer une fois** la couleur de base, la normale unitaire et la direction de vue, puis pour chaque
+  lumière **`LightSample` → test de contribution → ombre → accumulation**.
+
+### 10.5 État d'avancement des propositions
+
+| Id | Proposition | État au 6 octobre |
+|---|---|---|
+| D1 | Compteurs statiques des vecteurs | À faire (priorité 1, prérequis du multithreading) |
+| D7 | `FloatMap` en `float[]` 1D | À faire (gain re-mesuré en v2) |
+| D6 | Écriture directe dans `int[]` (+ `addPixel()`) | À faire (gain re-mesuré en v2, N6) |
+| A4 | `Matrix4 × Vector4` déroulé | À faire (enjeu accru : PCF et passes d'ombre) |
+| A1, A2, A3, A5, A6, A7 | Chemin par pixel, éclairage, textures | À faire |
+| D2 à D5, D8, D9 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
+| D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape_MouseMoving` |
+| R1, R3 à R7 | Élimination en amont | À faire |
+| R2 | Outcodes et clipping du plan proche | **Partiel** : clipping fait ; outcodes et chemin rapide (N5) à faire |
+| R9 | Passe d'ombre | À faire, enjeu multiplié (N4) |
+| R10 | Sortie anticipée de l'éclairage | À faire, gain dépendant de la scène (N2) |
+| §6 | Multithreading | À faire, après D1, A3, A6, D3 et D5 |
+| §7 | Chronométrage par phase, `PerfBench` dans le dépôt | À faire |
+
+### 10.6 Feuille de route : ce qui change
+
+La phase 1 du §8 reste valable telle quelle. On y ajoute **N2, N3, N5** et le point 1 de **N4** (réutiliser les
+buffers d'ombre), tous de petite taille. **N1** (gradient du PCF par triangle) et les points 2 à 4 de **N4**
+(élimination et cache des passes d'ombre) rejoignent la phase 2, avec R1 et D8 dont ils dépendent.
+
+Les décisions en attente dans le BACKLOG peuvent maintenant s'appuyer sur ces chiffres :
+
+- **PCF 3 × 3 par défaut ?** Aujourd'hui, il coûte environ +65 à +80 % par image avec une seule lumière. Après les
+  gains rapides et N1, l'écart devrait nettement baisser (estimation : de l'ordre de +25 %, à mesurer). Il vaut mieux attendre N1 avant d'en faire le comportement par
+  défaut.
+- **Ombres des lumières ponctuelles** : 6 passes par image, c'est le cas où le cache (N4.4) et l'élimination par
+  portée (N4.2) rapportent le plus.
