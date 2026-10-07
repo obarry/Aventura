@@ -87,7 +87,37 @@ public abstract class Light {
 	 * by position (e.g. a colored gel, a projected texture).
 	 */
 	public Color getLightColorAtPoint(Vector4 point) {
+		if (frameColor != null) return frameColor; // Same color at every point, computed once by prepareFrame()
 		return ColorTools.multColor(lightColor, getIntensity(point));
+	}
+
+	// Color of this light for the frame being rendered, when it is the same at every point of space (see
+	// prepareFrame()). null otherwise, and as soon as a setter changes the color or the intensity of the light.
+	private Color frameColor = null;
+
+	/**
+	 * Prepares this light for a new frame. Called by Lighting.prepareFrame() at the start of each
+	 * RenderEngine.render(): a light whose color is the same at every point (hasUniformColor()) computes it once
+	 * here, instead of once per pixel in getLightColorAtPoint() (performance audit, D2a).
+	 */
+	public void prepareFrame() {
+		frameColor = hasUniformColor() ? ColorTools.multColor(lightColor, getIntensity(null)) : null;
+	}
+
+	/**
+	 * @return true if the color of this light (color x intensity) is the same at every point of space, as for an
+	 *         ambient or a directional light. False by default: the subclasses that can say true override it.
+	 */
+	protected boolean hasUniformColor() {
+		return false;
+	}
+
+	/**
+	 * To be called by every setter that changes the color or the intensity of this light: the color computed
+	 * by prepareFrame() is then no longer valid.
+	 */
+	protected void colorChanged() {
+		frameColor = null;
 	}
 
 	// Set this Light's direction (Directional Light)
@@ -103,7 +133,8 @@ public abstract class Light {
 	
 	// Set this Light's color
 	public void setLightColor(Color c) {
-		this.lightColor = c;	
+		this.lightColor = c;
+		colorChanged();
 	}
 
 
