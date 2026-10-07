@@ -101,6 +101,19 @@ public class RGBAccumulator {
 		return new Color(clamp(r), clamp(g), clamp(b));
 	}
 
+	/**
+	 * Same result as toColor().getRGB(), without creating a Color: each channel is clamped to [0, 1], then
+	 * rounded to 0..255 exactly as java.awt.Color's float constructor does.
+	 * @return the accumulated color as an int RGB value (0xFFRRGGBB)
+	 */
+	public int toRGB() {
+		return 0xFF000000 | (toByte(r) << 16) | (toByte(g) << 8) | toByte(b);
+	}
+
+	private static int toByte(float v) {
+		return (int) (clamp(v) * 255 + 0.5f);
+	}
+
 	private static float clamp(float v) {
 		return v < 0f ? 0f : (v > 1f ? 1f : v);
 	}

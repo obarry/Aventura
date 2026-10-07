@@ -171,6 +171,16 @@ public class Lighting {
 		return pointLights;
 	}
 	
+	/**
+	 * Prepares every light for a new frame (see Light.prepareFrame()). Called by RenderEngine.render() at the
+	 * start of each frame.
+	 */
+	public void prepareFrame() {
+		if (ambient != null) ambient.prepareFrame();
+		for (DirectionalLight light : directionalLights) light.prepareFrame();
+		for (PointLight light : pointLights) light.prepareFrame();
+	}
+
 	public ArrayList<ShadowingLight> getShadowingLights() {
 		return shadowingLights;
 	}

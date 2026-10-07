@@ -92,6 +92,15 @@ public abstract class GUIView extends View {
 	public abstract void drawPixel(int x, int y);
 	
 	public abstract void drawPixel(int x, int y, Color c);
+
+	/**
+	 * Draws a pixel whose color is given as an int RGB value (0xRRGGBB, alpha ignored), as produced by
+	 * RGBAccumulator.toRGB(). Generic implementation through a Color; the specializations (ImageView) write
+	 * the value directly, without creating any object.
+	 */
+	public void drawPixel(int x, int y, int rgb) {
+		drawPixel(x, y, new Color(rgb));
+	}
 	public abstract void drawLine(int x1, int y1, int x2, int y2);
 	
 	/**

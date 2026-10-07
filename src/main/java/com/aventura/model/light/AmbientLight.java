@@ -68,6 +68,12 @@ public class AmbientLight extends Light {
 	@Override
 	public void setIntensity(float intensity) {
 		this.intensity = intensity;
+		colorChanged();
+	}
+
+	@Override
+	protected boolean hasUniformColor() {
+		return true; // Same color at every point: by definition of ambient light
 	}
 
 	// setLightColor(Color) removed: it was an empty override silently no-op'ing Light's working

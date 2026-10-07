@@ -176,6 +176,12 @@ public class DirectionalLight extends ShadowingLight {
 	@Override
 	public void setIntensity(float intensity) {
 		this.intensity = intensity;
+		colorChanged();
+	}
+
+	@Override
+	protected boolean hasUniformColor() {
+		return true; // Same color at every point: a directional light has the same intensity everywhere
 	}
 	
 	@Override

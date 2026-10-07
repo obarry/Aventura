@@ -100,7 +100,7 @@ public class ShadingConsumer implements FragmentConsumer {
 			}
 		}
 
-		view.drawPixel(fragment.getScreenX(), fragment.getScreenY(), accumulator.toColor());
+		view.drawPixel(fragment.getScreenX(), fragment.getScreenY(), accumulator.toRGB());
 		zBuffer.update(fragment.getScreenX(), fragment.getScreenY(), fragment.getZ());
 	}
 }

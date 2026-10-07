@@ -75,7 +75,8 @@ l'étape pixels est réaliste après les phases 1 et 2.
 > (défaut d'UrbanScape), une image coûte environ **3,4 fois** une image sans ombres (contre 2 fois en ombres dures).
 > Une lumière ponctuelle ou un spot avec ombres ajoute chacun environ 60 % au temps de l'image. Les mêmes
 > 4 gains rapides (D1, D6, D7, A4) donnent aujourd'hui **−13 à −19 % avec ombres** et divisent par 2 le coût des
-> lumières visibles. Les nouvelles propositions les plus rentables sont le **gradient du PCF par triangle** (N1),
+> lumières visibles. En y ajoutant **D2a** (la partie rapide de D2 sur les `Color`), une image sans ombres coûte
+> **45 % de moins** et les allocations passent de ≈ 145 à ≈ 21 Mo par image. Les nouvelles propositions les plus rentables sont le **gradient du PCF par triangle** (N1),
 > l'**élimination, la réutilisation et le cache des passes d'ombre** (N4) et le **calcul unique de la direction et
 > de la distance des lumières** (N3). Détails au [§10](#10-mise-à-jour-du-6-octobre-2026--nouvelles-fonctions-et-état-davancement).
 
@@ -721,6 +722,7 @@ parallèle. En pratique, la bande passante mémoire, l'hyperthreading et le dés
 | D1 | Supprimer les compteurs statiques de `Vector3` et `Vector4` | prérequis du multithreading |
 | D7 | `FloatMap` en `float[]` 1D ligne par ligne (réalise BACKLOG §2) | −5 à −28 ms (m) |
 | D6 | Écriture directe dans le `int[]` de l'image, pool d'images (BACKLOG §6) | −11 ms (m) |
+| D2a | **v2** : couleurs des lumières constantes préparées une fois, `RGBAccumulator` → `int` écrit directement | −30 % sans ombres, allocations ÷6 (m, §10.3) |
 | A4 | `Matrix4` déroulée, `float[16]` | inclus dans −14 ms (m) |
 | A2, R10 | Éclairage : valeurs communes calculées une fois, `dotNL` avant l'ombre | fort avec ombres ou textures (e) |
 | R9 | Réutiliser le Z-buffer des ombres | faible à moyen |
@@ -736,7 +738,7 @@ parallèle. En pratique, la bande passante mémoire, l'hyperthreading et le dés
 - **R3** : back-face culling dans l'espace écran (après la correction de l'enroulement de `Sphere`).
 - **R1**, **R5** : volumes englobants, élimination par élément, tri avant → arrière.
 - **A1** : interpolation incrémentale sur des `float`.
-- **D2** : couleurs internes en `float` ou `int`. **D8** : compteurs de version (conservation de la shadow map).
+- **D2b** : matériaux, textures et lumières en `float` (D2a est en phase 1). **D8** : compteurs de version (conservation de la shadow map).
 
 ### Phase 3 — Multithreading
 
@@ -978,10 +980,11 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 |---|---|---|
 | D1 | Compteurs statiques des vecteurs | **Fait** (phase 1, étape 2) : neutre en mono-thread (±5 %, dans le bruit), prérequis du multithreading levé |
 | D7 | `FloatMap` en `float[]` 1D | **Stockage fait** (phase 1, étape 3) : `MapView` en `float[]` ligne par ligne, −10 % sans ombres et en PCF, −15 à −20 % avec une lumière ponctuelle ou un spot (passes d'ombre −15 à −18 %). Reste l'extraction de `FloatMap` hors du paquet `view` (BACKLOG §2) |
-| D6 | Écriture directe dans `int[]` (+ `addPixel()`) | À faire (gain re-mesuré en v2, N6) |
+| D6 | Écriture directe dans `int[]` (+ `addPixel()`) | **Fait** (phase 1, étape 4, avec D2a). Reste le pool d'images (BACKLOG §6) |
 | A4 | `Matrix4 × Vector4` déroulé | À faire (enjeu accru : PCF et passes d'ombre) |
 | A1, A2, A3, A5, A6, A7 | Chemin par pixel, éclairage, textures | À faire |
-| D2 à D5, D8, D9 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
+| D2a | Couleurs des lumières et accumulateur sans `Color` | **Fait** (phase 1, étape 4, avec D6) : sans ombres −43 % (91 → 52 ms, 92 → 11 Mo alloués par image), lumière ponctuelle et spot −15 %, lumières visibles −18 % ; PCF dans le bruit (dominé par N1) |
+| D2b, D3 à D5, D8, D9 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
 | D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape_MouseMoving` |
 | R1, R3 à R7 | Élimination en amont | À faire |
 | R2 | Outcodes et clipping du plan proche | **Partiel** : clipping fait ; outcodes et chemin rapide (N5) à faire |
@@ -992,7 +995,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 
 ### 10.6 Feuille de route : ce qui change
 
-La phase 1 du §8 reste valable telle quelle. On y ajoute **N2, N3, N5** et le point 1 de **N4** (réutiliser les
+La phase 1 du §8 reste valable telle quelle. On y ajoute **D2a** (en tête, avec D1), **N2, N3, N5** et le point 1 de **N4** (réutiliser les
 buffers d'ombre), tous de petite taille. **N1** (gradient du PCF par triangle) et les points 2 à 4 de **N4**
 (élimination et cache des passes d'ombre) rejoignent la phase 2, avec R1 et D8 dont ils dépendent.
 

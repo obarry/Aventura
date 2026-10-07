@@ -28,6 +28,7 @@ package com.aventura.view;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -64,6 +65,10 @@ public class ImageView extends GUIView {
 	// Back buffer: the frame being drawn
 	protected BufferedImage backbuffer;
 	protected Graphics2D backgraph;
+	// The pixels of the back buffer, row by row (index y * width + x, in image coordinates, Y axis down): the
+	// rasterizer writes them directly, without BufferedImage.setRGB() (which converts every pixel through the
+	// ColorModel and allocates an int[] at each call). See docs/PERFORMANCE_AUDIT.md, D6.
+	protected int[] backPixels;
 	
 	// Optional notification of each new frame (called by renderView(), in the rendering thread)
 	private Consumer<BufferedImage> frameListener = null;
@@ -109,6 +114,7 @@ public class ImageView extends GUIView {
 		// stay untouched while it may be displayed
 		backbuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
 		backgraph = (Graphics2D)backbuffer.getGraphics();
+		backPixels = ((DataBufferInt) backbuffer.getRaster().getDataBuffer()).getData();
 		// Fill image with background color pixels
 		backgraph.setColor(backgroundColor != null ? backgroundColor : DEFAULT_BACKGROUND_COLOR);
 		backgraph.fillRect(0, 0, width, height);
@@ -199,7 +205,16 @@ public class ImageView extends GUIView {
 	 */
 	@Override
 	public void drawPixel(int x, int y, Color c) {
-		if (inImage(x, y)) backbuffer.setRGB(x+width/2, -y+height/2, c.getRGB());
+		drawPixel(x, y, c.getRGB());
+	}
+
+	/**
+	 * Same as drawPixel(int, int, Color), with the color given as an int RGB value (0xRRGGBB, the alpha bits
+	 * are ignored): no Color object is needed.
+	 */
+	@Override
+	public void drawPixel(int x, int y, int rgb) {
+		if (inImage(x, y)) backPixels[(-y + height/2) * width + x + width/2] = rgb & 0xFFFFFF;
 	}
 
 	@Override
@@ -230,12 +245,12 @@ public class ImageView extends GUIView {
 	@Override
 	public void addPixel(int x, int y, float r, float g, float b) {
 		if (backbuffer == null || !inImage(x, y)) return;
-		int ix = x + width / 2, iy = -y + height / 2;
-		int p = backbuffer.getRGB(ix, iy);
+		int index = (-y + height / 2) * width + x + width / 2;
+		int p = backPixels[index];
 		int pr = Math.min(255, ((p >> 16) & 255) + Math.round(r * 255));
 		int pg = Math.min(255, ((p >> 8) & 255) + Math.round(g * 255));
 		int pb = Math.min(255, (p & 255) + Math.round(b * 255));
-		backbuffer.setRGB(ix, iy, (pr << 16) | (pg << 8) | pb);
+		backPixels[index] = (pr << 16) | (pg << 8) | pb;
 	}
 
 	/**

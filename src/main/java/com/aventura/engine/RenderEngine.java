@@ -232,6 +232,9 @@ public class RenderEngine {
 		// camera move otherwise. Cheap (one matrix multiplication); done once per frame, shared by
 		// both elementTransform (main render loop) and screenLineRenderer (debug vectors).
 		viewProjection.refresh();
+
+		// Colors of the lights that are the same at every point: computed once for the frame (Light.prepareFrame())
+		if (lighting != null) lighting.prepareFrame();
 		
 		// Geometry calculation : calculate World coordinates for all vertices of the World
 		world.worldProject(); // To be done before potential Light's cameras calculation (need full world geometry available to calculate bounding boxes etc.)
