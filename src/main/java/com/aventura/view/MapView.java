@@ -29,50 +29,48 @@ package com.aventura.view;
 * MapView is a simple Map (array of values, generally int) adapted to the GUIView interface defined by the abstract class GUIView
 * It is used as storage by ZBuffer (depth buffer of the main pass, shadow maps), filled by TriangleRasterizer.
 * It is e.g. used for Shadow mapping rendering but could be used for any purpose when a Map needs to be rendered.
+*
+* Storage: a single float[] of width x height values, row by row (index y * width + x). The rasterizer walks the
+* pixels row by row (x varies, y fixed), so consecutive pixels are consecutive in memory: this is what the CPU
+* caches are made for. (It used to be a float[x][y] array: each pixel of a row was then in a different Java array,
+* with a cache miss almost every time. See docs/PERFORMANCE_AUDIT.md, D7.)
+* The accessors keep the (x, y) convention: the storage is an internal detail.
 * 
  */
 
 public class MapView extends View {
 	
-	protected float[][] map;
+	/** The values, row by row: the value of (x, y) is data[y * width + x] */
+	protected float[] data;
 	
 	/**
-	 * Wraps an existing array, indexed map[x][y] (like every accessor of this class): width = map.length,
-	 * height = map[0].length. (Width and height used to be swapped here, and a 1 column map crashed.)
+	 * Creates a map from an existing array indexed map[x][y]: width = map.length, height = map[0].length.
+	 * The values are copied (the map does not keep a reference to this array).
 	 */
 	public MapView(float[][] map) {
-		this.map = map;
-		
-		this.width = map.length;
-		this.height = map.length > 0 ? map[0].length : 0;
+		this(map.length, map.length > 0 ? map[0].length : 0);
+		for (int x=0; x<width; x++) {
+			for (int y=0; y<height; y++) {
+				set(x, y, map[x][y]);
+			}
+		}
 	}
 	
 	// Recopy constructor
 	public MapView(MapView view) {
 		this.width = view.width;
 		this.height = view.height;
-		
-		this.map = new float[width][height];
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				this.map[i][j] = view.get(i, j);
-			}
-		}
+		this.data = view.data.clone();
 	}
 	
 	public MapView(int width, int height) {
 		this.width = width;
 		this.height = height;
-		
-		this.map = new float[width][height];
+		this.data = new float[width * height]; // Java initializes it with 0
 	}
 	
 	public void initView() {
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				map[i][j] = 0;
-			}
-		}
+		fill(0);
 	}
 	
 	/**
@@ -83,74 +81,69 @@ public class MapView extends View {
 	public void initView(int width, int height) {
 		this.width = width;
 		this.height = height;
-		this.map = new float[width][height]; // Java initializes it with 0
+		this.data = new float[width * height]; // Java initializes it with 0
 	}
 
 	public void initView(float f) {
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				map[i][j] = f;
-			}
-		}
-
+		fill(f);
+	}
+	
+	/** Sets every value of this map to f */
+	public void fill(float f) {
+		java.util.Arrays.fill(data, f);
 	}
 	
 	public float get(int x, int y) {
-		return map[x][y];
+		return data[y * width + x];
 	}
 
 	public void set(int x, int y, float f) {
-		map[x][y] = f;
+		data[y * width + x] = f;
 	}
 	
+	/**
+	 * @return a copy of the values, as an array indexed [x][y] (the map itself is stored row by row, see the class
+	 * description): changing this array does not change the map.
+	 */
 	public float[][] getMap() {
+		float[][] map = new float[width][height];
+		for (int x=0; x<width; x++) {
+			for (int y=0; y<height; y++) {
+				map[x][y] = get(x, y);
+			}
+		}
 		return map;
 	}
 	
 	public float getMax() {
-		float max = map[0][0];
-		
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				if (map[i][j] > max) max = map[i][j];
-			}
+		float max = data[0];
+		for (int i=1; i<data.length; i++) {
+			if (data[i] > max) max = data[i];
 		}
-		
 		return max;
 	}
 	
 	public float getMin() {
-		float min = map[0][0];
-
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				if (map[i][j] < min) min = map[i][j];
-			}
+		float min = data[0];
+		for (int i=1; i<data.length; i++) {
+			if (data[i] < min) min = data[i];
 		}
-
 		return min;
 	}
 
 	public float getAverage() {
 		float avg = 0;
-		
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				avg += map[i][j];
-			}
+		for (int i=0; i<data.length; i++) {
+			avg += data[i];
 		}
-		
 		return avg/(width*height);
 	}
 	
 	public int getNbOfPixelsInRange(float min, float max) {
 		int n = 0;
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				if(map[i][j]>=min && map[i][j]<=max) n++;
-			}
+		for (int i=0; i<data.length; i++) {
+			if (data[i]>=min && data[i]<=max) n++;
 		}
-		
 		return n;
 	}
 
@@ -169,20 +162,15 @@ public class MapView extends View {
 			return;
 		}
 		
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				map[i][j] = (map[i][j]-min)/(max-min);
-			}
+		for (int i=0; i<data.length; i++) {
+			data[i] = (data[i]-min)/(max-min);
 		}
 	}
 	
 	// To zero values beyond far (e.g. for Zbuffering)
 	public void removeFar(float far, float replaceBy) {
-
-		for (int i=0; i<width; i++) {
-			for (int j=0; j<height; j++) {
-				if (map[i][j] >= far) map[i][j] = replaceBy;
-			}
+		for (int i=0; i<data.length; i++) {
+			if (data[i] >= far) data[i] = replaceBy;
 		}
 	}
 	
@@ -219,7 +207,7 @@ public class MapView extends View {
 		if (y1>=this.height) y1 = this.height - 1;
 
 		// Calculate the interpolated value as per Bilinear Filtering algorithm
-		return getBilinearFilteredComponent(map[x0][y0], map[x0][y1], map[x1][y0], map[x1][y1], u_ratio, v_ratio);
+		return getBilinearFilteredComponent(get(x0, y0), get(x0, y1), get(x1, y0), get(x1, y1), u_ratio, v_ratio);
 
 	}
 

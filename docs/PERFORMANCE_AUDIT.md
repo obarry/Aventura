@@ -977,7 +977,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | Id | Proposition | État au 6 octobre |
 |---|---|---|
 | D1 | Compteurs statiques des vecteurs | **Fait** (phase 1, étape 2) : neutre en mono-thread (±5 %, dans le bruit), prérequis du multithreading levé |
-| D7 | `FloatMap` en `float[]` 1D | À faire (gain re-mesuré en v2) |
+| D7 | `FloatMap` en `float[]` 1D | **Stockage fait** (phase 1, étape 3) : `MapView` en `float[]` ligne par ligne, −10 % sans ombres et en PCF, −15 à −20 % avec une lumière ponctuelle ou un spot (passes d'ombre −15 à −18 %). Reste l'extraction de `FloatMap` hors du paquet `view` (BACKLOG §2) |
 | D6 | Écriture directe dans `int[]` (+ `addPixel()`) | À faire (gain re-mesuré en v2, N6) |
 | A4 | `Matrix4 × Vector4` déroulé | À faire (enjeu accru : PCF et passes d'ombre) |
 | A1, A2, A3, A5, A6, A7 | Chemin par pixel, éclairage, textures | À faire |

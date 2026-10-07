@@ -34,6 +34,12 @@ inheritance: `GUIView.initView(map)` or a small map-to-image adapter can show an
 does not need to *be* a map. The bilinear filtering duplicated between `MapView` and `Texture` can
 be factored at the same time.
 
+**Done (October 2026): the storage.** `MapView` now stores its values in a single `float[]`, row by
+row (index `y * width + x`), instead of a `float[x][y]` array: the rasterizer walks the pixels row by
+row, so they are now consecutive in memory (performance audit D7: about −10 % per frame, −15 to
+−20 % with point or spot light shadows). The accessors keep the `(x, y)` convention; `getMap()` now
+returns a copy. The extraction of `FloatMap` out of the `view` package remains to be done.
+
 ## 3. Shadows
 
 - **Done (October 2026): spot and point light shadows.** A `SpotLight` has one perspective (frustum)
