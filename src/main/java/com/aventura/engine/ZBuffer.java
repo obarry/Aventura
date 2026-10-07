@@ -90,11 +90,7 @@ public class ZBuffer {
 	 * so that any actual fragment is closer and will pass the depth test).
 	 */
 	public void clear(float initValue) {
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < height; j++) {
-				map.set(i, j, initValue);
-			}
-		}
+		map.fill(initValue);
 	}
 
 	/**
