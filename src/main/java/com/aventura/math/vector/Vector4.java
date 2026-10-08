@@ -27,7 +27,6 @@ package com.aventura.math.vector;
 
 import com.aventura.math.Constants;
 import com.aventura.math.tools.MathTools;
-import com.aventura.tools.tracing.Tracer;
 
 /**
  * A Vector 4 in 3D Graphics is a Vector 3 (x,y,z) + w, a fourth component that represent the point information: if null this is a Vector, else a Point
@@ -589,20 +588,7 @@ public class Vector4 {
 	 * @return W, a new Vector4, result of the multiplication
 	 */
 	public Vector4 times(Matrix4 A) {
-		Vector4 r = new Vector4();
-		
-		for (int i=0; i<Constants.SIZE_4; i++) {
-			for (int j=0; j<Constants.SIZE_4; j++) {
-				try {
-					r.set(i, r.get(i)+A.get(i,j)*this.get(j));
-				} catch (IndexOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();
-				}
-			}
-		}		
-		return r;
+		return A.times(this); // Written out in Matrix4.times(Vector4)
 	}
 	
 	/**
@@ -611,24 +597,12 @@ public class Vector4 {
 	 * @param A the Matrix4
 	 */
 	public void timesEquals(Matrix4 A) {
-		float[] array = new float[Constants.SIZE_4];
-
-		for (int i=0; i<Constants.SIZE_4; i++) {
-			array[i] = 0;
-			for (int j=0; j<Constants.SIZE_4; j++) {
-				try {
-					array[i]+=A.get(i,j)*this.get(j);
-				} catch (IndexOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();
-				}
-			}
-		}		
-		this.x = array[0];
-		this.y = array[1];
-		this.z = array[2];
-		this.w = array[3];
+		float[] r0 = A.array[0], r1 = A.array[1], r2 = A.array[2], r3 = A.array[3];
+		float x = this.x, y = this.y, z = this.z, w = this.w;
+		this.x = r0[0]*x + r0[1]*y + r0[2]*z + r0[3]*w;
+		this.y = r1[0]*x + r1[1]*y + r1[2]*z + r1[3]*w;
+		this.z = r2[0]*x + r2[1]*y + r2[2]*z + r2[3]*w;
+		this.w = r3[0]*x + r3[1]*y + r3[2]*z + r3[3]*w;
 	}
 	
 	/**

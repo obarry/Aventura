@@ -390,12 +390,7 @@ public class Matrix4 {
 	 */
 	public Matrix4 times(Matrix4 b) {
 		Matrix4 r = new Matrix4();
-		
-		for (int i=0; i<Constants.SIZE_4; i++) {
-			for (int j=0; j<Constants.SIZE_4; j++) {
-				r.set(i,j, this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j) + this.get(i,3)*b.get(3, j));
-			}
-		}
+		multiply(this.array, b.array, r.array);
 		return r;
 	}
 	
@@ -404,13 +399,21 @@ public class Matrix4 {
 	 * @param B
 	 */
 	public void timesEquals(Matrix4 b) {
-		float[][] array = new float[Constants.SIZE_4][Constants.SIZE_4];
+		float[][] result = new float[Constants.SIZE_4][Constants.SIZE_4];
+		multiply(this.array, b.array, result);
+		this.array = result;
+	}
+
+	/**
+	 * c = a.b, on the arrays directly (c must be a different array from a and b).
+	 */
+	private static void multiply(float[][] a, float[][] b, float[][] c) {
 		for (int i=0; i<Constants.SIZE_4; i++) {
+			float[] ai = a[i];
 			for (int j=0; j<Constants.SIZE_4; j++) {
-				array[i][j] = this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j) + this.get(i,3)*b.get(3, j);
+				c[i][j] = ai[0]*b[0][j] + ai[1]*b[1][j] + ai[2]*b[2][j] + ai[3]*b[3][j];
 			}
 		}
-		this.array = array;
 	}
 	
 	/**
@@ -527,10 +530,23 @@ public class Matrix4 {
 		}
 	}
 
+	/**
+	 * W = A.V: product of this Matrix4 A by the Vector4 V (a column vector).
+	 *
+	 * Written out (16 multiplications, 12 additions) rather than as a double loop with indexed accessors: this
+	 * is the most frequent operation of the engine, for every vertex and, with shadows, several times for every
+	 * pixel (projection in the light space). See docs/PERFORMANCE_AUDIT.md, A4.
+	 * @param v the Vector4 V
+	 * @return W, a new Vector4
+	 */
 	public Vector4 times(Vector4 v) {
-		// Rely on the service provided by the Vector4D class
-		// Optimal call is to use Vector4D method directly
-		return v.times(this);
+		float x = v.x, y = v.y, z = v.z, w = v.w;
+		float[] r0 = array[0], r1 = array[1], r2 = array[2], r3 = array[3];
+		return new Vector4(
+				r0[0]*x + r0[1]*y + r0[2]*z + r0[3]*w,
+				r1[0]*x + r1[1]*y + r1[2]*z + r1[3]*w,
+				r2[0]*x + r2[1]*y + r2[2]*z + r2[3]*w,
+				r3[0]*x + r3[1]*y + r3[2]*z + r3[3]*w);
 	}
 	
 	/**
