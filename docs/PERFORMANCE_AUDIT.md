@@ -900,6 +900,14 @@ Deux détails en plus :
 **Gain** e : important en PCF (de l'ordre de −30 %) · **Effort** M · **Lisibilité** + (un calcul géométrique nommé,
 au lieu d'une mesure par différences finies).
 
+> **Mesure du 8 octobre (après les étapes 1 à 5 de la phase 1) — estimation corrigée.** Le JIT supprime
+> maintenant les allocations des deux projections supplémentaires : `posInLightSpace1()` ne pèse plus que 0,1 %
+> du temps. En PCF, **72 % du temps est dans `shadowFactorAt()`, et presque tout dans la boucle des 16 lectures
+> de la shadow map** : une carte de 2000 × 2000 fait 16 Mo et ne tient dans aucun cache, si bien que chaque pixel
+> paie des défauts de cache. Le calcul du plan par triangle ne rapporterait donc presque rien aujourd'hui. Les
+> leviers efficaces sont, dans l'ordre : la **sortie anticipée** sur les 4 coins (lire 4 texels au lieu de 16
+> loin des bords d'ombre), et une shadow map **plus petite ou mieux cadrée** (`SHADOWING_BOX_VIEWFRUSTUM`, R9).
+
 #### N2. Ne pas consulter la shadow map d'une lumière qui n'éclaire pas le pixel
 
 *`ShadingConsumer.consume()`*
@@ -981,7 +989,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | D1 | Compteurs statiques des vecteurs | **Fait** (phase 1, étape 2) : neutre en mono-thread (±5 %, dans le bruit), prérequis du multithreading levé |
 | D7 | `FloatMap` en `float[]` 1D | **Stockage fait** (phase 1, étape 3) : `MapView` en `float[]` ligne par ligne, −10 % sans ombres et en PCF, −15 à −20 % avec une lumière ponctuelle ou un spot (passes d'ombre −15 à −18 %). Reste l'extraction de `FloatMap` hors du paquet `view` (BACKLOG §2) |
 | D6 | Écriture directe dans `int[]` (+ `addPixel()`) | **Fait** (phase 1, étape 4, avec D2a). Reste le pool d'images (BACKLOG §6) |
-| A4 | `Matrix4 × Vector4` déroulé | À faire (enjeu accru : PCF et passes d'ombre) |
+| A4 | `Matrix4 × Vector4` déroulé | **Fait** (phase 1, étape 5) : **sans gain mesurable** (le JIT optimisait déjà la boucle d'origine), gardé pour la lisibilité. Le stockage `float[16]` n'est pas fait (pas d'enjeu mesuré) |
 | A1, A2, A3, A5, A6, A7 | Chemin par pixel, éclairage, textures | À faire |
 | D2a | Couleurs des lumières et accumulateur sans `Color` | **Fait** (phase 1, étape 4, avec D6) : sans ombres −43 % (91 → 52 ms, 92 → 11 Mo alloués par image), lumière ponctuelle et spot −15 %, lumières visibles −18 % ; PCF dans le bruit (dominé par N1) |
 | D2b, D3 à D5, D8, D9 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
