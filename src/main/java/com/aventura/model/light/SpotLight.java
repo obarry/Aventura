@@ -314,8 +314,8 @@ public class SpotLight extends PointLight {
 	 * method too, for its own six-face cube map).
 	 */
 	@Override
-	public float shadowFactorAt(Vector4 worldPosition, Vector3 normal) {
-		return singleShadowFactorAt(worldPosition, normal);
+	public float shadowFactorAt(Vector4 worldPosition, Vector3 unitNormal, float dotNL) {
+		return singleShadowFactorAt(worldPosition, unitNormal, dotNL);
 	}
 
 	/**

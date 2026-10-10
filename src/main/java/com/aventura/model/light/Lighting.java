@@ -30,6 +30,7 @@ import java.util.ArrayList;
 
 import com.aventura.engine.Fragment;
 import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
 import com.aventura.model.material.Material;
 import com.aventura.tools.color.RGBAccumulator;
 import com.aventura.tools.tracing.Tracer;
@@ -203,8 +204,18 @@ public class Lighting {
 		if (!hasAmbient()) {
 			return;
 		}
-		Color baseColor = material.baseColorAt(fragment);
-		Color ambientLightColor = ambient.getLightColorAtPoint(fragment.getWorldPosition());
+		accumulateAmbient(fragment.getWorldPosition(), material.baseColorAt(fragment), out);
+	}
+
+	/**
+	 * Same as accumulateAmbient(Fragment, Material, RGBAccumulator), with the base color of the material already
+	 * computed by the caller (ShadingConsumer computes it once per pixel, for the ambient term and every light).
+	 */
+	public void accumulateAmbient(Vector4 position, Color baseColor, RGBAccumulator out) {
+		if (!hasAmbient()) {
+			return;
+		}
+		Color ambientLightColor = ambient.getLightColorAtPoint(position);
 		out.addProduct(ambientLightColor, baseColor);
 	}
 
@@ -248,6 +259,28 @@ public class Lighting {
 		// per term -- halves the allocation this call makes (getLightColorAtPoint() still returns
 		// a java.awt.Color, since it's a Light-extensible contract; see its Javadoc).
 		Color lightColor = light.getLightColorAtPoint(fragment.getWorldPosition());
+
+		accumulateContribution(lightColor, baseColor, normal, lightVector, dotNL, viewerDirection, material, fragment, out, lightFactor);
+	}
+
+	/**
+	 * The diffuse and specular terms of one light, from values the caller has already computed for this pixel
+	 * (ShadingConsumer: the base color, the unit normal and the viewer direction once per pixel; the light
+	 * vector, dotNL and the light color once per light). See accumulateContribution(Light, Fragment, ...).
+	 *
+	 * @param lightColor      color of the light at this point (intensity included)
+	 * @param baseColor       base color of the material at this point
+	 * @param normal          unit surface normal
+	 * @param lightVector     unit vector from the point towards the light
+	 * @param dotNL           normal . lightVector, strictly positive (the caller skips the light otherwise)
+	 * @param viewerDirection unit vector from the point towards the eye; may be null when there is no specular term
+	 * @param material        the material (specular color and exponent)
+	 * @param fragment        the fragment (for Material.specularColorAt())
+	 * @param out             the accumulator of the pixel color
+	 * @param lightFactor     1 for a lit point, between 0 and 1 at the edge of a soft shadow
+	 */
+	public void accumulateContribution(Color lightColor, Color baseColor, Vector3 normal, Vector3 lightVector, float dotNL,
+			Vector3 viewerDirection, Material material, Fragment fragment, RGBAccumulator out, float lightFactor) {
 
 		// Diffuse term: Ci . D.T . dotNL
 		out.addProduct(lightColor, baseColor, dotNL * lightFactor);

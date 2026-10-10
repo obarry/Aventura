@@ -383,7 +383,7 @@ public class PointLight extends ShadowingLight {
 	 * is relevant for this point.
 	 */
 	@Override
-	public float shadowFactorAt(Vector4 worldPosition, Vector3 normal) {
+	public float shadowFactorAt(Vector4 worldPosition, Vector3 unitNormal, float dotNL) {
 		if (faceMap == null) {
 			// No shadow map generated (yet) for this light -- treat as fully lit.
 			return 1f;
@@ -396,7 +396,7 @@ public class PointLight extends ShadowingLight {
 			// This face was skipped this frame (facesNeeded()): nothing there could cast a shadow.
 			return 1f;
 		}
-		return shadowFactorAt(map, faceViewProjection[face], facePerspectiveCtx[face], faceShadowBiasBase[face], worldPosition, normal);
+		return shadowFactorAt(map, faceViewProjection[face], facePerspectiveCtx[face], faceShadowBiasBase[face], worldPosition, unitNormal, dotNL);
 	}
 
 	/**

@@ -480,7 +480,21 @@ public abstract class ShadowingLight extends Light {
 	 *         setShadowFilter()), any value in between at the edge of a shadow
 	 */
 	public float shadowFactorAt(Vector4 worldPosition, Vector3 normal) {
-		return singleShadowFactorAt(worldPosition, normal);
+		return shadowFactorAt(worldPosition, normal, getLightVectorAtPoint(worldPosition).dot(normal.normalize()));
+	}
+
+	/**
+	 * Same as shadowFactorAt(Vector4, Vector3), for a caller that already has the unit normal and its dot product
+	 * with the light vector (ShadingConsumer computes them once per pixel): they are not computed again here.
+	 * This is the method the subclasses override.
+	 *
+	 * @param worldPosition world-space position to test
+	 * @param unitNormal    world-space surface normal at worldPosition, of length 1
+	 * @param dotNL         unitNormal . getLightVectorAtPoint(worldPosition)
+	 * @return 1.0 if fully lit, 0.0 if in shadow, and with a soft shadow filter any value in between
+	 */
+	public float shadowFactorAt(Vector4 worldPosition, Vector3 unitNormal, float dotNL) {
+		return singleShadowFactorAt(worldPosition, unitNormal, dotNL);
 	}
 
 	/**
@@ -490,7 +504,7 @@ public abstract class ShadowingLight extends Light {
 	 * override calls this directly, to use ShadowingLight's single-map behavior instead of
 	 * inheriting PointLight's six-face one.
 	 */
-	protected final float singleShadowFactorAt(Vector4 worldPosition, Vector3 normal) {
+	protected final float singleShadowFactorAt(Vector4 worldPosition, Vector3 unitNormal, float dotNL) {
 
 		if (map == null) {
 			// No shadow map generated (yet) for this light -- treat as fully lit rather than
@@ -498,7 +512,7 @@ public abstract class ShadowingLight extends Light {
 			return 1f;
 		}
 
-		return shadowFactorAt(map, viewProjection_light, perspectiveCtx_light, shadowBiasBase, worldPosition, normal);
+		return shadowFactorAt(map, viewProjection_light, perspectiveCtx_light, shadowBiasBase, worldPosition, unitNormal, dotNL);
 	}
 
 	/**
@@ -510,7 +524,7 @@ public abstract class ShadowingLight extends Light {
 	 * single-map overload above, and PointLight.shadowFactorAt()).
 	 */
 	protected float shadowFactorAt(MapView map, ViewProjection viewProjection, PerspectiveContext perspectiveCtx,
-			float shadowBiasBase, Vector4 worldPosition, Vector3 normal) {
+			float shadowBiasBase, Vector4 worldPosition, Vector3 unitNormal, float dotNL) {
 
 		Vector4 posInLightSpace = viewProjection.project(worldPosition);
 
@@ -554,7 +568,7 @@ public abstract class ShadowingLight extends Light {
 		// Slope-scaled epsilon bias to avoid "shadow acne" (self-shadowing) -- see
 		// DOT_NL_FLOOR's Javadoc for why a single fixed bias (shadowBiasBase alone) isn't
 		// enough across every incidence angle.
-		float dotNL = getLightVectorAtPoint(worldPosition).dot(normal.normalize());
+		// (dotNL is given by the caller: unitNormal . light vector)
 		float shadowBias = shadowBiasBase / Math.max(dotNL, DOT_NL_FLOOR);
 
 		int radius = shadowFilter.getRadius();
@@ -589,7 +603,7 @@ public abstract class ShadowingLight extends Light {
 		float v = t * map.getViewHeight() - 0.5f;
 		float gradX = 0f, gradY = 0f; // depth change per texel along the map axes
 		float pcfBias = shadowBias;
-		Vector3 n = normal.normalize();
+		Vector3 n = unitNormal;
 		Vector3 helper = Math.abs(n.getZ()) < 0.9f ? Vector3.zAxis() : Vector3.xAxis();
 		Vector3 t1 = n.cross(helper).normalize();
 		Vector3 t2 = n.cross(t1).normalize();
