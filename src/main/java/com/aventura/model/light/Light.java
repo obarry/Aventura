@@ -87,8 +87,19 @@ public abstract class Light {
 	 * by position (e.g. a colored gel, a projected texture).
 	 */
 	public Color getLightColorAtPoint(Vector4 point) {
+		return getLightColorAtPoint(point, getIntensity(point));
+	}
+
+	/**
+	 * Same as getLightColorAtPoint(Vector4), for a caller that already has getIntensity(point) (the renderer
+	 * computes it once per pixel and per light): it is not computed again. A light that varies its hue by
+	 * position overrides this method.
+	 * @param point the point of world space
+	 * @param intensity getIntensity(point)
+	 */
+	public Color getLightColorAtPoint(Vector4 point, float intensity) {
 		if (frameColor != null) return frameColor; // Same color at every point, computed once by prepareFrame()
-		return ColorTools.multColor(lightColor, getIntensity(point));
+		return ColorTools.multColor(lightColor, intensity);
 	}
 
 	// Color of this light for the frame being rendered, when it is the same at every point of space (see

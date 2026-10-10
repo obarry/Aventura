@@ -908,6 +908,17 @@ au lieu d'une mesure par différences finies).
 > leviers efficaces sont, dans l'ordre : la **sortie anticipée** sur les 4 coins (lire 4 texels au lieu de 16
 > loin des bords d'ombre), et une shadow map **plus petite ou mieux cadrée** (`SHADOWING_BOX_VIEWFRUSTUM`, R9).
 
+> **Essayé le 10 octobre, abandonné : la sortie anticipée sur un encadrement min/max.** Le min/max de profondeur
+> par bloc de 4 × 4 texels (une passe sur la carte à chaque image) permet de conclure sans lire les 16 texels quand
+> toute la zone est nettement plus proche (ombre) ou plus loin (éclairé) que le point. Résultat : images
+> identiques, mais **pas de gain, et même +10 %**. Un point éclairé se compare à la profondeur de **sa propre
+> surface**, qui est dans la carte à quelques biais près : pour la grande majorité des pixels (éclairés), seul le
+> plan du récepteur permet de trancher, et l'encadrement ne conclut jamais. Seules les zones d'ombre en profitent,
+> et le calcul des blocs (≈ 15 ms par image pour 2000²) coûte plus que ce qu'il fait gagner. La sortie anticipée
+> « 4 coins » d'abord envisagée aurait le même défaut, et ferait en plus disparaître les ombres des objets fins
+> (une barre d'appui plus fine que 4 texels). Restent, pour le PCF : une shadow map plus petite ou mieux cadrée
+> (R9) et le multithreading.
+
 #### N2. Ne pas consulter la shadow map d'une lumière qui n'éclaire pas le pixel
 
 *`ShadingConsumer.consume()`*
@@ -921,6 +932,11 @@ PCF). Il faut tester dans cet ordre, du moins cher au plus cher : intensité > 0
 bruit. Il sera **proportionnel à la part de l'écran hors du cône ou hors de portée** : élevé pour un lampadaire ou un
 spot de scène · **Effort** S · **Lisibilité** +.
 
+> **v2 — fait (phase 1, étape 6).** `ShadingConsumer` teste, pour chaque lumière, `dotNL` puis l'intensité
+> (portée, cône) avant `shadowFactorAt()`, qui reçoit `dotNL` et la normale unitaire au lieu de les recalculer.
+> Mesuré avec A2 : PCF ≈ −19 % (passe principale −20 %), spot −5 % (passe principale −17 %), lumière ponctuelle
+> −6 %, sans ombres inchangé ; images identiques au bit près.
+
 #### N3. Lumières ponctuelles et spots : un seul calcul de direction et de distance par pixel
 
 Pour une `PointLight` ou un `SpotLight`, un même pixel calcule le vecteur lumière → point **3 ou 4 fois**, avec à
@@ -931,6 +947,11 @@ chaque fois un `new Vector3`, une racine carrée et une normalisation : dans `ge
 cône), calculé une fois par pixel et par lumière, puis passé à l'éclairage et à l'ombre. Le code devient en plus
 plus lisible : il dit clairement ce qui est calculé une fois.
 **Gain** e : moyen · **Effort** S à M · **Lisibilité** +.
+
+> **v2 — en partie (phase 1, étape 6).** La couleur d'une lumière est calculée à partir de l'intensité déjà
+> obtenue (`Light.getLightColorAtPoint(point, intensity)`), et le cône du spot et la direction ne sont plus
+> recalculés par la shadow map. Il reste deux calculs du vecteur lumière → point pour une lumière ponctuelle
+> (direction et intensité) : l'objet `LightSample` complet reste à faire, avec D2b.
 
 #### N4. Passes d'ombre : éliminer, mettre en cache, réutiliser
 
@@ -990,14 +1011,15 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | D7 | `FloatMap` en `float[]` 1D | **Stockage fait** (phase 1, étape 3) : `MapView` en `float[]` ligne par ligne, −10 % sans ombres et en PCF, −15 à −20 % avec une lumière ponctuelle ou un spot (passes d'ombre −15 à −18 %). Reste l'extraction de `FloatMap` hors du paquet `view` (BACKLOG §2) |
 | D6 | Écriture directe dans `int[]` (+ `addPixel()`) | **Fait** (phase 1, étape 4, avec D2a). Reste le pool d'images (BACKLOG §6) |
 | A4 | `Matrix4 × Vector4` déroulé | **Fait** (phase 1, étape 5) : **sans gain mesurable** (le JIT optimisait déjà la boucle d'origine), gardé pour la lisibilité. Le stockage `float[16]` n'est pas fait (pas d'enjeu mesuré) |
-| A1, A2, A3, A5, A6, A7 | Chemin par pixel, éclairage, textures | À faire |
+| A2 | Éclairage : valeurs communes calculées une fois par pixel | **Fait** (phase 1, étape 6, avec N2 et N3 en partie) |
+| A1, A3, A5, A6, A7 | Chemin par pixel, textures | À faire |
 | D2a | Couleurs des lumières et accumulateur sans `Color` | **Fait** (phase 1, étape 4, avec D6) : sans ombres −43 % (91 → 52 ms, 92 → 11 Mo alloués par image), lumière ponctuelle et spot −15 %, lumières visibles −18 % ; PCF dans le bruit (dominé par N1) |
 | D2b, D3 à D5, D8, D9 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
 | D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape_MouseMoving` |
 | R1, R3 à R7 | Élimination en amont | À faire |
 | R2 | Outcodes et clipping du plan proche | **Partiel** : clipping fait ; outcodes et chemin rapide (N5) à faire |
 | R9 | Passe d'ombre | À faire, enjeu multiplié (N4) |
-| R10 | Sortie anticipée de l'éclairage | À faire, gain dépendant de la scène (N2) |
+| R10 | Sortie anticipée de l'éclairage | **Fait** avec N2 (phase 1, étape 6) |
 | §6 | Multithreading | À faire, après D1, A3, A6, D3 et D5 |
 | §7 | Chronométrage par phase, `PerfBench` dans le dépôt | À faire |
 
