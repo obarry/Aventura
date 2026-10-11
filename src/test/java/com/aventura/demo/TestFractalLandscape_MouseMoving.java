@@ -4,9 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.aventura.math.transform.Rotation;
-import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
 /**
@@ -30,62 +27,52 @@ public class TestFractalLandscape_MouseMoving {
 	}
 
 	@Test
-	public void testComposeDragRotation_atZeroAngles_isIdentity() {
-		System.out.println("***** Test FractalLandscape_MouseMoving : composeDragRotation(0,0) is a no-op *****");
+	public void testOrbitEye_atZeroAngles_isOnTheXAxisOfThePoi() {
+		System.out.println("***** Test FractalLandscape_MouseMoving : orbitEye(azimuth=0, elevation=0) is on the X axis of the poi *****");
 
-		Rotation r = FractalLandscape_MouseMoving.composeDragRotation(0f, 0f);
-		Vector4 v = new Vector4(1f, 2f, 3f, 0f);
+		Vector4 poi = new Vector4(1f, 2f, 1.5f, 1f);
+		Vector4 eye = FractalLandscape_MouseMoving.orbitEye(poi, 5f, 0f, 0f);
 
-		Vector4 result = v.times(r);
-
-		assertEquals(v.getX(), result.getX(), 1e-4f);
-		assertEquals(v.getY(), result.getY(), 1e-4f);
-		assertEquals(v.getZ(), result.getZ(), 1e-4f);
+		assertEquals(6f, eye.getX(), 1e-5f);
+		assertEquals(2f, eye.getY(), 1e-5f);
+		assertEquals(1.5f, eye.getZ(), 1e-5f);
+		assertEquals(1f, eye.getW(), 0f); // A point
 	}
 
 	@Test
-	public void testComposeDragRotation_matchesEquivalentTwoRotationComposition() {
-		System.out.println("***** Test FractalLandscape_MouseMoving : composeDragRotation(angleZ, angleY) matches ry.times(rz) *****");
+	public void testOrbitEye_azimuthTurnsAroundZ_elevationRaisesTheEye() {
+		System.out.println("***** Test FractalLandscape_MouseMoving : orbitEye() azimuth turns around Z, elevation raises the eye *****");
 
-		float angleZ = (float) Math.PI / 6;
-		float angleY = (float) Math.PI / 8;
+		Vector4 poi = new Vector4(0f, 0f, 0f, 1f);
 
-		Rotation quaternionComposed = FractalLandscape_MouseMoving.composeDragRotation(angleZ, angleY);
+		Vector4 quarterTurn = FractalLandscape_MouseMoving.orbitEye(poi, 2f, (float) Math.PI / 2, 0f);
+		assertEquals(0f, quarterTurn.getX(), 1e-5f);
+		assertEquals(2f, quarterTurn.getY(), 1e-5f);
+		assertEquals(0f, quarterTurn.getZ(), 1e-5f);
 
-		// The exact composition it replaces: apply the Z rotation first, then the Y rotation
-		// (this is what the original "ry.times(rz)" Matrix4 composition computed).
-		Rotation rz = new Rotation(angleZ, Vector3.zAxis());
-		Rotation ry = new Rotation(angleY, Vector3.yAxis());
-		Matrix4 matrixComposed = ry.times(rz);
-
-		Vector4[] samples = new Vector4[] {
-				new Vector4(1f, 0f, 0f, 0f),
-				new Vector4(0f, 1f, 0f, 0f),
-				new Vector4(0f, 0f, 1f, 0f),
-				new Vector4(1f, 1f, 1f, 0f),
-				new Vector4(2f, -1f, 0.5f, 0f)
-		};
-
-		for (Vector4 v : samples) {
-			Vector4 expected = v.times(matrixComposed);
-			Vector4 actual = v.times(quaternionComposed);
-
-			assertEquals("mismatch (x)", expected.getX(), actual.getX(), 1e-4f);
-			assertEquals("mismatch (y)", expected.getY(), actual.getY(), 1e-4f);
-			assertEquals("mismatch (z)", expected.getZ(), actual.getZ(), 1e-4f);
-		}
+		Vector4 fromAbove = FractalLandscape_MouseMoving.orbitEye(poi, 2f, 0f, (float) Math.PI / 2);
+		assertEquals(0f, fromAbove.getX(), 1e-5f);
+		assertEquals(0f, fromAbove.getY(), 1e-5f);
+		assertEquals(2f, fromAbove.getZ(), 1e-5f);
 	}
 
 	@Test
-	public void testComposeDragRotation_preservesLength() {
-		System.out.println("***** Test FractalLandscape_MouseMoving : composeDragRotation() is a pure rotation -- length is preserved *****");
+	public void testOrbitEye_keepsTheDistanceToThePoi() {
+		System.out.println("***** Test FractalLandscape_MouseMoving : orbitEye() stays at the given distance from the poi *****");
 
-		Rotation r = FractalLandscape_MouseMoving.composeDragRotation((float) Math.PI / 5, (float) Math.PI / 7);
-		Vector4 v = new Vector4(0.6f, 0.8f, 0f, 0f); // length 1, not axis-aligned
+		Vector4 poi = new Vector4(0f, 0f, 1.5f, 1f);
+		Vector4 eye = FractalLandscape_MouseMoving.orbitEye(poi, 6.2f, 2.3f, -0.7f);
 
-		Vector4 result = v.times(r);
+		assertEquals(6.2f, eye.minus(poi).length(), 1e-4f);
+	}
 
-		assertEquals(v.length(), result.length(), 1e-4f);
+	@Test
+	public void testClamp_keepsTheValueWithinTheInterval() {
+		System.out.println("***** Test FractalLandscape_MouseMoving : clamp() keeps the value within [min, max] *****");
+
+		assertEquals(0.5f, FractalLandscape_MouseMoving.clamp(0.5f, 0f, 1f), 0f);
+		assertEquals(0f, FractalLandscape_MouseMoving.clamp(-3f, 0f, 1f), 0f);
+		assertEquals(1f, FractalLandscape_MouseMoving.clamp(7f, 0f, 1f), 0f);
 	}
 
 	@Test

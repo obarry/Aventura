@@ -43,10 +43,7 @@ import java.awt.event.*;
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
-import com.aventura.math.transform.Rotation;
-import com.aventura.math.transform.Transformation;
 import com.aventura.math.transform.Translation;
-import com.aventura.math.vector.Quaternion;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -67,6 +64,14 @@ import com.aventura.model.perspective.PerspectiveType;
  * 
  * It generates a landscape through a Treillis material formed through a Fractal recursion with random variations to create the ground
  * Goal is to progressively build a complete application on a typical 3D graphic use case
+ * 
+ * Controls (same conventions as most 3D / terrain viewers):
+ * - Mouse drag:         orbit the camera around the point of interest (turntable: horizontal drag turns around
+ *                       the vertical Z axis, vertical drag changes the elevation, clamped below the poles)
+ * - Mouse wheel:        zoom (dolly the camera toward / away from the point of interest)
+ * - CTRL + mouse wheel: raise / lower the sea level (a transformation of the World: the sea Element is translated on Z)
+ * SHIFT + mouse wheel is deliberately left free: it is the usual OS / application convention for lateral scrolling,
+ * hence reserved for a future camera pan.
  * 
  * @author Olivier BARRY
  * @since Nov 2023
@@ -93,7 +98,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// World
 	World world;
 	
-	// Element combining landscape and sea
+	// Element combining landscape and sea (parent of both, for transformations of the whole landscape; the
+	// mouse no longer moves it: the camera orbits around the World instead)
 	Element master_land;
 	
 	// Element : Trellis for landscape
@@ -105,6 +111,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// Element : Trellis for the sea
 	Trellis tre_sea;
 	float sea_level = 1.5f;
+	// Each CTRL + mouse wheel notch moves the sea by this altitude; the sea level stays within the landscape altitudes
+	static final float SEA_LEVEL_STEP = 0.01f;
 
 	// Movement variables
 	int i_rotation = 0;
@@ -112,14 +120,24 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	int zoom = 0;
 	static int NB_ROTATIONS = 90;
 	
-	// Mouse drag: last known position (updated on each event) and total displacement over all drags so far
+	// Mouse drag: last known position (updated on each event)
 	int mouse_last_X, mouse_last_Y;
-	int mouse_dragged_X = 0;
-	int mouse_dragged_Y = 0;
-	// Drag sensitivity: dragging across the whole window width rotates by DRAG_ANGLE_PER_WIDTH radians
-	// (around Z), across the whole height by DRAG_ANGLE_PER_HEIGHT radians (around Y)
+	// Drag sensitivity: dragging across the whole window width turns the camera by DRAG_ANGLE_PER_WIDTH radians
+	// (azimuth, around the vertical Z axis), across the whole height by DRAG_ANGLE_PER_HEIGHT radians (elevation)
 	static final float DRAG_ANGLE_PER_WIDTH = (float) Math.PI;
 	static final float DRAG_ANGLE_PER_HEIGHT = (float) Math.PI / 2;
+
+	// Orbit camera ("turntable", as in most 3D viewers): the World does not move, the camera moves on a sphere
+	// centered on the point of interest (poi), described by spherical coordinates around the World's up axis (Z):
+	// - azimuth: angle around Z, measured from the X axis
+	// - elevation: angle above the horizontal plane, clamped to +/- MAX_ELEVATION to never reach the poles, where
+	//   the forward vector would be parallel to the up vector (Z) and the LookAt matrix would be undefined
+	// - distance: initial distance eye-poi, reduced by the zoom (never below MIN_ORBIT_DISTANCE, not to cross the poi)
+	static final float MAX_ELEVATION = (float) Math.PI / 2 - 0.01f;
+	static final float MIN_ORBIT_DISTANCE = 0.2f;
+	float orbitAzimuth;
+	float orbitElevation;
+	float orbitDistance;
 
 	// CTRL key + mouse flag
 	boolean key_control = false;
@@ -129,7 +147,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// that same target over ZOOM_ANIM_DURATION_MS via linear interpolation, driven by a Swing Timer
 	// firing on the EDT (same thread as mouseWheelMoved(), so no synchronization is needed). Linear
 	// interpolation is used instead of Quaternion.slerp() because zoom is a translation along the
-	// camera's forward vector, not a rotation -- slerp only applies to the mouse-drag rotation below.
+	// camera's forward vector, not a rotation.
 	private static final int ZOOM_ANIM_DURATION_MS = 150;
 	private static final int ZOOM_ANIM_FRAME_MS = 15; // ~60 fps
 
@@ -261,27 +279,29 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
      }
 
  	public void mouseDragged(MouseEvent e) {
-        // Accumulate the displacement since the PREVIOUS event (not since the click): the total, hence the angle,
-        // only depends on the mouse movement, whatever the number of events. Swing coalesces the drag events
-        // while a (slow, e.g. zoomed-in) frame is rendered: adding the offset since the click at each event
-        // made the rotation depend on the rendering speed, and not come back when the mouse did.
-        mouse_dragged_X += e.getX() - mouse_last_X;
-        mouse_dragged_Y += e.getY() - mouse_last_Y;
+        // Use the displacement since the PREVIOUS event (not since the click): the total angle only depends on
+        // the mouse movement, whatever the number of events. Swing coalesces the drag events while a (slow,
+        // e.g. zoomed-in) frame is rendered: using the offset since the click at each event made the rotation
+        // depend on the rendering speed, and not come back when the mouse did.
+        int dx = e.getX() - mouse_last_X;
+        int dy = e.getY() - mouse_last_Y;
         mouse_last_X = e.getX(); mouse_last_Y = e.getY();
-        //System.out.println("Drag X: " + mouse_dragged_X + " Drag Y: " + mouse_dragged_Y);
 
-        float angleZ = dragAngle(mouse_dragged_X, frame.getWidth(), DRAG_ANGLE_PER_WIDTH);
-        float angleY = dragAngle(mouse_dragged_Y, frame.getHeight(), DRAG_ANGLE_PER_HEIGHT);
-        Rotation r = composeDragRotation(angleZ, angleY);
-        master_land.setTransformation(new Transformation(r));
-        //tre_land.combineTransformation(r);
+        // "Grab the World" feeling: dragging to the right makes the landscape turn to the right, hence the camera
+        // turns the other way (azimuth decreases); dragging down shows the landscape more from above (elevation
+        // increases). The elevation is clamped at each event (not on a total), so that dragging back immediately
+        // moves the camera again, without a dead zone after having hit the limit.
+        orbitAzimuth -= dragAngle(dx, frame.getWidth(), DRAG_ANGLE_PER_WIDTH);
+        orbitElevation = clamp(orbitElevation + dragAngle(dy, frame.getHeight(), DRAG_ANGLE_PER_HEIGHT),
+        		-MAX_ELEVATION, MAX_ELEVATION);
 
-        // Render the updated view after zooming camera and rotating Element
+        // Move the camera and render the updated view (the World itself is unchanged)
+        updateCameraPosition();
 		renderer.render();
  	}
 
 	/**
-	 * Rotation angle for a total mouse displacement: proportional to the displacement, anglePerSize radians
+	 * Rotation angle (radians) for a mouse displacement (pixels): proportional to the displacement, anglePerSize radians
 	 * for a displacement of the whole window size. Package-private and static so it can be unit-tested.
 	 */
 	static float dragAngle(int displacement, int windowSize, float anglePerSize) {
@@ -289,21 +309,36 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	}
 
 	/**
-	 * Composes the two-axis (Z then Y) drag rotation via Quaternion instead of the equivalent
-	 * two-Matrix4 Rotation composition (kept as a comment below for reference): builds one
-	 * Quaternion per axis, composes them with the same "Z applied first, then Y" convention as the
-	 * previous ry.times(rz), and converts the result to a Rotation once via the Rotation(Quaternion)
-	 * constructor. No slerp/easing here on purpose: dragging is continuous, real-time direct
-	 * manipulation, so the element's orientation must keep tracking the mouse position on every
-	 * event with no added latency.
+	 * Position of the eye of an orbit camera: the point at the given distance from the point of interest, in the
+	 * direction given by the spherical angles azimuth (around the vertical Z axis, from the X axis) and elevation
+	 * (above the horizontal plane).
 	 *
-	 * Package-private and static purely so it can be unit-tested (TestFractalLandscape_MouseMoving)
-	 * without a live Camera/RenderEngine/Swing GUIView -- this method touches none of those.
+	 * Package-private and static purely so it can be unit-tested (TestFractalLandscape_MouseMoving) without a
+	 * live Camera/RenderEngine/Swing GUIView -- this method touches none of those.
 	 */
-	static Rotation composeDragRotation(float angleZ, float angleY) {
-		Quaternion qz = new Quaternion(Vector3.zAxis(), angleZ);
-		Quaternion qy = new Quaternion(Vector3.yAxis(), angleY);
-		return new Rotation(qy.times(qz));
+	static Vector4 orbitEye(Vector4 poi, float distance, float azimuth, float elevation) {
+		float horizontal = distance * (float) Math.cos(elevation); // Projection of the eye-poi distance on the XY plane
+		return new Vector4(
+				poi.getX() + horizontal * (float) Math.cos(azimuth),
+				poi.getY() + horizontal * (float) Math.sin(azimuth),
+				poi.getZ() + distance * (float) Math.sin(elevation),
+				1);
+	}
+
+	/**
+	 * Restricts a value to the [min, max] interval. Package-private and static so it can be unit-tested.
+	 */
+	static float clamp(float value, float min, float max) {
+		return Math.max(min, Math.min(max, value));
+	}
+
+	/**
+	 * Places the camera according to the current orbit angles and the current (possibly mid-animation) zoom,
+	 * always looking at the point of interest with the World's up axis (Z) as up vector.
+	 */
+	private void updateCameraPosition() {
+		float distance = orbitDistance - appliedZoom / 10;
+		camera.updateCamera(orbitEye(poi, distance, orbitAzimuth, orbitElevation), poi, Vector4.zAxis());
 	}
 
  	public void mouseMoved(MouseEvent e) {
@@ -312,9 +347,36 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		//System.out.println("Mouse wheel moved: " + e.getWheelRotation());
-		// Increment or decrement zoom based on wheel rotation (+1 or -1)
-		zoom-=e.getWheelRotation();
+		// The modifier keys are read on the event itself (not through keyPressed()/keyReleased(), which require the
+		// frame to have the keyboard focus)
+		if (e.isControlDown()) {
+			// CTRL + wheel: wheel up (negative rotation) raises the sea, wheel down lowers it
+			changeSeaLevel(-e.getWheelRotation());
+			return;
+		}
+		// Increment or decrement zoom based on wheel rotation (+1 or -1), without letting the camera reach (or cross)
+		// the point of interest: zoom/10 is the distance travelled toward the poi
+		int maxZoom = (int) ((orbitDistance - MIN_ORBIT_DISTANCE) * 10);
+		zoom = Math.min(zoom - e.getWheelRotation(), maxZoom);
 		startZoomAnimation((float)zoom);
+	}
+
+	/**
+	 * Raises (positive notches) or lowers (negative notches) the sea level by SEA_LEVEL_STEP per notch, within the
+	 * altitudes of the landscape. This is a transformation of the World, not of the view: the sea Element (tre_sea)
+	 * is translated on the Z axis; its geometry is unchanged, the RenderEngine applies the new transformation at the
+	 * next rendering, so neither a rebuild of the World nor a new calculation of the normals is needed.
+	 */
+	private void changeSeaLevel(int notches) {
+		sea_level = clamp(sea_level + notches * SEA_LEVEL_STEP, tre_land.getMinZ(), tre_land.getMaxZ());
+		tre_sea.setTransformation(new Translation(new Vector3(0, 0, sea_level)));
+		updateTitle();
+		renderer.render();
+	}
+
+	/** Displays the current sea level in the title of the frame. */
+	private void updateTitle() {
+		frame.setTitle(String.format("Fractal Landscape - Sea level: %.2f", sea_level));
 	}
 
 	/**
@@ -350,8 +412,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 
 		appliedZoom = interpolateZoom(zoomAnimStartValue, zoomAnimTargetValue, t);
 
-		// Zoom camera by updating eye on the forward direction
-		camera.updateCamera(eye.plus(camera.getForward().times(appliedZoom/10)), poi, camera.getUp());
+		// Zoom camera by moving the eye toward the point of interest (orbit angles unchanged)
+		updateCameraPosition();
 
 		// Render the updated view after zooming camera and rotating Element
 		renderer.render();
@@ -562,8 +624,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 
 
 	public static Lighting createLighting() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-1), 0.7f);
-		AmbientLight al = new AmbientLight(0.3f);
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-0.5f), 0.8f);
+		AmbientLight al = new AmbientLight(0.2f);
 		return new Lighting(dl, al, false);
 	}
 
@@ -581,6 +643,12 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		//Vector4 eye = new Vector4(3,2,2,1);
 		poi = new Vector4(0,0,1.5f,1);
 		camera = new Camera(eye, poi, Vector4.zAxis());
+
+		// Initial orbit parameters: spherical coordinates of the initial eye around the point of interest
+		Vector4 poiToEye = eye.minus(poi);
+		orbitDistance = poiToEye.length();
+		orbitAzimuth = (float) Math.atan2(poiToEye.getY(), poiToEye.getX());
+		orbitElevation = (float) Math.asin(poiToEye.getZ() / orbitDistance);
 				
 		System.out.println("********* Creating World");
 		
@@ -655,6 +723,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		// Initialize Render Engine and render a first view
 		renderer = new RenderEngine(world, light, camera, rContext, pContext);
 		renderer.setView(guiView);
+		updateTitle();
 		renderer.render();
 		
 		System.out.println("********* APPLICATION LAUNCHED *********");
