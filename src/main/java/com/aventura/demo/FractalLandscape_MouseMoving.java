@@ -45,6 +45,7 @@ import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.transform.Transformation;
+import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Quaternion;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -53,6 +54,7 @@ import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
@@ -91,11 +93,18 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// World
 	World world;
 	
-	// Trellis element
-	Trellis tre;
+	// Element combining landscape and sea
+	Element master_land;
+	
+	// Element : Trellis for landscape
+	Trellis tre_land;
 	float size; // Size of the Treillis (square)
 	int n; // Nb of segments of the Treillis, should be a 2^n number
 	float array_land[][]; // Updated array with sea level
+	
+	// Element : Trellis for the sea
+	Trellis tre_sea;
+	float sea_level = 1.5f;
 
 	// Movement variables
 	int i_rotation = 0;
@@ -264,8 +273,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         float angleZ = dragAngle(mouse_dragged_X, frame.getWidth(), DRAG_ANGLE_PER_WIDTH);
         float angleY = dragAngle(mouse_dragged_Y, frame.getHeight(), DRAG_ANGLE_PER_HEIGHT);
         Rotation r = composeDragRotation(angleZ, angleY);
-        tre.setTransformation(new Transformation(r));
-        //tre.combineTransformation(r);
+        master_land.setTransformation(new Transformation(r));
+        //tre_land.combineTransformation(r);
 
         // Render the updated view after zooming camera and rotating Element
 		renderer.render();
@@ -389,13 +398,13 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		if (e.getSource() == m1e1) { // Generate
 			createLandscape(array_land, size, n);
 			try {
-				tre.updateTrellis(array_land);
+				tre_land.updateTrellis(array_land);
 			} catch (WrongArraySizeException exc) {
 				// TODO Auto-generated catch block
 				exc.printStackTrace();
 			}
 			world.rebuild();
-			System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles()+" Number of vertices: " + tre.getNbVertices());
+			System.out.println("Number of Triangles in Trellis: "+tre_land.getNbTriangles()+" Number of vertices: " + tre_land.getNbVertices());
 			updateTrianglesColorTrellis();
 			renderer.render();
 		} else if (e.getSource() == m1e2) { // Texture on/off (toggle)
@@ -513,12 +522,12 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		// End of Fractal generation
 		//
 		
-		float sea_level = 1.5f;
-		//float array_land[][] = new float[n+1][n+1]; // Updated array with sea level
+		//float sea_level = 1.5f;
 		
 		for (int i=0; i<=n; i++ ) {
 			for (int j=0; j<=n; j++) {
-				array_land[i][j] = array[i][j] >= sea_level ? array[i][j] : sea_level ;
+				// array_land[i][j] = array[i][j] >= sea_level ? array[i][j] : sea_level ;
+				array_land[i][j] = array[i][j];
 			}
 		}
 		
@@ -527,17 +536,17 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	}
 	
 	protected void updateVertexColorTrellis( ) {
-		float max_alt = tre.getMaxZ();
-		float min_alt = tre.getMinZ();
-		for (int v=0; v<tre.getVertices().size(); v++) {
-			float v_alt = tre.getVertex(v).getPos().getZ();
-			tre.getVertex(v).setColor(new Color((int)((v_alt-min_alt)/(max_alt-min_alt)*200),(int)((v_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-v_alt)/(max_alt-min_alt)*200)));
+		float max_alt = tre_land.getMaxZ();
+		float min_alt = tre_land.getMinZ();
+		for (int v=0; v<tre_land.getVertices().size(); v++) {
+			float v_alt = tre_land.getVertex(v).getPos().getZ();
+			tre_land.getVertex(v).setColor(new Color((int)((v_alt-min_alt)/(max_alt-min_alt)*200),(int)((v_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-v_alt)/(max_alt-min_alt)*200)));
 		}
 		
 	}
 
 	protected void updateTrianglesColorTrellis() {
-		colorTrianglesByAltitude(tre);
+		colorTrianglesByAltitude(tre_land);
 	}
 
 	/** Colors each triangle of the trellis according to its average altitude: blue (lowest) to yellow-green (highest). */
@@ -586,29 +595,38 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		// Create World
 		world = new World();
 		
+		master_land = new Element();
+		
 		// Create and form the Treillis
 		size = 4; // Size of the Treillis (square)
 		n = 128; // Nb of segments of the Treillis, should be a 2^n number
 		array_land = new float[n+1][n+1]; // Updated array with sea level
 		createLandscape(array_land, size, n);
 		// Create the Treillis
-		tre = null;
+		tre_land = null;
 		try {
-			tre = new Trellis(size, size, n, n, array_land, tex);
+			tre_land = new Trellis(size, size, n, n, array_land, tex);
 		} catch (WrongArraySizeException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//tre.setColor(new Color(100,200,50));
-		tre.setSpecularExp(8);		
+		//tre_land.setColor(new Color(100,200,50));
+		tre_land.setSpecularExp(8);
+		
+		// Create the sea
+		tre_sea = new Trellis(4, 4, 4, 4);
+		tre_sea.setColor(new Color(0, 0, 250));
+		tre_sea.setTransformation(new Translation(new Vector3(0, 0, sea_level)));
 		
 		// Add the Treillis as a new Element of the World
-		world.addElement(tre);
+		master_land.addElement(tre_land);
+		master_land.addElement(tre_sea);
+		world.addElement(master_land);
 		
 		// Generate World (including Triangles)
 		System.out.println("********* Calculating normals");
 		world.build();
-		System.out.println("Number of Triangles in Trellis: "+tre.getNbTriangles()+" Number of vertices: " + tre.getNbVertices());
+		System.out.println("Number of Triangles in Trellis: "+tre_land.getNbTriangles()+" Number of vertices: " + tre_land.getNbVertices());
 		
 		// Then update Triangles as needed (Colors) to create effect on the Landscape
 		updateTrianglesColorTrellis();
