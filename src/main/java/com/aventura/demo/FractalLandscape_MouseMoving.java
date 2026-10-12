@@ -70,6 +70,8 @@ import com.aventura.model.perspective.PerspectiveType;
  *                       the vertical Z axis, vertical drag changes the elevation, clamped below the poles)
  * - Mouse wheel:        zoom (dolly the camera toward / away from the point of interest)
  * - CTRL + mouse wheel: raise / lower the sea level (a transformation of the World: the sea Element is translated on Z)
+ * - Window resizing:    the rendered image always fills the window, at the same scale (PPU): a larger window shows
+ *                       more of the landscape, objects keep their size on screen (PerspectiveContext.ResizeMode.KEEP_SCALE)
  * SHIFT + mouse wheel is deliberately left free: it is the usual OS / application convention for lateral scrolling,
  * hence reserved for a future camera pan.
  * 
@@ -80,6 +82,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	
 	// GUI Frame and Menus
 	JFrame frame;
+	JPanel panel; // Displays the rendered image, fills the content area of the frame
 	JMenu menu1, menu2;
 	JMenuItem m1e1, m1e2, m1e3, m2e1, m2e2, m2e3, m2e5, m2e6;
 	boolean texture_menu = false;
@@ -92,6 +95,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	Camera camera;
 	
 	// Render engine
+	PerspectiveContext pContext;
 	RenderContext rContext;
 	RenderEngine renderer;
 	
@@ -139,6 +143,11 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	float orbitElevation;
 	float orbitDistance;
 
+	// Window resizing: the image is resized (and rendered) only once the size has not changed for RESIZE_DELAY_MS,
+	// instead of rendering a full frame for each intermediate size while the user drags the border of the window
+	private static final int RESIZE_DELAY_MS = 50;
+	Timer resizeTimer;
+
 	// CTRL key + mouse flag
 	boolean key_control = false;
 
@@ -168,8 +177,6 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		
 		// Create the frame of the application 
 		frame = new JFrame("Fractal Landscape");
-		// Set the size of the frame
-		frame.setSize(1000,600);
 		
 		// Create Menus and associate the menu items to appropriate listeners
 	    JMenuBar menubar = new JMenuBar();
@@ -215,13 +222,19 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		SwingView view = new SwingView(context, frame);
 		
 		// Create a panel and add it to the frame
-		JPanel panel = new JPanel() {
+		panel = new JPanel() {
 			
 		    public void paintComponent(Graphics graph) {
+		    	super.paintComponent(graph); // Clears with the background color (visible until a resized image is rendered)
 		    	graph.drawImage(view.getImageView(), 0, 0, null);
 		    }
 		};
+		panel.setBackground(Color.BLACK);
+		// Initial size of the content area = size of the image defined by the PerspectiveContext: pack() sizes the frame
+		// around it (title bar, borders and menu bar added), so the image exactly fills the window from the start
+		panel.setPreferredSize(new Dimension(context.getPixelWidth(), context.getPixelHeight()));
 		frame.getContentPane().add(panel);
+		frame.pack();
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
  
 		// Locate application frame in the center of the screen
@@ -237,6 +250,15 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         frame.addKeyListener(this);
         panel.addMouseMotionListener(this);
         panel.addMouseWheelListener(this);
+
+        // Follow the size of the panel (hence of the window): restart the delay at each intermediate size
+        resizeTimer = new Timer(RESIZE_DELAY_MS, e -> resizeViewport());
+        resizeTimer.setRepeats(false);
+        panel.addComponentListener(new ComponentAdapter() {
+        	public void componentResized(ComponentEvent e) {
+        		resizeTimer.restart();
+        	}
+        });
  		
 		return view;
 	}
@@ -291,8 +313,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         // turns the other way (azimuth decreases); dragging down shows the landscape more from above (elevation
         // increases). The elevation is clamped at each event (not on a total), so that dragging back immediately
         // moves the camera again, without a dead zone after having hit the limit.
-        orbitAzimuth -= dragAngle(dx, frame.getWidth(), DRAG_ANGLE_PER_WIDTH);
-        orbitElevation = clamp(orbitElevation + dragAngle(dy, frame.getHeight(), DRAG_ANGLE_PER_HEIGHT),
+        orbitAzimuth -= dragAngle(dx, panel.getWidth(), DRAG_ANGLE_PER_WIDTH);
+        orbitElevation = clamp(orbitElevation + dragAngle(dy, panel.getHeight(), DRAG_ANGLE_PER_HEIGHT),
         		-MAX_ELEVATION, MAX_ELEVATION);
 
         // Move the camera and render the updated view (the World itself is unchanged)
@@ -371,6 +393,22 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		sea_level = clamp(sea_level + notches * SEA_LEVEL_STEP, tre_land.getMinZ(), tre_land.getMaxZ());
 		tre_sea.setTransformation(new Translation(new Vector3(0, 0, sea_level)));
 		updateTitle();
+		renderer.render();
+	}
+
+	/**
+	 * Resizes the rendered image to the current size of the panel and renders it. KEEP_SCALE: the number of pixels per
+	 * unit is kept, so a larger window shows more of the landscape (wider and taller view volume) rather than an
+	 * enlarged image. Ignored while the renderer is not created yet, or for an empty panel (e.g. minimized window).
+	 */
+	private void resizeViewport() {
+		int width = panel.getWidth();
+		int height = panel.getHeight();
+		if (renderer == null || width < 1 || height < 1) return;
+		// Nothing to do if the size did not change, e.g. for the first componentResized() event, when the window is
+		// displayed at the initial size of the image (it can come while run() is still creating the renderer)
+		if (width == pContext.getPixelWidth() && height == pContext.getPixelHeight()) return;
+		renderer.resize(width, height, PerspectiveContext.ResizeMode.KEEP_SCALE);
 		renderer.render();
 	}
 
@@ -705,7 +743,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		Lighting light = createLighting();
 		
 		// Graphic Context
-		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1250);
+		pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1250);
 		//PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveType.ORTHOGRAPHIC, 125);
 		
 		// Create view

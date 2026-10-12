@@ -40,6 +40,8 @@ import com.aventura.tools.tracing.Tracer;
  * required for example by the ShadowingLight class and related to identify the area where to cast shadows.
  * As a consequence, the width, height, dist, depth, top, bottom, left, right, far, near information are now stored in Perspective. 
  * Sep-2026 : perspective type is now the PerspectiveType enum (former PERSPECTIVE_TYPE_* int constants), owned by the Perspective.
+ * Oct-2026 : resize(pixelWidth, pixelHeight, ResizeMode): the pixel dimensions can now change after construction (e.g. to
+ * follow the size of a window), the Perspective being adapted according to the ResizeMode. First step of the split below.
  * Planned : split into a Perspective (lens, world units) and a Viewport (pixels) -- separate evolution.
  * -------------------------------------------------------------------
  * 
@@ -68,6 +70,17 @@ import com.aventura.tools.tracing.Tracer;
  *
  */
 public class PerspectiveContext {
+
+	/**
+	 * How the Perspective follows a change of the pixel dimensions (see resize()):
+	 * - KEEP_HEIGHT: the height of the view volume (in world units) is kept, its width follows the new aspect ratio of
+	 *   the image. For a FRUSTUM this keeps the vertical field of view, as most 3D applications do: enlarging the window
+	 *   horizontally shows more of the scene on the sides, enlarging it vertically enlarges the image. The PPU changes.
+	 * - KEEP_SCALE: the PPU (pixels per unit) is kept, both dimensions of the view volume follow the image: enlarging
+	 *   the window shows more of the scene in every direction, objects keep their size on screen (like a map or a CAD
+	 *   application). For a FRUSTUM the field of view changes, hence a stronger perspective distortion on large windows.
+	 */
+	public enum ResizeMode { KEEP_HEIGHT, KEEP_SCALE }
 	
 	// Default perspective (see empty constructor): 8 x 4.5 units (16/9), near at 10, depth 1000, 100 pixels per unit
 	public static final float DEFAULT_WIDTH = 8f;
@@ -203,6 +216,43 @@ public class PerspectiveContext {
 		createPerspective(type, left , right, bottom, top, near, far);
 	}
 	
+	/**
+	 * Changes the pixel dimensions of the image (e.g. when the window displaying it is resized) and adapts the
+	 * Perspective according to the given mode (see ResizeMode). Dist and depth (near and far planes) are unchanged.
+	 * The view volume stays centered on the line of sight: the bounds of an asymmetric (six-bounds) perspective are
+	 * recentered.
+	 *
+	 * The objects using this PerspectiveContext read the pixel dimensions at each frame, except the buffers allocated
+	 * for a given size: use RenderEngine.resize(), which calls this method then reallocates them.
+	 *
+	 * @param pixel_width the new number of pixels on the X axis (at least 1)
+	 * @param pixel_height the new number of pixels on the Y axis (at least 1)
+	 * @param mode how the Perspective follows the new dimensions
+	 */
+	public void resize(int pixel_width, int pixel_height, ResizeMode mode) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Resize perspectiveContext: pixel width: " + pixel_width + " pixel height: " + pixel_height + " mode: " + mode);
+		if (pixel_width < 1 || pixel_height < 1) {
+			throw new IllegalArgumentException("PerspectiveContext: pixel dimensions must be at least 1x1, got " + pixel_width + "x" + pixel_height);
+		}
+		if (mode == null) throw new IllegalArgumentException("PerspectiveContext: resize mode must not be null");
+
+		switch (mode) {
+		case KEEP_HEIGHT:
+			// Same height in world units, width from the new aspect ratio; the PPU is derived from the height
+			float height = perspective.getHeight();
+			perspective.setWidth(height * pixel_width / pixel_height);
+			perspective.setHeight(height);
+			this.ppu = Math.round(pixel_height / height);
+			break;
+		case KEEP_SCALE:
+			// Same PPU: each dimension in world units is the number of pixels divided by the PPU
+			perspective.setWidth((float) pixel_width / ppu);
+			perspective.setHeight((float) pixel_height / ppu);
+			break;
+		}
+		setPixelDimensions(pixel_width, pixel_height);
+	}
+
 	private void setPixelDimensions(int pixel_width, int pixel_height) {
 		this.pixelWidth = pixel_width;
 		this.pixelHeight = pixel_height;
