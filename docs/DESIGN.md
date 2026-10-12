@@ -754,9 +754,12 @@ Presets cover common cases, for example `RENDER_STANDARD_INTERPOLATE`,
 (setters throw `IllegalStateException`): copy one with `new RenderContext(preset)` to customize it.
 
 `PerspectiveContext` currently holds both the lens (the `Perspective`: view volume and projection,
-in world units) and the raster size (pixels, derived through a pixels-per-unit ratio). The pixel
-size is fixed at construction; changing the `Perspective` afterwards (e.g. `setWidth()` to zoom)
-maps the new volume onto the same image. Splitting it into a `Perspective` and a `Viewport` is
+in world units) and the raster size (pixels, derived through a pixels-per-unit ratio). Changing the
+`Perspective` afterwards (e.g. `setWidth()` to zoom) maps the new volume onto the same image. To
+change the image size (e.g. to follow a window), call `RenderEngine.resize(w, h, mode)`: it resizes
+the `PerspectiveContext`, adapting the `Perspective` according to the `ResizeMode` (`KEEP_HEIGHT`:
+same vertical field of view; `KEEP_SCALE`: same pixels per unit, a larger image shows more of the
+scene), and reallocates the main ZBuffer and the `GUIView` buffers. Splitting it into a `Perspective` and a `Viewport` is
 planned (see the roadmap).
 
 ---

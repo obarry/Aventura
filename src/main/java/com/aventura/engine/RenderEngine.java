@@ -131,7 +131,8 @@ public class RenderEngine {
 
 	// Main pass rasterization pipeline (the former Rasterizer façade has been removed; ShadowingLight
 	// builds its own TriangleRasterizer/ZBuffer for shadow maps).
-	// mainZBuffer/triangleRasterizer are built once, in the constructor, and reused every frame --
+	// mainZBuffer/triangleRasterizer are built once, in the constructor (and again by resize() only),
+	// and reused every frame --
 	// render() only clear()s the ZBuffer at the start of each frame instead of reallocating it.
 	private ZBuffer mainZBuffer;
 	private TriangleRasterizer triangleRasterizer;
@@ -182,10 +183,7 @@ public class RenderEngine {
 
 		// Built once, here, rather than reallocated every frame (see initFrameZBuffer()) --
 		// same width/height/init-value the legacy Rasterizer.initZBuffer() (no-arg) used to compute.
-		int halfWidth = perspectiveCtx.getPixelHalfWidth();
-		int halfHeight = perspectiveCtx.getPixelHalfHeight();
-		this.mainZBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, perspectiveCtx.getPerspective().getFar());
-		this.triangleRasterizer = new TriangleRasterizer(perspectiveCtx, mainZBuffer);
+		allocateZBuffer();
 	}
 		
 
@@ -193,6 +191,36 @@ public class RenderEngine {
 		guiView = v;
 		screenLineRenderer = new ScreenLineRenderer(perspectiveContext, viewProjection, v);
 		lightGlowRenderer = new LightGlowRenderer(perspectiveContext, viewProjection, v);
+	}
+
+	/**
+	 * Changes the size of the rendered image, e.g. to follow the size of the window displaying it: resizes the
+	 * PerspectiveContext (adapting its Perspective according to the given mode, see PerspectiveContext.ResizeMode),
+	 * then reallocates what depends on the number of pixels: the main ZBuffer (hence the TriangleRasterizer writing
+	 * into it) and the buffers of the GUIView (if already set). The new size is used from the next render().
+	 *
+	 * The other renderers (ScreenLineRenderer, LightGlowRenderer) and the projection read the PerspectiveContext at
+	 * each frame and need nothing. The shadow maps keep their own resolution (it does not depend on the image size).
+	 *
+	 * @param pixelWidth the new width of the image in pixels (at least 1)
+	 * @param pixelHeight the new height of the image in pixels (at least 1)
+	 * @param mode how the Perspective follows the new size
+	 */
+	public void resize(int pixelWidth, int pixelHeight, PerspectiveContext.ResizeMode mode) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Resize to " + pixelWidth + "x" + pixelHeight + " (" + mode + ")");
+		perspectiveContext.resize(pixelWidth, pixelHeight, mode);
+		allocateZBuffer();
+		if (guiView != null) {
+			guiView.initView(perspectiveContext.getPixelWidth(), perspectiveContext.getPixelHeight());
+		}
+	}
+
+	/** (Re)allocates the main ZBuffer and the TriangleRasterizer writing into it, for the current pixel dimensions. */
+	private void allocateZBuffer() {
+		int halfWidth = perspectiveContext.getPixelHalfWidth();
+		int halfHeight = perspectiveContext.getPixelHalfHeight();
+		this.mainZBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, perspectiveContext.getPerspective().getFar());
+		this.triangleRasterizer = new TriangleRasterizer(perspectiveContext, mainZBuffer);
 	}
 	
 	/**

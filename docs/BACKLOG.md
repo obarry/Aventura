@@ -10,8 +10,13 @@ See also the roadmap in [DESIGN.md](DESIGN.md#11-history-limitations-and-roadmap
 `PerspectiveContext` mixes the lens (the `Perspective`: view volume and projection, in world units)
 and the raster target (pixel size), linked by a pixels-per-unit ratio.
 
-- Pixel dimensions are fixed at construction and do not follow later `Perspective` changes;
-  `ppu` only reflects the construction-time ratio.
+- Pixel dimensions do not follow later `Perspective` changes; `ppu` only reflects the ratio of the
+  construction (or of the last `resize()`).
+  **Done (October 2026): resizing.** `PerspectiveContext.resize(pixelWidth, pixelHeight, ResizeMode)` changes
+  the pixel dimensions after construction and adapts the `Perspective`: `KEEP_HEIGHT` (vertical field of view
+  kept, the usual 3D convention) or `KEEP_SCALE` (`ppu` kept, a larger image shows more of the scene).
+  `RenderEngine.resize()` calls it and reallocates the main ZBuffer and the `GUIView` buffers.
+  `FractalLandscape_MouseMoving` uses it to make the image fill its window (`KEEP_SCALE`).
 - Overload trap: `(int, int, float, float, type, int)` is pixel-based while
   `(float, float, float, float, type, int)` is unit-based, so `(10, 10, ...)` means 10 x 10 **pixels**.
 - The six-bounds constructor takes `(top, bottom, right, left, far, near)`, unlike `Perspective`
