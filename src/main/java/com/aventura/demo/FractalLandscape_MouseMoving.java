@@ -97,6 +97,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// Render engine
 	PerspectiveContext pContext;
 	RenderContext rContext;
+	GUIView guiView;
 	RenderEngine renderer;
 	
 	// World
@@ -397,9 +398,9 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	}
 
 	/**
-	 * Resizes the rendered image to the current size of the panel and renders it. KEEP_SCALE: the number of pixels per
-	 * unit is kept, so a larger window shows more of the landscape (wider and taller view volume) rather than an
-	 * enlarged image. Ignored while the renderer is not created yet, or for an empty panel (e.g. minimized window).
+	 * Resizes the GUIView to the current size of the panel and renders it: the RenderEngine adapts the perspective to
+	 * the new size of the view (KEEP_SCALE, see run()). Ignored while the renderer is not created yet, or for an
+	 * empty panel (e.g. minimized window).
 	 */
 	private void resizeViewport() {
 		int width = panel.getWidth();
@@ -407,8 +408,8 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		if (renderer == null || width < 1 || height < 1) return;
 		// Nothing to do if the size did not change, e.g. for the first componentResized() event, when the window is
 		// displayed at the initial size of the image (it can come while run() is still creating the renderer)
-		if (width == pContext.getPixelWidth() && height == pContext.getPixelHeight()) return;
-		renderer.resize(width, height, PerspectiveContext.ResizeMode.KEEP_SCALE);
+		if (width == guiView.getViewWidth() && height == guiView.getViewHeight()) return;
+		guiView.resize(width, height);
 		renderer.render();
 	}
 
@@ -675,10 +676,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	public void run() {
 		
 		// Camera
-		//Vector4 eye = new Vector4(8,3,5,1);
 		eye = new Vector4(6,0,3,1);
-		//Vector4 eye = new Vector4(16,6,12,1);
-		//Vector4 eye = new Vector4(3,2,2,1);
 		poi = new Vector4(0,0,1.5f,1);
 		camera = new Camera(eye, poi, Vector4.zAxis());
 
@@ -736,8 +734,6 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		
 		// Then update Triangles as needed (Colors) to create effect on the Landscape
 		updateTrianglesColorTrellis();
-//		updateVertexColorTrellis();
-//		world.update();
 
 		// Lighting initialization
 		Lighting light = createLighting();
@@ -746,15 +742,16 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1250);
 		//PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveType.ORTHOGRAPHIC, 125);
 		
+		// When the window (hence the view) is resized, keep the number of pixels per unit rather than the field of view:
+		// a larger window shows more of the landscape (wider and taller view volume) rather than an enlarged image
+		pContext.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE);
+
 		// Create view
-		GUIView guiView = this.createView(pContext);
+		guiView = this.createView(pContext);
 
 		// Rendering context
-		//rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
 		rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(false);
-		//rContext.setDisplayNormals(true);
-		//rContext.setDisplayLandmark(true);
 
 		//rContext.setRendering(RenderContext.RenderingType.INTERPOLATE);
 		

@@ -81,6 +81,22 @@ public abstract class GUIView extends View {
 		
 	}
 		
+	/**
+	 * Resizes the view, e.g. to follow the size of the window displaying it. As for any change around the
+	 * RenderEngine (Camera, Elements, lights...), the change is taken into account by the next render(): the
+	 * RenderEngine adapts its PerspectiveContext to the new size of the view (according to the context's ResizeMode,
+	 * see PerspectiveContext.setResizeMode()) and reallocates its buffers.
+	 *
+	 * @param width the new width of the view in pixels (at least 1)
+	 * @param height the new height of the view in pixels (at least 1)
+	 */
+	public void resize(int width, int height) {
+		if (width < 1 || height < 1) {
+			throw new IllegalArgumentException("GUIView: dimensions must be at least 1x1, got " + width + "x" + height);
+		}
+		initView(width, height);
+	}
+
 	public abstract void initView(MapView map); // init back buffer with another map of MapView type
 
 	public abstract void renderView(); // swap back buffer to front buffer, ready to display once the GUI will refresh
