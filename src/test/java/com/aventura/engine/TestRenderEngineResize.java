@@ -21,15 +21,16 @@ import com.aventura.model.world.shape.Sphere;
 import com.aventura.view.SwingView;
 
 /**
- * Off-screen tests of RenderEngine.resize(): the rendered image takes the new size, and the Perspective follows it
- * according to the PerspectiveContext.ResizeMode (same on-screen size of the objects with KEEP_SCALE, enlarged
- * objects with KEEP_HEIGHT when the image gets taller).
+ * Off-screen tests of the resizing of the GUIView (GUIView.resize()): the RenderEngine follows the new size of the
+ * view at the next render(), the Perspective being adapted according to the PerspectiveContext.ResizeMode (same
+ * on-screen size of the objects with KEEP_SCALE, enlarged objects with KEEP_HEIGHT when the image gets taller).
  */
 public class TestRenderEngineResize {
 
 	private static final Color BACKGROUND = Color.BLACK;
 	private static final Color SPHERE_COLOR = new Color(220, 60, 60);
 
+	private PerspectiveContext perspective;
 	private SwingView view;
 	private RenderEngine engine;
 
@@ -44,9 +45,9 @@ public class TestRenderEngineResize {
 		world.build();
 		Camera camera = new Camera(new Vector4(0, -8, 0, 1), new Vector4(0, 0, 0, 1), Vector4.zAxis());
 		Lighting lighting = new Lighting(new DirectionalLight(new Vector3(-1, 0.6f, -0.6f), 0.4f), new AmbientLight(0.1f));
-		PerspectiveContext p = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 200);
-		view = new SwingView(p);
-		engine = new RenderEngine(world, lighting, camera, rc, p);
+		perspective = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 200);
+		view = new SwingView(perspective);
+		engine = new RenderEngine(world, lighting, camera, rc, perspective);
 		engine.setView(view);
 	}
 
@@ -63,15 +64,20 @@ public class TestRenderEngineResize {
 	}
 
 	@Test
-	public void testResize_imageTakesTheNewSize() {
-		System.out.println("***** Test RenderEngine : resize() changes the size of the rendered image *****");
+	public void testResize_imageTakesTheNewSizeAtTheNextRender() {
+		System.out.println("***** Test RenderEngine : GUIView.resize() changes the size of the image rendered by the next render() *****");
 		createSphereScene(RenderContext.RENDER_STANDARD_UNLIT);
 		engine.render();
 		assertEquals(160, view.getImageView().getWidth());
 		assertEquals(90, view.getImageView().getHeight());
 
-		engine.resize(300, 120, PerspectiveContext.ResizeMode.KEEP_SCALE);
+		perspective.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE);
+		view.resize(300, 120);
+		// Like any change around the RenderEngine, taken into account by the next render() only
+		assertEquals(160, perspective.getPixelWidth());
 		engine.render();
+		assertEquals(300, perspective.getPixelWidth());
+		assertEquals(120, perspective.getPixelHeight());
 		BufferedImage img = view.getImageView();
 		assertEquals(300, img.getWidth());
 		assertEquals(120, img.getHeight());
@@ -85,7 +91,8 @@ public class TestRenderEngineResize {
 		engine.render();
 		int before = count(view.getImageView(), SPHERE_COLOR);
 
-		engine.resize(320, 180, PerspectiveContext.ResizeMode.KEEP_SCALE);
+		perspective.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE);
+		view.resize(320, 180);
 		engine.render();
 		int after = count(view.getImageView(), SPHERE_COLOR);
 
@@ -100,7 +107,7 @@ public class TestRenderEngineResize {
 		engine.render();
 		int before = count(view.getImageView(), SPHERE_COLOR);
 
-		engine.resize(320, 180, PerspectiveContext.ResizeMode.KEEP_HEIGHT);
+		view.resize(320, 180); // KEEP_HEIGHT is the default resize mode
 		engine.render();
 		int after = count(view.getImageView(), SPHERE_COLOR);
 
@@ -113,10 +120,16 @@ public class TestRenderEngineResize {
 		System.out.println("***** Test RenderEngine : resize() to a smaller image, with shadows, renders without error *****");
 		createSphereScene(RenderContext.RENDER_STANDARD_INTERPOLATE_SHADOWS);
 		engine.render();
-		engine.resize(41, 23, PerspectiveContext.ResizeMode.KEEP_SCALE); // odd dimensions on purpose
+		perspective.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE);
+		view.resize(41, 23); // odd dimensions on purpose
 		engine.render();
 		assertEquals(41, view.getImageView().getWidth());
 		assertEquals(23, view.getImageView().getHeight());
 		assertNotEquals(BACKGROUND, center(view.getImageView()));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testGUIViewResize_emptyViewRejected() {
+		new SwingView(20, 10).resize(20, 0);
 	}
 }

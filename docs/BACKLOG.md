@@ -12,10 +12,12 @@ and the raster target (pixel size), linked by a pixels-per-unit ratio.
 
 - Pixel dimensions do not follow later `Perspective` changes; `ppu` only reflects the ratio of the
   construction (or of the last `resize()`).
-  **Done (October 2026): resizing.** `PerspectiveContext.resize(pixelWidth, pixelHeight, ResizeMode)` changes
-  the pixel dimensions after construction and adapts the `Perspective`: `KEEP_HEIGHT` (vertical field of view
-  kept, the usual 3D convention) or `KEEP_SCALE` (`ppu` kept, a larger image shows more of the scene).
-  `RenderEngine.resize()` calls it and reallocates the main ZBuffer and the `GUIView` buffers.
+  **Done (October 2026): resizing.** The application resizes the view (`GUIView.resize(w, h)`); at the next
+  `render()`, the `RenderEngine` follows it: `PerspectiveContext.resize()` changes the pixel dimensions and
+  adapts the `Perspective` according to the context's `ResizeMode` (`setResizeMode()`): `KEEP_HEIGHT`
+  (default, vertical field of view kept, the usual 3D convention) or `KEEP_SCALE` (`ppu` kept, a larger image
+  shows more of the scene); the main ZBuffer is reallocated. The view is the reference for the pixel size,
+  which the future `Viewport` should hold.
   `FractalLandscape_MouseMoving` uses it to make the image fill its window (`KEEP_SCALE`).
 - Overload trap: `(int, int, float, float, type, int)` is pixel-based while
   `(float, float, float, float, type, int)` is unit-based, so `(10, 10, ...)` means 10 x 10 **pixels**.

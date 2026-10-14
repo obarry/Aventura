@@ -126,7 +126,7 @@ public class TestPerspectiveContext {
 	public void testResizeKeepScale_keepsThePpuAndFollowsThePixels() {
 		System.out.println("***** Test PerspectiveContext : resize(KEEP_SCALE) keeps the PPU, the view volume follows the pixels *****");
 		PerspectiveContext c = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100f, PerspectiveType.FRUSTUM, 1250);
-		c.resize(1500, 900, PerspectiveContext.ResizeMode.KEEP_SCALE);
+		c.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE).resize(1500, 900);
 		assertEquals(1500, c.getPixelWidth());
 		assertEquals(900, c.getPixelHeight());
 		assertEquals(750, c.getPixelHalfWidth());
@@ -145,7 +145,7 @@ public class TestPerspectiveContext {
 	public void testResizeKeepHeight_keepsTheHeightAndFollowsTheAspectRatio() {
 		System.out.println("***** Test PerspectiveContext : resize(KEEP_HEIGHT) keeps the height, the width follows the aspect ratio *****");
 		PerspectiveContext c = new PerspectiveContext(8f, 4.5f, 10f, 1000f, PerspectiveType.FRUSTUM, 100);
-		c.resize(1200, 600, PerspectiveContext.ResizeMode.KEEP_HEIGHT);
+		c.setResizeMode(PerspectiveContext.ResizeMode.KEEP_HEIGHT).resize(1200, 600);
 		assertEquals(1200, c.getPixelWidth());
 		assertEquals(600, c.getPixelHeight());
 		assertEquals(4.5f, c.getPerspective().getHeight(), DELTA);
@@ -157,19 +157,27 @@ public class TestPerspectiveContext {
 	public void testResize_updatesTheProjection() {
 		System.out.println("***** Test PerspectiveContext : resize() updates the projection: the new edge of the view volume projects to x = 1 *****");
 		PerspectiveContext c = new PerspectiveContext(8f, 6f, 1f, 100f, PerspectiveType.ORTHOGRAPHIC, 100);
-		c.resize(1000, 600, PerspectiveContext.ResizeMode.KEEP_SCALE); // width 10 units
+		c.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE).resize(1000, 600); // width 10 units
 		Vector4 right = c.getPerspective().getProjection().times(new Vector4(5f, 0, -10f, 1));
 		assertEquals(1f, right.getX() / right.getW(), 1e-3f);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testResize_emptyImageRejected() {
-		new PerspectiveContext().resize(0, 450, PerspectiveContext.ResizeMode.KEEP_SCALE);
+		new PerspectiveContext().setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE).resize(0, 450);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testResize_nullModeRejected() {
-		new PerspectiveContext().resize(800, 450, null);
+		new PerspectiveContext().setResizeMode(null);
+	}
+
+	@Test
+	public void testResizeMode_defaultsToKeepHeightAndIsCopied() {
+		System.out.println("***** Test PerspectiveContext : the resize mode is KEEP_HEIGHT by default and copied by the copy constructor *****");
+		assertEquals(PerspectiveContext.ResizeMode.KEEP_HEIGHT, new PerspectiveContext().getResizeMode());
+		PerspectiveContext o = new PerspectiveContext().setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE);
+		assertEquals(PerspectiveContext.ResizeMode.KEEP_SCALE, new PerspectiveContext(o).getResizeMode());
 	}
 
 	@Test(expected = IllegalArgumentException.class)

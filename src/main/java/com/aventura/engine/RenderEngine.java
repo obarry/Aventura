@@ -131,8 +131,8 @@ public class RenderEngine {
 
 	// Main pass rasterization pipeline (the former Rasterizer façade has been removed; ShadowingLight
 	// builds its own TriangleRasterizer/ZBuffer for shadow maps).
-	// mainZBuffer/triangleRasterizer are built once, in the constructor (and again by resize() only),
-	// and reused every frame --
+	// mainZBuffer/triangleRasterizer are built once, in the constructor (and again only when the
+	// GUIView has been resized, see followViewSize()), and reused every frame --
 	// render() only clear()s the ZBuffer at the start of each frame instead of reallocating it.
 	private ZBuffer mainZBuffer;
 	private TriangleRasterizer triangleRasterizer;
@@ -194,25 +194,20 @@ public class RenderEngine {
 	}
 
 	/**
-	 * Changes the size of the rendered image, e.g. to follow the size of the window displaying it: resizes the
-	 * PerspectiveContext (adapting its Perspective according to the given mode, see PerspectiveContext.ResizeMode),
-	 * then reallocates what depends on the number of pixels: the main ZBuffer (hence the TriangleRasterizer writing
-	 * into it) and the buffers of the GUIView (if already set). The new size is used from the next render().
+	 * Follows the size of the GUIView ("refresh, don't cache"): if the view has been resized (GUIView.resize()) since
+	 * the last frame, resizes the PerspectiveContext (adapting its Perspective according to its ResizeMode) and
+	 * reallocates what depends on the number of pixels: the main ZBuffer, hence the TriangleRasterizer writing into it.
 	 *
 	 * The other renderers (ScreenLineRenderer, LightGlowRenderer) and the projection read the PerspectiveContext at
 	 * each frame and need nothing. The shadow maps keep their own resolution (it does not depend on the image size).
-	 *
-	 * @param pixelWidth the new width of the image in pixels (at least 1)
-	 * @param pixelHeight the new height of the image in pixels (at least 1)
-	 * @param mode how the Perspective follows the new size
 	 */
-	public void resize(int pixelWidth, int pixelHeight, PerspectiveContext.ResizeMode mode) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Resize to " + pixelWidth + "x" + pixelHeight + " (" + mode + ")");
-		perspectiveContext.resize(pixelWidth, pixelHeight, mode);
+	private void followViewSize() {
+		int width = guiView.getViewWidth();
+		int height = guiView.getViewHeight();
+		if (width == perspectiveContext.getPixelWidth() && height == perspectiveContext.getPixelHeight()) return;
+		if (Tracer.info) Tracer.traceInfo(this.getClass(), "GUIView resized to " + width + "x" + height + " (" + perspectiveContext.getResizeMode() + ")");
+		perspectiveContext.resize(width, height);
 		allocateZBuffer();
-		if (guiView != null) {
-			guiView.initView(perspectiveContext.getPixelWidth(), perspectiveContext.getPixelHeight());
-		}
 	}
 
 	/** (Re)allocates the main ZBuffer and the TriangleRasterizer writing into it, for the current pixel dimensions. */
@@ -253,6 +248,10 @@ public class RenderEngine {
 		nbt_out = 0;
 		nbt_bf = 0;
 		nbe = 0;
+
+		// Follow a resizing of the GUIView, if any -- before refreshing the View*Projection matrix below, since the
+		// Perspective (hence the projection) may change
+		followViewSize();
 
 		// Recompute the View*Projection matrix from the camera's CURRENT state -- necessary
 		// because Camera.updateCamera() mutates the same LookAt/Matrix4 object in place (rather

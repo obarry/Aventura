@@ -40,8 +40,9 @@ import com.aventura.tools.tracing.Tracer;
  * required for example by the ShadowingLight class and related to identify the area where to cast shadows.
  * As a consequence, the width, height, dist, depth, top, bottom, left, right, far, near information are now stored in Perspective. 
  * Sep-2026 : perspective type is now the PerspectiveType enum (former PERSPECTIVE_TYPE_* int constants), owned by the Perspective.
- * Oct-2026 : resize(pixelWidth, pixelHeight, ResizeMode): the pixel dimensions can now change after construction (e.g. to
- * follow the size of a window), the Perspective being adapted according to the ResizeMode. First step of the split below.
+ * Oct-2026 : resize(pixelWidth, pixelHeight): the pixel dimensions can now change after construction (to follow the size of
+ * the GUIView, see GUIView.resize()), the Perspective being adapted according to the ResizeMode (setResizeMode()).
+ * First step of the split below.
  * Planned : split into a Perspective (lens, world units) and a Viewport (pixels) -- separate evolution.
  * -------------------------------------------------------------------
  * 
@@ -81,6 +82,9 @@ public class PerspectiveContext {
 	 *   application). For a FRUSTUM the field of view changes, hence a stronger perspective distortion on large windows.
 	 */
 	public enum ResizeMode { KEEP_HEIGHT, KEEP_SCALE }
+
+	// How the Perspective follows a resizing of the image (see resize()): a rule of the lens, set once
+	ResizeMode resizeMode = ResizeMode.KEEP_HEIGHT;
 	
 	// Default perspective (see empty constructor): 8 x 4.5 units (16/9), near at 10, depth 1000, 100 pixels per unit
 	public static final float DEFAULT_WIDTH = 8f;
@@ -119,6 +123,7 @@ public class PerspectiveContext {
 		this.pixelHeight = c.pixelHeight;
 		this.pixelHalfWidth = c.pixelHalfWidth;
 		this.pixelHalfHeight = c.pixelHalfHeight;
+		this.resizeMode = c.resizeMode;
 		this.perspective = c.perspective.copy();
 	}
 	
@@ -217,26 +222,39 @@ public class PerspectiveContext {
 	}
 	
 	/**
-	 * Changes the pixel dimensions of the image (e.g. when the window displaying it is resized) and adapts the
-	 * Perspective according to the given mode (see ResizeMode). Dist and depth (near and far planes) are unchanged.
-	 * The view volume stays centered on the line of sight: the bounds of an asymmetric (six-bounds) perspective are
-	 * recentered.
+	 * Sets how the Perspective follows a resizing of the image (see ResizeMode). Default: KEEP_HEIGHT.
 	 *
-	 * The objects using this PerspectiveContext read the pixel dimensions at each frame, except the buffers allocated
-	 * for a given size: use RenderEngine.resize(), which calls this method then reallocates them.
+	 * @param mode the resize mode, not null
+	 * @return this PerspectiveContext (chainable)
+	 */
+	public PerspectiveContext setResizeMode(ResizeMode mode) {
+		if (mode == null) throw new IllegalArgumentException("PerspectiveContext: resize mode must not be null");
+		this.resizeMode = mode;
+		return this;
+	}
+
+	public ResizeMode getResizeMode() {
+		return resizeMode;
+	}
+
+	/**
+	 * Changes the pixel dimensions of the image and adapts the Perspective according to the resize mode (see
+	 * setResizeMode()). Dist and depth (near and far planes) are unchanged. The view volume stays centered on the line
+	 * of sight: the bounds of an asymmetric (six-bounds) perspective are recentered.
+	 *
+	 * Applications do not need to call it: they resize the GUIView (GUIView.resize()), and the RenderEngine calls this
+	 * method at the start of the next render() when the size of the GUIView differs from the one of this context.
 	 *
 	 * @param pixel_width the new number of pixels on the X axis (at least 1)
 	 * @param pixel_height the new number of pixels on the Y axis (at least 1)
-	 * @param mode how the Perspective follows the new dimensions
 	 */
-	public void resize(int pixel_width, int pixel_height, ResizeMode mode) {
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Resize perspectiveContext: pixel width: " + pixel_width + " pixel height: " + pixel_height + " mode: " + mode);
+	public void resize(int pixel_width, int pixel_height) {
+		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Resize perspectiveContext: pixel width: " + pixel_width + " pixel height: " + pixel_height + " mode: " + resizeMode);
 		if (pixel_width < 1 || pixel_height < 1) {
 			throw new IllegalArgumentException("PerspectiveContext: pixel dimensions must be at least 1x1, got " + pixel_width + "x" + pixel_height);
 		}
-		if (mode == null) throw new IllegalArgumentException("PerspectiveContext: resize mode must not be null");
 
-		switch (mode) {
+		switch (resizeMode) {
 		case KEEP_HEIGHT:
 			// Same height in world units, width from the new aspect ratio; the PPU is derived from the height
 			float height = perspective.getHeight();
