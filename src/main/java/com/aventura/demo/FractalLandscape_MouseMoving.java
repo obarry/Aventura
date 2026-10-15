@@ -31,10 +31,13 @@ import java.awt.Graphics;
 import java.awt.Toolkit;
 import java.util.Random;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
@@ -42,6 +45,7 @@ import java.awt.event.*;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
+import com.aventura.context.RenderContext.RenderingType;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
@@ -49,7 +53,9 @@ import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
+import com.aventura.model.light.LightAppearance;
 import com.aventura.model.light.Lighting;
+import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.World;
@@ -74,20 +80,26 @@ import com.aventura.model.perspective.PerspectiveType;
  *                       more of the landscape, objects keep their size on screen (PerspectiveContext.ResizeMode.KEEP_SCALE)
  * SHIFT + mouse wheel is deliberately left free: it is the usual OS / application convention for lateral scrolling,
  * hence reserved for a future camera pan.
+ *
+ * Menus:
+ * - Landscape: generate a new landscape, reset the camera to its initial position
+ * - Rendering: the rendering type (exclusive choice: radio buttons)
+ * - Effects:   options independent of the rendering type (check boxes), grayed out when the current rendering type
+ *              does not use them: texture, specular highlights, shadows (hard or soft), and the sun with its effects
+ *              (halo, lens flare, light shafts). The sun is low on the horizon, in front of the initial camera and a
+ *              little to its left: orbit a little to the left and lower the camera to see it.
  * 
  * @author Olivier BARRY
  * @since Nov 2023
  */
-public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener, ActionListener {
+public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
 	
 	// GUI Frame and Menus
 	JFrame frame;
 	JPanel panel; // Displays the rendered image, fills the content area of the frame
-	JMenu menu1, menu2;
-	JMenuItem m1e1, m1e2, m1e3, m2e1, m2e2, m2e3, m2e5, m2e6;
-	boolean texture_menu = false;
-	boolean shading_menu = true;
-	boolean shadow_menu = false;
+	// Effects menu: the check boxes whose availability depends on the rendering type or on another check box (see
+	// updateEffectsMenu()); their state is read from the model (RenderContext, Lighting, sun) when they are created
+	JCheckBoxMenuItem textureItem, specularItem, shadowsItem, softShadowsItem, sunItem, sunHaloItem, lensFlareItem, lightShaftsItem;
 
 	// Camera
 	Vector4 eye;
@@ -97,6 +109,25 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// Render engine
 	PerspectiveContext pContext;
 	RenderContext rContext;
+	Lighting lighting;
+
+	// Sun: a directional light, low on the horizon so that it can be seen in the sky (azimuth: angle around the
+	// vertical Z axis from the X axis, elevation: angle above the horizon, both in degrees, of the direction of the sun
+	// seen from the scene). The initial camera is on the X axis looking towards -X (azimuth 180): the sun is in front of
+	// it, a little to the left, lighting the landscape from behind and from the side
+	static final float SUN_AZIMUTH = 225f;
+	static final float SUN_ELEVATION = 15f;
+	DirectionalLight sun;
+	LightAppearance sunAppearance; // Halo (gain) and lens flare of the sun, see the Effects menu
+
+	// Colors
+	static final Color SKY_COLOR = new Color(80, 120, 220);
+	
+	// Specular highlights (Effects menu): sharp and bright on the water, faint on the ground
+	static final Color SEA_SPECULAR_COLOR = new Color(200, 200, 200);
+	static final float SEA_SPECULAR_EXP = 200;
+	static final Color LAND_SPECULAR_COLOR = new Color(60, 60, 60);
+	static final float LAND_SPECULAR_EXP = 8;
 	GUIView guiView;
 	RenderEngine renderer;
 	
@@ -181,42 +212,11 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		
 		// Create Menus and associate the menu items to appropriate listeners
 	    JMenuBar menubar = new JMenuBar();
-	    
-	    // Create menu1
-	    menu1 = new JMenu("Run");
-	    m1e1 = new JMenuItem("Generate");
-	    m1e1.addActionListener(this);
-	    m1e2 = new JMenuItem("Texture off");
-	    m1e2.addActionListener(this);
-	    // Texture and shadows are options independent of the rendering type (Rendering menu)
-	    m1e3 = new JMenuItem("Shadows off");
-	    m1e3.addActionListener(this);
-	    menu1.add(m1e1); 
-	    menu1.add(m1e2); 
-	    menu1.add(m1e3); 
-	    menubar.add(menu1);
-	    
-	    // Create menu2
-	    menu2 = new JMenu("Rendering");
-	    m2e1 = new JMenuItem("Lines off");
-	    m2e1.addActionListener(this);
-	    m2e5 = new JMenuItem("Monochrome off");
-	    m2e5.addActionListener(this);
-	    m2e6 = new JMenuItem("Unlit off");
-	    m2e6.addActionListener(this);
-	    m2e2 = new JMenuItem("Flat off");
-	    m2e2.addActionListener(this);
-	    m2e3 = new JMenuItem("Shading on");
-	    m2e3.addActionListener(this);
-	    menu2.add(m2e1);
-	    menu2.add(m2e5);
-	    menu2.add(m2e6);
-	    menu2.add(m2e2);
-	    menu2.add(m2e3);
-	    menubar.add(menu2);
-
-	    // Add menu bar to the frame
+	    menubar.add(createLandscapeMenu());
+	    menubar.add(createRenderingMenu());
+	    menubar.add(createEffectsMenu());
 	    frame.setJMenuBar(menubar);
+	    updateEffectsMenu();
 
 		
 		// Create the view to be displayed
@@ -474,83 +474,138 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 
 
 
-	/**
-	 * Switches the rendering type, updates the Rendering menu labels and renders. The texture toggle (Run menu)
-	 * is only available for the rendering types that process textures (UNLIT, FLAT, INTERPOLATE), the shadows
-	 * toggle for the ones that use the lights (FLAT, INTERPOLATE).
-	 */
-	private void selectRendering(RenderContext.RenderingType type) {
-		rContext.setRenderingType(type);
-		renderer.render();
-		m2e1.setText(type == RenderContext.RenderingType.LINE ? "Lines on" : "Lines off");
-		m2e5.setText(type == RenderContext.RenderingType.MONOCHROME ? "Monochrome on" : "Monochrome off");
-		m2e6.setText(type == RenderContext.RenderingType.UNLIT ? "Unlit on" : "Unlit off");
-		m2e2.setText(type == RenderContext.RenderingType.FLAT ? "Flat on" : "Flat off");
-		m2e3.setText(type == RenderContext.RenderingType.INTERPOLATE ? "Shading on" : "Shading off");
-		shading_menu = type == RenderContext.RenderingType.UNLIT || type == RenderContext.RenderingType.FLAT
-				|| type == RenderContext.RenderingType.INTERPOLATE;
-		m1e2.setEnabled(shading_menu);
-		m1e3.setEnabled(type == RenderContext.RenderingType.FLAT || type == RenderContext.RenderingType.INTERPOLATE);
+	// *****************
+	// ***** Menus *****
+	// *****************
+
+	/** Landscape menu: actions on the whole scene. */
+	private JMenu createLandscapeMenu() {
+		JMenu menu = new JMenu("Landscape");
+		menu.setMnemonic(KeyEvent.VK_L);
+		JMenuItem generate = new JMenuItem("Generate");
+		generate.addActionListener(e -> generateLandscape());
+		menu.add(generate);
+		JMenuItem resetCamera = new JMenuItem("Reset camera");
+		resetCamera.addActionListener(e -> resetCamera());
+		menu.add(resetCamera);
+		return menu;
 	}
 
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
+	/** Rendering menu: the rendering type, an exclusive choice (radio buttons in a ButtonGroup). */
+	private JMenu createRenderingMenu() {
+		JMenu menu = new JMenu("Rendering");
+		menu.setMnemonic(KeyEvent.VK_R);
+		ButtonGroup group = new ButtonGroup();
+		addRenderingItem(menu, group, "Lines", RenderingType.LINE);
+		addRenderingItem(menu, group, "Monochrome", RenderingType.MONOCHROME);
+		addRenderingItem(menu, group, "Unlit", RenderingType.UNLIT);
+		addRenderingItem(menu, group, "Flat", RenderingType.FLAT);
+		addRenderingItem(menu, group, "Shading", RenderingType.INTERPOLATE);
+		return menu;
+	}
 
-		if (e.getSource() == m1e1) { // Generate
-			createLandscape(array_land, size, n);
-			try {
-				tre_land.updateTrellis(array_land);
-			} catch (WrongArraySizeException exc) {
-				// TODO Auto-generated catch block
-				exc.printStackTrace();
-			}
-			world.rebuild();
-			System.out.println("Number of Triangles in Trellis: "+tre_land.getNbTriangles()+" Number of vertices: " + tre_land.getNbVertices());
-			updateTrianglesColorTrellis();
+	private void addRenderingItem(JMenu menu, ButtonGroup group, String label, RenderingType type) {
+		JRadioButtonMenuItem item = new JRadioButtonMenuItem(label, rContext.getRenderingType() == type);
+		item.addActionListener(e -> selectRendering(type));
+		group.add(item);
+		menu.add(item);
+	}
+
+	/**
+	 * Effects menu: on/off options, independent of the rendering type, in three groups (surfaces, shadows, sun). Each
+	 * check box starts from the state of the model and changes it, then renders.
+	 */
+	private JMenu createEffectsMenu() {
+		JMenu menu = new JMenu("Effects");
+		menu.setMnemonic(KeyEvent.VK_E);
+
+		// Surfaces
+		textureItem = addEffectItem(menu, "Texture", rContext.isTextureProcessing(), on -> rContext.setTextureProcessing(on));
+		specularItem = addEffectItem(menu, "Specular highlights", lighting.hasSpecular(), on -> lighting.setSpecularLight(on));
+		menu.addSeparator();
+
+		// Shadows: PCF_3X3 filtering of the shadow map for soft edges (see ShadowFilter)
+		shadowsItem = addEffectItem(menu, "Shadows", rContext.isShadowing(), on -> rContext.setShadowing(on));
+		softShadowsItem = addEffectItem(menu, "Soft shadows", sun.getShadowFilter() == ShadowFilter.PCF_3X3,
+				on -> sun.setShadowFilter(on ? ShadowFilter.PCF_3X3 : ShadowFilter.HARD));
+		menu.addSeparator();
+
+		// Sun: the light glow of a directional light is the SUN mode (disc and halo in the sky, see LightGlowMode)
+		sunItem = addEffectItem(menu, "Sun", rContext.isLightGlow(), on -> rContext.setLightGlow(on));
+		sunHaloItem = addEffectItem(menu, "Sun halo", sunAppearance.getGain() > 0, on -> sunAppearance.setGain(on ? 1f : 0f));
+		lensFlareItem = addEffectItem(menu, "Lens flare", sunAppearance.getFlareGain() > 0, on -> sunAppearance.setFlareGain(on ? 1f : 0f));
+		lightShaftsItem = addEffectItem(menu, "Light shafts", Boolean.TRUE.equals(rContext.getLightShafts()), on -> rContext.setLightShafts(on));
+		return menu;
+	}
+
+	/** Creates a check box of the Effects menu: applies the change to the model, updates the menu and renders. */
+	private JCheckBoxMenuItem addEffectItem(JMenu menu, String label, boolean selected, java.util.function.Consumer<Boolean> apply) {
+		JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, selected);
+		item.addActionListener(e -> {
+			apply.accept(item.isSelected());
+			updateEffectsMenu();
 			renderer.render();
-		} else if (e.getSource() == m1e2) { // Texture on/off (toggle)
-			
-			if (shading_menu) {
-				if (texture_menu) {
-					rContext.setTextureProcessing(false);
-					renderer.render();
-					m1e2.setText("Texture off");
-					texture_menu = false;
-				} else {
-					rContext.setTextureProcessing(true);
-					renderer.render();
-					m1e2.setText("Texture on");
-					texture_menu = true;
-				}
-			} else {
-				// no action
-			}
-		} else if (e.getSource() == m2e1) { // Rendering lines
-			selectRendering(RenderContext.RenderingType.LINE);
-		} else if (e.getSource() == m2e5) { // Rendering monochrome (hidden-line wireframe)
-			selectRendering(RenderContext.RenderingType.MONOCHROME);
-		} else if (e.getSource() == m2e6) { // Rendering unlit (colors or texture, no lighting)
-			selectRendering(RenderContext.RenderingType.UNLIT);
-		} else if (e.getSource() == m2e2) { // Rendering flat (faceted shading)
-			selectRendering(RenderContext.RenderingType.FLAT);
-		} else if (e.getSource() == m2e3) { // Rendering Shading
-			selectRendering(RenderContext.RenderingType.INTERPOLATE);
-		} else if (e.getSource() == m1e3) { // Shadows on/off (toggle)
+		});
+		menu.add(item);
+		return item;
+	}
 
-			if (shadow_menu) {
-				rContext.setShadowing(false);
-				renderer.render();
-				m1e3.setText("Shadows off");
-				shadow_menu = false;
-			} else {
-				rContext.setShadowing(true);
-				renderer.render();
-				m1e3.setText("Shadows on");
-				shadow_menu = true;
-			}
-		} else {
-			System.out.println("Other Action Event : "+e);			
+	/**
+	 * Grays out the effects that the current rendering type does not use: the texture is used by the filled rendering
+	 * types (UNLIT, FLAT, INTERPOLATE), the specular highlights and the shadows by the lit ones (FLAT, INTERPOLATE),
+	 * the sun by all but LINE. The sub-options (soft shadows, halo, lens flare, light shafts) also need their main option.
+	 */
+	private void updateEffectsMenu() {
+		RenderingType type = rContext.getRenderingType();
+		boolean lit = type == RenderingType.FLAT || type == RenderingType.INTERPOLATE;
+		textureItem.setEnabled(lit || type == RenderingType.UNLIT);
+		specularItem.setEnabled(lit);
+		shadowsItem.setEnabled(lit);
+		softShadowsItem.setEnabled(lit && shadowsItem.isSelected());
+		sunItem.setEnabled(type != RenderingType.LINE);
+		boolean sunVisible = sunItem.isEnabled() && sunItem.isSelected();
+		sunHaloItem.setEnabled(sunVisible);
+		lensFlareItem.setEnabled(sunVisible);
+		lightShaftsItem.setEnabled(sunVisible);
+	}
+
+	/** Switches the rendering type, updates the Effects menu and renders. */
+	private void selectRendering(RenderingType type) {
+		rContext.setRenderingType(type);
+		updateEffectsMenu();
+		renderer.render();
+	}
+
+	/** Generates a new random landscape (same sea), recomputes its geometry and colors, and renders. */
+	private void generateLandscape() {
+		createLandscape(array_land, size, n);
+		try {
+			tre_land.updateTrellis(array_land);
+		} catch (WrongArraySizeException exc) {
+			exc.printStackTrace();
 		}
+		world.rebuild();
+		System.out.println("Number of Triangles in Trellis: "+tre_land.getNbTriangles()+" Number of vertices: " + tre_land.getNbVertices());
+		updateTrianglesColorTrellis();
+		renderer.render();
+	}
+
+	/** Puts the camera back to its initial position (orbit angles and zoom), and renders. */
+	private void resetCamera() {
+		if (zoomAnimTimer != null) zoomAnimTimer.stop();
+		zoom = 0;
+		appliedZoom = 0f;
+		initOrbit();
+		updateCameraPosition();
+		renderer.render();
+	}
+
+	/** Initial orbit parameters: spherical coordinates of the initial eye around the point of interest. */
+	private void initOrbit() {
+		Vector4 poiToEye = eye.minus(poi);
+		orbitDistance = poiToEye.length();
+		orbitAzimuth = (float) Math.atan2(poiToEye.getY(), poiToEye.getX());
+		orbitElevation = (float) Math.asin(poiToEye.getZ() / orbitDistance);
 	}
 	
 	/**
@@ -641,7 +696,10 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		float min_alt = tre_land.getMinZ();
 		for (int v=0; v<tre_land.getVertices().size(); v++) {
 			float v_alt = tre_land.getVertex(v).getPos().getZ();
-			tre_land.getVertex(v).setColor(new Color((int)((v_alt-min_alt)/(max_alt-min_alt)*200),(int)((v_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-v_alt)/(max_alt-min_alt)*200)));
+			//tre_land.getVertex(v).setColor(new Color((int)((v_alt-min_alt)/(max_alt-min_alt)*200),(int)((v_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-v_alt)/(max_alt-min_alt)*200)));
+			float ratio = (v_alt - min_alt) / (max_alt - min_alt);
+			int gray = (int)(ratio*255); // From black (lowest) to white (highest)
+			tre_land.getVertex(v).setColor(new Color(gray, gray, gray));
 		}
 		
 	}
@@ -650,22 +708,44 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		colorTrianglesByAltitude(tre_land);
 	}
 
-	/** Colors each triangle of the trellis according to its average altitude: blue (lowest) to yellow-green (highest). */
+	/** Colors each triangle of the trellis according to its average altitude: black (lowest) to white (highest). */
 	public static void colorTrianglesByAltitude(Trellis tre) {
 		float max_alt = tre.getMaxZ();
 		float min_alt = tre.getMinZ();
 		int t = 0;
 		for (t=0; t<tre.getTriangles().size(); t++) {
 			float avg_alt = (tre.getTriangle(t).getV1().getPos().getZ() + tre.getTriangle(t).getV2().getPos().getZ() + tre.getTriangle(t).getV3().getPos().getZ())/3;
-			tre.getTriangle(t).setColor(new Color((int)((avg_alt-min_alt)/(max_alt-min_alt)*200),(int)((avg_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-avg_alt)/(max_alt-min_alt)*200)));
+			//tre.getTriangle(t).setColor(new Color((int)((avg_alt-min_alt)/(max_alt-min_alt)*200),(int)((avg_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-avg_alt)/(max_alt-min_alt)*200)));
+			float ratio = (avg_alt-min_alt)/(max_alt-min_alt);
+			int gray = (int)(ratio*255); // From black (lowest) to white (highest)
+			tre.getTriangle(t).setColor(new Color(gray, gray, gray));
 		}
 	}
 
 
+	/**
+	 * The lighting of the image of the documentation (see DocumentationImages): a sun behind the camera of that image.
+	 * The interactive demo uses a lower sun, that can be seen in the sky (see run() and SUN_AZIMUTH, SUN_ELEVATION).
+	 */
 	public static Lighting createLighting() {
 		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-0.5f), 0.8f);
 		AmbientLight al = new AmbientLight(0.2f);
 		return new Lighting(dl, al, false);
+	}
+
+	/**
+	 * Direction of a DirectionalLight (its propagation direction, from the light towards the scene, as the engine
+	 * expects it) for a sun seen from the scene at the given azimuth (around the vertical Z axis, from the X axis) and
+	 * elevation (above the horizon), in degrees. Package-private and static so it can be unit-tested.
+	 */
+	static Vector3 sunDirection(float azimuthDegrees, float elevationDegrees) {
+		double azimuth = Math.toRadians(azimuthDegrees);
+		double elevation = Math.toRadians(elevationDegrees);
+		// Unit vector towards the sun, then reversed: the light travels from the sun towards the scene
+		return new Vector3(
+				(float) (-Math.cos(elevation) * Math.cos(azimuth)),
+				(float) (-Math.cos(elevation) * Math.sin(azimuth)),
+				(float) (-Math.sin(elevation)));
 	}
 
 	/**
@@ -680,11 +760,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		poi = new Vector4(0,0,1.5f,1);
 		camera = new Camera(eye, poi, Vector4.zAxis());
 
-		// Initial orbit parameters: spherical coordinates of the initial eye around the point of interest
-		Vector4 poiToEye = eye.minus(poi);
-		orbitDistance = poiToEye.length();
-		orbitAzimuth = (float) Math.atan2(poiToEye.getY(), poiToEye.getX());
-		orbitElevation = (float) Math.asin(poiToEye.getZ() / orbitDistance);
+		initOrbit();
 				
 		System.out.println("********* Creating World");
 		
@@ -693,11 +769,14 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
 		//Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
 		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
-		Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");
+		//Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");		
 		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
+		Texture tex = new Texture("resources/texture/texture_gray_concrete_wall_with_cracks_2748x2748.jpg");
+		Texture tex_sea = new Texture("resources/texture/texture_waves-calm-sea_4480x4480.jpg");
 		
 		// Create World
 		world = new World();
+		world.setBackgroundColor(SKY_COLOR);
 		
 		master_land = new Element();
 		
@@ -715,11 +794,14 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 			e.printStackTrace();
 		}
 		//tre_land.setColor(new Color(100,200,50));
-		tre_land.setSpecularExp(8);
+		tre_land.setSpecularExp(LAND_SPECULAR_EXP);
+		tre_land.setSpecularColor(LAND_SPECULAR_COLOR);
 		
 		// Create the sea
-		tre_sea = new Trellis(4, 4, 4, 4);
+		tre_sea = new Trellis(4, 4, 4, 4, tex_sea);
 		tre_sea.setColor(new Color(0, 0, 250));
+		tre_sea.setSpecularExp(SEA_SPECULAR_EXP);
+		tre_sea.setSpecularColor(SEA_SPECULAR_COLOR);
 		tre_sea.setTransformation(new Translation(new Vector3(0, 0, sea_level)));
 		
 		// Add the Treillis as a new Element of the World
@@ -735,8 +817,13 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		// Then update Triangles as needed (Colors) to create effect on the Landscape
 		updateTrianglesColorTrellis();
 
-		// Lighting initialization
-		Lighting light = createLighting();
+		// Lighting initialization: the sun (soft shadows when the shadows are on) and an ambient light, with the
+		// specular highlights
+		sun = new DirectionalLight(sunDirection(SUN_AZIMUTH, SUN_ELEVATION), 0.8f);
+		sun.setShadowFilter(ShadowFilter.PCF_3X3);
+		sunAppearance = new LightAppearance(); // Default halo and lens flare
+		sun.setAppearance(sunAppearance);
+		lighting = new Lighting(sun, new AmbientLight(0.2f), true);
 		
 		// Graphic Context
 		pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1250);
@@ -746,17 +833,17 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		// a larger window shows more of the landscape (wider and taller view volume) rather than an enlarged image
 		pContext.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE);
 
-		// Create view
-		guiView = this.createView(pContext);
-
-		// Rendering context
+		// Rendering context (before the view: the menus start from its state): shading, no texture, no shadows,
+		// sun visible (light glow) without light shafts
 		rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(false);
+		rContext.setLightGlow(true);
 
-		//rContext.setRendering(RenderContext.RenderingType.INTERPOLATE);
+		// Create view
+		guiView = this.createView(pContext);
 		
 		// Initialize Render Engine and render a first view
-		renderer = new RenderEngine(world, light, camera, rContext, pContext);
+		renderer = new RenderEngine(world, lighting, camera, rContext, pContext);
 		renderer.setView(guiView);
 		updateTitle();
 		renderer.render();

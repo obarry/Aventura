@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
 /**
@@ -64,6 +65,39 @@ public class TestFractalLandscape_MouseMoving {
 		Vector4 eye = FractalLandscape_MouseMoving.orbitEye(poi, 6.2f, 2.3f, -0.7f);
 
 		assertEquals(6.2f, eye.minus(poi).length(), 1e-4f);
+	}
+
+	@Test
+	public void testSunDirection_isTheReversedDirectionTowardsTheSun() {
+		System.out.println("***** Test FractalLandscape_MouseMoving : sunDirection() is the propagation direction, from the sun towards the scene *****");
+
+		// Sun on the horizon, on the +X side: the light travels towards -X
+		Vector3 east = FractalLandscape_MouseMoving.sunDirection(0f, 0f);
+		assertEquals(-1f, east.getX(), 1e-5f);
+		assertEquals(0f, east.getY(), 1e-5f);
+		assertEquals(0f, east.getZ(), 1e-5f);
+
+		// Sun at the zenith: the light travels straight down
+		Vector3 zenith = FractalLandscape_MouseMoving.sunDirection(123f, 90f);
+		assertEquals(0f, zenith.getX(), 1e-5f);
+		assertEquals(0f, zenith.getY(), 1e-5f);
+		assertEquals(-1f, zenith.getZ(), 1e-5f);
+
+		// Sun on the +Y side, 30 degrees high
+		Vector3 north = FractalLandscape_MouseMoving.sunDirection(90f, 30f);
+		assertEquals(0f, north.getX(), 1e-5f);
+		assertEquals(-(float) Math.cos(Math.PI / 6), north.getY(), 1e-5f);
+		assertEquals(-0.5f, north.getZ(), 1e-5f);
+	}
+
+	@Test
+	public void testSunDirection_isAUnitVectorGoingDownForASunAboveTheHorizon() {
+		System.out.println("***** Test FractalLandscape_MouseMoving : sunDirection() of the demo's sun is a unit vector going down *****");
+
+		Vector3 d = FractalLandscape_MouseMoving.sunDirection(FractalLandscape_MouseMoving.SUN_AZIMUTH, FractalLandscape_MouseMoving.SUN_ELEVATION);
+
+		assertEquals(1f, d.length(), 1e-5f);
+		assertTrue("a sun above the horizon lights downwards", d.getZ() < 0);
 	}
 
 	@Test
