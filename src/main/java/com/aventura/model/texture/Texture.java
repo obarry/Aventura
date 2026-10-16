@@ -32,7 +32,6 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import com.aventura.tools.color.RGBAccumulator;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -50,15 +49,12 @@ public class Texture {
 	public static final int TEXTURE_ORIENTATION_NORMAL = 1;
 	public static final int TEXTURE_ORIENTATION_OPPOSITE = 2;
 	
-	// array containing data e.g. rgb values
-	protected int[][] tex;
+	// The ARGB values of the texels, row by row: texel (x, y) is tex[y * width + x]. The texels of a row are
+	// neighbors in memory, as the bilinear filtering below reads them (performance audit A6; it used to be an
+	// int[x][y] array).
+	protected int[] tex;
 	protected int width, height;
 
-	// Reused across every call to getInterpolatedColor() -- same "own the mutable scratch object"
-	// pattern as Fragment (TriangleRasterizer) and RGBAccumulator (ShadingConsumer): one texture
-	// asset is typically sampled for many pixels, so this amortizes to zero allocations per call
-	// rather than one per call.
-	private final RGBAccumulator accumulator = new RGBAccumulator();
 	
 	/**
 	 * Create an empty Texture of a given width and height
@@ -68,7 +64,7 @@ public class Texture {
 	public Texture(int width, int height) {
 		this.width = width;
 		this.height = height;
-		tex = new int[width][height];
+		tex = new int[width * height];
 	}
 	
 	/**
@@ -93,13 +89,8 @@ public class Texture {
         this.height = img.getHeight();
         this.width = img.getWidth();
         
-        tex = new int[width][height];
-        
-        for (int h=0; h<height; h++) {
-            for (int w=0; w<width; w++) {
-            	tex[w][h] = img.getRGB(w, h);
-            }
-        }
+        // All the pixels in one call, already row by row (getRGB(x, y) converted them one by one)
+        tex = img.getRGB(0, 0, width, height, null, 0, width);
         // Flush BufferedImage data, they are no longer needed
         img.flush();
 	}
@@ -132,7 +123,11 @@ public class Texture {
 			// Should never happen
 		}
 
-		tex = new int[width][height];
+		tex = new int[width * height];
+
+		// All the pixels of the image in one call, row by row: pixel (x, y) of the image is pixels[y * imageWidth + x]
+		int imageWidth = img.getWidth();
+		int[] pixels = img.getRGB(0, 0, imageWidth, img.getHeight(), null, 0, imageWidth);
 
 		for (int h=0; h<height; h++) {
 			for (int w=0; w<width; w++) {
@@ -140,18 +135,18 @@ public class Texture {
 					
 					if (horizontal_orientation == TEXTURE_ORIENTATION_NORMAL) {
 						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
-							tex[w][h] = img.getRGB(w, h);
+							tex[h * width + w] = pixels[(h) * imageWidth + (w)];
 						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
-							tex[w][h] = img.getRGB(w, height-h-1);
+							tex[h * width + w] = pixels[(height-h-1) * imageWidth + (w)];
 						} else {
 							// Should never happen
 						}
 
 					} else if (horizontal_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
 						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
-							tex[w][h] = img.getRGB(width-w-1, h);
+							tex[h * width + w] = pixels[(h) * imageWidth + (width-w-1)];
 						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
-							tex[w][h] = img.getRGB(width-w-1, height-h-1);
+							tex[h * width + w] = pixels[(height-h-1) * imageWidth + (width-w-1)];
 						} else {
 							// Should never happen
 						}
@@ -163,18 +158,18 @@ public class Texture {
 				} else if (direction == TEXTURE_DIRECTION_HORIZONTAL) {
 					if (horizontal_orientation == TEXTURE_ORIENTATION_NORMAL) {
 						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
-							tex[w][h] = img.getRGB(h, w); // Inverse h and w reading
+							tex[h * width + w] = pixels[(w) * imageWidth + (h)]; // Inverse h and w reading
 						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
-							tex[w][h] = img.getRGB(height-h-1,w);
+							tex[h * width + w] = pixels[(w) * imageWidth + (height-h-1)];
 						} else {
 							// Should never happen
 						}
 
 					} else if (horizontal_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
 						if (vertical_orientation == TEXTURE_ORIENTATION_NORMAL) {
-							tex[w][h] = img.getRGB(h, width-w-1);
+							tex[h * width + w] = pixels[(width-w-1) * imageWidth + (h)];
 						} else if (vertical_orientation == TEXTURE_ORIENTATION_OPPOSITE) {
-							tex[w][h] = img.getRGB(height-h-1, width-w-1);
+							tex[h * width + w] = pixels[(width-w-1) * imageWidth + (height-h-1)];
 						} else {
 							// Should never happen
 						}
@@ -192,7 +187,7 @@ public class Texture {
 	/**
 	 * Calculate the bilinear interpolated Color of this Texture at coordinates <s,t> with 0 <= s <= 1 and 0 <= t <= 1
 	 *
-	 * PERF NOTE: works directly on the packed ARGB ints stored in tex[][], extracting R/G/B as
+	 * PERF NOTE: works directly on the packed ARGB ints stored in tex[], extracting R/G/B as
 	 * floats via bit shifts rather than constructing 4 intermediate Color objects (one per
 	 * sample) and extracting their components via getRGBColorComponents() (which itself
 	 * allocates a float[3] per call). Only one Color is ever created here, at the very end --
@@ -226,26 +221,29 @@ public class Texture {
 		y0 = clampToHeight(y0);
 		y1 = clampToHeight(y1);
 
-		int argb00 = tex[x0][y0];
-		int argb01 = tex[x0][y1];
-		int argb10 = tex[x1][y0];
-		int argb11 = tex[x1][y1];
+		int argb00 = tex[y0 * width + x0];
+		int argb01 = tex[y1 * width + x0];
+		int argb10 = tex[y0 * width + x1];
+		int argb11 = tex[y1 * width + x1];
 
-		// Bilinear filtering IS a weighted sum of 4 RGB samples (weights (1-u)(1-v), (1-u)v,
-		// u(1-v), uv) -- exactly the shape RGBAccumulator already handles for combining light
-		// contributions, so reused here rather than a separate per-channel helper. No extra
-		// allocation cost versus the 3-separate-channel-calls version: still zero intermediate
-		// allocations, one Color materialized at the end.
+		// Bilinear filtering is a weighted sum of 4 RGB samples (weights (1-u)(1-v), (1-u)v, u(1-v), uv).
 		float u_opposite = 1f - u_ratio;
 		float v_opposite = 1f - v_ratio;
 
-		accumulator.reset();
-		accumulator.add(red(argb00), green(argb00), blue(argb00), u_opposite * v_opposite);
-		accumulator.add(red(argb01), green(argb01), blue(argb01), u_opposite * v_ratio);
-		accumulator.add(red(argb10), green(argb10), blue(argb10), u_ratio * v_opposite);
-		accumulator.add(red(argb11), green(argb11), blue(argb11), u_ratio * v_ratio);
+		// Local sums rather than a shared accumulator object: no state in this Texture, so several threads can
+		// sample it at once (performance audit A6). Same operations, in the same order, as RGBAccumulator.add().
+		float r = 0f, g = 0f, b = 0f;
+		float w00 = u_opposite * v_opposite, w01 = u_opposite * v_ratio, w10 = u_ratio * v_opposite, w11 = u_ratio * v_ratio;
+		r += red(argb00) * w00;   g += green(argb00) * w00;   b += blue(argb00) * w00;
+		r += red(argb01) * w01;   g += green(argb01) * w01;   b += blue(argb01) * w01;
+		r += red(argb10) * w10;   g += green(argb10) * w10;   b += blue(argb10) * w10;
+		r += red(argb11) * w11;   g += green(argb11) * w11;   b += blue(argb11) * w11;
 
-		return accumulator.toColor();
+		return new Color(clamp01(r), clamp01(g), clamp01(b));
+	}
+
+	private static float clamp01(float v) {
+		return v < 0f ? 0f : (v > 1f ? 1f : v);
 	}
 
 	private static float red(int argb) {
@@ -274,12 +272,12 @@ public class Texture {
 	
 	public Color getColor(int x, int y) {
 		// TODO Implement x y validation and return exception if outside width and height
-		return new Color(tex[x][y]);
+		return new Color(tex[y * width + x]);
 	}
 		
 	public void setColor(int x, int y, Color c) {
 		// TODO Implement x y validation and return exception if outside width and height
-		tex[x][y] = c.getRGB();
+		tex[y * width + x] = c.getRGB();
 	}
 	
 	public int getWidth() {
