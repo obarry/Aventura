@@ -1012,11 +1012,13 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | D6 | Écriture directe dans `int[]` (+ `addPixel()`) | **Fait** (phase 1, étape 4, avec D2a). Reste le pool d'images (BACKLOG §6) |
 | A4 | `Matrix4 × Vector4` déroulé | **Fait** (phase 1, étape 5) : **sans gain mesurable** (le JIT optimisait déjà la boucle d'origine), gardé pour la lisibilité. Le stockage `float[16]` n'est pas fait (pas d'enjeu mesuré) |
 | A2 | Éclairage : valeurs communes calculées une fois par pixel | **Fait** (phase 1, étape 6, avec N2 et N3 en partie) |
-| A1, A3, A5, A6, A7 | Chemin par pixel, textures | À faire |
+| A3, A5, A6 | `ZBuffer` sans état, tri des 3 sommets, textures en `int[]` | **Fait** (phase 1, étape 8) : sans ombres −12 % (avec R4), allocations 12 → 7 Mo par image ; chargement d'une texture de 4480 × 4480 ≈ 1,2 → 0,7-0,9 s ; `ZBuffer` et `Texture` sans état partagé (prérequis du multithreading) |
+| A1, A7 | Interpolation incrémentale, mode Gouraud | À faire |
 | D2a | Couleurs des lumières et accumulateur sans `Color` | **Fait** (phase 1, étape 4, avec D6) : sans ombres −43 % (91 → 52 ms, 92 → 11 Mo alloués par image), lumière ponctuelle et spot −15 %, lumières visibles −18 % ; PCF dans le bruit (dominé par N1) |
 | D2b, D3 à D5, D8, D9 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
 | D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape_MouseMoving` |
-| R1, R3 à R7 | Élimination en amont | À faire |
+| R4 | Rejet des triangles sans centre de pixel | **Fait** (phase 1, étape 8), avant toute allocation dans `TriangleRasterizer` |
+| R1, R3, R5 à R7 | Élimination en amont | À faire |
 | R2 | Outcodes et clipping du plan proche | **Partiel** : clipping fait, chemin rapide N5 fait (phase 1, étape 7) ; outcodes à faire |
 | R9 | Passe d'ombre | À faire, enjeu multiplié (N4). **N4.1 fait** (phase 1, étape 7) : buffers d'ombre réutilisés d'une image à l'autre ; allocations −20 à −40 %, temps inchangé (allouer un tableau neuf ou le remplir coûtent autant) |
 | R10 | Sortie anticipée de l'éclairage | **Fait** avec N2 (phase 1, étape 6) |

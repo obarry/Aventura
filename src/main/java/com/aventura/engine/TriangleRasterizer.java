@@ -33,8 +33,6 @@ import com.aventura.model.world.Vertex;
 import com.aventura.model.world.triangle.Triangle;
 import com.aventura.tools.tracing.Tracer;
 
-import java.util.Arrays;
-import java.util.Comparator;
 import com.aventura.model.perspective.PerspectiveType;
 
 /**
@@ -195,6 +193,23 @@ public class TriangleRasterizer {
 			FragmentConsumer consumer) {
 
 		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterizing triangle.");
+
+		// Early rejection (performance audit R4): about half of the triangles of a detailed scene cover no pixel
+		// center at all (small or far triangles, between two pixel centers). The bounding box of the triangle on the
+		// screen tells it before any allocation, sort or set-up. It uses exactly the bounds of the rows and columns
+		// below, so it only rejects triangles that would draw nothing. The rows are still counted, as the full
+		// rasterization would (rasterizedLines, see RasterizerStats).
+		int halfWidth = perspectiveCtx.getPixelHalfWidth(), halfHeight = perspectiveCtx.getPixelHalfHeight();
+		float x1 = xScreen(pv1), x2 = xScreen(pv2), x3 = xScreen(pv3);
+		float y1 = yScreen(pv1), y2 = yScreen(pv2), y3 = yScreen(pv3);
+		int firstRow = Math.max((int) Math.ceil(Math.min(y1, Math.min(y2, y3))), -halfHeight);
+		int endRow = Math.min((int) Math.ceil(Math.max(y1, Math.max(y2, y3))), halfHeight + 1); // exclusive
+		int firstColumn = Math.max((int) Math.ceil(Math.min(x1, Math.min(x2, x3))), -halfWidth);
+		int endColumn = Math.min((int) Math.ceil(Math.max(x1, Math.max(x2, x3))), halfWidth + 1); // exclusive
+		if (firstRow >= endRow || firstColumn >= endColumn) {
+			if (endRow > firstRow) rasterizedLines += endRow - firstRow;
+			return; // No pixel center inside the triangle
+		}
 
 		RasterVertex a = new RasterVertex(pv1, normal1, texCoord1);
 		RasterVertex b = new RasterVertex(pv2, normal2, texCoord2);
@@ -409,9 +424,14 @@ public class TriangleRasterizer {
 	 * ascending order but required tracing 8 branches by hand to verify.
 	 */
 	private RasterVertex[] sortByScreenY(RasterVertex a, RasterVertex b, RasterVertex c) {
-		RasterVertex[] sorted = { a, b, c };
-		Arrays.sort(sorted, Comparator.comparing(v -> yScreen(v.vertex)));
-		return sorted;
+		// Three comparisons instead of Arrays.sort() with a Comparator (performance audit A5). The order of equal
+		// values is kept (stable sort) and Float.compare() orders the values like the former Comparator did
+		// (e.g. -0.0 before 0.0), so the vertices come out in exactly the same order.
+		RasterVertex t;
+		if (Float.compare(yScreen(b.vertex), yScreen(a.vertex)) < 0) { t = a; a = b; b = t; }
+		if (Float.compare(yScreen(c.vertex), yScreen(b.vertex)) < 0) { t = b; b = c; c = t; }
+		if (Float.compare(yScreen(b.vertex), yScreen(a.vertex)) < 0) { t = a; a = b; b = t; }
+		return new RasterVertex[] { a, b, c };
 	}
 
 	/** Bundles one triangle corner's geometry with the attributes the caller wants interpolated. */
