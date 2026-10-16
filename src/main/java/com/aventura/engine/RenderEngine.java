@@ -663,8 +663,9 @@ public class RenderEngine {
 	 * @param consumer receives one Fragment per surviving pixel of every resulting sub-triangle
 	 */
 	private void rasterizeClipped(Triangle t, Vector3 n1, Vector3 n2, Vector3 n3, Vector4 tx1, Vector4 tx2, Vector4 tx3, FragmentConsumer consumer) {
-		if (perspectiveContext.getPerspectiveType() == PerspectiveType.FRUSTUM) {
-			float near = perspectiveContext.getPerspective().getNear();
+		float near = perspectiveContext.getPerspective().getNear();
+		if (perspectiveContext.getPerspectiveType() == PerspectiveType.FRUSTUM
+				&& !NearPlaneClipper.isInFront(t.getV1(), t.getV2(), t.getV3(), near)) {
 			for (NearPlaneClipper.ClippedTriangle ct : NearPlaneClipper.clip(
 					t.getV1(), t.getV2(), t.getV3(), n1, n2, n3, tx1, tx2, tx3, near)) {
 				triangleRasterizer.rasterize(ct.v1, ct.v2, ct.v3, ct.n1, ct.n2, ct.n3, ct.t1, ct.t2, ct.t3, consumer);

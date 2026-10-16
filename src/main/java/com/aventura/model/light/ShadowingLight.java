@@ -328,10 +328,20 @@ public abstract class ShadowingLight extends Light {
 	 */
 	protected ShadowMapFace generateShadowMapFace(World world, Camera camera, PerspectiveContext perspectiveCtx,
 			ViewProjection viewProjection, ElementTransform elementTransform) {
+		return generateShadowMapFace(world, camera, perspectiveCtx, viewProjection, elementTransform, 0);
+	}
 
-		// Fresh ZBuffer + TriangleRasterizer for this generation pass -- rebuilt every time rather
-		// than reused across frames, since the shadow map must not carry over stale depth from a
-		// previous frame in a scene with moving lights/geometry.
+	/**
+	 * Same as generateShadowMapFace(World, Camera, PerspectiveContext, ViewProjection, ElementTransform), for the
+	 * face of index faceIndex (0 for a single map, 0 to 5 for the faces of a PointLight's cube map): the depth buffer
+	 * of each face is kept from one frame to the next (see reusableShadowBuffer()).
+	 */
+	protected ShadowMapFace generateShadowMapFace(World world, Camera camera, PerspectiveContext perspectiveCtx,
+			ViewProjection viewProjection, ElementTransform elementTransform, int faceIndex) {
+
+		// The ZBuffer of this face is reused from the previous frame and cleared (performance audit N4), so the
+		// shadow map never carries over stale depth from a previous frame; a new one is allocated only for the
+		// first frame or when the size of the map changes. The TriangleRasterizer is cheap and rebuilt.
 		// Map size from this face's perspective context: width x height pixels, possibly
 		// rectangular (see setShadowMapSize()). The ZBuffer covers the centered screen space
 		// [-half, half] on each axis, hence 2*half+1 cells (same convention as the main pass in
@@ -351,7 +361,7 @@ public abstract class ShadowingLight extends Light {
 		// the audit doc): "far" is then simply this face's far plane distance, with the same
 		// small relative margin.
 		final float SHADOW_MAP_FAR_VALUE = frustum ? lightPerspective.getFar() * (1.0f + 1e-4f) : 1.0f + 1e-4f;
-		ZBuffer shadowZBuffer = new ZBuffer(2 * halfWidth + 1, 2 * halfHeight + 1, halfWidth, halfHeight, SHADOW_MAP_FAR_VALUE);
+		ZBuffer shadowZBuffer = reusableShadowBuffer(faceIndex, halfWidth, halfHeight, SHADOW_MAP_FAR_VALUE);
 		MapView faceMap = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
 		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx, shadowZBuffer);
 		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
@@ -404,6 +414,32 @@ public abstract class ShadowingLight extends Light {
 	 * @param rasterizer
 	 * @param consumer
 	 */
+	/** Maximum number of shadow maps of one light (the 6 faces of a PointLight's cube map) */
+	protected static final int MAX_SHADOW_MAP_FACES = 6;
+
+	// The depth buffer of each face, kept from one frame to the next (see reusableShadowBuffer())
+	private final ZBuffer[] shadowBuffers = new ZBuffer[MAX_SHADOW_MAP_FACES];
+
+	/**
+	 * The depth buffer of the face of index faceIndex, cleared to farValue: the one of the previous frame when it has
+	 * the same size, otherwise a new one (performance audit N4: a 2000 x 2000 shadow map is a 16 MB array, it used to
+	 * be allocated at every frame, and 6 of them for a PointLight).
+	 *
+	 * Consequence: the MapView returned by getMap() (and PointLight.getFaceMap()) is the same object from one frame
+	 * to the next, overwritten by each new generation. Copy it (new MapView(map)) to keep the map of a given frame.
+	 */
+	private ZBuffer reusableShadowBuffer(int faceIndex, int halfWidth, int halfHeight, float farValue) {
+		int width = 2 * halfWidth + 1, height = 2 * halfHeight + 1;
+		ZBuffer buffer = shadowBuffers[faceIndex];
+		if (buffer == null || buffer.getWidth() != width || buffer.getHeight() != height) {
+			buffer = new ZBuffer(width, height, halfWidth, halfHeight, farValue); // The constructor clears it
+			shadowBuffers[faceIndex] = buffer;
+		} else {
+			buffer.clear(farValue);
+		}
+		return buffer;
+	}
+
 	protected void generateShadowMap(Element e, TriangleRasterizer rasterizer, DepthOnlyConsumer consumer) {
 		generateShadowMapElement(e, rasterizer, consumer, elementTransform_light, perspectiveCtx_light);
 	}
@@ -445,7 +481,7 @@ public abstract class ShadowingLight extends Light {
 				// Counters reset per triangle so that recordTriangle() gets THIS triangle's counts
 				// (same pattern as the main render pass in RenderEngine).
 				rasterizer.resetStats();
-				if (frustum) {
+				if (frustum && !NearPlaneClipper.isInFront(t.getV1(), t.getV2(), t.getV3(), near)) {
 					for (NearPlaneClipper.ClippedTriangle ct : NearPlaneClipper.clip(
 							t.getV1(), t.getV2(), t.getV3(), null, null, null, null, null, null, near)) {
 						rasterizer.rasterize(ct.v1, ct.v2, ct.v3, null, null, null, null, null, null, consumer);

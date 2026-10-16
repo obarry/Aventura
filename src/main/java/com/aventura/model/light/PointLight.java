@@ -303,7 +303,7 @@ public class PointLight extends ShadowingLight {
 		for (int face = 0; face < NB_FACES; face++) {
 			if (needed[face]) {
 				ShadowMapFace result = generateShadowMapFace(world, faceCamera[face], facePerspectiveCtx[face],
-						faceViewProjection[face], faceElementTransform[face]);
+						faceViewProjection[face], faceElementTransform[face], face);
 				faceMap[face] = result.map;
 				faceShadowBiasBase[face] = result.shadowBiasBase;
 			} else {

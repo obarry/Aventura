@@ -120,6 +120,15 @@ public final class NearPlaneClipper {
 	 * @return an empty list if the triangle is entirely behind near, one ClippedTriangle if it was
 	 *         entirely in front or had exactly one corner cut off, two if it had two corners cut off
 	 */
+	/**
+	 * Fast path (performance audit N5): true if the 3 vertices are in front of the near plane (w >= near), which is
+	 * the case of almost every triangle. The triangle can then be rasterized as it is, without calling clip(),
+	 * which would return it unchanged after allocating its corners and lists.
+	 */
+	public static boolean isInFront(Vertex v1, Vertex v2, Vertex v3, float near) {
+		return v1.getProjPos().getW() >= near && v2.getProjPos().getW() >= near && v3.getProjPos().getW() >= near;
+	}
+
 	public static List<ClippedTriangle> clip(
 			Vertex v1, Vertex v2, Vertex v3,
 			Vector3 n1, Vector3 n2, Vector3 n3,

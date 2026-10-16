@@ -1017,8 +1017,8 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | D2b, D3 à D5, D8, D9 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
 | D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape_MouseMoving` |
 | R1, R3 à R7 | Élimination en amont | À faire |
-| R2 | Outcodes et clipping du plan proche | **Partiel** : clipping fait ; outcodes et chemin rapide (N5) à faire |
-| R9 | Passe d'ombre | À faire, enjeu multiplié (N4) |
+| R2 | Outcodes et clipping du plan proche | **Partiel** : clipping fait, chemin rapide N5 fait (phase 1, étape 7) ; outcodes à faire |
+| R9 | Passe d'ombre | À faire, enjeu multiplié (N4). **N4.1 fait** (phase 1, étape 7) : buffers d'ombre réutilisés d'une image à l'autre ; allocations −20 à −40 %, temps inchangé (allouer un tableau neuf ou le remplir coûtent autant) |
 | R10 | Sortie anticipée de l'éclairage | **Fait** avec N2 (phase 1, étape 6) |
 | §6 | Multithreading | À faire, après D1, A3, A6, D3 et D5 |
 | §7 | Chronométrage par phase, `PerfBench` dans le dépôt | À faire |
