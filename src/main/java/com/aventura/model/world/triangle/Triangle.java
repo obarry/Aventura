@@ -333,22 +333,40 @@ public class Triangle {
 	}
 	
 	/**
-	 * Is true if at least one Vertex of the Triangle is in the View Frustum in homogeneous coordinates
-	 * Assumes that the projection of the vertices has been done previously
-	 * 
-	 * Caution this algorithm have limitations : the 3 vertices can be outside the View Frustum while the triangle stil have a portion of it inside...
-	 * TODO : look at the literature for a better scissor test alogorithm
-	 * 
-	 * @param t the Triangle
-	 * @return true if triangle is at least partially inside the View Frustum, else false
+	 * Is false only if the Triangle is certainly outside the View Frustum: classic "outcode" trivial rejection (as in
+	 * the Cohen-Sutherland line clipping). Each Vertex gets a code with one bit per plane of the View Frustum it is
+	 * outside of (left, right, bottom, top, near, far), and the Triangle is rejected only if its 3 vertices are outside
+	 * the SAME plane (the AND of the 3 codes is not 0): then no point of the Triangle can be inside.
+	 *
+	 * Conservative: a Triangle passing the test may still be outside (near a corner of the frustum); the rasterizer
+	 * clips it to the screen and the near plane clipper to the near plane. It replaces the former test "at least one
+	 * Vertex inside the frustum", which wrongly rejected a large Triangle crossing the whole view with its 3 vertices
+	 * outside (e.g. a large ground or sea triangle seen from close above, which then disappeared).
+	 *
+	 * The tests are done in homogeneous clip coordinates (x, y, z compared with w, without dividing by w), which stays
+	 * valid for the vertices behind the eye (w negative under a frustum perspective).
+	 * Assumes that the projection of the vertices has been done previously.
+	 *
+	 * @return true if the Triangle may be (at least partially) inside the View Frustum, false if it is certainly outside
 	 */
 	public boolean isInViewFrustum() {
+		return (outcode(v1.getProjPos()) & outcode(v2.getProjPos()) & outcode(v3.getProjPos())) == 0;
+	}
 
-		// Need at least one vertice to be in the view frustum
-		if (v1.isInViewFrustum() || v2.isInViewFrustum() || v3.isInViewFrustum())
-			return true;
-		else
-			return false;
+	/**
+	 * Outcode of a point in homogeneous clip coordinates: one bit per plane of the View Frustum the point is outside of.
+	 * Inside the frustum: -w <= x, y, z <= w, hence code 0.
+	 */
+	static int outcode(Vector4 clip) {
+		float w = clip.getW();
+		int code = 0;
+		if (clip.getX() < -w) code |= 1;  // Left
+		if (clip.getX() > w)  code |= 2;  // Right
+		if (clip.getY() < -w) code |= 4;  // Bottom
+		if (clip.getY() > w)  code |= 8;  // Top
+		if (clip.getZ() < -w) code |= 16; // Near
+		if (clip.getZ() > w)  code |= 32; // Far
+		return code;
 	}
 
 	

@@ -101,6 +101,46 @@ public class TestFractalLandscape_MouseMoving {
 	}
 
 	@Test
+	public void testFlyDirection_followsYawAndPitch() {
+		System.out.println("***** Test FractalLandscape_MouseMoving : flyDirection() is the unit line of sight for a yaw and a pitch *****");
+
+		Vector4 alongX = FractalLandscape_MouseMoving.flyDirection(0f, 0f);
+		assertEquals(1f, alongX.getX(), 1e-5f);
+		assertEquals(0f, alongX.getY(), 1e-5f);
+		assertEquals(0f, alongX.getZ(), 1e-5f);
+		assertEquals(0f, alongX.getW(), 0f); // A direction
+
+		Vector4 turnedLeft = FractalLandscape_MouseMoving.flyDirection((float) Math.PI / 2, 0f);
+		assertEquals(0f, turnedLeft.getX(), 1e-5f);
+		assertEquals(1f, turnedLeft.getY(), 1e-5f);
+
+		Vector4 lookingUp = FractalLandscape_MouseMoving.flyDirection(0f, (float) Math.PI / 6);
+		assertEquals((float) Math.cos(Math.PI / 6), lookingUp.getX(), 1e-5f);
+		assertEquals(0.5f, lookingUp.getZ(), 1e-5f);
+
+		assertEquals(1f, FractalLandscape_MouseMoving.flyDirection(2.1f, -0.6f).length(), 1e-5f);
+	}
+
+	@Test
+	public void testGroundAltitude_interpolatesTheTrellisAltitudes() {
+		System.out.println("***** Test FractalLandscape_MouseMoving : groundAltitude() is the altitude of the trellis (highest triangle cut), NaN outside *****");
+
+		// 2 x 2 cells on a 4 x 4 square centered on the origin: vertices at x, y = -2, 0, 2
+		float[][] altitudes = {
+				{ 0f, 1f, 2f },  // x = -2 (y = -2, 0, 2)
+				{ 1f, 2f, 3f },  // x = 0
+				{ 2f, 3f, 8f } }; // x = 2
+		assertEquals(0f, FractalLandscape_MouseMoving.groundAltitude(altitudes, 4f, 2, -2f, -2f), 1e-5f); // A vertex
+		assertEquals(2f, FractalLandscape_MouseMoving.groundAltitude(altitudes, 4f, 2, 0f, 0f), 1e-5f); // A vertex
+		assertEquals(8f, FractalLandscape_MouseMoving.groundAltitude(altitudes, 4f, 2, 2f, 2f), 1e-5f); // The far corner
+		assertEquals(1f, FractalLandscape_MouseMoving.groundAltitude(altitudes, 4f, 2, -1f, -1f), 1e-5f); // Center of a cell
+		// Center of the cell with corners 2, 3, 3, 8: 5 if cut along the 2-8 diagonal, 3 along the other one: the higher
+		assertEquals(5f, FractalLandscape_MouseMoving.groundAltitude(altitudes, 4f, 2, 1f, 1f), 1e-5f);
+		assertTrue(Float.isNaN(FractalLandscape_MouseMoving.groundAltitude(altitudes, 4f, 2, 2.5f, 0f)));
+		assertTrue(Float.isNaN(FractalLandscape_MouseMoving.groundAltitude(altitudes, 4f, 2, 0f, -3f)));
+	}
+
+	@Test
 	public void testClamp_keepsTheValueWithinTheInterval() {
 		System.out.println("***** Test FractalLandscape_MouseMoving : clamp() keeps the value within [min, max] *****");
 
