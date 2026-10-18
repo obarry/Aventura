@@ -71,10 +71,17 @@ import com.aventura.model.perspective.PerspectiveType;
  * It generates a landscape through a Treillis material formed through a Fractal recursion with random variations to create the ground
  * Goal is to progressively build a complete application on a typical 3D graphic use case
  * 
- * Controls (same conventions as most 3D / terrain viewers):
- * - Mouse drag:         orbit the camera around the point of interest (turntable: horizontal drag turns around
- *                       the vertical Z axis, vertical drag changes the elevation, clamped below the poles)
- * - Mouse wheel:        zoom (dolly the camera toward / away from the point of interest)
+ * Two camera modes (Landscape menu), with the same mouse gestures:
+ * - Orbit camera (default), to look at the landscape from outside, as most 3D / terrain viewers:
+ *   - Mouse drag:  orbit the camera around the point of interest (turntable: horizontal drag turns around
+ *                  the vertical Z axis, vertical drag changes the elevation, clamped below the poles)
+ *   - Mouse wheel: zoom (dolly the camera toward / away from the point of interest)
+ * - Fly camera, to fly inside the landscape like a plane, starting from where the orbit camera was:
+ *   - Mouse drag:  look around (horizontal drag turns left / right, vertical drag looks up / down, clamped below
+ *                  the vertical)
+ *   - Mouse wheel: fly forward / backward along the line of sight; the camera stays above the ground and the sea
+ *   Going back to the orbit camera puts the camera back on its orbit, where it was.
+ * Common to both modes:
  * - CTRL + mouse wheel: raise / lower the sea level (a transformation of the World: the sea Element is translated on Z)
  * - Window resizing:    the rendered image always fills the window, at the same scale (PPU): a larger window shows
  *                       more of the landscape, objects keep their size on screen (PerspectiveContext.ResizeMode.KEEP_SCALE)
@@ -82,7 +89,8 @@ import com.aventura.model.perspective.PerspectiveType;
  * hence reserved for a future camera pan.
  *
  * Menus:
- * - Landscape: generate a new landscape, reset the camera to its initial position
+ * - Landscape: generate a new landscape, reset the camera (to its initial orbit, or to the start of the flight), and
+ *              choose the camera mode (orbit or fly)
  * - Rendering: the rendering type (exclusive choice: radio buttons)
  * - Effects:   options independent of the rendering type (check boxes), grayed out when the current rendering type
  *              does not use them: texture, specular highlights, shadows (hard or soft), and the sun with its effects
@@ -174,6 +182,23 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	float orbitAzimuth;
 	float orbitElevation;
 	float orbitDistance;
+
+	// Fly camera (see the class comment): position of the eye, and direction of the line of sight given by two angles,
+	// like a plane: yaw (heading, angle around the vertical Z axis, from the X axis) and pitch (angle above the
+	// horizontal plane, clamped to +/- MAX_ELEVATION for the same reason as the orbit's elevation)
+	boolean flyMode = false;
+	Vector4 flyEye;
+	float flyYaw;
+	float flyPitch;
+	// Where the flight started (for Reset camera), and the zoom of the orbit, kept while flying to go back to it
+	Vector4 flyStartEye;
+	float flyStartYaw, flyStartPitch;
+	int orbitZoom;
+	// Distance flown per mouse wheel notch (the same as one notch of the orbit's zoom), and minimum height of the
+	// camera above the ground and the sea, so that it never goes under the landscape (where its "backstage" shows); it
+	// must stay larger than the distance of the near plane (see run()), which would cut the ground otherwise
+	static final float FLY_STEP = 0.1f;
+	static final float FLY_CLEARANCE = 0.03f;
 
 	// Window resizing: the image is resized (and rendered) only once the size has not changed for RESIZE_DELAY_MS,
 	// instead of rendering a full frame for each intermediate size while the user drags the border of the window
@@ -310,13 +335,22 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         int dy = e.getY() - mouse_last_Y;
         mouse_last_X = e.getX(); mouse_last_Y = e.getY();
 
-        // "Grab the World" feeling: dragging to the right makes the landscape turn to the right, hence the camera
-        // turns the other way (azimuth decreases); dragging down shows the landscape more from above (elevation
-        // increases). The elevation is clamped at each event (not on a total), so that dragging back immediately
-        // moves the camera again, without a dead zone after having hit the limit.
-        orbitAzimuth -= dragAngle(dx, panel.getWidth(), DRAG_ANGLE_PER_WIDTH);
-        orbitElevation = clamp(orbitElevation + dragAngle(dy, panel.getHeight(), DRAG_ANGLE_PER_HEIGHT),
-        		-MAX_ELEVATION, MAX_ELEVATION);
+        float angleX = dragAngle(dx, panel.getWidth(), DRAG_ANGLE_PER_WIDTH);
+        float angleY = dragAngle(dy, panel.getHeight(), DRAG_ANGLE_PER_HEIGHT);
+        // The vertical angle is clamped at each event (not on a total), so that dragging back immediately moves
+        // the camera again, without a dead zone after having hit the limit.
+        if (flyMode) {
+        	// "Look around" (like the head of the pilot): dragging to the right turns the line of sight to the right
+        	// (the yaw decreases, clockwise seen from above), dragging up looks up (the screen Y axis points down)
+        	flyYaw -= angleX;
+        	flyPitch = clamp(flyPitch - angleY, -MAX_ELEVATION, MAX_ELEVATION);
+        } else {
+        	// "Grab the World" feeling: dragging to the right makes the landscape turn to the right, hence the
+        	// camera turns the other way (azimuth decreases); dragging down shows the landscape more from above
+        	// (elevation increases)
+        	orbitAzimuth -= angleX;
+        	orbitElevation = clamp(orbitElevation + angleY, -MAX_ELEVATION, MAX_ELEVATION);
+        }
 
         // Move the camera and render the updated view (the World itself is unchanged)
         updateCameraPosition();
@@ -349,6 +383,44 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	}
 
 	/**
+	 * Unit vector of the line of sight of the fly camera, for the given yaw (heading, around the vertical Z axis, from
+	 * the X axis) and pitch (above the horizontal plane), in radians: the same spherical coordinates as orbitEye(),
+	 * here for a direction (w = 0) rather than a point. Package-private and static so it can be unit-tested.
+	 */
+	static Vector4 flyDirection(float yaw, float pitch) {
+		float horizontal = (float) Math.cos(pitch);
+		return new Vector4(
+				horizontal * (float) Math.cos(yaw),
+				horizontal * (float) Math.sin(yaw),
+				(float) Math.sin(pitch),
+				0);
+	}
+
+	/**
+	 * Altitude of the ground at (x, y), never below the surface actually drawn: a trellis of the given size, centered on
+	 * the origin, made of n x n cells, with altitudes[i][j] at x = -size/2 + i*size/n, y = -size/2 + j*size/n. Each
+	 * cell is drawn as 2 triangles, cut along one diagonal or the other (the mesh alternates them): the altitude is the
+	 * higher of the two possible cuts, each one a planar interpolation in the triangle containing the point, so that
+	 * the camera kept above it is above the drawn triangles whatever the cut. NaN outside of the trellis (no ground).
+	 * Package-private and static so it can be unit-tested.
+	 */
+	static float groundAltitude(float[][] altitudes, float size, int n, float x, float y) {
+		// Position in cells from the corner of the trellis
+		float u = (x + size / 2) / size * n;
+		float v = (y + size / 2) / size * n;
+		if (u < 0 || v < 0 || u > n || v > n) return Float.NaN;
+		int i = Math.min((int) u, n - 1); // The last cell for the far edge (u = n)
+		int j = Math.min((int) v, n - 1);
+		float fu = u - i, fv = v - j; // Position inside the cell, in [0, 1]
+		float a = altitudes[i][j], b = altitudes[i + 1][j], c = altitudes[i][j + 1], d = altitudes[i + 1][j + 1];
+		// Cut along the diagonal a-d: triangle a-b-d below the diagonal (fu >= fv), a-c-d above
+		float cutAD = fu >= fv ? a + (b - a) * fu + (d - b) * fv : a + (c - a) * fv + (d - c) * fu;
+		// Cut along the diagonal b-c: triangle a-b-c near the corner a (fu + fv <= 1), d-c-b near the corner d
+		float cutBC = fu + fv <= 1 ? a + (b - a) * fu + (c - a) * fv : d + (c - d) * (1 - fu) + (b - d) * (1 - fv);
+		return Math.max(cutAD, cutBC);
+	}
+
+	/**
 	 * Restricts a value to the [min, max] interval. Package-private and static so it can be unit-tested.
 	 */
 	static float clamp(float value, float min, float max) {
@@ -356,12 +428,44 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	}
 
 	/**
-	 * Places the camera according to the current orbit angles and the current (possibly mid-animation) zoom,
-	 * always looking at the point of interest with the World's up axis (Z) as up vector.
+	 * Places the camera according to the current mode, always with the World's up axis (Z) as up vector:
+	 * - orbit: according to the orbit angles and the current (possibly mid-animation) zoom, looking at the point of
+	 *   interest
+	 * - fly: at the position of the fly camera, looking along its line of sight (yaw, pitch)
 	 */
 	private void updateCameraPosition() {
-		float distance = orbitDistance - appliedZoom / 10;
-		camera.updateCamera(orbitEye(poi, distance, orbitAzimuth, orbitElevation), poi, Vector4.zAxis());
+		if (flyMode) {
+			camera.updateCamera(flyEye, flyEye.plus(flyDirection(flyYaw, flyPitch)), Vector4.zAxis());
+		} else {
+			float distance = orbitDistance - appliedZoom / 10;
+			camera.updateCamera(orbitEye(poi, distance, orbitAzimuth, orbitElevation), poi, Vector4.zAxis());
+		}
+	}
+
+	/** Moves the fly camera by the given distance along its line of sight (backward if negative), above the ground. */
+	private void flyForward(float distance) {
+		flyEye = flyEye.plus(flyDirection(flyYaw, flyPitch).times(distance));
+		keepAboveGround();
+	}
+
+	/**
+	 * Keeps the fly camera at least FLY_CLEARANCE above the ground and the sea (the sea covers the same square as the
+	 * landscape): the camera slides on them instead of going under. The ground is taken under the camera and around
+	 * it (at FLY_CLEARANCE on each side): on a steep slope, the ground rising beside the camera would otherwise come
+	 * closer than the near plane, which would cut it. Outside of the landscape there is nothing to keep above.
+	 */
+	private void keepAboveGround() {
+		float x = flyEye.getX(), y = flyEye.getY(), r = FLY_CLEARANCE;
+		float ground = Float.NaN;
+		float[][] samples = { { x, y }, { x - r, y }, { x + r, y }, { x, y - r }, { x, y + r } };
+		for (float[] sample : samples) {
+			float altitude = groundAltitude(array_land, size, n, sample[0], sample[1]);
+			if (Float.isNaN(altitude)) continue; // Outside of the landscape
+			if (Float.isNaN(ground) || altitude > ground) ground = altitude; // The highest
+		}
+		if (Float.isNaN(ground)) return;
+		float floor = Math.max(ground, sea_level) + FLY_CLEARANCE;
+		if (flyEye.getZ() < floor) flyEye.setZ(floor);
 	}
 
  	public void mouseMoved(MouseEvent e) {
@@ -375,6 +479,13 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		if (e.isControlDown()) {
 			// CTRL + wheel: wheel up (negative rotation) raises the sea, wheel down lowers it
 			changeSeaLevel(-e.getWheelRotation());
+			return;
+		}
+		if (flyMode) {
+			// Fly forward (wheel up, negative rotation) or backward, FLY_STEP per notch, with the same easing as the
+			// zoom (see stepZoomAnimation()), and no limit
+			zoom -= e.getWheelRotation();
+			startZoomAnimation((float)zoom);
 			return;
 		}
 		// Increment or decrement zoom based on wheel rotation (+1 or -1), without letting the camera reach (or cross)
@@ -393,6 +504,10 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	private void changeSeaLevel(int notches) {
 		sea_level = clamp(sea_level + notches * SEA_LEVEL_STEP, tre_land.getMinZ(), tre_land.getMaxZ());
 		tre_sea.setTransformation(new Translation(new Vector3(0, 0, sea_level)));
+		if (flyMode) { // A rising sea lifts the flying camera
+			keepAboveGround();
+			updateCameraPosition();
+		}
 		updateTitle();
 		renderer.render();
 	}
@@ -413,9 +528,9 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		renderer.render();
 	}
 
-	/** Displays the current sea level in the title of the frame. */
+	/** Displays the camera mode and the current sea level in the title of the frame. */
 	private void updateTitle() {
-		frame.setTitle(String.format("Fractal Landscape - Sea level: %.2f", sea_level));
+		frame.setTitle(String.format("Fractal Landscape - %s camera - Sea level: %.2f", flyMode ? "Fly" : "Orbit", sea_level));
 	}
 
 	/**
@@ -449,9 +564,13 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		long elapsed = System.currentTimeMillis() - zoomAnimStartMillis;
 		float t = Math.min(1f, (float) elapsed / ZOOM_ANIM_DURATION_MS);
 
+		float previousZoom = appliedZoom;
 		appliedZoom = interpolateZoom(zoomAnimStartValue, zoomAnimTargetValue, t);
 
-		// Zoom camera by moving the eye toward the point of interest (orbit angles unchanged)
+		// Orbit: zoom camera by moving the eye toward the point of interest (orbit angles unchanged), see
+		// updateCameraPosition(). Fly: move the eye along the CURRENT line of sight by the distance of this frame only,
+		// so that the flight follows the direction even if it changes (mouse drag) during the animation.
+		if (flyMode) flyForward((appliedZoom - previousZoom) * FLY_STEP);
 		updateCameraPosition();
 
 		// Render the updated view after zooming camera and rotating Element
@@ -488,7 +607,67 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		JMenuItem resetCamera = new JMenuItem("Reset camera");
 		resetCamera.addActionListener(e -> resetCamera());
 		menu.add(resetCamera);
+		menu.addSeparator();
+
+		// Camera mode: exclusive choice
+		ButtonGroup cameraGroup = new ButtonGroup();
+		JRadioButtonMenuItem orbitItem = new JRadioButtonMenuItem("Orbit camera", !flyMode);
+		orbitItem.addActionListener(e -> setFlyMode(false));
+		JRadioButtonMenuItem flyItem = new JRadioButtonMenuItem("Fly camera", flyMode);
+		flyItem.addActionListener(e -> setFlyMode(true));
+		cameraGroup.add(orbitItem);
+		cameraGroup.add(flyItem);
+		menu.add(orbitItem);
+		menu.add(flyItem);
 		return menu;
+	}
+
+	/**
+	 * Switches between the orbit and the fly camera, and renders.
+	 * - To fly: the flight starts where the orbit camera is, looking in the same direction (so the view does not
+	 *   jump), and the zoom of the orbit is kept aside.
+	 * - Back to orbit: the camera goes back on its orbit, where it was (same angles and zoom as before the flight).
+	 */
+	private void setFlyMode(boolean fly) {
+		if (fly == flyMode) return;
+		finishZoomAnimation();
+		if (fly) {
+			orbitZoom = zoom;
+			Vector4 eyePosition = camera.getEye();
+			Vector4 direction = poi.minus(eyePosition).normalize();
+			flyStartEye = new Vector4(eyePosition);
+			flyStartYaw = (float) Math.atan2(direction.getY(), direction.getX());
+			flyStartPitch = clamp((float) Math.asin(direction.getZ()), -MAX_ELEVATION, MAX_ELEVATION);
+			startFlight();
+		} else {
+			zoom = orbitZoom;
+			appliedZoom = orbitZoom;
+		}
+		flyMode = fly;
+		if (fly) keepAboveGround();
+		updateCameraPosition();
+		updateTitle();
+		renderer.render();
+	}
+
+	/** Puts the fly camera at the start of the flight (no wheel movement pending). */
+	private void startFlight() {
+		flyEye = new Vector4(flyStartEye);
+		flyYaw = flyStartYaw;
+		flyPitch = flyStartPitch;
+		zoom = 0;
+		appliedZoom = 0f;
+	}
+
+	/** Stops a running zoom (or flight) animation at its target, so that a mode switch starts from a stable state. */
+	private void finishZoomAnimation() {
+		if (zoomAnimTimer != null && zoomAnimTimer.isRunning()) {
+			zoomAnimTimer.stop();
+			float previousZoom = appliedZoom;
+			appliedZoom = zoom;
+			if (flyMode) flyForward((appliedZoom - previousZoom) * FLY_STEP);
+			updateCameraPosition();
+		}
 	}
 
 	/** Rendering menu: the rendering type, an exclusive choice (radio buttons in a ButtonGroup). */
@@ -587,15 +766,27 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		world.rebuild();
 		System.out.println("Number of Triangles in Trellis: "+tre_land.getNbTriangles()+" Number of vertices: " + tre_land.getNbVertices());
 		updateTrianglesColorTrellis();
+		if (flyMode) { // The new ground may be above the flying camera
+			keepAboveGround();
+			updateCameraPosition();
+		}
 		renderer.render();
 	}
 
-	/** Puts the camera back to its initial position (orbit angles and zoom), and renders. */
+	/**
+	 * Puts the camera back to its initial position, and renders: orbit camera, its initial angles and no zoom; fly
+	 * camera, the start of the flight.
+	 */
 	private void resetCamera() {
 		if (zoomAnimTimer != null) zoomAnimTimer.stop();
-		zoom = 0;
-		appliedZoom = 0f;
-		initOrbit();
+		if (flyMode) {
+			startFlight();
+			keepAboveGround();
+		} else {
+			zoom = 0;
+			appliedZoom = 0f;
+			initOrbit();
+		}
 		updateCameraPosition();
 		renderer.render();
 	}
@@ -826,7 +1017,11 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		lighting = new Lighting(sun, new AmbientLight(0.2f), true);
 		
 		// Graphic Context
-		pContext = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1250);
+		// Near plane very close to the eye (0.01, less than the FLY_CLEARANCE of the fly camera above the ground), so
+		// that the fly camera can go near the hills and the sea without cutting them (the near plane cuts everything
+		// closer, which would show the "backstage" through the ground): the same field of view and image size as a
+		// near plane at 0.8 with 0.8 x 0.45 and 1250 pixels per unit (all divided / multiplied by 80)
+		pContext = new PerspectiveContext(0.01f, 0.005625f, 0.01f, 100, PerspectiveType.FRUSTUM, 100000);
 		//PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveType.ORTHOGRAPHIC, 125);
 		
 		// When the window (hence the view) is resized, keep the number of pixels per unit rather than the field of view:

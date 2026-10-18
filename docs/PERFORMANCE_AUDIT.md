@@ -450,6 +450,13 @@ De plus, il fait 3 divisions par sommet, **refaites pour chaque triangle** qui p
 > par outcodes** (`Triangle.isInViewFrustum()` est inchangé, donc les grands triangles qui traversent l'écran avec
 > leurs 3 sommets dehors sont toujours rejetés), et un **chemin rapide** dans le clipper, qui alloue aujourd'hui
 > 5 à 7 objets pour chaque triangle, même entièrement devant le plan proche (voir N5 au §10).
+>
+> **Fait (octobre 2026) : le test de frustum par outcodes.** `Triangle.isInViewFrustum()` rejette un triangle
+> seulement si ses 3 sommets sont du même côté d'un même plan du frustum (`oc1 & oc2 & oc3 != 0`), en espace clip
+> et sans division. Les grands triangles qui traversent l'écran ne sont plus rejetés : la mer de `FractalLandscape`
+> (des triangles d'une unité) disparaissait entièrement quand la caméra de vol passait juste au-dessus. Les outcodes
+> sont encore recalculés pour chaque triangle (pas une fois par sommet), et le cas « entièrement dedans » ne sert
+> pas encore à éviter le clipper.
 
 ### R3. Back-face culling dans l'espace écran
 
@@ -1019,7 +1026,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape_MouseMoving` |
 | R4 | Rejet des triangles sans centre de pixel | **Fait** (phase 1, étape 8), avant toute allocation dans `TriangleRasterizer` |
 | R1, R3, R5 à R7 | Élimination en amont | À faire |
-| R2 | Outcodes et clipping du plan proche | **Partiel** : clipping fait, chemin rapide N5 fait (phase 1, étape 7) ; outcodes à faire |
+| R2 | Outcodes et clipping du plan proche | **Fait** : clipping, chemin rapide N5 (phase 1, étape 7), test de rejet par outcodes (octobre 2026) |
 | R9 | Passe d'ombre | À faire, enjeu multiplié (N4). **N4.1 fait** (phase 1, étape 7) : buffers d'ombre réutilisés d'une image à l'autre ; allocations −20 à −40 %, temps inchangé (allouer un tableau neuf ou le remplir coûtent autant) |
 | R10 | Sortie anticipée de l'éclairage | **Fait** avec N2 (phase 1, étape 6) |
 | §6 | Multithreading | À faire, après D1, A3, A6, D3 et D5 |
