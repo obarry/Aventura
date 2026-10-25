@@ -31,14 +31,17 @@ import java.awt.Graphics;
 import java.awt.Toolkit;
 import java.util.Random;
 
+import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
 import java.awt.event.*;
@@ -75,22 +78,28 @@ import com.aventura.model.perspective.PerspectiveType;
  * - Orbit camera (default), to look at the landscape from outside, as most 3D / terrain viewers:
  *   - Mouse drag:  orbit the camera around the point of interest (turntable: horizontal drag turns around
  *                  the vertical Z axis, vertical drag changes the elevation, clamped below the poles)
- *   - Mouse wheel: zoom (dolly the camera toward / away from the point of interest)
+ *   - Mouse wheel (or Up / Down arrow keys): zoom (dolly the camera toward / away from the point of interest)
  * - Fly camera, to fly inside the landscape like a plane, starting from where the orbit camera was:
  *   - Mouse drag:  look around (horizontal drag turns left / right, vertical drag looks up / down, clamped below
  *                  the vertical)
- *   - Mouse wheel: fly forward / backward along the line of sight; the camera stays above the ground and the sea
+ *   - Mouse wheel (or Up / Down arrow keys): fly forward / backward along the line of sight; the camera stays
+ *                  above the ground and the sea
  *   Going back to the orbit camera puts the camera back on its orbit, where it was.
+ * On a touchpad, the two finger vertical scroll and the pinch both act as the mouse wheel: the pinch is sent by the
+ * system as CTRL + mouse wheel (the zoom gesture of the browsers, office or map applications), so CTRL + mouse wheel
+ * is the same as the mouse wheel. The fractions of a notch sent by the touchpads are taken into account
+ * (MouseWheelEvent.getPreciseWheelRotation()), for a smooth movement.
  * Common to both modes:
- * - CTRL + mouse wheel: raise / lower the sea level (a transformation of the World: the sea Element is translated on Z)
+ * - CTRL + U / CTRL + D (or Page Up / Page Down): raise / lower the sea level (a transformation of the World: the sea
+ *                       Element is translated on Z); keep the key pressed for a continuous movement
  * - Window resizing:    the rendered image always fills the window, at the same scale (PPU): a larger window shows
  *                       more of the landscape, objects keep their size on screen (PerspectiveContext.ResizeMode.KEEP_SCALE)
  * SHIFT + mouse wheel is deliberately left free: it is the usual OS / application convention for lateral scrolling,
  * hence reserved for a future camera pan.
  *
  * Menus:
- * - Landscape: generate a new landscape, reset the camera (to its initial orbit, or to the start of the flight), and
- *              choose the camera mode (orbit or fly)
+ * - Landscape: generate a new landscape, raise / lower the sea level, reset the camera (to its initial orbit, or to
+ *              the start of the flight), and choose the camera mode (orbit or fly)
  * - Rendering: the rendering type (exclusive choice: radio buttons)
  * - Effects:   options independent of the rendering type (check boxes), grayed out when the current rendering type
  *              does not use them: texture, specular highlights, shadows (hard or soft), and the sun with its effects
@@ -100,7 +109,7 @@ import com.aventura.model.perspective.PerspectiveType;
  * @author Olivier BARRY
  * @since Nov 2023
  */
-public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
+public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionListener, MouseWheelListener {
 	
 	// GUI Frame and Menus
 	JFrame frame;
@@ -155,13 +164,16 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// Element : Trellis for the sea
 	Trellis tre_sea;
 	float sea_level = 1.5f;
-	// Each CTRL + mouse wheel notch moves the sea by this altitude; the sea level stays within the landscape altitudes
+	// Each key press (CTRL + U / D, Page Up / Down) moves the sea by this altitude; the sea level stays within the
+	// landscape altitudes
 	static final float SEA_LEVEL_STEP = 0.01f;
 
 	// Movement variables
 	int i_rotation = 0;
 	int j_rotation = 0;
-	int zoom = 0;
+	// Zoom (orbit camera) or distance flown (fly camera) asked by the mouse wheel and the arrow keys, in notches of the
+	// wheel (a float: a touchpad sends fractions of a notch), see moveCamera()
+	float zoom = 0;
 	static int NB_ROTATIONS = 90;
 	
 	// Mouse drag: last known position (updated on each event)
@@ -193,7 +205,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// Where the flight started (for Reset camera), and the zoom of the orbit, kept while flying to go back to it
 	Vector4 flyStartEye;
 	float flyStartYaw, flyStartPitch;
-	int orbitZoom;
+	float orbitZoom;
 	// Distance flown per mouse wheel notch (the same as one notch of the orbit's zoom), and minimum height of the
 	// camera above the ground and the sea, so that it never goes under the landscape (where its "backstage" shows); it
 	// must stay larger than the distance of the near plane (see run()), which would cut the ground otherwise
@@ -204,9 +216,6 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	// instead of rendering a full frame for each intermediate size while the user drags the border of the window
 	private static final int RESIZE_DELAY_MS = 50;
 	Timer resizeTimer;
-
-	// CTRL key + mouse flag
-	boolean key_control = false;
 
 	// Zoom-wheel smoothing (Quaternion/slerp technique adapted for a translation): each mouse wheel
 	// notch used to jump the camera's dolly position straight to its new value. It now eases into
@@ -242,6 +251,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	    menubar.add(createEffectsMenu());
 	    frame.setJMenuBar(menubar);
 	    updateEffectsMenu();
+	    bindKeys();
 
 		
 		// Create the view to be displayed
@@ -273,7 +283,6 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
         //where initialization occurs:
         //Register for mouse events on blankArea and the panel.
         panel.addMouseListener(this);
-        frame.addKeyListener(this);
         panel.addMouseMotionListener(this);
         panel.addMouseWheelListener(this);
 
@@ -289,22 +298,29 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		return view;
 	}
 	
-	public void keyTyped(KeyEvent e) {
-		// Do nothing
+	/**
+	 * Keyboard shortcuts without a menu item: Up / Down arrows move the camera like the mouse wheel, Page Up / Page Down
+	 * raise / lower the sea level like CTRL + U / CTRL + D (the accelerators of the Landscape menu). They are key
+	 * bindings of the whole window (WHEN_IN_FOCUSED_WINDOW), so they work whatever component has the keyboard focus,
+	 * unlike a KeyListener which only receives the keys when its own component has it.
+	 */
+	private void bindKeys() {
+		JComponent root = frame.getRootPane();
+		bindKey(root, KeyEvent.VK_UP, "cameraForward", () -> moveCamera(1));
+		bindKey(root, KeyEvent.VK_DOWN, "cameraBackward", () -> moveCamera(-1));
+		bindKey(root, KeyEvent.VK_PAGE_UP, "seaUp", () -> changeSeaLevel(1));
+		bindKey(root, KeyEvent.VK_PAGE_DOWN, "seaDown", () -> changeSeaLevel(-1));
 	}
 
-	public void keyPressed(KeyEvent e) {
-	    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-	    	key_control = true;
-	    }
+	private void bindKey(JComponent component, int keyCode, String name, Runnable action) {
+		component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(keyCode, 0), name);
+		component.getActionMap().put(name, new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				if (renderer != null) action.run(); // Ignored until the renderer is created
+			}
+		});
 	}
- 
-	public void keyReleased(KeyEvent e) {
-	    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-	    	key_control = false;
-	    }
-	}
-	
+
 	public void mousePressed(MouseEvent e) {
 		// Store the location when mouse is clicked: mouseDragged() accumulates the displacement from one event to the next
 		mouse_last_X = e.getX(); mouse_last_Y = e.getY();
@@ -472,37 +488,40 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		// Do nothing
  	}
 
+	/**
+	 * Mouse wheel, touchpad two finger scroll and touchpad pinch (sent as CTRL + wheel, hence not distinguished): wheel
+	 * up (negative rotation) moves the camera forward. getPreciseWheelRotation() rather than getWheelRotation(): a
+	 * touchpad sends fractions of a notch, which getWheelRotation() rounds to 0 (no movement) until a whole notch is
+	 * reached; a mouse wheel sends whole notches, so it moves exactly as before.
+	 */
 	public void mouseWheelMoved(MouseWheelEvent e) {
-		//System.out.println("Mouse wheel moved: " + e.getWheelRotation());
-		// The modifier keys are read on the event itself (not through keyPressed()/keyReleased(), which require the
-		// frame to have the keyboard focus)
-		if (e.isControlDown()) {
-			// CTRL + wheel: wheel up (negative rotation) raises the sea, wheel down lowers it
-			changeSeaLevel(-e.getWheelRotation());
-			return;
-		}
-		if (flyMode) {
-			// Fly forward (wheel up, negative rotation) or backward, FLY_STEP per notch, with the same easing as the
-			// zoom (see stepZoomAnimation()), and no limit
-			zoom -= e.getWheelRotation();
-			startZoomAnimation((float)zoom);
-			return;
-		}
-		// Increment or decrement zoom based on wheel rotation (+1 or -1), without letting the camera reach (or cross)
-		// the point of interest: zoom/10 is the distance travelled toward the poi
-		int maxZoom = (int) ((orbitDistance - MIN_ORBIT_DISTANCE) * 10);
-		zoom = Math.min(zoom - e.getWheelRotation(), maxZoom);
-		startZoomAnimation((float)zoom);
+		moveCamera((float) -e.getPreciseWheelRotation());
 	}
 
 	/**
-	 * Raises (positive notches) or lowers (negative notches) the sea level by SEA_LEVEL_STEP per notch, within the
+	 * Moves the camera forward (positive notches) or backward (negative notches), with an easing (see
+	 * startZoomAnimation()): one notch of the wheel, or one press of an arrow key, is 1.
+	 * - Orbit camera: zoom, 1/10 of a unit per notch, without letting the camera reach (or cross) the point of interest
+	 * - Fly camera: flight along the line of sight, FLY_STEP per notch, without limit
+	 */
+	private void moveCamera(float notches) {
+		if (flyMode) {
+			zoom += notches;
+		} else {
+			float maxZoom = (orbitDistance - MIN_ORBIT_DISTANCE) * 10; // zoom/10 is the distance travelled toward the poi
+			zoom = Math.min(zoom + notches, maxZoom);
+		}
+		startZoomAnimation(zoom);
+	}
+
+	/**
+	 * Raises (positive steps) or lowers (negative steps) the sea level by SEA_LEVEL_STEP per step, within the
 	 * altitudes of the landscape. This is a transformation of the World, not of the view: the sea Element (tre_sea)
 	 * is translated on the Z axis; its geometry is unchanged, the RenderEngine applies the new transformation at the
 	 * next rendering, so neither a rebuild of the World nor a new calculation of the normals is needed.
 	 */
-	private void changeSeaLevel(int notches) {
-		sea_level = clamp(sea_level + notches * SEA_LEVEL_STEP, tre_land.getMinZ(), tre_land.getMaxZ());
+	private void changeSeaLevel(int steps) {
+		sea_level = clamp(sea_level + steps * SEA_LEVEL_STEP, tre_land.getMinZ(), tre_land.getMaxZ());
 		tre_sea.setTransformation(new Translation(new Vector3(0, 0, sea_level)));
 		if (flyMode) { // A rising sea lifts the flying camera
 			keepAboveGround();
@@ -604,6 +623,19 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 		JMenuItem generate = new JMenuItem("Generate");
 		generate.addActionListener(e -> generateLandscape());
 		menu.add(generate);
+
+		// Sea level: CTRL + U / CTRL + D accelerators (letters: the same keys on every keyboard layout, unlike + / -,
+		// which need SHIFT for + only on an AZERTY keyboard); Page Up / Page Down also work (see bindKeys())
+		JMenuItem seaUp = new JMenuItem("Sea level up");
+		seaUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
+		seaUp.addActionListener(e -> changeSeaLevel(1));
+		menu.add(seaUp);
+		JMenuItem seaDown = new JMenuItem("Sea level down");
+		seaDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK));
+		seaDown.addActionListener(e -> changeSeaLevel(-1));
+		menu.add(seaDown);
+		menu.addSeparator();
+
 		JMenuItem resetCamera = new JMenuItem("Reset camera");
 		resetCamera.addActionListener(e -> resetCamera());
 		menu.add(resetCamera);
