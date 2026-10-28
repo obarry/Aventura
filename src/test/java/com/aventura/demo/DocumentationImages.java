@@ -16,11 +16,15 @@ import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.cookbook.CookbookGallery;
 import com.aventura.math.transform.Transformation;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
+import com.aventura.model.light.AmbientLight;
+import com.aventura.model.light.DirectionalLight;
+import com.aventura.model.light.Lighting;
 import com.aventura.model.light.PointLight;
 import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.light.SpotLight;
@@ -62,7 +66,7 @@ import com.aventura.test.TestLightingSun;
  *     aventura_demo.jpg       AventuraDemo, one image of its animation
  *     urbanscape_street.jpg   UrbanScape, camera low in front of the buildings
  *     urbanscape_flight.jpg   UrbanScape, camera high on the side (shadows of the buildings)
- *     fractal_landscape.jpg   FractalLandscape_MouseMoving, landscape from a fixed random seed, seen from afar
+ *     fractal_landscape.jpg   FractalLandscape, landscape from a fixed random seed, seen from afar
  *     spotlights.jpg          TestLightingSpot1
  *     spot_shadows.jpg        TestLightingSpot3Shadows, one image of its animation (shadows of a SpotLight)
  *     soft_shadows.png        TestLightingSpot3Shadows, hard (left) and PCF 3x3 (right) shadows with a small shadow map
@@ -183,7 +187,7 @@ public class DocumentationImages {
 	}
 
 	/**
-	 * The fractal landscape of FractalLandscape_MouseMoving (same size, resolution, sea level, colors and light),
+	 * The fractal landscape of FractalLandscape (same size, resolution, sea level, colors and light),
 	 * generated from a fixed seed, seen from farther than the demo's initial position so that it is fully visible
 	 * (1280 x 720 pixels). The image of the documentation is the 960 x 260 band around it (crop).
 	 */
@@ -191,7 +195,7 @@ public class DocumentationImages {
 		float size = 4;
 		int n = 128;
 		float[][] altitudes = new float[n + 1][n + 1];
-		FractalLandscape_MouseMoving.createLandscape(altitudes, size, n, new Random(seed));
+		FractalLandscape.generateFractalAltitudes(altitudes, size, n, new Random(seed));
 		Trellis trellis;
 		try {
 			trellis = new Trellis(size, size, n, n, altitudes);
@@ -202,13 +206,21 @@ public class DocumentationImages {
 		World world = new World();
 		world.addElement(trellis);
 		world.build();
-		FractalLandscape_MouseMoving.colorTrianglesByAltitude(trellis);
+		FractalLandscape.colorTrianglesByAltitude(trellis);
 
 		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 0.8f, 100, PerspectiveType.FRUSTUM, 1600);
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(false);
-		return new DemoScene(world, FractalLandscape_MouseMoving.createLighting(), new Vector4(7, -2, 2.4f, 1), new Vector4(0, 0, 1.3f, 1),
+		return new DemoScene(world, fractalLandscapeLighting(), new Vector4(7, -2, 2.4f, 1), new Vector4(0, 0, 1.3f, 1),
 				rContext, perspective).crop(241, 190, 960, 260);
+	}
+
+	/**
+	 * The lighting of the fractal landscape image: a sun behind the camera of that image, lighting the slopes it sees.
+	 * The interactive demo uses a lower sun instead, that can be seen in the sky (see FractalLandscape.createSun()).
+	 */
+	static Lighting fractalLandscapeLighting() {
+		return new Lighting(new DirectionalLight(new Vector3(-1, 1, -0.5f), 0.8f), new AmbientLight(0.2f), false);
 	}
 
 	/** The scene of TestLightingSpot1: two spot lights (soft and sharp edge) and a point light, without landmarks. */

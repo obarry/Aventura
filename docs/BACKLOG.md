@@ -18,7 +18,7 @@ and the raster target (pixel size), linked by a pixels-per-unit ratio.
   (default, vertical field of view kept, the usual 3D convention) or `KEEP_SCALE` (`ppu` kept, a larger image
   shows more of the scene); the main ZBuffer is reallocated. The view is the reference for the pixel size,
   which the future `Viewport` should hold.
-  `FractalLandscape_MouseMoving` uses it to make the image fill its window (`KEEP_SCALE`).
+  `FractalLandscape` uses it to make the image fill its window (`KEEP_SCALE`).
 - Overload trap: `(int, int, float, float, type, int)` is pixel-based while
   `(float, float, float, float, type, int)` is unit-based, so `(10, 10, ...)` means 10 x 10 **pixels**.
 - The six-bounds constructor takes `(top, bottom, right, left, far, near)`, unlike `Perspective`
@@ -188,7 +188,7 @@ Possible design, to be refined:
   background; the light shafts and the halos are computed from the sky and must stay consistent; `LINE`
   rendering and the edge lines (`MONOCHROME`, overlay lines) should fade like the surfaces or not at all; the
   shadows are unchanged (they are computed in the light space).
-- **Demo and tests.** `FractalLandscape_MouseMoving` and `UrbanScape` (a long street) are the natural scenes; a
+- **Demo and tests.** `FractalLandscape` and `UrbanScape` (a long street) are the natural scenes; a
   "Fog" option in the `SceneViewer`; unit tests of the factor of each model and pixel tests (a far object is
   closer to the fog color than a near one, the sky stays unchanged, off by default changes nothing).
 

@@ -103,7 +103,7 @@ public class SceneViewer {
 
 	// ***** Camera movement *****
 
-	/** Mouse drag sensitivity, as in FractalLandscape_MouseMoving: the whole width turns by PI, the whole height by PI/2 */
+	/** Mouse drag sensitivity, as in FractalLandscape: the whole width turns by PI, the whole height by PI/2 */
 	static final float YAW_PER_WIDTH = (float) Math.PI;
 	static final float PITCH_PER_HEIGHT = (float) Math.PI / 2;
 	/** The camera never goes exactly above or below the point it looks at (the "up" vector would be undefined) */
@@ -332,9 +332,9 @@ public class SceneViewer {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				// Displacement since the previous event (not since the click), as in FractalLandscape_MouseMoving
-				float yaw = -FractalLandscape_MouseMoving.dragAngle(e.getX() - lastX, panel.getWidth(), YAW_PER_WIDTH);
-				float pitch = FractalLandscape_MouseMoving.dragAngle(e.getY() - lastY, panel.getHeight(), PITCH_PER_HEIGHT);
+				// Displacement since the previous event (not since the click), as in FractalLandscape
+				float yaw = -FractalLandscape.dragAngle(e.getX() - lastX, panel.getWidth(), YAW_PER_WIDTH);
+				float pitch = FractalLandscape.dragAngle(e.getY() - lastY, panel.getHeight(), PITCH_PER_HEIGHT);
 				lastX = e.getX();
 				lastY = e.getY();
 				double elevation0 = sceneElevation;
