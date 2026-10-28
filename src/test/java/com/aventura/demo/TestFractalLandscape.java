@@ -2,18 +2,19 @@ package com.aventura.demo;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+import java.util.Random;
+
 import org.junit.Test;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 
 /**
- * Tests for the two pure-math helpers extracted from FractalLandscape:
- * composeDragRotation() (Quaternion composition, no easing -- drag rotation must stay real-time)
- * and interpolateZoom() (linear-interpolation easing for the discrete mouse-wheel zoom steps).
- * Everything else in the class needs a live Camera/RenderEngine/Swing GUIView, which this demo
- * class has never had test coverage for; these two helpers touch none of that, so they can be
- * exercised directly.
+ * Unit tests of the pure geometry helpers of FractalLandscape (mouse drag angle, orbit and fly camera,
+ * sun direction, ground altitude, interpolation of the camera animation) and of its fractal landscape generation.
+ * The rest of the demo needs a window, a Camera and a RenderEngine; these helpers touch none of them, so they can be
+ * tested headless.
  */
 public class TestFractalLandscape {
 
@@ -151,42 +152,74 @@ public class TestFractalLandscape {
 
 	@Test
 	public void testInterpolateZoom_atZero_returnsStartValue() {
-		System.out.println("***** Test FractalLandscape : interpolateZoom(t=0) returns the start value *****");
+		System.out.println("***** Test FractalLandscape : interpolate(t=0) returns the start value *****");
 
-		float result = FractalLandscape.interpolateZoom(2f, 10f, 0f);
+		float result = FractalLandscape.interpolate(2f, 10f, 0f);
 
 		assertEquals(2f, result, 1e-6f);
 	}
 
 	@Test
 	public void testInterpolateZoom_atOne_returnsTargetValue() {
-		System.out.println("***** Test FractalLandscape : interpolateZoom(t=1) returns the target value *****");
+		System.out.println("***** Test FractalLandscape : interpolate(t=1) returns the target value *****");
 
-		float result = FractalLandscape.interpolateZoom(2f, 10f, 1f);
+		float result = FractalLandscape.interpolate(2f, 10f, 1f);
 
 		assertEquals(10f, result, 1e-6f);
 	}
 
 	@Test
 	public void testInterpolateZoom_atIntermediateT_isLinear() {
-		System.out.println("***** Test FractalLandscape : interpolateZoom(t) is linear between start and target *****");
+		System.out.println("***** Test FractalLandscape : interpolate(t) is linear between start and target *****");
 
 		float start = -4f;
 		float target = 6f;
 
-		assertEquals(-1.5f, FractalLandscape.interpolateZoom(start, target, 0.25f), 1e-4f);
-		assertEquals(1f, FractalLandscape.interpolateZoom(start, target, 0.5f), 1e-4f);
-		assertEquals(3.5f, FractalLandscape.interpolateZoom(start, target, 0.75f), 1e-4f);
+		assertEquals(-1.5f, FractalLandscape.interpolate(start, target, 0.25f), 1e-4f);
+		assertEquals(1f, FractalLandscape.interpolate(start, target, 0.5f), 1e-4f);
+		assertEquals(3.5f, FractalLandscape.interpolate(start, target, 0.75f), 1e-4f);
 	}
 
 	@Test
 	public void testInterpolateZoom_handlesNegativeDirection() {
-		System.out.println("***** Test FractalLandscape : interpolateZoom() also works when zooming back out (target < start) *****");
+		System.out.println("***** Test FractalLandscape : interpolate() also works when zooming back out (target < start) *****");
 
 		float start = 10f;
 		float target = 0f;
 
-		assertEquals(5f, FractalLandscape.interpolateZoom(start, target, 0.5f), 1e-4f);
-		assertEquals(0f, FractalLandscape.interpolateZoom(start, target, 1f), 1e-6f);
+		assertEquals(5f, FractalLandscape.interpolate(start, target, 0.5f), 1e-4f);
+		assertEquals(0f, FractalLandscape.interpolate(start, target, 1f), 1e-6f);
+	}
+
+	@Test
+	public void testGenerateFractalAltitudes_isReproducibleWithASeed() {
+		System.out.println("***** Test FractalLandscape : generateFractalAltitudes() gives the same landscape for the same seed *****");
+
+		int n = 16;
+		float[][] first = new float[n + 1][n + 1];
+		float[][] second = new float[n + 1][n + 1];
+		FractalLandscape.generateFractalAltitudes(first, 4f, n, new Random(42));
+		FractalLandscape.generateFractalAltitudes(second, 4f, n, new Random(42));
+
+		for (int i = 0; i <= n; i++) {
+			assertArrayEquals(first[i], second[i], 0f);
+		}
+	}
+
+	@Test
+	public void testGenerateFractalAltitudes_fillsEveryVertexWithAPositiveAltitude() {
+		System.out.println("***** Test FractalLandscape : generateFractalAltitudes() gives every vertex a positive altitude *****");
+
+		int n = 16;
+		float[][] altitudes = new float[n + 1][n + 1];
+		for (float[] row : altitudes) Arrays.fill(row, Float.NaN); // To detect a vertex left out
+		FractalLandscape.generateFractalAltitudes(altitudes, 4f, n, new Random(7));
+
+		for (int i = 0; i <= n; i++) {
+			for (int j = 0; j <= n; j++) {
+				assertFalse("vertex " + i + ", " + j + " is set", Float.isNaN(altitudes[i][j]));
+				assertTrue("vertex " + i + ", " + j + " is above 0", altitudes[i][j] >= 0);
+			}
+		}
 	}
 }

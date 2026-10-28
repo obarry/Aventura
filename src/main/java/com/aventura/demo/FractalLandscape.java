@@ -1,19 +1,19 @@
 /*
- * ------------------------------------------------------------------------------ 
+ * ------------------------------------------------------------------------------
  * MIT License
- * 
+ *
  * Copyright (c) 2016-2026 Olivier BARRY
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,8 +28,16 @@ package com.aventura.demo;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.util.Random;
+import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
@@ -39,12 +47,11 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
-import java.awt.event.*;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
@@ -59,650 +66,693 @@ import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.LightAppearance;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowFilter;
+import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
 import com.aventura.model.world.shape.Trellis;
-import com.aventura.view.SwingView;
 import com.aventura.view.GUIView;
-import com.aventura.model.perspective.PerspectiveType;
+import com.aventura.view.SwingView;
 
 /**
- * This class is a Test class demonstrating usage of the API of the Aventura rendering engine
- * 
- * It generates a landscape through a Treillis material formed through a Fractal recursion with random variations to create the ground
- * Goal is to progressively build a complete application on a typical 3D graphic use case
- * 
- * Two camera modes (Landscape menu), with the same mouse gestures:
- * - Orbit camera (default), to look at the landscape from outside, as most 3D / terrain viewers:
- *   - Mouse drag:  orbit the camera around the point of interest (turntable: horizontal drag turns around
- *                  the vertical Z axis, vertical drag changes the elevation, clamped below the poles)
- *   - Mouse wheel (or Up / Down arrow keys): zoom (dolly the camera toward / away from the point of interest)
- * - Fly camera, to fly inside the landscape like a plane, starting from where the orbit camera was:
- *   - Mouse drag:  look around (horizontal drag turns left / right, vertical drag looks up / down, clamped below
- *                  the vertical)
- *   - Mouse wheel (or Up / Down arrow keys): fly forward / backward along the line of sight; the camera stays
- *                  above the ground and the sea
- *   Going back to the orbit camera puts the camera back on its orbit, where it was.
- * On a touchpad, the two finger vertical scroll and the pinch both act as the mouse wheel: the pinch is sent by the
- * system as CTRL + mouse wheel (the zoom gesture of the browsers, office or map applications), so CTRL + mouse wheel
- * is the same as the mouse wheel. The fractions of a notch sent by the touchpads are taken into account
- * (MouseWheelEvent.getPreciseWheelRotation()), for a smooth movement.
- * Common to both modes:
- * - CTRL + U / CTRL + D (or Page Up / Page Down): raise / lower the sea level (a transformation of the World: the sea
- *                       Element is translated on Z); keep the key pressed for a continuous movement
- * - Window resizing:    the rendered image always fills the window, at the same scale (PPU): a larger window shows
- *                       more of the landscape, objects keep their size on screen (PerspectiveContext.ResizeMode.KEEP_SCALE)
- * SHIFT + mouse wheel is deliberately left free: it is the usual OS / application convention for lateral scrolling,
- * hence reserved for a future camera pan.
+ * Demo application of the Aventura rendering engine: an interactive fractal landscape, surrounded by a sea and lit by
+ * a low sun, that the user explores with the mouse.
  *
- * Menus:
- * - Landscape: generate a new landscape, raise / lower the sea level, reset the camera (to its initial orbit, or to
- *              the start of the flight), and choose the camera mode (orbit or fly)
- * - Rendering: the rendering type (exclusive choice: radio buttons)
- * - Effects:   options independent of the rendering type (check boxes), grayed out when the current rendering type
- *              does not use them: texture, specular highlights, shadows (hard or soft), and the sun with its effects
- *              (halo, lens flare, light shafts). The sun is low on the horizon, in front of the initial camera and a
- *              little to its left: orbit a little to the left and lower the camera to see it.
- * 
+ * <h2>What this demo shows of the Aventura API</h2>
+ *
+ * The {@link #run()} method follows the typical steps of an Aventura application, one method per step:
+ * <ol>
+ * <li>{@link #createWorld()}: the {@link World} and its {@link Element}s. The ground is a {@link Trellis} (a grid of
+ *     triangles) whose altitudes come from a fractal algorithm ({@link #generateFractalAltitudes}); the sea is a flat
+ *     Trellis, moved vertically by a {@link Translation}. Both are grouped under a parent Element.</li>
+ * <li>{@link #createSun()} and {@link #createLighting(DirectionalLight)}: a {@link DirectionalLight} (the sun, with
+ *     soft shadows, a halo and a lens flare) plus an {@link AmbientLight}, gathered in a {@link Lighting}.</li>
+ * <li>{@link #createCamera()}: the {@link Camera} (eye, point of interest and up vector, Z being up).</li>
+ * <li>{@link #createPerspectiveContext()} and {@link #createRenderContext()}: how the 3D scene is projected on the
+ *     screen, and how it is rendered (rendering type, texture, shadows, sun...).</li>
+ * <li>{@link RenderEngine}: the engine gathering all of the above.</li>
+ * <li>{@link #createView(PerspectiveContext)}: a {@link SwingView} (a {@link GUIView}) displayed in a Swing window,
+ *     with its menus and the mouse and keyboard controls.</li>
+ * </ol>
+ * Then, at each user interaction, the application only changes the model (moves the {@link Camera}, translates the
+ * sea, switches an option of the {@link RenderContext}...) and calls {@link RenderEngine#render()} again.
+ *
+ * <h2>Controls</h2>
+ *
+ * Two camera modes (Landscape menu), driven by the same mouse gestures:
+ * <ul>
+ * <li><b>Orbit camera</b> (default), to look at the landscape from outside, as in most 3D viewers:
+ *     <ul>
+ *     <li>Mouse drag: orbit around the point of interest ("turntable": a horizontal drag turns around the vertical Z
+ *         axis, a vertical drag changes the elevation, never up to the poles)</li>
+ *     <li>Mouse wheel (or Up / Down arrow keys): zoom, i.e. move the camera toward / away from the point of
+ *         interest</li>
+ *     </ul></li>
+ * <li><b>Fly camera</b>, to fly inside the landscape like a plane, starting from where the orbit camera was:
+ *     <ul>
+ *     <li>Mouse drag: look around (horizontal drag: turn left / right, vertical drag: look up / down)</li>
+ *     <li>Mouse wheel (or Up / Down arrow keys): fly forward / backward along the line of sight, always above the
+ *         ground and the sea</li>
+ *     </ul>
+ *     Going back to the orbit camera puts the camera back on its orbit, where it was.</li>
+ * </ul>
+ * Common to both modes:
+ * <ul>
+ * <li>CTRL + U / CTRL + D (or Page Up / Page Down): raise / lower the sea level (keep the key pressed for a
+ *     continuous movement)</li>
+ * <li>Window resizing: the image always fills the window, at the same scale: a larger window shows more of the
+ *     landscape ({@link PerspectiveContext.ResizeMode#KEEP_SCALE})</li>
+ * <li>Touchpad: the two-finger vertical scroll and the pinch both act as the mouse wheel (the system sends the pinch
+ *     as CTRL + mouse wheel). SHIFT + mouse wheel, the usual convention for a lateral scroll, is left free for a future
+ *     camera pan.</li>
+ * </ul>
+ *
+ * <h2>Menus</h2>
+ * <ul>
+ * <li>Landscape: generate a new landscape, raise / lower the sea level, reset the camera, choose the camera mode</li>
+ * <li>Rendering: the rendering type (an exclusive choice)</li>
+ * <li>Effects: options independent of the rendering type (texture, specular highlights, shadows, sun, sun halo, lens
+ *     flare, light shafts), grayed out when the current rendering type does not use them. The sun is low on the
+ *     horizon, in front of the initial camera and a little to its left: orbit a little to the left and lower the
+ *     camera to see it.</li>
+ * </ul>
+ *
+ * <h2>Conventions</h2>
+ * Z is the up axis. The landscape is a square of {@link #LANDSCAPE_SIZE} units, centered on the origin. Angles are in
+ * radians, except the position of the sun, given in degrees for readability.
+ *
  * @author Olivier BARRY
  * @since Nov 2023
  */
-public class FractalLandscape implements MouseListener, MouseMotionListener, MouseWheelListener {
-	
-	// GUI Frame and Menus
-	JFrame frame;
-	JPanel panel; // Displays the rendered image, fills the content area of the frame
-	// Effects menu: the check boxes whose availability depends on the rendering type or on another check box (see
-	// updateEffectsMenu()); their state is read from the model (RenderContext, Lighting, sun) when they are created
-	JCheckBoxMenuItem textureItem, specularItem, shadowsItem, softShadowsItem, sunItem, sunHaloItem, lensFlareItem, lightShaftsItem;
+public class FractalLandscape {
 
-	// Camera
-	Vector4 eye;
-	Vector4 poi;
-	Camera camera;
-	
-	// Render engine
-	PerspectiveContext pContext;
-	RenderContext rContext;
-	Lighting lighting;
+	// ****************************************************************************************************************
+	// ***** Constants
+	// ****************************************************************************************************************
 
-	// Sun: a directional light, low on the horizon so that it can be seen in the sky (azimuth: angle around the
-	// vertical Z axis from the X axis, elevation: angle above the horizon, both in degrees, of the direction of the sun
-	// seen from the scene). The initial camera is on the X axis looking towards -X (azimuth 180): the sun is in front of
-	// it, a little to the left, lighting the landscape from behind and from the side
-	static final float SUN_AZIMUTH = 225f;
-	static final float SUN_ELEVATION = 15f;
-	DirectionalLight sun;
-	LightAppearance sunAppearance; // Halo (gain) and lens flare of the sun, see the Effects menu
+	// ----- Landscape -----
 
-	// Colors
+	/** Side of the square landscape (and of the sea), in units. */
+	static final float LANDSCAPE_SIZE = 4f;
+	/** Number of cells of the landscape Trellis on each side. Must be a power of 2 for the fractal algorithm. */
+	static final int LANDSCAPE_DIVISIONS = 128;
+	/** Roughness of the fractal landscape: higher gives a more rugged landscape, lower a smoother one. */
+	static final float FRACTAL_ROUGHNESS = 0.6f;
+
+	/** Textures of the ground and of the sea (displayed when the Texture effect is on). */
+	static final String LAND_TEXTURE = "resources/texture/texture_gray_concrete_wall_with_cracks_2748x2748.jpg";
+	static final String SEA_TEXTURE = "resources/texture/texture_waves-calm-sea_4480x4480.jpg";
+
+	/** Initial altitude of the sea. */
+	static final float INITIAL_SEA_LEVEL = 1.5f;
+	/** Change of the sea level per key press (CTRL + U / D, Page Up / Down). */
+	static final float SEA_LEVEL_STEP = 0.01f;
+
+	// ----- Colors and materials -----
+
 	static final Color SKY_COLOR = new Color(80, 120, 220);
-	
-	// Specular highlights (Effects menu): sharp and bright on the water, faint on the ground
+	static final Color SEA_COLOR = new Color(0, 0, 250);
+
+	/** Specular highlights (Effects menu): sharp and bright on the water, faint and wide on the ground. */
 	static final Color SEA_SPECULAR_COLOR = new Color(200, 200, 200);
 	static final float SEA_SPECULAR_EXP = 200;
 	static final Color LAND_SPECULAR_COLOR = new Color(60, 60, 60);
 	static final float LAND_SPECULAR_EXP = 8;
-	GUIView guiView;
-	RenderEngine renderer;
-	
-	// World
-	World world;
-	
-	// Element combining landscape and sea (parent of both, for transformations of the whole landscape; the
-	// mouse no longer moves it: the camera orbits around the World instead)
-	Element master_land;
-	
-	// Element : Trellis for landscape
-	Trellis tre_land;
-	float size; // Size of the Treillis (square)
-	int n; // Nb of segments of the Treillis, should be a 2^n number
-	float array_land[][]; // Updated array with sea level
-	
-	// Element : Trellis for the sea
-	Trellis tre_sea;
-	float sea_level = 1.5f;
-	// Each key press (CTRL + U / D, Page Up / Down) moves the sea by this altitude; the sea level stays within the
-	// landscape altitudes
-	static final float SEA_LEVEL_STEP = 0.01f;
 
-	// Movement variables
-	int i_rotation = 0;
-	int j_rotation = 0;
-	// Zoom (orbit camera) or distance flown (fly camera) asked by the mouse wheel and the arrow keys, in notches of the
-	// wheel (a float: a touchpad sends fractions of a notch), see moveCamera()
-	float zoom = 0;
-	static int NB_ROTATIONS = 90;
-	
-	// Mouse drag: last known position (updated on each event)
-	int mouse_last_X, mouse_last_Y;
-	// Drag sensitivity: dragging across the whole window width turns the camera by DRAG_ANGLE_PER_WIDTH radians
-	// (azimuth, around the vertical Z axis), across the whole height by DRAG_ANGLE_PER_HEIGHT radians (elevation)
+	// ----- Lighting -----
+
+	/**
+	 * Position of the sun, as seen from the scene, in degrees: azimuth (around the vertical Z axis, from the X axis)
+	 * and elevation (above the horizon). The initial camera is on the X axis and looks toward -X (azimuth 180): the sun
+	 * is in front of it, a little to its left, low enough to be seen in the sky.
+	 */
+	static final float SUN_AZIMUTH = 225f;
+	static final float SUN_ELEVATION = 15f;
+	static final float SUN_INTENSITY = 0.8f;
+	/** Ambient light, so that the faces in the shade are not black. */
+	static final float AMBIENT_INTENSITY = 0.2f;
+
+	// ----- Camera -----
+
+	/** Initial position of the camera (eye) and point it looks at (point of interest, center of the orbit). */
+	static final Vector4 INITIAL_EYE = new Vector4(6, 0, 3, 1);
+	static final Vector4 POINT_OF_INTEREST = new Vector4(0, 0, 1.5f, 1);
+
+	/**
+	 * Drag sensitivity: dragging the mouse across the whole width of the window turns the camera by
+	 * DRAG_ANGLE_PER_WIDTH radians (horizontal angle), across the whole height by DRAG_ANGLE_PER_HEIGHT radians
+	 * (vertical angle).
+	 */
 	static final float DRAG_ANGLE_PER_WIDTH = (float) Math.PI;
 	static final float DRAG_ANGLE_PER_HEIGHT = (float) Math.PI / 2;
 
-	// Orbit camera ("turntable", as in most 3D viewers): the World does not move, the camera moves on a sphere
-	// centered on the point of interest (poi), described by spherical coordinates around the World's up axis (Z):
-	// - azimuth: angle around Z, measured from the X axis
-	// - elevation: angle above the horizontal plane, clamped to +/- MAX_ELEVATION to never reach the poles, where
-	//   the forward vector would be parallel to the up vector (Z) and the LookAt matrix would be undefined
-	// - distance: initial distance eye-poi, reduced by the zoom (never below MIN_ORBIT_DISTANCE, not to cross the poi)
+	/**
+	 * Limit of the vertical angle of the camera (orbit elevation, fly pitch), just below the vertical: at the vertical,
+	 * the line of sight would be parallel to the up vector (Z) and the orientation of the camera would be undefined.
+	 */
 	static final float MAX_ELEVATION = (float) Math.PI / 2 - 0.01f;
+	/** Minimum distance between the orbit camera and the point of interest, so that the zoom never crosses it. */
 	static final float MIN_ORBIT_DISTANCE = 0.2f;
+
+	/** Distance travelled by the camera per notch of the mouse wheel (zoom of the orbit camera, or flight). */
+	static final float DOLLY_STEP = 0.1f;
+	/**
+	 * Minimum height of the fly camera above the ground and the sea. It must stay larger than the distance of the near
+	 * plane (see {@link #createPerspectiveContext()}), otherwise the near plane would cut the ground in front of the
+	 * camera and show what is under the landscape.
+	 */
+	static final float FLY_CLEARANCE = 0.03f;
+
+	// ----- Animations and timings -----
+
+	/** A mouse wheel notch does not move the camera at once: it eases over this duration, with frames at this rate. */
+	static final int DOLLY_ANIMATION_DURATION_MS = 150;
+	static final int DOLLY_ANIMATION_FRAME_MS = 15; // About 60 frames per second
+	/**
+	 * While the user drags the border of the window, the view is resized (and rendered) only once the size has not
+	 * changed for this delay, instead of rendering a full image for each intermediate size.
+	 */
+	static final int RESIZE_DELAY_MS = 50;
+
+	// ****************************************************************************************************************
+	// ***** Fields
+	// ****************************************************************************************************************
+
+	// ----- Aventura objects -----
+
+	World world;
+	Trellis landTrellis;         // The ground
+	float[][] landAltitudes;     // Altitudes of the vertices of the ground: (LANDSCAPE_DIVISIONS + 1)^2 values
+	Trellis seaTrellis;          // The sea: a flat Trellis translated at the altitude seaLevel
+	float seaLevel = INITIAL_SEA_LEVEL;
+
+	Lighting lighting;
+	DirectionalLight sun;
+	LightAppearance sunAppearance; // Halo and lens flare of the sun (Effects menu)
+
+	Camera camera;
+	PerspectiveContext pContext;
+	RenderContext rContext;
+	RenderEngine renderer;
+	GUIView guiView;
+
+	// ----- Swing user interface -----
+
+	JFrame frame;
+	JPanel panel; // Displays the rendered image, fills the window
+	Timer resizeTimer;
+	// Check boxes of the Effects menu that can be grayed out (see updateEffectsMenu())
+	JCheckBoxMenuItem textureItem, specularItem, shadowsItem, softShadowsItem;
+	JCheckBoxMenuItem sunItem, sunHaloItem, lensFlareItem, lightShaftsItem;
+
+	// ----- State of the camera -----
+
+	boolean flyMode = false;
+
+	/**
+	 * Orbit camera: the camera moves on a sphere centered on the point of interest, described by spherical
+	 * coordinates around the up axis Z: azimuth (angle around Z, from the X axis), elevation (angle above the
+	 * horizontal plane) and distance (to the point of interest, before the zoom).
+	 */
 	float orbitAzimuth;
 	float orbitElevation;
 	float orbitDistance;
+	float orbitDolly; // Zoom of the orbit, set aside while flying to get back to it
 
-	// Fly camera (see the class comment): position of the eye, and direction of the line of sight given by two angles,
-	// like a plane: yaw (heading, angle around the vertical Z axis, from the X axis) and pitch (angle above the
-	// horizontal plane, clamped to +/- MAX_ELEVATION for the same reason as the orbit's elevation)
-	boolean flyMode = false;
+	/**
+	 * Fly camera: position of the eye and direction of the line of sight, given by two angles like for a plane: yaw
+	 * (heading, angle around Z from the X axis) and pitch (angle above the horizontal plane).
+	 */
 	Vector4 flyEye;
 	float flyYaw;
 	float flyPitch;
-	// Where the flight started (for Reset camera), and the zoom of the orbit, kept while flying to go back to it
+	// Start of the flight (where the orbit camera was), for the Reset camera menu
 	Vector4 flyStartEye;
 	float flyStartYaw, flyStartPitch;
-	float orbitZoom;
-	// Distance flown per mouse wheel notch (the same as one notch of the orbit's zoom), and minimum height of the
-	// camera above the ground and the sea, so that it never goes under the landscape (where its "backstage" shows); it
-	// must stay larger than the distance of the near plane (see run()), which would cut the ground otherwise
-	static final float FLY_STEP = 0.1f;
-	static final float FLY_CLEARANCE = 0.03f;
-
-	// Window resizing: the image is resized (and rendered) only once the size has not changed for RESIZE_DELAY_MS,
-	// instead of rendering a full frame for each intermediate size while the user drags the border of the window
-	private static final int RESIZE_DELAY_MS = 50;
-	Timer resizeTimer;
-
-	// Zoom-wheel smoothing (Quaternion/slerp technique adapted for a translation): each mouse wheel
-	// notch used to jump the camera's dolly position straight to its new value. It now eases into
-	// that same target over ZOOM_ANIM_DURATION_MS via linear interpolation, driven by a Swing Timer
-	// firing on the EDT (same thread as mouseWheelMoved(), so no synchronization is needed). Linear
-	// interpolation is used instead of Quaternion.slerp() because zoom is a translation along the
-	// camera's forward vector, not a rotation.
-	private static final int ZOOM_ANIM_DURATION_MS = 150;
-	private static final int ZOOM_ANIM_FRAME_MS = 15; // ~60 fps
-
-	Timer zoomAnimTimer;
-	float appliedZoom = 0f; // last applied (possibly mid-animation) zoom value
-	float zoomAnimStartValue;
-	float zoomAnimTargetValue;
-	long zoomAnimStartMillis;
 
 	/**
-	 * Create the view and associate all needed mouse and key listeners for user interaction with screen
-	 * The renderer will then be called each time Mouse generates a move to the view and a new updated view will be displayed
-	 * 
-	 * @param context the PerspectiveContext to be used to create the GUIView
-	 * @return
+	 * Mouse wheel and arrow keys move the camera along its line of sight ("dolly", in cinema terms). The movement is
+	 * counted in notches of the wheel (a float: a touchpad sends fractions of a notch). dollyTarget is where the user
+	 * asked to go, dollyApplied is where the camera is, and moves toward dollyTarget during a short animation.
+	 */
+	float dollyTarget = 0;
+	float dollyApplied = 0;
+	float dollyAnimationStart;
+	long dollyAnimationStartMillis;
+	Timer dollyTimer;
+
+	/** Last known position of the mouse during a drag. */
+	int lastMouseX, lastMouseY;
+
+	// ****************************************************************************************************************
+	// ***** Main program
+	// ****************************************************************************************************************
+
+	public static void main(String[] args) {
+		System.out.println("********* STARTING APPLICATION *********");
+		FractalLandscape demo = new FractalLandscape();
+		demo.run();
+		System.out.println("********* APPLICATION is RUNNING *********");
+	}
+
+	/**
+	 * Creates the scene, the rendering engine and the window, then renders the first image. From then on, the
+	 * application is driven by the user (mouse, keyboard and menus, see the class comment).
+	 */
+	public void run() {
+
+		// 1. The World: landscape and sea
+		System.out.println("********* Creating World");
+		world = createWorld();
+
+		// 2. The Lighting: the sun and an ambient light
+		System.out.println("********* Creating Lighting");
+		sun = createSun();
+		sunAppearance = sun.getAppearance();
+		lighting = createLighting(sun);
+
+		// 3. The Camera, and the orbit it starts on
+		camera = createCamera();
+		initOrbit();
+
+		// 4. The contexts: projection on the screen, and rendering options
+		pContext = createPerspectiveContext();
+		rContext = createRenderContext();
+
+		// 5. The RenderEngine, which renders the World, lit by the Lighting, seen by the Camera, with the contexts
+		renderer = new RenderEngine(world, lighting, camera, rContext, pContext);
+
+		// 6. The view (where the RenderEngine draws), in a window with its menus and its mouse and keyboard controls.
+		// The window is shown only once the RenderEngine knows its view, so that a user action can always be rendered.
+		guiView = createView(pContext);
+		renderer.setView(guiView);
+		frame.setVisible(true);
+
+		// First image
+		updateTitle();
+		renderer.render();
+
+		System.out.println("********* APPLICATION LAUNCHED *********");
+	}
+
+	// ****************************************************************************************************************
+	// ***** 1. The World
+	// ****************************************************************************************************************
+
+	/**
+	 * Creates the World: a fractal landscape (a Trellis whose altitudes come from {@link #generateFractalAltitudes})
+	 * and a sea (a flat Trellis of the same size, at the altitude seaLevel), both grouped under a parent Element.
+	 * The World is built (vertices, triangles and normals are calculated), then the triangles of the ground are colored
+	 * according to their altitude.
+	 */
+	World createWorld() {
+
+		World world = new World();
+		world.setBackgroundColor(SKY_COLOR);
+
+		// The ground: a square Trellis, centered on the origin, of LANDSCAPE_DIVISIONS x LANDSCAPE_DIVISIONS cells,
+		// whose vertices take their altitude in the landAltitudes array
+		landAltitudes = new float[LANDSCAPE_DIVISIONS + 1][LANDSCAPE_DIVISIONS + 1];
+		generateFractalAltitudes(landAltitudes, LANDSCAPE_SIZE, LANDSCAPE_DIVISIONS, new Random());
+		try {
+			landTrellis = new Trellis(LANDSCAPE_SIZE, LANDSCAPE_SIZE, LANDSCAPE_DIVISIONS, LANDSCAPE_DIVISIONS, landAltitudes,
+					new Texture(LAND_TEXTURE));
+		} catch (WrongArraySizeException e) {
+			// Cannot happen: the array has the size of the Trellis
+			throw new IllegalStateException(e);
+		}
+		landTrellis.setSpecularExp(LAND_SPECULAR_EXP);
+		landTrellis.setSpecularColor(LAND_SPECULAR_COLOR);
+
+		// The sea: a flat Trellis (altitude 0 everywhere), raised to the sea level by a Translation. A few cells are
+		// enough for a flat surface; they only need to be small enough to stay partly in the view frustum.
+		seaTrellis = new Trellis(LANDSCAPE_SIZE, LANDSCAPE_SIZE, 4, 4, new Texture(SEA_TEXTURE));
+		seaTrellis.setColor(SEA_COLOR);
+		seaTrellis.setSpecularExp(SEA_SPECULAR_EXP);
+		seaTrellis.setSpecularColor(SEA_SPECULAR_COLOR);
+		seaTrellis.setTransformation(new Translation(new Vector3(0, 0, seaLevel)));
+
+		// An Element without geometry of its own can group other Elements: a Transformation given to it would apply
+		// to the whole landscape, ground and sea together
+		Element landscape = new Element("landscape");
+		landscape.addElement(landTrellis);
+		landscape.addElement(seaTrellis);
+		world.addElement(landscape);
+
+		// Calculate the geometry of all the Elements of the World: vertices, triangles and normals
+		System.out.println("********* Calculating normals");
+		world.build();
+		printLandscapeStatistics();
+
+		// Colors are given to the triangles, which only exist once the World is built
+		colorTrianglesByAltitude(landTrellis);
+
+		return world;
+	}
+
+	/**
+	 * Fills the altitudes array of a square grid with a fractal landscape, by recursive subdivision (a variant of the
+	 * "midpoint displacement" / "diamond-square" algorithms):
+	 * <ol>
+	 * <li>The 4 corners of the grid get a random altitude.</li>
+	 * <li>The grid is a single square. Each square is divided into 4 smaller squares, by calculating the altitude of its
+	 *     center and of the middle of its 4 sides: the average of the neighbor points, plus a random value.</li>
+	 * <li>Step 2 is repeated on the smaller squares, with random values proportional to their size, until the squares
+	 *     are a single cell: large squares give the overall shape of the landscape (mountains, valleys), small ones
+	 *     its details.</li>
+	 * </ol>
+	 * <pre>
+	 *  C---M---C     C: corners of the square (known)
+	 *  |   |   |     X: center = average of the 4 corners + random value
+	 *  M---X---M     M: middle of a side = average of the 2 corners of the side and of the center (before its random
+	 *  |   |   |        value) + random value
+	 *  C---M---C
+	 * </pre>
+	 * The middle of a side shared by two neighbor squares is calculated by both: the second value is kept.
+	 *
+	 * <p>A Random created with a fixed seed always gives the same landscape (used to generate the image of the
+	 * documentation, see DocumentationImages in the test sources).
+	 *
+	 * @param altitudes the array to fill, of size (n + 1) x (n + 1): altitudes[i][j] is the altitude of the vertex in
+	 *                  column i and row j
+	 * @param size      the size of the landscape (the random values are proportional to it)
+	 * @param n         the number of cells on each side, must be a power of 2
+	 * @param random    the source of the random variations of the altitudes
+	 */
+	public static void generateFractalAltitudes(float[][] altitudes, float size, int n, Random random) {
+
+		// 1. Corners of the whole grid
+		altitudes[0][0] = (float) random.nextDouble() * FRACTAL_ROUGHNESS * size / 2;
+		altitudes[0][n] = (float) random.nextDouble() * FRACTAL_ROUGHNESS * size / 2;
+		altitudes[n][0] = (float) random.nextDouble() * FRACTAL_ROUGHNESS * size / 2;
+		altitudes[n][n] = (float) random.nextDouble() * FRACTAL_ROUGHNESS * size / 2;
+
+		// 2. and 3. Subdivide squares of side "step" (in cells), from the whole grid down to squares of 2 x 2 cells
+		for (int step = n; step > 1; step /= 2) {
+			int half = step / 2;
+			// The random variations are proportional to the size of the squares: smaller and smaller details
+			float amplitude = FRACTAL_ROUGHNESS * (step * size) / (n * 2);
+
+			for (int i = 0; i < n; i += step) {
+				for (int j = 0; j < n; j += step) {
+					// Square with corners (i, j) and (i + step, j + step)
+					float corner00 = altitudes[i][j];
+					float corner01 = altitudes[i][j + step];
+					float corner10 = altitudes[i + step][j];
+					float corner11 = altitudes[i + step][j + step];
+					float center = (corner00 + corner01 + corner10 + corner11) / 4;
+
+					altitudes[i + half][j + half] = center + (float) random.nextDouble() * amplitude;
+					altitudes[i + half][j] = (corner00 + corner10 + center) / 3 + (float) random.nextDouble() * amplitude;
+					altitudes[i][j + half] = (corner00 + corner01 + center) / 3 + (float) random.nextDouble() * amplitude;
+					altitudes[i + step][j + half] = (corner10 + corner11 + center) / 3 + (float) random.nextDouble() * amplitude;
+					altitudes[i + half][j + step] = (corner01 + corner11 + center) / 3 + (float) random.nextDouble() * amplitude;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Colors each triangle of a Trellis according to its average altitude: from black (lowest) to white (highest).
+	 * With the Texture effect on, the texture is modulated by this color.
+	 */
+	public static void colorTrianglesByAltitude(Trellis trellis) {
+		float minAltitude = trellis.getMinZ();
+		float maxAltitude = trellis.getMaxZ();
+		for (int t = 0; t < trellis.getTriangles().size(); t++) {
+			float altitude = (trellis.getTriangle(t).getV1().getPos().getZ()
+					+ trellis.getTriangle(t).getV2().getPos().getZ()
+					+ trellis.getTriangle(t).getV3().getPos().getZ()) / 3;
+			int gray = (int) ((altitude - minAltitude) / (maxAltitude - minAltitude) * 255);
+			trellis.getTriangle(t).setColor(new Color(gray, gray, gray));
+		}
+	}
+
+	private void printLandscapeStatistics() {
+		System.out.println("Landscape: " + landTrellis.getNbTriangles() + " triangles, " + landTrellis.getNbVertices() + " vertices");
+	}
+
+	// ****************************************************************************************************************
+	// ***** 2. The Lighting
+	// ****************************************************************************************************************
+
+	/**
+	 * The sun: a DirectionalLight (parallel rays, as from a light at infinity), low on the horizon (see SUN_AZIMUTH,
+	 * SUN_ELEVATION). Its shadows are soft (PCF_3X3 filtering of the shadow map) and its LightAppearance gives it a halo
+	 * and a lens flare when it is in the field of view (Effects menu).
+	 */
+	static DirectionalLight createSun() {
+		DirectionalLight sun = new DirectionalLight(sunDirection(SUN_AZIMUTH, SUN_ELEVATION), SUN_INTENSITY);
+		sun.setShadowFilter(ShadowFilter.PCF_3X3);
+		sun.setAppearance(new LightAppearance()); // Default halo and lens flare
+		return sun;
+	}
+
+	/**
+	 * The Lighting of the scene: the sun, an ambient light, and the specular highlights enabled (third parameter).
+	 */
+	static Lighting createLighting(DirectionalLight sun) {
+		return new Lighting(sun, new AmbientLight(AMBIENT_INTENSITY), true);
+	}
+
+	/**
+	 * Direction of a DirectionalLight for a sun seen from the scene at the given azimuth (around the vertical Z axis,
+	 * from the X axis) and elevation (above the horizon), in degrees. Aventura defines a DirectionalLight by the
+	 * direction in which its light travels, from the sun toward the scene: the opposite of the direction toward the
+	 * sun.
+	 */
+	static Vector3 sunDirection(float azimuthDegrees, float elevationDegrees) {
+		double azimuth = Math.toRadians(azimuthDegrees);
+		double elevation = Math.toRadians(elevationDegrees);
+		return new Vector3(
+				(float) (-Math.cos(elevation) * Math.cos(azimuth)),
+				(float) (-Math.cos(elevation) * Math.sin(azimuth)),
+				(float) (-Math.sin(elevation)));
+	}
+
+	// ****************************************************************************************************************
+	// ***** 3. The Camera
+	// ****************************************************************************************************************
+
+	/** The Camera at its initial position, looking at the point of interest, with Z as up vector. */
+	static Camera createCamera() {
+		return new Camera(new Vector4(INITIAL_EYE), new Vector4(POINT_OF_INTEREST), Vector4.zAxis());
+	}
+
+	/** Initial orbit: spherical coordinates of the initial eye around the point of interest, no zoom. */
+	private void initOrbit() {
+		Vector4 poiToEye = INITIAL_EYE.minus(POINT_OF_INTEREST);
+		orbitDistance = poiToEye.length();
+		orbitAzimuth = (float) Math.atan2(poiToEye.getY(), poiToEye.getX());
+		orbitElevation = (float) Math.asin(poiToEye.getZ() / orbitDistance);
+	}
+
+	// ****************************************************************************************************************
+	// ***** 4. The contexts
+	// ****************************************************************************************************************
+
+	/**
+	 * The PerspectiveContext: how the scene is projected on the screen. Here a perspective projection (FRUSTUM) through
+	 * a view plane of 0.01 x 0.005625 units at a distance of 0.01 from the eye, up to a depth of 100 units, with 100000
+	 * pixels per unit: a 1000 x 562 pixels image.
+	 *
+	 * The near plane is very close to the eye, less than the FLY_CLEARANCE of the fly camera above the ground, so that
+	 * the fly camera can go near the hills and the sea without the near plane cutting them.
+	 *
+	 * When the window is resized, the PerspectiveContext keeps the number of pixels per unit rather than the field of
+	 * view (KEEP_SCALE): a larger window shows more of the landscape rather than a larger image.
+	 */
+	static PerspectiveContext createPerspectiveContext() {
+		PerspectiveContext pContext = new PerspectiveContext(0.01f, 0.005625f, 0.01f, 100, PerspectiveType.FRUSTUM, 100000);
+		pContext.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE);
+		return pContext;
+	}
+
+	/**
+	 * The RenderContext: the rendering options at start-up, which the Rendering and Effects menus then change. Smooth
+	 * shading (INTERPOLATE), no texture, the sun visible in the sky (light glow).
+	 */
+	static RenderContext createRenderContext() {
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		rContext.setTextureProcessing(false);
+		rContext.setLightGlow(true);
+		return rContext;
+	}
+
+	// ****************************************************************************************************************
+	// ***** 6. The view, its window and its controls (step 5, the RenderEngine, is a single line of run())
+	// ****************************************************************************************************************
+
+	/**
+	 * Creates the window (not shown yet) with its menus, the SwingView where the RenderEngine draws and the Swing panel
+	 * that displays it, and installs the mouse and keyboard controls. The menus start from the state of the model, so
+	 * the Lighting and the RenderContext must be created before.
+	 *
+	 * @param context the PerspectiveContext, which gives the initial size of the image
+	 * @return the view, to be given to the RenderEngine
 	 */
 	public GUIView createView(PerspectiveContext context) {
-		
-		// Create the frame of the application 
-		frame = new JFrame("Fractal Landscape");
-		
-		// Create Menus and associate the menu items to appropriate listeners
-	    JMenuBar menubar = new JMenuBar();
-	    menubar.add(createLandscapeMenu());
-	    menubar.add(createRenderingMenu());
-	    menubar.add(createEffectsMenu());
-	    frame.setJMenuBar(menubar);
-	    updateEffectsMenu();
-	    bindKeys();
 
-		
-		// Create the view to be displayed
+		frame = new JFrame("Fractal Landscape");
+		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+		// Menus
+		JMenuBar menuBar = new JMenuBar();
+		menuBar.add(createLandscapeMenu());
+		menuBar.add(createRenderingMenu());
+		menuBar.add(createEffectsMenu());
+		frame.setJMenuBar(menuBar);
+		updateEffectsMenu();
+
+		// The view: an image the RenderEngine draws into. Given the frame, it repaints it after each rendering.
 		SwingView view = new SwingView(context, frame);
-		
-		// Create a panel and add it to the frame
+
+		// The panel displays the image of the view
 		panel = new JPanel() {
-			
-		    public void paintComponent(Graphics graph) {
-		    	super.paintComponent(graph); // Clears with the background color (visible until a resized image is rendered)
-		    	graph.drawImage(view.getImageView(), 0, 0, null);
-		    }
+			@Override
+			public void paintComponent(Graphics graphics) {
+				super.paintComponent(graphics); // Clears with the background color, visible until a resized image is rendered
+				graphics.drawImage(view.getImageView(), 0, 0, null);
+			}
 		};
 		panel.setBackground(Color.BLACK);
-		// Initial size of the content area = size of the image defined by the PerspectiveContext: pack() sizes the frame
-		// around it (title bar, borders and menu bar added), so the image exactly fills the window from the start
+		// The panel has the size of the image: pack() sizes the frame around it (title bar, borders and menu bar)
 		panel.setPreferredSize(new Dimension(context.getPixelWidth(), context.getPixelHeight()));
 		frame.getContentPane().add(panel);
 		frame.pack();
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
- 
-		// Locate application frame in the center of the screen
-		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		frame.setLocation(dim.width/2 - frame.getWidth()/2, dim.height/2 - frame.getHeight()/2);
-		
-		// Render the frame on the display
-		frame.setVisible(true);
-		
-        //where initialization occurs:
-        //Register for mouse events on blankArea and the panel.
-        panel.addMouseListener(this);
-        panel.addMouseMotionListener(this);
-        panel.addMouseWheelListener(this);
+		frame.setLocationRelativeTo(null); // Center of the screen
 
-        // Follow the size of the panel (hence of the window): restart the delay at each intermediate size
-        resizeTimer = new Timer(RESIZE_DELAY_MS, e -> resizeViewport());
-        resizeTimer.setRepeats(false);
-        panel.addComponentListener(new ComponentAdapter() {
-        	public void componentResized(ComponentEvent e) {
-        		resizeTimer.restart();
-        	}
-        });
- 		
+		// User controls
+		installMouseControls();
+		installKeyboardControls();
+		installResizeControl();
+
 		return view;
 	}
-	
+
+	/**
+	 * Mouse controls on the panel: drag to turn the camera, wheel to move it. A MouseAdapter implements all the mouse
+	 * listener interfaces with empty methods, so that only the useful ones are written.
+	 */
+	private void installMouseControls() {
+		MouseAdapter mouseControls = new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// Start of a drag: mouseDragged() uses the displacement from one event to the next
+				lastMouseX = e.getX();
+				lastMouseY = e.getY();
+			}
+
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				int dx = e.getX() - lastMouseX;
+				int dy = e.getY() - lastMouseY;
+				lastMouseX = e.getX();
+				lastMouseY = e.getY();
+				turnCamera(dragAngle(dx, panel.getWidth(), DRAG_ANGLE_PER_WIDTH), dragAngle(dy, panel.getHeight(), DRAG_ANGLE_PER_HEIGHT));
+			}
+
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) {
+				// Wheel up (negative rotation) moves forward. getPreciseWheelRotation() rather than getWheelRotation():
+				// a touchpad sends fractions of a notch, which getWheelRotation() would round to 0 (no movement)
+				dollyCamera((float) -e.getPreciseWheelRotation());
+			}
+		};
+		panel.addMouseListener(mouseControls);
+		panel.addMouseMotionListener(mouseControls);
+		panel.addMouseWheelListener(mouseControls);
+	}
+
 	/**
 	 * Keyboard shortcuts without a menu item: Up / Down arrows move the camera like the mouse wheel, Page Up / Page Down
-	 * raise / lower the sea level like CTRL + U / CTRL + D (the accelerators of the Landscape menu). They are key
-	 * bindings of the whole window (WHEN_IN_FOCUSED_WINDOW), so they work whatever component has the keyboard focus,
-	 * unlike a KeyListener which only receives the keys when its own component has it.
+	 * raise / lower the sea level like CTRL + U / CTRL + D (the accelerators of the Landscape menu).
 	 */
-	private void bindKeys() {
+	private void installKeyboardControls() {
 		JComponent root = frame.getRootPane();
-		bindKey(root, KeyEvent.VK_UP, "cameraForward", () -> moveCamera(1));
-		bindKey(root, KeyEvent.VK_DOWN, "cameraBackward", () -> moveCamera(-1));
+		bindKey(root, KeyEvent.VK_UP, "cameraForward", () -> dollyCamera(1));
+		bindKey(root, KeyEvent.VK_DOWN, "cameraBackward", () -> dollyCamera(-1));
 		bindKey(root, KeyEvent.VK_PAGE_UP, "seaUp", () -> changeSeaLevel(1));
 		bindKey(root, KeyEvent.VK_PAGE_DOWN, "seaDown", () -> changeSeaLevel(-1));
 	}
 
-	private void bindKey(JComponent component, int keyCode, String name, Runnable action) {
+	/**
+	 * Binds a key to an action for the whole window (WHEN_IN_FOCUSED_WINDOW): it works whatever component has the
+	 * keyboard focus, unlike a KeyListener, which only receives the keys when its own component has it.
+	 */
+	private static void bindKey(JComponent component, int keyCode, String name, Runnable action) {
 		component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(keyCode, 0), name);
 		component.getActionMap().put(name, new AbstractAction() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (renderer != null) action.run(); // Ignored until the renderer is created
+				action.run();
 			}
 		});
 	}
 
-	public void mousePressed(MouseEvent e) {
-		// Store the location when mouse is clicked: mouseDragged() accumulates the displacement from one event to the next
-		mouse_last_X = e.getX(); mouse_last_Y = e.getY();
-	}
-
-     public void mouseEntered(MouseEvent e) {
-    	 // Do nothing
-	 }
-
-	public void mouseReleased(MouseEvent e) {
-		// Do nothing
-     }
-
-     public void mouseExited(MouseEvent e) {
- 		// Do nothing
-     }
-
-     public void mouseClicked(MouseEvent e) {
- 		// Do nothing
-     }
-
- 	public void mouseDragged(MouseEvent e) {
-        // Use the displacement since the PREVIOUS event (not since the click): the total angle only depends on
-        // the mouse movement, whatever the number of events. Swing coalesces the drag events while a (slow,
-        // e.g. zoomed-in) frame is rendered: using the offset since the click at each event made the rotation
-        // depend on the rendering speed, and not come back when the mouse did.
-        int dx = e.getX() - mouse_last_X;
-        int dy = e.getY() - mouse_last_Y;
-        mouse_last_X = e.getX(); mouse_last_Y = e.getY();
-
-        float angleX = dragAngle(dx, panel.getWidth(), DRAG_ANGLE_PER_WIDTH);
-        float angleY = dragAngle(dy, panel.getHeight(), DRAG_ANGLE_PER_HEIGHT);
-        // The vertical angle is clamped at each event (not on a total), so that dragging back immediately moves
-        // the camera again, without a dead zone after having hit the limit.
-        if (flyMode) {
-        	// "Look around" (like the head of the pilot): dragging to the right turns the line of sight to the right
-        	// (the yaw decreases, clockwise seen from above), dragging up looks up (the screen Y axis points down)
-        	flyYaw -= angleX;
-        	flyPitch = clamp(flyPitch - angleY, -MAX_ELEVATION, MAX_ELEVATION);
-        } else {
-        	// "Grab the World" feeling: dragging to the right makes the landscape turn to the right, hence the
-        	// camera turns the other way (azimuth decreases); dragging down shows the landscape more from above
-        	// (elevation increases)
-        	orbitAzimuth -= angleX;
-        	orbitElevation = clamp(orbitElevation + angleY, -MAX_ELEVATION, MAX_ELEVATION);
-        }
-
-        // Move the camera and render the updated view (the World itself is unchanged)
-        updateCameraPosition();
-		renderer.render();
- 	}
-
 	/**
-	 * Rotation angle (radians) for a mouse displacement (pixels): proportional to the displacement, anglePerSize radians
-	 * for a displacement of the whole window size. Package-private and static so it can be unit-tested.
+	 * Follows the size of the panel (hence of the window). Each intermediate size restarts the delay of the timer, so
+	 * that the view is resized and rendered only once the user stops resizing.
 	 */
-	static float dragAngle(int displacement, int windowSize, float anglePerSize) {
-		return anglePerSize * displacement / windowSize;
+	private void installResizeControl() {
+		resizeTimer = new Timer(RESIZE_DELAY_MS, e -> resizeView());
+		resizeTimer.setRepeats(false);
+		panel.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				resizeTimer.restart();
+			}
+		});
 	}
 
 	/**
-	 * Position of the eye of an orbit camera: the point at the given distance from the point of interest, in the
-	 * direction given by the spherical angles azimuth (around the vertical Z axis, from the X axis) and elevation
-	 * (above the horizontal plane).
-	 *
-	 * Package-private and static purely so it can be unit-tested (TestFractalLandscape) without a
-	 * live Camera/RenderEngine/Swing GUIView -- this method touches none of those.
+	 * Resizes the view to the size of the panel and renders it: the RenderEngine adapts the perspective to the new size
+	 * of the view (KEEP_SCALE, see createPerspectiveContext()). Nothing to do for an empty panel (minimized window) or
+	 * if the size did not change (the first event, when the window is displayed at the initial size of the image).
 	 */
-	static Vector4 orbitEye(Vector4 poi, float distance, float azimuth, float elevation) {
-		float horizontal = distance * (float) Math.cos(elevation); // Projection of the eye-poi distance on the XY plane
-		return new Vector4(
-				poi.getX() + horizontal * (float) Math.cos(azimuth),
-				poi.getY() + horizontal * (float) Math.sin(azimuth),
-				poi.getZ() + distance * (float) Math.sin(elevation),
-				1);
-	}
-
-	/**
-	 * Unit vector of the line of sight of the fly camera, for the given yaw (heading, around the vertical Z axis, from
-	 * the X axis) and pitch (above the horizontal plane), in radians: the same spherical coordinates as orbitEye(),
-	 * here for a direction (w = 0) rather than a point. Package-private and static so it can be unit-tested.
-	 */
-	static Vector4 flyDirection(float yaw, float pitch) {
-		float horizontal = (float) Math.cos(pitch);
-		return new Vector4(
-				horizontal * (float) Math.cos(yaw),
-				horizontal * (float) Math.sin(yaw),
-				(float) Math.sin(pitch),
-				0);
-	}
-
-	/**
-	 * Altitude of the ground at (x, y), never below the surface actually drawn: a trellis of the given size, centered on
-	 * the origin, made of n x n cells, with altitudes[i][j] at x = -size/2 + i*size/n, y = -size/2 + j*size/n. Each
-	 * cell is drawn as 2 triangles, cut along one diagonal or the other (the mesh alternates them): the altitude is the
-	 * higher of the two possible cuts, each one a planar interpolation in the triangle containing the point, so that
-	 * the camera kept above it is above the drawn triangles whatever the cut. NaN outside of the trellis (no ground).
-	 * Package-private and static so it can be unit-tested.
-	 */
-	static float groundAltitude(float[][] altitudes, float size, int n, float x, float y) {
-		// Position in cells from the corner of the trellis
-		float u = (x + size / 2) / size * n;
-		float v = (y + size / 2) / size * n;
-		if (u < 0 || v < 0 || u > n || v > n) return Float.NaN;
-		int i = Math.min((int) u, n - 1); // The last cell for the far edge (u = n)
-		int j = Math.min((int) v, n - 1);
-		float fu = u - i, fv = v - j; // Position inside the cell, in [0, 1]
-		float a = altitudes[i][j], b = altitudes[i + 1][j], c = altitudes[i][j + 1], d = altitudes[i + 1][j + 1];
-		// Cut along the diagonal a-d: triangle a-b-d below the diagonal (fu >= fv), a-c-d above
-		float cutAD = fu >= fv ? a + (b - a) * fu + (d - b) * fv : a + (c - a) * fv + (d - c) * fu;
-		// Cut along the diagonal b-c: triangle a-b-c near the corner a (fu + fv <= 1), d-c-b near the corner d
-		float cutBC = fu + fv <= 1 ? a + (b - a) * fu + (c - a) * fv : d + (c - d) * (1 - fu) + (b - d) * (1 - fv);
-		return Math.max(cutAD, cutBC);
-	}
-
-	/**
-	 * Restricts a value to the [min, max] interval. Package-private and static so it can be unit-tested.
-	 */
-	static float clamp(float value, float min, float max) {
-		return Math.max(min, Math.min(max, value));
-	}
-
-	/**
-	 * Places the camera according to the current mode, always with the World's up axis (Z) as up vector:
-	 * - orbit: according to the orbit angles and the current (possibly mid-animation) zoom, looking at the point of
-	 *   interest
-	 * - fly: at the position of the fly camera, looking along its line of sight (yaw, pitch)
-	 */
-	private void updateCameraPosition() {
-		if (flyMode) {
-			camera.updateCamera(flyEye, flyEye.plus(flyDirection(flyYaw, flyPitch)), Vector4.zAxis());
-		} else {
-			float distance = orbitDistance - appliedZoom / 10;
-			camera.updateCamera(orbitEye(poi, distance, orbitAzimuth, orbitElevation), poi, Vector4.zAxis());
-		}
-	}
-
-	/** Moves the fly camera by the given distance along its line of sight (backward if negative), above the ground. */
-	private void flyForward(float distance) {
-		flyEye = flyEye.plus(flyDirection(flyYaw, flyPitch).times(distance));
-		keepAboveGround();
-	}
-
-	/**
-	 * Keeps the fly camera at least FLY_CLEARANCE above the ground and the sea (the sea covers the same square as the
-	 * landscape): the camera slides on them instead of going under. The ground is taken under the camera and around
-	 * it (at FLY_CLEARANCE on each side): on a steep slope, the ground rising beside the camera would otherwise come
-	 * closer than the near plane, which would cut it. Outside of the landscape there is nothing to keep above.
-	 */
-	private void keepAboveGround() {
-		float x = flyEye.getX(), y = flyEye.getY(), r = FLY_CLEARANCE;
-		float ground = Float.NaN;
-		float[][] samples = { { x, y }, { x - r, y }, { x + r, y }, { x, y - r }, { x, y + r } };
-		for (float[] sample : samples) {
-			float altitude = groundAltitude(array_land, size, n, sample[0], sample[1]);
-			if (Float.isNaN(altitude)) continue; // Outside of the landscape
-			if (Float.isNaN(ground) || altitude > ground) ground = altitude; // The highest
-		}
-		if (Float.isNaN(ground)) return;
-		float floor = Math.max(ground, sea_level) + FLY_CLEARANCE;
-		if (flyEye.getZ() < floor) flyEye.setZ(floor);
-	}
-
- 	public void mouseMoved(MouseEvent e) {
-		// Do nothing
- 	}
-
-	/**
-	 * Mouse wheel, touchpad two finger scroll and touchpad pinch (sent as CTRL + wheel, hence not distinguished): wheel
-	 * up (negative rotation) moves the camera forward. getPreciseWheelRotation() rather than getWheelRotation(): a
-	 * touchpad sends fractions of a notch, which getWheelRotation() rounds to 0 (no movement) until a whole notch is
-	 * reached; a mouse wheel sends whole notches, so it moves exactly as before.
-	 */
-	public void mouseWheelMoved(MouseWheelEvent e) {
-		moveCamera((float) -e.getPreciseWheelRotation());
-	}
-
-	/**
-	 * Moves the camera forward (positive notches) or backward (negative notches), with an easing (see
-	 * startZoomAnimation()): one notch of the wheel, or one press of an arrow key, is 1.
-	 * - Orbit camera: zoom, 1/10 of a unit per notch, without letting the camera reach (or cross) the point of interest
-	 * - Fly camera: flight along the line of sight, FLY_STEP per notch, without limit
-	 */
-	private void moveCamera(float notches) {
-		if (flyMode) {
-			zoom += notches;
-		} else {
-			float maxZoom = (orbitDistance - MIN_ORBIT_DISTANCE) * 10; // zoom/10 is the distance travelled toward the poi
-			zoom = Math.min(zoom + notches, maxZoom);
-		}
-		startZoomAnimation(zoom);
-	}
-
-	/**
-	 * Raises (positive steps) or lowers (negative steps) the sea level by SEA_LEVEL_STEP per step, within the
-	 * altitudes of the landscape. This is a transformation of the World, not of the view: the sea Element (tre_sea)
-	 * is translated on the Z axis; its geometry is unchanged, the RenderEngine applies the new transformation at the
-	 * next rendering, so neither a rebuild of the World nor a new calculation of the normals is needed.
-	 */
-	private void changeSeaLevel(int steps) {
-		sea_level = clamp(sea_level + steps * SEA_LEVEL_STEP, tre_land.getMinZ(), tre_land.getMaxZ());
-		tre_sea.setTransformation(new Translation(new Vector3(0, 0, sea_level)));
-		if (flyMode) { // A rising sea lifts the flying camera
-			keepAboveGround();
-			updateCameraPosition();
-		}
-		updateTitle();
-		renderer.render();
-	}
-
-	/**
-	 * Resizes the GUIView to the current size of the panel and renders it: the RenderEngine adapts the perspective to
-	 * the new size of the view (KEEP_SCALE, see run()). Ignored while the renderer is not created yet, or for an
-	 * empty panel (e.g. minimized window).
-	 */
-	private void resizeViewport() {
+	private void resizeView() {
 		int width = panel.getWidth();
 		int height = panel.getHeight();
-		if (renderer == null || width < 1 || height < 1) return;
-		// Nothing to do if the size did not change, e.g. for the first componentResized() event, when the window is
-		// displayed at the initial size of the image (it can come while run() is still creating the renderer)
+		if (width < 1 || height < 1) return;
 		if (width == guiView.getViewWidth() && height == guiView.getViewHeight()) return;
 		guiView.resize(width, height);
 		renderer.render();
 	}
 
-	/** Displays the camera mode and the current sea level in the title of the frame. */
+	/** Displays the camera mode and the sea level in the title of the window. */
 	private void updateTitle() {
-		frame.setTitle(String.format("Fractal Landscape - %s camera - Sea level: %.2f", flyMode ? "Fly" : "Orbit", sea_level));
+		frame.setTitle(String.format("Fractal Landscape - %s camera - Sea level: %.2f", flyMode ? "Fly" : "Orbit", seaLevel));
 	}
 
-	/**
-	 * Starts (or retargets) the eased transition of the camera's dolly position toward
-	 * targetZoom (the new "zoom" accumulator value), instead of jumping straight to it as before.
-	 * Each wheel notch is a discrete stepped input, similar in character to a keyboard tap, so it
-	 * benefits from the same kind of easing used for MovingCamera's rotation keys -- but zoom is a
-	 * translation along the camera's forward vector, not a rotation, so linear interpolation is
-	 * used here instead of Quaternion.slerp().
-	 *
-	 * If a previous zoom animation is still in progress (e.g. several wheel notches in quick
-	 * succession), this retargets from the CURRENT, already-interpolated zoom value rather than
-	 * restarting from the value before that still-running animation began -- otherwise fast
-	 * scrolling would look like the camera snapping backwards before each new increment.
-	 */
-	private void startZoomAnimation(float targetZoom) {
-		zoomAnimStartValue = appliedZoom;
-		zoomAnimTargetValue = targetZoom;
-		zoomAnimStartMillis = System.currentTimeMillis();
+	// ****************************************************************************************************************
+	// ***** Menus
+	// ****************************************************************************************************************
 
-		if (zoomAnimTimer == null) {
-			zoomAnimTimer = new Timer(ZOOM_ANIM_FRAME_MS, e -> stepZoomAnimation());
-		}
-		if (!zoomAnimTimer.isRunning()) {
-			zoomAnimTimer.start();
-		}
-	}
-
-	/** One animation frame: advances the applied zoom value toward its target and renders. */
-	private void stepZoomAnimation() {
-		long elapsed = System.currentTimeMillis() - zoomAnimStartMillis;
-		float t = Math.min(1f, (float) elapsed / ZOOM_ANIM_DURATION_MS);
-
-		float previousZoom = appliedZoom;
-		appliedZoom = interpolateZoom(zoomAnimStartValue, zoomAnimTargetValue, t);
-
-		// Orbit: zoom camera by moving the eye toward the point of interest (orbit angles unchanged), see
-		// updateCameraPosition(). Fly: move the eye along the CURRENT line of sight by the distance of this frame only,
-		// so that the flight follows the direction even if it changes (mouse drag) during the animation.
-		if (flyMode) flyForward((appliedZoom - previousZoom) * FLY_STEP);
-		updateCameraPosition();
-
-		// Render the updated view after zooming camera and rotating Element
-		renderer.render();
-
-		if (t >= 1f) {
-			zoomAnimTimer.stop();
-		}
-	}
-
-	/**
-	 * Linearly interpolates the applied zoom value a fraction t of the way from startValue to
-	 * targetValue. Package-private and static purely so it can be unit-tested
-	 * (TestFractalLandscape) without a live Camera/RenderEngine/Swing GUIView -- this
-	 * method touches none of those.
-	 */
-	static float interpolateZoom(float startValue, float targetValue, float t) {
-		return startValue + (targetValue - startValue) * t;
-	}
-
-
-
-	// *****************
-	// ***** Menus *****
-	// *****************
-
-	/** Landscape menu: actions on the whole scene. */
+	/** Landscape menu: actions on the scene and choice of the camera mode. */
 	private JMenu createLandscapeMenu() {
 		JMenu menu = new JMenu("Landscape");
 		menu.setMnemonic(KeyEvent.VK_L);
-		JMenuItem generate = new JMenuItem("Generate");
-		generate.addActionListener(e -> generateLandscape());
-		menu.add(generate);
 
-		// Sea level: CTRL + U / CTRL + D accelerators (letters: the same keys on every keyboard layout, unlike + / -,
-		// which need SHIFT for + only on an AZERTY keyboard); Page Up / Page Down also work (see bindKeys())
-		JMenuItem seaUp = new JMenuItem("Sea level up");
-		seaUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
-		seaUp.addActionListener(e -> changeSeaLevel(1));
-		menu.add(seaUp);
-		JMenuItem seaDown = new JMenuItem("Sea level down");
-		seaDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK));
-		seaDown.addActionListener(e -> changeSeaLevel(-1));
-		menu.add(seaDown);
+		addMenuItem(menu, "Generate", null, this::generateLandscape);
+
+		// Accelerators CTRL + U / CTRL + D: letters are at the same place on every keyboard layout, unlike + and -
+		// (Page Up / Page Down also work, see installKeyboardControls())
+		addMenuItem(menu, "Sea level up", KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK), () -> changeSeaLevel(1));
+		addMenuItem(menu, "Sea level down", KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK), () -> changeSeaLevel(-1));
 		menu.addSeparator();
 
-		JMenuItem resetCamera = new JMenuItem("Reset camera");
-		resetCamera.addActionListener(e -> resetCamera());
-		menu.add(resetCamera);
+		addMenuItem(menu, "Reset camera", null, this::resetCamera);
 		menu.addSeparator();
 
-		// Camera mode: exclusive choice
+		// Camera mode: an exclusive choice (radio buttons in a ButtonGroup)
 		ButtonGroup cameraGroup = new ButtonGroup();
-		JRadioButtonMenuItem orbitItem = new JRadioButtonMenuItem("Orbit camera", !flyMode);
-		orbitItem.addActionListener(e -> setFlyMode(false));
-		JRadioButtonMenuItem flyItem = new JRadioButtonMenuItem("Fly camera", flyMode);
-		flyItem.addActionListener(e -> setFlyMode(true));
-		cameraGroup.add(orbitItem);
-		cameraGroup.add(flyItem);
-		menu.add(orbitItem);
-		menu.add(flyItem);
+		addRadioItem(menu, cameraGroup, "Orbit camera", !flyMode, () -> setFlyMode(false));
+		addRadioItem(menu, cameraGroup, "Fly camera", flyMode, () -> setFlyMode(true));
 		return menu;
 	}
 
-	/**
-	 * Switches between the orbit and the fly camera, and renders.
-	 * - To fly: the flight starts where the orbit camera is, looking in the same direction (so the view does not
-	 *   jump), and the zoom of the orbit is kept aside.
-	 * - Back to orbit: the camera goes back on its orbit, where it was (same angles and zoom as before the flight).
-	 */
-	private void setFlyMode(boolean fly) {
-		if (fly == flyMode) return;
-		finishZoomAnimation();
-		if (fly) {
-			orbitZoom = zoom;
-			Vector4 eyePosition = camera.getEye();
-			Vector4 direction = poi.minus(eyePosition).normalize();
-			flyStartEye = new Vector4(eyePosition);
-			flyStartYaw = (float) Math.atan2(direction.getY(), direction.getX());
-			flyStartPitch = clamp((float) Math.asin(direction.getZ()), -MAX_ELEVATION, MAX_ELEVATION);
-			startFlight();
-		} else {
-			zoom = orbitZoom;
-			appliedZoom = orbitZoom;
-		}
-		flyMode = fly;
-		if (fly) keepAboveGround();
-		updateCameraPosition();
-		updateTitle();
-		renderer.render();
-	}
-
-	/** Puts the fly camera at the start of the flight (no wheel movement pending). */
-	private void startFlight() {
-		flyEye = new Vector4(flyStartEye);
-		flyYaw = flyStartYaw;
-		flyPitch = flyStartPitch;
-		zoom = 0;
-		appliedZoom = 0f;
-	}
-
-	/** Stops a running zoom (or flight) animation at its target, so that a mode switch starts from a stable state. */
-	private void finishZoomAnimation() {
-		if (zoomAnimTimer != null && zoomAnimTimer.isRunning()) {
-			zoomAnimTimer.stop();
-			float previousZoom = appliedZoom;
-			appliedZoom = zoom;
-			if (flyMode) flyForward((appliedZoom - previousZoom) * FLY_STEP);
-			updateCameraPosition();
-		}
-	}
-
-	/** Rendering menu: the rendering type, an exclusive choice (radio buttons in a ButtonGroup). */
+	/** Rendering menu: the rendering type of the RenderContext, an exclusive choice. */
 	private JMenu createRenderingMenu() {
 		JMenu menu = new JMenu("Rendering");
 		menu.setMnemonic(KeyEvent.VK_R);
@@ -716,15 +766,16 @@ public class FractalLandscape implements MouseListener, MouseMotionListener, Mou
 	}
 
 	private void addRenderingItem(JMenu menu, ButtonGroup group, String label, RenderingType type) {
-		JRadioButtonMenuItem item = new JRadioButtonMenuItem(label, rContext.getRenderingType() == type);
-		item.addActionListener(e -> selectRendering(type));
-		group.add(item);
-		menu.add(item);
+		addRadioItem(menu, group, label, rContext.getRenderingType() == type, () -> {
+			rContext.setRenderingType(type);
+			updateEffectsMenu();
+			renderer.render();
+		});
 	}
 
 	/**
-	 * Effects menu: on/off options, independent of the rendering type, in three groups (surfaces, shadows, sun). Each
-	 * check box starts from the state of the model and changes it, then renders.
+	 * Effects menu: on / off options, independent of the rendering type, in three groups (surfaces, shadows, sun). Each
+	 * check box starts from the state of the model (RenderContext, Lighting, sun) and changes it.
 	 */
 	private JMenu createEffectsMenu() {
 		JMenu menu = new JMenu("Effects");
@@ -735,13 +786,13 @@ public class FractalLandscape implements MouseListener, MouseMotionListener, Mou
 		specularItem = addEffectItem(menu, "Specular highlights", lighting.hasSpecular(), on -> lighting.setSpecularLight(on));
 		menu.addSeparator();
 
-		// Shadows: PCF_3X3 filtering of the shadow map for soft edges (see ShadowFilter)
+		// Shadows, hard or soft (PCF_3X3 filtering of the shadow map of the sun)
 		shadowsItem = addEffectItem(menu, "Shadows", rContext.isShadowing(), on -> rContext.setShadowing(on));
 		softShadowsItem = addEffectItem(menu, "Soft shadows", sun.getShadowFilter() == ShadowFilter.PCF_3X3,
 				on -> sun.setShadowFilter(on ? ShadowFilter.PCF_3X3 : ShadowFilter.HARD));
 		menu.addSeparator();
 
-		// Sun: the light glow of a directional light is the SUN mode (disc and halo in the sky, see LightGlowMode)
+		// Sun: the "light glow" of a directional light is the sun disc in the sky, the LightAppearance its halo and lens flare
 		sunItem = addEffectItem(menu, "Sun", rContext.isLightGlow(), on -> rContext.setLightGlow(on));
 		sunHaloItem = addEffectItem(menu, "Sun halo", sunAppearance.getGain() > 0, on -> sunAppearance.setGain(on ? 1f : 0f));
 		lensFlareItem = addEffectItem(menu, "Lens flare", sunAppearance.getFlareGain() > 0, on -> sunAppearance.setFlareGain(on ? 1f : 0f));
@@ -750,7 +801,7 @@ public class FractalLandscape implements MouseListener, MouseMotionListener, Mou
 	}
 
 	/** Creates a check box of the Effects menu: applies the change to the model, updates the menu and renders. */
-	private JCheckBoxMenuItem addEffectItem(JMenu menu, String label, boolean selected, java.util.function.Consumer<Boolean> apply) {
+	private JCheckBoxMenuItem addEffectItem(JMenu menu, String label, boolean selected, Consumer<Boolean> apply) {
 		JCheckBoxMenuItem item = new JCheckBoxMenuItem(label, selected);
 		item.addActionListener(e -> {
 			apply.accept(item.isSelected());
@@ -764,7 +815,8 @@ public class FractalLandscape implements MouseListener, MouseMotionListener, Mou
 	/**
 	 * Grays out the effects that the current rendering type does not use: the texture is used by the filled rendering
 	 * types (UNLIT, FLAT, INTERPOLATE), the specular highlights and the shadows by the lit ones (FLAT, INTERPOLATE),
-	 * the sun by all but LINE. The sub-options (soft shadows, halo, lens flare, light shafts) also need their main option.
+	 * the sun by all but LINE. The sub-options (soft shadows, halo, lens flare, light shafts) also need their main
+	 * option.
 	 */
 	private void updateEffectsMenu() {
 		RenderingType type = rContext.getRenderingType();
@@ -780,313 +832,335 @@ public class FractalLandscape implements MouseListener, MouseMotionListener, Mou
 		lightShaftsItem.setEnabled(sunVisible);
 	}
 
-	/** Switches the rendering type, updates the Effects menu and renders. */
-	private void selectRendering(RenderingType type) {
-		rContext.setRenderingType(type);
-		updateEffectsMenu();
-		renderer.render();
+	private static void addMenuItem(JMenu menu, String label, KeyStroke accelerator, Runnable action) {
+		JMenuItem item = new JMenuItem(label);
+		if (accelerator != null) item.setAccelerator(accelerator);
+		item.addActionListener(e -> action.run());
+		menu.add(item);
 	}
 
-	/** Generates a new random landscape (same sea), recomputes its geometry and colors, and renders. */
+	private static void addRadioItem(JMenu menu, ButtonGroup group, String label, boolean selected, Runnable action) {
+		JRadioButtonMenuItem item = new JRadioButtonMenuItem(label, selected);
+		item.addActionListener(e -> action.run());
+		group.add(item);
+		menu.add(item);
+	}
+
+	// ****************************************************************************************************************
+	// ***** Actions on the World
+	// ****************************************************************************************************************
+
+	/**
+	 * Generates a new random landscape and renders it. The geometry of the existing Trellis is updated with the new
+	 * altitudes, then the World is rebuilt (new normals) and the triangles colored again.
+	 */
 	private void generateLandscape() {
-		createLandscape(array_land, size, n);
+		generateFractalAltitudes(landAltitudes, LANDSCAPE_SIZE, LANDSCAPE_DIVISIONS, new Random());
 		try {
-			tre_land.updateTrellis(array_land);
-		} catch (WrongArraySizeException exc) {
-			exc.printStackTrace();
+			landTrellis.updateTrellis(landAltitudes);
+		} catch (WrongArraySizeException e) {
+			// Cannot happen: the array has the size of the Trellis
+			throw new IllegalStateException(e);
 		}
 		world.rebuild();
-		System.out.println("Number of Triangles in Trellis: "+tre_land.getNbTriangles()+" Number of vertices: " + tre_land.getNbVertices());
-		updateTrianglesColorTrellis();
+		printLandscapeStatistics();
+		colorTrianglesByAltitude(landTrellis);
+
 		if (flyMode) { // The new ground may be above the flying camera
 			keepAboveGround();
-			updateCameraPosition();
+			updateCamera();
 		}
 		renderer.render();
 	}
 
 	/**
-	 * Puts the camera back to its initial position, and renders: orbit camera, its initial angles and no zoom; fly
-	 * camera, the start of the flight.
+	 * Raises (positive steps) or lowers (negative steps) the sea level, within the altitudes of the landscape, and
+	 * renders. This is a transformation of the World, not of the view: the sea Element is given a new Translation; its
+	 * geometry is unchanged, so neither a rebuild of the World nor a new calculation of the normals is needed.
+	 */
+	private void changeSeaLevel(int steps) {
+		seaLevel = clamp(seaLevel + steps * SEA_LEVEL_STEP, landTrellis.getMinZ(), landTrellis.getMaxZ());
+		seaTrellis.setTransformation(new Translation(new Vector3(0, 0, seaLevel)));
+		if (flyMode) { // A rising sea lifts the flying camera
+			keepAboveGround();
+			updateCamera();
+		}
+		updateTitle();
+		renderer.render();
+	}
+
+	// ****************************************************************************************************************
+	// ***** Camera control
+	// ****************************************************************************************************************
+
+	/**
+	 * Turns the camera after a mouse drag, by the given angles (in radians) and renders. The vertical angle is clamped
+	 * at each event (not on a total), so that dragging back moves the camera again at once, without a dead zone.
+	 *
+	 * @param horizontalAngle angle for the horizontal displacement of the mouse (positive to the right)
+	 * @param verticalAngle   angle for the vertical displacement of the mouse (positive downward: the screen Y axis
+	 *                        points down)
+	 */
+	private void turnCamera(float horizontalAngle, float verticalAngle) {
+		if (flyMode) {
+			// "Look around", like the head of the pilot: dragging to the right turns the line of sight to the right
+			// (the yaw decreases, clockwise seen from above), dragging up looks up
+			flyYaw -= horizontalAngle;
+			flyPitch = clamp(flyPitch - verticalAngle, -MAX_ELEVATION, MAX_ELEVATION);
+		} else {
+			// "Grab the World": dragging to the right turns the landscape to the right, hence the camera the other way
+			// (the azimuth decreases); dragging down shows the landscape more from above (the elevation increases)
+			orbitAzimuth -= horizontalAngle;
+			orbitElevation = clamp(orbitElevation + verticalAngle, -MAX_ELEVATION, MAX_ELEVATION);
+		}
+		updateCamera();
+		renderer.render();
+	}
+
+	/**
+	 * Moves the camera forward (positive notches) or backward (negative notches) along its line of sight: one notch of
+	 * the wheel, or one press of an arrow key, is 1. The movement is not immediate, it eases over a short animation.
+	 * <ul>
+	 * <li>Orbit camera: zoom, without letting the camera reach the point of interest</li>
+	 * <li>Fly camera: flight along the line of sight, without limit (but above the ground)</li>
+	 * </ul>
+	 */
+	private void dollyCamera(float notches) {
+		if (flyMode) {
+			dollyTarget += notches;
+		} else {
+			float maxDolly = (orbitDistance - MIN_ORBIT_DISTANCE) / DOLLY_STEP;
+			dollyTarget = Math.min(dollyTarget + notches, maxDolly);
+		}
+		startDollyAnimation();
+	}
+
+	/**
+	 * Starts the animation of the camera from where it is (dollyApplied) toward dollyTarget. If an animation is already
+	 * running (several wheel notches in quick succession), it restarts from the current, already interpolated, position,
+	 * so that the camera never jumps backward.
+	 */
+	private void startDollyAnimation() {
+		dollyAnimationStart = dollyApplied;
+		dollyAnimationStartMillis = System.currentTimeMillis();
+		if (dollyTimer == null) {
+			dollyTimer = new Timer(DOLLY_ANIMATION_FRAME_MS, e -> stepDollyAnimation());
+		}
+		if (!dollyTimer.isRunning()) {
+			dollyTimer.start();
+		}
+	}
+
+	/**
+	 * One frame of the animation: moves the camera a step further toward dollyTarget (a linear interpolation over
+	 * the duration of the animation) and renders. The Swing Timer calls it on the Swing thread, the same as the mouse
+	 * events, so no synchronization is needed.
+	 */
+	private void stepDollyAnimation() {
+		long elapsed = System.currentTimeMillis() - dollyAnimationStartMillis;
+		float t = Math.min(1f, (float) elapsed / DOLLY_ANIMATION_DURATION_MS);
+		applyDolly(interpolate(dollyAnimationStart, dollyTarget, t));
+		renderer.render();
+		if (t >= 1f) {
+			dollyTimer.stop();
+		}
+	}
+
+	/** Stops a running animation at its target, so that a change of camera mode starts from a stable state. */
+	private void finishDollyAnimation() {
+		if (dollyTimer != null && dollyTimer.isRunning()) {
+			dollyTimer.stop();
+			applyDolly(dollyTarget);
+		}
+	}
+
+	/**
+	 * Moves the camera to the given dolly position.
+	 * <ul>
+	 * <li>Orbit: the distance to the point of interest is calculated from it (see updateCamera())</li>
+	 * <li>Fly: the eye moves along the CURRENT line of sight by the distance since the previous position only, so that
+	 *     the flight follows the direction if it changes (mouse drag) during the animation</li>
+	 * </ul>
+	 */
+	private void applyDolly(float dolly) {
+		if (flyMode) {
+			flyEye = flyEye.plus(flyDirection(flyYaw, flyPitch).times((dolly - dollyApplied) * DOLLY_STEP));
+			keepAboveGround();
+		}
+		dollyApplied = dolly;
+		updateCamera();
+	}
+
+	/**
+	 * Places the Camera according to the current mode, always with Z as up vector:
+	 * <ul>
+	 * <li>Orbit: on its orbit (angles and zoom), looking at the point of interest</li>
+	 * <li>Fly: at the position of the fly camera, looking along its line of sight</li>
+	 * </ul>
+	 * The World does not move: only the Camera does.
+	 */
+	private void updateCamera() {
+		if (flyMode) {
+			camera.updateCamera(flyEye, flyEye.plus(flyDirection(flyYaw, flyPitch)), Vector4.zAxis());
+		} else {
+			float distance = orbitDistance - dollyApplied * DOLLY_STEP;
+			camera.updateCamera(orbitEye(POINT_OF_INTEREST, distance, orbitAzimuth, orbitElevation), POINT_OF_INTEREST, Vector4.zAxis());
+		}
+	}
+
+	/**
+	 * Switches between the orbit and the fly camera, and renders.
+	 * <ul>
+	 * <li>To fly: the flight starts where the orbit camera is, looking in the same direction (so the view does not
+	 *     jump); the zoom of the orbit is set aside.</li>
+	 * <li>Back to orbit: the camera goes back on its orbit, where it was (same angles and zoom as before the
+	 *     flight).</li>
+	 * </ul>
+	 */
+	private void setFlyMode(boolean fly) {
+		if (fly == flyMode) return;
+		finishDollyAnimation();
+		if (fly) {
+			orbitDolly = dollyApplied;
+			Vector4 eye = camera.getEye();
+			Vector4 direction = POINT_OF_INTEREST.minus(eye).normalize();
+			flyStartEye = new Vector4(eye);
+			flyStartYaw = (float) Math.atan2(direction.getY(), direction.getX());
+			flyStartPitch = clamp((float) Math.asin(direction.getZ()), -MAX_ELEVATION, MAX_ELEVATION);
+			startFlight();
+			keepAboveGround();
+		} else {
+			dollyTarget = orbitDolly;
+			dollyApplied = orbitDolly;
+		}
+		flyMode = fly;
+		updateCamera();
+		updateTitle();
+		renderer.render();
+	}
+
+	/** Puts the fly camera at the start of the flight. */
+	private void startFlight() {
+		flyEye = new Vector4(flyStartEye);
+		flyYaw = flyStartYaw;
+		flyPitch = flyStartPitch;
+		dollyTarget = 0;
+		dollyApplied = 0;
+	}
+
+	/**
+	 * Puts the camera back at its initial position, and renders: the initial orbit without zoom for the orbit camera,
+	 * the start of the flight for the fly camera.
 	 */
 	private void resetCamera() {
-		if (zoomAnimTimer != null) zoomAnimTimer.stop();
+		if (dollyTimer != null) dollyTimer.stop();
 		if (flyMode) {
 			startFlight();
 			keepAboveGround();
 		} else {
-			zoom = 0;
-			appliedZoom = 0f;
+			dollyTarget = 0;
+			dollyApplied = 0;
 			initOrbit();
 		}
-		updateCameraPosition();
+		updateCamera();
 		renderer.render();
 	}
 
-	/** Initial orbit parameters: spherical coordinates of the initial eye around the point of interest. */
-	private void initOrbit() {
-		Vector4 poiToEye = eye.minus(poi);
-		orbitDistance = poiToEye.length();
-		orbitAzimuth = (float) Math.atan2(poiToEye.getY(), poiToEye.getX());
-		orbitElevation = (float) Math.asin(poiToEye.getZ() / orbitDistance);
-	}
-	
 	/**
-	 * @param size the size of the trellis
-	 * @param n the number of segments (should be a power of 2)
+	 * Keeps the fly camera at least FLY_CLEARANCE above the ground and the sea: the camera slides on them instead of
+	 * going under. The ground is measured under the camera and around it (at FLY_CLEARANCE on each side): on a steep
+	 * slope, the ground rising beside the camera could otherwise come closer than the near plane, which would cut it.
+	 * Outside of the landscape there is nothing to stay above.
 	 */
-	public void createLandscape(float[][] array_land, float size, int n) {
-		createLandscape(array_land, size, n, new Random());
+	private void keepAboveGround() {
+		float x = flyEye.getX(), y = flyEye.getY(), r = FLY_CLEARANCE;
+		float[][] samples = { { x, y }, { x - r, y }, { x + r, y }, { x, y - r }, { x, y + r } };
+		float ground = Float.NaN;
+		for (float[] sample : samples) {
+			float altitude = groundAltitude(landAltitudes, LANDSCAPE_SIZE, LANDSCAPE_DIVISIONS, sample[0], sample[1]);
+			if (Float.isNaN(altitude)) continue; // Outside of the landscape
+			if (Float.isNaN(ground) || altitude > ground) ground = altitude; // Keep the highest
+		}
+		if (Float.isNaN(ground)) return;
+		float minAltitude = Math.max(ground, seaLevel) + FLY_CLEARANCE;
+		if (flyEye.getZ() < minAltitude) flyEye.setZ(minAltitude);
+	}
+
+	// ****************************************************************************************************************
+	// ***** Geometry helpers
+	// ***** Pure functions, static and package-private so that they can be unit-tested without a window
+	// ***** (see TestFractalLandscape)
+	// ****************************************************************************************************************
+
+	/**
+	 * Rotation angle (radians) for a mouse displacement (pixels): proportional to the displacement, anglePerSize
+	 * radians for a displacement of the whole window size. Using the displacement since the previous event (not since
+	 * the click) makes the total angle depend on the mouse movement only, whatever the number of events received.
+	 */
+	static float dragAngle(int displacement, int windowSize, float anglePerSize) {
+		return anglePerSize * displacement / windowSize;
 	}
 
 	/**
-	 * Same, with a given random generator: a Random created with a fixed seed always gives the same landscape
-	 * (used to regenerate the image of the documentation, see DocumentationImages in the test sources).
+	 * Position of the eye of an orbit camera: the point at the given distance from the point of interest, in the
+	 * direction given by the spherical angles azimuth (around the vertical Z axis, from the X axis) and elevation
+	 * (above the horizontal plane).
+	 */
+	static Vector4 orbitEye(Vector4 poi, float distance, float azimuth, float elevation) {
+		float horizontal = distance * (float) Math.cos(elevation); // Projection of the distance on the XY plane
+		return new Vector4(
+				poi.getX() + horizontal * (float) Math.cos(azimuth),
+				poi.getY() + horizontal * (float) Math.sin(azimuth),
+				poi.getZ() + distance * (float) Math.sin(elevation),
+				1);
+	}
+
+	/**
+	 * Unit vector of the line of sight of the fly camera, for the given yaw (heading, around the vertical Z axis, from
+	 * the X axis) and pitch (above the horizontal plane): the same spherical coordinates as orbitEye(), here for a
+	 * direction (w = 0) rather than a point (w = 1).
+	 */
+	static Vector4 flyDirection(float yaw, float pitch) {
+		float horizontal = (float) Math.cos(pitch);
+		return new Vector4(
+				horizontal * (float) Math.cos(yaw),
+				horizontal * (float) Math.sin(yaw),
+				(float) Math.sin(pitch),
+				0);
+	}
+
+	/**
+	 * Altitude of the ground at (x, y), never below the surface actually drawn, for a Trellis of the given size,
+	 * centered on the origin, made of n x n cells, with altitudes[i][j] at x = -size/2 + i*size/n, y = -size/2 +
+	 * j*size/n. Each cell is drawn as 2 triangles, cut along one diagonal or the other: the altitude returned is the
+	 * higher of the two possible cuts (each one a planar interpolation in the triangle containing the point), so that a
+	 * camera kept above it is above the drawn triangles whatever the cut.
 	 *
-	 * @param size the size of the trellis
-	 * @param n the number of segments (should be a power of 2)
-	 * @param random the source of the random variations of the altitudes
+	 * @return the altitude, NaN outside of the Trellis
 	 */
-	public static void createLandscape(float[][] array_land, float size, int n, Random random) {
-		
-		float array[][] = new float[n+1][n+1]; // Temporary array to be used for the Treillis generation
-		
-		float mult = 0.6f; // Global multiplication factor for altitudes used by the Fractal generator. If higher, the landscape will be more accidented, if lower it will be smoother
-
-		int ix = n; // Start from the largest dimension of the Treillis
-		// Initialize the 4 corners
-		array[0][0] = (float)random.nextDouble()*mult*size/2;
-		array[0][ix] = (float)random.nextDouble()*mult*size/2;
-		array[ix][0] = (float)random.nextDouble()*mult*size/2;
-		array[ix][ix] = (float)random.nextDouble()*mult*size/2;
-		
-		// Recursion loop on i that will be divided by 2 at each iteration until it is equal to 1
-		while (ix>1) {
-			
-			float factor = (float)(mult*(ix * size)/(n * 2)); // For each loop calculate the variation factor (should reduce at each Fractal iteration)
-			// Then at each stage let's loop on sub-squares of the main square
-			for (int j=0; j<n/ix; j++) { // n/i will be 1 (i=n at first iteration), then 2 (i is divided by 2), 4, 8, 16...
-				for (int k=0; k<n/ix; k++) {
-					
-					// Let's calculate the average altitude of the center of the square as it will be used later
-					float center = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix])/4;
-					
-					// Then use Fractal approach to calculate the center of the square and the middle of each segment of the squares
-					//
-					// Co---M---Co
-					// |    |    |
-					// |    |    |
-					// M---Cnt---M
-					// |    |    |
-					// |    |    |
-					// Co---M---Co
-					//
-					// Co = Corners of the square
-					// Cnt = Center of the square
-					// M = Middle of each segment of the square
-					
-					// For each calculation, add a random value multiplied by the loop factor calculated above (hence proportional to the size of the square)
-					array[ix/2+j*ix][ix/2+k*ix] = center + (float)random.nextDouble()*factor;
-					// Use average of other points : 2 Corners + Center of the square for the middle segments
-					array[ix/2+j*ix][0+k*ix] = (array[0+j*ix][0+k*ix] + array[ix+j*ix][0+k*ix] + center)/3 + (float)random.nextDouble()*factor;;
-					array[0+j*ix][ix/2+k*ix] = (array[0+j*ix][0+k*ix] + array[0+j*ix][ix+k*ix] + center)/3 + (float)random.nextDouble()*factor;;
-					array[ix+j*ix][ix/2+k*ix] = (array[ix+j*ix][0+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)random.nextDouble()*factor;;
-					array[ix/2+j*ix][ix+k*ix] = (array[0+j*ix][ix+k*ix] + array[ix+j*ix][ix+k*ix] + center)/3 + (float)random.nextDouble()*factor;;
-				}
-			}
-			ix/=2; // Divide i by 2 (i remains a power of 2)
-		}
-		
-		//
-		// End of Fractal generation
-		//
-		
-		//float sea_level = 1.5f;
-		
-		for (int i=0; i<=n; i++ ) {
-			for (int j=0; j<=n; j++) {
-				// array_land[i][j] = array[i][j] >= sea_level ? array[i][j] : sea_level ;
-				array_land[i][j] = array[i][j];
-			}
-		}
-		
-		array = null; // We no longer need this one, the array_land has been updated appropriately
-		
-	}
-	
-	protected void updateVertexColorTrellis( ) {
-		float max_alt = tre_land.getMaxZ();
-		float min_alt = tre_land.getMinZ();
-		for (int v=0; v<tre_land.getVertices().size(); v++) {
-			float v_alt = tre_land.getVertex(v).getPos().getZ();
-			//tre_land.getVertex(v).setColor(new Color((int)((v_alt-min_alt)/(max_alt-min_alt)*200),(int)((v_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-v_alt)/(max_alt-min_alt)*200)));
-			float ratio = (v_alt - min_alt) / (max_alt - min_alt);
-			int gray = (int)(ratio*255); // From black (lowest) to white (highest)
-			tre_land.getVertex(v).setColor(new Color(gray, gray, gray));
-		}
-		
+	static float groundAltitude(float[][] altitudes, float size, int n, float x, float y) {
+		// Position in cells from the corner of the Trellis
+		float u = (x + size / 2) / size * n;
+		float v = (y + size / 2) / size * n;
+		if (u < 0 || v < 0 || u > n || v > n) return Float.NaN;
+		int i = Math.min((int) u, n - 1); // The last cell for the far edge (u = n)
+		int j = Math.min((int) v, n - 1);
+		float fu = u - i, fv = v - j; // Position inside the cell, in [0, 1]
+		float a = altitudes[i][j], b = altitudes[i + 1][j], c = altitudes[i][j + 1], d = altitudes[i + 1][j + 1];
+		// Cut along the diagonal a-d: triangle a-b-d below the diagonal (fu >= fv), a-c-d above
+		float cutAD = fu >= fv ? a + (b - a) * fu + (d - b) * fv : a + (c - a) * fv + (d - c) * fu;
+		// Cut along the diagonal b-c: triangle a-b-c near the corner a (fu + fv <= 1), d-c-b near the corner d
+		float cutBC = fu + fv <= 1 ? a + (b - a) * fu + (c - a) * fv : d + (c - d) * (1 - fu) + (b - d) * (1 - fv);
+		return Math.max(cutAD, cutBC);
 	}
 
-	protected void updateTrianglesColorTrellis() {
-		colorTrianglesByAltitude(tre_land);
+	/** Linear interpolation: the value a fraction t (in [0, 1]) of the way from start to target. */
+	static float interpolate(float start, float target, float t) {
+		return start + (target - start) * t;
 	}
 
-	/** Colors each triangle of the trellis according to its average altitude: black (lowest) to white (highest). */
-	public static void colorTrianglesByAltitude(Trellis tre) {
-		float max_alt = tre.getMaxZ();
-		float min_alt = tre.getMinZ();
-		int t = 0;
-		for (t=0; t<tre.getTriangles().size(); t++) {
-			float avg_alt = (tre.getTriangle(t).getV1().getPos().getZ() + tre.getTriangle(t).getV2().getPos().getZ() + tre.getTriangle(t).getV3().getPos().getZ())/3;
-			//tre.getTriangle(t).setColor(new Color((int)((avg_alt-min_alt)/(max_alt-min_alt)*200),(int)((avg_alt-min_alt)/(max_alt-min_alt)*255),(int)((max_alt-avg_alt)/(max_alt-min_alt)*200)));
-			float ratio = (avg_alt-min_alt)/(max_alt-min_alt);
-			int gray = (int)(ratio*255); // From black (lowest) to white (highest)
-			tre.getTriangle(t).setColor(new Color(gray, gray, gray));
-		}
+	/** Restricts a value to the [min, max] interval. */
+	static float clamp(float value, float min, float max) {
+		return Math.max(min, Math.min(max, value));
 	}
-
-
-	/**
-	 * The lighting of the image of the documentation (see DocumentationImages): a sun behind the camera of that image.
-	 * The interactive demo uses a lower sun, that can be seen in the sky (see run() and SUN_AZIMUTH, SUN_ELEVATION).
-	 */
-	public static Lighting createLighting() {
-		DirectionalLight dl = new DirectionalLight(new Vector3(-1,1,-0.5f), 0.8f);
-		AmbientLight al = new AmbientLight(0.2f);
-		return new Lighting(dl, al, false);
-	}
-
-	/**
-	 * Direction of a DirectionalLight (its propagation direction, from the light towards the scene, as the engine
-	 * expects it) for a sun seen from the scene at the given azimuth (around the vertical Z axis, from the X axis) and
-	 * elevation (above the horizon), in degrees. Package-private and static so it can be unit-tested.
-	 */
-	static Vector3 sunDirection(float azimuthDegrees, float elevationDegrees) {
-		double azimuth = Math.toRadians(azimuthDegrees);
-		double elevation = Math.toRadians(elevationDegrees);
-		// Unit vector towards the sun, then reversed: the light travels from the sun towards the scene
-		return new Vector3(
-				(float) (-Math.cos(elevation) * Math.cos(azimuth)),
-				(float) (-Math.cos(elevation) * Math.sin(azimuth)),
-				(float) (-Math.sin(elevation)));
-	}
-
-	/**
-	 * Create the World and Camera, generate a Treillis based on Fractal recursivity to create a Landscape
-	 * Create the Graphic Swing view by calling the createView method that will associate mouse Listners to the panel so that user can 
-	 * interact with the view and move it or zomm in it.
-	 */
-	public void run() {
-		
-		// Camera
-		eye = new Vector4(6,0,3,1);
-		poi = new Vector4(0,0,1.5f,1);
-		camera = new Camera(eye, poi, Vector4.zAxis());
-
-		initOrbit();
-				
-		System.out.println("********* Creating World");
-		
-		//Texture tex = new Texture("resources/texture/texture_bricks_204x204.jpg");
-		//Texture tex = new Texture("resources/texture/texture_blueground_204x204.jpg");
-		//Texture tex = new Texture("resources/texture/texture_woodfloor_160x160.jpg");
-		//Texture tex = new Texture("resources/texture/texture_damier_600x591.gif");
-		//Texture tex = new Texture("resources/texture/texture_grass_900x600.jpg");
-		//Texture tex = new Texture("resources/texture/texture_ground_stone_600x600.jpg");		
-		//Texture tex = new Texture("resources/texture/texture_snow_590x590.jpg");
-		Texture tex = new Texture("resources/texture/texture_gray_concrete_wall_with_cracks_2748x2748.jpg");
-		Texture tex_sea = new Texture("resources/texture/texture_waves-calm-sea_4480x4480.jpg");
-		
-		// Create World
-		world = new World();
-		world.setBackgroundColor(SKY_COLOR);
-		
-		master_land = new Element();
-		
-		// Create and form the Treillis
-		size = 4; // Size of the Treillis (square)
-		n = 128; // Nb of segments of the Treillis, should be a 2^n number
-		array_land = new float[n+1][n+1]; // Updated array with sea level
-		createLandscape(array_land, size, n);
-		// Create the Treillis
-		tre_land = null;
-		try {
-			tre_land = new Trellis(size, size, n, n, array_land, tex);
-		} catch (WrongArraySizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		//tre_land.setColor(new Color(100,200,50));
-		tre_land.setSpecularExp(LAND_SPECULAR_EXP);
-		tre_land.setSpecularColor(LAND_SPECULAR_COLOR);
-		
-		// Create the sea
-		tre_sea = new Trellis(4, 4, 4, 4, tex_sea);
-		tre_sea.setColor(new Color(0, 0, 250));
-		tre_sea.setSpecularExp(SEA_SPECULAR_EXP);
-		tre_sea.setSpecularColor(SEA_SPECULAR_COLOR);
-		tre_sea.setTransformation(new Translation(new Vector3(0, 0, sea_level)));
-		
-		// Add the Treillis as a new Element of the World
-		master_land.addElement(tre_land);
-		master_land.addElement(tre_sea);
-		world.addElement(master_land);
-		
-		// Generate World (including Triangles)
-		System.out.println("********* Calculating normals");
-		world.build();
-		System.out.println("Number of Triangles in Trellis: "+tre_land.getNbTriangles()+" Number of vertices: " + tre_land.getNbVertices());
-		
-		// Then update Triangles as needed (Colors) to create effect on the Landscape
-		updateTrianglesColorTrellis();
-
-		// Lighting initialization: the sun (soft shadows when the shadows are on) and an ambient light, with the
-		// specular highlights
-		sun = new DirectionalLight(sunDirection(SUN_AZIMUTH, SUN_ELEVATION), 0.8f);
-		sun.setShadowFilter(ShadowFilter.PCF_3X3);
-		sunAppearance = new LightAppearance(); // Default halo and lens flare
-		sun.setAppearance(sunAppearance);
-		lighting = new Lighting(sun, new AmbientLight(0.2f), true);
-		
-		// Graphic Context
-		// Near plane very close to the eye (0.01, less than the FLY_CLEARANCE of the fly camera above the ground), so
-		// that the fly camera can go near the hills and the sea without cutting them (the near plane cuts everything
-		// closer, which would show the "backstage" through the ground): the same field of view and image size as a
-		// near plane at 0.8 with 0.8 x 0.45 and 1250 pixels per unit (all divided / multiplied by 80)
-		pContext = new PerspectiveContext(0.01f, 0.005625f, 0.01f, 100, PerspectiveType.FRUSTUM, 100000);
-		//PerspectiveContext pContext = new PerspectiveContext(8f, 4.5f, 1, 100, PerspectiveType.ORTHOGRAPHIC, 125);
-		
-		// When the window (hence the view) is resized, keep the number of pixels per unit rather than the field of view:
-		// a larger window shows more of the landscape (wider and taller view volume) rather than an enlarged image
-		pContext.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE);
-
-		// Rendering context (before the view: the menus start from its state): shading, no texture, no shadows,
-		// sun visible (light glow) without light shafts
-		rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
-		rContext.setTextureProcessing(false);
-		rContext.setLightGlow(true);
-
-		// Create view
-		guiView = this.createView(pContext);
-		
-		// Initialize Render Engine and render a first view
-		renderer = new RenderEngine(world, lighting, camera, rContext, pContext);
-		renderer.setView(guiView);
-		updateTitle();
-		renderer.render();
-		
-		System.out.println("********* APPLICATION LAUNCHED *********");
-	}
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		
-		System.out.println("********* STARTING APPLICATION *********");
-		FractalLandscape fractal = new FractalLandscape();
-		fractal.run();
-		System.out.println("********* APPLICATION is RUNNING *********");
-	}
-
 }
