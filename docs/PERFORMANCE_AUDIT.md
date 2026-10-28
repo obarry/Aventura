@@ -132,7 +132,7 @@ chaque coefficient), `setRGB()` 8 %.
 ### Pourquoi 8 à 10 % de CPU
 
 Le rendu tourne sur un seul thread : le thread `main` dans `UrbanScape`, l'**EDT** Swing dans `MovingCamera` et
-`FractalLandscape_MouseMoving`. Un thread qui travaille sans arrêt occupe un cœur logique. Sur une machine à
+`FractalLandscape`. Un thread qui travaille sans arrêt occupe un cœur logique. Sur une machine à
 12 threads logiques, cela affiche 8,3 %. Le moteur est déjà à 100 % de ce qu'un seul thread peut donner.
 
 ---
@@ -390,14 +390,14 @@ C'est le découpage « vertex processing → primitive assembly → rasterizatio
 
 ### D10. Rendu sur l'EDT dans deux démos
 
-`MovingCamera` et `FractalLandscape_MouseMoving` appellent `renderer.render()` depuis des `Timer` Swing et des
+`MovingCamera` et `FractalLandscape` appellent `renderer.render()` depuis des `Timer` Swing et des
 écouteurs souris, donc **sur le thread de l'interface**. Pendant un rendu de 100 à 300 ms, la fenêtre ne répond pas
 et les événements s'accumulent. `UrbanScape` fait déjà le rendu dans sa propre boucle.
 **Proposition** : une boucle de rendu dédiée (ou un `SwingWorker`) qui ne rend que le **dernier** état de caméra
 demandé. **Effort** S · **Lisibilité** +.
 
 > **v2.** `SceneViewer` (code de test) montre le bon modèle : un thread de rendu dédié qui lit le dernier état
-> demandé. `MovingCamera` et `FractalLandscape_MouseMoving` rendent toujours sur l'EDT : il suffit de reprendre ce
+> demandé. `MovingCamera` et `FractalLandscape` rendent toujours sur l'EDT : il suffit de reprendre ce
 > modèle.
 
 ---
@@ -1023,7 +1023,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | A1, A7 | Interpolation incrémentale, mode Gouraud | À faire |
 | D2a | Couleurs des lumières et accumulateur sans `Color` | **Fait** (phase 1, étape 4, avec D6) : sans ombres −43 % (91 → 52 ms, 92 → 11 Mo alloués par image), lumière ponctuelle et spot −15 %, lumières visibles −18 % ; PCF dans le bruit (dominé par N1) |
 | D2b, D3 à D5, D8, D9 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
-| D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape_MouseMoving` |
+| D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape` |
 | R4 | Rejet des triangles sans centre de pixel | **Fait** (phase 1, étape 8), avant toute allocation dans `TriangleRasterizer` |
 | R1, R3, R5 à R7 | Élimination en amont | À faire |
 | R2 | Outcodes et clipping du plan proche | **Fait** : clipping, chemin rapide N5 (phase 1, étape 7), test de rejet par outcodes (octobre 2026) |

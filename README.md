@@ -38,7 +38,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
   <img src="resources/doc/images/fractal_landscape.jpg" alt="FractalLandscape: procedural terrain" width="800">
 </p>
 
-*Left to right, top to bottom: the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, two frames of the `UrbanScape` helicopter flight (street level, then an overview showing the shadows of the buildings), and the `FractalLandscape_MouseMoving` procedural terrain.*
+*Left to right, top to bottom: the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, two frames of the `UrbanScape` helicopter flight (street level, then an overview showing the shadows of the buildings), and the `FractalLandscape` procedural terrain.*
 
 The images of the documentation are rendered off-screen from the scenes of these programs by `com.aventura.demo.DocumentationImages` (in the test sources). Run it from the project root to regenerate them, for instance after a change of the engine:
 
@@ -85,7 +85,7 @@ mvn test-compile exec:java
 
 # Any other demo or visual test program
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.AventuraDemo
-mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.FractalLandscape_MouseMoving
+mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.FractalLandscape
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.UrbanScape
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.test.TestSphereTexture
 
@@ -355,7 +355,7 @@ The projection type of a `PerspectiveContext` is given by the `PerspectiveType` 
 
 ### Building your own geometry
 
-A shape is a set of triangles. To add a new one, extend `GenerativeElement` and implement `generateVertices()` and `generateTriangles()` (the compiler will remind you if you forget); `build()` and `rebuild()` take care of the rest, including normals. Or skip subclassing and feed `Element.addVertex()` / `Element.addTriangle()` directly. `Trellis` shows how to drive a grid from a height array (see `FractalLandscape_MouseMoving`).
+A shape is a set of triangles. To add a new one, extend `GenerativeElement` and implement `generateVertices()` and `generateTriangles()` (the compiler will remind you if you forget); `build()` and `rebuild()` take care of the rest, including normals. Or skip subclassing and feed `Element.addVertex()` / `Element.addTriangle()` directly. `Trellis` shows how to drive a grid from a height array (see `FractalLandscape`).
 
 The [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) covers it in depth: the contracts a new element must fulfill, a new primitive written from scratch, an existing shape enriched by inheritance, and complex objects assembled from sub-elements, with tested examples.
 
@@ -367,7 +367,7 @@ All demos live in `com.aventura.demo`.
 | --- | --- | --- |
 | `EarthAndMoon` | Two textured spheres, a directional light and specular highlights (the picture at the top of this page) | None: renders a still frame |
 | `AventuraDemo` | Textured cone, cylinder, sphere, cube, box, trellis and pyramid, spinning in 3D, with the coordinate axes displayed | None: animated |
-| `FractalLandscape_MouseMoving` | A procedural fractal terrain built on a `Trellis`, with a sea and a low sun | Orbit camera: drag the mouse to orbit, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to zoom; fly camera: drag the mouse to look around, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to fly forward / backward along the line of sight; `Ctrl` + `U` / `D` (or `Page Up` / `Page Down`) to raise / lower the sea; the image follows the window size; `Landscape` menu: generate, reset camera, orbit / fly camera; `Rendering` menu: lines, monochrome, unlit, flat, shading; `Effects` menu: texture, specular highlights, shadows (hard / soft), sun (halo, lens flare, light shafts) |
+| `FractalLandscape` | A procedural fractal terrain built on a `Trellis`, with a sea and a low sun | Orbit camera: drag the mouse to orbit, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to zoom; fly camera: drag the mouse to look around, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to fly forward / backward along the line of sight; `Ctrl` + `U` / `D` (or `Page Up` / `Page Down`) to raise / lower the sea; the image follows the window size; `Landscape` menu: generate, reset camera, orbit / fly camera; `Rendering` menu: lines, monochrome, unlit, flat, shading; `Effects` menu: texture, specular highlights, shadows (hard / soft), sun (halo, lens flare, light shafts) |
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 

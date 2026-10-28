@@ -109,7 +109,7 @@ import com.aventura.model.perspective.PerspectiveType;
  * @author Olivier BARRY
  * @since Nov 2023
  */
-public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class FractalLandscape implements MouseListener, MouseMotionListener, MouseWheelListener {
 	
 	// GUI Frame and Menus
 	JFrame frame;
@@ -386,7 +386,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	 * direction given by the spherical angles azimuth (around the vertical Z axis, from the X axis) and elevation
 	 * (above the horizontal plane).
 	 *
-	 * Package-private and static purely so it can be unit-tested (TestFractalLandscape_MouseMoving) without a
+	 * Package-private and static purely so it can be unit-tested (TestFractalLandscape) without a
 	 * live Camera/RenderEngine/Swing GUIView -- this method touches none of those.
 	 */
 	static Vector4 orbitEye(Vector4 poi, float distance, float azimuth, float elevation) {
@@ -603,7 +603,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	/**
 	 * Linearly interpolates the applied zoom value a fraction t of the way from startValue to
 	 * targetValue. Package-private and static purely so it can be unit-tested
-	 * (TestFractalLandscape_MouseMoving) without a live Camera/RenderEngine/Swing GUIView -- this
+	 * (TestFractalLandscape) without a live Camera/RenderEngine/Swing GUIView -- this
 	 * method touches none of those.
 	 */
 	static float interpolateZoom(float startValue, float targetValue, float t) {
@@ -1084,7 +1084,7 @@ public class FractalLandscape_MouseMoving implements MouseListener, MouseMotionL
 	public static void main(String[] args) {
 		
 		System.out.println("********* STARTING APPLICATION *********");
-		FractalLandscape_MouseMoving fractal = new FractalLandscape_MouseMoving();
+		FractalLandscape fractal = new FractalLandscape();
 		fractal.run();
 		System.out.println("********* APPLICATION is RUNNING *********");
 	}
