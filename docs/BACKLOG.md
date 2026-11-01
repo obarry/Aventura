@@ -205,3 +205,24 @@ Possible design, to be refined:
   they only exist in local working copies (the one under `src/` holds old shape sources and zip files).
 - Run `mvn test` locally: during these sessions, the code was compiled and tested with `javac` and
   JUnit directly, because Maven could not download its plugins.
+
+## 8. Transformations and numerical accuracy
+
+**Done (November 2026): wrong backface culling of translated elements in orthographic view.** Seen with
+`TestMultiElementsTextureOrtho`: after about two turns of accumulated rotations, two faces of the farthest cube
+disappeared. When the 3x3 part of the Model matrix is no longer orthogonal (within `Constants.EPSILON`),
+`ElementTransform.computeNormalMatrix()` switches from `model` to `transpose(inverse(model))`, whose bottom
+row carried the translation: the transformed normals got a non-zero `w`, which the View and Projection
+translations then added to the clip-space normal Z used by the orthographic backface test. The translation is
+now removed before the inverse transpose. Follow-ups:
+
+- **Drift of accumulated transformations.** `World.expandTransformation()` / `Element.combineTransformation()`
+  multiply the Model matrix by a small rotation at every frame, in `float`: the rounding errors accumulate and
+  the matrix slowly stops being a rotation (in the test above, the orthogonality test fails after 2692 frames).
+  The elements are then slightly sheared and scaled. Options: re-orthonormalize the 3x3 part from time to time
+  (Gram-Schmidt), store a rotation (angle, axis or quaternion) and rebuild the matrix from it, or let the
+  callers compute the transformation from the total angle rather than accumulating increments.
+- **Two code paths for the normal matrix.** The switch on an epsilon orthogonality test means a matrix can
+  jump from one path to the other between two frames, which is what made this bug appear only after a while.
+  Always using the inverse transpose of the 3x3 part (cached per Element when its transformation changes)
+  would give a single, continuous behavior.
