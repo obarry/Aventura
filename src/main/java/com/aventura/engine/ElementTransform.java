@@ -119,7 +119,17 @@ public class ElementTransform {
 			return model;
 		}
 		try {
-			return model.transpose().inverse();
+			// Normals are directions (w=0): only the linear 3x3 part of the Model matrix applies to them.
+			// The translation MUST be removed before the inverse transpose: otherwise it ends up in the
+			// bottom row of transpose(inverse(model)), giving the transformed normal a non-zero w
+			// (w = -t.(R.n)). That w is then multiplied by the translation terms of View and Projection
+			// in fullNormals = vp * modelNormals, corrupting the clip-space normal Z used by the
+			// ORTHOGRAPHIC backface test (faces of translated Elements wrongly culled).
+			Matrix4 linear = new Matrix4(model);
+			linear.set(0, 3, 0);
+			linear.set(1, 3, 0);
+			linear.set(2, 3, 0);
+			return linear.transpose().inverse();
 		} catch (NotInvertibleMatrixException e) {
 			// Should never happen but fall back to the Model matrix rather than propagate, exactly
 			// like the legacy behavior.
