@@ -58,19 +58,20 @@ import com.aventura.view.ImageView;
  *     sunglow    the same view with the visible sun (disc, halo, lens flare, light shafts)
  *
  * For each mode it prints the median time of a frame and of each of its phases (FrameTimer), the memory allocated
- * per frame by the rendering thread, and a checksum of the last image: an optimization that does not change the
+ * per frame by all the threads, and a checksum of the last image: an optimization that does not change the
  * images must leave every checksum unchanged.
  *
  * Run it from the project root, headless, ideally one mode per JVM (the JIT of one mode influences the next):
  *
- *     java -Djava.awt.headless=true -cp target/classes:target/test-classes com.aventura.demo.PerfBench [mode...] [-frames n] [-warmup n]
+ *     java -Djava.awt.headless=true -cp target/classes:target/test-classes com.aventura.demo.PerfBench [mode...] [-frames n] [-warmup n] [-threads n]
  *
  * In Windows PowerShell, quote the -D option (PowerShell splits it at the dot) and the class path (';' separator):
  *
  *     java "-Djava.awt.headless=true" -cp "target/classes;target/test-classes" com.aventura.demo.PerfBench pcf
  *
  * With no mode, all of them run in sequence. Default: 30 warm-up frames (not measured, the JIT compiles the
- * code meanwhile) then 30 measured frames. The times depend on the computer: compare runs on the same computer,
+ * code meanwhile) then 30 measured frames, rasterized by one thread per processor (-threads 1 for the rendering
+ * thread alone, see RenderContext.setRenderThreads()): the checksums must not depend on the number of threads. The times depend on the computer: compare runs on the same computer,
  * and repeat them (a few percent of noise is common).
  *
  * @author Olivier BARRY
@@ -84,25 +85,28 @@ public class PerfBench {
 	static final float FLIGHT_STEP = 0.05f;
 
 	public static void main(String[] args) {
-		int frames = 30, warmup = 30;
+		int frames = 30, warmup = 30, renderThreads = RenderContext.RENDER_THREADS_AUTO;
 		java.util.List<String> modes = new java.util.ArrayList<String>();
 		for (int i = 0; i < args.length; i++) {
 			if (args[i].equals("-frames")) frames = Integer.parseInt(args[++i]);
 			else if (args[i].equals("-warmup")) warmup = Integer.parseInt(args[++i]);
+			else if (args[i].equals("-threads")) renderThreads = Integer.parseInt(args[++i]);
 			else if (Arrays.asList(MODES).contains(args[i])) modes.add(args[i]);
 			else throw new IllegalArgumentException("Unknown argument: " + args[i] + ", modes: " + Arrays.toString(MODES));
 		}
 		if (modes.isEmpty()) modes.addAll(Arrays.asList(MODES));
 
 		Tracer.stats = false; // One line per frame would disturb the measure
+		System.out.println("Render threads: " + (renderThreads == RenderContext.RENDER_THREADS_AUTO
+				? "one per processor (" + Runtime.getRuntime().availableProcessors() + ")" : renderThreads));
 		System.out.println("Mode        frame ms  (SETUP  SHADOWS  GEOMETRY  MAIN_PASS  OVERLAYS  PRESENT)  MB/frame  checksum");
 		for (String mode : modes) {
-			System.out.println(run(mode, warmup, frames));
+			System.out.println(run(mode, warmup, frames, renderThreads));
 		}
 	}
 
 	/** Renders warmup + frames images in this mode, and returns the result line */
-	static String run(String mode, int warmup, int frames) {
+	static String run(String mode, int warmup, int frames, int renderThreads) {
 
 		World world = UrbanScape.createWorld();
 		Lighting lighting = UrbanScape.createLighting();
@@ -125,6 +129,7 @@ public class PerfBench {
 		PerspectiveContext perspective = UrbanScape.createPerspectiveContext();
 		RenderContext context = UrbanScape.createRenderContext();
 		context.setShadowing(!mode.equals("noshadow") && !towardsSun);
+		context.setRenderThreads(renderThreads);
 		if (mode.equals("sunglow")) {
 			context.setLightGlow(true);
 			context.setLightShafts(true);
@@ -152,11 +157,11 @@ public class PerfBench {
 			}
 			camera.updateCamera(eye, focus, Vector4.zAxis());
 
-			long allocatedBefore = threads.getCurrentThreadAllocatedBytes();
+			long allocatedBefore = allocatedBytes(threads);
 			engine.render();
 			if (i >= warmup) {
 				int k = i - warmup;
-				allocated += threads.getCurrentThreadAllocatedBytes() - allocatedBefore;
+				allocated += allocatedBytes(threads) - allocatedBefore;
 				FrameTimer timer = engine.getFrameTimer();
 				frameMillis[k] = timer.getFrameMillis();
 				for (FrameTimer.Phase phase : FrameTimer.Phase.values()) {
@@ -170,7 +175,17 @@ public class PerfBench {
 			line.append(String.format(p == 0 ? "%.1f" : " %.1f", median(phaseMillis[p])));
 		}
 		line.append(String.format(")  %8.1f  %d", allocated / (double) frames / (1024 * 1024), checksum(view.getImageView())));
+		engine.close();
 		return line.toString();
+	}
+
+	/** Bytes allocated so far by all the threads (the rendering thread and the rasterization threads) */
+	static long allocatedBytes(com.sun.management.ThreadMXBean threads) {
+		long total = 0;
+		for (long bytes : threads.getThreadAllocatedBytes(threads.getAllThreadIds())) {
+			if (bytes > 0) total += bytes; // -1 for a thread that has ended meanwhile
+		}
+		return total;
 	}
 
 	static float median(float[] values) {

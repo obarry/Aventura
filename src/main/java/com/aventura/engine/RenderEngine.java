@@ -139,6 +139,9 @@ public class RenderEngine {
 	private RasterizerStats stats = new RasterizerStats();
 	// The triangles prepared by the geometry stage, rasterized afterwards by the rasterization stage (see DrawList)
 	private final DrawList drawList = new DrawList();
+	// The threads of the rasterization stage, created at the first frame rendered with more than one thread (see
+	// RenderContext.setRenderThreads()), and again only if that number changes
+	private BandRasterizer bandRasterizer = null;
 	// Time of each phase of the last frame (see FrameTimer and docs/PERFORMANCE_AUDIT.md)
 	private final FrameTimer frameTimer = new FrameTimer();
 
@@ -631,17 +634,42 @@ public class RenderEngine {
 	 * Rasterization stage: executes the commands of the DrawList, in the order the geometry stage added them, then
 	 * empties it. The faces go through the TriangleRasterizer and a FragmentConsumer (with lighting or not), the
 	 * edges and normal vectors through the ScreenLineRenderer.
+	 *
+	 * With several threads (RenderContext.setRenderThreads()), the faces are shared between them by bands of the
+	 * screen (BandRasterizer), giving the same image. A list with edges or normals is executed by the rendering
+	 * thread alone: the lines are drawn through the Graphics2D of the GUIView, which is not thread-safe.
 	 */
 	private void rasterizeDrawList() {
+		int threads = getRenderThreads();
+		if (threads > 1 && drawList.hasOnlyFaces()) {
+			if (bandRasterizer == null || bandRasterizer.getThreads() != threads) {
+				if (bandRasterizer != null) bandRasterizer.close();
+				bandRasterizer = new BandRasterizer(threads);
+			}
+			bandRasterizer.rasterize(drawList, perspectiveContext, mainZBuffer, this::rasterizeFace, stats);
+		} else {
+			rasterizeDrawListSequentially();
+		}
+		drawList.clear();
+	}
+
+	/**
+	 * Executes the commands of the DrawList in the rendering thread, on the whole screen.
+	 */
+	private void rasterizeDrawListSequentially() {
 		for (int i = 0; i < drawList.size(); i++) {
 			DrawList.Command command = drawList.get(i);
 			Triangle t = command.triangle;
 			switch (command.kind) {
 			case FILL_SHADED:
-				rasterizeFace(command, new ShadingConsumer(command.material, lighting, camera, mainZBuffer, guiView, command.shadows));
-				break;
 			case FILL_UNLIT:
-				rasterizeFace(command, new UnlitConsumer(command.material, mainZBuffer, guiView));
+				// TriangleRasterizer's pixel counters accumulate until reset: reset them for each triangle so that
+				// recordTriangle() below receives THIS triangle's counts (as the former Rasterizer facade did).
+				// Without it, every triangle re-added all the pixels of the previous ones (quadratic inflation of
+				// the pixel statistics, e.g. 5 billion "rendered pixels" for a single 1280x720 frame).
+				triangleRasterizer.resetStats();
+				rasterizeFace(command, triangleRasterizer);
+				stats.recordTriangle(triangleRasterizer.getRasterizedLines(), triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
 				break;
 			case EDGES:
 				screenLineRenderer.drawTriangleEdges(t, command.lineColor);
@@ -654,57 +682,65 @@ public class RenderEngine {
 				break;
 			}
 		}
-		drawList.clear();
 	}
 
 	/**
-	 * Rasterizes the face of a FILL command with the given consumer, and records its statistics.
+	 * @return the number of threads of the rasterization: RenderContext.getRenderThreads(), or the number of
+	 *         processors for RenderContext.RENDER_THREADS_AUTO
 	 */
-	private void rasterizeFace(DrawList.Command command, FragmentConsumer consumer) {
-		Triangle t = command.triangle;
+	public int getRenderThreads() {
+		int threads = renderContext.getRenderThreads();
+		return threads == RenderContext.RENDER_THREADS_AUTO ? Runtime.getRuntime().availableProcessors() : threads;
+	}
 
-		// TriangleRasterizer's pixel counters accumulate until reset: reset them for each triangle so that
-		// recordTriangle() below receives THIS triangle's counts (as the former Rasterizer facade did).
-		// Without it, every triangle re-added all the pixels of the previous ones (quadratic inflation of
-		// the pixel statistics, e.g. 5 billion "rendered pixels" for a single 1280x720 frame).
-		triangleRasterizer.resetStats();
+	/**
+	 * Stops the rasterization threads, if any. Optional: they are daemon threads, which do not prevent the program
+	 * from ending, and they are idle between two frames. A RenderEngine rendering again after close() creates new
+	 * threads.
+	 */
+	public void close() {
+		if (bandRasterizer != null) {
+			bandRasterizer.close();
+			bandRasterizer = null;
+		}
+	}
+
+	/**
+	 * Rasterizes the face of a FILL command with the given TriangleRasterizer: the one of the rendering thread, or
+	 * the one of a thread of the BandRasterizer, restricted to a band of the screen. The statistics of the face are
+	 * left in the rasterizer's counters. Called by several threads at the same time: it only reads the command and
+	 * the fields of this RenderEngine.
+	 *
+	 * Clips the face against the near plane first when the camera uses a Frustum projection -- see
+	 * NearPlaneClipper's class Javadoc for why Orthographic never needs it (w is always 1, no perspective divide to
+	 * blow up). Clipping only cuts geometry: color, material and backface culling were resolved by the geometry
+	 * stage from the same unclipped triangle.
+	 */
+	private void rasterizeFace(DrawList.Command command, TriangleRasterizer rasterizer) {
+		Triangle t = command.triangle;
+		boolean clipped = perspectiveContext.getPerspectiveType() == PerspectiveType.FRUSTUM
+				&& !NearPlaneClipper.isInFront(t.getV1(), t.getV2(), t.getV3(), perspectiveContext.getPerspective().getNear());
+
+		// A face out of the band of rows of the rasterizer (or out of the screen) draws nothing: skipped before any
+		// work, which matters with several threads, since each band goes through all the faces
+		if (!clipped && rasterizer.coversNoRow(t.getV1(), t.getV2(), t.getV3())) return;
+
+		FragmentConsumer consumer = command.kind == DrawList.Kind.FILL_SHADED
+				? new ShadingConsumer(command.material, lighting, camera, mainZBuffer, guiView, command.shadows)
+				: new UnlitConsumer(command.material, mainZBuffer, guiView);
 
 		// For an unlit face, the 3 normals are null: no normal or world position interpolation (see TriangleRasterizer)
-		if (command.textured) {
-			rasterizeClipped(t, command.normal1, command.normal2, command.normal3, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
-		} else {
-			rasterizeClipped(t, command.normal1, command.normal2, command.normal3, null, null, null, consumer);
-		}
+		Vector4 tx1 = command.textured ? t.getTexVec1() : null;
+		Vector4 tx2 = command.textured ? t.getTexVec2() : null;
+		Vector4 tx3 = command.textured ? t.getTexVec3() : null;
 
-		stats.recordTriangle(triangleRasterizer.getRasterizedLines(), triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
-	}
-
-	/**
-	 * Rasterizes t's face through triangleRasterizer, clipping it against the near plane first
-	 * when the camera uses a Frustum projection -- see NearPlaneClipper's class Javadoc for why
-	 * Orthographic never needs it (w is always 1, no perspective divide to blow up). Shared by
-	 * all the faces of the DrawList (rasterizeFace()) so the textured/untextured and
-	 * shaded/unlit variants can't drift on this (phase 3 of the Lighting/Shadows plan: the same
-	 * latent near-plane defect fixed in ShadowingLight's shadow pass, phase 2, applies here too).
-	 *
-	 * @param t        the un-clipped triangle (used for its 3 corners; color/material/backface
-	 *                 culling are resolved by the caller from this SAME unclipped triangle --
-	 *                 clipping only cuts geometry, it does not change facing or material)
-	 * @param n1,n2,n3 per-corner normals, or null (all three) for a depth/unlit pass -- see
-	 *                 TriangleRasterizer.rasterize()'s Javadoc
-	 * @param tx1,tx2,tx3 per-corner texture coordinates, or null (all three) if untextured
-	 * @param consumer receives one Fragment per surviving pixel of every resulting sub-triangle
-	 */
-	private void rasterizeClipped(Triangle t, Vector3 n1, Vector3 n2, Vector3 n3, Vector4 tx1, Vector4 tx2, Vector4 tx3, FragmentConsumer consumer) {
-		float near = perspectiveContext.getPerspective().getNear();
-		if (perspectiveContext.getPerspectiveType() == PerspectiveType.FRUSTUM
-				&& !NearPlaneClipper.isInFront(t.getV1(), t.getV2(), t.getV3(), near)) {
-			for (NearPlaneClipper.ClippedTriangle ct : NearPlaneClipper.clip(
-					t.getV1(), t.getV2(), t.getV3(), n1, n2, n3, tx1, tx2, tx3, near)) {
-				triangleRasterizer.rasterize(ct.v1, ct.v2, ct.v3, ct.n1, ct.n2, ct.n3, ct.t1, ct.t2, ct.t3, consumer);
+		if (clipped) {
+			for (NearPlaneClipper.ClippedTriangle ct : NearPlaneClipper.clip(t.getV1(), t.getV2(), t.getV3(),
+					command.normal1, command.normal2, command.normal3, tx1, tx2, tx3, perspectiveContext.getPerspective().getNear())) {
+				rasterizer.rasterize(ct.v1, ct.v2, ct.v3, ct.n1, ct.n2, ct.n3, ct.t1, ct.t2, ct.t3, consumer);
 			}
 		} else {
-			triangleRasterizer.rasterize(t, n1, n2, n3, tx1, tx2, tx3, consumer);
+			rasterizer.rasterize(t, command.normal1, command.normal2, command.normal3, tx1, tx2, tx3, consumer);
 		}
 	}
 

@@ -74,6 +74,11 @@ public class TriangleRasterizer {
 	private int discardedPixels = 0;
 	private int rasterizedLines = 0; // scan lines (rows) inside the screen, whether or not they cover a pixel center
 
+	// Rows of the screen this rasterizer draws, from firstBandRow (inclusive) to endBandRow (exclusive): the whole
+	// screen by default, one band of it when several threads share the rasterization (see BandRasterizer)
+	private int firstBandRow = Integer.MIN_VALUE;
+	private int endBandRow = Integer.MAX_VALUE;
+
 	public TriangleRasterizer(PerspectiveContext perspectiveCtx, ZBuffer zBuffer) {
 		this.perspectiveCtx = perspectiveCtx;
 		this.zBuffer = zBuffer;
@@ -94,6 +99,49 @@ public class TriangleRasterizer {
 	 */
 	public int getRasterizedLines() {
 		return rasterizedLines;
+	}
+
+	/**
+	 * Restricts the drawing to a band of rows of the screen: the pixels outside of it are neither drawn nor
+	 * counted. A triangle crossing several bands is cut at the same rows as it would be drawn on the whole screen,
+	 * so the bands drawn one by one (or by different threads) give exactly the image of the whole screen.
+	 *
+	 * @param firstRow first row of the band (inclusive), in screen coordinates (-halfHeight .. halfHeight, Y up)
+	 * @param endRow   end of the band (exclusive)
+	 */
+	public void setRows(int firstRow, int endRow) {
+		this.firstBandRow = firstRow;
+		this.endBandRow = endRow;
+	}
+
+	/**
+	 * Cancels setRows(): draws on the whole screen (the default).
+	 */
+	public void setAllRows() {
+		setRows(Integer.MIN_VALUE, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * Quick test, before any set-up: true if the triangle has no row in the screen and in the band of setRows(),
+	 * so that rasterize() would draw and count nothing. Lets a caller skip a triangle entirely (e.g. not even create
+	 * its FragmentConsumer) when it does not cross the band of this rasterizer. Only valid for corners that are all
+	 * in front of the camera (see NearPlaneClipper.isInFront()): otherwise their projection is meaningless.
+	 */
+	public boolean coversNoRow(Vertex v1, Vertex v2, Vertex v3) {
+		float y1 = yScreen(v1), y2 = yScreen(v2), y3 = yScreen(v3);
+		return firstRow(y1, y2, y3) >= endRow(y1, y2, y3);
+	}
+
+	/** First row (inclusive) of a triangle whose corners are at screen heights y1, y2, y3, clipped to the screen and the band */
+	private int firstRow(float y1, float y2, float y3) {
+		int first = Math.max((int) Math.ceil(Math.min(y1, Math.min(y2, y3))), -perspectiveCtx.getPixelHalfHeight());
+		return Math.max(first, firstBandRow);
+	}
+
+	/** End row (exclusive) of a triangle whose corners are at screen heights y1, y2, y3, clipped to the screen and the band */
+	private int endRow(float y1, float y2, float y3) {
+		int end = Math.min((int) Math.ceil(Math.max(y1, Math.max(y2, y3))), perspectiveCtx.getPixelHalfHeight() + 1);
+		return Math.min(end, endBandRow);
 	}
 
 	/**
@@ -199,11 +247,12 @@ public class TriangleRasterizer {
 		// screen tells it before any allocation, sort or set-up. It uses exactly the bounds of the rows and columns
 		// below, so it only rejects triangles that would draw nothing. The rows are still counted, as the full
 		// rasterization would (rasterizedLines, see RasterizerStats).
-		int halfWidth = perspectiveCtx.getPixelHalfWidth(), halfHeight = perspectiveCtx.getPixelHalfHeight();
+		// The rows are also clipped to the band of setRows(), if any: a triangle outside of the band stops here.
+		int halfWidth = perspectiveCtx.getPixelHalfWidth();
 		float x1 = xScreen(pv1), x2 = xScreen(pv2), x3 = xScreen(pv3);
 		float y1 = yScreen(pv1), y2 = yScreen(pv2), y3 = yScreen(pv3);
-		int firstRow = Math.max((int) Math.ceil(Math.min(y1, Math.min(y2, y3))), -halfHeight);
-		int endRow = Math.min((int) Math.ceil(Math.max(y1, Math.max(y2, y3))), halfHeight + 1); // exclusive
+		int firstRow = firstRow(y1, y2, y3);
+		int endRow = endRow(y1, y2, y3); // exclusive
 		int firstColumn = Math.max((int) Math.ceil(Math.min(x1, Math.min(x2, x3))), -halfWidth);
 		int endColumn = Math.min((int) Math.ceil(Math.max(x1, Math.max(x2, x3))), halfWidth + 1); // exclusive
 		if (firstRow >= endRow || firstColumn >= endColumn) {
@@ -240,11 +289,11 @@ public class TriangleRasterizer {
 		// exactly on the edge shared by two stacked triangles is drawn once, not twice), clipped
 		// to the screen. This replaces the former (int) truncation toward zero, which made row 0
 		// (and column 0, see rasterizeScanLine) cover [-1, 1): twice the size of the others.
-		int yStart = Math.max((int) Math.ceil(yScreen(v1.vertex)), -perspectiveCtx.getPixelHalfHeight());
-		int yEnd = Math.min((int) Math.ceil(yScreen(v3.vertex)), perspectiveCtx.getPixelHalfHeight() + 1); // exclusive
+		// These rows are [firstRow, endRow), computed above (v1 has the lowest Y, v3 the highest), also clipped to
+		// the band of setRows().
 
 		if (dP1P2 > dP1P3) {
-			for (int y = yStart; y < yEnd; y++) {
+			for (int y = firstRow; y < endRow; y++) {
 				if (y < yScreen(v2.vertex)) {
 					rasterizeScanLine(y, v1, v3, v1, v2, consumer);
 				} else {
@@ -252,7 +301,7 @@ public class TriangleRasterizer {
 				}
 			}
 		} else {
-			for (int y = yStart; y < yEnd; y++) {
+			for (int y = firstRow; y < endRow; y++) {
 				if (y < yScreen(v2.vertex)) {
 					rasterizeScanLine(y, v1, v2, v1, v3, consumer);
 				} else {
