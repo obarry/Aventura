@@ -95,7 +95,7 @@ public class PerfBench {
 		if (modes.isEmpty()) modes.addAll(Arrays.asList(MODES));
 
 		Tracer.stats = false; // One line per frame would disturb the measure
-		System.out.println("Mode        frame ms  (SETUP  SHADOWS  MAIN_PASS  OVERLAYS  PRESENT)  MB/frame  checksum");
+		System.out.println("Mode        frame ms  (SETUP  SHADOWS  GEOMETRY  MAIN_PASS  OVERLAYS  PRESENT)  MB/frame  checksum");
 		for (String mode : modes) {
 			System.out.println(run(mode, warmup, frames));
 		}
