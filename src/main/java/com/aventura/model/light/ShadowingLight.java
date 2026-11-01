@@ -26,7 +26,9 @@
 package com.aventura.model.light;
 
 import com.aventura.context.PerspectiveContext;
+import com.aventura.engine.BandRasterizer;
 import com.aventura.engine.DepthOnlyConsumer;
+import com.aventura.engine.DrawList;
 import com.aventura.engine.ElementTransform;
 import com.aventura.engine.NearPlaneClipper;
 import com.aventura.engine.RasterizerStats;
@@ -253,24 +255,38 @@ public abstract class ShadowingLight extends Light {
 	 * shadowBiasBase fields below, via generateShadowMapFace() -- the parameterized core this
 	 * method and PointLight's six-face override both call (see that method's Javadoc; the
 	 * extraction is phase 5's refactor, with no behavior change for Directional/Spot).
+	 * Rasterized by the calling thread alone: see generateShadowMap(World, BandRasterizer).
 	 * @param world
 	 */
-	public void generateShadowMap(World world) {
-		generateSingleShadowMap(world);
+	public final void generateShadowMap(World world) {
+		generateShadowMap(world, null);
+	}
+
+	/**
+	 * Same as generateShadowMap(World), the rasterization of the map being shared between the threads of bands (by
+	 * bands of rows of the map, see BandRasterizer), which gives exactly the same map. This is the method the
+	 * subclasses override.
+	 *
+	 * @param world the world casting the shadows
+	 * @param bands the threads of the rasterization (the ones of the RenderEngine), or null to rasterize in the
+	 *              calling thread alone
+	 */
+	public void generateShadowMap(World world, BandRasterizer bands) {
+		generateSingleShadowMap(world, bands);
 	}
 
 	/**
 	 * The actual single-map generation body (DirectionalLight, SpotLight): package-visible via
 	 * "final" rather than inlined directly into generateShadowMap(World) above, so that a
 	 * ShadowingLight subclass whose OWN superclass is not ShadowingLight directly -- namely
-	 * SpotLight, whose superclass PointLight overrides generateShadowMap(World) for its own
+	 * SpotLight, whose superclass PointLight overrides generateShadowMap(World, BandRasterizer) for its own
 	 * six-face cube map -- can still reach this exact, unmodified single-map behavior by calling
 	 * this method from its own override, instead of inheriting PointLight's cube-map one (see
-	 * SpotLight.generateShadowMap(World) for why that override is necessary). "final" because no
+	 * SpotLight.generateShadowMap(World, BandRasterizer) for why that override is necessary). "final" because no
 	 * subclass has a reason to further customize the single-map algorithm itself -- only whether to
 	 * use it at all (PointLight does not).
 	 */
-	protected final void generateSingleShadowMap(World world) {
+	protected final void generateSingleShadowMap(World world, BandRasterizer bands) {
 
 		// A light whose initShadowing() does not (yet) set up its light camera/perspective/projection
 		// has no shadow map to generate: leave the map null, which shadowFactorAt() reads as "fully lit".
@@ -282,11 +298,11 @@ public abstract class ShadowingLight extends Light {
 			return;
 		}
 
-		ShadowMapFace face = generateShadowMapFace(world, camera_light, perspectiveCtx_light, viewProjection_light, elementTransform_light);
+		ShadowMapFace face = generateShadowMapFace(world, camera_light, perspectiveCtx_light, viewProjection_light, elementTransform_light, 0, bands);
 		this.map = face.map;
 		this.shadowBiasBase = face.shadowBiasBase;
 
-		// Diagnostics: each triangle was recorded by generateShadowMapElement(); snapshot this
+		// Diagnostics: each triangle was recorded by generateShadowMapFace(); snapshot this
 		// generation's deltas.
 		shadowMapStats.endFrame();
 	}
@@ -318,7 +334,7 @@ public abstract class ShadowingLight extends Light {
 	 * from the former (single-map) generateShadowMap(World) body, so that:
 	 * - generateShadowMap(World) above calls it once, with this light's own single
 	 *   camera_light/perspectiveCtx_light/viewProjection_light/elementTransform_light (Directional, Spot);
-	 * - PointLight.generateShadowMap(World) calls it up to six times, once per cube face, with
+	 * - PointLight.generateShadowMap(World, BandRasterizer) calls it up to six times, once per cube face, with
 	 *   that face's own camera/perspective/view-projection/element-transform.
 	 * Behavior, bias formula and diagnostics (shadowMapStats) are exactly the ones already proven
 	 * in phases 2-4 -- only the source of the camera/perspective/etc. moved from "this light's
@@ -328,16 +344,22 @@ public abstract class ShadowingLight extends Light {
 	 */
 	protected ShadowMapFace generateShadowMapFace(World world, Camera camera, PerspectiveContext perspectiveCtx,
 			ViewProjection viewProjection, ElementTransform elementTransform) {
-		return generateShadowMapFace(world, camera, perspectiveCtx, viewProjection, elementTransform, 0);
+		return generateShadowMapFace(world, camera, perspectiveCtx, viewProjection, elementTransform, 0, null);
 	}
 
 	/**
 	 * Same as generateShadowMapFace(World, Camera, PerspectiveContext, ViewProjection, ElementTransform), for the
 	 * face of index faceIndex (0 for a single map, 0 to 5 for the faces of a PointLight's cube map): the depth buffer
 	 * of each face is kept from one frame to the next (see reusableShadowBuffer()).
+	 *
+	 * Two stages, like the main pass of the RenderEngine (performance audit D9): the geometry stage transforms all
+	 * the Elements and lists the triangles of the light's frustum (depthList), then the rasterization stage draws
+	 * them, in the same order, by the threads of bands if any (BandRasterizer), or by the calling thread.
+	 *
+	 * @param bands the threads of the rasterization, or null to rasterize in the calling thread alone
 	 */
 	protected ShadowMapFace generateShadowMapFace(World world, Camera camera, PerspectiveContext perspectiveCtx,
-			ViewProjection viewProjection, ElementTransform elementTransform, int faceIndex) {
+			ViewProjection viewProjection, ElementTransform elementTransform, int faceIndex, BandRasterizer bands) {
 
 		// The ZBuffer of this face is reused from the previous frame and cleared (performance audit N4), so the
 		// shadow map never carries over stale depth from a previous frame; a new one is allocated only for the
@@ -363,7 +385,7 @@ public abstract class ShadowingLight extends Light {
 		final float SHADOW_MAP_FAR_VALUE = frustum ? lightPerspective.getFar() * (1.0f + 1e-4f) : 1.0f + 1e-4f;
 		ZBuffer shadowZBuffer = reusableShadowBuffer(faceIndex, halfWidth, halfHeight, SHADOW_MAP_FAR_VALUE);
 		MapView faceMap = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
-		TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx, shadowZBuffer);
+		// Only writes the depth of its pixel: one consumer can be shared by all the threads
 		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
 
 		// See SHADOW_BIAS_WORLD's Javadoc: converts the fixed world-space bias into this frame's
@@ -395,25 +417,32 @@ public abstract class ShadowingLight extends Light {
 		// generation regardless of whether this light actually moved.
 		viewProjection.refresh();
 
-		// For each element of the world
+		// Geometry stage: for each element of the world, list the triangles to rasterize
 		for (int i=0; i<world.getElements().size(); i++) {
 			Element e = world.getElement(i);
-			generateShadowMapElement(e, rasterizer, consumer, elementTransform, perspectiveCtx); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+			prepareShadowMapElement(e, elementTransform); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
+
+		// Rasterization stage
+		float near = frustum ? perspectiveCtx.getPerspective().getNear() : 0f;
+		if (bands != null && bands.getThreads() > 1) {
+			bands.rasterize(depthList, perspectiveCtx, shadowZBuffer,
+					(command, rasterizer) -> rasterizeDepth(command.getTriangle(), rasterizer, consumer, frustum, near), shadowMapStats);
+		} else {
+			TriangleRasterizer rasterizer = new TriangleRasterizer(perspectiveCtx, shadowZBuffer);
+			for (int i = 0; i < depthList.size(); i++) {
+				// Counters reset per triangle so that recordTriangle() gets THIS triangle's counts
+				// (same pattern as the main render pass in RenderEngine).
+				rasterizer.resetStats();
+				rasterizeDepth(depthList.get(i).getTriangle(), rasterizer, consumer, frustum, near);
+				shadowMapStats.recordTriangle(rasterizer.getRasterizedLines(), rasterizer.getRenderedPixels(), rasterizer.getDiscardedPixels());
+			}
+		}
+		depthList.clear();
 
 		return new ShadowMapFace(faceMap, faceBiasBase);
 	}
 
-	/**
-	 * Legacy single-map entry point: generates this light's single shadow map Element pass using
-	 * its own camera_light/perspectiveCtx_light/elementTransform_light. Kept as a thin wrapper
-	 * (phase 5) over the parameterized generateShadowMapElement() below, for any external caller
-	 * relying on this exact signature (none in this codebase currently, but this is a protected
-	 * method of a public API).
-	 * @param e
-	 * @param rasterizer
-	 * @param consumer
-	 */
 	/** Maximum number of shadow maps of one light (the 6 faces of a PointLight's cube map) */
 	protected static final int MAX_SHADOW_MAP_FACES = 6;
 
@@ -440,19 +469,20 @@ public abstract class ShadowingLight extends Light {
 		return buffer;
 	}
 
-	protected void generateShadowMap(Element e, TriangleRasterizer rasterizer, DepthOnlyConsumer consumer) {
-		generateShadowMapElement(e, rasterizer, consumer, elementTransform_light, perspectiveCtx_light);
-	}
+	// The triangles of the shadow map being generated, from the geometry stage to the rasterization stage of
+	// generateShadowMapFace() (reused from one face and one frame to the next, see DrawList)
+	private final DrawList depthList = new DrawList();
 
 	/**
-	 * Parameterized recursive Element pass for ONE shadow map face: transforms e (and its
-	 * sub-Elements) through elementTransform, clips/rasterizes each in-frustum Triangle depth-only
-	 * into rasterizer/consumer. Extracted (phase 5) from the former generateShadowMap(Element, ...)
-	 * so both the single-map path (via the thin wrapper above) and PointLight's six-face path can
-	 * share it, each with their own elementTransform/perspectiveCtx -- see generateShadowMapFace().
+	 * Geometry stage of ONE shadow map face, for an Element and its sub-Elements recursively: transforms them
+	 * through elementTransform and adds each Triangle in the light's frustum to depthList. Extracted (phase 5) so
+	 * that the single-map path and PointLight's six-face path share it, each with their own elementTransform -- see
+	 * generateShadowMapFace().
+	 *
+	 * The projected positions are kept in the vertices until the rasterization stage, so a vertex must belong to the
+	 * Element of its triangle (same rule as the main pass, see RenderEngine.prepare()).
 	 */
-	protected void generateShadowMapElement(Element e, TriangleRasterizer rasterizer, DepthOnlyConsumer consumer,
-			ElementTransform elementTransform, PerspectiveContext perspectiveCtx) {
+	protected void prepareShadowMapElement(Element e, ElementTransform elementTransform) {
 
 		// Single call replaces the legacy setModel()+calculateMVPMatrix() pair -- withNormals=false
 		// since shadow map generation never needs normals (matches the legacy behavior, which
@@ -462,42 +492,44 @@ public abstract class ShadowingLight extends Light {
 		// Calculate projection for all vertices of this Element
 		elementTransform.transformElement(e, false); // Calculate prj_pos of each vertex of this Element
 
-		// Near-plane clipping (phase 3): only meaningful for a Frustum projection -- see
-		// NearPlaneClipper's class Javadoc for why Orthographic (w always 1) never needs it. No-op
-		// for DirectionalLight today (always Orthographic), exercised for Spot (phase 4) and
-		// PointLight's six Frustum faces (phase 5).
-		boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
-		float near = frustum ? perspectiveCtx.getPerspective().getNear() : 0f;
-
-		// Process each Triangle (this will update the shadow map's ZBuffer)
+		// List each Triangle to rasterize
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			Triangle t = e.getTriangle(j);
 			// Scissor test: only shadow-map triangles at least partially in the View Frustum
 			if (t.isInViewFrustum()) {
-				// Depth-only pass: no normal/world-position interpolation is done at all (see
-				// TriangleRasterizer's depth-only rasterize() overload) -- convenient, since
-				// normals aren't even computed for this triangle during shadow map generation
-				// (transformElement(e, false) above deliberately skips that).
-				// Counters reset per triangle so that recordTriangle() gets THIS triangle's counts
-				// (same pattern as the main render pass in RenderEngine).
-				rasterizer.resetStats();
-				if (frustum && !NearPlaneClipper.isInFront(t.getV1(), t.getV2(), t.getV3(), near)) {
-					for (NearPlaneClipper.ClippedTriangle ct : NearPlaneClipper.clip(
-							t.getV1(), t.getV2(), t.getV3(), null, null, null, null, null, null, near)) {
-						rasterizer.rasterize(ct.v1, ct.v2, ct.v3, null, null, null, null, null, null, consumer);
-					}
-				} else {
-					rasterizer.rasterize(t, consumer);
-				}
-				shadowMapStats.recordTriangle(rasterizer.getRasterizedLines(), rasterizer.getRenderedPixels(), rasterizer.getDiscardedPixels());
+				depthList.next(DrawList.Kind.DEPTH, t);
 			}
 		}
 
 		// Do a recursive call for SubElements
 		if (!e.isLeaf()) {
 			for (int i=0; i<e.getSubElements().size(); i++) {
-				generateShadowMapElement(e.getSubElements().get(i), rasterizer, consumer, elementTransform, perspectiveCtx);
+				prepareShadowMapElement(e.getSubElements().get(i), elementTransform);
 			}
+		}
+	}
+
+	/**
+	 * Rasterization of one triangle of a shadow map, depth-only, with the given rasterizer (the one of the calling
+	 * thread, possibly restricted to a band of the map). Called by several threads at the same time: it only reads
+	 * the triangle, and the consumer only writes the depth of its own pixels.
+	 *
+	 * Depth-only pass: no normal/world-position interpolation is done at all (see TriangleRasterizer's depth-only
+	 * rasterize() overload) -- convenient, since normals aren't even computed for this triangle during shadow map
+	 * generation (transformElement(e, false) deliberately skips that).
+	 *
+	 * Near-plane clipping (phase 3): only meaningful for a Frustum projection -- see NearPlaneClipper's class Javadoc
+	 * for why Orthographic (w always 1) never needs it. No-op for DirectionalLight today (always Orthographic),
+	 * exercised for Spot (phase 4) and PointLight's six Frustum faces (phase 5).
+	 */
+	private static void rasterizeDepth(Triangle t, TriangleRasterizer rasterizer, DepthOnlyConsumer consumer, boolean frustum, float near) {
+		if (frustum && !NearPlaneClipper.isInFront(t.getV1(), t.getV2(), t.getV3(), near)) {
+			for (NearPlaneClipper.ClippedTriangle ct : NearPlaneClipper.clip(
+					t.getV1(), t.getV2(), t.getV3(), null, null, null, null, null, null, near)) {
+				rasterizer.rasterize(ct.v1, ct.v2, ct.v3, null, null, null, null, null, null, consumer);
+			}
+		} else if (!rasterizer.coversNoRow(t.getV1(), t.getV2(), t.getV3())) { // Out of the band (or of the map): nothing to do
+			rasterizer.rasterize(t, consumer);
 		}
 	}
 

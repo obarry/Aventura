@@ -34,7 +34,8 @@ import com.aventura.model.world.triangle.Triangle;
 
 /**
  * The list of the drawing commands of a frame, filled by the geometry stage of the RenderEngine and executed, in
- * the same order, by its rasterization stage. See docs/PERFORMANCE_AUDIT.md, D9.
+ * the same order, by its rasterization stage. See docs/PERFORMANCE_AUDIT.md, D9. The shadow maps are generated the
+ * same way (ShadowingLight), with DEPTH commands.
  *
  * A GPU works in the same two stages: the vertices are transformed and the triangles assembled, culled and
  * prepared first; the prepared triangles are rasterized and shaded afterwards. Separating them is what allows the
@@ -64,11 +65,13 @@ public class DrawList {
 		/** Draw the 3 edges of the triangle, depth-tested (MONOCHROME, and UNLIT with lines) */
 		EDGES_DEPTH_TESTED,
 		/** Draw the normal vectors of the triangle (RenderContext.isDisplayNormals()) */
-		NORMALS;
+		NORMALS,
+		/** Rasterize the triangle into a depth buffer only (DepthOnlyConsumer): the shadow maps (ShadowingLight) */
+		DEPTH;
 
-		/** @return true for the kinds that fill the face of the triangle (FILL_SHADED, FILL_UNLIT) */
+		/** @return true for the kinds that fill the face of the triangle (FILL_SHADED, FILL_UNLIT, DEPTH) */
 		public boolean isFace() {
-			return this == FILL_SHADED || this == FILL_UNLIT;
+			return this == FILL_SHADED || this == FILL_UNLIT || this == DEPTH;
 		}
 	}
 
@@ -90,6 +93,11 @@ public class DrawList {
 		/** Color of the lines (EDGES, EDGES_DEPTH_TESTED) */
 		Color lineColor;
 
+		/** @return the triangle of this command */
+		public Triangle getTriangle() {
+			return triangle;
+		}
+
 		private void clear() {
 			kind = null;
 			triangle = null;
@@ -106,7 +114,7 @@ public class DrawList {
 	/**
 	 * @return a command to fill, appended at the end of the list (a recycled one when possible)
 	 */
-	Command next(Kind kind, Triangle triangle) {
+	public Command next(Kind kind, Triangle triangle) {
 		if (size == commands.size()) {
 			commands.add(new Command());
 		}

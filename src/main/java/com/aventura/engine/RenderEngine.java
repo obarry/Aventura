@@ -324,9 +324,9 @@ public class RenderEngine {
 					// Initiate the Shadowing by calculating the light(s) camera/projection matrix(ces)
 					shadowingLights.get(i).initShadowing(perspectiveContext.getPerspective(), camera, world);
 					
-					// Generate the shadow map
+					// Generate the shadow map, by bands of the map if there are several rasterization threads
 					// TODO optimization : build a world2 containing only the Elements that can cast shadows by using bouncing algorithm then generate shadow map for this world2
-					shadowingLights.get(i).generateShadowMap(world); // need to recurse on each Element
+					shadowingLights.get(i).generateShadowMap(world, getBandRasterizer()); // need to recurse on each Element
 				}
 				if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendering: End Generating Shadow Maps ***");
 			}
@@ -640,13 +640,9 @@ public class RenderEngine {
 	 * thread alone: the lines are drawn through the Graphics2D of the GUIView, which is not thread-safe.
 	 */
 	private void rasterizeDrawList() {
-		int threads = getRenderThreads();
-		if (threads > 1 && drawList.hasOnlyFaces()) {
-			if (bandRasterizer == null || bandRasterizer.getThreads() != threads) {
-				if (bandRasterizer != null) bandRasterizer.close();
-				bandRasterizer = new BandRasterizer(threads);
-			}
-			bandRasterizer.rasterize(drawList, perspectiveContext, mainZBuffer, this::rasterizeFace, stats);
+		BandRasterizer bands = getBandRasterizer();
+		if (bands != null && drawList.hasOnlyFaces()) {
+			bands.rasterize(drawList, perspectiveContext, mainZBuffer, this::rasterizeFace, stats);
 		} else {
 			rasterizeDrawListSequentially();
 		}
@@ -691,6 +687,23 @@ public class RenderEngine {
 	public int getRenderThreads() {
 		int threads = renderContext.getRenderThreads();
 		return threads == RenderContext.RENDER_THREADS_AUTO ? Runtime.getRuntime().availableProcessors() : threads;
+	}
+
+	/**
+	 * @return the threads of the rasterization (main pass and shadow maps), created when first needed and again
+	 *         only if their number changes, or null if there is only one (the rendering thread)
+	 */
+	private BandRasterizer getBandRasterizer() {
+		int threads = getRenderThreads();
+		if (threads <= 1) {
+			close();
+			return null;
+		}
+		if (bandRasterizer == null || bandRasterizer.getThreads() != threads) {
+			close();
+			bandRasterizer = new BandRasterizer(threads);
+		}
+		return bandRasterizer;
 	}
 
 	/**

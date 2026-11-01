@@ -26,6 +26,7 @@
 package com.aventura.model.light;
 
 import com.aventura.context.PerspectiveContext;
+import com.aventura.engine.BandRasterizer;
 import com.aventura.engine.ElementTransform;
 import com.aventura.engine.ViewProjection;
 import com.aventura.math.vector.Vector3;
@@ -65,7 +66,7 @@ public class PointLight extends ShadowingLight {
 	// SpotLight, whose light is confined to a cone) cannot cover it: six Frustum maps are built
 	// instead, one per face of a cube centered on the light, each with a 90 degree field of view
 	// so the six faces exactly tile the full sphere of directions with no gap and no overlap (see
-	// initShadowing()). ShadowingLight's generateShadowMapFace()/generateShadowMapElement()/
+	// initShadowing()). ShadowingLight's generateShadowMapFace()/prepareShadowMapElement()/
 	// shadowFactorAt(MapView, ...) (extracted in phase 5 from the single-map methods used by
 	// DirectionalLight/SpotLight) are reused as-is for each face: PointLight only adds the
 	// per-face camera/perspective/view-projection/element-transform/map/bias arrays below and the
@@ -291,7 +292,7 @@ public class PointLight extends ShadowingLight {
 	 * saving the cost of rasterizing an empty map ("saut des faces vides" in the audit's plan).
 	 */
 	@Override
-	public void generateShadowMap(World world) {
+	public void generateShadowMap(World world, BandRasterizer bands) {
 		if (facePerspectiveCtx == null) {
 			// initShadowing() has not (yet) built the six faces: no shadow map to generate -- same
 			// "not ready" convention as ShadowingLight.generateShadowMap(World) for Directional/Spot.
@@ -303,7 +304,7 @@ public class PointLight extends ShadowingLight {
 		for (int face = 0; face < NB_FACES; face++) {
 			if (needed[face]) {
 				ShadowMapFace result = generateShadowMapFace(world, faceCamera[face], facePerspectiveCtx[face],
-						faceViewProjection[face], faceElementTransform[face], face);
+						faceViewProjection[face], faceElementTransform[face], face, bands);
 				faceMap[face] = result.map;
 				faceShadowBiasBase[face] = result.shadowBiasBase;
 			} else {

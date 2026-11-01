@@ -39,7 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.aventura.context.PerspectiveContext;
 
 /**
- * Rasterizes the faces of a DrawList with several threads (see docs/PERFORMANCE_AUDIT.md, multithreading).
+ * Rasterizes the faces of a DrawList with several threads (see docs/PERFORMANCE_AUDIT.md, multithreading): the
+ * main pass of the RenderEngine, and the shadow maps (ShadowingLight, in the screen of the light).
  *
  * The screen is cut into horizontal bands of rows. A thread takes a band, goes through ALL the faces of the list,
  * in their order, and draws only the pixels of its band (TriangleRasterizer.setRows()); then it takes the next free
@@ -157,6 +158,7 @@ public class BandRasterizer {
 		// Do not keep the objects of this frame alive
 		this.drawList = null;
 		this.renderer = null;
+		this.zBuffer = null;
 	}
 
 	/**
@@ -173,8 +175,11 @@ public class BandRasterizer {
 	 */
 	private class Worker implements Callable<Void> {
 
+		// The rasterizer of the last call, kept while the screen stays the same: the main pass of the next frame
+		// (a new one after a resize of the view, or for a shadow map, which has its own screen and depth buffer)
 		private TriangleRasterizer rasterizer;
-		private ZBuffer rasterizerZBuffer; // The ZBuffer of the rasterizer (a new one after a resize of the view)
+		private PerspectiveContext rasterizerPerspective;
+		private ZBuffer rasterizerZBuffer;
 
 		// Lines and pixels counted for each face of the list (index in the list), in the bands of this worker
 		private int[] lines = new int[0];
@@ -183,8 +188,9 @@ public class BandRasterizer {
 
 		@Override
 		public Void call() {
-			if (rasterizer == null || rasterizerZBuffer != zBuffer) {
+			if (rasterizer == null || rasterizerPerspective != perspectiveCtx || rasterizerZBuffer != zBuffer) {
 				rasterizer = new TriangleRasterizer(perspectiveCtx, zBuffer);
+				rasterizerPerspective = perspectiveCtx;
 				rasterizerZBuffer = zBuffer;
 			}
 			int size = drawList.size();
