@@ -47,7 +47,9 @@ public class FrameTimer {
 		SETUP,
 		/** Shadow map(s) of the shadowing lights */
 		SHADOWS,
-		/** Main pass: transformation, culling and rasterization of every triangle, with shading */
+		/** Geometry stage of the main pass: transformation and culling of the triangles, filling the DrawList */
+		GEOMETRY,
+		/** Rasterization stage of the main pass: rasterization and shading of the triangles of the DrawList */
 		MAIN_PASS,
 		/** Landmarks, light vectors and visible lights (post-processing of the finished image) */
 		OVERLAYS,
@@ -93,7 +95,7 @@ public class FrameTimer {
 		return frameNanos / 1e6f;
 	}
 
-	/** One line, e.g. "Frame 84.2 ms (SETUP 1.0, SHADOWS 0.0, MAIN_PASS 81.5, OVERLAYS 0.0, PRESENT 1.7)" */
+	/** One line, e.g. "Frame 84.2 ms (SETUP 1.0, SHADOWS 0.0, GEOMETRY 1.2, MAIN_PASS 80.3, OVERLAYS 0.0, PRESENT 1.7)" */
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

@@ -137,6 +137,8 @@ public class RenderEngine {
 	private ZBuffer mainZBuffer;
 	private TriangleRasterizer triangleRasterizer;
 	private RasterizerStats stats = new RasterizerStats();
+	// The triangles prepared by the geometry stage, rasterized afterwards by the rasterization stage (see DrawList)
+	private final DrawList drawList = new DrawList();
 	// Time of each phase of the last frame (see FrameTimer and docs/PERFORMANCE_AUDIT.md)
 	private final FrameTimer frameTimer = new FrameTimer();
 
@@ -333,8 +335,12 @@ public class RenderEngine {
 		for (int i=0; i<world.getElements().size(); i++) {			
 			Element e = world.getElement(i);
 			//render(e, null, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
-			render(e, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
+			prepare(e, world.getColor()); // First model Matrix is the IDENTITY Matrix (to allow recursive calls)
 		}
+		frameTimer.endPhase(FrameTimer.Phase.GEOMETRY);
+
+		// Rasterization stage: draw the prepared triangles, in the order they were prepared
+		rasterizeDrawList();
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
 
@@ -376,13 +382,16 @@ public class RenderEngine {
 	}
 	
 	/**
-	 * Render a single Element and all its sub-elements recursively
-	 * @param e the Element to renderContext
-	 * @param matrix, the model matrix, for recursive calls of sub-elements or should be null for root element
+	 * Geometry stage of a single Element and all its sub-elements recursively: transforms its vertices, culls its
+	 * triangles and adds the remaining ones to the DrawList (they are drawn later, by rasterizeDrawList()).
+	 *
+	 * The vertices of a triangle must belong to the Element of the triangle: their projected positions are kept
+	 * until the rasterization stage, so a vertex shared by two Elements would keep the position of the last one.
+	 *
+	 * @param e the Element to prepare
 	 * @param c (optional, should be null for shading calculation) the color for the various elements to be rendered
 	 */
-	//public void render(Element e, Matrix4 matrix, Color c) {
-	public void render(Element e, Color c) {
+	protected void prepare(Element e, Color c) {
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendering Element: "+e.getName());			
 		// Count Element stats
@@ -391,15 +400,6 @@ public class RenderEngine {
 		// Take color of the element else take super-element color passed in parameters
 		Color col = c;
 		if (e.getColor() != null) col = e.getColor();
-		
-		// Update ModelViewProjection matrix for this Element (Element <-> Model) by combining the one from this Element
-		// with the previous one for recursive calls (initialized to IDENTITY at first call)
-//		Matrix4 model = null;
-//		if (matrix == null) {
-//			model = e.getTransformation();			
-//		} else {
-//			model = matrix.times(e.getTransformation());
-//		}
 		
 		// Single call replaces the legacy setModel()+calculateNormalMatrix()+calculateMVPMatrix()
 		// trio -- see ElementTransform.setModel()'s Javadoc.
@@ -411,7 +411,7 @@ public class RenderEngine {
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			
 			// Render triangle 
-			render(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor(), e.isClosed());
+			prepare(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor(), e.isClosed());
 			
 			// Count Triangles stats (total, all triangles whatever in or out view frustum)
 			nbt++;
@@ -423,7 +423,7 @@ public class RenderEngine {
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
 				//render(e.getSubElements().get(i), model, col);
-				render(e.getSubElements().get(i), col);
+				prepare(e.getSubElements().get(i), col);
 			}
 		} else { // Leaf
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+e.getName()+" has no sub elements.");			
@@ -431,12 +431,10 @@ public class RenderEngine {
 	}
 	
 	/**
-	 * Rendering a single Triangle.
-	 * 
-	 * This method will calculate transformed triangle (which consists in transforming each vertex) then it delegates
-	 * the low level rasterization of the triangle to the TriangleRasterizer (or ScreenLineRenderer for lines), using appropriate methods based on the type of
-	 * rendering that is expected (lines, plain faces, interpolation, etc.). 
-	 * Pre-requisite: This assumes that the initialization of ElementTransform/ViewProjection is already done
+	 * Geometry stage of a single Triangle: frustum test, normals, back-face culling, then the drawing commands of the
+	 * triangle (face, edges, normal vectors) are added to the DrawList, according to the rendering type. They are
+	 * executed later by rasterizeDrawList(), in the same order.
+	 * Pre-requisite: the vertices of the triangle are already transformed (prepare(Element, Color))
 	 * 
 	 * @param to the triangle to render
 	 * @param c the color of the Element, can be overridden if color defined (not null) at Triangle level
@@ -445,7 +443,7 @@ public class RenderEngine {
 	 * @param isClosedElement a boolean to indicate if the Element to which triangle belongs is closed or not (to activate backface culling or not) 
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
-	public void render(Triangle t, Color c, float se, Color sc, boolean isClosedElement) {
+	protected void prepare(Triangle t, Color c, float se, Color sc, boolean isClosedElement) {
 		
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
@@ -470,7 +468,7 @@ public class RenderEngine {
 			
 			// If RENDERING_TYPE_LINE then no backface culling
 			if (renderContext.getRenderingType() == RenderingType.LINE) {
-				screenLineRenderer.drawTriangleEdges(t, color);
+				drawList.next(DrawList.Kind.EDGES, t).lineColor = color;
 				nbt_in++;
 
 			} else {
@@ -490,27 +488,27 @@ public class RenderEngine {
 						// Hidden-line wireframe: faces filled with a single color (default: the World's background
 						// color) only to hide what is behind them, then edges always drawn, depth-tested.
 						Color fill = renderContext.getMonochromeColor() != null ? renderContext.getMonochromeColor() : world.getBackgroundColor();
-						rasterizeUnlitTriangle(t, fill, false);
-						screenLineRenderer.drawTriangleEdgesDepthTested(t, color != null ? color : Color.WHITE, mainZBuffer);
+						prepareUnlitTriangle(t, fill, false);
+						drawList.next(DrawList.Kind.EDGES_DEPTH_TESTED, t).lineColor = color != null ? color : Color.WHITE;
 						break;
 					case UNLIT:
 						// Base color (or texture) without any lighting; edges only if enabled, depth-tested, and
 						// darker than the face color (with no shading, edges of the face color would be invisible).
-						rasterizeUnlitTriangle(t, color, renderContext.isTextureProcessing());
+						prepareUnlitTriangle(t, color, renderContext.isTextureProcessing());
 						if (renderContext.isRenderingLines()) {
-							screenLineRenderer.drawTriangleEdgesDepthTested(t, (color != null ? color : Color.WHITE).darker(), mainZBuffer);
+							drawList.next(DrawList.Kind.EDGES_DEPTH_TESTED, t).lineColor = (color != null ? color : Color.WHITE).darker();
 						}
 						break;
 					case FLAT:
 						// Always uses the triangle's single flat normal (interpolate=false),
 						// regardless of isTriangleNormal() -- genuine faceted/angular shading.
-						rasterizeShadedTriangle(t, color, se, sc, false,
+						prepareShadedTriangle(t, color, se, sc, false,
 								renderContext.isTextureProcessing(),
 								renderContext.isShadowing());
 						break;
 					case INTERPOLATE:
 						// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
-						rasterizeShadedTriangle(t, color, se, sc, true,
+						prepareShadedTriangle(t, color, se, sc, true,
 								renderContext.isTextureProcessing(),
 								renderContext.isShadowing());
 						break;
@@ -521,12 +519,12 @@ public class RenderEngine {
 
 					// Superimpose lines when enabled on the lit rendering types (not depth-tested, as before)
 					if (renderContext.isRenderingLines() && isLitRenderingType(renderContext.getRenderingType())) {
-						screenLineRenderer.drawTriangleEdges(t, color);				
+						drawList.next(DrawList.Kind.EDGES, t).lineColor = color;
 					}
 
 					// If DISPLAY_NORMALS is activated then renderContext normals
 					if (renderContext.isDisplayNormals()) {
-						displayNormalVectors(t);
+						drawList.next(DrawList.Kind.NORMALS, t);
 					}
 					// Count Triangles stats (in view frustum)
 					nbt_in++;
@@ -559,39 +557,30 @@ public class RenderEngine {
 	}
 
 	/**
-	 * Rasterizes t without any lighting (UNLIT and MONOCHROME rendering types): each pixel gets the
-	 * base color of the Material (UnlitConsumer). No normal is interpolated.
+	 * Prepares t to be rasterized without any lighting (UNLIT and MONOCHROME rendering types): each pixel will get
+	 * the base color of the Material (UnlitConsumer). No normal is interpolated.
 	 *
-	 * @param t       the triangle to rasterize
+	 * @param t       the triangle to prepare
 	 * @param color   the surface color, tinting the texture sample if textured; may be null (white)
 	 * @param texture whether to sample t's texture (if it has one)
 	 */
-	private void rasterizeUnlitTriangle(Triangle t, Color color, boolean texture) {
+	private void prepareUnlitTriangle(Triangle t, Color color, boolean texture) {
 
 		boolean useTexture = texture && t.getTexture() != null;
 		Material material = useTexture
 				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, DEFAULT_SPECULAR_COLOR, 0, LEGACY_AMBIENT_REFLECTIVITY)
 				: new SolidMaterial(color != null ? color : Color.WHITE, DEFAULT_SPECULAR_COLOR, 0, LEGACY_AMBIENT_REFLECTIVITY);
 
-		UnlitConsumer consumer = new UnlitConsumer(material, mainZBuffer, guiView);
-
-		triangleRasterizer.resetStats(); // see rasterizeShadedTriangle()
-		if (useTexture) {
-			// Null normals: no normal or world position interpolation, only the texture coordinates
-			rasterizeClipped(t, null, null, null, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
-		} else {
-			rasterizeClipped(t, null, null, null, null, null, null, consumer);
-		}
-		stats.recordTriangle(triangleRasterizer.getRasterizedLines(), triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
+		DrawList.Command command = drawList.next(DrawList.Kind.FILL_UNLIT, t);
+		command.material = material;
+		command.textured = useTexture;
 	}
 
 	/**
-	 * Resolves a Material and the right normals from (color, se, sc, interpolate, texture),
-	 * then rasterizes t through the direct pipeline (TriangleRasterizer + ShadingConsumer) --
-	 * this is what used to be the Rasterizer façade's rasterizeTriangle(), inlined here since
-	 * RenderEngine is now its only caller.
+	 * Resolves a Material and the right normals from (color, se, sc, interpolate, texture), and prepares t to be
+	 * rasterized with lighting (ShadingConsumer) by the rasterization stage.
 	 *
-	 * @param t           the triangle to rasterize
+	 * @param t           the triangle to prepare
 	 * @param color       the surface color (D), tinting the texture sample if textured -- see
 	 *                    TexturedMaterial's Javadoc; may be null (SolidMaterial falls back to white)
 	 * @param se          specular exponent
@@ -603,7 +592,7 @@ public class RenderEngine {
 	 * @param texture     whether to sample t's texture (if it has one) at all
 	 * @param shadows     whether shadow-map testing is applied for this triangle's lighting
 	 */
-	private void rasterizeShadedTriangle(Triangle t, Color color, float se, Color sc, boolean interpolate, boolean texture, boolean shadows) {
+	private void prepareShadedTriangle(Triangle t, Color color, float se, Color sc, boolean interpolate, boolean texture, boolean shadows) {
 
 		// Resolve which 3 normals to interpolate -- see this method's Javadoc.
 		Vector3 normal1, normal2, normal3;
@@ -629,7 +618,50 @@ public class RenderEngine {
 				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY)
 				: new SolidMaterial(color != null ? color : Color.WHITE, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY);
 
-		ShadingConsumer consumer = new ShadingConsumer(material, lighting, camera, mainZBuffer, guiView, shadows);
+		DrawList.Command command = drawList.next(DrawList.Kind.FILL_SHADED, t);
+		command.normal1 = normal1;
+		command.normal2 = normal2;
+		command.normal3 = normal3;
+		command.material = material;
+		command.textured = useTexture;
+		command.shadows = shadows;
+	}
+
+	/**
+	 * Rasterization stage: executes the commands of the DrawList, in the order the geometry stage added them, then
+	 * empties it. The faces go through the TriangleRasterizer and a FragmentConsumer (with lighting or not), the
+	 * edges and normal vectors through the ScreenLineRenderer.
+	 */
+	private void rasterizeDrawList() {
+		for (int i = 0; i < drawList.size(); i++) {
+			DrawList.Command command = drawList.get(i);
+			Triangle t = command.triangle;
+			switch (command.kind) {
+			case FILL_SHADED:
+				rasterizeFace(command, new ShadingConsumer(command.material, lighting, camera, mainZBuffer, guiView, command.shadows));
+				break;
+			case FILL_UNLIT:
+				rasterizeFace(command, new UnlitConsumer(command.material, mainZBuffer, guiView));
+				break;
+			case EDGES:
+				screenLineRenderer.drawTriangleEdges(t, command.lineColor);
+				break;
+			case EDGES_DEPTH_TESTED:
+				screenLineRenderer.drawTriangleEdgesDepthTested(t, command.lineColor, mainZBuffer);
+				break;
+			case NORMALS:
+				displayNormalVectors(t);
+				break;
+			}
+		}
+		drawList.clear();
+	}
+
+	/**
+	 * Rasterizes the face of a FILL command with the given consumer, and records its statistics.
+	 */
+	private void rasterizeFace(DrawList.Command command, FragmentConsumer consumer) {
+		Triangle t = command.triangle;
 
 		// TriangleRasterizer's pixel counters accumulate until reset: reset them for each triangle so that
 		// recordTriangle() below receives THIS triangle's counts (as the former Rasterizer facade did).
@@ -637,10 +669,11 @@ public class RenderEngine {
 		// the pixel statistics, e.g. 5 billion "rendered pixels" for a single 1280x720 frame).
 		triangleRasterizer.resetStats();
 
-		if (useTexture) {
-			rasterizeClipped(t, normal1, normal2, normal3, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
+		// For an unlit face, the 3 normals are null: no normal or world position interpolation (see TriangleRasterizer)
+		if (command.textured) {
+			rasterizeClipped(t, command.normal1, command.normal2, command.normal3, t.getTexVec1(), t.getTexVec2(), t.getTexVec3(), consumer);
 		} else {
-			rasterizeClipped(t, normal1, normal2, normal3, null, null, null, consumer);
+			rasterizeClipped(t, command.normal1, command.normal2, command.normal3, null, null, null, consumer);
 		}
 
 		stats.recordTriangle(triangleRasterizer.getRasterizedLines(), triangleRasterizer.getRenderedPixels(), triangleRasterizer.getDiscardedPixels());
@@ -650,7 +683,7 @@ public class RenderEngine {
 	 * Rasterizes t's face through triangleRasterizer, clipping it against the near plane first
 	 * when the camera uses a Frustum projection -- see NearPlaneClipper's class Javadoc for why
 	 * Orthographic never needs it (w is always 1, no perspective divide to blow up). Shared by
-	 * rasterizeUnlitTriangle() and rasterizeShadedTriangle() so the textured/untextured and
+	 * all the faces of the DrawList (rasterizeFace()) so the textured/untextured and
 	 * shaded/unlit variants can't drift on this (phase 3 of the Lighting/Shadows plan: the same
 	 * latent near-plane defect fixed in ShadowingLight's shadow pass, phase 2, applies here too).
 	 *
@@ -744,14 +777,14 @@ public class RenderEngine {
 		Element e1 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r1);
 		//render(e1, null, renderContext.getLandmarkXColor());
 		e1.transform();
-		render(e1, renderContext.getLandmarkXColor());
+		prepare(e1, renderContext.getLandmarkXColor());
 		
 		// Y axis arrow
 		Rotation r2 = new Rotation((float)-Math.PI/2, Vector4.xAxis());
 		Element e2 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r2);	
 		//render(e2, null, renderContext.getLandmarkYColor());
 		e2.transform();
-		render(e2, renderContext.getLandmarkYColor());
+		prepare(e2, renderContext.getLandmarkYColor());
 	
 		// Z axis arrow
 		Rotation r3 = null;
@@ -764,7 +797,9 @@ public class RenderEngine {
 		Element e3 = createAxisArrow(arrow_length, arrow_ray, spear_length, spear_ray, r3);		
 		//render(e3, null, renderContext.getLandmarkZColor());
 		e3.transform();
-		render(e3, renderContext.getLandmarkZColor());
+		prepare(e3, renderContext.getLandmarkZColor());
+
+		rasterizeDrawList(); // Draw the 3 arrows now (geometry stage above, rasterization stage here)
 
 	}
 	

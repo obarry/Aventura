@@ -1022,7 +1022,8 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | A3, A5, A6 | `ZBuffer` sans état, tri des 3 sommets, textures en `int[]` | **Fait** (phase 1, étape 8) : sans ombres −12 % (avec R4), allocations 12 → 7 Mo par image ; chargement d'une texture de 4480 × 4480 ≈ 1,2 → 0,7-0,9 s ; `ZBuffer` et `Texture` sans état partagé (prérequis du multithreading) |
 | A1, A7 | Interpolation incrémentale, mode Gouraud | À faire |
 | D2a | Couleurs des lumières et accumulateur sans `Color` | **Fait** (phase 1, étape 4, avec D6) : sans ombres −43 % (91 → 52 ms, 92 → 11 Mo alloués par image), lumière ponctuelle et spot −15 %, lumières visibles −18 % ; PCF dans le bruit (dominé par N1) |
-| D2b, D3 à D5, D8, D9 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
+| D9 | Pipeline en deux étages (géométrie → `DrawList` → rasterisation) | **Fait** (branche `perf-multithreading`) : images identiques dans tous les modes de rendu, temps et mémoire inchangés (liste réutilisée d'une image à l'autre) ; l'étage géométrie ne pèse que ≈ 1,4 ms sur ≈ 50 à 190 ms de passe principale |
+| D2b, D3 à D5, D8 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
 | D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape` |
 | R4 | Rejet des triangles sans centre de pixel | **Fait** (phase 1, étape 8), avant toute allocation dans `TriangleRasterizer` |
 | R1, R3, R5 à R7 | Élimination en amont | À faire |
