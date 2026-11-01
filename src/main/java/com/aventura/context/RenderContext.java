@@ -124,9 +124,15 @@ public class RenderContext {
 	// Fill color of the MONOCHROME rendering type, null means "the World's background color"
 	private Color monochromeColor = null;
 	
+	// Number of threads of the rasterization, RENDER_THREADS_AUTO = one per processor (see setRenderThreads())
+	private int renderThreads = RENDER_THREADS_AUTO;
+	
 	// Immutable flag, set on the presets below
 	private boolean frozen = false;
 
+	
+	/** Value of setRenderThreads() meaning one rasterization thread per processor of the computer (the default) */
+	public static final int RENDER_THREADS_AUTO = 0;
 	
 	// Default (immutable) RenderContexts to be used for easy display -- duplicate them to customize
 	public static final RenderContext RENDER_STANDARD_FLAT = new RenderContext(RenderingType.FLAT).freeze();
@@ -175,6 +181,7 @@ public class RenderContext {
 		this.normalsColor = r.normalsColor;
 		this.lightVectorsColor = r.lightVectorsColor;
 		this.monochromeColor = r.monochromeColor;
+		this.renderThreads = r.renderThreads;
 	}
 	
 	/**
@@ -409,6 +416,28 @@ public class RenderContext {
 		return this;
 	}
 	
+	/**
+	 * Number of threads sharing the rasterization of the faces (the main pass). The screen is cut into bands of
+	 * rows, each thread drawing whole bands, so the image is the same whatever the number of threads (see
+	 * BandRasterizer). The threads are created once, by the RenderEngine, and reused from frame to frame.
+	 * 
+	 * @param renderThreads 1 to rasterize in the rendering thread only (as before), n > 1 for n threads, or
+	 *                      RENDER_THREADS_AUTO (0, the default) for one thread per processor of the computer
+	 */
+	public RenderContext setRenderThreads(int renderThreads) {
+		checkNotFrozen();
+		if (renderThreads < 0) throw new IllegalArgumentException("Number of render threads must be positive or RENDER_THREADS_AUTO (0), got " + renderThreads);
+		this.renderThreads = renderThreads;
+		return this;
+	}
+	
+	/**
+	 * @return the number of rasterization threads as set by setRenderThreads(): 1, n, or RENDER_THREADS_AUTO (0)
+	 */
+	public int getRenderThreads() {
+		return renderThreads;
+	}
+	
 	private static String onOff(boolean b) {
 		return b ? "ENABLED" : "DISABLED";
 	}
@@ -425,7 +454,8 @@ public class RenderContext {
 				+ "* Shadowing:             " + onOff(shadowing) + "\n"
 				+ "* Light glow:            " + onOff(lightGlow) + (lightGlowMode == null ? "" : " (forced mode: " + lightGlowMode + ")") + "\n"
 				+ "* Light shafts:          " + (lightShafts == null ? "per light" : onOff(lightShafts)) + "\n"
-				+ "* Monochrome color:      " + (monochromeColor == null ? "World background" : monochromeColor) + "\n";
+				+ "* Monochrome color:      " + (monochromeColor == null ? "World background" : monochromeColor) + "\n"
+				+ "* Render threads:        " + (renderThreads == RENDER_THREADS_AUTO ? "one per processor" : renderThreads) + "\n";
 	}
 
 }

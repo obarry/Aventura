@@ -647,6 +647,12 @@ file du pool, de sorte qu'un thread qui a fini prend la zone suivante.
   la taille se configure dans `RenderContext` (`setRenderThreads(n)`). Valeur par défaut raisonnable :
   `Runtime.getRuntime().availableProcessors() - 1`, pour laisser un cœur à l'interface. Ajouter une méthode
   `close()` ou `shutdown()`.
+  *Réalisé (MT1)* : `RENDER_THREADS_AUTO` (défaut) = **un thread par processeur**, car le thread de rendu ne
+  calcule pas pendant la rasterisation (il attend la fin de `invokeAll`) ; `setRenderThreads(1)` redonne le
+  fonctionnement mono-thread. `RenderEngine.close()` arrête les threads (facultatif : ce sont des démons). Les
+  workers sont des objets créés une fois (`BandRasterizer.Worker`), qui prennent les bandes libres une à une ;
+  leur `TriangleRasterizer` est créé dans leur propre thread. Les consumers restent créés par triangle (D3), mais
+  seulement pour les triangles qui touchent la bande (`TriangleRasterizer.coversNoRow()`).
 - Une **`ThreadFactory`** pour nommer les threads (`aventura-raster-3`, lisible dans un profileur) et en faire des
   démons.
 - Une **factory de workers** (`RasterWorker`) : chaque worker possède **son** `TriangleRasterizer`, **son**
@@ -1023,6 +1029,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | A1, A7 | Interpolation incrémentale, mode Gouraud | À faire |
 | D2a | Couleurs des lumières et accumulateur sans `Color` | **Fait** (phase 1, étape 4, avec D6) : sans ombres −43 % (91 → 52 ms, 92 → 11 Mo alloués par image), lumière ponctuelle et spot −15 %, lumières visibles −18 % ; PCF dans le bruit (dominé par N1) |
 | D9 | Pipeline en deux étages (géométrie → `DrawList` → rasterisation) | **Fait** (branche `perf-multithreading`) : images identiques dans tous les modes de rendu, temps et mémoire inchangés (liste réutilisée d'une image à l'autre) ; l'étage géométrie ne pèse que ≈ 1,4 ms sur ≈ 50 à 190 ms de passe principale |
+| MT1 | Multithreading de la passe principale par bandes de lignes (`BandRasterizer`, `RenderContext.setRenderThreads(n)`) | **Fait** (branche `perf-multithreading`) : images **et statistiques** identiques pour 1, 2, 3, 5, 8 et 16 threads (tous les modes de rendu, images de la documentation, `PerfBench`, test `TestRenderThreads`). Sur 2 cœurs, passe principale ×1,8 à ×1,9 (PCF ≈ 200 → 110 ms, spot ≈ 150 → 80-100 ms, sans ombres ≈ 48 → 28-32 ms) ; en mono-thread, inchangé. Les arêtes et normales restent dans le thread de rendu (`Graphics2D` non thread-safe). La passe d'ombre, désormais la plus longue avec PCF et spot, reste mono-thread (étape suivante) |
 | D2b, D3 à D5, D8 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
 | D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape` |
 | R4 | Rejet des triangles sans centre de pixel | **Fait** (phase 1, étape 8), avant toute allocation dans `TriangleRasterizer` |

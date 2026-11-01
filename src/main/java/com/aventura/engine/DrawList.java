@@ -64,7 +64,12 @@ public class DrawList {
 		/** Draw the 3 edges of the triangle, depth-tested (MONOCHROME, and UNLIT with lines) */
 		EDGES_DEPTH_TESTED,
 		/** Draw the normal vectors of the triangle (RenderContext.isDisplayNormals()) */
-		NORMALS
+		NORMALS;
+
+		/** @return true for the kinds that fill the face of the triangle (FILL_SHADED, FILL_UNLIT) */
+		public boolean isFace() {
+			return this == FILL_SHADED || this == FILL_UNLIT;
+		}
 	}
 
 	/**
@@ -96,6 +101,7 @@ public class DrawList {
 
 	private final ArrayList<Command> commands = new ArrayList<Command>();
 	private int size = 0;
+	private int lineCommands = 0; // Commands that are not faces (edges, normals), see hasOnlyFaces()
 
 	/**
 	 * @return a command to fill, appended at the end of the list (a recycled one when possible)
@@ -107,7 +113,17 @@ public class DrawList {
 		Command command = commands.get(size++);
 		command.kind = kind;
 		command.triangle = triangle;
+		if (!kind.isFace()) lineCommands++;
 		return command;
+	}
+
+	/**
+	 * @return true if the list contains faces only (no edges, no normals): the faces can then be rasterized by
+	 *         several threads (see BandRasterizer). The lines are drawn through the Graphics2D of the GUIView, which
+	 *         is not thread-safe, so a list with lines is executed by the rendering thread alone.
+	 */
+	public boolean hasOnlyFaces() {
+		return lineCommands == 0;
 	}
 
 	/** @return the number of commands in the list */
@@ -129,5 +145,6 @@ public class DrawList {
 			commands.get(i).clear();
 		}
 		size = 0;
+		lineCommands = 0;
 	}
 }
