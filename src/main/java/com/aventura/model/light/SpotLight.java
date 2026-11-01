@@ -26,6 +26,7 @@
 package com.aventura.model.light;
 
 import com.aventura.context.PerspectiveContext;
+import com.aventura.engine.BandRasterizer;
 import com.aventura.engine.ElementTransform;
 import com.aventura.engine.ViewProjection;
 import com.aventura.math.vector.Vector3;
@@ -298,18 +299,18 @@ public class SpotLight extends PointLight {
 
 	/**
 	 * Re-asserts ShadowingLight's single-map shadow generation: without this override, SpotLight
-	 * would inherit generateShadowMap(World) from its OWN superclass PointLight, which (phase 5)
+	 * would inherit generateShadowMap(World, BandRasterizer) from its OWN superclass PointLight, which (phase 5)
 	 * overrides it for PointLight's six-face cube map -- the wrong model for a SpotLight, whose
 	 * shadow is the single Frustum map built by initShadowing() above. generateSingleShadowMap() is
 	 * the exact, unmodified single-map body (see its Javadoc in ShadowingLight).
 	 */
 	@Override
-	public void generateShadowMap(World world) {
-		generateSingleShadowMap(world);
+	public void generateShadowMap(World world, BandRasterizer bands) {
+		generateSingleShadowMap(world, bands);
 	}
 
 	/**
-	 * Re-asserts ShadowingLight's single-map shadow sampling -- see generateShadowMap(World)
+	 * Re-asserts ShadowingLight's single-map shadow sampling -- see generateShadowMap(World, BandRasterizer)
 	 * above for why this override is needed (PointLight, SpotLight's superclass, overrides this
 	 * method too, for its own six-face cube map).
 	 */
