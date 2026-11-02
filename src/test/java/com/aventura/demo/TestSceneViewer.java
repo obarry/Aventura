@@ -178,6 +178,20 @@ public class TestSceneViewer {
 	}
 
 	@Test
+	public void testAtmosphere_optionAndSceneDefault() {
+		System.out.println("***** Test SceneViewer : the atmosphere option follows the other changes, and the scene fills it only when undefined *****");
+		SceneViewer.ViewState s = SceneViewer.ViewState.of("haze_avenue");
+		assertNull(s.atmosphere);
+		SceneViewer.ViewState chosen = s.withAtmosphere(false).withCamera(1, 2, 3).withLightGlow(true).withLightShafts(true).withOptions(RenderingType.FLAT, true, true, true);
+		assertEquals(Boolean.FALSE, chosen.atmosphere);
+		assertEquals(Boolean.FALSE, chosen.withAtmosphereDefault(true).atmosphere);
+		assertEquals(Boolean.TRUE, s.withAtmosphereDefault(true).atmosphere);
+		assertEquals(Boolean.FALSE, s.withAtmosphereDefault(false).atmosphere);
+		assertEquals("Light glow and shafts are kept", Boolean.TRUE, chosen.withAtmosphere(true).lightGlow);
+		assertEquals(Boolean.TRUE, chosen.withAtmosphere(true).lightShafts);
+	}
+
+	@Test
 	public void testSoftShadows_appliedToEveryShadowingLight() {
 		System.out.println("***** Test SceneViewer : the soft shadows option sets the filter of every light casting shadows *****");
 

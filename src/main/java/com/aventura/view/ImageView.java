@@ -240,6 +240,14 @@ public class ImageView extends GUIView {
 	}
 
 	/**
+	 * @return the pixels of the back buffer, drawn directly (see GUIView.getBackPixels()), or null if no frame is being drawn
+	 */
+	@Override
+	public int[] getBackPixels() {
+		return backbuffer == null ? null : backPixels;
+	}
+
+	/**
 	 * Direct (no Color allocation) version of GUIView.addPixel() on the back buffer.
 	 */
 	@Override

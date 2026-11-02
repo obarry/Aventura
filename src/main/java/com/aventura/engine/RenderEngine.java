@@ -156,6 +156,9 @@ public class RenderEngine {
 	
 	// Visible lights (glow) -- constructed together with the ScreenLineRenderer, used if RenderContext.isLightGlow()
 	private LightGlowRenderer lightGlowRenderer;
+
+	// The atmosphere (haze with the distance) -- same construction, used if RenderContext.isAtmosphere() and the World has an Atmosphere
+	private AtmosphereRenderer atmosphereRenderer;
 	
 	/**
 	 * Create a Rendering Engine with required dependencies and context
@@ -196,6 +199,7 @@ public class RenderEngine {
 		guiView = v;
 		screenLineRenderer = new ScreenLineRenderer(perspectiveContext, viewProjection, v);
 		lightGlowRenderer = new LightGlowRenderer(perspectiveContext, viewProjection, v);
+		atmosphereRenderer = new AtmosphereRenderer(perspectiveContext, v);
 	}
 
 	/**
@@ -348,6 +352,12 @@ public class RenderEngine {
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendered: "+nbe+" Element(s) and "+nbt+" triangles. Triangles in View Frustum: "+nbt_in+", Out: "+nbt_out+", Back face: "+nbt_bf);
 
 		frameTimer.endPhase(FrameTimer.Phase.MAIN_PASS);
+
+		// The haze of the distance, if enabled (RenderContext) and defined by the World: needs the depth of the pixels, so not
+		// available in LINE rendering (no ZBuffer). Before the landmarks and the visible lights, which it must not fade.
+		if (renderContext.isAtmosphere() && world.getAtmosphere() != null && renderContext.getRenderingType() != RenderingType.LINE) {
+			atmosphereRenderer.render(world.getAtmosphere(), world.getBackgroundColor(), mainZBuffer, getRenderThreads());
+		}
 
 		// Display the landmarks if enabled (RenderContext)
 		if (renderContext.isDisplayLandmark()) {

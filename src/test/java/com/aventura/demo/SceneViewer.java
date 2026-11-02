@@ -87,7 +87,8 @@ import com.aventura.view.SwingView;
  *   the scene defines them). Soft shadows sets the filter of the shadow map of every light that casts shadows
  *   (ShadowFilter.PCF_3X3, or HARD when unchecked); it only shows when Shadows is on. Light glow makes the lights visible
  *   (a halo around the Point and Spot lights, hidden by the objects in front of them, a disc and a halo for the sun). Light shafts adds
- *   the light shafts of the sun (checked at the start if the scene's sun has some; it only shows when Light glow is on and the sun is in the field of view). View menu: back to the scene's camera (Ctrl+R), save the image shown (Ctrl+S).
+ *   the light shafts of the sun (checked at the start if the scene's sun has some; it only shows when Light glow is on and the sun is in the field of view).
+ *   Atmosphere fades the colors with the distance to the camera, towards the color of the air (haze), for the scenes whose World has an Atmosphere. View menu: back to the scene's camera (Ctrl+R), save the image shown (Ctrl+S).
  *
  * Threads: the Swing thread (EDT) only records what the user asks for, in an immutable ViewState, and requests a
  * rendering. The rendering (and the loading of a scene, which may take a moment) is done by a single background
@@ -181,6 +182,8 @@ public class SceneViewer {
 		final Boolean lightGlow;
 		/** Light shafts of the sun (RenderContext.setLightShafts()), null = as the scene's lights define them */
 		final Boolean lightShafts;
+		/** The atmosphere, the haze of the distance (RenderContext.setAtmosphere()), null = as the scene defines it */
+		final Boolean atmosphere;
 
 		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks) {
 			this(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, null);
@@ -198,6 +201,11 @@ public class SceneViewer {
 
 		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks,
 				Boolean softShadows, Boolean lightGlow, Boolean lightShafts) {
+			this(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, null);
+		}
+
+		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks,
+				Boolean softShadows, Boolean lightGlow, Boolean lightShafts, Boolean atmosphere) {
 			this.scene = scene;
 			this.yaw = yaw;
 			this.pitch = pitch;
@@ -209,6 +217,7 @@ public class SceneViewer {
 			this.softShadows = softShadows;
 			this.lightGlow = lightGlow;
 			this.lightShafts = lightShafts;
+			this.atmosphere = atmosphere;
 		}
 
 		/** A scene seen from its own camera, with its own options */
@@ -217,15 +226,15 @@ public class SceneViewer {
 		}
 
 		ViewState withCamera(float yaw, float pitch, int zoomNotches) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
 		}
 
 		ViewState withOptions(RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
 		}
 
 		ViewState withSoftShadows(Boolean softShadows) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
 		}
 
 		/** The soft shadows option, if still undefined, takes the given (scene's) value */
@@ -234,7 +243,7 @@ public class SceneViewer {
 		}
 
 		ViewState withLightGlow(Boolean lightGlow) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
 		}
 
 		/** The light glow option, if still undefined, takes the given (scene's) value */
@@ -243,12 +252,21 @@ public class SceneViewer {
 		}
 
 		ViewState withLightShafts(Boolean lightShafts) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
 		}
 
 		/** The light shafts option, if still undefined, takes the given (scene's) value */
 		ViewState withLightShaftsDefault(boolean lightShafts) {
 			return this.lightShafts != null ? this : withLightShafts(lightShafts);
+		}
+
+		ViewState withAtmosphere(Boolean atmosphere) {
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
+		}
+
+		/** The atmosphere option, if still undefined, takes the given (scene's) value */
+		ViewState withAtmosphereDefault(boolean atmosphere) {
+			return this.atmosphere != null ? this : withAtmosphere(atmosphere);
 		}
 
 		/** The options still undefined take the given (scene's) values */
@@ -291,7 +309,7 @@ public class SceneViewer {
 	private JPanel panel;
 	private final Map<String, JRadioButtonMenuItem> sceneItems = new LinkedHashMap<>();
 	private final Map<RenderingType, JRadioButtonMenuItem> typeItems = new LinkedHashMap<>();
-	private JCheckBoxMenuItem shadowsItem, softShadowsItem, texturesItem, landmarksItem, lightGlowItem, lightShaftsItem;
+	private JCheckBoxMenuItem shadowsItem, softShadowsItem, texturesItem, landmarksItem, lightGlowItem, lightShaftsItem, atmosphereItem;
 	private int lastX, lastY;
 
 	public SceneViewer(Map<String, Supplier<DemoScene>> scenesByImageName, String firstScene) {
@@ -411,6 +429,9 @@ public class SceneViewer {
 		lightShaftsItem = new JCheckBoxMenuItem("Light shafts");
 		lightShaftsItem.addActionListener(e -> update(s -> s.withLightShafts(lightShaftsItem.isSelected())));
 		renderingMenu.add(lightShaftsItem);
+		atmosphereItem = new JCheckBoxMenuItem("Atmosphere");
+		atmosphereItem.addActionListener(e -> update(s -> s.withAtmosphere(atmosphereItem.isSelected())));
+		renderingMenu.add(atmosphereItem);
 		bar.add(renderingMenu);
 
 		JMenu viewMenu = new JMenu("View");
@@ -439,6 +460,7 @@ public class SceneViewer {
 		if (s.landmarks != null) landmarksItem.setSelected(s.landmarks);
 		if (s.lightGlow != null) lightGlowItem.setSelected(s.lightGlow);
 		if (s.lightShafts != null) lightShaftsItem.setSelected(s.lightShafts);
+		if (s.atmosphere != null) atmosphereItem.setSelected(s.atmosphere);
 	}
 
 	/** Changes the state (EDT) and requests a rendering */
@@ -470,6 +492,7 @@ public class SceneViewer {
 							.withSoftShadowsDefault(sceneSoftShadows)
 							.withLightGlowDefault(sceneDefaults.isLightGlow())
 							.withLightShaftsDefault(sceneLightShafts)
+							.withAtmosphereDefault(sceneDefaults.isAtmosphere())
 					: st);
 			if (!s.scene.equals(loadedScene)) {
 				return; // another scene was chosen meanwhile: it has already been requested
@@ -482,6 +505,7 @@ public class SceneViewer {
 			options.setDisplayLandmark(s.landmarks);
 			options.setLightGlow(s.lightGlow);
 			options.setLightShafts(s.lightShafts);
+			options.setAtmosphere(s.atmosphere);
 			applySoftShadows(scene.getLighting(), s.softShadows);
 			Vector4 poi = scene.getPoi();
 			camera.updateCamera(orbitEye(scene.getEye(), poi, s.yaw, s.pitch, zoomFactor(s.zoomNotches)), poi, Vector4.zAxis());

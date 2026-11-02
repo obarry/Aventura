@@ -297,6 +297,9 @@ sequenceDiagram
             end
         end
     end
+    opt atmosphere enabled and defined by the World
+        RE->>V: haze of the distance (AtmosphereRenderer)
+    end
     RE->>V: overlays (axes, normals, light vectors)
     RE->>V: renderView()  (swap buffers)
     RE-->>App: Z-buffer as MapView
@@ -564,6 +567,43 @@ spread over the image by bilinear interpolation and added, tinted by the color o
 visibility. Like the halo, the beams are added over the objects too.
 
 Not done yet (see [BACKLOG.md](BACKLOG.md)): emissive geometry beyond the core of the light.
+
+### Atmosphere (the haze of the distance)
+
+The impression of distance of a landscape, where the colors fade towards the color of the air and the contrasts
+weaken as the objects get farther, is a post-process, like the visible lights: `World.setAtmosphere(Atmosphere)`
+holds the air of the scene (a property of the scene, like the background color), and
+`RenderContext.setAtmosphere(true)` (off by default, so the existing renderings are untouched) switches it on.
+`RenderEngine` calls `AtmosphereRenderer` right after the main pass, **before** the landmarks, the light vectors
+and `LightGlowRenderer`, so that the sun, the halos and their effects, which are added to the image, are not faded
+by the haze.
+
+For each pixel where something was drawn (the main Z-buffer holds the linear view depth W; far where nothing was
+drawn, which is the sky, never changed), the renderer computes the distance to the camera and blends the color
+with the haze color, `c = c + (haze - c) · f(distance)`. Three points of the design:
+
+- **The distance is the real one**, `W · √(1 + (x/focal)² + (y/focal)²)`, and not W alone: with W the edges of the
+  image would look nearer than the center, and the haze would change when the camera turns. The `1/cos` factor
+  costs a square root per pixel, which is negligible.
+- **The factor is a function of the visibility**, like in meteorology: the distance at which the contrast of an
+  object with its background falls to 5 %. `EXPONENTIAL` is `f = 1 - exp(-3 d / V)` (the extinction of light in a
+  homogeneous medium, Beer-Lambert), `EXPONENTIAL_SQUARED` is `f = 1 - exp(-(√3 d / V)²)` (clear air near the camera),
+  and `LINEAR` goes from 0 at the start distance to 1 at V. `d` is counted from the start distance, and `f` never
+  exceeds the maximum factor (0.95 by default). The factor is computed once per frame in a table of 4096 entries from 0
+  to far, so there is no `exp()` per pixel.
+- **The haze color** is by default the background color of the `World`, so that the far objects melt into the sky
+  without a visible edge; a background that is not a sky (black) needs `Atmosphere.setColor()`.
+
+The pixels are read and written directly in the back buffer (`GUIView.getBackPixels()`, implemented by `ImageView`;
+a view that does not give access to its pixels is skipped), by rows that are independent of each other, so they are
+computed by several threads (the parallel streams of the JDK) when the `RenderContext` allows more than one rendering
+thread, with exactly the same image. It costs about 2 ms for an image of 1000×562 pixels. Doing it in the fragment
+consumers instead would have changed the hot loops of the rasterization, paid for fragments that are covered later,
+and left the edge lines and the overlays out; the post-process is one pass for every rendering type but `LINE` (no
+Z-buffer), and, like the visible lights, it is not drawn under an orthographic perspective.
+
+Not done yet (see [BACKLOG.md](BACKLOG.md)): a haze tinted towards the sun, a mist that depends on the altitude, a
+different extinction for each color channel, and the attenuation of the halos of the point lights by the haze.
 
 ---
 
@@ -858,6 +898,7 @@ timeline
          : SpotLight, UrbanScape, 370+ unit tests
          : Spot and point light shadows (perspective and cube maps), soft shadows (PCF), 430+ unit tests
          : Visible lights: halos, sun with lens flare and light shafts, 470+ unit tests
+         : Atmosphere: the haze of the distance, 500+ unit tests
          : Rendering types: MONOCHROME (hidden-line), UNLIT
 ```
 
@@ -879,6 +920,7 @@ xychart-beta
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
 | Shadows | All lights (orthographic, perspective and cube maps); hard edges by default, optional PCF 3×3 with a fixed-width penumbra |
 | Lights | Invisible by default; optional halo of point and spot lights, and disc, halo, lens flare and optional light shafts of the sun (`setLightGlow`), hidden by the objects |
+| Atmosphere | A haze that depends on the distance only (one color, same extinction for each channel), as a post-process (`World.setAtmosphere`, `RenderContext.setAtmosphere`); not in `LINE` rendering nor orthographic |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |
@@ -901,7 +943,7 @@ flowchart LR
     end
     subgraph LATER["Ideas"]
         l1[Other GUIView backends<br/>JavaFX, image sequence]
-        l2[Sun, lens flare and<br/>light shafts]
+        l2[Haze tinted by the sun,<br/>mist by altitude]
         l3[Model import<br/>OBJ]
     end
     NOW --> NEXT --> LATER

@@ -16,6 +16,7 @@ import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.cookbook.CookbookGallery;
 import com.aventura.math.transform.Transformation;
+import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.perspective.PerspectiveType;
@@ -28,6 +29,7 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.light.PointLight;
 import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.light.SpotLight;
+import com.aventura.test.TestAtmosphere;
 import com.aventura.test.TestLightingPoint1Shadows;
 import com.aventura.test.TestLightingSpot1;
 import com.aventura.test.TestLightingSpot3Shadows;
@@ -72,6 +74,8 @@ import com.aventura.test.TestLightingSun;
  *     soft_shadows.png        TestLightingSpot3Shadows, hard (left) and PCF 3x3 (right) shadows with a small shadow map
  *     point_shadows.jpg       TestLightingPoint1Shadows, one image of its animation (cube-map shadows of a PointLight)
  *     sun_street.jpg          TestLightingSun, the visible sun (disc, halo, lens flare, light shafts) in a street between tower blocks
+ *     haze_avenue.jpg         TestAtmosphere, the haze of the distance on a long avenue between buildings
+ *     haze_landscape.jpg      FractalLandscape, the haze of the distance on the hills and the sea (as the Atmosphere option of the demo)
  *     cookbook_gallery.png    CookbookGallery (the examples of the Geometry Cookbook)
  *
  * Run it from the project root (the textures are read from resources/texture), headless:
@@ -107,6 +111,9 @@ public class DocumentationImages {
 	static final int POINT_SHADOWS_IMAGE = 45;
 	/** Angle of the camera of the TestLightingSun sweep (degrees, from -30 to +5): the sun is partly hidden by a building, with its flare and shafts */
 	static final float SUN_STREET_YAW = -12.5f;
+	/** Camera of the haze landscape image: the one of the demo (FractalLandscape.INITIAL_EYE), a little to the side */
+	static final Vector4 HAZE_LANDSCAPE_EYE = new Vector4(6.2f, -1.6f, 3.0f, 1);
+	static final Vector4 HAZE_LANDSCAPE_POI = FractalLandscape.POINT_OF_INTEREST;
 	/** Size of the shadow map of the spot light in the soft shadows image: coarse on purpose, to make the filtering visible */
 	static final int SOFT_SHADOWS_MAP_SIZE = 200;
 
@@ -127,6 +134,8 @@ public class DocumentationImages {
 		scenes.put("spot_shadows.jpg", () -> spotShadows(SPOT_SHADOWS_IMAGE, 1000));
 		scenes.put("point_shadows.jpg", () -> pointShadows(POINT_SHADOWS_IMAGE, 1000));
 		scenes.put("sun_street.jpg", () -> sunStreet(SUN_STREET_YAW, 1250));
+		scenes.put("haze_avenue.jpg", () -> hazeAvenue(1000));
+		scenes.put("haze_landscape.jpg", () -> hazeLandscape(FRACTAL_SEED));
 		scenes.put("cookbook_gallery.png", () -> CookbookGallery.createScene(1000));
 		return scenes;
 	}
@@ -241,6 +250,55 @@ public class DocumentationImages {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE).setLightGlow(true);
 		return new DemoScene(TestLightingSun.createWorld(), TestLightingSun.createLighting(), TestLightingSun.EYE, TestLightingSun.poiForYaw(yawDegrees),
 				rContext, perspective);
+	}
+
+	/**
+	 * The scene of TestAtmosphere: a long avenue between two rows of buildings, seen from its start. The World has an Atmosphere and the
+	 * scene switches it on: the buildings fade towards the sky color as they get farther (the Atmosphere option of the SceneViewer
+	 * shows the difference).
+	 */
+	static DemoScene hazeAvenue(int pixelsPerUnit) {
+		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 260, PerspectiveType.FRUSTUM, pixelsPerUnit);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE).setAtmosphere(true);
+		return new DemoScene(TestAtmosphere.createWorld(), TestAtmosphere.createLighting(), TestAtmosphere.eyeAt(0), TestAtmosphere.poiAt(0),
+				rContext, perspective);
+	}
+
+	/**
+	 * The landscape of FractalLandscape (the same land colors, sea, sky, sun and atmosphere, from a fixed seed), seen from the side
+	 * of the island, so that the far hills are farther than the near ones: with the atmosphere they get paler and
+	 * bluer, like in a real landscape (the Atmosphere option of the SceneViewer shows the difference). The sun is visible, as in
+	 * the demo. The image of the documentation is the 1000 x 260 band around the island (crop): the SceneViewer shows the whole view.
+	 */
+	static DemoScene hazeLandscape(long seed) {
+		float size = FractalLandscape.LANDSCAPE_SIZE;
+		int n = FractalLandscape.LANDSCAPE_DIVISIONS;
+		float[][] altitudes = new float[n + 1][n + 1];
+		FractalLandscape.generateFractalAltitudes(altitudes, size, n, new Random(seed));
+		Trellis land;
+		try {
+			land = new Trellis(size, size, n, n, altitudes);
+		} catch (WrongArraySizeException e) {
+			throw new IllegalStateException(e);
+		}
+		land.setSpecularExp(FractalLandscape.LAND_SPECULAR_EXP);
+		land.setSpecularColor(FractalLandscape.LAND_SPECULAR_COLOR);
+		Trellis sea = new Trellis(size, size, 4, 4);
+		sea.setColor(FractalLandscape.SEA_COLOR);
+		sea.setSpecularExp(FractalLandscape.SEA_SPECULAR_EXP);
+		sea.setSpecularColor(FractalLandscape.SEA_SPECULAR_COLOR);
+		sea.setTransformation(new Translation(new Vector3(0, 0, FractalLandscape.INITIAL_SEA_LEVEL)));
+		World world = new World();
+		world.setBackgroundColor(FractalLandscape.SKY_COLOR);
+		world.addElement(land);
+		world.addElement(sea);
+		world.setAtmosphere(FractalLandscape.createAtmosphere());
+		world.build();
+		FractalLandscape.colorTrianglesByAltitude(land);
+
+		RenderContext rContext = FractalLandscape.createRenderContext().setAtmosphere(true);
+		return new DemoScene(world, FractalLandscape.createLighting(FractalLandscape.createSun()), HAZE_LANDSCAPE_EYE, HAZE_LANDSCAPE_POI,
+				rContext, FractalLandscape.createPerspectiveContext()).crop(0, 140, 1000, 260);
 	}
 
 	/** The scene of TestLightingSpot3Shadows: a spot light (and a dim moonlight) sweeping a floor of five objects, at image i of the animation. */

@@ -68,6 +68,7 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Atmosphere;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
@@ -132,7 +133,8 @@ import com.aventura.view.SwingView;
  * <ul>
  * <li>Landscape: generate a new landscape, raise / lower the sea level, reset the camera, choose the camera mode</li>
  * <li>Rendering: the rendering type (an exclusive choice)</li>
- * <li>Effects: options independent of the rendering type (texture, specular highlights, shadows, sun, sun halo, lens
+ * <li>Effects: options independent of the rendering type (texture, specular highlights, shadows, atmosphere (the haze
+ *     of the distance), sun, sun halo, lens
  *     flare, light shafts), grayed out when the current rendering type does not use them. The sun is low on the
  *     horizon, in front of the initial camera and a little to its left: orbit a little to the left and lower the
  *     camera to see it.</li>
@@ -173,6 +175,10 @@ public class FractalLandscape {
 
 	static final Color SKY_COLOR = new Color(80, 120, 220);
 	static final Color SEA_COLOR = new Color(0, 0, 250);
+
+	/** Atmosphere (Effects menu): the haze of the distance, as the color of the sky. Visibility and start distance in scene units. */
+	static final float HAZE_VISIBILITY = 10f;
+	static final float HAZE_START_DISTANCE = 1.8f;
 
 	/** Specular highlights (Effects menu): sharp and bright on the water, faint and wide on the ground. */
 	static final Color SEA_SPECULAR_COLOR = new Color(200, 200, 200);
@@ -264,7 +270,7 @@ public class FractalLandscape {
 	Timer resizeTimer;
 	// Check boxes of the Effects menu that can be grayed out (see updateEffectsMenu())
 	JCheckBoxMenuItem textureItem, specularItem, shadowsItem, softShadowsItem;
-	JCheckBoxMenuItem sunItem, sunHaloItem, lensFlareItem, lightShaftsItem;
+	JCheckBoxMenuItem atmosphereItem, sunItem, sunHaloItem, lensFlareItem, lightShaftsItem;
 
 	// ----- State of the camera -----
 
@@ -370,6 +376,7 @@ public class FractalLandscape {
 
 		World world = new World();
 		world.setBackgroundColor(SKY_COLOR);
+		world.setAtmosphere(createAtmosphere()); // Drawn when the Atmosphere option of the Effects menu is on
 
 		// The ground: a square Trellis, centered on the origin, of LANDSCAPE_DIVISIONS x LANDSCAPE_DIVISIONS cells,
 		// whose vertices take their altitude in the landAltitudes array
@@ -487,6 +494,16 @@ public class FractalLandscape {
 			int gray = (int) ((altitude - minAltitude) / (maxAltitude - minAltitude) * 255);
 			trellis.getTriangle(t).setColor(new Color(gray, gray, gray));
 		}
+	}
+
+	/**
+	 * The air of the World: a haze that makes the far hills pale and blue like the sky (the color of the haze is the
+	 * background color of the World), clear for the first HAZE_START_DISTANCE units, with a visibility of HAZE_VISIBILITY
+	 * units (the contrast of an object with the sky falls to 5% there). It is only drawn when the Atmosphere option of
+	 * the Effects menu is on (RenderContext.setAtmosphere()).
+	 */
+	static Atmosphere createAtmosphere() {
+		return new Atmosphere(HAZE_VISIBILITY).setStartDistance(HAZE_START_DISTANCE);
 	}
 
 	private void printLandscapeStatistics() {
@@ -774,7 +791,7 @@ public class FractalLandscape {
 	}
 
 	/**
-	 * Effects menu: on / off options, independent of the rendering type, in three groups (surfaces, shadows, sun). Each
+	 * Effects menu: on / off options, independent of the rendering type, in four groups (surfaces, shadows, atmosphere, sun). Each
 	 * check box starts from the state of the model (RenderContext, Lighting, sun) and changes it.
 	 */
 	private JMenu createEffectsMenu() {
@@ -790,6 +807,10 @@ public class FractalLandscape {
 		shadowsItem = addEffectItem(menu, "Shadows", rContext.isShadowing(), on -> rContext.setShadowing(on));
 		softShadowsItem = addEffectItem(menu, "Soft shadows", sun.getShadowFilter() == ShadowFilter.PCF_3X3,
 				on -> sun.setShadowFilter(on ? ShadowFilter.PCF_3X3 : ShadowFilter.HARD));
+		menu.addSeparator();
+
+		// Atmosphere: the haze of the distance (the World has an Atmosphere, the RenderContext switches it on)
+		atmosphereItem = addEffectItem(menu, "Atmosphere", rContext.isAtmosphere(), on -> rContext.setAtmosphere(on));
 		menu.addSeparator();
 
 		// Sun: the "light glow" of a directional light is the sun disc in the sky, the LightAppearance its halo and lens flare
@@ -815,7 +836,7 @@ public class FractalLandscape {
 	/**
 	 * Grays out the effects that the current rendering type does not use: the texture is used by the filled rendering
 	 * types (UNLIT, FLAT, INTERPOLATE), the specular highlights and the shadows by the lit ones (FLAT, INTERPOLATE),
-	 * the sun by all but LINE. The sub-options (soft shadows, halo, lens flare, light shafts) also need their main
+	 * the sun and the atmosphere by all but LINE. The sub-options (soft shadows, halo, lens flare, light shafts) also need their main
 	 * option.
 	 */
 	private void updateEffectsMenu() {
@@ -825,6 +846,7 @@ public class FractalLandscape {
 		specularItem.setEnabled(lit);
 		shadowsItem.setEnabled(lit);
 		softShadowsItem.setEnabled(lit && shadowsItem.isSelected());
+		atmosphereItem.setEnabled(type != RenderingType.LINE);
 		sunItem.setEnabled(type != RenderingType.LINE);
 		boolean sunVisible = sunItem.isEnabled() && sunItem.isSelected();
 		sunHaloItem.setEnabled(sunVisible);
