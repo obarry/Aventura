@@ -120,6 +120,17 @@ public abstract class GUIView extends View {
 	public abstract void drawLine(int x1, int y1, int x2, int y2);
 	
 	/**
+	 * Direct access to the pixels of the frame being drawn (the back buffer), for the post-processes that read and
+	 * change the colors of the whole image (see AtmosphereRenderer): one 0xRRGGBB int per pixel, by rows, the top row
+	 * first, getViewWidth() pixels per row. The array is the one the view draws in: the changes are part of the frame.
+	 *
+	 * @return the pixels, or null if this view does not give access to them (the post-processes that need it are skipped)
+	 */
+	public int[] getBackPixels() {
+		return null;
+	}
+
+	/**
 	 * Adds a light contribution to a pixel (centered coordinates, Y axis up): each channel of the current pixel
 	 * is increased by the given amount (0 = nothing, 1 = full scale) and saturates at full scale. Pixels outside
 	 * of the image are ignored. Generic implementation based on getPixel() / drawPixel(); the specializations

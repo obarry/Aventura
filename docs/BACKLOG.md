@@ -159,38 +159,29 @@ Follow-ups identified while doing it:
 
 ## 5b. Atmospheric perspective (distance fog)
 
-**Idea (October 2026).** Give an impression of distance like in a real landscape: with the distance to the
-camera, the contrasts weaken and the colors fade towards the color of the air (haze), so that far hills are
-paler and bluer than near objects. In practice, each pixel is blended with a **fog color** by a factor that
-grows with its distance to the camera: `color = lerp(color, fog, f(distance))`. It is cheap, and it also hides
-the far plane clipping.
+**Done (November 2026).** The haze of the distance: `World.setAtmosphere(Atmosphere)` (visibility, model
+`EXPONENTIAL` / `EXPONENTIAL_SQUARED` / `LINEAR`, start distance, maximum factor, color of the haze, by default the
+background of the `World`) and `RenderContext.setAtmosphere(true)` (off by default). `AtmosphereRenderer` is a
+post-process after the main pass (before the landmarks and the visible lights), from the linear depth of the main
+Z-buffer, with the real distance to the camera, computed by rows on several threads (about 2 ms for 1000×562 pixels).
+Demos: `TestAtmosphere` (an avenue), the scenes `haze_avenue` and `haze_landscape` of the `SceneViewer` (Atmosphere
+option), and the Atmosphere option of the Effects menu of `FractalLandscape`. See
+[DESIGN.md, Atmosphere](DESIGN.md#atmosphere-the-haze-of-the-distance). Follow-ups, one at a time:
 
-Possible design, to be refined:
-
-- **Where.** Two options. In the fragment consumers (`ShadingConsumer`, `UnlitConsumer`), where the view depth
-  is already known per pixel: simple, but every consumer must do it, and the cost is paid on pixels that are
-  later hidden. Or as a post-process on the finished image using the main Z-buffer (linear view depth W, far
-  for the sky), like `LightGlowRenderer`: one pass for every rendering type, but it needs to read and write the
-  color buffer (`GUIView` only has an additive `addPixel()` today). The post-process would run before the
-  visible lights, so that the sun, its disc and its flare are not faded by the fog.
-- **Model of the factor** `f(d)`: linear between a start and an end distance (the easiest to tune), or
-  exponential (`1 - exp(-density * d)`, more natural) or exponential squared (clear air near the camera, then a
-  quick fading). Parameters in `RenderContext` (off by default, so the existing renderings do not change):
-  the model, the distances or the density, the fog color and a maximum factor (so that the far objects keep
-  a trace of their color).
-- **Fog color.** By default the background color of the `World` (the sky), so that the far objects melt into it
-  without a visible edge. A slightly bluer fog than the sky, or a color depending on the direction of the sun
-  (warmer towards the sun, like the halo), would be more realistic.
-- **Refinements for later.** A different extinction per color channel (red lost first, so the distance turns
-  blue), a fog that fades with the altitude (valleys filled with mist), a fog density per `World` (or per
-  scene) rather than per `RenderContext`.
-- **Interactions to check.** The sky pixels (depth = far) must not turn into a different color than the
-  background; the light shafts and the halos are computed from the sky and must stay consistent; `LINE`
-  rendering and the edge lines (`MONOCHROME`, overlay lines) should fade like the surfaces or not at all; the
-  shadows are unchanged (they are computed in the light space).
-- **Demo and tests.** `FractalLandscape` and `UrbanScape` (a long street) are the natural scenes; a
-  "Fog" option in the `SceneViewer`; unit tests of the factor of each model and pixel tests (a far object is
-  closer to the fog color than a near one, the sky stays unchanged, off by default changes nothing).
+- A haze tinted towards the sun (the color of the haze depends on the angle between the view direction and the
+  direction of the sun, warmer towards it), which would suit `sun_street`.
+- A mist that depends on the altitude (valleys filled with mist): the factor would also depend on the height of
+  the point, which needs its world position, not only its depth (a pass over the pixels with the inverse of the
+  view projection, or the position interpolated by the rasterizer).
+- A different extinction for each color channel (the red is lost first, so that the distance turns blue), without
+  changing the haze color.
+- The halos of the point and spot lights could be attenuated by
+  the haze, according to the distance of the light: a far lamp would be dimmer in the fog.
+- The haze is not drawn in `LINE` rendering (no Z-buffer) nor under an orthographic perspective; the overlay lines
+  and the landmarks are never faded.
+- The pass reads the Z-buffer through `ZBuffer.get()` for each pixel; a direct access to the rows of the map
+  (like `getBackPixels()` for the colors) would make it faster if it ever shows in a profile.
+- `GUIView.getBackPixels()` is only implemented by `ImageView` (so `SwingView`): other views are skipped.
 
 ## 6. Views
 

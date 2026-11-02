@@ -55,7 +55,7 @@ The same scenes can be explored in a Swing window with `com.aventura.demo.SceneV
 java -cp target/classes:target/test-classes com.aventura.demo.SceneViewer urbanscape_flight
 ```
 
-Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures, landmarks, light glow and light shafts options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
+Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures, landmarks, light glow, light shafts and atmosphere options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
 
 ## Quick start
 
@@ -290,6 +290,32 @@ sun.setAppearance(new LightAppearance().setShaftsGain(1f)); // 0 (default) = no 
 
 `TestLightingGlow` shows a lamp circling around the objects of the spot light scene, passing behind them, with the visible lights switched on and off in turn; `TestLightingSun` is a street where the camera turns to bring the sun behind the buildings (with its lens flare and its light shafts); the same scene is `sun_street` in the SceneViewer, where the camera can be moved with the mouse.
 
+## Atmosphere
+
+In a landscape, the far objects look paler and less contrasted than the near ones: the air between them and the eye veils their colors with its own. Aventura can give this impression of distance. The `World` has an `Atmosphere` (the air of the scene), and `RenderContext.setAtmosphere(true)` draws it: each pixel is blended with the color of the haze by a share that grows with its distance to the camera, read in the depth buffer. The sky is not changed, so the far buildings and hills melt into it. The option is off by default.
+
+```java
+World world = new World();
+world.setBackgroundColor(new Color(130, 175, 225));         // the sky, also the color of the haze by default
+world.setAtmosphere(new Atmosphere(220f).setStartDistance(8f)); // the contrast falls to 5% at 220 units
+
+RenderContext rc = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE).setAtmosphere(true);
+```
+
+The strength is a **visibility**, like in meteorology: the distance, in the units of the scene, at which the contrast of an object with its background falls to 5%. Three models give the share of haze `f(d)`: `EXPONENTIAL` (the default, the law of the extinction of light in a homogeneous medium), `EXPONENTIAL_SQUARED` (clear air near the camera, then a faster fading) and `LINEAR` (from the start distance to the visibility). `setStartDistance()` keeps the first units clear, `setMaxFactor()` (0.95 by default) leaves a trace of their color to the farthest objects, and `setColor()` gives the haze a color of its own, which is needed when the background is not a sky (a black background would darken the objects). The distance is the real distance to the camera, so the haze does not change when the camera turns.
+
+<p align="center">
+  <img src="resources/doc/images/haze_avenue.jpg" alt="TestAtmosphere: an avenue whose buildings fade into the sky with the distance" width="600">
+</p>
+
+*An avenue seen from its start (`TestAtmosphere`). Without the atmosphere, the last buildings have the same colors as the first ones.*
+
+<p align="center">
+  <img src="resources/doc/images/haze_landscape.jpg" alt="The fractal landscape with the haze of the distance" width="800">
+</p>
+
+It costs a pass over the image after the rendering, about 2 ms for 1000×562 pixels (a few percent of the time of a frame in the demo scenes), computed by several threads like the rendering. The sun and its effects are drawn after the haze, so they keep all their brightness. `TestAtmosphere` is an avenue where the camera travels from the first buildings to the last ones; the scenes `haze_avenue` and `haze_landscape` of the SceneViewer and the Atmosphere option of the `FractalLandscape` demo let you switch the haze on and off to compare.
+
 ## How it works
 
 ### The scene and the engine
@@ -338,6 +364,7 @@ For each frame, every element's vertices are moved through its transformation ch
 | Rendering type | `setRenderingType(RenderingType)` | `LINE` (wireframe, hidden edges visible), `MONOCHROME` (hidden-line wireframe: faces filled with a single color, edges in the element color), `UNLIT` (element colors or textures, no lighting), `FLAT` (shaded, faceted), `INTERPOLATE` (shaded, smooth per-pixel, default) |
 | Textures | `setTextureProcessing(boolean)` | disabled by default; used by `UNLIT`, `FLAT` and `INTERPOLATE` |
 | Shadows | `setShadowing(boolean)` | disabled by default; used by `FLAT` and `INTERPOLATE` |
+| Atmosphere | `setAtmosphere(boolean)` | disabled by default; draws the `Atmosphere` of the `World` (see above), not in `LINE` rendering nor under an orthographic perspective |
 | Back-face culling | `setBackFaceCulling(boolean)` | enabled by default (applies to closed elements) |
 | Wireframe overlay | `setRenderingLines(boolean)` | disabled by default (always on in `MONOCHROME`) |
 | Monochrome fill color | `setMonochromeColor(Color)` | `null` by default: the `World` background color |
@@ -371,7 +398,7 @@ All demos live in `com.aventura.demo`.
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 
-The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows), `TestLightingGlow` (a lamp with a visible halo, hidden behind the objects) and `TestLightingSun` (a street where the camera turns to bring the sun behind the buildings). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
+The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows), `TestLightingGlow` (a lamp with a visible halo, hidden behind the objects) and `TestLightingSun` (a street where the camera turns to bring the sun behind the buildings) and `TestAtmosphere` (an avenue whose buildings fade into the sky with the distance). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
 
 ## Tests
 
@@ -379,7 +406,7 @@ The `src/test/java/com/aventura/test` folder holds about seventy additional visu
 mvn test
 ```
 
-The unit tests (JUnit 4, about 470 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, and the visible lights), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 500 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, the visible lights, and the atmosphere), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 
@@ -420,6 +447,7 @@ Aventura/
 - A `Lighting` system holds at most one ambient light, plus any number of directional, point and spot lights.
 - Soft shadows have a penumbra of a fixed width of a few texels (no wider penumbra far from the object that casts the shadow), they are off by default, and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
 - Lights are invisible by default. `RenderContext.setLightGlow(true)` draws a halo around point and spot lights (hidden by the objects in front of them); the sun (directional lights) is drawn as a disc and a halo in the sky, with a lens flare, and optionally light shafts; and the halos are not drawn in `LINE` rendering nor under an orthographic perspective.
+- The atmosphere is a haze that depends on the distance only: a single color for the whole sky (no warmer haze towards the sun, no mist in the valleys), the same extinction for the three color channels, and it does not fade the halos of the point lights. It is not drawn in `LINE` rendering nor under an orthographic perspective.
 - Texture files are loaded from file paths (relative to the working directory or absolute), not from the classpath.
 
 ## License

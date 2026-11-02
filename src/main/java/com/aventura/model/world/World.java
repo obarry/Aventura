@@ -53,6 +53,8 @@ public class World {
 	protected Color backgroundColor = Color.BLACK; // Color of the background ("sky")
 	protected Color worldColor = Color.WHITE; // Color of the world's elements unless specified at Element or Vertex level (lowest level priority)
 
+	protected Atmosphere atmosphere = null; // The air of this world (haze with the distance), drawn if RenderContext.setAtmosphere(true)
+
 	public World() {
 		this.name = "world";
 		this.elements  = new ArrayList<Element>();
@@ -130,6 +132,18 @@ public class World {
 		return backgroundColor;
 	}
 	
+	/**
+	 * The air of this world: with RenderContext.setAtmosphere(true), the colors fade towards the color of the air as
+	 * the objects get farther from the camera. Null (the default) for clear air.
+	 */
+	public void setAtmosphere(Atmosphere atmosphere) {
+		this.atmosphere = atmosphere;
+	}
+
+	public Atmosphere getAtmosphere() {
+		return atmosphere;
+	}
+
 	public void setTransformation(Transformation t) {
 		for (int i=0; i<elements.size(); i++) {
 			elements.get(i).setTransformation(t);

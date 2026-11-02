@@ -112,6 +112,7 @@ public class RenderContext {
 	// Visible lights (glow / halos)
 	private boolean lightGlow = false;
 	private LightGlowMode lightGlowMode = null; // null = not forced: each Light's own appearance, or its default
+	private boolean atmosphere = false;
 	private Boolean lightShafts = null; // null = not forced: the shafts gain of each Light's appearance
 	
 	// Colors of the debug displays
@@ -175,6 +176,7 @@ public class RenderContext {
 		this.lightGlow = r.lightGlow;
 		this.lightGlowMode = r.lightGlowMode;
 		this.lightShafts = r.lightShafts;
+		this.atmosphere = r.atmosphere;
 		this.landmarkXColor = r.landmarkXColor;
 		this.landmarkYColor = r.landmarkYColor;
 		this.landmarkZColor = r.landmarkZColor;
@@ -310,6 +312,22 @@ public class RenderContext {
 		return lightGlow;
 	}
 	
+	/**
+	 * Switch of the atmosphere (the haze of a landscape, see Atmosphere): when enabled, and if the World has an
+	 * Atmosphere (World.setAtmosphere()), the colors fade towards the color of the air as the objects get farther
+	 * from the camera. Disabled by default: nothing changes for the existing renderings. Only available for the
+	 * rendering types that have a depth (not LINE) under a frustum perspective.
+	 */
+	public RenderContext setAtmosphere(boolean atmosphere) {
+		checkNotFrozen();
+		this.atmosphere = atmosphere;
+		return this;
+	}
+
+	public boolean isAtmosphere() {
+		return atmosphere;
+	}
+
 	/**
 	 * Forces the same LightGlowMode for all the lights that do not define their own one in their LightAppearance
 	 * (which takes precedence). Resolution order: the Light's appearance, then this RenderContext, then the
@@ -453,6 +471,7 @@ public class RenderContext {
 				+ "* Texture processing:    " + onOff(textureProcessing) + "\n"
 				+ "* Shadowing:             " + onOff(shadowing) + "\n"
 				+ "* Light glow:            " + onOff(lightGlow) + (lightGlowMode == null ? "" : " (forced mode: " + lightGlowMode + ")") + "\n"
+				+ "* Atmosphere:           " + onOff(atmosphere) + "\n"
 				+ "* Light shafts:          " + (lightShafts == null ? "per light" : onOff(lightShafts)) + "\n"
 				+ "* Monochrome color:      " + (monochromeColor == null ? "World background" : monochromeColor) + "\n"
 				+ "* Render threads:        " + (renderThreads == RENDER_THREADS_AUTO ? "one per processor" : renderThreads) + "\n";
