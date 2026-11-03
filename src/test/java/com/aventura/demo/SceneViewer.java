@@ -35,10 +35,11 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-import com.aventura.context.RenderContext;
 import com.aventura.context.RenderContext.RenderingType;
+import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.atmosphere.Atmosphere;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
@@ -88,7 +89,8 @@ import com.aventura.view.SwingView;
  *   (ShadowFilter.PCF_3X3, or HARD when unchecked); it only shows when Shadows is on. Light glow makes the lights visible
  *   (a halo around the Point and Spot lights, hidden by the objects in front of them, a disc and a halo for the sun). Light shafts adds
  *   the light shafts of the sun (checked at the start if the scene's sun has some; it only shows when Light glow is on and the sun is in the field of view).
- *   Atmosphere fades the colors with the distance to the camera, towards the color of the air (haze), for the scenes whose World has an Atmosphere. View menu: back to the scene's camera (Ctrl+R), save the image shown (Ctrl+S).
+ *   Atmosphere fades the colors with the distance to the camera, towards the color of the air (haze) and in the fogs of the World (the volumes where the air is thick), for the scenes whose World has an Atmosphere; Haze and Fog switch each of these
+ *   two branches (Atmosphere.setHaze(), setFog()) when the scene has one. View menu: back to the scene's camera (Ctrl+R), save the image shown (Ctrl+S).
  *
  * Threads: the Swing thread (EDT) only records what the user asks for, in an immutable ViewState, and requests a
  * rendering. The rendering (and the loading of a scene, which may take a moment) is done by a single background
@@ -184,6 +186,8 @@ public class SceneViewer {
 		final Boolean lightShafts;
 		/** The atmosphere, the haze of the distance (RenderContext.setAtmosphere()), null = as the scene defines it */
 		final Boolean atmosphere;
+		/** The haze and the fogs of the atmosphere (Atmosphere.setHaze(), setFog()), null = as the scene's Atmosphere defines them */
+		final Boolean haze, fog;
 
 		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks) {
 			this(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, null);
@@ -206,6 +210,11 @@ public class SceneViewer {
 
 		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks,
 				Boolean softShadows, Boolean lightGlow, Boolean lightShafts, Boolean atmosphere) {
+			this(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere, null, null);
+		}
+
+		ViewState(String scene, float yaw, float pitch, int zoomNotches, RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks,
+				Boolean softShadows, Boolean lightGlow, Boolean lightShafts, Boolean atmosphere, Boolean haze, Boolean fog) {
 			this.scene = scene;
 			this.yaw = yaw;
 			this.pitch = pitch;
@@ -218,6 +227,8 @@ public class SceneViewer {
 			this.lightGlow = lightGlow;
 			this.lightShafts = lightShafts;
 			this.atmosphere = atmosphere;
+			this.haze = haze;
+			this.fog = fog;
 		}
 
 		/** A scene seen from its own camera, with its own options */
@@ -226,15 +237,15 @@ public class SceneViewer {
 		}
 
 		ViewState withCamera(float yaw, float pitch, int zoomNotches) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere, haze, fog);
 		}
 
 		ViewState withOptions(RenderingType type, Boolean shadows, Boolean textures, Boolean landmarks) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere, haze, fog);
 		}
 
 		ViewState withSoftShadows(Boolean softShadows) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere, haze, fog);
 		}
 
 		/** The soft shadows option, if still undefined, takes the given (scene's) value */
@@ -243,7 +254,7 @@ public class SceneViewer {
 		}
 
 		ViewState withLightGlow(Boolean lightGlow) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere, haze, fog);
 		}
 
 		/** The light glow option, if still undefined, takes the given (scene's) value */
@@ -252,7 +263,7 @@ public class SceneViewer {
 		}
 
 		ViewState withLightShafts(Boolean lightShafts) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere, haze, fog);
 		}
 
 		/** The light shafts option, if still undefined, takes the given (scene's) value */
@@ -261,12 +272,30 @@ public class SceneViewer {
 		}
 
 		ViewState withAtmosphere(Boolean atmosphere) {
-			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere);
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere, haze, fog);
 		}
 
 		/** The atmosphere option, if still undefined, takes the given (scene's) value */
 		ViewState withAtmosphereDefault(boolean atmosphere) {
 			return this.atmosphere != null ? this : withAtmosphere(atmosphere);
+		}
+
+		ViewState withHaze(Boolean haze) {
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere, haze, fog);
+		}
+
+		/** The haze option, if still undefined, takes the given (scene's) value */
+		ViewState withHazeDefault(boolean haze) {
+			return this.haze != null ? this : withHaze(haze);
+		}
+
+		ViewState withFog(Boolean fog) {
+			return new ViewState(scene, yaw, pitch, zoomNotches, type, shadows, textures, landmarks, softShadows, lightGlow, lightShafts, atmosphere, haze, fog);
+		}
+
+		/** The fog option, if still undefined, takes the given (scene's) value */
+		ViewState withFogDefault(boolean fog) {
+			return this.fog != null ? this : withFog(fog);
 		}
 
 		/** The options still undefined take the given (scene's) values */
@@ -297,6 +326,8 @@ public class SceneViewer {
 	private DemoScene scene;
 	private RenderContext sceneDefaults; // copy of the scene's own options, before any change
 	private boolean sceneLightShafts; // whether the scene's own sun has light shafts
+	private boolean sceneHaze, sceneFog; // whether the scene's Atmosphere has a haze, fogs (switched on)
+	private volatile boolean sceneHasHaze, sceneHasFog; // whether it has one at all (the items are disabled if not)
 	private boolean sceneSoftShadows; // whether the scene's own lights filter their shadows (all of them, at least one)
 	private Camera camera;
 	private RenderEngine engine;
@@ -309,7 +340,7 @@ public class SceneViewer {
 	private JPanel panel;
 	private final Map<String, JRadioButtonMenuItem> sceneItems = new LinkedHashMap<>();
 	private final Map<RenderingType, JRadioButtonMenuItem> typeItems = new LinkedHashMap<>();
-	private JCheckBoxMenuItem shadowsItem, softShadowsItem, texturesItem, landmarksItem, lightGlowItem, lightShaftsItem, atmosphereItem;
+	private JCheckBoxMenuItem shadowsItem, softShadowsItem, texturesItem, landmarksItem, lightGlowItem, lightShaftsItem, atmosphereItem, hazeItem, fogItem;
 	private int lastX, lastY;
 
 	public SceneViewer(Map<String, Supplier<DemoScene>> scenesByImageName, String firstScene) {
@@ -432,6 +463,12 @@ public class SceneViewer {
 		atmosphereItem = new JCheckBoxMenuItem("Atmosphere");
 		atmosphereItem.addActionListener(e -> update(s -> s.withAtmosphere(atmosphereItem.isSelected())));
 		renderingMenu.add(atmosphereItem);
+		hazeItem = new JCheckBoxMenuItem("Haze");
+		hazeItem.addActionListener(e -> update(s -> s.withHaze(hazeItem.isSelected())));
+		renderingMenu.add(hazeItem);
+		fogItem = new JCheckBoxMenuItem("Fog");
+		fogItem.addActionListener(e -> update(s -> s.withFog(fogItem.isSelected())));
+		renderingMenu.add(fogItem);
 		bar.add(renderingMenu);
 
 		JMenu viewMenu = new JMenu("View");
@@ -461,6 +498,10 @@ public class SceneViewer {
 		if (s.lightGlow != null) lightGlowItem.setSelected(s.lightGlow);
 		if (s.lightShafts != null) lightShaftsItem.setSelected(s.lightShafts);
 		if (s.atmosphere != null) atmosphereItem.setSelected(s.atmosphere);
+		if (s.haze != null) hazeItem.setSelected(s.haze);
+		if (s.fog != null) fogItem.setSelected(s.fog);
+		hazeItem.setEnabled(sceneHasHaze); // Nothing to switch if the Atmosphere of the scene has no haze, no fog
+		fogItem.setEnabled(sceneHasFog);
 	}
 
 	/** Changes the state (EDT) and requests a rendering */
@@ -493,6 +534,8 @@ public class SceneViewer {
 							.withLightGlowDefault(sceneDefaults.isLightGlow())
 							.withLightShaftsDefault(sceneLightShafts)
 							.withAtmosphereDefault(sceneDefaults.isAtmosphere())
+							.withHazeDefault(sceneHaze)
+							.withFogDefault(sceneFog)
 					: st);
 			if (!s.scene.equals(loadedScene)) {
 				return; // another scene was chosen meanwhile: it has already been requested
@@ -506,6 +549,11 @@ public class SceneViewer {
 			options.setLightGlow(s.lightGlow);
 			options.setLightShafts(s.lightShafts);
 			options.setAtmosphere(s.atmosphere);
+			Atmosphere air = scene.getWorld().getAtmosphere();
+			if (air != null) {
+				air.setHaze(s.haze);
+				air.setFog(s.fog);
+			}
 			applySoftShadows(scene.getLighting(), s.softShadows);
 			Vector4 poi = scene.getPoi();
 			camera.updateCamera(orbitEye(scene.getEye(), poi, s.yaw, s.pitch, zoomFactor(s.zoomNotches)), poi, Vector4.zAxis());
@@ -566,6 +614,11 @@ public class SceneViewer {
 		camera = newScene.createCamera();
 		engine = newScene.createEngine(camera, newView);
 		sceneDefaults = new RenderContext(newScene.getRenderContext());
+		Atmosphere air = newScene.getWorld().getAtmosphere();
+		sceneHaze = air != null && air.isHaze();
+		sceneFog = air != null && air.isFog();
+		sceneHasHaze = air != null && air.getHaze() != null;
+		sceneHasFog = air != null && !air.getFogs().isEmpty();
 		sceneSoftShadows = hasSoftShadows(newScene.getLighting());
 		sceneLightShafts = hasLightShafts(newScene.getLighting());
 		loadedScene = name;

@@ -17,6 +17,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 - **Pure Java, zero runtime dependency.** Only the JDK is needed (`java.desktop` for Swing and image loading).
 - **Complete software pipeline.** Model, world and camera transforms, frustum or orthographic projection, triangle rasterization with a Z-buffer and perspective-correct interpolation.
 - **Lighting and shadows.** Ambient, directional, point and spot lights (a spot has an aimable cone with a soft or sharp edge), specular highlights, and shadow mapping for every kind of light: orthographic maps for directional lights, perspective maps for spot lights, and a six-face cube map for point lights, with optional soft edges (see [Lights and shadows](#lights-and-shadows)).
+- **Atmosphere.** A haze that pales the distance, banks of fog (spherical ones, and your own kinds) that dim what is seen through them, each branch with its own switch, with an exact formula for the fog and a step-by-step tutorial (see [Atmosphere](#atmosphere)).
 - **Textures.** Any image format supported by `ImageIO` (JPEG, PNG, GIF...), with per-face textures on boxes and pyramids and control over mapping direction and orientation.
 - **Ready-made shapes.** Box, cube, sphere, cone, cone frustum, cylinder, disc, pyramid, torus and height-field grids (`Trellis`), plus your own geometry from triangles and meshes.
 - **Hierarchical scene graph.** Elements can contain sub-elements; translations, rotations and scalings compose down the tree.
@@ -55,7 +56,7 @@ The same scenes can be explored in a Swing window with `com.aventura.demo.SceneV
 java -cp target/classes:target/test-classes com.aventura.demo.SceneViewer urbanscape_flight
 ```
 
-Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures, landmarks, light glow, light shafts and atmosphere options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
+Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures, landmarks, light glow, light shafts, atmosphere, haze and fog options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
 
 ## Quick start
 
@@ -292,29 +293,98 @@ sun.setAppearance(new LightAppearance().setShaftsGain(1f)); // 0 (default) = no 
 
 ## Atmosphere
 
-In a landscape, the far objects look paler and less contrasted than the near ones: the air between them and the eye veils their colors with its own. Aventura can give this impression of distance. The `World` has an `Atmosphere` (the air of the scene), and `RenderContext.setAtmosphere(true)` draws it: each pixel is blended with the color of the haze by a share that grows with its distance to the camera, read in the depth buffer. The sky is not changed, so the far buildings and hills melt into it. The option is off by default.
+In a landscape, the far objects look paler and less contrasted than the near ones: the air between them and the eye veils their colors with its own. And in a valley, a bank of fog hides what is in it. Aventura gives both impressions with the `Atmosphere` of the `World` (the air of the scene), which `RenderContext.setAtmosphere(true)` draws (off by default). It is organized like the `Lighting` (one ambient light, several lights): a tree with two branches.
+
+- the **`Haze`**, one per atmosphere: each pixel is blended with the color of the haze by a share that grows with its distance to the camera, read in the depth buffer. The sky is not changed, so the far buildings and hills melt into it;
+- the **`Fog`**, as many as you want: a volume at a place of the World, in which the air is thick. `SphericalFog` is a sphere (a center and a radius of action) whose density is the highest at the center and falls to nothing at the surface, so it has no visible edge. It dims what is seen through it, and hides the sky too, which the haze cannot do; a camera that enters it sees it all around.
+
+### Step by step
+
+The scene of this tutorial is [`AtmosphereCookbook`](src/test/java/com/aventura/cookbook/AtmosphereCookbook.java): a lawn and two rows of pillars, one every 8 units, seen from the start of the row at the height of a walker's eye, under a blue sky. Every step is a few lines on top of the previous one; the picture shows the four atmospheres of the tutorial.
+
+<p align="center">
+  <img src="resources/doc/images/atmosphere_steps.jpg" alt="The same avenue of pillars: clear air, with the haze, with a bank of fog, with both" width="800">
+</p>
+
+*Clear air (step 1, top left), the haze (step 2, top right), a bank of fog (step 3, bottom left), both (step 4, bottom right).*
+
+**Step 1: clear air.** A `World` has no atmosphere until you give it one, and the sky is its background color: the color the haze will melt the far objects into.
 
 ```java
 World world = new World();
-world.setBackgroundColor(new Color(130, 175, 225));         // the sky, also the color of the haze by default
-world.setAtmosphere(new Atmosphere(220f).setStartDistance(8f)); // the contrast falls to 5% at 220 units
+world.setBackgroundColor(new Color(130, 175, 225));   // the sky
+// ... the lawn and the pillars (Box elements), world.build()
 
-RenderContext rc = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE).setAtmosphere(true);
+RenderContext rc = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 ```
 
-The strength is a **visibility**, like in meteorology: the distance, in the units of the scene, at which the contrast of an object with its background falls to 5%. Three models give the share of haze `f(d)`: `EXPONENTIAL` (the default, the law of the extinction of light in a homogeneous medium), `EXPONENTIAL_SQUARED` (clear air near the camera, then a faster fading) and `LINEAR` (from the start distance to the visibility). `setStartDistance()` keeps the first units clear, `setMaxFactor()` (0.95 by default) leaves a trace of their color to the farthest objects, and `setColor()` gives the haze a color of its own, which is needed when the background is not a sky (a black background would darken the objects). The distance is the real distance to the camera, so the haze does not change when the camera turns.
+**Step 2: a haze.** The air itself, everywhere: the farther an object, the paler. `Haze(80f)` is a visibility of 80 units (the contrast of an object falls to 5% there), and `setStartDistance(5f)` keeps the first 5 units clear. Two lines: the atmosphere goes to the `World`, and the `RenderContext` is told to draw it.
+
+```java
+world.setAtmosphere(new Atmosphere(new Haze(80f).setStartDistance(5f)));
+rc.setAtmosphere(true);   // off by default
+```
+
+The pillars at the end of the row melt into the sky, the sky itself is not changed.
+
+**Step 3: a bank of fog.** A volume at a place of the World: its center (here on the lawn, at the height of the eye), its radius of action and the visibility through its densest part, the center. It dims what is seen through it, the sky too, and fades into the clear air with no visible edge.
+
+```java
+SphericalFog bank = new SphericalFog(new Vector4(0f, 30f, 2.2f, 1f), 12f, 20f);
+world.setAtmosphere(new Atmosphere().addFog(bank));   // the fog alone: addFog() returns the atmosphere
+```
+
+**Step 4: both, and switches.** An atmosphere holds one haze and any number of fogs, and each branch has its switch, to wire to a menu of the application:
+
+```java
+Atmosphere atmosphere = new Atmosphere(new Haze(80f).setStartDistance(5f)).addFog(bank);
+world.setAtmosphere(atmosphere);
+
+atmosphere.setFog(false);    // the fogs are out, the haze stays
+atmosphere.setFog(true);     // and back
+atmosphere.setHaze(false);   // the haze is out, the fogs stay
+bank.setCenter(new Vector4(10f, 30f, 2.2f, 1f));   // a fog is a plain object: move it, render again
+```
+
+**Step 5: your own fog.** A `Fog` only gives the optical depth of a ray and a sphere that contains it, so a new kind is one class, and the renderer does the rest. The cookbook writes a `GroundMist`, a layer of mist that hugs the ground, in about 40 lines:
 
 <p align="center">
-  <img src="resources/doc/images/haze_avenue.jpg" alt="TestAtmosphere: an avenue whose buildings fade into the sky with the distance" width="600">
+  <img src="resources/doc/images/ground_mist.jpg" alt="The avenue of pillars in a mist that hugs the ground" width="600">
 </p>
 
-*An avenue seen from its start (`TestAtmosphere`). Without the atmosphere, the last buildings have the same colors as the first ones.*
+The [Atmosphere Cookbook](docs/ATMOSPHERE_COOKBOOK.md) goes further: the contracts of an effect, the toolbox, the five recipes of this tutorial in depth (the haze, the bank of fog, the switches, a fog that moves, a new kind of fog), and how to test an atmosphere; its examples are compiled and tested. A [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) does the same for the shapes of the `World`.
+
+### Haze and fog in detail
+
+Everything can be switched, from the largest to the smallest scope: `RenderContext.setAtmosphere()` for all of it, `Atmosphere.setHaze(boolean)` and `Atmosphere.setFog(boolean)` for each branch (all the fogs at once), and `setEnabled(boolean)` on a `Haze` or a `Fog` for just that one. A fog is in the coordinates of the World: it is not attached to the tree of the geometry and does not move with it.
+
+The strength of a haze or of a fog is a **visibility**, like in meteorology: the distance, in the units of the scene, at which the contrast of an object with its background falls to 5% (for a fog, in the densest part of it). Three models give the share of haze `f(d)`: `EXPONENTIAL` (the default, the law of the extinction of light in a homogeneous medium), `EXPONENTIAL_SQUARED` (clear air near the camera, then a faster fading) and `LINEAR` (from the start distance to the visibility). `setStartDistance()` keeps the first units clear, `setMaxFactor()` (0.95 by default) leaves a trace of their color to the farthest objects, and `setColor()` gives the haze a color of its own, which is needed when the background is not a sky (a black background would darken the objects). The distance is the real distance to the camera, so the haze does not change when the camera turns. A fog has a `setColor()` too (a light grey by default). For each pixel, the renderer follows the ray of the eye through the fog up to the surface that was drawn there (up to infinity for the sky) and integrates the density along it: the formula is exact, so the image does not depend on any sampling. A pixel gets `color * exp(-t) + fog color * (1 - exp(-t))`, with `t` the optical depth of the ray in the fog. Several fogs are drawn from the farthest to the nearest, after the haze.
+
+<p align="center">
+  <img src="resources/doc/images/haze_compare.jpg" alt="TestAtmosphere: an avenue without and with the haze" width="800">
+</p>
+
+*An avenue seen from its start (`TestAtmosphere`), without the atmosphere on the left and with the haze on the right: without it, the last buildings have the same colors as the first ones.*
 
 <p align="center">
   <img src="resources/doc/images/haze_landscape.jpg" alt="The fractal landscape with the haze of the distance" width="800">
 </p>
 
-It costs a pass over the image after the rendering, about 2 ms for 1000×562 pixels (a few percent of the time of a frame in the demo scenes), computed by several threads like the rendering. The sun and its effects are drawn after the haze, so they keep all their brightness. `TestAtmosphere` is an avenue where the camera travels from the first buildings to the last ones; the scenes `haze_avenue` and `haze_landscape` of the SceneViewer and the Atmosphere option of the `FractalLandscape` demo let you switch the haze on and off to compare.
+<p align="center">
+  <img src="resources/doc/images/fog_compare.jpg" alt="TestFog: the avenue without and with a bank of fog, soft at its edges" width="800">
+</p>
+
+*The same avenue with a bank of fog (`TestFog`), without it on the left and with it on the right: a sphere whose density falls to nothing at its surface; the buildings behind it are dimmed, the sky too, the ones in front of it are not.*
+
+<p align="center">
+  <img src="resources/doc/images/fog_landscape.jpg" alt="The fractal landscape with two random banks of fog on its hills" width="800">
+</p>
+
+*The `FractalLandscape` demo with two banks of fog on its hills (Landscape / Generate fog), and its haze.*
+
+It costs a pass over the image after the rendering, about 2 ms for 1000×562 pixels for the haze, and the same order for each fog that covers the image (a fog only costs where it can be seen: the rectangle where its bounding sphere projects), computed by several threads like the rendering. The sun and its effects are drawn after the atmosphere, so they keep all their brightness. `TestAtmosphere` is an avenue where the camera travels from the first buildings to the last ones, and `TestFog` the same with banks of fog that the camera crosses (one trip with both, one with the fogs only, one with the haze only); the scenes `haze_avenue`, `haze_landscape`, `fog_avenue`, `fog_landscape` and `ground_mist` of the SceneViewer, with its Atmosphere, Haze and Fog options, and the `Haze` and `Fog` items of the `Effects` menu of the `FractalLandscape` demo let you switch them on and off to compare. In `FractalLandscape` there is no fog at first: `Landscape` / `Generate fog` draws one to three banks of fog at random places and sizes on the hills (as many times as you like, until the result pleases you), and the `Fog` item shows or hides them, apart from the `Haze` one.
+
+The model is meant to grow: `Haze` and `Fog` are both an `AtmosphericEffect`, and a new phenomenon (clouds, rain, a mist that hugs the ground...) is a new class, a branch of the `Atmosphere`, and a pass in `AtmosphereRenderer` (see [docs/DESIGN.md](docs/DESIGN.md)).
 
 ## How it works
 
@@ -351,6 +421,7 @@ For each frame, every element's vertices are moved through its transformation ch
 | `com.aventura.model.world.triangle` | Triangle meshes used to generate shapes (`FanMesh`, `FullMesh`, `CircularMesh`, `RectangleMesh`) |
 | `com.aventura.model.camera` | `Camera` and its look-at matrix |
 | `com.aventura.model.light` | `AmbientLight`, `DirectionalLight`, `PointLight`, `SpotLight`, and the `Lighting` system that gathers them |
+| `com.aventura.model.atmosphere` | `Atmosphere` (the air of a `World`) with its `Haze` and its fogs (`Fog`, `SphericalFog`), all `AtmosphericEffect` |
 | `com.aventura.model.material`, `com.aventura.model.texture` | Solid and textured materials, image textures |
 | `com.aventura.context` | `RenderContext` and `PerspectiveContext` |
 | `com.aventura.engine` | `RenderEngine`, `TriangleRasterizer`, `ZBuffer`, fragment consumers |
@@ -364,7 +435,7 @@ For each frame, every element's vertices are moved through its transformation ch
 | Rendering type | `setRenderingType(RenderingType)` | `LINE` (wireframe, hidden edges visible), `MONOCHROME` (hidden-line wireframe: faces filled with a single color, edges in the element color), `UNLIT` (element colors or textures, no lighting), `FLAT` (shaded, faceted), `INTERPOLATE` (shaded, smooth per-pixel, default) |
 | Textures | `setTextureProcessing(boolean)` | disabled by default; used by `UNLIT`, `FLAT` and `INTERPOLATE` |
 | Shadows | `setShadowing(boolean)` | disabled by default; used by `FLAT` and `INTERPOLATE` |
-| Atmosphere | `setAtmosphere(boolean)` | disabled by default; draws the `Atmosphere` of the `World` (see above), not in `LINE` rendering nor under an orthographic perspective |
+| Atmosphere | `setAtmosphere(boolean)` | disabled by default; draws the `Atmosphere` of the `World` (its haze and its fogs, see above), not in `LINE` rendering nor under an orthographic perspective |
 | Back-face culling | `setBackFaceCulling(boolean)` | enabled by default (applies to closed elements) |
 | Wireframe overlay | `setRenderingLines(boolean)` | disabled by default (always on in `MONOCHROME`) |
 | Monochrome fill color | `setMonochromeColor(Color)` | `null` by default: the `World` background color |
@@ -394,11 +465,11 @@ All demos live in `com.aventura.demo`.
 | --- | --- | --- |
 | `EarthAndMoon` | Two textured spheres, a directional light and specular highlights (the picture at the top of this page) | None: renders a still frame |
 | `AventuraDemo` | Textured cone, cylinder, sphere, cube, box, trellis and pyramid, spinning in 3D, with the coordinate axes displayed | None: animated |
-| `FractalLandscape` | A procedural fractal terrain built on a `Trellis`, with a sea and a low sun | Orbit camera: drag the mouse to orbit, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to zoom; fly camera: drag the mouse to look around, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to fly forward / backward along the line of sight; `Ctrl` + `U` / `D` (or `Page Up` / `Page Down`) to raise / lower the sea; the image follows the window size; `Landscape` menu: generate, reset camera, orbit / fly camera; `Rendering` menu: lines, monochrome, unlit, flat, shading; `Effects` menu: texture, specular highlights, shadows (hard / soft), sun (halo, lens flare, light shafts) |
+| `FractalLandscape` | A procedural fractal terrain built on a `Trellis`, with a sea and a low sun | Orbit camera: drag the mouse to orbit, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to zoom; fly camera: drag the mouse to look around, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to fly forward / backward along the line of sight; `Ctrl` + `U` / `D` (or `Page Up` / `Page Down`) to raise / lower the sea; the image follows the window size; `Landscape` menu: generate, generate fog, reset camera, orbit / fly camera; `Rendering` menu: lines, monochrome, unlit, flat, shading; `Effects` menu: texture, specular highlights, shadows (hard / soft), sun (halo, lens flare, light shafts), haze, fog (none by default) |
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
 
-The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows), `TestLightingGlow` (a lamp with a visible halo, hidden behind the objects) and `TestLightingSun` (a street where the camera turns to bring the sun behind the buildings) and `TestAtmosphere` (an avenue whose buildings fade into the sky with the distance). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
+The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows), `TestLightingGlow` (a lamp with a visible halo, hidden behind the objects) and `TestLightingSun` (a street where the camera turns to bring the sun behind the buildings), `TestAtmosphere` (an avenue whose buildings fade into the sky with the distance) and `TestFog` (the same avenue with banks of fog that the camera crosses). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
 
 ## Tests
 
@@ -406,7 +477,7 @@ The `src/test/java/com/aventura/test` folder holds about seventy additional visu
 mvn test
 ```
 
-The unit tests (JUnit 4, about 500 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, the visible lights, and the atmosphere), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 540 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, the visible lights, the atmosphere with its haze and its fogs), the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) and of the [Atmosphere Cookbook](docs/ATMOSPHERE_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 
@@ -447,7 +518,7 @@ Aventura/
 - A `Lighting` system holds at most one ambient light, plus any number of directional, point and spot lights.
 - Soft shadows have a penumbra of a fixed width of a few texels (no wider penumbra far from the object that casts the shadow), they are off by default, and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
 - Lights are invisible by default. `RenderContext.setLightGlow(true)` draws a halo around point and spot lights (hidden by the objects in front of them); the sun (directional lights) is drawn as a disc and a halo in the sky, with a lens flare, and optionally light shafts; and the halos are not drawn in `LINE` rendering nor under an orthographic perspective.
-- The atmosphere is a haze that depends on the distance only: a single color for the whole sky (no warmer haze towards the sun, no mist in the valleys), the same extinction for the three color channels, and it does not fade the halos of the point lights. It is not drawn in `LINE` rendering nor under an orthographic perspective.
+- The atmosphere has a haze that depends on the distance only (a single color for the whole sky, no warmer haze towards the sun, no mist in the valleys) and spherical fogs with a soft parabolic profile; the extinction is the same for the three color channels, nothing is lit by the sun through a fog (no light scattering, the fog has its own color) and the fogs do not fade the sun or the halos of the point lights. It is not drawn in `LINE` rendering nor under an orthographic perspective.
 - Texture files are loaded from file paths (relative to the working directory or absolute), not from the classpath.
 
 ## License

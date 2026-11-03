@@ -8,6 +8,7 @@ object assembled from simpler ones.
 | **For** | Programmers who build scenes in code and need a shape Aventura does not provide |
 | **Prerequisites** | The [README](../README.md) "Hello, Aventura" example; [DESIGN.md §3](DESIGN.md#3-domain-model) for the big picture |
 | **Examples** | [`src/test/java/com/aventura/cookbook`](../src/test/java/com/aventura/cookbook): every class shown here is compiled and tested ([`TestGeometryCookbook`](../src/test/java/com/aventura/cookbook/TestGeometryCookbook.java)) |
+| **See also** | The [Atmosphere Cookbook](ATMOSPHERE_COOKBOOK.md): the air the `World` bathes in (haze, fogs, a new kind of fog), the counterpart of this one for what is not geometry |
 
 <p align="center">
   <img src="../resources/doc/images/cookbook_gallery.png" alt="The cookbook examples: a pyramid frustum, a closed cone frustum and two street lamps" width="800">

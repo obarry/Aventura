@@ -23,18 +23,19 @@
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  */
-package com.aventura.model.world;
+package com.aventura.model.atmosphere;
 
 import java.awt.Color;
 
 /**
- * The air of a World: the effect of distance seen in a landscape, where the contrasts weaken and the colors
- * fade towards the color of the air (the haze) as the objects get farther from the camera. The pixels of the
- * image are blended with the haze color by a factor that grows with their distance to the camera: 0 on the
- * camera, 1 (or maxFactor) very far away. The sky is not touched.
+ * The haze of the distance, an effect of the Atmosphere (see Atmosphere): the effect seen in a landscape, where the
+ * contrasts weaken and the colors fade towards the color of the air as the objects get farther from the camera. The
+ * pixels of the image are blended with the haze color by a factor that grows with their distance to the camera: 0 on
+ * the camera, 1 (or maxFactor) very far away. The sky is not touched.
  *
- * It is a property of the scene, like the background color of the World (World.setAtmosphere()), and it is
- * only drawn if RenderContext.setAtmosphere(true) switches it on (see AtmosphereRenderer).
+ * It is a property of the scene, held by the Atmosphere of the World (World.setAtmosphere()), and it is only drawn if
+ * RenderContext.setAtmosphere(true) switches the atmosphere on (see AtmosphereRenderer). Unlike a Fog, which is a
+ * volume at a place of the World, the haze is everywhere and depends only on the distance to the camera.
  *
  * The distance is measured in the units of the scene. The strength is given as a visibility, like in
  * meteorology: the distance at which the contrast of an object with its background falls to 5%. A visibility
@@ -52,7 +53,7 @@ import java.awt.Color;
  * @author Olivier BARRY
  * @since 2026
  */
-public class Atmosphere {
+public class Haze extends AtmosphericEffect {
 
 	/** How the factor of the haze grows with the distance */
 	public enum Model {
@@ -72,18 +73,19 @@ public class Atmosphere {
 	private float maxFactor = DEFAULT_MAX_FACTOR;
 	private Color color = null; // null = the background color of the World
 
-	public Atmosphere() {
+	public Haze() {
 	}
 
 	/**
 	 * @param visibility distance (scene units) at which the contrast falls to 5% (exponential models), or where the
 	 *                   haze is complete (linear model)
 	 */
-	public Atmosphere(float visibility) {
+	public Haze(float visibility) {
 		setVisibility(visibility);
 	}
 
-	public Atmosphere(Atmosphere a) {
+	public Haze(Haze a) {
+		this.enabled = a.enabled;
 		this.model = a.model;
 		this.visibility = a.visibility;
 		this.startDistance = a.startDistance;
@@ -95,8 +97,8 @@ public class Atmosphere {
 		return model;
 	}
 
-	public Atmosphere setModel(Model model) {
-		if (model == null) throw new IllegalArgumentException("The model of the atmosphere cannot be null");
+	public Haze setModel(Model model) {
+		if (model == null) throw new IllegalArgumentException("The model of the haze cannot be null");
 		this.model = model;
 		return this;
 	}
@@ -108,7 +110,7 @@ public class Atmosphere {
 	/**
 	 * @param visibility distance in scene units, greater than the start distance
 	 */
-	public Atmosphere setVisibility(float visibility) {
+	public Haze setVisibility(float visibility) {
 		if (!(visibility > startDistance)) throw new IllegalArgumentException("The visibility must be greater than the start distance (" + startDistance + "): " + visibility);
 		this.visibility = visibility;
 		return this;
@@ -121,7 +123,7 @@ public class Atmosphere {
 	/**
 	 * Distance from the camera below which the air is perfectly clear (0 by default).
 	 */
-	public Atmosphere setStartDistance(float startDistance) {
+	public Haze setStartDistance(float startDistance) {
 		if (startDistance < 0f || !(startDistance < visibility)) throw new IllegalArgumentException("The start distance must be in [0, visibility[ (visibility " + visibility + "): " + startDistance);
 		this.startDistance = startDistance;
 		return this;
@@ -134,7 +136,7 @@ public class Atmosphere {
 	/**
 	 * @param maxFactor largest share of the haze color in a pixel, in ]0, 1] (1: the farthest objects get the color of the haze)
 	 */
-	public Atmosphere setMaxFactor(float maxFactor) {
+	public Haze setMaxFactor(float maxFactor) {
 		if (!(maxFactor > 0f && maxFactor <= 1f)) throw new IllegalArgumentException("The maximum factor must be in ]0, 1]: " + maxFactor);
 		this.maxFactor = maxFactor;
 		return this;
@@ -151,7 +153,7 @@ public class Atmosphere {
 	/**
 	 * @param color the color of the haze, null for the background color of the World
 	 */
-	public Atmosphere setColor(Color color) {
+	public Haze setColor(Color color) {
 		this.color = color;
 		return this;
 	}
@@ -185,7 +187,7 @@ public class Atmosphere {
 
 	@Override
 	public String toString() {
-		return "Atmosphere: " + model + ", visibility " + visibility + ", start " + startDistance + ", max factor " + maxFactor + ", color "
+		return "Haze: " + (enabled ? "" : "(disabled) ") + model + ", visibility " + visibility + ", start " + startDistance + ", max factor " + maxFactor + ", color "
 				+ (color == null ? "World background" : color);
 	}
 }

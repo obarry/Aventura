@@ -36,6 +36,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 
@@ -54,12 +56,16 @@ import javax.swing.Timer;
 import javax.swing.WindowConstants;
 
 import com.aventura.context.PerspectiveContext;
-import com.aventura.context.RenderContext;
 import com.aventura.context.RenderContext.RenderingType;
+import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.atmosphere.Atmosphere;
+import com.aventura.model.atmosphere.Fog;
+import com.aventura.model.atmosphere.Haze;
+import com.aventura.model.atmosphere.SphericalFog;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
@@ -68,7 +74,6 @@ import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.texture.Texture;
-import com.aventura.model.world.Atmosphere;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
@@ -131,10 +136,11 @@ import com.aventura.view.SwingView;
  *
  * <h2>Menus</h2>
  * <ul>
- * <li>Landscape: generate a new landscape, raise / lower the sea level, reset the camera, choose the camera mode</li>
+ * <li>Landscape: generate a new landscape, generate fog (new random banks of fog, which can be repeated until they
+ *     please), raise / lower the sea level, reset the camera, choose the camera mode</li>
  * <li>Rendering: the rendering type (an exclusive choice)</li>
- * <li>Effects: options independent of the rendering type (texture, specular highlights, shadows, atmosphere (the haze
- *     of the distance), sun, sun halo, lens
+ * <li>Effects: options independent of the rendering type (texture, specular highlights, shadows, haze (the fading with the
+ *     distance), fog (banks of fog, none until generated), sun, sun halo, lens
  *     flare, light shafts), grayed out when the current rendering type does not use them. The sun is low on the
  *     horizon, in front of the initial camera and a little to its left: orbit a little to the left and lower the
  *     camera to see it.</li>
@@ -179,6 +185,22 @@ public class FractalLandscape {
 	/** Atmosphere (Effects menu): the haze of the distance, as the color of the sky. Visibility and start distance in scene units. */
 	static final float HAZE_VISIBILITY = 10f;
 	static final float HAZE_START_DISTANCE = 1.8f;
+
+	/**
+	 * Fog (Effects menu, Landscape / Generate fog): there is none until the user asks for it. A generation makes between
+	 * FOG_MIN_COUNT and FOG_MAX_COUNT banks, spherical, of random radius and place (over the middle of the landscape, where the island is,
+	 * at the height of the sea and the first half of the way to the highest peak). The visibility of the center of a bank is FOG_MIN_VISIBILITY_RATIO to FOG_MAX_VISIBILITY_RATIO
+	 * times its radius, so that the optical depth through its center (4 radius / visibility) goes from light (1) to thick (2.7).
+	 */
+	static final int FOG_MIN_COUNT = 1;
+	static final int FOG_MAX_COUNT = 3;
+	static final float FOG_MIN_RADIUS = 0.4f;
+	static final float FOG_MAX_RADIUS = 1.1f;
+	/** The centers of the banks are in the square of this share of the side of the landscape, around its center */
+	static final float FOG_AREA_RATIO = 0.6f;
+	static final float FOG_MIN_VISIBILITY_RATIO = 1.5f;
+	static final float FOG_MAX_VISIBILITY_RATIO = 4f;
+	static final Color FOG_COLOR = new Color(215, 222, 232);
 
 	/** Specular highlights (Effects menu): sharp and bright on the water, faint and wide on the ground. */
 	static final Color SEA_SPECULAR_COLOR = new Color(200, 200, 200);
@@ -248,6 +270,7 @@ public class FractalLandscape {
 	// ----- Aventura objects -----
 
 	World world;
+	Atmosphere atmosphere;       // The air of the World: a haze (off at the start) and the banks of fog (none at the start)
 	Trellis landTrellis;         // The ground
 	float[][] landAltitudes;     // Altitudes of the vertices of the ground: (LANDSCAPE_DIVISIONS + 1)^2 values
 	Trellis seaTrellis;          // The sea: a flat Trellis translated at the altitude seaLevel
@@ -270,7 +293,7 @@ public class FractalLandscape {
 	Timer resizeTimer;
 	// Check boxes of the Effects menu that can be grayed out (see updateEffectsMenu())
 	JCheckBoxMenuItem textureItem, specularItem, shadowsItem, softShadowsItem;
-	JCheckBoxMenuItem atmosphereItem, sunItem, sunHaloItem, lensFlareItem, lightShaftsItem;
+	JCheckBoxMenuItem hazeItem, fogItem, sunItem, sunHaloItem, lensFlareItem, lightShaftsItem;
 
 	// ----- State of the camera -----
 
@@ -376,7 +399,10 @@ public class FractalLandscape {
 
 		World world = new World();
 		world.setBackgroundColor(SKY_COLOR);
-		world.setAtmosphere(createAtmosphere()); // Drawn when the Atmosphere option of the Effects menu is on
+		atmosphere = createAtmosphere();
+		atmosphere.setHaze(false); // Nothing at the start: the Haze and Fog options of the Effects menu switch them on
+		atmosphere.setFog(false);
+		world.setAtmosphere(atmosphere);
 
 		// The ground: a square Trellis, centered on the origin, of LANDSCAPE_DIVISIONS x LANDSCAPE_DIVISIONS cells,
 		// whose vertices take their altitude in the landAltitudes array
@@ -499,11 +525,39 @@ public class FractalLandscape {
 	/**
 	 * The air of the World: a haze that makes the far hills pale and blue like the sky (the color of the haze is the
 	 * background color of the World), clear for the first HAZE_START_DISTANCE units, with a visibility of HAZE_VISIBILITY
-	 * units (the contrast of an object with the sky falls to 5% there). It is only drawn when the Atmosphere option of
-	 * the Effects menu is on (RenderContext.setAtmosphere()).
+	 * units (the contrast of an object with the sky falls to 5% there). It is only drawn when the Haze option of
+	 * the Effects menu is on (Atmosphere.setHaze(), and RenderContext.setAtmosphere()). The fogs are added later, by the user
+	 * (Landscape / Generate fog).
 	 */
 	static Atmosphere createAtmosphere() {
-		return new Atmosphere(HAZE_VISIBILITY).setStartDistance(HAZE_START_DISTANCE);
+		return new Atmosphere(new Haze(HAZE_VISIBILITY).setStartDistance(HAZE_START_DISTANCE));
+	}
+
+	/**
+	 * Makes random banks of fog for a landscape: between FOG_MIN_COUNT and FOG_MAX_COUNT spherical fogs, each of random
+	 * radius and center: in the middle of the landscape (FOG_AREA_RATIO of its side), at an altitude between lowZ and half the
+	 * way to highZ (the sea level and the highest peak, so that the mist hugs the water and the first slopes).
+	 * A Random with a fixed seed always gives the same fogs.
+	 *
+	 * @param random the source of random numbers
+	 * @param size   side of the landscape, centered on the origin
+	 * @param lowZ   the lowest altitude of the centers of the banks
+	 * @param highZ  the highest altitude of the ground (at least 0.5 above lowZ is used)
+	 * @return the new fogs, never empty
+	 */
+	static List<Fog> generateFogs(Random random, float size, float lowZ, float highZ) {
+		float span = Math.max(highZ - lowZ, 0.5f);
+		int count = FOG_MIN_COUNT + random.nextInt(FOG_MAX_COUNT - FOG_MIN_COUNT + 1);
+		List<Fog> fogs = new ArrayList<Fog>(count);
+		for (int i = 0; i < count; i++) {
+			float radius = FOG_MIN_RADIUS + random.nextFloat() * (FOG_MAX_RADIUS - FOG_MIN_RADIUS);
+			float x = (random.nextFloat() - 0.5f) * size * FOG_AREA_RATIO;
+			float y = (random.nextFloat() - 0.5f) * size * FOG_AREA_RATIO;
+			float z = lowZ + 0.5f * random.nextFloat() * span;
+			float visibility = radius * (FOG_MIN_VISIBILITY_RATIO + random.nextFloat() * (FOG_MAX_VISIBILITY_RATIO - FOG_MIN_VISIBILITY_RATIO));
+			fogs.add(new SphericalFog(new Vector4(x, y, z, 1f), radius, visibility).setColor(FOG_COLOR));
+		}
+		return fogs;
 	}
 
 	private void printLandscapeStatistics() {
@@ -752,6 +806,7 @@ public class FractalLandscape {
 		menu.setMnemonic(KeyEvent.VK_L);
 
 		addMenuItem(menu, "Generate", null, this::generateLandscape);
+		addMenuItem(menu, "Generate fog", null, this::generateFog);
 
 		// Accelerators CTRL + U / CTRL + D: letters are at the same place on every keyboard layout, unlike + and -
 		// (Page Up / Page Down also work, see installKeyboardControls())
@@ -809,8 +864,17 @@ public class FractalLandscape {
 				on -> sun.setShadowFilter(on ? ShadowFilter.PCF_3X3 : ShadowFilter.HARD));
 		menu.addSeparator();
 
-		// Atmosphere: the haze of the distance (the World has an Atmosphere, the RenderContext switches it on)
-		atmosphereItem = addEffectItem(menu, "Atmosphere", rContext.isAtmosphere(), on -> rContext.setAtmosphere(on));
+		// Atmosphere: the haze of the distance and the banks of fog, switched apart (the World has an Atmosphere, whose two
+		// branches have their own switch; the RenderContext switch is on when one of them is)
+		hazeItem = addEffectItem(menu, "Haze", atmosphere.isHaze(), on -> {
+			atmosphere.setHaze(on);
+			updateAtmosphere();
+		});
+		fogItem = addEffectItem(menu, "Fog", atmosphere.isFog(), on -> {
+			if (on && atmosphere.getFogs().isEmpty()) newFogs(); // None yet: make some
+			atmosphere.setFog(on);
+			updateAtmosphere();
+		});
 		menu.addSeparator();
 
 		// Sun: the "light glow" of a directional light is the sun disc in the sky, the LightAppearance its halo and lens flare
@@ -836,7 +900,7 @@ public class FractalLandscape {
 	/**
 	 * Grays out the effects that the current rendering type does not use: the texture is used by the filled rendering
 	 * types (UNLIT, FLAT, INTERPOLATE), the specular highlights and the shadows by the lit ones (FLAT, INTERPOLATE),
-	 * the sun and the atmosphere by all but LINE. The sub-options (soft shadows, halo, lens flare, light shafts) also need their main
+	 * the sun, the haze and the fog by all but LINE. The sub-options (soft shadows, halo, lens flare, light shafts) also need their main
 	 * option.
 	 */
 	private void updateEffectsMenu() {
@@ -846,7 +910,8 @@ public class FractalLandscape {
 		specularItem.setEnabled(lit);
 		shadowsItem.setEnabled(lit);
 		softShadowsItem.setEnabled(lit && shadowsItem.isSelected());
-		atmosphereItem.setEnabled(type != RenderingType.LINE);
+		hazeItem.setEnabled(type != RenderingType.LINE);
+		fogItem.setEnabled(type != RenderingType.LINE);
 		sunItem.setEnabled(type != RenderingType.LINE);
 		boolean sunVisible = sunItem.isEnabled() && sunItem.isSelected();
 		sunHaloItem.setEnabled(sunVisible);
@@ -893,6 +958,35 @@ public class FractalLandscape {
 			updateCamera();
 		}
 		renderer.render();
+	}
+
+	/**
+	 * Replaces the banks of fog of the atmosphere by new random ones (generateFogs()), over the middle of the current landscape, at the current sea level.
+	 */
+	private void newFogs() {
+		atmosphere.clearFogs();
+		for (Fog fog : generateFogs(new Random(), LANDSCAPE_SIZE, seaLevel, landTrellis.getMaxZ())) {
+			atmosphere.addFog(fog);
+		}
+	}
+
+	/**
+	 * Generates new random banks of fog, switches the fog on and renders: it can be repeated until the fog pleases.
+	 */
+	private void generateFog() {
+		newFogs();
+		atmosphere.setFog(true);
+		fogItem.setSelected(true);
+		updateAtmosphere();
+		renderer.render();
+	}
+
+	/**
+	 * The atmosphere is drawn by the RenderContext when at least one of its two branches, the haze and the fogs, is on (there is
+	 * nothing to compute otherwise).
+	 */
+	private void updateAtmosphere() {
+		rContext.setAtmosphere(atmosphere.isHaze() || atmosphere.isFog());
 	}
 
 	/**

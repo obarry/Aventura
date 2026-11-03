@@ -165,8 +165,31 @@ background of the `World`) and `RenderContext.setAtmosphere(true)` (off by defau
 post-process after the main pass (before the landmarks and the visible lights), from the linear depth of the main
 Z-buffer, with the real distance to the camera, computed by rows on several threads (about 2 ms for 1000×562 pixels).
 Demos: `TestAtmosphere` (an avenue), the scenes `haze_avenue` and `haze_landscape` of the `SceneViewer` (Atmosphere
-option), and the Atmosphere option of the Effects menu of `FractalLandscape`. See
-[DESIGN.md, Atmosphere](DESIGN.md#atmosphere-the-haze-of-the-distance). Follow-ups, one at a time:
+option), and, since the fogs, the Haze and Fog items of the Effects menu of `FractalLandscape`.
+
+**Done (November 2026), second step: the atmosphere as a tree, and the fogs.** `Atmosphere` is now the container of the
+air: a `Haze` (the former `Atmosphere`) and a list of `Fog`, all `AtmosphericEffect` (own on/off flag), with the
+switches `Atmosphere.setHaze(boolean)` and `setFog(boolean)` under the global switch of the `RenderContext`, like the
+`Lighting` has an ambient light and several lights. `SphericalFog` (center, radius of action, visibility, color) is a
+volume in the coordinates of the `World` with a parabolic density, so with no visible edge, whose optical depth along
+the ray of each pixel is exact; it hides the sky too, and a camera can cross it. Demo `TestFog` (the avenue with four
+banks), scene `fog_avenue` and the Haze and Fog options of the `SceneViewer`. `FractalLandscape` has the Haze and Fog
+items in its Effects menu (no fog by default) and `Landscape` / `Generate fog`, which draws one to three banks at random
+places and sizes on the hills, to generate again until it pleases (`FractalLandscape.generateFogs()`, reproducible with a
+seed). The [Atmosphere Cookbook](ATMOSPHERE_COOKBOOK.md) and a step-by-step tutorial of the README document it all, with
+tested examples (`AtmosphereCookbook`, `GroundMist`). See
+[DESIGN.md, Atmosphere](DESIGN.md#atmosphere-the-haze-of-the-distance-the-fogs). Follow-ups, one at a time:
+
+- Fogs with a uniform density (a visible volume with a soft edge only at its surface), and other shapes: a box, a
+  horizontal layer (a mist of the valleys that depends on the altitude), a cylinder. Each only implements
+  `Fog.opticalDepth()` and a bounding sphere. A horizontal layer already exists as the `GroundMist` of the cookbook (in
+  the tests: a layer between two altitudes, with a density that falls linearly, an exact integral); making it a built-in
+  class of `com.aventura.model.atmosphere` is a small step.
+- The sun and the halos are not attenuated by a fog or by the haze (they are drawn after the atmosphere): a sun seen
+  through a thick fog should be dimmer and larger. The optical depth to the light of the sun (or of the lamp) would
+  also dim the light that reaches the objects inside the fog (a cheap form of its scattering).
+- Other phenomena as new `AtmosphericEffect`: clouds, rain or snow, a layer of smoke. A fog that moves (drifts, grows)
+  only needs its center and radius to be changed from one image to the next, with no other cost.
 
 - A haze tinted towards the sun (the color of the haze depends on the angle between the view direction and the
   direction of the sun, warmer towards it), which would suit `sun_street`.

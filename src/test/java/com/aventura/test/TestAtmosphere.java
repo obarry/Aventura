@@ -16,12 +16,13 @@ import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.atmosphere.Atmosphere;
+import com.aventura.model.atmosphere.Haze;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.AmbientLight;
 import com.aventura.model.light.DirectionalLight;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.perspective.PerspectiveType;
-import com.aventura.model.world.Atmosphere;
 import com.aventura.model.world.World;
 import com.aventura.model.world.shape.Box;
 import com.aventura.model.world.shape.Trellis;
@@ -103,7 +104,7 @@ public class TestAtmosphere {
 
 	/** The haze: the objects melt into the sky about 220 units away (the contrast is 5% there), clear air for the first 8 units. */
 	public static Atmosphere createAtmosphere() {
-		return new Atmosphere(220f).setStartDistance(8f);
+		return new Atmosphere(new Haze(220f).setStartDistance(8f));
 	}
 
 	/**
