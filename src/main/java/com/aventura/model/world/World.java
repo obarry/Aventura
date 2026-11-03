@@ -30,6 +30,7 @@ import java.util.ArrayList;
 
 import com.aventura.math.transform.Transformation;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.atmosphere.Atmosphere;
 import com.aventura.tools.tracing.Tracer;
 
 /**
@@ -53,7 +54,7 @@ public class World {
 	protected Color backgroundColor = Color.BLACK; // Color of the background ("sky")
 	protected Color worldColor = Color.WHITE; // Color of the world's elements unless specified at Element or Vertex level (lowest level priority)
 
-	protected Atmosphere atmosphere = null; // The air of this world (haze with the distance), drawn if RenderContext.setAtmosphere(true)
+	protected Atmosphere atmosphere = null; // The air of this world (haze with the distance, fogs), drawn if RenderContext.setAtmosphere(true)
 
 	public World() {
 		this.name = "world";
@@ -133,8 +134,9 @@ public class World {
 	}
 	
 	/**
-	 * The air of this world: with RenderContext.setAtmosphere(true), the colors fade towards the color of the air as
-	 * the objects get farther from the camera. Null (the default) for clear air.
+	 * The air of this world, with its haze and its fogs: with RenderContext.setAtmosphere(true), the colors fade towards
+	 * the color of the air as the objects get farther from the camera, and the fogs dim what is seen through them.
+	 * Null (the default) for clear air.
 	 */
 	public void setAtmosphere(Atmosphere atmosphere) {
 		this.atmosphere = atmosphere;

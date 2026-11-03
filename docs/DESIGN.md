@@ -74,6 +74,7 @@ flowchart TB
     subgraph MODEL["Model layer"]
         WORLD["model.world (+ shape, triangle)<br/>World · Element · Triangle · Vertex"]
         LIGHT["model.light<br/>Lighting · Ambient/Directional/Point/SpotLight"]
+        ATMO["model.atmosphere<br/>Atmosphere · Haze · Fog (SphericalFog)"]
         MAT["model.material · model.texture"]
         CAM["model.camera · model.perspective"]
     end
@@ -112,6 +113,7 @@ pie showData
 | `math.projection` | Frustum and orthographic projection matrices |
 | `model.world` | `World`, hierarchical `Element`, `Triangle`, `Vertex`; built-in shapes and meshes |
 | `model.light` | Light types and the `Lighting` system that gathers them |
+| `model.atmosphere` | The `Atmosphere` of a world and its phenomena: `Haze`, `Fog` / `SphericalFog` (see §6) |
 | `model.material`, `model.texture` | `SolidMaterial`, `TexturedMaterial`, image `Texture` |
 | `model.camera`, `model.perspective` | `Camera` / `LookAt`, `FrustumPerspective`, `OrthographicPerspective` |
 | `context` | `RenderContext` (how to rasterize) and `PerspectiveContext` (how to project) |
@@ -298,7 +300,7 @@ sequenceDiagram
         end
     end
     opt atmosphere enabled and defined by the World
-        RE->>V: haze of the distance (AtmosphereRenderer)
+        RE->>V: haze, then fogs (AtmosphereRenderer)
     end
     RE->>V: overlays (axes, normals, light vectors)
     RE->>V: renderView()  (swap buffers)
@@ -568,7 +570,45 @@ visibility. Like the halo, the beams are added over the objects too.
 
 Not done yet (see [BACKLOG.md](BACKLOG.md)): emissive geometry beyond the core of the light.
 
-### Atmosphere (the haze of the distance)
+### Atmosphere (the haze of the distance, the fogs)
+
+The air of the scene is a tree, like the `Lighting` (one ambient light, several lights):
+
+```mermaid
+classDiagram
+    class Atmosphere {
+        setHaze(boolean), setFog(boolean)
+        addFog(Fog)
+    }
+    class AtmosphericEffect {
+        <<abstract>>
+        setEnabled(boolean)
+    }
+    class Haze
+    class Fog {
+        <<abstract>>
+        color, visibility
+        opticalDepth(ray)
+    }
+    class SphericalFog
+    Atmosphere o-- "0..1" Haze
+    Atmosphere o-- "*" Fog
+    AtmosphericEffect <|-- Haze
+    AtmosphericEffect <|-- Fog
+    Fog <|-- SphericalFog
+```
+
+`Atmosphere` holds a `Haze` and a list of `Fog`; each has its own on/off flag (`AtmosphericEffect`), each branch a
+switch (`setHaze(boolean)`, `setFog(boolean)`, for a menu of an application) and the `RenderContext` the global one.
+An effect is drawn when all the switches above it are on (`Atmosphere.isHaze()`, `getActiveFogs()`).
+
+**Adding a phenomenon** (clouds, rain, a mist that hugs the ground...): a class extending `AtmosphericEffect` (or `Fog`
+for another shape of fog: a box, a layer, a cylinder, which only implement `opticalDepth()` and a bounding sphere), a
+branch in `Atmosphere` (a field with its switch, or a list), a pass in `AtmosphereRenderer` in the physical order (from
+the farthest layer to the nearest), a checkbox in the `SceneViewer` and a test. A new `Fog` needs none of that: the
+[Atmosphere Cookbook](ATMOSPHERE_COOKBOOK.md) writes one (recipe 5, a mist that hugs the ground) with the contracts it
+must fulfill (a bounding sphere that contains it, an exact optical depth, never `NaN`, no state: it is called from
+several threads).
 
 The impression of distance of a landscape, where the colors fade towards the color of the air and the contrasts
 weaken as the objects get farther, is a post-process, like the visible lights: `World.setAtmosphere(Atmosphere)`
@@ -592,7 +632,7 @@ with the haze color, `c = c + (haze - c) · f(distance)`. Three points of the de
   exceeds the maximum factor (0.95 by default). The factor is computed once per frame in a table of 4096 entries from 0
   to far, so there is no `exp()` per pixel.
 - **The haze color** is by default the background color of the `World`, so that the far objects melt into the sky
-  without a visible edge; a background that is not a sky (black) needs `Atmosphere.setColor()`.
+  without a visible edge; a background that is not a sky (black) needs `Haze.setColor()`.
 
 The pixels are read and written directly in the back buffer (`GUIView.getBackPixels()`, implemented by `ImageView`;
 a view that does not give access to its pixels is skipped), by rows that are independent of each other, so they are
@@ -602,8 +642,29 @@ consumers instead would have changed the hot loops of the rasterization, paid fo
 and left the edge lines and the overlays out; the post-process is one pass for every rendering type but `LINE` (no
 Z-buffer), and, like the visible lights, it is not drawn under an orthographic perspective.
 
-Not done yet (see [BACKLOG.md](BACKLOG.md)): a haze tinted towards the sun, a mist that depends on the altitude, a
-different extinction for each color channel, and the attenuation of the halos of the point lights by the haze.
+**The fogs** are drawn after the haze, one pass each, from the farthest to the nearest (by the distance of the center
+to the eye). A fog is a volume in the coordinates of the `World`, held by the `Atmosphere`, not by the tree of the
+geometry: it does not move with the elements. For each pixel the renderer rebuilds the ray of the eye,
+`eye + s · (forward + x/focal · side + y/focal · up)`, which meets the drawn surface at `s = W` (the direction is not
+normalized, its component along `forward` is 1, which is why the depth of the Z-buffer is the parameter of the ray) and
+at infinity for the sky. A fog gives the optical depth `t` of the ray between the eye and that point, and the color
+becomes `c · exp(-t) + fog · (1 - exp(-t))` (Beer-Lambert, with a table of `exp` of 4096 entries). The sky is hidden by a
+fog like the objects, which the haze cannot do; a surface in front of the fog has a ray that never meets it, and one
+inside it only sees the part of the fog in front of it.
+
+`SphericalFog` has a parabolic density, `ρ(r) = σ0 (1 - r² / R²)` with `σ0 = 3 / visibility`: highest at the center,
+zero at the surface, so the fog has no visible edge from any side (a constant density would show the sphere as a disc).
+Its optical depth is computed exactly: for a ray at distance `b` of the center, with `u0` and `u1` the real distances,
+along the ray from its closest point to the center, to the entry (or the eye) and to the exit (or the surface),
+`t = σ0 [ (1 - b²/R²) (u1 - u0) - (u1³ - u0³) / (3 R²) ]`, and through the center `t = 4R / visibility`. There is no
+ray marching, so the image does not depend on any sampling, a camera inside the fog sees the same formula, and the
+cost is a few multiplications and a square root per pixel. A fog is only looked for in the rectangle where its
+bounding cube projects when the cube is entirely in front of the eye (the whole image otherwise), so a small distant
+bank costs almost nothing. The rows are independent and computed by several threads, with the same image.
+
+Not done yet (see [BACKLOG.md](BACKLOG.md)): a haze tinted towards the sun, a mist that depends on the altitude (a
+fog with a different shape would do), a different extinction for each color channel, the attenuation of the sun and of
+the halos by the haze and the fogs, and fogs with a uniform density.
 
 ---
 
@@ -816,6 +877,7 @@ flowchart LR
         E3["FragmentConsumer<br/>new per-pixel pass"]
         E4["GUIView<br/>new display backend"]
         E5["Light / ShadowingLight<br/>new light type"]
+        E6["Fog<br/>new kind of fog"]
     end
     subgraph CORE["Aventura core"]
         C1[Element / World]
@@ -823,12 +885,14 @@ flowchart LR
         C3[TriangleRasterizer]
         C4[RenderEngine]
         C5[Lighting]
+        C6[AtmosphereRenderer]
     end
     E1 --> C1
     E2 --> C2
     E3 --> C3
     E4 --> C4
     E5 --> C5
+    E6 --> C6
 ```
 
 | To add… | Extend / implement | What you write | Example |
@@ -838,10 +902,13 @@ flowchart LR
 | A pass | `FragmentConsumer` | `consume(Fragment)` — e.g. a normal buffer, an ID buffer for picking | `DepthOnlyConsumer` |
 | A display | `ImageView` (or `GUIView`) | `frameRendered` (or `initView`, `drawPixel`, `drawLine`, `renderView`) | `SwingView` |
 | A light | `Light` or `ShadowingLight` | `getLightVectorAtPoint`, `getIntensity` (+ shadow map) | `SpotLight` |
+| A fog | `Fog` | `getBoundingCenter`, `getBoundingRadius`, `opticalDepth` (exact integral of the density along a ray) | `SphericalFog`, `GroundMist` (cookbook) |
 
 Custom geometry without subclassing is also possible: feed `Element.addVertex()` and
 `Element.addTriangle()` directly. The [Geometry Cookbook](GEOMETRY_COOKBOOK.md) details the
-contracts of a new shape, inheritance and assembly, with tested examples.
+contracts of a new shape, inheritance and assembly, with tested examples; the
+[Atmosphere Cookbook](ATMOSPHERE_COOKBOOK.md) does the same for the haze, the fogs, their switches and a new kind
+of fog (a ground mist).
 
 ---
 
@@ -862,6 +929,7 @@ pie showData
     "Demo logic (camera, flight path, mouse drag…)" : 44
     "Transforms (T, R, S)" : 13
     "Geometry Cookbook examples" : 13
+    "Atmosphere Cookbook examples" : 10
     "Camera, perspective, elements" : 10
     "Z-buffer" : 8
 ```
@@ -898,7 +966,7 @@ timeline
          : SpotLight, UrbanScape, 370+ unit tests
          : Spot and point light shadows (perspective and cube maps), soft shadows (PCF), 430+ unit tests
          : Visible lights: halos, sun with lens flare and light shafts, 470+ unit tests
-         : Atmosphere: the haze of the distance, 500+ unit tests
+         : Atmosphere: the haze of the distance, spherical fogs, 540+ unit tests
          : Rendering types: MONOCHROME (hidden-line), UNLIT
 ```
 
@@ -920,7 +988,7 @@ xychart-beta
 | Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
 | Shadows | All lights (orthographic, perspective and cube maps); hard edges by default, optional PCF 3×3 with a fixed-width penumbra |
 | Lights | Invisible by default; optional halo of point and spot lights, and disc, halo, lens flare and optional light shafts of the sun (`setLightGlow`), hidden by the objects |
-| Atmosphere | A haze that depends on the distance only (one color, same extinction for each channel), as a post-process (`World.setAtmosphere`, `RenderContext.setAtmosphere`); not in `LINE` rendering nor orthographic |
+| Atmosphere | A haze that depends on the distance only and spherical fogs with a soft edge (one color each, same extinction for each channel, no scattering of the light of the sun), as a post-process (`World.setAtmosphere`, `RenderContext.setAtmosphere`); not in `LINE` rendering nor orthographic |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
 | Assets | Textures loaded from file paths, not from the classpath |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |
@@ -943,7 +1011,7 @@ flowchart LR
     end
     subgraph LATER["Ideas"]
         l1[Other GUIView backends<br/>JavaFX, image sequence]
-        l2[Haze tinted by the sun,<br/>mist by altitude]
+        l2[Haze tinted by the sun,<br/>other phenomena: clouds, rain]
         l3[Model import<br/>OBJ]
     end
     NOW --> NEXT --> LATER

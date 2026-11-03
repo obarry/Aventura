@@ -3,12 +3,16 @@ package com.aventura.demo;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.atmosphere.Atmosphere;
+import com.aventura.model.atmosphere.Fog;
+import com.aventura.model.atmosphere.SphericalFog;
 
 /**
  * Unit tests of the pure geometry helpers of FractalLandscape (mouse drag angle, orbit and fly camera,
@@ -221,5 +225,58 @@ public class TestFractalLandscape {
 				assertTrue("vertex " + i + ", " + j + " is above 0", altitudes[i][j] >= 0);
 			}
 		}
+	}
+
+	@Test
+	public void testGenerateFogs_isReproducibleWithASeed() {
+		System.out.println("***** Test FractalLandscape : the random fogs are reproducible with a seed, and differ with another *****");
+		List<Fog> a = FractalLandscape.generateFogs(new Random(5), 4f, 1.5f, 3f);
+		List<Fog> b = FractalLandscape.generateFogs(new Random(5), 4f, 1.5f, 3f);
+		assertEquals(a.size(), b.size());
+		for (int i = 0; i < a.size(); i++) {
+			assertEquals(a.get(i).toString(), b.get(i).toString());
+		}
+		boolean different = false;
+		for (long seed = 6; seed < 16 && !different; seed++) {
+			List<Fog> c = FractalLandscape.generateFogs(new Random(seed), 4f, 1.5f, 3f);
+			different = c.size() != a.size() || !c.get(0).toString().equals(a.get(0).toString());
+		}
+		assertTrue("Another seed gives other fogs", different);
+	}
+
+	@Test
+	public void testGenerateFogs_areWithinTheLandscapeAndTheLimits() {
+		System.out.println("***** Test FractalLandscape : the random fogs stay in the landscape, with the radius, density and count limits *****");
+		float size = 4f, lowZ = 1.5f, highZ = 3f;
+		int minCount = Integer.MAX_VALUE, maxCount = 0;
+		for (long seed = 0; seed < 300; seed++) {
+			List<Fog> fogs = FractalLandscape.generateFogs(new Random(seed), size, lowZ, highZ);
+			minCount = Math.min(minCount, fogs.size());
+			maxCount = Math.max(maxCount, fogs.size());
+			assertTrue(fogs.size() >= FractalLandscape.FOG_MIN_COUNT && fogs.size() <= FractalLandscape.FOG_MAX_COUNT);
+			for (Fog fog : fogs) {
+				SphericalFog f = (SphericalFog) fog;
+				assertTrue(f.isEnabled());
+				assertEquals(FractalLandscape.FOG_COLOR, f.getColor());
+				assertTrue(f.getRadius() >= FractalLandscape.FOG_MIN_RADIUS && f.getRadius() <= FractalLandscape.FOG_MAX_RADIUS);
+				Vector4 c = f.getCenter();
+				float half = size * FractalLandscape.FOG_AREA_RATIO / 2;
+				assertTrue("In the middle of the landscape", Math.abs(c.getX()) <= half && Math.abs(c.getY()) <= half);
+				assertTrue("Between the sea level and half the way to the peaks: " + c.getZ(), c.getZ() >= lowZ && c.getZ() <= lowZ + 0.5f * (highZ - lowZ));
+				float ratio = f.getVisibility() / f.getRadius();
+				assertTrue("Density: " + ratio, ratio >= FractalLandscape.FOG_MIN_VISIBILITY_RATIO - 1e-4f && ratio <= FractalLandscape.FOG_MAX_VISIBILITY_RATIO + 1e-4f);
+			}
+		}
+		assertEquals("The smallest count is reached", FractalLandscape.FOG_MIN_COUNT, minCount);
+		assertEquals("The largest count is reached", FractalLandscape.FOG_MAX_COUNT, maxCount);
+	}
+
+	@Test
+	public void testCreateAtmosphere_hasAHazeAndNoFog() {
+		System.out.println("***** Test FractalLandscape : the atmosphere of the demo has a haze and no fog *****");
+		Atmosphere atmosphere = FractalLandscape.createAtmosphere();
+		assertNotNull(atmosphere.getHaze());
+		assertTrue(atmosphere.getFogs().isEmpty());
+		assertFalse(atmosphere.isFog());
 	}
 }

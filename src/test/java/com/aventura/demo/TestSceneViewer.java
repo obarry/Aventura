@@ -192,6 +192,25 @@ public class TestSceneViewer {
 	}
 
 	@Test
+	public void testHazeAndFog_optionsAndSceneDefaults() {
+		System.out.println("***** Test SceneViewer : the haze and fog options follow the other changes, and the scene fills them only when undefined *****");
+		SceneViewer.ViewState s = SceneViewer.ViewState.of("fog_avenue");
+		assertNull(s.haze);
+		assertNull(s.fog);
+		SceneViewer.ViewState chosen = s.withHaze(false).withFog(true).withCamera(1, 2, 3).withAtmosphere(true).withLightGlow(true).withLightShafts(true)
+				.withSoftShadows(true).withOptions(RenderingType.FLAT, true, true, true);
+		assertEquals(Boolean.FALSE, chosen.haze);
+		assertEquals(Boolean.TRUE, chosen.fog);
+		assertEquals(Boolean.FALSE, chosen.withHazeDefault(true).haze);
+		assertEquals(Boolean.TRUE, chosen.withFogDefault(false).fog);
+		assertEquals(Boolean.TRUE, s.withHazeDefault(true).haze);
+		assertEquals(Boolean.FALSE, s.withFogDefault(false).fog);
+		assertEquals("The haze is kept when the fog changes", Boolean.FALSE, chosen.withFog(false).haze);
+		assertEquals("The fog is kept when the haze changes", Boolean.TRUE, chosen.withHaze(true).fog);
+		assertEquals("The atmosphere is kept", Boolean.TRUE, chosen.withFog(false).atmosphere);
+	}
+
+	@Test
 	public void testSoftShadows_appliedToEveryShadowingLight() {
 		System.out.println("***** Test SceneViewer : the soft shadows option sets the filter of every light casting shadows *****");
 

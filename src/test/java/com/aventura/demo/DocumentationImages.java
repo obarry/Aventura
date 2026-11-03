@@ -14,11 +14,14 @@ import javax.imageio.ImageIO;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
+import com.aventura.cookbook.AtmosphereCookbook;
 import com.aventura.cookbook.CookbookGallery;
 import com.aventura.math.transform.Transformation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.atmosphere.Atmosphere;
+import com.aventura.model.atmosphere.Fog;
 import com.aventura.model.perspective.PerspectiveType;
 import com.aventura.model.world.World;
 import com.aventura.model.world.WrongArraySizeException;
@@ -30,6 +33,7 @@ import com.aventura.model.light.PointLight;
 import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.light.SpotLight;
 import com.aventura.test.TestAtmosphere;
+import com.aventura.test.TestFog;
 import com.aventura.test.TestLightingPoint1Shadows;
 import com.aventura.test.TestLightingSpot1;
 import com.aventura.test.TestLightingSpot3Shadows;
@@ -76,6 +80,12 @@ import com.aventura.test.TestLightingSun;
  *     sun_street.jpg          TestLightingSun, the visible sun (disc, halo, lens flare, light shafts) in a street between tower blocks
  *     haze_avenue.jpg         TestAtmosphere, the haze of the distance on a long avenue between buildings
  *     haze_landscape.jpg      FractalLandscape, the haze of the distance on the hills and the sea (as the Atmosphere option of the demo)
+ *     fog_avenue.jpg          TestFog, banks of fog (SphericalFog) over the avenue, with the haze
+ *     fog_landscape.jpg       FractalLandscape, random banks of fog on the hills (as Landscape / Generate fog of the demo), with the haze
+ *     atmosphere_steps.jpg    AtmosphereCookbook, the same scene in four steps: clear air, haze, fog, haze and fog
+ *     ground_mist.jpg         AtmosphereCookbook, a new kind of fog (GroundMist) written outside the engine: a mist that hugs the ground
+ *     haze_compare.jpg        TestAtmosphere, the avenue without the atmosphere (left) and with its haze (right)
+ *     fog_compare.jpg         TestFog, the avenue without any atmosphere (left) and with its banks of fog only (right)
  *     cookbook_gallery.png    CookbookGallery (the examples of the Geometry Cookbook)
  *
  * Run it from the project root (the textures are read from resources/texture), headless:
@@ -106,14 +116,22 @@ public class DocumentationImages {
 	 * would show its edge, with nothing below it.
 	 */
 	static final long FRACTAL_SEED = 1862;
+	/** Seed of the random fogs of the fog landscape image: banks that show well on the hills (see FractalLandscape.generateFogs()) */
+	static final long FOG_LANDSCAPE_SEED = 5;
 	/** Images of the TestLightingSpot3Shadows and TestLightingPoint1Shadows animations (0 .. NB_IMAGES) */
 	static final int SPOT_SHADOWS_IMAGE = 20;
 	static final int POINT_SHADOWS_IMAGE = 45;
 	/** Angle of the camera of the TestLightingSun sweep (degrees, from -30 to +5): the sun is partly hidden by a building, with its flare and shafts */
 	static final float SUN_STREET_YAW = -12.5f;
+	/** Camera of the fog avenue image: in the avenue, just before the first bank of fog */
+	static final Vector4 FOG_AVENUE_EYE = new Vector4(0f, -6f, 2.2f, 1);
+	static final Vector4 FOG_AVENUE_POI = new Vector4(0f, 38f, 3f, 1);
 	/** Camera of the haze landscape image: the one of the demo (FractalLandscape.INITIAL_EYE), a little to the side */
 	static final Vector4 HAZE_LANDSCAPE_EYE = new Vector4(6.2f, -1.6f, 3.0f, 1);
 	static final Vector4 HAZE_LANDSCAPE_POI = FractalLandscape.POINT_OF_INTEREST;
+	/** Camera of the fog landscape image: closer and higher than the haze one, above the banks of fog */
+	static final Vector4 FOG_LANDSCAPE_EYE = new Vector4(3.4f, -3.4f, 3.4f, 1);
+	static final Vector4 FOG_LANDSCAPE_POI = new Vector4(0, 0, 1.4f, 1);
 	/** Size of the shadow map of the spot light in the soft shadows image: coarse on purpose, to make the filtering visible */
 	static final int SOFT_SHADOWS_MAP_SIZE = 200;
 
@@ -136,6 +154,9 @@ public class DocumentationImages {
 		scenes.put("sun_street.jpg", () -> sunStreet(SUN_STREET_YAW, 1250));
 		scenes.put("haze_avenue.jpg", () -> hazeAvenue(1000));
 		scenes.put("haze_landscape.jpg", () -> hazeLandscape(FRACTAL_SEED));
+		scenes.put("fog_avenue.jpg", () -> fogAvenue(1000));
+		scenes.put("ground_mist.jpg", () -> AtmosphereCookbook.createScene(AtmosphereCookbook.createGroundMistAtmosphere(), 1000));
+		scenes.put("fog_landscape.jpg", () -> fogLandscape(FRACTAL_SEED, FOG_LANDSCAPE_SEED));
 		scenes.put("cookbook_gallery.png", () -> CookbookGallery.createScene(1000));
 		return scenes;
 	}
@@ -145,6 +166,9 @@ public class DocumentationImages {
 		Map<String, Supplier<BufferedImage>> images = new LinkedHashMap<>();
 		images.put("hello_aventura.png", DocumentationImages::helloAventura);
 		images.put("soft_shadows.png", DocumentationImages::softShadows);
+		images.put("atmosphere_steps.jpg", DocumentationImages::atmosphereSteps);
+		images.put("haze_compare.jpg", DocumentationImages::hazeCompare);
+		images.put("fog_compare.jpg", DocumentationImages::fogCompare);
 		for (Map.Entry<String, Supplier<DemoScene>> scene : scenes().entrySet()) {
 			images.put(scene.getKey(), () -> scene.getValue().get().render());
 		}
@@ -265,12 +289,39 @@ public class DocumentationImages {
 	}
 
 	/**
+	 * The scene of TestFog: the avenue of TestAtmosphere with four banks of fog (SphericalFog) in the World, seen from a point of the
+	 * avenue just before the first bank. The atmosphere has the haze and the fogs, switched on (the Haze and Fog options of the
+	 * SceneViewer switch each of them off).
+	 */
+	static DemoScene fogAvenue(int pixelsPerUnit) {
+		PerspectiveContext perspective = new PerspectiveContext(0.8f, 0.45f, 1, 260, PerspectiveType.FRUSTUM, pixelsPerUnit);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE).setAtmosphere(true);
+		return new DemoScene(TestFog.createWorld(), TestAtmosphere.createLighting(), FOG_AVENUE_EYE, FOG_AVENUE_POI, rContext, perspective);
+	}
+
+	/**
 	 * The landscape of FractalLandscape (the same land colors, sea, sky, sun and atmosphere, from a fixed seed), seen from the side
 	 * of the island, so that the far hills are farther than the near ones: with the atmosphere they get paler and
 	 * bluer, like in a real landscape (the Atmosphere option of the SceneViewer shows the difference). The sun is visible, as in
 	 * the demo. The image of the documentation is the 1000 x 260 band around the island (crop): the SceneViewer shows the whole view.
 	 */
 	static DemoScene hazeLandscape(long seed) {
+		return landscapeWithAtmosphere(seed, null, HAZE_LANDSCAPE_EYE, HAZE_LANDSCAPE_POI, true);
+	}
+
+	/**
+	 * The same landscape, with the random fogs of the demo (FractalLandscape.generateFogs()) made from the given seed, switched on with the
+	 * haze: the Landscape / Generate fog menu of the demo, at the seed that gives this image.
+	 */
+	static DemoScene fogLandscape(long seed, long fogSeed) {
+		return fogLandscape(seed, fogSeed, FOG_LANDSCAPE_EYE, FOG_LANDSCAPE_POI);
+	}
+
+	static DemoScene fogLandscape(long seed, long fogSeed, Vector4 eye, Vector4 poi) {
+		return landscapeWithAtmosphere(seed, fogSeed, eye, poi, false);
+	}
+
+	private static DemoScene landscapeWithAtmosphere(long seed, Long fogSeed, Vector4 eye, Vector4 poi, boolean band) {
 		float size = FractalLandscape.LANDSCAPE_SIZE;
 		int n = FractalLandscape.LANDSCAPE_DIVISIONS;
 		float[][] altitudes = new float[n + 1][n + 1];
@@ -295,10 +346,16 @@ public class DocumentationImages {
 		world.setAtmosphere(FractalLandscape.createAtmosphere());
 		world.build();
 		FractalLandscape.colorTrianglesByAltitude(land);
+		if (fogSeed != null) {
+			for (Fog fog : FractalLandscape.generateFogs(new Random(fogSeed), size, FractalLandscape.INITIAL_SEA_LEVEL, land.getMaxZ())) {
+				world.getAtmosphere().addFog(fog);
+			}
+		}
 
 		RenderContext rContext = FractalLandscape.createRenderContext().setAtmosphere(true);
-		return new DemoScene(world, FractalLandscape.createLighting(FractalLandscape.createSun()), HAZE_LANDSCAPE_EYE, HAZE_LANDSCAPE_POI,
-				rContext, FractalLandscape.createPerspectiveContext()).crop(0, 140, 1000, 260);
+		DemoScene scene = new DemoScene(world, FractalLandscape.createLighting(FractalLandscape.createSun()), eye, poi, rContext,
+				FractalLandscape.createPerspectiveContext());
+		return band ? scene.crop(0, 140, 1000, 260) : scene;
 	}
 
 	/** The scene of TestLightingSpot3Shadows: a spot light (and a dim moonlight) sweeping a floor of five objects, at image i of the animation. */
@@ -338,6 +395,63 @@ public class DocumentationImages {
 		g.fillRect(0, 0, out.getWidth(), out.getHeight());
 		g.drawImage(hard.getSubimage(x, y, w, h), 0, 0, w * scale, h * scale, null);
 		g.drawImage(soft.getSubimage(x, y, w, h), w * scale + gap, 0, w * scale, h * scale, null);
+		g.dispose();
+		return out;
+	}
+
+	/**
+	 * The avenue of TestAtmosphere without the atmosphere (left) and with its haze (right): the same camera, the buildings fade into the
+	 * sky as they get farther. Each half is the 600 x 338 image of the scene.
+	 */
+	static BufferedImage hazeCompare() {
+		DemoScene without = hazeAvenue(750);
+		without.getRenderContext().setAtmosphere(false);
+		return sideBySide(without.render(), hazeAvenue(750).render());
+	}
+
+	/**
+	 * The avenue of TestFog without any atmosphere (left) and with its banks of fog only (right, the haze is put out with
+	 * Atmosphere.setHaze(false)): a fog dims what is behind it, the sky included, and has no visible edge.
+	 */
+	static BufferedImage fogCompare() {
+		DemoScene without = fogAvenue(750);
+		without.getRenderContext().setAtmosphere(false);
+		DemoScene with = fogAvenue(750);
+		with.getWorld().getAtmosphere().setHaze(false);
+		return sideBySide(without.render(), with.render());
+	}
+
+	/**
+	 * The scene of the tutorial of the README (AtmosphereCookbook) in four steps, in a grid: clear air, the haze, the bank of fog,
+	 * then both. Each panel is 600 x 337 pixels.
+	 */
+	static BufferedImage atmosphereSteps() {
+		Atmosphere haze = new Atmosphere(AtmosphereCookbook.createHaze());
+		Atmosphere fog = new Atmosphere().addFog(AtmosphereCookbook.createFogBank());
+		BufferedImage clear = AtmosphereCookbook.createScene(null, 750).render();
+		BufferedImage hazy = AtmosphereCookbook.createScene(haze, 750).render();
+		BufferedImage foggy = AtmosphereCookbook.createScene(fog, 750).render();
+		BufferedImage both = AtmosphereCookbook.createScene(AtmosphereCookbook.createAtmosphere(), 750).render();
+		BufferedImage top = sideBySide(clear, hazy), bottom = sideBySide(foggy, both);
+		BufferedImage out = new BufferedImage(top.getWidth(), top.getHeight() * 2 + 6, BufferedImage.TYPE_INT_RGB);
+		java.awt.Graphics2D g = out.createGraphics();
+		g.setColor(java.awt.Color.WHITE);
+		g.fillRect(0, 0, out.getWidth(), out.getHeight());
+		g.drawImage(top, 0, 0, null);
+		g.drawImage(bottom, 0, top.getHeight() + 6, null);
+		g.dispose();
+		return out;
+	}
+
+	/** Two images of the same size side by side, with a thin white gap */
+	static BufferedImage sideBySide(BufferedImage left, BufferedImage right) {
+		int gap = 6;
+		BufferedImage out = new BufferedImage(left.getWidth() + gap + right.getWidth(), left.getHeight(), BufferedImage.TYPE_INT_RGB);
+		java.awt.Graphics2D g = out.createGraphics();
+		g.setColor(java.awt.Color.WHITE);
+		g.fillRect(0, 0, out.getWidth(), out.getHeight());
+		g.drawImage(left, 0, 0, null);
+		g.drawImage(right, left.getWidth() + gap, 0, null);
 		g.dispose();
 		return out;
 	}
