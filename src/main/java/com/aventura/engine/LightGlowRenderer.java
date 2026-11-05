@@ -138,25 +138,30 @@ public class LightGlowRenderer {
 	 * Draws the lights of the lighting into the view. To be called when the frame is complete (after the
 	 * rasterization of the objects), with the ViewProjection already refreshed for this frame.
 	 *
+	 * The pixels of each effect (glow, core, disc, ghosts, shafts) are computed by bands of rows, by the threads of
+	 * bands if any (see BandRasterizer.runRows()): each pixel receives the same additions in the same order, so the
+	 * image does not depend on the number of threads.
+	 *
+	 * @param bands the threads of the RenderEngine, or null to draw in the calling thread alone
 	 * @return the number of lights drawn (visible, at least partly)
 	 */
-	public int render(Lighting lighting, Camera camera, RenderContext renderContext, ZBuffer zBuffer) {
+	public int render(Lighting lighting, Camera camera, RenderContext renderContext, ZBuffer zBuffer, BandRasterizer bands) {
 		if (perspectiveCtx.getPerspectiveType() != PerspectiveType.FRUSTUM) return 0;
 		int drawn = 0;
 		// The Spot lights are in the same list as the Point lights
 		for (PointLight light : lighting.getPointLights()) {
 			LightGlowMode mode = resolveMode(light, renderContext);
 			if (mode != LightGlowMode.HALO && mode != LightGlowMode.EMISSIVE) continue;
-			if (drawPointLight(light, mode, camera, zBuffer)) drawn++;
+			if (drawPointLight(light, mode, camera, zBuffer, bands)) drawn++;
 		}
 		for (DirectionalLight light : lighting.getDirectionalLights()) {
 			if (resolveMode(light, renderContext) != LightGlowMode.SUN) continue;
-			if (drawSun(light, renderContext, zBuffer)) drawn++;
+			if (drawSun(light, renderContext, zBuffer, bands)) drawn++;
 		}
 		return drawn;
 	}
 
-	private boolean drawPointLight(PointLight light, LightGlowMode mode, Camera camera, ZBuffer zBuffer) {
+	private boolean drawPointLight(PointLight light, LightGlowMode mode, Camera camera, ZBuffer zBuffer, BandRasterizer bands) {
 		LightAppearance appearance = light.getAppearance() != null ? light.getAppearance() : new LightAppearance();
 
 		Vector4 clip = viewProjection.project(light.getPosition());
@@ -188,11 +193,8 @@ public class LightGlowRenderer {
 		Color color = appearance.getColor() != null ? appearance.getColor() : light.getLightColor();
 		float cr = color.getRed() / 255f, cg = color.getGreen() / 255f, cb = color.getBlue() / 255f;
 
-		float gain = appearance.getGain();
-		if (light instanceof SpotLight) {
-			// A Spot light seen from outside of its cone looks dimmer
-			gain *= ((SpotLight) light).coneFactor(camera.getEye());
-		}
+		// A Spot light seen from outside of its cone looks dimmer
+		float gain = appearance.getGain() * (light instanceof SpotLight ? ((SpotLight) light).coneFactor(camera.getEye()) : 1f);
 
 		boolean halo = mode == LightGlowMode.HALO;
 		float extent = halo ? Math.max(GLOW_EXTENT * glowRadius, coreRadius * 1.4f) : coreRadius * 1.4f;
@@ -200,7 +202,7 @@ public class LightGlowRenderer {
 		int x0 = Math.max(cx - (int) Math.ceil(extent), -halfWidth), x1 = Math.min(cx + (int) Math.ceil(extent), halfWidth);
 		int y0 = Math.max(cy - (int) Math.ceil(extent), -halfHeight), y1 = Math.min(cy + (int) Math.ceil(extent), halfHeight);
 
-		for (int y = y0; y <= y1; y++) {
+		BandRasterizer.runRows(bands, y0, y1 + 1, y -> {
 			for (int x = x0; x <= x1; x++) {
 				if (!inScreen(x, y)) continue;
 				float dx = x - sx, dy = y - sy;
@@ -220,7 +222,7 @@ public class LightGlowRenderer {
 					view.addPixel(x, y, c * (0.35f + 0.65f * cr), c * (0.35f + 0.65f * cg), c * (0.35f + 0.65f * cb));
 				}
 			}
-		}
+		});
 		return true;
 	}
 
@@ -232,7 +234,7 @@ public class LightGlowRenderer {
 	 * the disc (a little larger than the sun) where nothing was drawn (depth = far), so the sun is hidden by
 	 * anything in front of the sky.
 	 */
-	private boolean drawSun(DirectionalLight light, RenderContext renderContext, ZBuffer zBuffer) {
+	private boolean drawSun(DirectionalLight light, RenderContext renderContext, ZBuffer zBuffer, BandRasterizer bands) {
 		LightAppearance appearance = light.getAppearance() != null ? light.getAppearance() : new LightAppearance();
 
 		Vector3 toSun = light.getLightVectorAtPoint(null); // unit vector, from the scene towards the light
@@ -271,7 +273,7 @@ public class LightGlowRenderer {
 		int x0 = Math.max(cx - (int) Math.ceil(extent), -halfWidth), x1 = Math.min(cx + (int) Math.ceil(extent), halfWidth);
 		int y0 = Math.max(cy - (int) Math.ceil(extent), -halfHeight), y1 = Math.min(cy + (int) Math.ceil(extent), halfHeight);
 
-		for (int y = y0; y <= y1; y++) {
+		BandRasterizer.runRows(bands, y0, y1 + 1, y -> {
 			for (int x = x0; x <= x1; x++) {
 				if (!inScreen(x, y)) continue;
 				float dx = x - sx, dy = y - sy;
@@ -289,13 +291,13 @@ public class LightGlowRenderer {
 					view.addPixel(x, y, c, c, c);
 				}
 			}
-		}
+		});
 		if (appearance.getFlareGain() > 0f) {
-			drawLensFlare(sx, sy, visibility * appearance.getFlareGain());
+			drawLensFlare(sx, sy, visibility * appearance.getFlareGain(), bands);
 		}
 		float shaftsGain = resolveShaftsGain(appearance, renderContext);
 		if (shaftsGain > 0f) {
-			drawLightShafts(sx, sy, visibility * shaftsGain, cr, cg, cb, zBuffer);
+			drawLightShafts(sx, sy, visibility * shaftsGain, cr, cg, cb, zBuffer, bands);
 		}
 		return true;
 	}
@@ -323,7 +325,7 @@ public class LightGlowRenderer {
 	 * @param sy y of the sun on the screen
 	 * @param strength visibility of the sun times the gain of the shafts
 	 */
-	private void drawLightShafts(float sx, float sy, float strength, float cr, float cg, float cb, ZBuffer zBuffer) {
+	private void drawLightShafts(float sx, float sy, float strength, float cr, float cg, float cb, ZBuffer zBuffer, BandRasterizer bands) {
 		int halfWidth = perspectiveCtx.getPixelHalfWidth();
 		int halfHeight = perspectiveCtx.getPixelHalfHeight();
 		float far = perspectiveCtx.getPerspective().getFar();
@@ -332,8 +334,10 @@ public class LightGlowRenderer {
 		float maskRadius = SHAFTS_MASK_RADIUS * 2 * halfWidth;
 
 		// Mask: the sky, brighter near the sun (average of 4 pixels around the grid point, to avoid aliasing)
+		// Each of the 3 steps below is computed by bands of rows (of the grid, then of the image): a step reads the
+		// result of the previous one complete, since runRows() returns when all the bands are done
 		float[] mask = new float[gw * gh];
-		for (int j = 0; j < gh; j++) {
+		BandRasterizer.runRows(bands, 0, gh, j -> {
 			for (int i = 0; i < gw; i++) {
 				int x = -halfWidth + i * s, y = -halfHeight + j * s;
 				int sky = 0;
@@ -346,12 +350,12 @@ public class LightGlowRenderer {
 				float dx = x - sx, dy = y - sy;
 				mask[j * gw + i] = sky / 4f * (float) Math.exp(-(dx * dx + dy * dy) / (maskRadius * maskRadius));
 			}
-		}
+		});
 
 		// Radial blur towards the sun, in grid units, with a jitter of the start to hide the steps
 		float[] shafts = new float[gw * gh];
 		float gsx = (sx + halfWidth) / s, gsy = (sy + halfHeight) / s; // The sun in grid coordinates
-		for (int j = 0; j < gh; j++) {
+		BandRasterizer.runRows(bands, 0, gh, j -> {
 			for (int i = 0; i < gw; i++) {
 				float stepX = (gsx - i) * SHAFTS_DENSITY / SHAFTS_SAMPLES;
 				float stepY = (gsy - j) * SHAFTS_DENSITY / SHAFTS_SAMPLES;
@@ -367,10 +371,10 @@ public class LightGlowRenderer {
 				}
 				shafts[j * gw + i] = sum * SHAFTS_EXPOSURE * strength;
 			}
-		}
+		});
 
 		// Spread over the image (bilinear interpolation of the grid), added to the pixels
-		for (int y = -halfHeight; y <= halfHeight; y++) {
+		BandRasterizer.runRows(bands, -halfHeight, halfHeight + 1, y -> {
 			float v = (float) (y + halfHeight) / s;
 			int j0 = (int) v;
 			float fy = v - j0;
@@ -385,7 +389,7 @@ public class LightGlowRenderer {
 				float intensity = top * (1 - fy) + bottom * fy;
 				if (intensity > 0.002f) view.addPixel(x, y, cr * intensity, cg * intensity, cb * intensity);
 			}
-		}
+		});
 	}
 
 	// Ghosts of the lens flare: position along the axis (1 = center of the image, 0 = the sun itself, 2 = the opposite
@@ -409,7 +413,7 @@ public class LightGlowRenderer {
 	 * @param sy y of the sun on the screen
 	 * @param strength visibility of the sun times the flare gain
 	 */
-	private void drawLensFlare(float sx, float sy, float strength) {
+	private void drawLensFlare(float sx, float sy, float strength, BandRasterizer bands) {
 		int halfWidth = perspectiveCtx.getPixelHalfWidth();
 		int halfHeight = perspectiveCtx.getPixelHalfHeight();
 		float distance = (float) Math.sqrt(sx * sx + sy * sy);
@@ -427,13 +431,14 @@ public class LightGlowRenderer {
 			int x0 = Math.max(cx - extent, -halfWidth), x1 = Math.min(cx + extent, halfWidth);
 			int y0 = Math.max(cy - extent, -halfHeight), y1 = Math.min(cy + extent, halfHeight);
 			float[] c = FLARE_COLOR[g];
-			for (int y = y0; y <= y1; y++) {
+			boolean ring = FLARE_RING[g];
+			BandRasterizer.runRows(bands, y0, y1 + 1, y -> {
 				for (int x = x0; x <= x1; x++) {
 					if (!inScreen(x, y)) continue;
 					float dx = x - gx, dy = y - gy;
 					float d = (float) Math.sqrt(dx * dx + dy * dy);
 					float intensity;
-					if (FLARE_RING[g]) {
+					if (ring) {
 						float t = (d - radius) / (0.18f * radius);
 						intensity = 0.7f * (float) Math.exp(-t * t);
 					} else {
@@ -442,7 +447,7 @@ public class LightGlowRenderer {
 					intensity *= amplitude;
 					if (intensity > 0.002f) view.addPixel(x, y, c[0] * intensity, c[1] * intensity, c[2] * intensity);
 				}
-			}
+			});
 		}
 	}
 

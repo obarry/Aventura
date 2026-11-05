@@ -356,7 +356,7 @@ public class RenderEngine {
 		// The haze of the distance, if enabled (RenderContext) and defined by the World: needs the depth of the pixels, so not
 		// available in LINE rendering (no ZBuffer). Before the landmarks and the visible lights, which it must not fade.
 		if (renderContext.isAtmosphere() && world.getAtmosphere() != null && world.getAtmosphere().isActive() && renderContext.getRenderingType() != RenderingType.LINE) {
-			atmosphereRenderer.render(world.getAtmosphere(), world.getBackgroundColor(), camera, mainZBuffer, getRenderThreads());
+			atmosphereRenderer.render(world.getAtmosphere(), world.getBackgroundColor(), camera, mainZBuffer, getBandRasterizer());
 		}
 
 		// Display the landmarks if enabled (RenderContext)
@@ -376,7 +376,7 @@ public class RenderEngine {
 		// Make the lights visible if enabled (RenderContext): needs the depth of the objects to hide the lights
 		// behind them, so not available in LINE rendering (no ZBuffer)
 		if (renderContext.isLightGlow() && renderContext.getRenderingType() != RenderingType.LINE) {
-			lightGlowRenderer.render(lighting, camera, renderContext, mainZBuffer);
+			lightGlowRenderer.render(lighting, camera, renderContext, mainZBuffer, getBandRasterizer());
 		}
 
 		frameTimer.endPhase(FrameTimer.Phase.OVERLAYS);
@@ -930,4 +930,4 @@ public class RenderEngine {
 	}
 
 
-}
+}
