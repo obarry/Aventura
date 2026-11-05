@@ -29,7 +29,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.math.vector.Vector4;
@@ -103,10 +102,11 @@ public class AtmosphereRenderer {
 	 * @param background the background color of the World, the color of the haze if the Haze has none
 	 * @param camera     the camera of the view (the eye and the axes of the fogs rays)
 	 * @param zBuffer    the main ZBuffer, with the linear view depth of what was drawn (far for the sky)
-	 * @param threads    the number of threads to compute the rows with (1: only the calling thread)
+	 * @param bands      the threads to compute the rows with, by bands (see BandRasterizer.runRows()), or null for the
+	 *                   calling thread alone
 	 * @return the number of pixels that were blended, with the haze and with the fogs (a pixel counts for each pass that changes it)
 	 */
-	public int render(Atmosphere atmosphere, Color background, Camera camera, ZBuffer zBuffer, int threads) {
+	public int render(Atmosphere atmosphere, Color background, Camera camera, ZBuffer zBuffer, BandRasterizer bands) {
 		if (perspectiveCtx.getPerspectiveType() != PerspectiveType.FRUSTUM) return 0;
 		int[] pixels = view.getBackPixels();
 		if (pixels == null) return 0;
@@ -160,9 +160,7 @@ public class AtmosphereRenderer {
 		}
 
 		int[] counts = new int[height]; // blended pixels by row, summed at the end (no shared counter between threads)
-		IntStream rows = IntStream.range(0, height);
-		if (threads > 1) rows = rows.parallel();
-		rows.forEach(r -> {
+		BandRasterizer.runRows(bands, 0, height, r -> {
 			int y = halfHeight - r; // Centered coordinates, Y axis up
 			float ny = y / focal;
 			int base = r * width;

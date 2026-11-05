@@ -35,12 +35,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntConsumer;
 
 import com.aventura.context.PerspectiveContext;
 
 /**
  * Rasterizes the faces of a DrawList with several threads (see docs/PERFORMANCE_AUDIT.md, multithreading): the
- * main pass of the RenderEngine, and the shadow maps (ShadowingLight, in the screen of the light).
+ * main pass of the RenderEngine, and the shadow maps (ShadowingLight, in the screen of the light). The same threads
+ * also run the post-processes of the image by bands (runBands(): atmosphere, visible lights).
  *
  * The screen is cut into horizontal bands of rows. A thread takes a band, goes through ALL the faces of the list,
  * in their order, and draws only the pixels of its band (TriangleRasterizer.setRows()); then it takes the next free
@@ -132,16 +134,7 @@ public class BandRasterizer {
 		nextBand.set(0);
 
 		// Start all the workers and wait until they have all finished (the end of the frame's rasterization)
-		try {
-			for (Future<Void> done : pool.invokeAll(workers)) {
-				done.get(); // throws the exception of a worker, if any
-			}
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new IllegalStateException("Interrupted while rasterizing", e);
-		} catch (ExecutionException e) {
-			throw new IllegalStateException("Rasterization failed in a worker thread", e.getCause());
-		}
+		invokeAll(workers);
 
 		// Statistics: each worker has counted the lines and pixels of each face in its own bands; their sums are
 		// the counts of the face on the whole screen
@@ -159,6 +152,81 @@ public class BandRasterizer {
 		this.drawList = null;
 		this.renderer = null;
 		this.zBuffer = null;
+	}
+
+	/**
+	 * Work done on a band of rows of the image (a post-process: atmosphere, visible lights): see runBands().
+	 */
+	public interface BandTask {
+		/**
+		 * Processes the rows from firstRow (inclusive) to endRow (exclusive). Called by several threads at the same
+		 * time, for different bands: it must only write into its own rows.
+		 */
+		void run(int firstRow, int endRow);
+	}
+
+	/**
+	 * Runs a task on all the rows from firstRow to endRow (exclusive), cut into bands shared by the threads (as for
+	 * rasterize()), and returns when all the bands are done. Each row being processed by one thread, as it would be
+	 * by a single one, the result does not depend on the number of threads.
+	 *
+	 * @param bands    the threads, or null to run the task in the calling thread, on all the rows at once
+	 * @param firstRow first row (inclusive), in whatever coordinates the task uses
+	 * @param endRow   end row (exclusive)
+	 * @param task     the work on one band
+	 */
+	public static void runBands(BandRasterizer bands, int firstRow, int endRow, BandTask task) {
+		if (endRow <= firstRow) return;
+		if (bands == null) {
+			task.run(firstRow, endRow);
+		} else {
+			bands.runBands(firstRow, endRow, task);
+		}
+	}
+
+	/**
+	 * Same as runBands(), for a task written row by row: row.accept(r) is called once for each row r, from firstRow
+	 * to endRow (exclusive), by the thread of its band.
+	 */
+	public static void runRows(BandRasterizer bands, int firstRow, int endRow, IntConsumer row) {
+		runBands(bands, firstRow, endRow, (first, end) -> {
+			for (int r = first; r < end; r++) {
+				row.accept(r);
+			}
+		});
+	}
+
+	private void runBands(int first, int end, BandTask task) {
+		int rows = end - first;
+		int height = (rows + workers.size() * BANDS_PER_THREAD - 1) / (workers.size() * BANDS_PER_THREAD);
+		int count = (rows + height - 1) / height;
+		AtomicInteger next = new AtomicInteger();
+		List<Callable<Void>> tasks = new ArrayList<Callable<Void>>();
+		for (int i = 0; i < workers.size(); i++) {
+			tasks.add(() -> {
+				int band;
+				while ((band = next.getAndIncrement()) < count) {
+					int bandFirst = first + band * height;
+					task.run(bandFirst, Math.min(bandFirst + height, end));
+				}
+				return null;
+			});
+		}
+		invokeAll(tasks);
+	}
+
+	/** Runs the tasks with all the threads and waits until they have all finished, passing on their exceptions */
+	private void invokeAll(List<? extends Callable<Void>> tasks) {
+		try {
+			for (Future<Void> done : pool.invokeAll(tasks)) {
+				done.get(); // throws the exception of a task, if any
+			}
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted while rendering in several threads", e);
+		} catch (ExecutionException e) {
+			throw new IllegalStateException("Rendering failed in a worker thread", e.getCause());
+		}
 	}
 
 	/**

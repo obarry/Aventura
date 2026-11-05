@@ -1018,7 +1018,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 
 ### 10.5 État d'avancement des propositions
 
-| Id | Proposition | État au 6 octobre |
+| Id | Proposition | État au 5 novembre |
 |---|---|---|
 | D1 | Compteurs statiques des vecteurs | **Fait** (phase 1, étape 2) : neutre en mono-thread (±5 %, dans le bruit), prérequis du multithreading levé |
 | D7 | `FloatMap` en `float[]` 1D | **Stockage fait** (phase 1, étape 3) : `MapView` en `float[]` ligne par ligne, −10 % sans ombres et en PCF, −15 à −20 % avec une lumière ponctuelle ou un spot (passes d'ombre −15 à −18 %). Reste l'extraction de `FloatMap` hors du paquet `view` (BACKLOG §2) |
@@ -1031,6 +1031,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | D9 | Pipeline en deux étages (géométrie → `DrawList` → rasterisation) | **Fait** (branche `perf-multithreading`) : images identiques dans tous les modes de rendu, temps et mémoire inchangés (liste réutilisée d'une image à l'autre) ; l'étage géométrie ne pèse que ≈ 1,4 ms sur ≈ 50 à 190 ms de passe principale |
 | MT1 | Multithreading de la passe principale par bandes de lignes (`BandRasterizer`, `RenderContext.setRenderThreads(n)`) | **Fait** (branche `perf-multithreading`) : images **et statistiques** identiques pour 1, 2, 3, 5, 8 et 16 threads (tous les modes de rendu, images de la documentation, `PerfBench`, test `TestRenderThreads`). Sur 2 cœurs, passe principale ×1,8 à ×1,9 (PCF ≈ 200 → 110 ms, spot ≈ 150 → 80-100 ms, sans ombres ≈ 48 → 28-32 ms) ; en mono-thread, inchangé. Les arêtes et normales restent dans le thread de rendu (`Graphics2D` non thread-safe). La passe d'ombre, désormais la plus longue avec PCF et spot, reste mono-thread (étape suivante) |
 | MT2 | Shadow maps en deux étages et par bandes (`ShadowingLight` : `prepareShadowMapElement()` → `DrawList` → `BandRasterizer`) | **Fait** (branche `perf-multithreading`) : shadow maps, images et statistiques identiques pour 1 à 16 threads (soleil, spot, lumière ponctuelle à 6 faces). Sur 2 cœurs, phase des ombres ×1,5 à ×1,9 (hard ≈ 67 → 35 ms, PCF ≈ 68 → 45, point ≈ 100 → 61, spot ≈ 120 → 75). L'étage géométrie de la lumière et les faces de la cube map restent séquentiels (D4) |
+| MT3 | Post-traitements par bandes (`BandRasterizer.runRows()` : lumières visibles, brume et brouillards) | **Fait** : mêmes threads que la rasterisation (l'atmosphère utilisait un `parallelStream()` sur le pool commun de Java) ; images identiques pour 1 à 8 threads. Sur 2 cœurs, lumières visibles (sunglow) ≈ 51 → 32 ms ; atmosphère ≈ 16 → 9,5 ms, comme avant. À noter : une boucle sur toutes les lignes appelée une fois par image reste compilée « en cours d'exécution » (OSR) par le JIT et était 30 % plus lente ; d'où un appel par ligne (`runRows()`) |
 | D2b, D3 à D5, D8 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
 | D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape` |
 | R4 | Rejet des triangles sans centre de pixel | **Fait** (phase 1, étape 8), avant toute allocation dans `TriangleRasterizer` |
@@ -1038,8 +1039,8 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | R2 | Outcodes et clipping du plan proche | **Fait** : clipping, chemin rapide N5 (phase 1, étape 7), test de rejet par outcodes (octobre 2026) |
 | R9 | Passe d'ombre | À faire, enjeu multiplié (N4). **N4.1 fait** (phase 1, étape 7) : buffers d'ombre réutilisés d'une image à l'autre ; allocations −20 à −40 %, temps inchangé (allouer un tableau neuf ou le remplir coûtent autant) |
 | R10 | Sortie anticipée de l'éclairage | **Fait** avec N2 (phase 1, étape 6) |
-| §6 | Multithreading | À faire, après D1, A3, A6, D3 et D5 |
-| §7 | Chronométrage par phase, `PerfBench` dans le dépôt | À faire |
+| §6 | Multithreading | **Fait** : voir D9, MT1, MT2, MT3 (v3-0-0). Restent les shadow maps de plusieurs lumières et des faces de la cube map en parallèle (après D4) |
+| §7 | Chronométrage par phase, `PerfBench` dans le dépôt | **Fait** (phase 0) : `FrameTimer` et `PerfBench`, avec les options `-frames`, `-warmup`, `-threads` et les modes `sunglow` et `atmosphere` |
 
 ### 10.6 Feuille de route : ce qui change
 

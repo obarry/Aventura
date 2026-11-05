@@ -203,11 +203,11 @@ public class TestAtmosphereRenderer {
 		ZBuffer zBuffer = new ZBuffer(2 * p.getPixelHalfWidth() + 1, 2 * p.getPixelHalfHeight() + 1, p.getPixelHalfWidth(), p.getPixelHalfHeight(), p.getPerspective().getFar());
 		view.initView();
 		assertNotNull(view.getBackPixels());
-		assertEquals("Only sky: nothing to blend", 0, renderer.render(new Atmosphere(new Haze(10f)), SKY, camera, zBuffer, 1));
+		assertEquals("Only sky: nothing to blend", 0, renderer.render(new Atmosphere(new Haze(10f)), SKY, camera, zBuffer, null));
 		for (int y = -5; y < 5; y++)
 			for (int x = -10; x < 10; x++) zBuffer.update(x, y, 20f);
-		assertEquals("A block of 20 x 10 pixels at 20 units", 200, renderer.render(new Atmosphere(new Haze(10f)), SKY, camera, zBuffer, 1));
-		assertEquals("Not in the clear air of the start distance", 0, renderer.render(new Atmosphere(new Haze(50f).setStartDistance(30f)), SKY, camera, zBuffer, 1));
+		assertEquals("A block of 20 x 10 pixels at 20 units", 200, renderer.render(new Atmosphere(new Haze(10f)), SKY, camera, zBuffer, null));
+		assertEquals("Not in the clear air of the start distance", 0, renderer.render(new Atmosphere(new Haze(50f).setStartDistance(30f)), SKY, camera, zBuffer, null));
 		assertNull("A view that gives no access to its pixels is left alone", new GUIView(10, 10) {
 			@Override public void initView() { }
 			@Override public void initView(int w, int h) { }

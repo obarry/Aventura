@@ -10,6 +10,9 @@ import com.aventura.engine.FrameTimer;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.atmosphere.Atmosphere;
+import com.aventura.model.atmosphere.Haze;
+import com.aventura.model.atmosphere.SphericalFog;
 import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.PointLight;
@@ -56,6 +59,7 @@ import com.aventura.view.ImageView;
  *     spot       hard sun shadows, plus a SpotLight with its shadows
  *     sunview    the camera looks towards the sun, no shadows, no visible lights
  *     sunglow    the same view with the visible sun (disc, halo, lens flare, light shafts)
+ *     atmosphere no shadows, with the haze of the distance and a spherical fog around the central building
  *
  * For each mode it prints the median time of a frame and of each of its phases (FrameTimer), the memory allocated
  * per frame by all the threads, and a checksum of the last image: an optimization that does not change the
@@ -79,7 +83,7 @@ import com.aventura.view.ImageView;
  */
 public class PerfBench {
 
-	static final String[] MODES = { "noshadow", "hard", "pcf", "point", "spot", "sunview", "sunglow" };
+	static final String[] MODES = { "noshadow", "hard", "pcf", "point", "spot", "sunview", "sunglow", "atmosphere" };
 
 	/** Angle step of the helicopter flight between two frames, in radians */
 	static final float FLIGHT_STEP = 0.05f;
@@ -128,11 +132,15 @@ public class PerfBench {
 
 		PerspectiveContext perspective = UrbanScape.createPerspectiveContext();
 		RenderContext context = UrbanScape.createRenderContext();
-		context.setShadowing(!mode.equals("noshadow") && !towardsSun);
+		context.setShadowing(!mode.equals("noshadow") && !mode.equals("atmosphere") && !towardsSun);
 		context.setRenderThreads(renderThreads);
 		if (mode.equals("sunglow")) {
 			context.setLightGlow(true);
 			context.setLightShafts(true);
+		}
+		if (mode.equals("atmosphere")) {
+			world.setAtmosphere(new Atmosphere(new Haze(40f)).addFog(new SphericalFog(center, 6f, 3f)));
+			context.setAtmosphere(true);
 		}
 
 		Camera camera = new Camera(flight.getEye(0), flight.getFocus(), Vector4.zAxis());
