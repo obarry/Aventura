@@ -1035,7 +1035,8 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | D2b, D3 à D5, D8 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
 | D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape` |
 | R4 | Rejet des triangles sans centre de pixel | **Fait** (phase 1, étape 8), avant toute allocation dans `TriangleRasterizer` |
-| R1, R3, R5 à R7 | Élimination en amont | À faire |
+| R5 | Tri avant → arrière | **Fait** : faces de la `DrawList` triées par la profondeur de leur sommet le plus proche avant la rasterisation (`RenderEngine.sortFrontToBack()`, sauf si la liste contient des arêtes). Sur UrbanScape, pixels éclairés −42 à −53 % (les pixels cachés sont rejetés par le Z-buffer avant l'éclairage) ; sur 2 cœurs, passe principale −30 % sans ombres, −40 à −45 % en PCF et spot. Images inchangées (mêmes checksums) |
+| R1, R3, R6, R7 | Élimination en amont | À faire |
 | R2 | Outcodes et clipping du plan proche | **Fait** : clipping, chemin rapide N5 (phase 1, étape 7), test de rejet par outcodes (octobre 2026) |
 | R9 | Passe d'ombre | À faire, enjeu multiplié (N4). **N4.1 fait** (phase 1, étape 7) : buffers d'ombre réutilisés d'une image à l'autre ; allocations −20 à −40 %, temps inchangé (allouer un tableau neuf ou le remplir coûtent autant) |
 | R10 | Sortie anticipée de l'éclairage | **Fait** avec N2 (phase 1, étape 6) |

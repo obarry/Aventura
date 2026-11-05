@@ -27,6 +27,7 @@ package com.aventura.engine;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.model.material.Material;
@@ -92,6 +93,8 @@ public class DrawList {
 		boolean shadows;
 		/** Color of the lines (EDGES, EDGES_DEPTH_TESTED) */
 		Color lineColor;
+		/** Depth of the triangle (its nearest corner), to sort the list (see sortByDepth()) */
+		float depth;
 
 		/** @return the triangle of this command */
 		public Triangle getTriangle() {
@@ -133,6 +136,16 @@ public class DrawList {
 	public boolean hasOnlyFaces() {
 		return lineCommands == 0;
 	}
+
+	/**
+	 * Sorts the commands by increasing Command.depth, set beforehand (see RenderEngine.sortFrontToBack()). The sort
+	 * is stable: commands of equal depth keep their order.
+	 */
+	public void sortByDepth() {
+		commands.subList(0, size).sort(BY_DEPTH);
+	}
+
+	private static final Comparator<Command> BY_DEPTH = (a, b) -> Float.compare(a.depth, b.depth);
 
 	/** @return the number of commands in the list */
 	public int size() {
