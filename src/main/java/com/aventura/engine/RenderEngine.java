@@ -651,12 +651,39 @@ public class RenderEngine {
 	 */
 	private void rasterizeDrawList() {
 		BandRasterizer bands = getBandRasterizer();
+		if (drawList.hasOnlyFaces()) {
+			sortFrontToBack();
+		}
 		if (bands != null && drawList.hasOnlyFaces()) {
 			bands.rasterize(drawList, perspectiveContext, mainZBuffer, this::rasterizeFace, stats);
 		} else {
 			rasterizeDrawListSequentially();
 		}
 		drawList.clear();
+	}
+
+	/**
+	 * Sorts the faces of the DrawList from the nearest to the farthest (performance audit R5), by the depth of their
+	 * nearest corner (W, the eye distance, under a frustum projection; Z under an orthographic one). The depth test
+	 * then rejects most hidden pixels BEFORE they are shaded, instead of shading them and covering them later with a
+	 * nearer face: on UrbanScape, about half of the shaded pixels were hidden afterwards.
+	 *
+	 * Only the order changes, not the result: each pixel still shows the nearest face. Two faces at exactly the same
+	 * depth on a pixel (coplanar faces) may come out the other way round. A list with edges or normals is not sorted:
+	 * the lines must be drawn after the faces they are over.
+	 */
+	private void sortFrontToBack() {
+		boolean frustum = perspectiveContext.getPerspectiveType() == PerspectiveType.FRUSTUM;
+		for (int i = 0; i < drawList.size(); i++) {
+			DrawList.Command command = drawList.get(i);
+			Vector4 p1 = command.triangle.getV1().getProjPos();
+			Vector4 p2 = command.triangle.getV2().getProjPos();
+			Vector4 p3 = command.triangle.getV3().getProjPos();
+			command.depth = frustum
+					? Math.min(p1.getW(), Math.min(p2.getW(), p3.getW()))
+					: Math.min(p1.getZ(), Math.min(p2.getZ(), p3.getZ()));
+		}
+		drawList.sortByDepth();
 	}
 
 	/**
@@ -930,4 +957,4 @@ public class RenderEngine {
 	}
 
 
-}
+}

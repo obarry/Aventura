@@ -672,7 +672,7 @@ public abstract class ShadowingLight extends Light {
 		float gradX = 0f, gradY = 0f; // depth change per texel along the map axes
 		float pcfBias = shadowBias;
 		Vector3 n = unitNormal;
-		Vector3 helper = Math.abs(n.getZ()) < 0.9f ? Vector3.zAxis() : Vector3.xAxis();
+		Vector3 helper = Math.abs(n.getZ()) < 0.9f ? Z_AXIS : X_AXIS;
 		Vector3 t1 = n.cross(helper).normalize();
 		Vector3 t2 = n.cross(t1).normalize();
 		// A step of about one texel along each tangent of the plane, in world units at the depth of the point
@@ -724,6 +724,11 @@ public abstract class ShadowingLight extends Light {
 		int taps = (2 * radius + 1) * (2 * radius + 1);
 		return Math.min(litWeight / taps, 1f);
 	}
+
+	// Axes used (read only) to build the tangents of the receiving plane in shadowFactorAt(): constants rather than
+	// Vector3.zAxis()/xAxis(), which create a new vector at each call, here for each pixel (performance audit A1)
+	private static final Vector3 X_AXIS = Vector3.xAxis();
+	private static final Vector3 Z_AXIS = Vector3.zAxis();
 
 	/** Light-space position (see ViewProjection.project()) of the world point moved by step along the direction */
 	private static Vector4 posInLightSpace1(ViewProjection viewProjection, Vector4 worldPosition, Vector3 direction, float step) {

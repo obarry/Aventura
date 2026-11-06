@@ -286,9 +286,12 @@ public class Lighting {
 		out.addProduct(lightColor, baseColor, dotNL * lightFactor);
 
 		if (hasSpecular() && material.specularExponent() > 0) {
-			// Reflection vector R = 2N.dotNL - L
-			Vector3 reflection = normal.times(2 * dotNL).minus(lightVector);
-			float dotRV = reflection.dot(viewerDirection);
+			// Reflection vector R = 2N.dotNL - L, and its dot product with the viewer direction, written component by
+			// component so that no vector is created for each pixel (performance audit A1)
+			float k = 2 * dotNL;
+			float dotRV = (normal.getX() * k - lightVector.getX()) * viewerDirection.getX()
+					+ (normal.getY() * k - lightVector.getY()) * viewerDirection.getY()
+					+ (normal.getZ() * k - lightVector.getZ()) * viewerDirection.getZ();
 			if (dotRV < 0) dotRV = 0;
 
 			if (dotRV > 0) {

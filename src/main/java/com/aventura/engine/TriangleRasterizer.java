@@ -372,8 +372,14 @@ public class TriangleRasterizer {
 		float wc = frustum ? 1 / zc : 1;
 		float wd = frustum ? 1 / zd : 1;
 
-		Vector4 worldEdge1 = null, worldEdge2 = null;
-		Vector3 normalEdge1 = null, normalEdge2 = null;
+		// The attributes on the two edges of this scan line, divided by z (perspective correction, see above), as plain
+		// floats: written component by component rather than with Vector3/Vector4 operations, so that no object is
+		// created for each scan line and each pixel (performance audit A1: these temporary vectors were most of the
+		// memory allocated per frame, unless the JIT happened to remove them). The formulas are exactly those of
+		// Tools.interpolate() (a * (1 - t) + b * t) and of the former lerpV3() (a + (b - a) * t), so the values,
+		// hence the images, are the same to the bit.
+		float wx1 = 0, wy1 = 0, wz1 = 0, wx2 = 0, wy2 = 0, wz2 = 0; // world position on edges 1 and 2
+		float nx1 = 0, ny1 = 0, nz1 = 0, nx2 = 0, ny2 = 0, nz2 = 0; // normal on edges 1 and 2
 
 		// Depth-only convention: normal == null means "skip normal AND world position
 		// interpolation entirely" -- used by the no-attribute rasterize(Triangle, FragmentConsumer)
@@ -382,18 +388,32 @@ public class TriangleRasterizer {
 		// is called with normals=false for that pass).
 		boolean needsShadingAttributes = va.normal != null;
 		if (needsShadingAttributes) {
-			worldEdge1 = Tools.interpolate(va.vertex.getWorldPos().times(wa), vb.vertex.getWorldPos().times(wb), gradient1);
-			worldEdge2 = Tools.interpolate(vc.vertex.getWorldPos().times(wc), vd.vertex.getWorldPos().times(wd), gradient2);
+			Vector4 pa = va.vertex.getWorldPos(), pb = vb.vertex.getWorldPos(), pc = vc.vertex.getWorldPos(), pd = vd.vertex.getWorldPos();
+			wx1 = lerp(pa.getX() * wa, pb.getX() * wb, gradient1);
+			wy1 = lerp(pa.getY() * wa, pb.getY() * wb, gradient1);
+			wz1 = lerp(pa.getZ() * wa, pb.getZ() * wb, gradient1);
+			wx2 = lerp(pc.getX() * wc, pd.getX() * wd, gradient2);
+			wy2 = lerp(pc.getY() * wc, pd.getY() * wd, gradient2);
+			wz2 = lerp(pc.getZ() * wc, pd.getZ() * wd, gradient2);
 
-			normalEdge1 = lerpV3(va.normal.times(wa), vb.normal.times(wb), gradient1);
-			normalEdge2 = lerpV3(vc.normal.times(wc), vd.normal.times(wd), gradient2);
+			nx1 = step(va.normal.getX() * wa, vb.normal.getX() * wb, gradient1);
+			ny1 = step(va.normal.getY() * wa, vb.normal.getY() * wb, gradient1);
+			nz1 = step(va.normal.getZ() * wa, vb.normal.getZ() * wb, gradient1);
+			nx2 = step(vc.normal.getX() * wc, vd.normal.getX() * wd, gradient2);
+			ny2 = step(vc.normal.getY() * wc, vd.normal.getY() * wd, gradient2);
+			nz2 = step(vc.normal.getZ() * wc, vd.normal.getZ() * wd, gradient2);
 		}
 
+		// Homogeneous texture coordinates (u, v, w) on edges 1 and 2
 		boolean hasTexture = va.texCoord != null;
-		Vector4 texEdge1 = null, texEdge2 = null;
+		float tu1 = 0, tv1 = 0, tw1 = 0, tu2 = 0, tv2 = 0, tw2 = 0;
 		if (hasTexture) {
-			texEdge1 = Tools.interpolate(va.texCoord.times(wa), vb.texCoord.times(wb), gradient1);
-			texEdge2 = Tools.interpolate(vc.texCoord.times(wc), vd.texCoord.times(wd), gradient2);
+			tu1 = lerp(va.texCoord.getX() * wa, vb.texCoord.getX() * wb, gradient1);
+			tv1 = lerp(va.texCoord.getY() * wa, vb.texCoord.getY() * wb, gradient1);
+			tw1 = lerp(va.texCoord.getW() * wa, vb.texCoord.getW() * wb, gradient1);
+			tu2 = lerp(vc.texCoord.getX() * wc, vd.texCoord.getX() * wd, gradient2);
+			tv2 = lerp(vc.texCoord.getY() * wc, vd.texCoord.getY() * wd, gradient2);
+			tw2 = lerp(vc.texCoord.getW() * wc, vd.texCoord.getW() * wd, gradient2);
 		}
 
 		float invSpan = 1 / (ex - sx); // ex != sx here, otherwise startX >= endX above
@@ -420,10 +440,8 @@ public class TriangleRasterizer {
 			fragment.setScreen(x, y, z);
 
 			if (needsShadingAttributes) {
-				Vector4 worldPos = Tools.interpolate(worldEdge1, worldEdge2, gradient).times(wPixel);
-				Vector3 normal = lerpV3(normalEdge1, normalEdge2, gradient).times(wPixel);
-				fragment.setWorldPosition(worldPos.getX(), worldPos.getY(), worldPos.getZ());
-				fragment.setNormal(normal.getX(), normal.getY(), normal.getZ());
+				fragment.setWorldPosition(lerp(wx1, wx2, gradient) * wPixel, lerp(wy1, wy2, gradient) * wPixel, lerp(wz1, wz2, gradient) * wPixel);
+				fragment.setNormal(step(nx1, nx2, gradient) * wPixel, step(ny1, ny2, gradient) * wPixel, step(nz1, nz2, gradient) * wPixel);
 			}
 			// else: depth-only pass -- Fragment.getWorldPosition()/getNormal() are left untouched
 			// (stale from a previous triangle) on purpose; the consumer must not read them, see
@@ -433,8 +451,7 @@ public class TriangleRasterizer {
 				// Left un-divided on purpose: Fragment exposes raw (u, v, w) and it is up to
 				// Material (TexturedMaterial) to apply the projective divide appropriate to this
 				// triangle's texture orientation — this class has no notion of it.
-				Vector4 tex = Tools.interpolate(texEdge1, texEdge2, gradient).times(wPixel);
-				fragment.setTexCoord(tex.getX(), tex.getY(), tex.getW());
+				fragment.setTexCoord(lerp(tu1, tu2, gradient) * wPixel, lerp(tv1, tv2, gradient) * wPixel, lerp(tw1, tw2, gradient) * wPixel);
 			} else {
 				fragment.clearTexCoord();
 			}
@@ -448,10 +465,15 @@ public class TriangleRasterizer {
 	// Small helpers
 	//
 
-	/** Linear interpolation for Vector3, mirroring Tools.interpolate's Vector4 overload.
-	 *  ASSUMPTION: Vector3 exposes plus()/minus()/times(float) — adjust if the real API differs. */
-	private Vector3 lerpV3(Vector3 a, Vector3 b, float gradient) {
-		return a.plus(b.minus(a).times(gradient));
+	/** Linear interpolation a * (1 - t) + b * t, as Tools.interpolate() (world positions, texture coordinates) */
+	private static float lerp(float a, float b, float t) {
+		return a * (1 - t) + b * t;
+	}
+
+	/** Linear interpolation written a + (b - a) * t (normals): same value as lerp() in exact arithmetic, but not
+	 *  always to the last bit in float, so each attribute keeps the formula it has always been interpolated with */
+	private static float step(float a, float b, float t) {
+		return a + (b - a) * t;
 	}
 
 	private float xScreen(Vertex v) {
