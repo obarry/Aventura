@@ -26,6 +26,7 @@
 package com.aventura.engine;
 
 import java.awt.Color;
+import java.util.List;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
@@ -86,13 +87,19 @@ public class ShadingConsumer implements FragmentConsumer {
 		Color baseColor = material.baseColorAt(fragment);
 		Vector3 normal = fragment.getNormal().normalize();
 		boolean specular = lighting.hasSpecular() && material.specularExponent() > 0;
-		Vector3 viewerDirection = specular ? camera.getEye().minus(position).V3().normalize() : null;
+		Vector4 eye = camera.getEye();
+		Vector3 viewerDirection = specular
+				? new Vector3(eye.getX() - position.getX(), eye.getY() - position.getY(), eye.getZ() - position.getZ()).normalize()
+				: null;
 
 		// Ambient term: D.T.A — independent of any light or shadow.
 		lighting.accumulateAmbient(position, baseColor, accumulator);
 
-		if (lighting.getShadowingLights() != null) {
-			for (ShadowingLight light : lighting.getShadowingLights()) {
+		List<ShadowingLight> lights = lighting.getShadowingLights();
+		if (lights != null) {
+			// Indexed loop rather than for-each: an Iterator would be created for each pixel (performance audit A1)
+			for (int i = 0; i < lights.size(); i++) {
+				ShadowingLight light = lights.get(i);
 
 				// From the cheapest test to the most expensive one (performance audit N2): a light that
 				// cannot light this point is skipped before its shadow map is read.
