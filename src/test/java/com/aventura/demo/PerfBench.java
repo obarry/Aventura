@@ -145,6 +145,7 @@ public class PerfBench {
 
 		Camera camera = new Camera(flight.getEye(0), flight.getFocus(), Vector4.zAxis());
 		ImageView view = new ImageView(perspective);
+		view.setImageReuse(true); // As an animation: no image allocated per frame
 		RenderEngine engine = new RenderEngine(world, lighting, camera, context, perspective);
 		engine.setView(view);
 

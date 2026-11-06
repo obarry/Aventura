@@ -678,6 +678,7 @@ public class FractalLandscape {
 
 		// The view: an image the RenderEngine draws into. Given the frame, it repaints it after each rendering.
 		SwingView view = new SwingView(context, frame);
+		view.setImageReuse(true); // An animation: the 3 images are recycled (see ImageView.setImageReuse())
 
 		// The panel displays the image of the view
 		panel = new JPanel() {

@@ -69,6 +69,7 @@ public class EarthAndMoon {
 		
 		// Create the view to be displayed
 		view = new SwingView(context, frame);
+		view.setImageReuse(true); // An animation: the 3 images are recycled (see ImageView.setImageReuse())
 		
 		// Create a panel and add it to the frame
 		JPanel panel = new JPanel() {

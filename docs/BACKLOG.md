@@ -240,3 +240,27 @@ now removed before the inverse transpose. Follow-ups:
   jump from one path to the other between two frames, which is what made this bug appear only after a while.
   Always using the inverse transpose of the 3x3 part (cached per Element when its transformation changes)
   would give a single, continuous behavior.
+
+## 9. Reading and writing 3D model files
+
+Saving a scene to a file and loading it back is not available yet: scenes exist only as Java code. The analysis,
+the file format, the architecture and the step-by-step plan are in [MODEL_FILE_IO.md](MODEL_FILE_IO.md).
+
+- **Aventura JSON format first**, since it describes the whole element tree with its local model matrices,
+  colors and textures, which flat formats such as OBJ cannot. Phases: (1) geometry tree with raw geometry,
+  (2) built-in shapes written as type + parameters, (3) camera, lights and atmosphere, (4) other formats
+  (OBJ, already listed as an idea in [DESIGN.md §11](DESIGN.md#11-history-limitations-and-roadmap)).
+- **Separate Maven target.** The reader and writer, and the JSON library they need, live in their own module
+  (`aventura-io`, built and released separately) so that the rendering engine keeps no dependency other than
+  the JDK. The engine never references the module. Layout decided: a sibling
+  folder `aventura-io/` next to the root `pom.xml` (the engine build and the Eclipse configuration do not change); a
+  multi-module reactor remains possible later, see [MODEL_FILE_IO.md §6](MODEL_FILE_IO.md#6-maven-structure-a-separate-build-target).
+- **Small engine changes needed first** ([§7](MODEL_FILE_IO.md#7-changes-required-in-the-engine)): a getter for the
+  local model matrix of an `Element` (`getTransformation()` returns the accumulated one), and a `Texture` that
+  remembers its source file and orientation arguments (it keeps only its texels today). Phase 2 also needs getters
+  for the constructor parameters of the built-in shapes (only `Trellis` has some).
+- Decided: the file extension is `.av3d` (JSON text), every file starts with the signature `AVENTURA3D` and a
+  `major.minor` format version (1.0 first, see the versioning policy of MODEL_FILE_IO.md §4); older versions are read by default, and rewriting
+  one over itself in the current version needs a confirmation from the application (never silent); textures are not embedded, they are referenced by a path
+  relative to the model file. The product is called "Aventura 3D", but the Maven coordinates and the packages keep the name
+  Aventura. Still open: optional compression, and where the demo that opens a file lives.
