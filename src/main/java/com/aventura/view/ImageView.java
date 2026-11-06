@@ -46,6 +46,10 @@ import com.aventura.tools.tracing.Tracer;
 *   the next frame is being drawn into a new back buffer. A front image is never modified after the
 *   swap, so it can be read from another thread (e.g. a GUI thread) without tearing.
 * 
+* By default each frame is drawn into a new image, so an image obtained from getImageView() can be kept for
+* ever. setImageReuse(true) recycles the images instead (an animation then allocates no image per frame): see
+* its Javadoc for the condition.
+* 
 * It can therefore be used as is:
 * - headless / off-screen, e.g. to render into image files (saveImage()) or for tests;
 * - with any GUI toolkit: register a frame listener (setFrameListener()) to be notified, after each
@@ -72,6 +76,12 @@ public class ImageView extends GUIView {
 	
 	// Optional notification of each new frame (called by renderView(), in the rendering thread)
 	private Consumer<BufferedImage> frameListener = null;
+	
+	// Reuse of the images (setImageReuse()): 3 images in rotation, the front buffer, the previous front buffer (it
+	// may still be on the screen) and the spare one, two frames old, which becomes the next back buffer
+	private boolean imageReuse = false;
+	private BufferedImage previousFront = null;
+	private BufferedImage spare = null;
 	
 	/**
 	 * Create an ImageView of the pixel size of the PerspectiveContext.
@@ -111,8 +121,14 @@ public class ImageView extends GUIView {
 	
 	protected void initBack() {
 		// A NEW back buffer image for each frame: the previous one became the front buffer and must
-		// stay untouched while it may be displayed
-		backbuffer = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
+		// stay untouched while it may be displayed. With setImageReuse(true), the spare image (two frames
+		// old) is drawn again instead, if it has the right size.
+		BufferedImage image = spare;
+		spare = null;
+		if (image == null || image.getWidth() != width || image.getHeight() != height) {
+			image = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
+		}
+		backbuffer = image;
 		backgraph = (Graphics2D)backbuffer.getGraphics();
 		backPixels = ((DataBufferInt) backbuffer.getRaster().getDataBuffer()).getData();
 		// Fill image with background color pixels
@@ -129,6 +145,10 @@ public class ImageView extends GUIView {
 	public void renderView() {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render " + getClass().getSimpleName());
 		if (backbuffer == null) return; // nothing drawn yet
+		if (imageReuse) {
+			spare = previousFront;
+			previousFront = frontbuffer;
+		}
 		frontbuffer = backbuffer;
 		frameRendered(frontbuffer);
 	}
@@ -151,6 +171,29 @@ public class ImageView extends GUIView {
 		this.frameListener = listener;
 	}
 	
+	/**
+	 * Reuse of the images. Off (default): each frame is drawn into a new image, so the images obtained from
+	 * getImageView() or by the frame listener can be kept for ever. On: three images are drawn in turn, so an
+	 * animation allocates no image per frame (a 1280 x 720 image is 3.7 MB, allocated and cleared at each frame:
+	 * about 0.7 ms). The condition: an image obtained from getImageView() or by the frame listener is drawn again
+	 * two frames later, so it must be displayed or copied before (a window paints the last image, the one before it
+	 * is left untouched one more frame for a paint in progress).
+	 *
+	 * @param imageReuse true to recycle the images (animations), false (default) for a new image per frame
+	 */
+	public void setImageReuse(boolean imageReuse) {
+		this.imageReuse = imageReuse;
+		if (!imageReuse) {
+			previousFront = null;
+			spare = null;
+		}
+	}
+
+	/** @return true if the images are recycled (see setImageReuse()) */
+	public boolean isImageReuse() {
+		return imageReuse;
+	}
+
 	/**
 	 * @return the Front Buffer image: the last complete frame (to be displayed or saved)
 	 */

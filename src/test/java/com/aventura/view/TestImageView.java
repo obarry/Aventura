@@ -42,6 +42,56 @@ public class TestImageView {
 		assertSame(front, v.getImageView());
 	}
 
+	/** Draws a frame with a red pixel at (x, 0) on a blue background, swaps it and returns the new front image */
+	private static BufferedImage frame(ImageView v, int x) {
+		v.initView();
+		v.drawPixel(x, 0, Color.RED);
+		v.renderView();
+		return v.getImageView();
+	}
+
+	@Test
+	public void testNewImageForEachFrameByDefault() {
+		ImageView v = new ImageView(20, 10);
+		v.setBackgroundColor(Color.BLUE);
+		assertFalse(v.isImageReuse());
+		BufferedImage first = frame(v, 0);
+		for (int i = 1; i < 5; i++) {
+			assertNotSame("A new image for each frame", first, frame(v, i));
+		}
+		assertEquals("The first image is never drawn again", Color.RED.getRGB(), first.getRGB(10, 5));
+	}
+
+	@Test
+	public void testImageReuse() {
+		ImageView v = new ImageView(20, 10);
+		v.setBackgroundColor(Color.BLUE);
+		v.setImageReuse(true);
+		BufferedImage f1 = frame(v, 1), f2 = frame(v, 2), f3 = frame(v, 3);
+		assertNotSame(f1, f2);
+		assertNotSame(f2, f3);
+		assertNotSame(f1, f3);
+		// While the 4th frame is drawn, the last two images (on the screen, or being painted) are left untouched
+		v.initView();
+		v.drawPixel(4, 0, Color.RED);
+		assertEquals(Color.RED.getRGB(), f2.getRGB(10 + 2, 5));
+		assertEquals(Color.RED.getRGB(), f3.getRGB(10 + 3, 5));
+		v.renderView();
+		BufferedImage f4 = v.getImageView();
+		assertSame("Three images in rotation: the 1st one is drawn again for the 4th frame", f1, f4);
+		assertEquals("Cleared to the background before being drawn again", Color.BLUE.getRGB(), f4.getRGB(10 + 1, 5));
+		assertEquals(Color.RED.getRGB(), f4.getRGB(10 + 4, 5));
+		assertSame(f2, frame(v, 5));
+		// A new size: new images
+		v.initView(30, 10);
+		v.renderView();
+		assertEquals(30, v.getImageView().getWidth());
+		// Off again: a new image for each frame
+		v.setImageReuse(false);
+		BufferedImage g1 = frame(v, 0);
+		for (int i = 0; i < 4; i++) assertNotSame(g1, frame(v, 0));
+	}
+
 	@Test
 	public void testYAxisUp() {
 		ImageView v = new ImageView(20, 10);

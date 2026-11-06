@@ -1022,7 +1022,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 |---|---|---|
 | D1 | Compteurs statiques des vecteurs | **Fait** (phase 1, étape 2) : neutre en mono-thread (±5 %, dans le bruit), prérequis du multithreading levé |
 | D7 | `FloatMap` en `float[]` 1D | **Stockage fait** (phase 1, étape 3) : `MapView` en `float[]` ligne par ligne, −10 % sans ombres et en PCF, −15 à −20 % avec une lumière ponctuelle ou un spot (passes d'ombre −15 à −18 %). Reste l'extraction de `FloatMap` hors du paquet `view` (BACKLOG §2) |
-| D6 | Écriture directe dans `int[]` (+ `addPixel()`) | **Fait** (phase 1, étape 4, avec D2a). Reste le pool d'images (BACKLOG §6) |
+| D6 | Écriture directe dans `int[]` (+ `addPixel()`) | **Fait** (phase 1, étape 4, avec D2a). **Pool d'images fait** (novembre) : `ImageView.setImageReuse(true)`, 3 images en rotation, activé dans les démos animées et `PerfBench` (désactivé par défaut : une image obtenue de `getImageView()` est redessinée deux images plus tard). Sur 2 cœurs, SETUP −0,4 ms, allocations PCF 7,4 → 3,9 Mo par image ; temps total dans le bruit |
 | A4 | `Matrix4 × Vector4` déroulé | **Fait** (phase 1, étape 5) : **sans gain mesurable** (le JIT optimisait déjà la boucle d'origine), gardé pour la lisibilité. Le stockage `float[16]` n'est pas fait (pas d'enjeu mesuré) |
 | A2 | Éclairage : valeurs communes calculées une fois par pixel | **Fait** (phase 1, étape 6, avec N2 et N3 en partie) |
 | A3, A5, A6 | `ZBuffer` sans état, tri des 3 sommets, textures en `int[]` | **Fait** (phase 1, étape 8) : sans ombres −12 % (avec R4), allocations 12 → 7 Mo par image ; chargement d'une texture de 4480 × 4480 ≈ 1,2 → 0,7-0,9 s ; `ZBuffer` et `Texture` sans état partagé (prérequis du multithreading) |
