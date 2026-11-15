@@ -50,7 +50,7 @@ public class Tracer {
     public static boolean function  = false;
     public static boolean state     = true;
 	public static boolean object    = false;
-	public static boolean stats     = true;
+	public static boolean stats     = false; // Off by default: when on, RenderEngine prints one line per image (timing, FPS)
 	public static boolean debug     = false;
     
     // For output to file

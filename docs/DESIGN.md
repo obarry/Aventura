@@ -8,7 +8,7 @@
 |---|---|
 | **What** | A software 3D rendering engine: scene API → CPU rasterizer → pixels |
 | **Language** | Java 21, JDK only (`java.desktop`), no native code, no GPU |
-| **Size** | ~30 k lines in `src/main` (~130 classes), ~150 test classes (~60 JUnit classes, ~80 visual test programs), ~610 JUnit tests |
+| **Size** | ~30 k lines in `src/main` (~130 classes), ~150 test classes (~60 JUnit classes, ~80 visual test programs), ~620 JUnit tests |
 | **License** | MIT |
 | **Status** | `0.0.1-SNAPSHOT` — stable core, lighting & shadows actively evolving |
 
@@ -98,13 +98,13 @@ flowchart TB
 ```mermaid
 pie showData
     title Lines of code per package (src/main)
-    "model" : 8064
-    "math" : 5556
-    "engine" : 2413
-    "demo" : 2162
-    "context" : 715
-    "view" : 650
-    "tools" : 554
+    "model" : 10908
+    "demo" : 6848
+    "math" : 5509
+    "engine" : 4394
+    "view" : 876
+    "context" : 866
+    "tools" : 593
 ```
 
 | Package | Responsibility |
@@ -945,7 +945,7 @@ of fog (a ground mist).
 
 Two complementary test families run from Maven:
 
-- **Unit tests (JUnit 4, headless)** — about 610, run by `mvn test`, no display needed.
+- **Unit tests (JUnit 4, headless)** — about 620, run by `mvn test`, no display needed.
 - **Visual test programs** — ~80 `main()` classes in `com.aventura.test`, checked by eye
   (shapes, meshes, textures, lighting, shadow maps, rasterizer experiments).
 
@@ -954,7 +954,7 @@ pie showData
     title JUnit test methods by area
     "Math: vectors, matrices, quaternions" : 244
     "Lighting (point, spot, shadow maps, visible lights, smoke renders)" : 96
-    "Demo logic (camera, flight path, scene geometry, documentation images…)" : 91
+    "Demo logic (camera, flight path, scene geometry, documentation images…)" : 96
     "Rendering (context, rendering types, rasterizer, mipmapping, threads, views)" : 66
     "Atmosphere (haze, fogs)" : 39
     "Camera, perspective, elements, statistics, textures" : 33

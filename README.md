@@ -478,6 +478,8 @@ System.out.println(GeometryReport.of(world)); // The composition of the geometry
 
 A demo with a Swing window gets a `Statistics` menu item, a window for the report (with the timing and the triangle counts of the last image) and a print in the console at closing from `com.aventura.demo.StatisticsWindow`, in three lines; see it in `TempleRuins`, and its output in [The Making of a Demo](docs/TEMPLE_RUINS.md#statistics). `FrameTimeStatistics` gives the average, fastest and slowest rendering times of a series of images: `TempleRuins` reports them at each lap of its helicopter tour, to compare rendering options on the same views.
 
+The engine can also print the timing of each image in the console (`Tracer.stats = true`); it is off by default, so that an application that embeds Aventura gets no output it did not ask for.
+
 ## Demos
 
 All demos live in `com.aventura.demo` (`TempleRuins`, made of several classes, in its own `com.aventura.demo.temple` package).
@@ -506,7 +508,7 @@ The `src/test/java/com/aventura/test` folder holds about eighty additional visua
 mvn test
 ```
 
-The unit tests (JUnit 4, about 610 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, the visible lights, the atmosphere with its haze and its fogs), the textures and their mipmaps, the statistics of a scene, the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) and of the [Atmosphere Cookbook](docs/ATMOSPHERE_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 620 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, the visible lights, the atmosphere with its haze and its fogs), the textures and their mipmaps, the statistics of a scene, the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) and of the [Atmosphere Cookbook](docs/ATMOSPHERE_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use Aventura in your own project
 
