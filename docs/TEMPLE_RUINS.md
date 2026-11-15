@@ -18,7 +18,7 @@
 | **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root) |
 | **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (35.5 MB), 1 sun, 1 ambient light, haze and optional mist |
 | **Cameras** | Orbit, fly, and a helicopter tour of 516 m flown in 57 s |
-| **Speed** | 40 to 120 ms per image (8 to 25 images per second) on a laptop, at 1000 x 562 pixels |
+| **Speed** | 42 to 145 ms per image (7 to 24 images per second) on a laptop, 94 ms on average over the helicopter tour, at 1000 x 562 pixels |
 | **Engine changes** | `ShadowingLight.setShadowingElement()` (shadow map limited to an Element) and a depth rule in `shadowFactorAt()`; `GeometryStatistics` and `GeometryReport` (the size of a scene), the name and the memory of a `Texture` |
 
 ## Contents
@@ -550,7 +550,8 @@ the camera at once: the movement eases over 150 ms.
 
 The effects that the current rendering type does not use are grayed out, and so are the sub-options of an option that
 is off. The title of the window shows the camera mode and the time taken by the last image, in milliseconds: the
-simplest performance meter, always in view.
+simplest performance meter, always in view. During the helicopter tour, it also shows the average, fastest and
+slowest times of the last lap (see [Statistics](#statistics)).
 
 ### Statistics
 
@@ -632,6 +633,25 @@ seas (a `Trellis` is called "trellis" by default) and the computed textures (whi
 **What the statistics showed at once.** The foliage is 28% of the triangles, more than the whole temple with its
 platform (22%); and the texture of the boulders is 81% of the texture memory (38.4 MB, mipmaps included: one third more than the texture alone) for 5.6% of the triangles, drawn on
 rocks that seldom cover more than a few hundred pixels. Both are in the list of [§10](#10-performance).
+
+**Rendering times, lap by lap.** The time of one image, in the title of the window, changes with what the camera
+sees and from an image to the next: it cannot tell whether an option costs or saves a few percent. The helicopter
+tour can: always the same path, at the same speed. At the end of each lap, the demo prints the number of images and
+their average, fastest and slowest rendering times, with the options in force:
+
+```
+HELICOPTER TOUR, LAP 2 (1000 x 562 pixels, INTERPOLATE, textures, mipmapping, specular highlights, shadows, soft shadows, haze, sun, sun halo, lens flare, sun at 212 / 32 degrees)
+412 images in 31.2 s (13.2 per second), rendering: average 71.4 ms (14.0 per second), fastest 38.2 ms (26.2), slowest 124.9 ms (8.0)
+```
+
+(the figures of this example are made up). The first rate is what is displayed, the second what the engine renders:
+the display of the image and the pace of the timer make the difference. The average of the last lap also stays in
+the title of the window, and the report is added to the statistics. To compare two options, fly one whole lap with
+each: change the option, wait for the end of the lap under way (reported with a warning, since it mixes the two),
+then read the next one. A lap entered on the way (after a visit in another camera mode) is not reported, and the
+first lap after start-up is a little slower than the next ones, while the Java virtual machine compiles the code.
+The counting is `FrameTimeStatistics` (`com.aventura.demo`), usable by any demo, and
+`StatisticsWindow.setExtraSection()` adds such a text to the report.
 
 ### How it is built
 
@@ -752,18 +772,25 @@ are already in the [backlog](BACKLOG.md) or in the [performance audit](PERFORMAN
 
 ### Measures
 
-**In the application.** Measured by the author on his laptop, in the window of the demo (1000 x 562 pixels), with the
-options it starts with (textures, soft shadows, haze, visible sun), during the helicopter tour. The time is the one
-displayed in the title of the window.
+**In the application.** Measured by the author on his laptop, in the window of the demo (996 x 558 pixels drawn),
+with the options it starts with (textures with mipmapping, soft shadows, haze, visible sun), over whole laps of the
+helicopter tour: the rendering times that the demo reports at the end of each lap (see [Statistics](#statistics)).
+A lap is 57 s and about 530 images.
 
-| View of the tour | Time per image | Images per second |
-|---|---|---|
-| Very close to the temple | About 40 ms | 25 |
-| The whole temple from the side, little landscape around it | 65 to 85 ms | 12 to 15 |
-| Wide shots: the island and the sea | About 120 ms | 8 |
+| Lap | Mipmapping | Average | Fastest image | Slowest image | Images displayed per second |
+|---|---|---|---|---|---|
+| 1 (the Java virtual machine warms up) | on | 94.2 ms (10.6 per second) | 44.8 ms (22.3) | 179.0 ms (5.6) | 9.3 |
+| 2 | on | 95.9 ms (10.4 per second) | 50.0 ms (20.0) | 141.4 ms (7.1) | 9.2 |
+| 3 | on | 91.4 ms (10.9 per second) | 41.6 ms (24.0) | 145.2 ms (6.9) | 9.5 |
+| 1, in another run | off | 89.9 ms (11.1 per second) | 48.8 ms (20.5) | 150.6 ms (6.6) | 9.7 |
 
-The flight is fluid near the temple and still readable in the wide shots, where the ground and the sea fill the
-image with lit, textured and shadowed pixels, and almost every triangle of the scene is in the view.
+The fastest images are the views very close to the temple, the slowest the wide shots, where the ground and the sea
+fill the image with lit, textured and shadowed pixels and almost every triangle of the scene is in the view. The
+flight is fluid near the temple and still readable in the wide shots.
+
+Two lessons. The laps differ by up to 5% with the same options: a single image, or a single lap, cannot settle a
+difference of a few percent. And the mipmapping costs about that much at most (2 to 6 ms per image on average,
+within the variation from lap to lap), for an image without noise nor flicker in the distance.
 
 **Stage by stage.** Measured on the 18 images of a lap of the tour, at the same size, rendered off-screen on a much
 slower computer (a **2-core** virtual machine with JDK 21, whose times are two to three times longer): take the

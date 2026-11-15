@@ -441,7 +441,7 @@ random: the texture turns into noise and flickers when the camera moves. With mi
    of the pyramid; both are read (bilinear) and blended, so no line shows where the level changes.
    Level 0 or below (texture magnified) gives exactly the image without mipmapping.
 
-The cost is 8 texels per pixel instead of 4 and one logarithm, a few percent of the frame on
+The cost is 8 texels per pixel instead of 4 and one logarithm, at most a few percent of the frame on
 `TempleRuins`, where it is enabled.
 
 ---
