@@ -669,6 +669,14 @@ with its own transformation. A factory method or a constructor with parameters i
 - **Per-part tuning**: specular exponent and color, texture, tessellation (a thin pole needs
   fewer segments than a large base: keep the triangle count in check, it drives the rendering time).
 
+### A larger example
+
+The `TempleRuins` demo (`com.aventura.demo.temple`) applies the four recipes to a whole scene: two
+primitives written from scratch (`TaperedDrum`, a tapered and optionally fluted drum, smooth or flat;
+`Boulder`, whose normals are computed from its triangles), a `Trellis` enriched by inheritance
+(`TiledTrellis`, which repeats its texture), and assemblies three levels deep (`Column`, `Temple`,
+`OliveTree`). [TempleRuins — The Making of a Demo](TEMPLE_RUINS.md) explains the choices behind them.
+
 ---
 
 ## 8. Testing your geometry

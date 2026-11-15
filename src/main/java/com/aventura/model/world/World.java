@@ -158,36 +158,31 @@ public class World {
 		}
 	}
 	
+	/**
+	 * The size of the whole World: number of Elements, triangles and vertices of all its Elements and their
+	 * sub-Elements at every level, depth of the tree, textures used. Computed at each call, from the current geometry
+	 * (to be asked after build(), which creates the vertices and the triangles of the shapes).
+	 */
+	public GeometryStatistics getStatistics() {
+		return GeometryStatistics.of(this);
+	}
+
+	/** @return the number of Elements directly in this World (the roots of its tree), without their sub-Elements */
 	public int getNbElements() {
 		return elements.size();
 	}
-	
+
+	/** @return the number of sub-Elements of e, at every level (e itself is not counted) */
 	public int getNbElements(Element e) {
-		int nb = 0;
-		
-			// Do a recursive call for SubElements
-			if (!e.isLeaf()) {
-				for (int i=0; i<e.getSubElements().size(); i++) {
-					// Recursive call
-					nb+=getNbElements(e.getSubElements().get(i));
-				}
-			}
-//			} else { // Leaf
-//				nb+=1;			
-//			}
-		return nb;
+		return e.getStatistics().getNbElements() - 1;
 	}
-	
+
+	/** @return the number of Elements of this World, sub-Elements of every level included */
 	int getNbAllElements() {
-		int nb =0;
-		
-		for (int i=0; i<elements.size(); i++) {
-			nb++; // the Element of the list
-			nb+=getNbElements(getElement(i)); // the SubElements of the Element of the list (all SubElement recursively)
-		}
-		return nb;
+		return getStatistics().getNbElements();
 	}
-	
+
+	/** @return the number of triangles owned by the Elements directly in this World, without their sub-Elements */
 	public int getNbTriangles() {
 		int nb = 0;
 		for (int i=0; i<elements.size(); i++) {
@@ -196,32 +191,17 @@ public class World {
 		return nb;
 	}
 
+	/** @return the number of triangles of the sub-Elements of e, at every level (those of e itself are not counted) */
 	public int getNbTriangles(Element e) {
-		int nb = 0;
-
-		// Do a recursive call for SubElements
-		if (!e.isLeaf()) {
-			for (int i=0; i<e.getSubElements().size(); i++) {
-				// Recursive call
-				nb += getNbTriangles(e.getSubElements().get(i));
-			}
-		}
-//		} else { // Leaf
-//			nb+=e.getNbTriangles();			
-//		}
-		return nb;
+		return e.getStatistics().getNbTriangles() - e.getNbTriangles();
 	}
 
+	/** @return the number of triangles of this World, sub-Elements of every level included */
 	int getNbAllTriangles() {
-		int nb =0;
-		nb+=getNbTriangles(); // Triangles of the Element of the list
-		for (int i=0; i<elements.size(); i++) {
-			nb += getNbTriangles(getElement(i)); // Triangles of the SubElements of the Element of the list (all SubElement recursively)
-		}
-		return nb;
+		return getStatistics().getNbTriangles();
 	}
 
-	
+	/** @return the number of vertices owned by the Elements directly in this World, without their sub-Elements */
 	public int getNbVertices() {
 		int nb = 0;
 		for (int i=0; i<elements.size(); i++) {
@@ -229,33 +209,17 @@ public class World {
 		}
 		return nb;
 	}
-	
-	public int getNbVertices(Element e) {
-		int nb = 0;
 
-		// Do a recursive call for SubElements
-		if (!e.isLeaf()) {
-			for (int i=0; i<e.getSubElements().size(); i++) {
-				// Recursive call
-				nb += getNbVertices(e.getSubElements().get(i));
-			}
-		}
-//		} else { // Leaf
-//			nb+=e.getNbVertices();			
-//		}
-		return nb;
+	/** @return the number of vertices of the sub-Elements of e, at every level (those of e itself are not counted) */
+	public int getNbVertices(Element e) {
+		return e.getStatistics().getNbVertices() - e.getNbVertices();
 	}
-	
+
+	/** @return the number of vertices of this World, sub-Elements of every level included */
 	public int getNbAllVertices() {
-		int nb =0;
-		nb+=getNbVertices(); // Vertices of the Element of the list
-		
-		for (int i=0; i<elements.size(); i++) {
-			nb+=getNbVertices(getElement(i)); // Vertices of the SubElements of the Element of the list (all SubElement recursively)
-		}
-		return nb;
+		return getStatistics().getNbVertices();
 	}
-	
+
 	/**
 	 * @return the max distance from origin of all vertices in the World (including sub-Elements
 	 *         recursively -- see the fix note on the (Vector4) overload below)
@@ -384,4 +348,4 @@ public class World {
 		//return "World name: "+name+"\nElements: "+getNbElements()+", Triangles: "+getNbTriangles()+", Vertices: "+getNbVertices()+"\nBackground color: "+backgroundColor+"\nWorld color: "+worldColor;		
 	}
 
-}
+}

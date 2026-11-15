@@ -334,9 +334,10 @@ public class DirectionalLight extends ShadowingLight {
 	 * Returns the 8 world-space corners of the box to use for this light's shadow frustum,
 	 * according to shadowingBox_type.
 	 *
-	 * SHADOWING_BOX_ELEMENT and SHADOWING_BOX_SPECIFIC are not implemented yet -- both fall back
-	 * to SHADOWING_BOX_WORLD (with an error trace) rather than returning a null/empty box, which
-	 * would otherwise blow up the projection below.
+	 * SHADOWING_BOX_ELEMENT uses the bounding box of the Element given to setShadowingElement().
+	 * SHADOWING_BOX_SPECIFIC is not implemented yet: it falls back to SHADOWING_BOX_WORLD (with an
+	 * error trace) rather than returning a null/empty box, which would otherwise blow up the
+	 * projection below.
 	 */
 	private Vector4[] computeBoxCorners(Perspective perspectiveWorld, Camera camera_view) {
 
@@ -359,7 +360,23 @@ public class DirectionalLight extends ShadowingLight {
 		}
 
 		case SHADOWING_BOX_ELEMENT:
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Not implemented yet: SHADOWING_BOX_ELEMENT -- falling back to SHADOWING_BOX_WORLD");
+			// World-space AABB of one Element and its sub-Elements (see ShadowingLight.setShadowingElement()), computed
+			// like the one of the World below. Without an Element, or before its vertices are transformed (no bounds
+			// yet), fall back to the whole World.
+			if (shadowingElement != null) {
+				float[] min = { Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE };
+				float[] max = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE };
+				shadowingElement.accumulateWorldBounds(min, max);
+				if (min[0] <= max[0]) {
+					BoundingBox4 box = new BoundingBox4(new Vector4[] {
+							new Vector4(min[0], min[1], min[2], 1), new Vector4(max[0], max[1], max[2], 1) });
+					return new Vector4[] {
+							box.getP11(), box.getP12(), box.getP13(), box.getP14(),
+							box.getP21(), box.getP22(), box.getP23(), box.getP24()
+					};
+				}
+			}
+			if (Tracer.error) Tracer.traceError(this.getClass(), "SHADOWING_BOX_ELEMENT without a usable Element (see setShadowingElement()) -- falling back to SHADOWING_BOX_WORLD");
 			// Fall through to SHADOWING_BOX_WORLD
 
 		case SHADOWING_BOX_SPECIFIC:
@@ -382,4 +399,4 @@ public class DirectionalLight extends ShadowingLight {
 	public String toString() {
 		return "Directional Light with light vector (= -direction of the light) : " + this.light_vector;
 	}
-}
+}

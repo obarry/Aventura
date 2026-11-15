@@ -30,7 +30,7 @@ no third-party runtime library (only the JDK; JUnit 4 for tests). Java 21, Maven
   - `engine/` rendering pipeline, rasterization, fragments, shadow maps
   - `context/` graphic and rendering contexts
   - `view/` `GUIView`, `ImageView`, `SwingView`, `MapView`
-  - `demo/` demo applications
+  - `demo/` demo applications (`demo/temple/`: the `TempleRuins` demo and its classes)
   - `tools/` color, tracing
 - `src/test/java/com/aventura/` unit tests mirror the main packages; `test/` holds ~70 visual
   test programs with a `main()`; `cookbook/` tests the Geometry and Atmosphere Cookbook examples
@@ -38,6 +38,8 @@ no third-party runtime library (only the JDK; JUnit 4 for tests). Java 21, Maven
 - `docs/`
   - `BACKLOG.md` work items not handled yet (read it when picking or finishing a backlog item)
   - `DESIGN.md` architecture, pipeline, lighting, shadows, contexts, conventions
+  - `TEMPLE_RUINS.md` the making of the `TempleRuins` demo: architecture, graphic design, tricks, UI,
+    limitations, performance (update it when the demo changes)
   - `GEOMETRY_COOKBOOK.md`, `ATMOSPHERE_COOKBOOK.md`, `PERFORMANCE_AUDIT.md`, `JAVADOC_AUDIT.md`
 
 ## Conventions (see docs/DESIGN.md §12)

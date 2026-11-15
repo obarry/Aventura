@@ -107,6 +107,9 @@ public abstract class ShadowingLight extends Light {
 	
 	// World that can cast shadows with that Light, only needed starting ShadowingLight in the class hierarchy
 	World world = null;
+
+	// Element whose bounding box is the area covered by the shadow map, for SHADOWING_BOX_ELEMENT (see setShadowingElement())
+	protected Element shadowingElement = null;
 	
 	// Shadow map size requested through setShadowMapSize(), 0 = use getDefaultShadowMapSize()
 	private int shadowMapSize = 0;
@@ -619,6 +622,13 @@ public abstract class ShadowingLight extends Light {
 		if (xNdc < -1f || xNdc > 1f || yNdc < -1f || yNdc > 1f) {
 			return 1f;
 		}
+		// Same rule along the depth of an orthographic box (normalized depth out of [0, 1]): a point in front of or
+		// beyond the box is outside of what this light shadows. It matters when the box does not contain the whole
+		// World (see setShadowingElement()): beyond the far plane, the depth of the point would otherwise be compared
+		// with the far value of an empty texel, and the point would read as shadowed.
+		if (!frustum && (depthValue < 0f || depthValue > 1f)) {
+			return 1f;
+		}
 
 		// Sample the map where the rasterizer wrote this position. TriangleRasterizer follows the
 		// pixel-center convention: centered pixel x holds the depth sampled exactly at the
@@ -734,6 +744,36 @@ public abstract class ShadowingLight extends Light {
 	private static Vector4 posInLightSpace1(ViewProjection viewProjection, Vector4 worldPosition, Vector3 direction, float step) {
 		return viewProjection.project(new Vector4(worldPosition.getX() + direction.getX() * step, worldPosition.getY() + direction.getY() * step,
 				worldPosition.getZ() + direction.getZ() * step, 1f));
+	}
+
+	// ------------------------------------------------------------------
+	// Shadowing box
+	// ------------------------------------------------------------------
+
+	/**
+	 * Limits the area covered by the shadow map of this light to the bounding box of an Element (and of its
+	 * sub-Elements): the box type of this light becomes SHADOWING_BOX_ELEMENT. The whole resolution of the map is then
+	 * spent on that part of the World, e.g. a group of buildings in a landscape that extends to the horizon, instead of
+	 * being diluted over the whole World (SHADOWING_BOX_WORLD, the default).
+	 *
+	 * Only what is inside the box, seen from the light, casts and receives shadows: a point outside of it is lit. The
+	 * box is computed again at each frame, in World coordinates, so it follows the Element when it is transformed.
+	 * Used by the DirectionalLight (a PointLight and a SpotLight size their maps from their own position and range).
+	 * Taken into account from the next rendered frame.
+	 *
+	 * @param element the Element to cover, which must belong to the rendered World, or null to go back to the whole World
+	 *                (SHADOWING_BOX_WORLD)
+	 */
+	public void setShadowingElement(Element element) {
+		this.shadowingElement = element;
+		this.shadowingBox_type = element != null ? SHADOWING_BOX_ELEMENT : SHADOWING_BOX_WORLD;
+	}
+
+	/**
+	 * @return the Element whose bounding box limits the shadow map (see setShadowingElement()), null if none
+	 */
+	public Element getShadowingElement() {
+		return shadowingElement;
 	}
 
 	// ------------------------------------------------------------------
@@ -855,4 +895,4 @@ public abstract class ShadowingLight extends Light {
 		return shadowingBoxType_string;
 	}
 
-}
+}

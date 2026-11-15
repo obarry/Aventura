@@ -38,8 +38,12 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 <p align="center">
   <img src="resources/doc/images/fractal_landscape.jpg" alt="FractalLandscape: procedural terrain" width="800">
 </p>
+<p align="center">
+  <img src="resources/doc/images/temple_ruins.jpg" alt="TempleRuins: the main front of the temple" width="400">
+  <img src="resources/doc/images/temple_ruins_island.jpg" alt="TempleRuins: the island from the helicopter" width="400">
+</p>
 
-*Left to right, top to bottom: the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, two frames of the `UrbanScape` helicopter flight (street level, then an overview showing the shadows of the buildings), and the `FractalLandscape` procedural terrain.*
+*Left to right, top to bottom: the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, two frames of the `UrbanScape` helicopter flight (street level, then an overview showing the shadows of the buildings), the `FractalLandscape` procedural terrain, and two views of the `TempleRuins` demo (the temple as the demo starts, the island seen from its helicopter tour; see [The Making of a Demo](docs/TEMPLE_RUINS.md)).*
 
 The images of the documentation are rendered off-screen from the scenes of these programs by `com.aventura.demo.DocumentationImages` (in the test sources). Run it from the project root to regenerate them, for instance after a change of the engine:
 
@@ -88,6 +92,7 @@ mvn test-compile exec:java
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.AventuraDemo
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.FractalLandscape
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.UrbanScape
+mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.test.TestSphereTexture
 
 # Or straight from the jar built above (Earth and Moon)
@@ -457,9 +462,20 @@ A shape is a set of triangles. To add a new one, extend `GenerativeElement` and 
 
 The [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) covers it in depth: the contracts a new element must fulfill, a new primitive written from scratch, an existing shape enriched by inheritance, and complex objects assembled from sub-elements, with tested examples.
 
+### Measuring a scene
+
+How large is a scene? `World.getStatistics()` (or `Element.getStatistics()` for one branch of the tree) returns its `GeometryStatistics`: number of Elements, triangles and vertices at every level, depth of the tree, textures used with the triangles that use them and their memory. `GeometryReport` makes a text of it, one line per kind of Element of each level:
+
+```java
+System.out.println(world.getStatistics());    // 753 elements (72 groups), 56,676 triangles, 36,397 vertices, depth 7, 7 textures (35.5 MB)
+System.out.println(GeometryReport.of(world)); // The composition of the geometry, then the textures
+```
+
+A demo with a Swing window gets a `Statistics` menu item, a window for the report (with the timing and the triangle counts of the last image) and a print in the console at closing from `com.aventura.demo.StatisticsWindow`, in three lines; see it in `TempleRuins`, and its output in [The Making of a Demo](docs/TEMPLE_RUINS.md#statistics).
+
 ## Demos
 
-All demos live in `com.aventura.demo`.
+All demos live in `com.aventura.demo` (`TempleRuins`, made of several classes, in its own `com.aventura.demo.temple` package).
 
 | Demo | What it shows | Interaction |
 | --- | --- | --- |
@@ -468,6 +484,14 @@ All demos live in `com.aventura.demo`.
 | `FractalLandscape` | A procedural fractal terrain built on a `Trellis`, with a sea and a low sun | Orbit camera: drag the mouse to orbit, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to zoom; fly camera: drag the mouse to look around, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to fly forward / backward along the line of sight; `Ctrl` + `U` / `D` (or `Page Up` / `Page Down`) to raise / lower the sea; the image follows the window size; `Landscape` menu: generate, generate fog, reset camera, orbit / fly camera; `Rendering` menu: lines, monochrome, unlit, flat, shading; `Effects` menu: texture, specular highlights, shadows (hard / soft), sun (halo, lens flare, light shafts), haze, fog (none by default) |
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
 | `UrbanScape` | Three apartment buildings along a street, each one a three-level tree of `Element`s (building > floors > windows), lit by a mid-height sun with shadows, no texture | None: the camera flies three laps around the scene like a helicopter (off-center, tilted orbit, always looking at the middle building) |
+| `TempleRuins` | The ruins of a Greek temple on an island, with olive trees, boulders and the sea up to the horizon. A scene of about 57,000 triangles that uses most of the API: a three-level tree of `Element`s built from a plan, two new shapes (`TaperedDrum`, `Boulder`) and a `Trellis` extended by inheritance (`TiledTrellis`), textures from files and computed ones, Scaling / Rotation / Translation, a warm sun with soft shadows limited to the island (`setShadowingElement()`), a bluish ambient light, haze and sea mist | Orbit camera (`O`), fly camera (`F`) and helicopter tour (`H`, a Catmull-Rom spline flown at constant speed, banking in the turns; `Space` pauses it, dragging the mouse takes the controls); mouse and wheel as in `FractalLandscape`; `Sun` menu (`Page Up` / `Page Down`, `Left` / `Right`): move the sun; `Rendering` and `Effects` menus as in `FractalLandscape`; `Camera` / `Statistics` (`I`): the size of the scene and the work of the engine for the last image, also printed in the console when the window is closed |
+
+<p align="center">
+  <img src="resources/doc/images/temple_ruins_debris.jpg" alt="TempleRuins: the ruined south side of the temple" width="400">
+  <img src="resources/doc/images/temple_ruins_sun.jpg" alt="TempleRuins: against the light, the sun and its lens flare" width="400">
+</p>
+
+*The `TempleRuins` demo: the ruined side of the temple, and the sun seen from behind it. [TempleRuins — The Making of a Demo](docs/TEMPLE_RUINS.md) tells how it was built: its architecture, its graphic design, the tricks and the design choices, its controls and menus, its limitations and its performance.*
 
 The `src/test/java/com/aventura/test` folder holds about seventy additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows), `TestLightingGlow` (a lamp with a visible halo, hidden behind the objects) and `TestLightingSun` (a street where the camera turns to bring the sun behind the buildings), `TestAtmosphere` (an avenue whose buildings fade into the sky with the distance) and `TestFog` (the same avenue with banks of fog that the camera crosses). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
 

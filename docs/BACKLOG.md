@@ -62,8 +62,8 @@ returns a copy. The extraction of `FloatMap` out of the `view` package remains t
   - `SpotLight extends PointLight` forces `SpotLight` to re-assert the single-map behavior
     (`generateShadowMap`, `shadowFactorAt`, default and current map size). A shared abstract parent
     (point-like light) with two siblings would remove this trap.
-- `SHADOWING_BOX_ELEMENT` and `SHADOWING_BOX_SPECIFIC` are not implemented (they fall back to
-  `SHADOWING_BOX_WORLD`). The `SHADOWING_BOX_*` int constants could become an enum, like
+- `SHADOWING_BOX_SPECIFIC` is not implemented (it falls back to `SHADOWING_BOX_WORLD`;
+  `SHADOWING_BOX_ELEMENT` is, through `setShadowingElement()`, for a `DirectionalLight`). The `SHADOWING_BOX_*` int constants could become an enum, like
   `RenderingType`. Also, `ShadowingLight(int)` (box type) and `ShadowingLight(float)` (intensity) are
   easy to confuse.
 - Tuning constants are hard-coded: `SHADOW_BIAS_WORLD`, `DOT_NL_FLOOR`, `SHADOW_BIAS_TEXEL_FACTOR`.
