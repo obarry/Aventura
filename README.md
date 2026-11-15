@@ -9,8 +9,10 @@
 Aventura lets you build a 3D scene through a plain Java API (shapes, textures, lights, shadows, camera), then rasterizes it on the CPU and hands you the pixels: in a Swing window, or straight into a `BufferedImage` you can save, stream or post-process. Because nothing depends on graphics hardware or OpenGL drivers, it runs anywhere a JVM runs, headless servers included.
 
 <p align="center">
-  <img src="Aventura_moon_and_earth.jpg" alt="Earth and Moon rendered by Aventura" width="720">
+  <img src="resources/doc/images/temple_ruins.jpg" alt="The TempleRuins demo: the ruins of a Greek temple on an island, rendered by Aventura" width="800">
 </p>
+
+*The `TempleRuins` demo: 56,676 triangles, textures, soft shadows, a visible sun and the haze of the distance, rendered on the CPU at 8 to 25 images per second on a laptop (1000 x 562 pixels), with an orbit camera, a fly camera and a helicopter tour. [How it was made](docs/TEMPLE_RUINS.md).*
 
 ## Highlights
 
@@ -28,22 +30,25 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 ## Gallery
 
 <p align="center">
-  <img src="resources/doc/images/hello_aventura.png" alt="Hello Aventura: sphere, cone and shadows" width="400">
-  <img src="resources/doc/images/aventura_demo.jpg" alt="AventuraDemo: textured shapes" width="400">
+  <img src="resources/doc/images/temple_ruins_island.jpg" alt="TempleRuins: the island from the helicopter" width="400">
+  <img src="resources/doc/images/temple_ruins_colonnade.jpg" alt="TempleRuins: at the foot of the columns" width="400">
 </p>
 <p align="center">
   <img src="resources/doc/images/urbanscape_street.jpg" alt="UrbanScape: street level" width="400">
   <img src="resources/doc/images/urbanscape_flight.jpg" alt="UrbanScape: overview with shadows" width="400">
 </p>
 <p align="center">
+  <img src="resources/doc/images/hello_aventura.png" alt="Hello Aventura: sphere, cone and shadows" width="400">
+  <img src="resources/doc/images/aventura_demo.jpg" alt="AventuraDemo: textured shapes" width="400">
+</p>
+<p align="center">
   <img src="resources/doc/images/fractal_landscape.jpg" alt="FractalLandscape: procedural terrain" width="800">
 </p>
 <p align="center">
-  <img src="resources/doc/images/temple_ruins.jpg" alt="TempleRuins: the main front of the temple" width="400">
-  <img src="resources/doc/images/temple_ruins_island.jpg" alt="TempleRuins: the island from the helicopter" width="400">
+  <img src="Aventura_moon_and_earth.jpg" alt="Earth and Moon rendered by Aventura" width="800">
 </p>
 
-*Left to right, top to bottom: the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, two frames of the `UrbanScape` helicopter flight (street level, then an overview showing the shadows of the buildings), the `FractalLandscape` procedural terrain, and two views of the `TempleRuins` demo (the temple as the demo starts, the island seen from its helicopter tour; see [The Making of a Demo](docs/TEMPLE_RUINS.md)).*
+*Left to right, top to bottom: two more views of the `TempleRuins` demo (the island seen from its helicopter tour, the corner of the temple from the ground; see [The Making of a Demo](docs/TEMPLE_RUINS.md)), two frames of the `UrbanScape` helicopter flight (street level, then an overview showing the shadows of the buildings), the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, the `FractalLandscape` procedural terrain, and the `EarthAndMoon` textured spheres.*
 
 The images of the documentation are rendered off-screen from the scenes of these programs by `com.aventura.demo.DocumentationImages` (in the test sources). Run it from the project root to regenerate them, for instance after a change of the engine:
 
@@ -479,7 +484,7 @@ All demos live in `com.aventura.demo` (`TempleRuins`, made of several classes, i
 
 | Demo | What it shows | Interaction |
 | --- | --- | --- |
-| `EarthAndMoon` | Two textured spheres, a directional light and specular highlights (the picture at the top of this page) | None: renders a still frame |
+| `EarthAndMoon` | Two textured spheres, a directional light and specular highlights (the last picture of the gallery) | None: renders a still frame |
 | `AventuraDemo` | Textured cone, cylinder, sphere, cube, box, trellis and pyramid, spinning in 3D, with the coordinate axes displayed | None: animated |
 | `FractalLandscape` | A procedural fractal terrain built on a `Trellis`, with a sea and a low sun | Orbit camera: drag the mouse to orbit, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to zoom; fly camera: drag the mouse to look around, mouse wheel (or touchpad scroll / pinch, or `Up` / `Down` keys) to fly forward / backward along the line of sight; `Ctrl` + `U` / `D` (or `Page Up` / `Page Down`) to raise / lower the sea; the image follows the window size; `Landscape` menu: generate, generate fog, reset camera, orbit / fly camera; `Rendering` menu: lines, monochrome, unlit, flat, shading; `Effects` menu: texture, specular highlights, shadows (hard / soft), sun (halo, lens flare, light shafts), haze, fog (none by default) |
 | `MovingCamera` | The same scene as `AventuraDemo`, with a keyboard-driven camera (smooth rotation using quaternion `slerp`) | Numeric keys: `8`/`2` look up/down, `4`/`6` look left/right, `5` move forward, `0` move back |
