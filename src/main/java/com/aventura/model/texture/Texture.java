@@ -57,6 +57,12 @@ public class Texture {
 	// Name of the texture, for the reports (see getName()): the name of its file, or the one given by setName()
 	protected String name = null;
 
+	// Mipmaps: smaller and smaller copies of the texture, each one half the size of the previous one, down to 1 x 1
+	// (see buildMipmaps()). mipTexels[n] holds the texels of level n, row by row like tex; level 0 is tex itself.
+	// null until they are built: they are only needed by getInterpolatedColor(s, t, pixelSize).
+	protected int[][] mipTexels = null;
+	protected int[] mipWidths, mipHeights;
+
 	
 	/**
 	 * Create an empty Texture of a given width and height
@@ -246,6 +252,179 @@ public class Texture {
 		return new Color(clamp01(r), clamp01(g), clamp01(b));
 	}
 
+	// ------------------------------------------------------------------
+	// Mipmapping
+	// ------------------------------------------------------------------
+
+	/**
+	 * Builds the mipmaps of this texture, if they are not built yet: a pyramid of copies of the texture, each level
+	 * half the size of the previous one (rounded down, at least 1), down to a single texel. A texel of a level is the
+	 * average of the 2 x 2 texels it covers in the level below (a "box filter").
+	 * <pre>
+	 *   level 0: 8 x 8 (the texture)   level 1: 4 x 4   level 2: 2 x 2   level 3: 1 x 1
+	 * </pre>
+	 * The pyramid adds one third to the memory of the texture (1/4 + 1/16 + ...). It is built once: the RenderEngine
+	 * calls this method before rasterizing, when mipmapping is enabled (RenderContext.setMipmapping()), so that the
+	 * rasterization threads only read it. setColor() discards it: it is built again at the next call.
+	 */
+	public synchronized void buildMipmaps() {
+		if (mipTexels != null) return;
+
+		// Number of levels: the size is halved until both sides are 1
+		int levels = 1;
+		for (int size = Math.max(width, height); size > 1; size /= 2) levels++;
+
+		int[][] texels = new int[levels][];
+		int[] widths = new int[levels], heights = new int[levels];
+		texels[0] = tex;
+		widths[0] = width;
+		heights[0] = height;
+		for (int level = 1; level < levels; level++) {
+			int w = Math.max(1, widths[level - 1] / 2), h = Math.max(1, heights[level - 1] / 2);
+			widths[level] = w;
+			heights[level] = h;
+			texels[level] = halve(texels[level - 1], widths[level - 1], heights[level - 1], w, h);
+		}
+		mipWidths = widths;
+		mipHeights = heights;
+		mipTexels = texels; // Assigned last: a texture with mipTexels has all its levels
+	}
+
+	/**
+	 * A copy of half the size of the given texels: each texel of the copy is the average of the block of 2 x 2
+	 * texels it covers (2 x 1 or 1 x 2 when the source is a single row or column of texels). When a side of the
+	 * source is odd, its last row or column is left out.
+	 */
+	private static int[] halve(int[] source, int sourceWidth, int sourceHeight, int width, int height) {
+		int[] half = new int[width * height];
+		for (int y = 0; y < height; y++) {
+			int y0 = Math.min(2 * y, sourceHeight - 1), y1 = Math.min(2 * y + 1, sourceHeight - 1);
+			for (int x = 0; x < width; x++) {
+				int x0 = Math.min(2 * x, sourceWidth - 1), x1 = Math.min(2 * x + 1, sourceWidth - 1);
+				int a = source[y0 * sourceWidth + x0], b = source[y0 * sourceWidth + x1];
+				int c = source[y1 * sourceWidth + x0], d = source[y1 * sourceWidth + x1];
+				// The average of each color component (8 bits each, in a packed ARGB int), rounded to the nearest
+				int red = (((a >> 16) & 0xFF) + ((b >> 16) & 0xFF) + ((c >> 16) & 0xFF) + ((d >> 16) & 0xFF) + 2) / 4;
+				int green = (((a >> 8) & 0xFF) + ((b >> 8) & 0xFF) + ((c >> 8) & 0xFF) + ((d >> 8) & 0xFF) + 2) / 4;
+				int blue = ((a & 0xFF) + (b & 0xFF) + (c & 0xFF) + (d & 0xFF) + 2) / 4;
+				half[y * width + x] = 0xFF000000 | (red << 16) | (green << 8) | blue;
+			}
+		}
+		return half;
+	}
+
+	/** @return true if the mipmaps of this texture are built (see buildMipmaps()) */
+	public boolean hasMipmaps() {
+		return mipTexels != null;
+	}
+
+	/** @return the number of mipmap levels, the texture itself (level 0) included; 1 if the mipmaps are not built */
+	public int getNbMipmapLevels() {
+		return mipTexels != null ? mipTexels.length : 1;
+	}
+
+	/** @return the width of a mipmap level, in texels (level 0 is the texture itself); the mipmaps must be built */
+	public int getMipmapWidth(int level) {
+		return mipWidths[level];
+	}
+
+	/** @return the height of a mipmap level, in texels; the mipmaps must be built */
+	public int getMipmapHeight(int level) {
+		return mipHeights[level];
+	}
+
+	/**
+	 * The mipmap level whose texels have the size of a pixel of the screen, for a surface seen at a given scale.
+	 * The scale is the size of a pixel on the surface, in texture coordinates (the texture is 1 wide and 1 high), as
+	 * a base 2 logarithm: -10 means that a pixel covers 1/1024 of the texture. A texel of level 0 covers
+	 * 1/width x 1/height of the texture, hence 1/sqrt(width x height) on average, and each level doubles it:
+	 * <pre>
+	 *   level = log2(pixel size / texel size of level 0) = log2PixelSize + log2(sqrt(width x height))
+	 * </pre>
+	 * The level is a float: 2.3 is between the levels 2 and 3, nearer to 2. A negative level means that a pixel is
+	 * smaller than a texel (the texture is magnified): level 0 is the finest there is.
+	 *
+	 * @param log2PixelSize base 2 logarithm of the size of a pixel, in texture coordinates (see Fragment.getTexLog2PixelSize())
+	 */
+	public float mipmapLevel(float log2PixelSize) {
+		return log2PixelSize + 0.5f * (float) (Math.log((double) width * height) / LN_2);
+	}
+
+	private static final double LN_2 = Math.log(2);
+
+	/**
+	 * The Color of this Texture at coordinates <s,t> (0 <= s <= 1 and 0 <= t <= 1) for a surface seen at a given
+	 * scale: with mipmapping, also called trilinear filtering.
+	 *
+	 * getInterpolatedColor(s, t) reads the 4 texels around the point. This is right as long as a texel is larger
+	 * than a pixel of the screen. On a surface seen from far away, a pixel covers many texels, of which only these 4
+	 * would be read, almost at random: the texture turns into noise, which flickers when the camera moves. Here the
+	 * color is read in the mipmap level whose texels have the size of the pixel, where each texel is already the
+	 * average of all the texels of the texture that it covers. The level is usually between two levels of the
+	 * pyramid (see mipmapLevel()): the color is read in both (bilinear interpolation in each) and interpolated
+	 * between the two, so that no line shows on a surface where the level changes.
+	 *
+	 * When a pixel is smaller than a texel (level 0 or below), the result is exactly getInterpolatedColor(s, t).
+	 * The mipmaps must be built (buildMipmaps()); otherwise the texture itself is read.
+	 *
+	 * @param log2PixelSize base 2 logarithm of the size of a pixel, in texture coordinates (see mipmapLevel())
+	 * @return the Color, never null
+	 */
+	public Color getInterpolatedColor(float s, float t, float log2PixelSize) {
+		int[][] texels = mipTexels;
+		float level = mipmapLevel(log2PixelSize);
+		if (texels == null || level <= 0f) {
+			return getInterpolatedColor(s, t);
+		}
+
+		// The two levels around the wanted one, and the share of the coarser one. Beyond the last level (a pixel
+		// larger than the whole texture), the last level only: the average color of the texture.
+		int last = texels.length - 1;
+		int fine = Math.min((int) level, last);
+		int coarse = Math.min(fine + 1, last);
+		float share = fine == last ? 0f : level - fine;
+
+		int fineColor = bilinear(texels[fine], mipWidths[fine], mipHeights[fine], s, t);
+		if (share == 0f) {
+			return new Color(fineColor);
+		}
+		int coarseColor = bilinear(texels[coarse], mipWidths[coarse], mipHeights[coarse], s, t);
+		return new Color(
+				mix((fineColor >> 16) & 0xFF, (coarseColor >> 16) & 0xFF, share),
+				mix((fineColor >> 8) & 0xFF, (coarseColor >> 8) & 0xFF, share),
+				mix(fineColor & 0xFF, coarseColor & 0xFF, share));
+	}
+
+	/** The value a share (0 to 1) of the way from a to b, two color components (0 to 255), rounded to the nearest */
+	private static int mix(int a, int b, float share) {
+		return Math.round(a + (b - a) * share);
+	}
+
+	/**
+	 * Bilinear interpolation of the 4 texels around the point <s,t> in a mipmap level: the same computation as
+	 * getInterpolatedColor(s, t), on the texels of that level. Returns a packed RGB int rather than a Color, so that
+	 * the two levels of a trilinear filtering create a single Color, at the end.
+	 */
+	private static int bilinear(int[] texels, int width, int height, float s, float t) {
+		float u = s * width - 0.5f;
+		float v = t * height - 0.5f;
+		int x0 = (int) Math.floor(u);
+		int y0 = (int) Math.floor(v);
+		float uRatio = u - x0, vRatio = v - y0;
+		int x1 = Math.max(0, Math.min(x0 + 1, width - 1));
+		int y1 = Math.max(0, Math.min(y0 + 1, height - 1));
+		x0 = Math.max(0, Math.min(x0, width - 1));
+		y0 = Math.max(0, Math.min(y0, height - 1));
+
+		int argb00 = texels[y0 * width + x0], argb01 = texels[y1 * width + x0];
+		int argb10 = texels[y0 * width + x1], argb11 = texels[y1 * width + x1];
+		float w00 = (1f - uRatio) * (1f - vRatio), w01 = (1f - uRatio) * vRatio, w10 = uRatio * (1f - vRatio), w11 = uRatio * vRatio;
+		int red = Math.round(((argb00 >> 16) & 0xFF) * w00 + ((argb01 >> 16) & 0xFF) * w01 + ((argb10 >> 16) & 0xFF) * w10 + ((argb11 >> 16) & 0xFF) * w11);
+		int green = Math.round(((argb00 >> 8) & 0xFF) * w00 + ((argb01 >> 8) & 0xFF) * w01 + ((argb10 >> 8) & 0xFF) * w10 + ((argb11 >> 8) & 0xFF) * w11);
+		int blue = Math.round((argb00 & 0xFF) * w00 + (argb01 & 0xFF) * w01 + (argb10 & 0xFF) * w10 + (argb11 & 0xFF) * w11);
+		return (red << 16) | (green << 8) | blue;
+	}
+
 	private static float clamp01(float v) {
 		return v < 0f ? 0f : (v > 1f ? 1f : v);
 	}
@@ -282,6 +461,7 @@ public class Texture {
 	public void setColor(int x, int y, Color c) {
 		// TODO Implement x y validation and return exception if outside width and height
 		tex[y * width + x] = c.getRGB();
+		mipTexels = null; // The mipmaps, if any, no longer match: they will be built again (see buildMipmaps())
 	}
 	
 	public int getWidth() {
@@ -307,14 +487,20 @@ public class Texture {
 
 	/**
 	 * @return the memory used by the texels of this texture, in bytes: 4 bytes (an ARGB int) for each of its
-	 *         width x height texels, whatever the size of the (compressed) file it was loaded from
+	 *         width x height texels, whatever the size of the (compressed) file it was loaded from, plus those of its
+	 *         mipmaps if they are built (about one third more, see buildMipmaps())
 	 */
 	public long getMemorySize() {
-		return 4L * tex.length;
+		long texels = tex.length;
+		int[][] mipmaps = mipTexels;
+		if (mipmaps != null) {
+			for (int level = 1; level < mipmaps.length; level++) texels += mipmaps[level].length;
+		}
+		return 4L * texels;
 	}
 	
 	public int getHeight() {
 		return this.height;
 	}
 
-}
+}

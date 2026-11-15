@@ -63,6 +63,7 @@ What the demo shows of the API:
 | `Translation`, `Rotation`, `Scaling`, and their composition | `OliveTree.pose()`, foliage and boulders, fallen drums |
 | Textures from files, read in either direction | `SceneTextures` (marble, ground, rock; bark with its axes exchanged) |
 | Textures computed pixel by pixel | `SceneTextures.createSea()`, `createFoliage()`, `shrink()` |
+| Mipmapping of the textures (`RenderContext.setMipmapping()`) | `createRenderContext()`, Effects menu |
 | Colors per triangle, tinting a texture | `TempleRuins.colorGround()` |
 | `DirectionalLight` with color, soft shadows (`PCF_3X3`), shadow box | `TempleRuins.createSun()` |
 | Colored `AmbientLight`, specular highlights per surface | `createLighting()`, `createSea()` |
@@ -365,9 +366,17 @@ off, without any special case.
 would stretch the image over the whole temple. The platform is paved with one slab per column spacing: a sharp
 texture, a tint per slab, and joints, for 126 boxes and 1,500 triangles.
 
-**The sea does not flicker much.** The engine has no mipmaps: when several pixels of a texture fall in one pixel of
-the screen, one of them is read, and it changes with the slightest move of the camera. Hence a sea texture of 512
-pixels for 25 m (5 cm per pixel), with long, soft wavelets, and a plain color beyond 400 m.
+**The sea does not flicker much.** The demo was written when the engine had no mipmaps: when several pixels of a
+texture fell in one pixel of the screen, 4 of them were read, and they changed with the slightest move of the camera.
+Hence a sea texture of 512 pixels for 25 m (5 cm per pixel), with long, soft wavelets, and a plain color beyond 400 m.
+
+**Mipmapping, added for this demo.** The ground and the marble showed the problem the sea had avoided: sharp from
+close, they turned into a grainy noise in the distance, all the more visible next to the clean edges of the geometry,
+and it flickered during the flight. A texel of the ground is 2 cm wide; at 300 m a pixel covers 30 cm of ground,
+some 200 texels, of which 4 were read. The engine now keeps smaller and smaller copies of each texture (its mipmaps,
+each texel the average of 4 texels of the level below) and reads the one whose texels have the size of the pixel
+(`RenderContext.setMipmapping(true)`, see [DESIGN.md §5](DESIGN.md#5-rasterization-and-fragments)). Nothing changes
+from close. Switch "Mipmapping" off in the Effects menu to compare.
 
 **Leaves from two noises.** The foliage texture mixes a fine noise stretched in one direction (the leaves) and a
 coarse one (areas more green or more silver), through three colors: 256 x 256 pixels, computed at start-up.
@@ -529,7 +538,7 @@ the camera at once: the movement eases over 150 ms.
 | | Turn left / Turn right | `Left` / `Right` | Azimuth of the sun by 5° |
 | | Reset sun | | Back to 212°, 32° |
 | Rendering | Lines, Monochrome, Unlit, Flat, Shading | | The `RenderingType` (radio buttons) |
-| Effects | Textures, Specular highlights | | Surfaces |
+| Effects | Textures, Mipmapping, Specular highlights | | Surfaces; mipmapping smooths the textures seen from far away |
 | | Shadows, Soft shadows | | Shadow map of the sun, hard or `PCF_3X3` |
 | | Haze, Sea mist | | The two branches of the `Atmosphere` |
 | | Sun, Sun halo, Lens flare, Light shafts | | The visible sun and its `LightAppearance` |
@@ -587,15 +596,15 @@ World                                          753      56,676      36,397  100.
 7 levels of Elements, 72 of them without triangles of their own (groups)
 
 TEXTURES                                                        pixels      memory   triangles
-  texture_ground_stone_600x600.jpg                           600 x 600      1.4 MB      18,432
-  texture_stone_1023x852.jpg                                1023 x 852      3.3 MB      14,496
-  texture_barnwood_576x358.jpg                               358 x 576    805.5 KB       1,784
-  foliage (computed)                                         256 x 256    256.0 KB      16,100
-  texture_gray_concrete_wall_with_cracks_2748x2748.jpg     2748 x 2748     28.8 MB       3,168
-  sea (computed)                                             512 x 512      1.0 MB       2,048
+  texture_ground_stone_600x600.jpg                           600 x 600      1.8 MB      18,432
+  texture_stone_1023x852.jpg                                1023 x 852      4.4 MB      14,496
+  texture_barnwood_576x358.jpg                               358 x 576      1.0 MB       1,784
+  foliage (computed)                                         256 x 256    341.3 KB      16,100
+  texture_gray_concrete_wall_with_cracks_2748x2748.jpg     2748 x 2748     38.4 MB       3,168
+  sea (computed)                                             512 x 512      1.3 MB       2,048
   sea, average color                                             1 x 1         4 B         648
   (no texture)                                                                               0
-7 textures                                                                 35.5 MB      56,676
+7 textures                                                                 47.4 MB      56,676
 
 LAST IMAGE (1000 x 562 pixels, Helicopter tour)
 Frame 208.9 ms (SETUP 3.1, SHADOWS 42.1, GEOMETRY 10.4, MAIN_PASS 148.3, OVERLAYS 4.9, PRESENT 0.1)
@@ -621,7 +630,7 @@ The only things the demo does for its statistics are to **name** what has no tel
 seas (a `Trellis` is called "trellis" by default) and the computed textures (which have no file name).
 
 **What the statistics showed at once.** The foliage is 28% of the triangles, more than the whole temple with its
-platform (22%); and the texture of the boulders is 81% of the texture memory (28.8 MB) for 5.6% of the triangles, drawn on
+platform (22%); and the texture of the boulders is 81% of the texture memory (38.4 MB, mipmaps included: one third more than the texture alone) for 5.6% of the triangles, drawn on
 rocks that seldom cover more than a few hundred pixels. Both are in the list of [§10](#10-performance).
 
 ### How it is built
@@ -721,7 +730,7 @@ are already in the [backlog](BACKLOG.md) or in the [performance audit](PERFORMAN
 | The sky is a single color | No gradient towards the horizon, no clouds; the haze does the job of the horizon | A sky gradient (zenith and horizon colors), then a sky texture or procedural clouds |
 | No surface without lighting inside a lit scene | No sky dome, no emissive object (a fire, a lamp) | An "unlit" or emissive flag per Element or per material (backlog §3b: emissive geometry) |
 | Texture coordinates clamped to [0, 1] | Mirrored tiling, written three times in three shapes | Wrap modes on `Texture`: clamp, repeat, mirror |
-| No mipmaps | A coarse sea texture and a plain far sea; a slight shimmer of the ground far away | Mipmaps, or at least a level chosen per triangle |
+| Mipmaps without anisotropic filtering | The ground seen at a low angle is a compromise: slightly soft far away, to avoid the noise | Several samples along the stretched direction of the pixel (backlog §4) |
 | No transparency (alpha) | Foliage as solid blobs, opaque water without a sea bed | Alpha test first (leaves as textured cards), then blending |
 | Materials are chosen by the engine (`SolidMaterial`, `TexturedMaterial`); an Element cannot be given its own | No water material (Fresnel, moving ripples), no triplanar rock | `Element.setMaterial(Material)`: the `Material` interface already exists |
 | No bump or normal map (backlog §2) | Flutes as geometry; flat walls, flat water | Normal maps |
@@ -806,7 +815,6 @@ These are not specific to the demo; it only makes their value visible. The first
 | **Cull whole Elements** against the frustum with a bounding volume (audit R1) | 753 Elements, most of them small and often out of the image; the same test in light space would speed up the shadow pass |
 | **Draw only the back faces in the shadow pass**, or cull by Element in light space (audit R9) | Half the triangles of the shadow pass, and less shadow acne |
 | **A shadow box fitted on what the camera sees**, clamped to the casters | The same sharpness with a smaller map when the camera is close to the temple |
-| **Mipmaps** | Fewer cache misses on minified textures, and it removes the flicker for free |
 | **Instancing** | 26 columns and 18 trees would share a few meshes: less memory, vertices transformed once per instance with a single model matrix |
 | **Level of detail** per Element, chosen from its size on the screen | The trees and the far columns |
 | **A cheaper soft shadow** far from any shadow edge (skip the 16 reads when the 4 corners of the block agree) | Most of the pixels are far from an edge |

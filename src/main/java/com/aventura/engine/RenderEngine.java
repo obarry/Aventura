@@ -570,6 +570,17 @@ public class RenderEngine {
 	}
 
 	/**
+	 * @return true if the texture of t is to be read with mipmapping (RenderContext.setMipmapping()). Its mipmaps
+	 *         are then built here if they are not yet: once for each texture, by the rendering thread, before the
+	 *         rasterization threads read them.
+	 */
+	private boolean useMipmaps(Triangle t) {
+		if (!renderContext.isMipmapping()) return false;
+		t.getTexture().buildMipmaps(); // Returns at once if they are already built
+		return true;
+	}
+
+	/**
 	 * Prepares t to be rasterized without any lighting (UNLIT and MONOCHROME rendering types): each pixel will get
 	 * the base color of the Material (UnlitConsumer). No normal is interpolated.
 	 *
@@ -581,7 +592,7 @@ public class RenderEngine {
 
 		boolean useTexture = texture && t.getTexture() != null;
 		Material material = useTexture
-				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, DEFAULT_SPECULAR_COLOR, 0, LEGACY_AMBIENT_REFLECTIVITY)
+				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, DEFAULT_SPECULAR_COLOR, 0, LEGACY_AMBIENT_REFLECTIVITY, useMipmaps(t))
 				: new SolidMaterial(color != null ? color : Color.WHITE, DEFAULT_SPECULAR_COLOR, 0, LEGACY_AMBIENT_REFLECTIVITY);
 
 		DrawList.Command command = drawList.next(DrawList.Kind.FILL_UNLIT, t);
@@ -628,7 +639,7 @@ public class RenderEngine {
 		// never replaced by it. Only SolidMaterial needs a non-null fallback (white) since it has
 		// no texture to fall back on if color is null.
 		Material material = useTexture
-				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY)
+				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY, useMipmaps(t))
 				: new SolidMaterial(color != null ? color : Color.WHITE, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY);
 
 		DrawList.Command command = drawList.next(DrawList.Kind.FILL_SHADED, t);

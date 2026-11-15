@@ -260,6 +260,13 @@ public class TriangleRasterizer {
 			return; // No pixel center inside the triangle
 		}
 
+		// The scale of the texture on the screen, the same computation for all the pixels of the triangle (mipmapping)
+		if (texCoord1 != null) {
+			boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
+			fragment.setTexScale(texLog2PixelSize(x1, y1, x2, y2, x3, y3, texCoord1, texCoord2, texCoord3,
+					frustum ? pv1.getProjPos().getW() : 1, frustum ? pv2.getProjPos().getW() : 1, frustum ? pv3.getProjPos().getW() : 1), frustum);
+		}
+
 		RasterVertex a = new RasterVertex(pv1, normal1, texCoord1);
 		RasterVertex b = new RasterVertex(pv2, normal2, texCoord2);
 		RasterVertex c = new RasterVertex(pv3, normal3, texCoord3);
@@ -459,6 +466,80 @@ public class TriangleRasterizer {
 			consumer.consume(fragment);
 			renderedPixels++;
 		}
+	}
+
+	//
+	// Scale of the texture (mipmapping)
+	//
+
+	/**
+	 * Share of the stretching of the texture that is added to the size of a pixel (see texLog2PixelSize()): 0 would
+	 * keep the average size (the sharpest image, but still some noise on a ground seen at a low angle), 1 would take
+	 * the largest size (no noise at all, but a blurred ground far away).
+	 */
+	static final float TEX_STRETCH_SHARE = 0.5f;
+	/** The stretching taken into account is limited to this ratio between the largest and the smallest size of a pixel. */
+	static final float TEX_MAX_STRETCH = 16f;
+
+	private static final double LN_2 = Math.log(2);
+
+	/**
+	 * The size of a pixel of the screen on a textured triangle, in texture coordinates, as a base 2 logarithm, where
+	 * the depth is 1 (see Fragment.getTexLog2PixelSize(), which adds the effect of the depth of each pixel).
+	 *
+	 * 1. The average size. On the screen the triangle covers an area of Ascreen pixels, and in the texture an area of
+	 *    Atexture (in texture coordinates). Without perspective, a pixel therefore covers Atexture / Ascreen of the
+	 *    texture, wherever it is in the triangle, and its size (the side of a square of that area) is the square root
+	 *    of it. With perspective, the far part of the triangle is squeezed into fewer pixels than the near part: at a
+	 *    pixel of depth w, a pixel covers exactly
+	 *    <pre>
+	 *        Atexture / Ascreen x w^3 / (w1 x w2 x w3)        (w1, w2, w3: depths of the 3 corners)
+	 *    </pre>
+	 *    The part that does not depend on the pixel is computed here; the w^3 is left to the Fragment.
+	 *
+	 * 2. The stretching. A ground seen at a low angle is squeezed on the screen in one direction only: a pixel covers
+	 *    a long and thin strip of texture, e.g. 1 texel wide and 30 texels long, which the average size (5.5 texels
+	 *    here) does not describe well. Reading the texture at the average size leaves noise along the strip; at the
+	 *    largest size, it blurs across it. A part of the stretching (TEX_STRETCH_SHARE) is added, as a compromise.
+	 *    The two sizes are the singular values of the 2 x 2 matrix that turns a move on the screen into a move in the
+	 *    texture (how much a circle is stretched into an ellipse).
+	 *
+	 * @param x1..y3 the 3 corners on the screen, in pixels
+	 * @param t1..t3 their texture coordinates
+	 * @param w1..w3 their depths (1 under an orthographic projection)
+	 * @return the logarithm, or a very low value (the finest level of detail) for a triangle without area on the
+	 *         screen or in the texture
+	 */
+	static float texLog2PixelSize(float x1, float y1, float x2, float y2, float x3, float y3,
+			Vector4 t1, Vector4 t2, Vector4 t3, float w1, float w2, float w3) {
+
+		// Two sides of the triangle, on the screen (in pixels) and in the texture (in texture coordinates)
+		float ax = x2 - x1, ay = y2 - y1, bx = x3 - x1, by = y3 - y1;
+		float au = t2.getX() - t1.getX(), av = t2.getY() - t1.getY(), bu = t3.getX() - t1.getX(), bv = t3.getY() - t1.getY();
+
+		// Twice the areas (cross products of the sides): the factor 2 cancels out in their ratio
+		float screenArea = Math.abs(ax * by - ay * bx);
+		float textureArea = Math.abs(au * bv - av * bu);
+		if (screenArea <= 0 || textureArea <= 0 || w1 <= 0 || w2 <= 0 || w3 <= 0) {
+			return -1000f;
+		}
+		double log2Size = 0.5 * Math.log(textureArea / screenArea) / LN_2 - 0.5 * Math.log((double) w1 * w2 * w3) / LN_2;
+
+		// The matrix J that turns a move (dx, dy) on the screen into a move (du, dv) in the texture: it turns the
+		// side a of the screen into the side a of the texture, and likewise for b. Its determinant is the ratio of the
+		// areas, the product of its two singular values (the largest and the smallest size of a pixel), and the sum
+		// of the squares of its 4 terms is the sum of their squares: enough to get their ratio.
+		float j11 = (au * by - bu * ay) / (ax * by - ay * bx), j12 = (bu * ax - au * bx) / (ax * by - ay * bx);
+		float j21 = (av * by - bv * ay) / (ax * by - ay * bx), j22 = (bv * ax - av * bx) / (ax * by - ay * bx);
+		double sumOfSquares = (double) j11 * j11 + j12 * j12 + j21 * j21 + j22 * j22;
+		double product = textureArea / screenArea;
+		// largest^2 + smallest^2 = sumOfSquares and largest x smallest = product, hence the ratio largest / smallest
+		double root = Math.sqrt(Math.max(0, sumOfSquares * sumOfSquares - 4 * product * product));
+		double stretch = Math.min(TEX_MAX_STRETCH, Math.sqrt((sumOfSquares + root) / Math.max(sumOfSquares - root, 1e-30)));
+		// The largest size is the average one times the square root of the stretch
+		log2Size += TEX_STRETCH_SHARE * 0.5 * Math.log(stretch) / LN_2;
+
+		return (float) log2Size;
 	}
 
 	//

@@ -399,4 +399,4 @@ public class DirectionalLight extends ShadowingLight {
 	public String toString() {
 		return "Directional Light with light vector (= -direction of the light) : " + this.light_vector;
 	}
-}
+}

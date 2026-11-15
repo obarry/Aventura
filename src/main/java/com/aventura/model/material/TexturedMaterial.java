@@ -65,6 +65,7 @@ public class TexturedMaterial implements Material {
 	private final Color specularColor;
 	private final float specularExponent;
 	private final float ambientReflectivity;
+	private final boolean mipmapping;
 
 	/**
 	 * @param diffuseTint  the surface color (D) to multiply with every texture sample (T) --
@@ -73,6 +74,17 @@ public class TexturedMaterial implements Material {
 	 *                     equivalent to D being pure white.
 	 */
 	public TexturedMaterial(Texture texture, int textureOrientation, Color diffuseTint, Color specularColor, float specularExponent, float ambientReflectivity) {
+		this(texture, textureOrientation, diffuseTint, specularColor, specularExponent, ambientReflectivity, false);
+	}
+
+	/**
+	 * @param mipmapping true to read the texture at the level of detail that suits the size of each pixel on the
+	 *                   surface (see Texture.getInterpolatedColor(s, t, log2PixelSize)); the mipmaps of the texture
+	 *                   must be built (Texture.buildMipmaps()). false reads the texture itself, whatever the distance.
+	 */
+	public TexturedMaterial(Texture texture, int textureOrientation, Color diffuseTint, Color specularColor, float specularExponent,
+			float ambientReflectivity, boolean mipmapping) {
+		this.mipmapping = mipmapping;
 		this.texture = texture;
 		this.textureOrientation = textureOrientation;
 		this.diffuseTint = diffuseTint;
@@ -114,7 +126,9 @@ public class TexturedMaterial implements Material {
 
 		// getInterpolatedColor() no longer throws a checked exception nor returns null (see its
 		// Javadoc) -- the try/catch this used to need has been removed accordingly.
-		Color textureSample = texture.getInterpolatedColor(u, v);
+		Color textureSample = mipmapping
+				? texture.getInterpolatedColor(u, v, fragment.getTexLog2PixelSize())
+				: texture.getInterpolatedColor(u, v);
 
 		// D * T -- diffuseTint (D) is ALWAYS applied when present, matching the legacy behavior;
 		// null means "no tint", i.e. the texture is shown as-is (equivalent to D = white).

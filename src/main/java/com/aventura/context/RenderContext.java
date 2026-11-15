@@ -113,6 +113,7 @@ public class RenderContext {
 	private boolean lightGlow = false;
 	private LightGlowMode lightGlowMode = null; // null = not forced: each Light's own appearance, or its default
 	private boolean atmosphere = false;
+	private boolean mipmapping = false;
 	private Boolean lightShafts = null; // null = not forced: the shafts gain of each Light's appearance
 	
 	// Colors of the debug displays
@@ -177,6 +178,7 @@ public class RenderContext {
 		this.lightGlowMode = r.lightGlowMode;
 		this.lightShafts = r.lightShafts;
 		this.atmosphere = r.atmosphere;
+		this.mipmapping = r.mipmapping;
 		this.landmarkXColor = r.landmarkXColor;
 		this.landmarkYColor = r.landmarkYColor;
 		this.landmarkZColor = r.landmarkZColor;
@@ -331,6 +333,26 @@ public class RenderContext {
 	}
 
 	/**
+	 * Mipmapping of the textures: when enabled, a texture is read at a level of detail that depends on the size of
+	 * each pixel on the surface, in smaller and smaller copies of the texture computed once (its mipmaps, see
+	 * Texture.buildMipmaps()), with an interpolation between two levels (trilinear filtering). A textured surface
+	 * seen from far away is then smooth instead of noisy and flickering, since each pixel gets the average of the
+	 * part of the texture it covers instead of 4 of its texels. Nothing changes where the texture is seen from close
+	 * (a texel larger than a pixel).
+	 * Disabled by default: nothing changes for the existing renderings. It costs one third more memory for each
+	 * texture, and 8 texels read per pixel instead of 4. Only used when the textures are (setTextureProcessing()).
+	 */
+	public RenderContext setMipmapping(boolean mipmapping) {
+		checkNotFrozen();
+		this.mipmapping = mipmapping;
+		return this;
+	}
+
+	public boolean isMipmapping() {
+		return mipmapping;
+	}
+
+	/**
 	 * Forces the same LightGlowMode for all the lights that do not define their own one in their LightAppearance
 	 * (which takes precedence). Resolution order: the Light's appearance, then this RenderContext, then the
 	 * default mode of the type of the Light (see Light.getDefaultGlowMode()).
@@ -474,6 +496,7 @@ public class RenderContext {
 				+ "* Shadowing:             " + onOff(shadowing) + "\n"
 				+ "* Light glow:            " + onOff(lightGlow) + (lightGlowMode == null ? "" : " (forced mode: " + lightGlowMode + ")") + "\n"
 				+ "* Atmosphere:           " + onOff(atmosphere) + "\n"
+				+ "* Mipmapping:           " + onOff(mipmapping) + "\n"
 				+ "* Light shafts:          " + (lightShafts == null ? "per light" : onOff(lightShafts)) + "\n"
 				+ "* Monochrome color:      " + (monochromeColor == null ? "World background" : monochromeColor) + "\n"
 				+ "* Render threads:        " + (renderThreads == RENDER_THREADS_AUTO ? "one per processor" : renderThreads) + "\n";

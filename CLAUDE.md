@@ -14,7 +14,7 @@ no third-party runtime library (only the JDK; JUnit 4 for tests). Java 21, Maven
 ## Build, test, run
 
 - Compile: `mvn compile` (tests: `mvn test-compile`)
-- Unit tests (JUnit 4, ~540, headless): `mvn test`
+- Unit tests (JUnit 4, ~610, headless): `mvn test`
   - Single class: `mvn test -Dtest=Matrix4Test`
 - Run a demo (from the project root, textures are read from `./resources/texture`):
   `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.AventuraDemo`
@@ -32,7 +32,7 @@ no third-party runtime library (only the JDK; JUnit 4 for tests). Java 21, Maven
   - `view/` `GUIView`, `ImageView`, `SwingView`, `MapView`
   - `demo/` demo applications (`demo/temple/`: the `TempleRuins` demo and its classes)
   - `tools/` color, tracing
-- `src/test/java/com/aventura/` unit tests mirror the main packages; `test/` holds ~70 visual
+- `src/test/java/com/aventura/` unit tests mirror the main packages; `test/` holds ~80 visual
   test programs with a `main()`; `cookbook/` tests the Geometry and Atmosphere Cookbook examples
 - `resources/texture` textures; `resources/doc/images` documentation images
 - `docs/`

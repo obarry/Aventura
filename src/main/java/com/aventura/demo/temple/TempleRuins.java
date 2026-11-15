@@ -154,8 +154,9 @@ import com.aventura.view.SwingView;
  *     {@link StatisticsWindow} shared by the demos, on top of the GeometryStatistics and GeometryReport of the API.</li>
  * <li>Sun: turn the sun around the scene and move it up and down (the shadows follow)</li>
  * <li>Rendering: the rendering type (an exclusive choice)</li>
- * <li>Effects: options independent of the rendering type (textures, specular highlights, shadows, haze, sea mist,
- *     sun, sun halo, lens flare, light shafts), grayed out when the current rendering type does not use them</li>
+ * <li>Effects: options independent of the rendering type (textures, mipmapping, specular highlights, shadows, haze,
+ *     sea mist, sun, sun halo, lens flare, light shafts), grayed out when the current rendering type does not use
+ *     them</li>
  * </ul>
  *
  * <h2>Conventions</h2>
@@ -404,7 +405,7 @@ public class TempleRuins {
 	// Radio buttons of the Camera menu, to follow a change of mode not asked through the menu
 	Map<CameraMode, JRadioButtonMenuItem> cameraItems = new EnumMap<CameraMode, JRadioButtonMenuItem>(CameraMode.class);
 	// Check boxes of the Effects menu that can be grayed out (see updateEffectsMenu())
-	JCheckBoxMenuItem textureItem, specularItem, shadowsItem, softShadowsItem;
+	JCheckBoxMenuItem textureItem, mipmappingItem, specularItem, shadowsItem, softShadowsItem;
 	JCheckBoxMenuItem hazeItem, mistItem, sunItem, sunHaloItem, lensFlareItem, lightShaftsItem;
 	long lastRenderMillis; // Duration of the last rendering, displayed in the title of the window
 
@@ -906,10 +907,14 @@ public class TempleRuins {
 	/**
 	 * The RenderContext: the rendering options at start-up, which the Rendering and Effects menus then change. Smooth
 	 * shading (INTERPOLATE) with textures, shadows, the atmosphere and the sun visible in the sky (light glow).
+	 * The textures are read with mipmapping: the ground and the marble are seen from 5 m as well as from 500 m, where
+	 * a pixel covers dozens of texels. Without it they turn into a grainy noise in the distance, which flickers during
+	 * the flight (switch "Mipmapping" off in the Effects menu to see it).
 	 */
 	public static RenderContext createRenderContext() {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(true);
+		rContext.setMipmapping(true);
 		rContext.setShadowing(true);
 		rContext.setAtmosphere(true);
 		rContext.setLightGlow(true);
@@ -1172,6 +1177,7 @@ public class TempleRuins {
 
 		// Surfaces
 		textureItem = addEffectItem(menu, "Textures", rContext.isTextureProcessing(), on -> rContext.setTextureProcessing(on));
+		mipmappingItem = addEffectItem(menu, "Mipmapping", rContext.isMipmapping(), on -> rContext.setMipmapping(on));
 		specularItem = addEffectItem(menu, "Specular highlights", lighting.hasSpecular(), on -> lighting.setSpecularLight(on));
 		menu.addSeparator();
 
@@ -1216,13 +1222,14 @@ public class TempleRuins {
 	/**
 	 * Grays out the effects that the current rendering type does not use: the textures are used by the filled rendering
 	 * types (UNLIT, FLAT, INTERPOLATE), the specular highlights and the shadows by the lit ones (FLAT, INTERPOLATE),
-	 * the sun, the haze and the mist by all but LINE. The sub-options (soft shadows, halo, lens flare, light shafts)
-	 * also need their main option.
+	 * the sun, the haze and the mist by all but LINE. The sub-options (mipmapping, soft shadows, halo, lens flare,
+	 * light shafts) also need their main option.
 	 */
 	private void updateEffectsMenu() {
 		RenderingType type = rContext.getRenderingType();
 		boolean lit = type == RenderingType.FLAT || type == RenderingType.INTERPOLATE;
 		textureItem.setEnabled(lit || type == RenderingType.UNLIT);
+		mipmappingItem.setEnabled(textureItem.isEnabled() && textureItem.isSelected());
 		specularItem.setEnabled(lit);
 		shadowsItem.setEnabled(lit);
 		softShadowsItem.setEnabled(lit && shadowsItem.isSelected());

@@ -128,6 +128,20 @@ for every sign of x and y. `RasterizerStats` counts the triangles rendered with 
 the screen, `TriangleRasterizer.getRasterizedLines()`), for the main pass and, now triangle by
 triangle, for the shadow maps. See [DESIGN.md §5](DESIGN.md#5-rasterization-and-fragments).
 
+**Mipmapping done (November 2026).** `RenderContext.setMipmapping(true)` reads each texture at a
+level of detail chosen from the size of the pixel on the surface (`Texture.buildMipmaps()`,
+trilinear filtering), off by default. See [DESIGN.md §5](DESIGN.md#5-rasterization-and-fragments).
+Not handled yet:
+
+- **Anisotropic filtering.** On a surface seen at a low angle, a pixel covers a long and thin strip
+  of texture. One level cannot fit both its length and its width: today a fixed share of the
+  stretching is added to the size of the pixel (`TriangleRasterizer.TEX_STRETCH_SHARE`), a
+  compromise between noise and blur. Several samples along the strip, in the level that fits its
+  width, would be sharp and smooth at the same time (for 2 to 8 times the texel reads).
+- **Mipmapping on by default?** It is off so that the existing renderings do not change. Since it
+  only changes minified textures, for the better, the default could be reversed.
+- **Other maps.** The pyramid is in `Texture`; a future bump or normal map (§2) would need the same.
+
 ## 5. Rendering options
 
 **Done (September 2026).** `RenderingType` is now `LINE`, `MONOCHROME` (hidden-line wireframe, fill
