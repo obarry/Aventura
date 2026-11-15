@@ -415,6 +415,7 @@ public class TempleRuins {
 	long lastRenderMillis; // Duration of the last rendering, displayed in the title of the window
 	long lastRenderNanos; // The same, to the nanosecond, for the statistics of the tour
 	double lastLapAverage, lastLapMin, lastLapMax; // Rendering times of the last lap of the tour (ms), for the title
+	double lastLapDisplayRate; // Images displayed per second during the last lap of the tour, for the title
 
 	// ----- State of the cameras -----
 
@@ -836,6 +837,9 @@ public class TempleRuins {
 	 * <li>Its shadow map covers the island only (setShadowingElement()). By default it would cover the whole World,
 	 *     that is the sea up to the horizon: the columns would be smaller than a pixel of the map, and cast no shadow.</li>
 	 * <li>Its shadows are soft (PCF_3X3 filtering of the shadow map).</li>
+	 * <li>Its shadow map is kept from one frame to the next (setStaticShadowCasters()): nothing moves on the island, so
+	 *     the map only changes when the sun moves, which the light sees by itself. It saves the shadow pass, the
+	 *     longest phase of a frame, at each image of the tour.</li>
 	 * <li>Its LightAppearance gives it a halo and a lens flare when it is in the field of view (Effects menu).</li>
 	 * </ul>
 	 */
@@ -845,6 +849,7 @@ public class TempleRuins {
 		sun.setShadowingElement(island);
 		sun.setShadowMapSize(SHADOW_MAP_SIZE);
 		sun.setShadowFilter(ShadowFilter.PCF_3X3);
+		sun.setStaticShadowCasters(true); // The island does not move: the shadow map is drawn again only when the sun moves
 		sun.setAppearance(new LightAppearance()); // Default halo and lens flare
 		return sun;
 	}
@@ -1104,7 +1109,8 @@ public class TempleRuins {
 	}
 
 	/**
-	 * Renders an image, and displays the camera mode and the time taken by the rendering in the title of the window.
+	 * Renders an image, and displays the camera mode and the time taken by the rendering in the title of the window,
+	 * with its inverse: the number of images per second the engine would render at that pace (the frame rate, or FPS).
 	 * Every rendering of the application goes through here.
 	 */
 	private void render() {
@@ -1113,10 +1119,13 @@ public class TempleRuins {
 		lastRenderNanos = System.nanoTime() - start;
 		lastRenderMillis = Math.round(lastRenderNanos / 1e6);
 		String mode = cameraMode.label + (cameraMode == CameraMode.HELICOPTER && tourPaused ? " (paused)" : "");
-		String title = String.format("%s - %s - %d ms per image", TITLE, mode, lastRenderMillis);
+		double imagesPerSecond = 1e9 / Math.max(lastRenderNanos, 1);
+		String title = String.format(Locale.ROOT, "%s - %s - %d ms per image (%.1f per second)", TITLE, mode, lastRenderMillis, imagesPerSecond);
 		if (cameraMode == CameraMode.HELICOPTER && lapCount > 0) {
-			// The average of the last lap of the tour: a steadier figure than the time of the last image
-			title += String.format(Locale.ROOT, " - lap %d: %.1f ms on average (%.1f to %.1f)", lapCount, lastLapAverage, lastLapMin, lastLapMax);
+			// The average of the last lap of the tour: a steadier figure than the time of the last image. Rendered per
+			// second (1000 / average) and displayed per second: the display and the pace of the timer make the difference.
+			title += String.format(Locale.ROOT, " - lap %d: %.1f ms on average (%.1f per second, %.1f displayed), %.1f to %.1f ms",
+					lapCount, lastLapAverage, 1000 / lastLapAverage, lastLapDisplayRate, lastLapMin, lastLapMax);
 		}
 		frame.setTitle(title);
 	}
@@ -1607,6 +1616,7 @@ public class TempleRuins {
 			lastLapAverage = lapTimes.getAverageMillis();
 			lastLapMin = lapTimes.getMinMillis();
 			lastLapMax = lapTimes.getMaxMillis();
+			lastLapDisplayRate = lapTimes.getDisplayRate();
 			lastLapReport = "HELICOPTER TOUR, LAP " + lapCount + " (" + lapOptions + ")\n" + lapTimes
 					+ (lapOptionsChanged ? "\nThe options were changed during this lap: its times mix them" : "");
 			System.out.println(lastLapReport + "\n");

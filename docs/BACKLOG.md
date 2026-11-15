@@ -79,7 +79,7 @@ returns a copy. The extraction of `FloatMap` out of the `view` package remains t
     remains where the hard shadows already show a few specks (very thin gaps): a smaller or smarter
     clamp of the plane correction, or a gradient computed from the geometry instead of two projections,
     could be tried.
-- **Performance of the shadows** (cache of the shadow maps with a change flag, a `castShadows` switch per
+- **Performance of the shadows** (cache of the shadow maps: done for static casters, `setStaticShadowCasters()`; version counters on the Elements to detect moving casters by themselves (audit D8), a `castShadows` switch per
   light, reuse of the buffers, timing before and after on UrbanScape) is not handled here: it belongs to the
   performance audit, see [PERFORMANCE_AUDIT.md](PERFORMANCE_AUDIT.md) (§R9, R10). A point light costs up to six
   shadow passes per frame, and a soft shadow filter more texel reads per pixel.

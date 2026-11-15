@@ -25,6 +25,8 @@
  */
 package com.aventura.model.light;
 
+import java.util.Arrays;
+
 import com.aventura.context.PerspectiveContext;
 import com.aventura.engine.BandRasterizer;
 import com.aventura.engine.DepthOnlyConsumer;
@@ -35,6 +37,7 @@ import com.aventura.engine.RasterizerStats;
 import com.aventura.engine.TriangleRasterizer;
 import com.aventura.engine.ViewProjection;
 import com.aventura.engine.ZBuffer;
+import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
@@ -123,6 +126,14 @@ public abstract class ShadowingLight extends Light {
 	// quick way to spot an empty/all-far shadow map (a very common shadow-mapping bug) while the
 	// shadow-calculation rework mentioned in the backlog is still pending.
 	protected RasterizerStats shadowMapStats = new RasterizerStats();
+
+	// Keeping the shadow map from one frame to the next (see setStaticShadowCasters()). For each face, the inputs its
+	// depth buffer was drawn from (see shadowMapKey()), or null when the buffer must be drawn again.
+	private boolean staticShadowCasters = false;
+	private final float[][] shadowMapKeys = new float[MAX_SHADOW_MAP_FACES][];
+	// Number of shadow map faces drawn and kept since this light was created (diagnostics and tests)
+	private long drawnShadowMapFaces = 0;
+	private long keptShadowMapFaces = 0;
 
 	// Anti-acne depth bias, expressed as a WORLD-space distance (a physically meaningful depth
 	// tolerance, independent of how tight or loose this light's box happens to be) rather than a
@@ -386,11 +397,6 @@ public abstract class ShadowingLight extends Light {
 		// the audit doc): "far" is then simply this face's far plane distance, with the same
 		// small relative margin.
 		final float SHADOW_MAP_FAR_VALUE = frustum ? lightPerspective.getFar() * (1.0f + 1e-4f) : 1.0f + 1e-4f;
-		ZBuffer shadowZBuffer = reusableShadowBuffer(faceIndex, halfWidth, halfHeight, SHADOW_MAP_FAR_VALUE);
-		MapView faceMap = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
-		// Only writes the depth of its pixel: one consumer can be shared by all the threads
-		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
-
 		// See SHADOW_BIAS_WORLD's Javadoc: converts the fixed world-space bias into this frame's
 		// depth units. Orthographic stores a [0,1]-normalized depth, so dividing by the (far-near)
 		// depth range turns the world-space bias into that same normalized unit. Frustum stores the
@@ -420,6 +426,20 @@ public abstract class ShadowingLight extends Light {
 		// generation regardless of whether this light actually moved.
 		viewProjection.refresh();
 
+		// The map of the previous frame is kept when nothing it was drawn from has changed (performance audit R9): the
+		// shadow casters, that the application declares static (setStaticShadowCasters()), and the projection and the
+		// size of this face, compared here. A moving camera changes neither.
+		float[] key = shadowMapKey(viewProjection, halfWidth, halfHeight, SHADOW_MAP_FAR_VALUE);
+		if (staticShadowCasters && shadowBuffers[faceIndex] != null && Arrays.equals(key, shadowMapKeys[faceIndex])) {
+			keptShadowMapFaces++;
+			return new ShadowMapFace(shadowBuffers[faceIndex].getMapView(), faceBiasBase);
+		}
+
+		ZBuffer shadowZBuffer = reusableShadowBuffer(faceIndex, halfWidth, halfHeight, SHADOW_MAP_FAR_VALUE);
+		MapView faceMap = shadowZBuffer.getMapView(); // getMap()/getMap(x,y) keep working exactly as before
+		// Only writes the depth of its pixel: one consumer can be shared by all the threads
+		DepthOnlyConsumer consumer = new DepthOnlyConsumer(shadowZBuffer);
+
 		// Geometry stage: for each element of the world, list the triangles to rasterize
 		for (int i=0; i<world.getElements().size(); i++) {
 			Element e = world.getElement(i);
@@ -443,7 +463,28 @@ public abstract class ShadowingLight extends Light {
 		}
 		depthList.clear();
 
+		shadowMapKeys[faceIndex] = key; // The inputs of the map now in the buffer of this face
+		drawnShadowMapFaces++;
 		return new ShadowMapFace(faceMap, faceBiasBase);
+	}
+
+	/**
+	 * The inputs of the shadow map of a face, the shadow casters apart: the 16 coefficients of its View * Projection
+	 * matrix, which hold the position or the direction of the light, the box it covers and the projection, then the
+	 * size of the map and its far value. Two maps drawn from equal keys and the same casters are the same.
+	 */
+	private static float[] shadowMapKey(ViewProjection viewProjection, int halfWidth, int halfHeight, float farValue) {
+		Matrix4 matrix = viewProjection.getMatrix();
+		float[] key = new float[19];
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				key[4 * i + j] = matrix.get(i, j);
+			}
+		}
+		key[16] = halfWidth;
+		key[17] = halfHeight;
+		key[18] = farValue;
+		return key;
 	}
 
 	/** Maximum number of shadow maps of one light (the 6 faces of a PointLight's cube map) */
@@ -774,6 +815,63 @@ public abstract class ShadowingLight extends Light {
 	 */
 	public Element getShadowingElement() {
 		return shadowingElement;
+	}
+
+	// ------------------------------------------------------------------
+	// Keeping the shadow map from one frame to the next
+	// ------------------------------------------------------------------
+
+	/**
+	 * Declares that the shadow casters of this light are static: from one frame to the next, no Element of the World
+	 * moves or changes (transformation, vertices, Elements added or removed). The shadow map is then kept from one
+	 * frame to the next, and drawn again only when the light changes it: the direction or the position of the light,
+	 * the box it covers (setShadowingElement(), or the view frustum with SHADOWING_BOX_VIEWFRUSTUM), the size of the
+	 * map. These are compared at each frame, so moving the light needs nothing more; moving the camera does not
+	 * redraw the map (except with SHADOWING_BOX_VIEWFRUSTUM, where the box follows the camera).
+	 *
+	 * The engine cannot see by itself that the casters changed: when the World changes while this is on, call
+	 * invalidateShadowMap(), or turn this off while the casters move. Off by default: the map is then drawn at each
+	 * frame, which is always right. The rendered images are exactly the same either way; only the time of the
+	 * shadow phase changes. The filter of the map (setShadowFilter()) can change freely: it is applied when the map
+	 * is read.
+	 *
+	 * @param staticCasters true if the shadow casters do not change from one frame to the next
+	 */
+	public void setStaticShadowCasters(boolean staticCasters) {
+		this.staticShadowCasters = staticCasters;
+		invalidateShadowMap(); // The World may have changed since the last map was drawn
+	}
+
+	/**
+	 * @return true if the shadow casters of this light are declared static (see setStaticShadowCasters())
+	 */
+	public boolean isStaticShadowCasters() {
+		return staticShadowCasters;
+	}
+
+	/**
+	 * Draws the shadow map again at the next frame, for a light whose casters are declared static (see
+	 * setStaticShadowCasters()): to call after changing the World, e.g. after moving an Element or rebuilding a
+	 * landscape. Without effect otherwise.
+	 */
+	public void invalidateShadowMap() {
+		Arrays.fill(shadowMapKeys, null);
+	}
+
+	/**
+	 * @return the number of shadow map faces drawn since this light was created (one per frame for a single map, up to
+	 *         six for the cube map of a PointLight)
+	 */
+	public long getDrawnShadowMapFaces() {
+		return drawnShadowMapFaces;
+	}
+
+	/**
+	 * @return the number of shadow map faces kept from the previous frame instead of being drawn again, since this
+	 *         light was created (see setStaticShadowCasters())
+	 */
+	public long getKeptShadowMapFaces() {
+		return keptShadowMapFaces;
 	}
 
 	// ------------------------------------------------------------------

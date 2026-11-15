@@ -12,7 +12,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
   <img src="resources/doc/images/temple_ruins.jpg" alt="The TempleRuins demo: the ruins of a Greek temple on an island, rendered by Aventura" width="800">
 </p>
 
-*The `TempleRuins` demo: 56,676 triangles, textures, soft shadows, a visible sun and the haze of the distance, rendered on the CPU at 7 to 24 images per second on a laptop, 10 to 11 on average over its helicopter tour (1000 x 562 pixels), with an orbit camera, a fly camera and a helicopter tour. [How it was made](docs/TEMPLE_RUINS.md).*
+*The `TempleRuins` demo: 56,676 triangles, textures, soft shadows, a visible sun and the haze of the distance, rendered on the CPU at 8 to 90 images per second on a laptop, 18 on average over its helicopter tour (1000 x 562 pixels) and 9 in Full HD, with an orbit camera, a fly camera and a helicopter tour. [How it was made](docs/TEMPLE_RUINS.md).*
 
 ## Highlights
 
@@ -260,6 +260,15 @@ int size = sun.getShadowMapSize(); // size in use (set or default)
 ```
 
 The default size depends on the type of light: `getDefaultShadowMapSize()` returns it, and each light class documents its own. It is `ShadowingLight.DEFAULT_SHADOW_MAP_SIZE` (1000 pixels) for directional and spot lights, and `PointLight.DEFAULT_SHADOW_MAP_SIZE` (512 pixels **per face**, six maps in all) for point lights.
+
+A shadow map is drawn again at each frame, which is always right but often the longest phase of a frame. When the objects that cast the shadows do not move, the application can say so, and the map is then kept from one frame to the next:
+
+```java
+sun.setStaticShadowCasters(true); // nothing moves in the scene: keep the shadow map
+sun.invalidateShadowMap();        // to call after moving an Element, if it ever happens
+```
+
+The light still draws its map again by itself when it changes it: a new direction or position, another box (`setShadowingElement()`), another size. Moving the camera does not. The images are exactly the same as without it; only the time changes (the `TempleRuins` demo, whose island never moves, saves its whole shadow pass at each image of its helicopter tour).
 
 ### Visible lights
 
