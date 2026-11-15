@@ -72,6 +72,7 @@ public class StatisticsWindow {
 	private final World world;
 	private final RenderEngine renderer;
 	private Supplier<String> imageDescription = null;
+	private Supplier<String> extraSection = null;
 
 	// The window, created the first time the statistics are displayed
 	private JDialog dialog;
@@ -101,7 +102,19 @@ public class StatisticsWindow {
 		return this;
 	}
 
-	/** The statistics, as a text: the scene (see GeometryReport), then the last image rendered. */
+	/**
+	 * Adds a section of its own to the end of the report, for what only the demo knows: e.g. the average rendering
+	 * time over a lap of a flight (see FrameTimeStatistics). The text is asked each time the report is computed; a
+	 * null or empty text adds nothing.
+	 *
+	 * @param extraSection gives the text of the section, title line included
+	 */
+	public StatisticsWindow setExtraSection(Supplier<String> extraSection) {
+		this.extraSection = extraSection;
+		return this;
+	}
+
+	/** The statistics, as a text: the scene (see GeometryReport), the last image rendered, then the section of the demo if any. */
 	public String report() {
 		StringBuilder report = new StringBuilder();
 		report.append(title).append(" - statistics\n\n");
@@ -113,6 +126,8 @@ public class StatisticsWindow {
 		// The first line of the statistics of the engine: the triangles processed, displayed and culled (the next ones
 		// detail the work of the rasterizer)
 		report.append(renderer.renderStats().split("\n")[0]).append('\n');
+		String extra = extraSection != null ? extraSection.get() : null;
+		if (extra != null && !extra.isEmpty()) report.append('\n').append(extra).append('\n');
 		return report.toString();
 	}
 

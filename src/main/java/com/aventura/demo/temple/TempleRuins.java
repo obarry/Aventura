@@ -40,6 +40,7 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -61,6 +62,7 @@ import javax.swing.WindowConstants;
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.context.RenderContext.RenderingType;
+import com.aventura.demo.FrameTimeStatistics;
 import com.aventura.demo.StatisticsWindow;
 import com.aventura.engine.RenderEngine;
 import com.aventura.math.transform.Rotation;
@@ -151,7 +153,10 @@ import com.aventura.view.SwingView;
  * <li>Camera: the camera mode, pause of the tour, reset of the camera, and the statistics (key I): the composition of
  *     the scene (Elements, triangles and vertices of each branch of its tree), its textures and their memory, and what
  *     the engine did for the last image. They are also printed in the console when the window is closed. This is the
- *     {@link StatisticsWindow} shared by the demos, on top of the GeometryStatistics and GeometryReport of the API.</li>
+ *     {@link StatisticsWindow} shared by the demos, on top of the GeometryStatistics and GeometryReport of the API.
+ *     At the end of each lap of the helicopter tour, the average, fastest and slowest rendering times of the lap are
+ *     printed in the console, shown in the title of the window and added to the statistics
+ *     ({@link FrameTimeStatistics}): the figures to compare two rendering options.</li>
  * <li>Sun: turn the sun around the scene and move it up and down (the shadows follow)</li>
  * <li>Rendering: the rendering type (an exclusive choice)</li>
  * <li>Effects: options independent of the rendering type (textures, mipmapping, specular highlights, shadows, haze,
@@ -408,6 +413,8 @@ public class TempleRuins {
 	JCheckBoxMenuItem textureItem, mipmappingItem, specularItem, shadowsItem, softShadowsItem;
 	JCheckBoxMenuItem hazeItem, mistItem, sunItem, sunHaloItem, lensFlareItem, lightShaftsItem;
 	long lastRenderMillis; // Duration of the last rendering, displayed in the title of the window
+	long lastRenderNanos; // The same, to the nanosecond, for the statistics of the tour
+	double lastLapAverage, lastLapMin, lastLapMax; // Rendering times of the last lap of the tour (ms), for the title
 
 	// ----- State of the cameras -----
 
@@ -451,6 +458,17 @@ public class TempleRuins {
 	boolean tourPaused = false;
 	long tourLastStepNanos;
 	Timer tourTimer;
+
+	/**
+	 * Rendering times of the tour, lap by lap (see finishLap()): the times of the lap being flown, the number of laps
+	 * finished, the report of the last one, and the options in force when the lap started, to tell if they changed.
+	 */
+	FrameTimeStatistics lapTimes = new FrameTimeStatistics();
+	int lapCount = 0;
+	String lastLapReport = null;
+	String lapOptions;
+	boolean lapOptionsChanged;
+	boolean lapFromStart; // false for a lap entered on the way: it is not reported
 
 	/** Last known position of the mouse during a drag. */
 	int lastMouseX, lastMouseY;
@@ -948,6 +966,8 @@ public class TempleRuins {
 		// is closed. StatisticsWindow is shared by the demos: it only needs the window, the World and the RenderEngine.
 		statistics = new StatisticsWindow(frame, TITLE, world, renderer);
 		statistics.setImageDescription(() -> guiView.getViewWidth() + " x " + guiView.getViewHeight() + " pixels, " + cameraMode.label);
+		// With the rendering times of the last lap of the helicopter tour, once a lap has been flown
+		statistics.setExtraSection(() -> lastLapReport);
 		statistics.printOnClose();
 
 		// Menus
@@ -1088,11 +1108,17 @@ public class TempleRuins {
 	 * Every rendering of the application goes through here.
 	 */
 	private void render() {
-		long start = System.currentTimeMillis();
+		long start = System.nanoTime();
 		renderer.render();
-		lastRenderMillis = System.currentTimeMillis() - start;
+		lastRenderNanos = System.nanoTime() - start;
+		lastRenderMillis = Math.round(lastRenderNanos / 1e6);
 		String mode = cameraMode.label + (cameraMode == CameraMode.HELICOPTER && tourPaused ? " (paused)" : "");
-		frame.setTitle(String.format("%s - %s - %d ms per image", TITLE, mode, lastRenderMillis));
+		String title = String.format("%s - %s - %d ms per image", TITLE, mode, lastRenderMillis);
+		if (cameraMode == CameraMode.HELICOPTER && lapCount > 0) {
+			// The average of the last lap of the tour: a steadier figure than the time of the last image
+			title += String.format(Locale.ROOT, " - lap %d: %.1f ms on average (%.1f to %.1f)", lapCount, lastLapAverage, lastLapMin, lastLapMax);
+		}
+		frame.setTitle(title);
 	}
 
 	// ****************************************************************************************************************
@@ -1437,6 +1463,7 @@ public class TempleRuins {
 			break;
 		case HELICOPTER:
 			tourPaused = false;
+			startLap(tourDistance == 0); // The tour resumes where it was left: only a whole lap is measured
 			startTour();
 			break;
 		}
@@ -1484,6 +1511,7 @@ public class TempleRuins {
 			break;
 		case HELICOPTER:
 			tourDistance = 0;
+			startLap(true);
 			break;
 		}
 		updateCamera();
@@ -1536,9 +1564,72 @@ public class TempleRuins {
 		long now = System.nanoTime();
 		float elapsedSeconds = (now - tourLastStepNanos) / 1e9f;
 		tourLastStepNanos = now;
+		float previousDistance = tourDistance;
 		tourDistance = advance(tourDistance, elapsedSeconds, TOUR_SPEED, TOUR_MAX_STEP_SECONDS, tour.getLength());
+		if (tourDistance < previousDistance) {
+			finishLap(); // Back to the start of the path
+		}
 		updateCamera();
 		render();
+
+		// The rendering time of this image, for the statistics of the lap
+		lapTimes.add(lastRenderNanos / 1e6);
+		lapTimes.addDuration(elapsedSeconds);
+		if (!lapOptions.equals(lapOptions())) lapOptionsChanged = true;
+	}
+
+	// ****************************************************************************************************************
+	// ***** Rendering times of a lap of the tour
+	// ****************************************************************************************************************
+	//
+	// The time of one image changes with what the camera sees (from 40 to 150 ms around the island), and from an
+	// image to the next. To know what a rendering option costs or saves, e.g. the mipmapping, an average over the same
+	// views is needed: a whole lap of the tour, always the same path at the same speed. At the end of each lap, the
+	// number of images and their average, fastest and slowest rendering times are printed in the console with the
+	// options in force, shown in the title of the window, and added to the statistics (Camera menu, key I).
+
+	/**
+	 * Starts measuring a lap, with the current options.
+	 *
+	 * @param fromStart false if the camera is already somewhere on the path: the end of this lap will not be reported
+	 */
+	private void startLap(boolean fromStart) {
+		lapFromStart = fromStart;
+		lapTimes.reset();
+		lapOptions = lapOptions();
+		lapOptionsChanged = false;
+	}
+
+	/** End of a lap: reports its rendering times, and starts measuring the next one. */
+	private void finishLap() {
+		if (lapFromStart && lapTimes.getCount() > 0) {
+			lapCount++;
+			lastLapAverage = lapTimes.getAverageMillis();
+			lastLapMin = lapTimes.getMinMillis();
+			lastLapMax = lapTimes.getMaxMillis();
+			lastLapReport = "HELICOPTER TOUR, LAP " + lapCount + " (" + lapOptions + ")\n" + lapTimes
+					+ (lapOptionsChanged ? "\nThe options were changed during this lap: its times mix them" : "");
+			System.out.println(lastLapReport + "\n");
+		}
+		startLap(true);
+	}
+
+	/**
+	 * What the rendering time of a lap depends on, apart from the scene and the path: the size of the image, the
+	 * rendering type, the effects switched on (the selected check boxes of the Effects menu that are not grayed out)
+	 * and the position of the sun, which changes the shadows.
+	 */
+	private String lapOptions() {
+		StringBuilder options = new StringBuilder();
+		options.append(guiView.getViewWidth()).append(" x ").append(guiView.getViewHeight()).append(" pixels, ");
+		options.append(rContext.getRenderingType());
+		JCheckBoxMenuItem[] effects = { textureItem, mipmappingItem, specularItem, shadowsItem, softShadowsItem, hazeItem, mistItem,
+				sunItem, sunHaloItem, lensFlareItem, lightShaftsItem };
+		for (JCheckBoxMenuItem effect : effects) {
+			if (effect.isEnabled() && effect.isSelected()) options.append(", ").append(effect.getText().toLowerCase(Locale.ROOT));
+		}
+		options.append(String.format(Locale.ROOT, ", sun at %.0f / %.0f degrees", sunAzimuth, sunElevation));
+		return options.toString();
 	}
 
 	/** Pauses or resumes the helicopter tour (nothing to do in the other camera modes). */

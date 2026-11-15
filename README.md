@@ -12,7 +12,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
   <img src="resources/doc/images/temple_ruins.jpg" alt="The TempleRuins demo: the ruins of a Greek temple on an island, rendered by Aventura" width="800">
 </p>
 
-*The `TempleRuins` demo: 56,676 triangles, textures, soft shadows, a visible sun and the haze of the distance, rendered on the CPU at 8 to 25 images per second on a laptop (1000 x 562 pixels), with an orbit camera, a fly camera and a helicopter tour. [How it was made](docs/TEMPLE_RUINS.md).*
+*The `TempleRuins` demo: 56,676 triangles, textures, soft shadows, a visible sun and the haze of the distance, rendered on the CPU at 7 to 24 images per second on a laptop, 10 to 11 on average over its helicopter tour (1000 x 562 pixels), with an orbit camera, a fly camera and a helicopter tour. [How it was made](docs/TEMPLE_RUINS.md).*
 
 ## Highlights
 
@@ -476,7 +476,7 @@ System.out.println(world.getStatistics());    // 753 elements (72 groups), 56,67
 System.out.println(GeometryReport.of(world)); // The composition of the geometry, then the textures
 ```
 
-A demo with a Swing window gets a `Statistics` menu item, a window for the report (with the timing and the triangle counts of the last image) and a print in the console at closing from `com.aventura.demo.StatisticsWindow`, in three lines; see it in `TempleRuins`, and its output in [The Making of a Demo](docs/TEMPLE_RUINS.md#statistics).
+A demo with a Swing window gets a `Statistics` menu item, a window for the report (with the timing and the triangle counts of the last image) and a print in the console at closing from `com.aventura.demo.StatisticsWindow`, in three lines; see it in `TempleRuins`, and its output in [The Making of a Demo](docs/TEMPLE_RUINS.md#statistics). `FrameTimeStatistics` gives the average, fastest and slowest rendering times of a series of images: `TempleRuins` reports them at each lap of its helicopter tour, to compare rendering options on the same views.
 
 ## Demos
 
