@@ -55,6 +55,7 @@ import com.aventura.view.ImageView;
  *     noshadow   no shadows
  *     hard       the sun with hard shadows (ShadowFilter.HARD)
  *     pcf        the sun with soft shadows (ShadowFilter.PCF_3X3, UrbanScape's default)
+ *     kept       the same, the shadow map kept from one frame to the next (setStaticShadowCasters()): same checksum
  *     point      hard sun shadows, plus a PointLight with its cube-map shadows (6 faces)
  *     spot       hard sun shadows, plus a SpotLight with its shadows
  *     sunview    the camera looks towards the sun, no shadows, no visible lights
@@ -83,7 +84,7 @@ import com.aventura.view.ImageView;
  */
 public class PerfBench {
 
-	static final String[] MODES = { "noshadow", "hard", "pcf", "point", "spot", "sunview", "sunglow", "atmosphere" };
+	static final String[] MODES = { "noshadow", "hard", "pcf", "kept", "point", "spot", "sunview", "sunglow", "atmosphere" };
 
 	/** Angle step of the helicopter flight between two frames, in radians */
 	static final float FLIGHT_STEP = 0.05f;
@@ -118,8 +119,11 @@ public class PerfBench {
 		Vector4 center = UrbanScape.getWorldCenter(UrbanScape.findCentralBuilding(world));
 
 		// Shadow filter of the sun: PCF 3x3 is UrbanScape's default, HARD for the other modes
-		if (!mode.equals("pcf")) {
+		if (!mode.equals("pcf") && !mode.equals("kept")) {
 			for (ShadowingLight light : lighting.getShadowingLights()) light.setShadowFilter(ShadowFilter.HARD);
+		}
+		if (mode.equals("kept")) {
+			for (ShadowingLight light : lighting.getShadowingLights()) light.setStaticShadowCasters(true);
 		}
 		if (mode.equals("point")) {
 			lighting.addPointLight(new PointLight(new Vector4(center.getX() + 3, center.getY() - 3, center.getZ() * 2 + 3, 1), 30f, 1f));

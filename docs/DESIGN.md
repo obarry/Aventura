@@ -740,6 +740,18 @@ half a texel if the map is coarser than that), converted to NDC for the current 
 **slope-scaled** by `1 / max(N·L, floor)` so grazing surfaces (such as a floor under a low sun) get
 more tolerance than surfaces facing the light.
 
+**Keeping the map.** A map is drawn again at each frame by default. When the application declares that the
+casters of a light are static (`ShadowingLight.setStaticShadowCasters(true)`), each map (each face of a point
+light) remembers the inputs it was drawn from: the 16 coefficients of its View·Projection matrix (position or
+direction of the light, box, projection), its size and its far value. At the next frame they are computed as
+usual and compared: equal, the depth buffer of the previous frame is used again and the whole pass (geometry and
+rasterization) is skipped; different, the map is drawn again. So moving the light, changing its box or the size of
+its map needs nothing more, and the camera can move freely (except with `SHADOWING_BOX_VIEWFRUSTUM`, whose box follows
+it). What the engine cannot see is a change of the casters themselves: the application calls
+`invalidateShadowMap()` then. The filter (§ below) is applied when the map is read, so it can change without
+redrawing. `getDrawnShadowMapFaces()` and `getKeptShadowMapFaces()` count both cases. This is the first step of the
+version counters of the performance audit (D8): the light side is compared, the casters side is declared.
+
 ### Spot and point lights
 
 A spot or point light looks at the scene through a **perspective** (`Frustum`) map instead of an
@@ -1065,7 +1077,8 @@ flowchart LR
 - **Transform order is S → R → T** (`M = T · R · S`), composed parent-first down the tree.
 - **Refresh, don't cache:** `Camera.updateCamera()` mutates its matrix in place and
   `Perspective` setters replace its projection, so derived matrices go through
-  `ViewProjection.refresh()` once per frame.
+  `ViewProjection.refresh()` once per frame. A result kept from one frame to the next must be checked against
+  its inputs at each frame, as the shadow map kept by `setStaticShadowCasters()` is (§7), never kept on trust.
 - **Run demos from the project root**: texture paths are relative to the working directory.
 - **Tests must run headless**: Surefire sets `-Djava.awt.headless=true`.
 

@@ -18,8 +18,8 @@
 | **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root) |
 | **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (35.5 MB), 1 sun, 1 ambient light, haze and optional mist |
 | **Cameras** | Orbit, fly, and a helicopter tour of 516 m flown in 57 s |
-| **Speed** | 42 to 145 ms per image (7 to 24 images per second) on a laptop, 94 ms on average over the helicopter tour, at 1000 x 562 pixels |
-| **Engine changes** | `ShadowingLight.setShadowingElement()` (shadow map limited to an Element) and a depth rule in `shadowFactorAt()`; `GeometryStatistics` and `GeometryReport` (the size of a scene), the name and the memory of a `Texture` |
+| **Speed** | 11 to 124 ms per image (8 to 90 images per second) on a laptop, 55 ms on average over the helicopter tour at 1000 x 562 pixels (110 ms in Full HD, 1920 x 986) |
+| **Engine changes** | `ShadowingLight.setShadowingElement()` (shadow map limited to an Element) and a depth rule in `shadowFactorAt()`; `GeometryStatistics` and `GeometryReport` (the size of a scene), the name and the memory of a `Texture`; `ShadowingLight.setStaticShadowCasters()` (the shadow map kept from one image to the next) |
 
 ## Contents
 
@@ -549,9 +549,10 @@ the camera at once: the movement eases over 150 ms.
 </p>
 
 The effects that the current rendering type does not use are grayed out, and so are the sub-options of an option that
-is off. The title of the window shows the camera mode and the time taken by the last image, in milliseconds: the
-simplest performance meter, always in view. During the helicopter tour, it also shows the average, fastest and
-slowest times of the last lap (see [Statistics](#statistics)).
+is off. The title of the window shows the camera mode and the time taken by the last image, in milliseconds, with
+its inverse, the images per second (FPS) at that pace: the simplest performance meter, always in view. During the
+helicopter tour, it also shows the average time of the last lap with the images rendered and displayed per second,
+and its fastest and slowest times (see [Statistics](#statistics)).
 
 ### Statistics
 
@@ -759,7 +760,7 @@ are already in the [backlog](BACKLOG.md) or in the [performance audit](PERFORMAN
 | A `Box` maps its texture once per face | The platform paved with 126 small boxes | Texture repetition per face, given in world units |
 | The ambient light is constant | Faces in the shade are flat, whatever their direction | A hemispheric ambient (sky above, ground below), or ambient occlusion |
 | Every `ShadowingLight` casts shadows, when shadows are on | No fill light, no point lights as braziers (six maps each) | A `castShadows` switch per light (backlog §3) |
-| The shadow map is computed again at each frame | 45 to 75 ms per image for a sun and a scene that do not move | A cache with a change flag (backlog §3, audit R9) |
+| The engine cannot see by itself that the casters of a shadow map moved | The demo declares its casters static (`setStaticShadowCasters()`): moving an Element would need `invalidateShadowMap()` | Version counters on the Elements (audit D8) |
 | One shadow map for the whole island | 15 cm per texel: fine at 20 m, soft at 2 m | A box fitted on the view frustum, or cascades |
 | `SHADOWING_BOX_SPECIFIC` not implemented | The shadow box had to be an Element of the scene tree | A box given by its corners |
 | The haze has one color and ignores the sun; the sun and its halo are not dimmed by the haze or the fog | No warm glow towards the sun, a sharp sun through the mist | Backlog §5b |
@@ -793,6 +794,27 @@ Two lessons. The laps differ by up to 5% with the same options: a single image, 
 difference of a few percent. And the mipmapping costs about that much at most (2 to 6 ms per image on average,
 within the variation from lap to lap), for an image without noise nor flicker in the distance.
 
+**With the shadow map kept.** The sun and the island do not move during the tour, so the demo keeps the shadow map
+from one image to the next (`setStaticShadowCasters()`, see [below](#what-could-be-done-in-the-engine)): it is drawn
+at the first image and when the sun moves, no longer at each image. Measured the same way, the same evening, before
+and after, in the window of the demo and with the window enlarged to the full screen:
+
+| Window | Shadow map | Average | Fastest image | Slowest image | Images displayed per second |
+|---|---|---|---|---|---|
+| 996 x 558 | drawn at each image | 87.3 ms (11.5 per second) | 42.7 ms (23.4) | 148.2 ms (6.7) | 10.0 |
+| 996 x 558 | kept | **55.3 ms (18.1 per second)** | 10.9 ms (91.5) | 123.5 ms (8.1) | **14.8** |
+| 996 x 558, sun lower (17 degrees), lap 4 | kept | 54.7 ms (18.3 per second) | 12.7 ms (78.5) | 123.0 ms (8.1) | 14.8 |
+| 1920 x 986 | drawn at each image | 147.9 ms (6.8 per second) | 78.8 ms (12.7) | 249.6 ms (4.0) | 6.3 |
+| 1920 x 986 | kept | **109.7 ms (9.1 per second)** | 31.7 ms (31.6) | 212.2 ms (4.7) | **8.2** |
+| 1920 x 986, lap 2 | kept | 118.3 ms (8.5 per second) | 32.0 ms (31.3) | 245.0 ms (4.1) | 7.6 |
+
+The shadow phase of an image falls from 35 to 48 ms to less than 1 ms: −37% on average in the window of the demo,
+−20 to −26% in Full HD, where the main pass (pixels) weighs more. In Full HD the second lap is 8% slower than the
+first: the laptop, kept busy, probably lowers its clock speeds (its power is limited to about 28 W); this is more
+than the usual variation from lap to lap. The fastest images, close to the temple, gain the most:
+the shadow pass was most of their time. About 12 ms per image remain between two displayed images, outside of the
+rendering (the Swing timer of the tour and the display of the image), now a fifth of the time between two images.
+
 **Stage by stage.** Measured on the 18 images of a lap of the tour, at the same size, rendered off-screen on a much
 slower computer (a **2-core** virtual machine with JDK 21, whose times are two to three times longer): take the
 proportions between the stages rather than the values.
@@ -804,6 +826,10 @@ proportions between the stages rather than the values.
 | Main pass (rasterization and shading) | 40 to 215 ms | The pixels covered by lit, textured, shadowed surfaces: lowest when the sky fills the image, highest in the views from above |
 | Atmosphere and visible sun | 5 to 25 ms | The sun in the image or not |
 | **Whole image** | **120 to 290 ms** | |
+
+Since these measures, the shadow map of the sun is kept from one image to the next (`setStaticShadowCasters()`,
+[below](#what-could-be-done-in-the-engine)): the first line is paid at the first image and when the sun moves, no longer at each
+image of the tour.
 
 Switching the shadows off removes about a third of the time, the textures about a sixth. Of the 56,676 triangles,
 about 31,500 are drawn in a typical view; the rest is out of the frustum or back-facing (16,300).
@@ -839,7 +865,7 @@ These are not specific to the demo; it only makes their value visible. The first
 
 | Idea | Why it matters here |
 |---|---|
-| **Keep the shadow map** while the light and the casters do not change (audit R9, D8) | The largest gain available: 45 to 75 ms per image, a quarter to a half of the frame, for a static sun over a static island |
+| **Keep the shadow map** while the light and the casters do not change (audit R9, D8): **done**, `setStaticShadowCasters()` | The largest gain available: 45 to 75 ms per image, a quarter to a half of the frame, for a static sun over a static island |
 | **Cull whole Elements** against the frustum with a bounding volume (audit R1) | 753 Elements, most of them small and often out of the image; the same test in light space would speed up the shadow pass |
 | **Draw only the back faces in the shadow pass**, or cull by Element in light space (audit R9) | Half the triangles of the shadow pass, and less shadow acne |
 | **A shadow box fitted on what the camera sees**, clamped to the casters | The same sharpness with a smaller map when the camera is close to the temple |
