@@ -14,7 +14,7 @@
 | | |
 |---|---|
 | **What** | The ruins of a Doric temple on a small island, among olive trees and boulders, the sea up to the horizon, the sun halfway up the sky |
-| **Where** | `com.aventura.demo.temple` (11 classes, about 3,500 lines, comments included), tests in the same package of `src/test` |
+| **Where** | `com.aventura.demo.temple` (11 classes, about 3,600 lines, comments included), tests in the same package of `src/test` |
 | **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root) |
 | **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (35.5 MB), 1 sun, 1 ambient light, haze and optional mist |
 | **Cameras** | Orbit, fly, and a helicopter tour of 516 m flown in 57 s |
@@ -685,6 +685,7 @@ The counting is `FrameTimeStatistics` (`com.aventura.demo`), usable by any demo,
 | `TestTempleRuins` | 9 | The pure functions of the application, the computed textures, the content of the scene and its statistics, the tour (above the ground, out of the temple), and a rendering in an `ImageView` (sky, ground, marble in the sun and in the shade, shadows that change the image) |
 | `TestGeometryStatistics` (`model.world`) | 8 | `GeometryStatistics` and `GeometryReport` on a small tree of boxes: counts of a branch, of a World, of a list; textures counted once; the lines of the report; the counters of `World`; name and memory of a `Texture` |
 | `TestStatisticsWindow` (`demo`) | 1 | The text of the statistics on a scene that is not a demo, without a window |
+| `TestFrameTimeStatistics` (`demo`) | 5 | `FrameTimeStatistics`: an empty series, the average, fastest and slowest times, a display rate lower than the rendering rate, the summary text, the reset |
 | `TestShadowingElement` (`model.light`) | 4 | The shadow box of an Element: the setter, the size of the box, the shadow of a small object in a large World, and the points out of the box, which are lit |
 
 The images of this page are rendered by `DocumentationImages`, like the others of the documentation, from the scene

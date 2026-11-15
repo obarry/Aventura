@@ -587,7 +587,8 @@ mais ne suffit pas à rendre ces allocations gratuites (JFR l'a montré).
 points secondaires :
 
 - `Tracer.stats` affiche une ligne à chaque image (`System.out` est synchronisé, et la console Windows est lente).
-  C'est négligeable, mais ce serait mieux sous forme de moyenne affichée toutes les N images.
+  C'est négligeable, mais ce serait mieux sous forme de moyenne affichée toutes les N images. **Depuis : désactivé
+  par défaut** (`Tracer.stats = false`) ; les démos affichent leurs propres statistiques (`FrameTimeStatistics`).
 - Chargement des textures : lecture pixel par pixel (A6) et chemins relatifs au répertoire courant (roadmap :
   chargement depuis le classpath). Cela ralentit le démarrage, pas le rendu.
 - Trace vers un fichier : `Tracer.output()` écrit ligne par ligne dans un `FileOutputStream` sans tampon. Un
