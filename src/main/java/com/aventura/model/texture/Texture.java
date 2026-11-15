@@ -54,6 +54,8 @@ public class Texture {
 	// int[x][y] array).
 	protected int[] tex;
 	protected int width, height;
+	// Name of the texture, for the reports (see getName()): the name of its file, or the one given by setName()
+	protected String name = null;
 
 	
 	/**
@@ -88,6 +90,7 @@ public class Texture {
         }
         this.height = img.getHeight();
         this.width = img.getWidth();
+        this.name = new File(fileName).getName();
         
         // All the pixels in one call, already row by row (getRGB(x, y) converted them one by one)
         tex = img.getRGB(0, 0, width, height, null, 0, width);
@@ -111,6 +114,7 @@ public class Texture {
 		if (img == null) {
 			throw new TextureLoadException("Failed to load texture file (unrecognized image format): " + fileName);
 		}
+		this.name = new File(fileName).getName();
 
 		if (direction == TEXTURE_DIRECTION_VERTICAL) {
 			this.height = img.getHeight();
@@ -283,9 +287,34 @@ public class Texture {
 	public int getWidth() {
 		return this.width;
 	}
+
+	/**
+	 * @return the name of this texture, for a report or a trace: the name of the file it was loaded from (without its
+	 *         directory), or the name given by setName(); "width x height texture" for a texture without either
+	 */
+	public String getName() {
+		return name != null ? name : width + " x " + height + " texture";
+	}
+
+	/**
+	 * Gives a name to this texture (e.g. a texture computed pixel by pixel, which has no file name).
+	 * @return this texture, to chain the call
+	 */
+	public Texture setName(String name) {
+		this.name = name;
+		return this;
+	}
+
+	/**
+	 * @return the memory used by the texels of this texture, in bytes: 4 bytes (an ARGB int) for each of its
+	 *         width x height texels, whatever the size of the (compressed) file it was loaded from
+	 */
+	public long getMemorySize() {
+		return 4L * tex.length;
+	}
 	
 	public int getHeight() {
 		return this.height;
 	}
 
-}
+}

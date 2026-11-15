@@ -1,7 +1,8 @@
 # Aventura — Design Overview
 
 > A synthesis of how Aventura is built, for contributors and curious readers.
-> For installation and usage, see the [README](../README.md).
+> For installation and usage, see the [README](../README.md). For an application built on the engine, described
+> from its first image to its performance, see [TempleRuins — The Making of a Demo](TEMPLE_RUINS.md).
 
 | | |
 |---|---|
@@ -65,7 +66,7 @@ about the engine, and the engine only talks to the display through the abstract 
 ```mermaid
 flowchart TB
     subgraph APP["Application layer"]
-        DEMO["com.aventura.demo<br/>EarthAndMoon · AventuraDemo · UrbanScape<br/>FractalLandscape · MovingCamera"]
+        DEMO["com.aventura.demo<br/>EarthAndMoon · AventuraDemo · UrbanScape<br/>FractalLandscape · MovingCamera · temple.TempleRuins"]
     end
     subgraph ENGINE["Engine layer"]
         CTX["context<br/>RenderContext · PerspectiveContext"]
@@ -694,8 +695,11 @@ flowchart LR
 **Fitting the light box.** `DirectionalLight.initShadowing()` builds an orthonormal basis from the
 light direction (Z-up hint, falling back to Y when the light is vertical), projects the eight
 corners of the chosen bounding box onto it, and derives a tight orthographic volume. The box can be
-the whole world (default), the view frustum, one element or a user-defined box
-(`SHADOWING_BOX_*`).
+the whole world (default), the view frustum or one element (`SHADOWING_BOX_*`; a user-defined box is
+not implemented yet). `setShadowingElement(Element)` limits the map to the bounding box of an Element
+and its sub-Elements, for a scene much larger than what casts shadows in it (the island of the
+[`TempleRuins`](TEMPLE_RUINS.md#shadows-limited-to-the-island) demo, in a sea that goes to the horizon): the whole resolution of the map is spent
+there, and a point outside of the box (on its sides, in front of it or beyond it) is lit.
 
 **Map resolution.** Each light has its own shadow map size (`setShadowMapSize()`, default given by
 `getDefaultShadowMapSize()`: `DEFAULT_SHADOW_MAP_SIZE` = 1000 for a directional light). It is the
@@ -941,6 +945,12 @@ pixel by pixel (for example: `UNLIT` gives exactly the base colour, `MONOCHROME`
 that `LINE` shows, `FLAT` follows the texture option); `TestRenderingModes` shows them all by eye.
 Diagnostic counters (`RasterizerStats`, triangle
 in/out/back-face counts, shadow-map stats) and the `Tracer` utility help investigate regressions.
+
+The size of a scene is measured by `GeometryStatistics` (`World.getStatistics()`, `Element.getStatistics()`):
+Elements, triangles and vertices of a whole tree, its depth, the textures used, their triangles and their memory.
+`GeometryReport` formats it as a table, one line per kind of Element of each level, and the `StatisticsWindow` of
+the demos adds the timing and the triangle counts of the last image (see the
+[statistics of TempleRuins](TEMPLE_RUINS.md#statistics)).
 
 ---
 

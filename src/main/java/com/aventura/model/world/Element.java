@@ -346,6 +346,15 @@ public class Element implements Transformable, Shape, Generable {
 		return vertices.get(i);
 	}
 	
+	/**
+	 * The size of this Element and of all its sub-Elements, at every level: number of Elements, triangles and vertices,
+	 * depth of the tree, textures used. getNbTriangles() and getNbVertices() only count what this Element owns itself.
+	 * The statistics are computed at each call, from the current geometry.
+	 */
+	public GeometryStatistics getStatistics() {
+		return GeometryStatistics.of(this);
+	}
+
 	public int getNbVertices() {
 		return vertices.size();
 	}
@@ -767,4 +776,4 @@ public class Element implements Transformable, Shape, Generable {
 		}
 	}
 
-}
+}

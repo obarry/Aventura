@@ -16,6 +16,7 @@ import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.cookbook.AtmosphereCookbook;
 import com.aventura.cookbook.CookbookGallery;
+import com.aventura.demo.temple.TempleRuins;
 import com.aventura.math.transform.Transformation;
 import com.aventura.math.transform.Translation;
 import com.aventura.math.vector.Vector3;
@@ -87,6 +88,12 @@ import com.aventura.test.TestLightingSun;
  *     haze_compare.jpg        TestAtmosphere, the avenue without the atmosphere (left) and with its haze (right)
  *     fog_compare.jpg         TestFog, the avenue without any atmosphere (left) and with its banks of fog only (right)
  *     cookbook_gallery.png    CookbookGallery (the examples of the Geometry Cookbook)
+ *     temple_ruins.jpg        TempleRuins, as the demo starts: the main front of the temple, lit by the sun
+ *     temple_ruins_colonnade.jpg  TempleRuins, at the foot of the corner of the main front: drums, flutes, capitals and beams
+ *     temple_ruins_debris.jpg TempleRuins, the ruined south side: broken columns, fallen drums and blocks, the walls of the cella
+ *     temple_ruins_sun.jpg    TempleRuins, against the light from behind the temple: the sun, its halo and its lens flare
+ *     temple_ruins_island.jpg TempleRuins, the whole island from above the sea, as in the helicopter tour
+ *     temple_ruins_rendering.jpg  TempleRuins, the same view in four renderings: lines, monochrome, flat without textures, full
  *
  * Run it from the project root (the textures are read from resources/texture), headless:
  *
@@ -134,6 +141,11 @@ public class DocumentationImages {
 	static final Vector4 FOG_LANDSCAPE_POI = new Vector4(0, 0, 1.4f, 1);
 	/** Size of the shadow map of the spot light in the soft shadows image: coarse on purpose, to make the filtering visible */
 	static final int SOFT_SHADOWS_MAP_SIZE = 200;
+	/** Cameras of the TempleRuins images (eye, then point of interest), besides the initial one of the demo */
+	static final Vector4 TEMPLE_COLONNADE_EYE = new Vector4(-21f, -13.5f, 17.9f, 1), TEMPLE_COLONNADE_POI = new Vector4(-9f, -2f, 21.5f, 1);
+	static final Vector4 TEMPLE_DEBRIS_EYE = new Vector4(20f, -30f, 22f, 1), TEMPLE_DEBRIS_POI = new Vector4(4f, -6f, 18f, 1);
+	static final Vector4 TEMPLE_SUN_EYE = new Vector4(16f, 11f, 18f, 1), TEMPLE_SUN_POI = new Vector4(-4f, -2f, 26f, 1);
+	static final Vector4 TEMPLE_ISLAND_EYE = new Vector4(-125f, -100f, 60f, 1), TEMPLE_ISLAND_POI = new Vector4(0f, 0f, 6f, 1);
 
 	// ***** The scenes and the images *****
 
@@ -158,6 +170,11 @@ public class DocumentationImages {
 		scenes.put("ground_mist.jpg", () -> AtmosphereCookbook.createScene(AtmosphereCookbook.createGroundMistAtmosphere(), 1000));
 		scenes.put("fog_landscape.jpg", () -> fogLandscape(FRACTAL_SEED, FOG_LANDSCAPE_SEED));
 		scenes.put("cookbook_gallery.png", () -> CookbookGallery.createScene(1000));
+		scenes.put("temple_ruins.jpg", () -> templeRuins(TempleRuins.INITIAL_EYE, TempleRuins.POINT_OF_INTEREST, 1000));
+		scenes.put("temple_ruins_colonnade.jpg", () -> templeRuins(TEMPLE_COLONNADE_EYE, TEMPLE_COLONNADE_POI, 1000));
+		scenes.put("temple_ruins_debris.jpg", () -> templeRuins(TEMPLE_DEBRIS_EYE, TEMPLE_DEBRIS_POI, 1000));
+		scenes.put("temple_ruins_sun.jpg", () -> templeRuins(TEMPLE_SUN_EYE, TEMPLE_SUN_POI, 1000));
+		scenes.put("temple_ruins_island.jpg", () -> templeRuins(TEMPLE_ISLAND_EYE, TEMPLE_ISLAND_POI, 1000));
 		return scenes;
 	}
 
@@ -169,6 +186,7 @@ public class DocumentationImages {
 		images.put("atmosphere_steps.jpg", DocumentationImages::atmosphereSteps);
 		images.put("haze_compare.jpg", DocumentationImages::hazeCompare);
 		images.put("fog_compare.jpg", DocumentationImages::fogCompare);
+		images.put("temple_ruins_rendering.jpg", DocumentationImages::templeRenderingTypes);
 		for (Map.Entry<String, Supplier<DemoScene>> scene : scenes().entrySet()) {
 			images.put(scene.getKey(), () -> scene.getValue().get().render());
 		}
@@ -433,6 +451,48 @@ public class DocumentationImages {
 		BufferedImage foggy = AtmosphereCookbook.createScene(fog, 750).render();
 		BufferedImage both = AtmosphereCookbook.createScene(AtmosphereCookbook.createAtmosphere(), 750).render();
 		BufferedImage top = sideBySide(clear, hazy), bottom = sideBySide(foggy, both);
+		BufferedImage out = new BufferedImage(top.getWidth(), top.getHeight() * 2 + 6, BufferedImage.TYPE_INT_RGB);
+		java.awt.Graphics2D g = out.createGraphics();
+		g.setColor(java.awt.Color.WHITE);
+		g.fillRect(0, 0, out.getWidth(), out.getHeight());
+		g.drawImage(top, 0, 0, null);
+		g.drawImage(bottom, 0, top.getHeight() + 6, null);
+		g.dispose();
+		return out;
+	}
+
+	/** The TempleRuins demo, whose scene is created once for all its images (it takes about a second, textures included). */
+	private static TempleRuins templeRuinsDemo;
+
+	/**
+	 * The scene of the TempleRuins demo (same World, lights and rendering options as the demo at start-up), seen from the
+	 * given camera. The World and the Lighting are shared by all the scenes returned; each one has its own RenderContext.
+	 *
+	 * @param width width of the image in pixels (the height is 9/16 of it, as in the demo)
+	 */
+	static synchronized DemoScene templeRuins(Vector4 eye, Vector4 poi, int width) {
+		if (templeRuinsDemo == null) {
+			templeRuinsDemo = new TempleRuins();
+			templeRuinsDemo.createScene();
+		}
+		return new DemoScene(templeRuinsDemo.getWorld(), templeRuinsDemo.getLighting(), eye, poi, TempleRuins.createRenderContext(),
+				TempleRuins.createPerspectiveContext(width));
+	}
+
+	/**
+	 * The initial view of the TempleRuins demo in four renderings, in a grid, as the Rendering and Effects menus of the demo
+	 * give them: lines, monochrome (hidden lines), flat shading without textures, shadows nor atmosphere, and the full
+	 * rendering of the demo. Each panel is 750 x 422 pixels.
+	 */
+	static BufferedImage templeRenderingTypes() {
+		DemoScene lines = templeRuins(TempleRuins.INITIAL_EYE, TempleRuins.POINT_OF_INTEREST, 750);
+		lines.getRenderContext().setRenderingType(RenderContext.RenderingType.LINE);
+		DemoScene monochrome = templeRuins(TempleRuins.INITIAL_EYE, TempleRuins.POINT_OF_INTEREST, 750);
+		monochrome.getRenderContext().setRenderingType(RenderContext.RenderingType.MONOCHROME);
+		DemoScene flat = templeRuins(TempleRuins.INITIAL_EYE, TempleRuins.POINT_OF_INTEREST, 750);
+		flat.getRenderContext().setRenderingType(RenderContext.RenderingType.FLAT).setTextureProcessing(false).setShadowing(false).setAtmosphere(false);
+		DemoScene full = templeRuins(TempleRuins.INITIAL_EYE, TempleRuins.POINT_OF_INTEREST, 750);
+		BufferedImage top = sideBySide(lines.render(), monochrome.render()), bottom = sideBySide(flat.render(), full.render());
 		BufferedImage out = new BufferedImage(top.getWidth(), top.getHeight() * 2 + 6, BufferedImage.TYPE_INT_RGB);
 		java.awt.Graphics2D g = out.createGraphics();
 		g.setColor(java.awt.Color.WHITE);
