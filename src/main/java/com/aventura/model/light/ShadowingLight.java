@@ -895,4 +895,4 @@ public abstract class ShadowingLight extends Light {
 		return shadowingBoxType_string;
 	}
 
-}
+}

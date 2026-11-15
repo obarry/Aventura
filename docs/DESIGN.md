@@ -8,7 +8,7 @@
 |---|---|
 | **What** | A software 3D rendering engine: scene API → CPU rasterizer → pixels |
 | **Language** | Java 21, JDK only (`java.desktop`), no native code, no GPU |
-| **Size** | ~20 k lines in `src/main`, ~105 test classes, ~375 JUnit tests |
+| **Size** | ~30 k lines in `src/main` (~130 classes), ~150 test classes (~60 JUnit classes, ~80 visual test programs), ~610 JUnit tests |
 | **License** | MIT |
 | **Status** | `0.0.1-SNAPSHOT` — stable core, lighting & shadows actively evolving |
 
@@ -47,7 +47,7 @@ mindmap
       Display-agnostic GUIView
       Same scene, many render settings
     Experimentation
-      70+ visual test programs
+      80 visual test programs
       Debug overlays: axes, normals, light vectors
       Diagnostic statistics per frame
 ```
@@ -418,6 +418,31 @@ implementers: **never keep a reference to a `Fragment` after `consume()` returns
 projective divide according to the triangle's texture orientation (isotropic, vertical or
 horizontal) and multiplies the sample by the surface colour (`D × T`), so one texture can be
 tinted differently per element.
+
+**Mipmapping** (`RenderContext.setMipmapping(true)`, off by default). `Texture.getInterpolatedColor(u, v)`
+reads the 4 texels around the point (bilinear filtering): right as long as a texel is larger than a
+pixel. On a surface seen from far away, a pixel covers many texels, of which 4 are read almost at
+random: the texture turns into noise and flickers when the camera moves. With mipmapping:
+
+1. **A pyramid of levels** (`Texture.buildMipmaps()`): copies of the texture, each half the size of
+   the previous one down to 1 × 1, a texel being the average of the 2 × 2 texels it covers below.
+   One third more memory. The `RenderEngine` builds it in the geometry stage, once per texture, so
+   the rasterization threads only read it; `Texture.setColor()` discards it.
+2. **The size of a pixel on the surface**, in texture coordinates. A triangle covers an area
+   `Ascreen` in pixels and `Atexture` in the texture, and a pixel at depth `w` covers exactly
+   `Atexture / Ascreen × w³ / (w1·w2·w3)` of the texture (`w1..w3`: depths of the corners; the
+   ratio alone under an orthographic projection). `TriangleRasterizer.texLog2PixelSize()` computes
+   the constant part once per triangle, and `Fragment.getTexLog2PixelSize()` adds `1.5 × log2(w)`
+   for each pixel: no derivative between neighbouring pixels is needed. A share of the stretching
+   of the texture (a ground at a low angle is squeezed in one direction only) is added, a
+   compromise between noise and blur in the absence of anisotropic filtering.
+3. **Trilinear filtering** (`Texture.getInterpolatedColor(u, v, log2PixelSize)`): the level whose
+   texels have the size of the pixel is `log2(pixel size / texel size)`, usually between two levels
+   of the pyramid; both are read (bilinear) and blended, so no line shows where the level changes.
+   Level 0 or below (texture magnified) gives exactly the image without mipmapping.
+
+The cost is 8 texels per pixel instead of 4 and one logarithm, a few percent of the frame on
+`TempleRuins`, where it is enabled.
 
 ---
 
@@ -920,21 +945,22 @@ of fog (a ground mist).
 
 Two complementary test families run from Maven:
 
-- **Unit tests (JUnit 4, headless)** — run by `mvn test`, no display needed.
-- **Visual test programs** — ~70 `main()` classes in `com.aventura.test`, checked by eye
+- **Unit tests (JUnit 4, headless)** — about 610, run by `mvn test`, no display needed.
+- **Visual test programs** — ~80 `main()` classes in `com.aventura.test`, checked by eye
   (shapes, meshes, textures, lighting, shadow maps, rasterizer experiments).
 
 ```mermaid
 pie showData
     title JUnit test methods by area
     "Math: vectors, matrices, quaternions" : 244
-    "Lighting (point, spot, shadow maps, smoke renders)" : 55
-    "Rendering (context, rendering types, rasterizer, views)" : 45
-    "Demo logic (camera, flight path, mouse drag…)" : 44
+    "Lighting (point, spot, shadow maps, visible lights, smoke renders)" : 96
+    "Demo logic (camera, flight path, scene geometry, documentation images…)" : 91
+    "Rendering (context, rendering types, rasterizer, mipmapping, threads, views)" : 66
+    "Atmosphere (haze, fogs)" : 39
+    "Camera, perspective, elements, statistics, textures" : 33
     "Transforms (T, R, S)" : 13
     "Geometry Cookbook examples" : 13
     "Atmosphere Cookbook examples" : 10
-    "Camera, perspective, elements" : 10
     "Z-buffer" : 8
 ```
 
@@ -978,6 +1004,7 @@ timeline
          : Visible lights: halos, sun with lens flare and light shafts, 470+ unit tests
          : Atmosphere: the haze of the distance, spherical fogs, 540+ unit tests
          : Rendering types: MONOCHROME (hidden-line), UNLIT
+         : TempleRuins, scene statistics, texture mipmapping, 610+ unit tests
 ```
 
 Commit activity reflects this: two intense phases (2016–2017 and 2024–2026) around a quieter period.
