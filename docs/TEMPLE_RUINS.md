@@ -18,6 +18,7 @@
 | **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root) |
 | **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (35.5 MB), 1 sun, 1 ambient light, haze and optional mist |
 | **Cameras** | Orbit, fly, and a helicopter tour of 516 m flown in 57 s |
+| **Speed** | 40 to 120 ms per image (8 to 25 images per second) on a laptop, at 1000 x 562 pixels |
 | **Engine changes** | `ShadowingLight.setShadowingElement()` (shadow map limited to an Element) and a depth rule in `shadowFactorAt()`; `GeometryStatistics` and `GeometryReport` (the size of a scene), the name and the memory of a `Texture` |
 
 ## Contents
@@ -742,9 +743,22 @@ are already in the [backlog](BACKLOG.md) or in the [performance audit](PERFORMAN
 
 ### Measures
 
-Measured on the 18 images of a lap of the helicopter tour, at 1000 x 562 pixels, rendered off-screen. The computer
-was a **2-core** virtual machine with JDK 21: a laptop with 8 cores or more should be several times faster on the
-parts of the pipeline that are multithreaded. Take the proportions rather than the values.
+**In the application.** Measured by the author on his laptop, in the window of the demo (1000 x 562 pixels), with the
+options it starts with (textures, soft shadows, haze, visible sun), during the helicopter tour. The time is the one
+displayed in the title of the window.
+
+| View of the tour | Time per image | Images per second |
+|---|---|---|
+| Very close to the temple | About 40 ms | 25 |
+| The whole temple from the side, little landscape around it | 65 to 85 ms | 12 to 15 |
+| Wide shots: the island and the sea | About 120 ms | 8 |
+
+The flight is fluid near the temple and still readable in the wide shots, where the ground and the sea fill the
+image with lit, textured and shadowed pixels, and almost every triangle of the scene is in the view.
+
+**Stage by stage.** Measured on the 18 images of a lap of the tour, at the same size, rendered off-screen on a much
+slower computer (a **2-core** virtual machine with JDK 21, whose times are two to three times longer): take the
+proportions between the stages rather than the values.
 
 | Stage | Time per image | Depends on |
 |---|---|---|
@@ -757,7 +771,7 @@ parts of the pipeline that are multithreaded. Take the proportions rather than t
 Switching the shadows off removes about a third of the time, the textures about a sixth. Of the 56,676 triangles,
 about 31,500 are drawn in a typical view; the rest is out of the frustum or back-facing (16,300).
 
-Creating the scene (textures, geometry, normals) takes 0.7 s on the same computer.
+Creating the scene (textures, geometry, normals) takes 0.7 s on that 2-core computer.
 
 ### Where the time goes
 
