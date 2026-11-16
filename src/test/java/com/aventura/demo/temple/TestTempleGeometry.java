@@ -39,12 +39,13 @@ import org.junit.Test;
 import com.aventura.cookbook.ElementContractChecker;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
+import com.aventura.model.world.shape.Trellis;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.shape.Box;
 import com.aventura.model.world.triangle.Triangle;
 
 /**
- * Tests of the geometry of the TempleRuins demo: the noise, the terrain, the new shapes (TiledTrellis, TaperedDrum,
+ * Tests of the geometry of the TempleRuins demo: the noise, the terrain, the ground, the new shapes (TaperedDrum,
  * Boulder), the assemblies (Column, Temple, OliveTree) and the flight path. None of them needs a window or an image
  * file: the textures are small empty ones.
  *
@@ -94,46 +95,31 @@ public class TestTempleGeometry {
 		assertEquals("edges in decreasing order: 1 below, 0 above", 1f, Noise.smoothstep(4, 2, 1), 0f);
 	}
 
-	// ***** TiledTrellis *****
+	// ***** Ground: a Trellis with its texture repeated *****
 
 	@Test
-	public void testMirror_isATriangleWave() {
-		System.out.println("***** Test TempleRuins : mirrored tiles *****");
-		assertEquals(0f, TiledTrellis.mirror(0), 0f);
-		assertEquals(0.25f, TiledTrellis.mirror(0.25f), 1e-6f);
-		assertEquals(1f, TiledTrellis.mirror(1), 0f);
-		assertEquals(0.75f, TiledTrellis.mirror(1.25f), 1e-6f);
-		assertEquals(0f, TiledTrellis.mirror(2), 0f);
-		assertEquals(1f, TiledTrellis.mirror(7), 0f);
-		assertEquals(0.5f, TiledTrellis.mirror(-0.5f), 1e-6f);
-	}
+	public void testGround_repeatsItsTextureEveryTile() {
+		System.out.println("***** Test TempleRuins : ground with a repeated texture *****");
+		IslandTerrain terrain = new IslandTerrain(TempleRuins.GROUND_SIZE, TempleRuins.GROUND_DIVISIONS, TempleRuins.ISLAND_SEED);
+		Trellis ground = TempleRuins.createGround(terrain, TEXTURE);
+		ground.build();
 
-	@Test
-	public void testTiledTrellis_repeatsItsTextureWithoutLeavingIt() throws Exception {
-		System.out.println("***** Test TempleRuins : TiledTrellis *****");
-		float[][] altitudes = new float[9][7];
-		for (int i = 0; i <= 8; i++) {
-			for (int j = 0; j <= 6; j++) altitudes[i][j] = 0.3f * (float) Math.sin(i + j);
-		}
-		TiledTrellis trellis = new TiledTrellis(8, 6, 8, 6, altitudes, TEXTURE, 2);
-		trellis.build();
-
-		assertEquals("2 triangles per cell", 2 * 8 * 6, trellis.getNbTriangles());
-		assertEquals(List.of(), ElementContractChecker.check(trellis));
-		boolean reachesZero = false, reachesOne = false;
-		for (Triangle t : trellis.getTriangles()) {
+		int cells = TempleRuins.GROUND_DIVISIONS;
+		assertEquals("2 triangles per cell", 2 * cells * cells, ground.getNbTriangles());
+		assertEquals(List.of(), ElementContractChecker.check(ground));
+		float tiles = TempleRuins.GROUND_SIZE / TempleRuins.GROUND_TILE_SIZE;
+		float max = 0;
+		for (Triangle t : ground.getTriangles()) {
 			assertTrue("the triangles face up", ElementContractChecker.faceNormal(t).getZ() > 0);
 			for (Vector4 uv : new Vector4[] { t.getTexVec1(), t.getTexVec2(), t.getTexVec3() }) {
-				assertTrue("texture coordinates in [0, 1]: " + uv, uv.getX() >= 0 && uv.getX() <= 1 && uv.getY() >= 0 && uv.getY() <= 1);
-				reachesZero |= uv.getX() == 0;
-				reachesOne |= uv.getX() == 1;
+				assertTrue("texture coordinates from 0 to the number of tiles: " + uv,
+						uv.getX() >= 0 && uv.getX() <= tiles + 1e-4f && uv.getY() >= 0 && uv.getY() <= tiles + 1e-4f);
+				max = Math.max(max, uv.getX());
 			}
 		}
-		assertTrue("a tile covers the whole texture", reachesZero && reachesOne);
-
-		// rebuild() generates the triangles again, without duplicating them
-		trellis.rebuild();
-		assertEquals(2 * 8 * 6, trellis.getNbTriangles());
+		assertEquals("the texture is repeated over the whole ground", tiles, max, 1e-4f);
+		assertEquals("the textures repeated in the scene show themselves again beyond 1", Texture.WrapMode.MIRROR,
+				new SceneTextures().ground.getWrapMode());
 	}
 
 	// ***** TaperedDrum *****

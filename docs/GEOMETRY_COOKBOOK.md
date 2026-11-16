@@ -178,7 +178,11 @@ stay open: both of their sides are then rasterized.
   `Vertex.setColor()` exists but is **ignored** by the renderer.
 - **Textures**: each textured triangle carries the texture and 3 texture coordinates
   `Vector4(u, v, 0, 1)` with `u, v` in `[0, 1]` (`Triangle.setTexture(tex, t1, t2, t3)`). The mesh
-  helpers compute them for you when created with a texture.
+  helpers compute them for you when created with a texture. Beyond 1, the texture shows its border
+  by default; to repeat it like tiles, give coordinates that go up to the number of tiles and set
+  `texture.setWrapMode(Texture.WrapMode.REPEAT)` or `MIRROR` (every other tile flipped: no seam,
+  whatever the image). `RectangleMesh.setTextureRepeat(nx, ny)` and `Trellis.setTextureRepeat(nx, ny)`
+  compute such coordinates.
 - **The `Shape` setters** (`setTopColor()`, `setFrontTexture()`…) only record the value, used
   when the geometry is generated: they must be called **before `build()`**. Return `this` when the
   face exists; the inherited default returns `null`, meaning "no such face on this shape".
@@ -673,8 +677,8 @@ with its own transformation. A factory method or a constructor with parameters i
 
 The `TempleRuins` demo (`com.aventura.demo.temple`) applies the four recipes to a whole scene: two
 primitives written from scratch (`TaperedDrum`, a tapered and optionally fluted drum, smooth or flat;
-`Boulder`, whose normals are computed from its triangles), a `Trellis` enriched by inheritance
-(`TiledTrellis`, which repeats its texture), and assemblies three levels deep (`Column`, `Temple`,
+`Boulder`, whose normals are computed from its triangles), textures repeated like tiles over a
+`Trellis` and around these shapes, and assemblies three levels deep (`Column`, `Temple`,
 `OliveTree`). [TempleRuins — The Making of a Demo](TEMPLE_RUINS.md) explains the choices behind them.
 
 ---

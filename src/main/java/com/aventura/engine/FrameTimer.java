@@ -25,6 +25,8 @@
  */
 package com.aventura.engine;
 
+import java.util.Locale;
+
 /**
  * Wall-clock time of each phase of the last frame rendered by the RenderEngine, measured with
  * System.nanoTime(). It answers "where does the time go?" without a profiler, and it is the reference
@@ -99,10 +101,12 @@ public class FrameTimer {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("Frame %.1f ms (", getFrameMillis()));
+		// Locale.ROOT: a decimal point whatever the language of the system. With a decimal comma, the times could not
+		// be told from the commas that separate the phases ("SETUP 3,9, SHADOWS 1,4").
+		sb.append(String.format(Locale.ROOT, "Frame %.1f ms (", getFrameMillis()));
 		for (int i = 0; i < PHASES.length; i++) {
 			if (i > 0) sb.append(", ");
-			sb.append(PHASES[i]).append(String.format(" %.1f", phaseNanos[i] / 1e6f));
+			sb.append(PHASES[i]).append(String.format(Locale.ROOT, " %.1f", phaseNanos[i] / 1e6f));
 		}
 		return sb.append(')').toString();
 	}

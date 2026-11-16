@@ -103,9 +103,9 @@ import com.aventura.view.SwingView;
  * <ol>
  * <li>{@link #createWorld()}: the {@link World} and its tree of {@link Element}s.
  *     <ul>
- *     <li>The ground is a height field ({@link IslandTerrain}) drawn by a {@link TiledTrellis}, a Trellis extended
- *         to repeat its texture; its triangles are colored after the nature of the ground
- *         ({@link #colorGround}).</li>
+ *     <li>The ground is a height field ({@link IslandTerrain}) drawn by a {@link Trellis} whose texture is repeated
+ *         like tiles ({@link Trellis#setTextureRepeat}, with a Texture in {@link Texture.WrapMode#MIRROR} mode); its
+ *         triangles are colored after the nature of the ground ({@link #colorGround}).</li>
  *     <li>The temple ({@link Temple}) is a tree of Elements three levels deep, made of built-in shapes (Box) and of
  *         a new shape written for the demo ({@link TaperedDrum}), assembled into {@link Column}s.</li>
  *     <li>The olive trees ({@link OliveTree}) and the boulders ({@link Boulder}, another new shape) are placed on
@@ -182,18 +182,19 @@ public class TempleRuins {
 	/** Side of the square of ground that carries the island, and number of cells of its Trellis on each side. */
 	static final float GROUND_SIZE = 240f;
 	static final int GROUND_DIVISIONS = 96;
-	/** The texture of the ground is repeated every GROUND_CELLS_PER_TILE cells (10 m). */
-	static final int GROUND_CELLS_PER_TILE = 4;
+	/** The texture of the ground is repeated every GROUND_TILE_SIZE (see createGround()). */
+	static final float GROUND_TILE_SIZE = 10f;
 	/** Seed of the relief of the island (see IslandTerrain). */
 	static final int ISLAND_SEED = 7;
 
 	/**
-	 * The sea is made of two flat Trellis at the altitude 0. Around the island, a textured one, whose cells are the
-	 * tiles of the texture. Under it and up to the horizon, a much larger one with very large cells, of a single
+	 * The sea is made of two flat Trellis at the altitude 0. Around the island, a textured one, its texture repeated
+	 * every SEA_TILE_SIZE. Under it and up to the horizon, a much larger one with very large cells, of a single
 	 * color: so far away, the waves could not be seen anyway.
 	 */
 	static final float NEAR_SEA_SIZE = 800f;
 	static final int NEAR_SEA_DIVISIONS = 32;
+	static final float SEA_TILE_SIZE = 25f;
 	static final float FAR_SEA_SIZE = 9000f;
 	static final int FAR_SEA_DIVISIONS = 18;
 	/** The far sea is this much lower than the near one, so that their surfaces are never mixed up by the depth test. */
@@ -387,7 +388,7 @@ public class TempleRuins {
 	SceneTextures textures;
 	IslandTerrain terrain;       // The altitudes of the ground: to put things on it, and to keep the camera above it
 	Element island;              // Everything that stands on the island, and the ground itself: what casts shadows
-	TiledTrellis ground;
+	Trellis ground;
 	Temple temple;
 
 	Lighting lighting;
@@ -555,7 +556,7 @@ public class TempleRuins {
 	 * <pre>
 	 *   World
 	 *    ├── island (group)      what the sun casts shadows on (see createSun())
-	 *    │    ├── ground         TiledTrellis, from the altitudes of IslandTerrain
+	 *    │    ├── ground         Trellis, from the altitudes of IslandTerrain
 	 *    │    ├── temple         Temple: platform, colonnade, entablature, cella
 	 *    │    ├── debris (group) fallen drums and blocks around the temple
 	 *    │    ├── trees (group)  OliveTree x NB_TREES
@@ -602,11 +603,19 @@ public class TempleRuins {
 		return world;
 	}
 
-	/** The ground of the island: a Trellis with the altitudes of the terrain, its texture repeated in tiles. */
-	static TiledTrellis createGround(IslandTerrain terrain, Texture texture) {
+	/**
+	 * The ground of the island: a Trellis with the altitudes of the terrain. Its texture is not stretched once over
+	 * the 240 m of the ground (a texel would be 40 cm wide) but repeated every GROUND_TILE_SIZE, like tiles: the
+	 * Trellis gives texture coordinates that go from 0 to the number of tiles, and the Texture, in MIRROR mode (see
+	 * SceneTextures), shows itself again beyond 1, every other tile flipped so that no seam shows between two tiles.
+	 */
+	static Trellis createGround(IslandTerrain terrain, Texture texture) {
 		try {
-			return new TiledTrellis(terrain.getSize(), terrain.getSize(), terrain.getDivisions(), terrain.getDivisions(),
-					terrain.getAltitudes(), texture, GROUND_CELLS_PER_TILE);
+			Trellis ground = new Trellis(terrain.getSize(), terrain.getSize(), terrain.getDivisions(), terrain.getDivisions(),
+					terrain.getAltitudes(), texture);
+			float tiles = terrain.getSize() / GROUND_TILE_SIZE;
+			ground.setTextureRepeat(tiles, tiles);
+			return ground;
 		} catch (WrongArraySizeException e) {
 			// Cannot happen: the array of altitudes of the terrain has the size of its grid
 			throw new IllegalStateException(e);
@@ -653,8 +662,9 @@ public class TempleRuins {
 		sea.setSpecularExp(SEA_SPECULAR_EXP);
 		sea.setSpecularColor(SEA_SPECULAR_COLOR);
 
-		// One tile of the texture per cell (25 m)
-		TiledTrellis nearSea = new TiledTrellis(NEAR_SEA_SIZE, NEAR_SEA_SIZE, NEAR_SEA_DIVISIONS, NEAR_SEA_DIVISIONS, seaTexture, 1);
+		// The texture is repeated like tiles, as on the ground (see createGround())
+		Trellis nearSea = new Trellis(NEAR_SEA_SIZE, NEAR_SEA_SIZE, NEAR_SEA_DIVISIONS, NEAR_SEA_DIVISIONS, seaTexture);
+		nearSea.setTextureRepeat(NEAR_SEA_SIZE / SEA_TILE_SIZE, NEAR_SEA_SIZE / SEA_TILE_SIZE);
 		nearSea.setName("near sea");
 		copySurfaceOf(sea, nearSea);
 		sea.addElement(nearSea);

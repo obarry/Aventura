@@ -56,8 +56,10 @@ import com.aventura.model.world.triangle.Triangle;
  *     at the top. The vertices are shared by the neighbor faces: there is no duplicated vertex where the surface
  *     closes on itself, because in Aventura the texture coordinates belong to the triangles, not to the vertices.</li>
  * <li><b>Triangles</b> ({@link #generateTriangles()}): two per segment, counter-clockwise seen from outside. The
- *     texture goes around the drum several times ({@code textureSpans}), mirrored every other time like the tiles of
- *     a {@link TiledTrellis}, so that it is not stretched.</li>
+ *     texture goes around the drum several times ({@code textureSpans}), so that it is not stretched: its
+ *     coordinate goes from 0 to textureSpans, and the Texture must repeat itself beyond 1
+ *     ({@link Texture#setWrapMode}). In MIRROR mode with an even number of spans, the surface closes without a
+ *     seam.</li>
  * <li><b>Normals</b> ({@link #calculateNormals()}): two cases. Without flutes the surface is smooth: each vertex gets
  *     the normal of the ideal cone at that point, and the shading is interpolated between the vertices. With flutes,
  *     each face keeps its own normal (flat shading), which is what makes the sharp ridges of the flutes catch the
@@ -186,9 +188,9 @@ public class TaperedDrum extends GenerativeElement {
 			Triangle lower = new Triangle(a, b, c);
 			Triangle upper = new Triangle(c, d, a);
 			if (texture != null) {
-				// u: around the drum, textureSpans times, mirrored. v: from the bottom (0) to the top (1)
-				float u0 = TiledTrellis.mirror((float) i * textureSpans / segments);
-				float u1 = TiledTrellis.mirror((float) (i + 1) * textureSpans / segments);
+				// u: around the drum, from 0 to textureSpans (repeated by the Texture). v: from the bottom (0) to the top (1)
+				float u0 = (float) i * textureSpans / segments;
+				float u1 = (float) (i + 1) * textureSpans / segments;
 				Vector4 ta = new Vector4(u0, 0, 0, 1), tb = new Vector4(u1, 0, 0, 1);
 				Vector4 tc = new Vector4(u1, 1, 0, 1), td = new Vector4(u0, 1, 0, 1);
 				lower.setTexture(texture, ta, tb, tc);

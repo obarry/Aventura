@@ -419,6 +419,17 @@ projective divide according to the triangle's texture orientation (isotropic, ve
 horizontal) and multiplies the sample by the surface colour (`D × T`), so one texture can be
 tinted differently per element.
 
+**Wrap mode** (`Texture.setWrapMode()`). Texture coordinates are not limited to [0, 1]: what a
+texture shows beyond is its wrap mode. `CLAMP` (the default): its border texels go on. `REPEAT`:
+it starts again, like tiles. `MIRROR`: it starts again, every other tile flipped, so that two
+neighbouring tiles share the same border and no seam shows, whatever the image. This is how a small
+texture stays sharp over a large surface: the surface gives coordinates that go up to the number
+of tiles (`Trellis.setTextureRepeat(nx, ny)`, `RectangleMesh.setTextureRepeat()`, or any
+`Triangle.setTexture()`), and the texture folds them back. The folding is done on the indices of
+the texels, at each read (`Texture.wrap()`), not on the coordinates of the vertices: the bilinear
+interpolation is right across the border of a tile, the tiles need not match the triangles, and
+the mipmap levels follow the same rule.
+
 **Mipmapping** (`RenderContext.setMipmapping(true)`, off by default). `Texture.getInterpolatedColor(u, v)`
 reads the 4 texels around the point (bilinear filtering): right as long as a texel is larger than a
 pixel. On a surface seen from far away, a pixel covers many texels, of which 4 are read almost at

@@ -152,6 +152,23 @@ public class Trellis extends GenerativeElement {
 		initTrellis(position, array);
 	}
 	
+	/**
+	 * Repeats the texture of this Trellis like tiles: repeatX times along the X axis and repeatY times along the Y
+	 * axis, instead of once over the whole Trellis (the default). This keeps the texture sharp on a large surface: a
+	 * ground of 200 m with a texture repeated 20 times shows it every 10 m.
+	 * <pre>
+	 *   Texture grass = new Texture("grass.jpg").setWrapMode(Texture.WrapMode.MIRROR);
+	 *   Trellis ground = new Trellis(200, 200, 40, 40, altitudes, grass);
+	 *   ground.setTextureRepeat(20, 20);
+	 * </pre>
+	 * The Texture must have a wrap mode that repeats it (Texture.setWrapMode()): MIRROR for any image, REPEAT for an
+	 * image made to be repeated. The numbers of repetitions need not be integers, nor related to the number of
+	 * segments. To be called before the geometry is generated (World.build() or generate()).
+	 */
+	public void setTextureRepeat(float repeatX, float repeatY) {
+		rectangleMesh.setTextureRepeat(repeatX, repeatY);
+	}
+
 	public void generateVertices() {
 		// Nothing to do, all is already done by constructor
 	}

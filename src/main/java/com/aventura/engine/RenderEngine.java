@@ -27,6 +27,7 @@ package com.aventura.engine;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
@@ -389,7 +390,7 @@ public class RenderEngine {
 		stats.endFrame();
 		
 		frameTimer.endFrame();
-		if (Tracer.stats) Tracer.traceStats(this.getClass(), frameTimer + ", FPS: " + String.format("%.1f", 1000 / Math.max(frameTimer.getFrameMillis(), 1e-3f)));
+		if (Tracer.stats) Tracer.traceStats(this.getClass(), frameTimer + ", FPS: " + String.format(Locale.ROOT, "%.1f", 1000 / Math.max(frameTimer.getFrameMillis(), 1e-3f)));
 
 		return zBuffer;
 	}
