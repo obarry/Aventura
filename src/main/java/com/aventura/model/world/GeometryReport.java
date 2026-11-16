@@ -46,7 +46,7 @@ import com.aventura.model.texture.Texture;
  * GEOMETRY                                  elements   triangles    vertices   share
  * World                                          753      56,676      36,397  100.0%
  *   island                                       750      53,980      34,947   95.2%
- *     ground (TiledTrellis)                        1      18,432       9,409   32.5%
+ *     ground (Trellis)                             1      18,432       9,409   32.5%
  *     temple                                     396      12,516      11,770   22.1%
  *       colonnade                                217      10,416      10,370   18.4%
  *         column x 26                            216      10,416      10,370   18.4%
@@ -158,7 +158,7 @@ public final class GeometryReport {
 
 	/**
 	 * The kind of an Element: its name, without the number that Aventura adds to it (the id of the Element, which
-	 * makes each name unique), followed by its class when the class says more than the name ("ground (TiledTrellis)",
+	 * makes each name unique), followed by its class when the class says more than the name ("ground (Trellis)",
 	 * but "column" rather than "column (Column)", and no class for a plain Element, which is a group).
 	 */
 	public static String kindOf(Element element) {

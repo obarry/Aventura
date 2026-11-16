@@ -60,6 +60,10 @@ public class RectangleMesh extends Mesh {
 	int nbv_x, nbv_y = 0;
 	Vertex[][] vertices = null; // Table of vertices
 
+	// Number of times the texture is repeated across the mesh on x and y: the texture coordinates go from 0 to these
+	// values instead of 0 to 1 (see setTextureRepeat())
+	float textureRepeatX = 1, textureRepeatY = 1;
+
 	public RectangleMesh(Element e) {
 		super(e);
 	}
@@ -87,6 +91,18 @@ public class RectangleMesh extends Mesh {
 		vertices = elm.createVertexMesh(n, p);
 	}
 	
+	/**
+	 * Sets the number of times the texture is repeated across the mesh, on x and y (1 by default: the texture covers
+	 * the mesh once). The texture coordinates of the triangles then go from 0 to these values: the Texture must have
+	 * a wrap mode that repeats it (Texture.setWrapMode(), REPEAT or MIRROR), otherwise it only shows once, in the
+	 * first corner of the mesh, its border texels going on over the rest. The values need not be integers, nor
+	 * related to the number of vertices. To be called before createTriangles().
+	 */
+	public void setTextureRepeat(float repeatX, float repeatY) {
+		this.textureRepeatX = repeatX;
+		this.textureRepeatY = repeatY;
+	}
+
 	public void initVertices(int n, int p) {
 		this.nbv_x = n;
 		this.nbv_y = p;
@@ -150,10 +166,10 @@ public class RectangleMesh extends Mesh {
 						Vector4 tv1, tv2, tv3, tv4;
 					
 						// Define position for Texture vectors based on stitch in homogeneous coordinates [0,1] within the RectangleMesh
-						float ti = (float)i/(float)(nbv_x-1);
-						float tip1 = (float)(i+1)/(float)(nbv_x-1);
-						float tj = (float)j/(float)(nbv_y-1);
-						float tjp1 = (float)(j+1)/(float)(nbv_y-1);
+						float ti = textureRepeatX*(float)i/(float)(nbv_x-1);
+						float tip1 = textureRepeatX*(float)(i+1)/(float)(nbv_x-1);
+						float tj = textureRepeatY*(float)j/(float)(nbv_y-1);
+						float tjp1 = textureRepeatY*(float)(j+1)/(float)(nbv_y-1);
 						
 						// Create texture vectors
 						tv1 = new Vector4(ti,tj,0,1);
@@ -198,10 +214,10 @@ public class RectangleMesh extends Mesh {
 							Vector4 tv1, tv2, tv3, tv4;
 						
 							// Define position for Texture vectors based on stitch in homogeneous coordinates [0,1] within the RectangleMesh
-							float ti = (float)i/(float)(nbv_x-1);
-							float tip1 = (float)(i+1)/(float)(nbv_x-1);
-							float tj = (float)j/(float)(nbv_y-1);
-							float tjp1 = (float)(j+1)/(float)(nbv_y-1);
+							float ti = textureRepeatX*(float)i/(float)(nbv_x-1);
+							float tip1 = textureRepeatX*(float)(i+1)/(float)(nbv_x-1);
+							float tj = textureRepeatY*(float)j/(float)(nbv_y-1);
+							float tjp1 = textureRepeatY*(float)(j+1)/(float)(nbv_y-1);
 							
 							// Create texture vectors
 							tv1 = new Vector4(ti,tj,0,1);
@@ -236,10 +252,10 @@ public class RectangleMesh extends Mesh {
 							Vector4 tv1, tv2, tv3, tv4;
 						
 							// Define position for Texture vectors based on stitch in homogeneous coordinates [0,1] within the RectangleMesh
-							float ti = (float)i/(float)(nbv_x-1);
-							float tip1 = (float)(i+1)/(float)(nbv_x-1);
-							float tj = (float)j/(float)(nbv_y-1);
-							float tjp1 = (float)(j+1)/(float)(nbv_y-1);
+							float ti = textureRepeatX*(float)i/(float)(nbv_x-1);
+							float tip1 = textureRepeatX*(float)(i+1)/(float)(nbv_x-1);
+							float tj = textureRepeatY*(float)j/(float)(nbv_y-1);
+							float tjp1 = textureRepeatY*(float)(j+1)/(float)(nbv_y-1);
 							
 							// Create texture vectors
 							tv1 = new Vector4(ti,tj,0,1);

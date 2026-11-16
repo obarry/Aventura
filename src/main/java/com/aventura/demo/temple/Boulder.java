@@ -124,8 +124,10 @@ public class Boulder extends GenerativeElement {
 	public void generateTriangles() {
 		for (int i = 0; i < segments; i++) {
 			int next = (i + 1) % segments;
-			// Texture: twice around the boulder (mirrored the second time), and once from the bottom to the top
-			float u0 = TiledTrellis.mirror(2f * i / segments), u1 = TiledTrellis.mirror(2f * (i + 1) / segments);
+			// Texture: twice around the boulder (u from 0 to 2: the Texture must repeat itself, see
+			// Texture.setWrapMode(); in MIRROR mode the second time is flipped, and the surface closes without a
+			// seam), and once from the bottom to the top
+			float u0 = 2f * i / segments, u1 = 2f * (i + 1) / segments;
 			float uMiddle = (u0 + u1) / 2;
 
 			// Fans around the poles. Seen from outside (from below for the bottom pole), counter-clockwise.

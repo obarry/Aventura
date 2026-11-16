@@ -91,6 +91,15 @@ public class SceneTextures {
 		// A computed texture has no file name: it is given a name, for the statistics of the scene (see GeometryReport)
 		sea = createSea(SEA_SIZE, SEA_SEED).setName("sea (computed)");
 		foliage = createFoliage(FOLIAGE_SIZE, FOLIAGE_SEED).setName("foliage (computed)");
+
+		// All these textures are repeated like tiles: over the ground and the sea (Trellis.setTextureRepeat()), around
+		// the drums of the columns and the trunks (TaperedDrum), around the boulders and the foliage (Boulder). These
+		// shapes give texture coordinates beyond 1; in MIRROR mode a Texture shows itself again there, every other
+		// time flipped, so that two neighbouring tiles share the same border: no seam, even with a photograph that
+		// was not made to be repeated.
+		for (Texture repeated : new Texture[] { marble, ground, rock, bark, sea, foliage }) {
+			repeated.setWrapMode(Texture.WrapMode.MIRROR);
+		}
 	}
 
 	/**

@@ -57,6 +57,32 @@ public class Texture {
 	// Name of the texture, for the reports (see getName()): the name of its file, or the one given by setName()
 	protected String name = null;
 
+	/**
+	 * What a Texture shows outside of itself: at texture coordinates below 0 or above 1 (see setWrapMode()).
+	 * <pre>
+	 *   coordinate:   -1        0        1        2        3
+	 *   CLAMP          aaaaaaaaa|abcdefgh|hhhhhhhhhhhhhhhhhh     the border texel goes on
+	 *   REPEAT         abcdefgh |abcdefgh|abcdefgh|abcdefgh      the texture starts again
+	 *   MIRROR         hgfedcba |abcdefgh|hgfedcba|abcdefgh      every other copy is flipped
+	 * </pre>
+	 */
+	public enum WrapMode {
+		/** The texture is there once, from 0 to 1; beyond, its border texels go on. The default. */
+		CLAMP,
+		/**
+		 * The texture is repeated like tiles: only the fractional part of the coordinate counts (2.3 is read at 0.3).
+		 * For a texture made to be repeated, whose opposite borders match; otherwise a seam shows between two tiles.
+		 */
+		REPEAT,
+		/**
+		 * The texture is repeated, every other tile flipped like in a mirror (2.3 is read at 0.3, but 1.3 at 0.7).
+		 * Two neighbouring tiles then share the same border: no seam, whatever the texture, e.g. a photograph.
+		 */
+		MIRROR
+	}
+
+	protected WrapMode wrapMode = WrapMode.CLAMP;
+
 	// Mipmaps: smaller and smaller copies of the texture, each one half the size of the previous one, down to 1 x 1
 	// (see buildMipmaps()). mipTexels[n] holds the texels of level n, row by row like tex; level 0 is tex itself.
 	// null until they are built: they are only needed by getInterpolatedColor(s, t, pixelSize).
@@ -226,10 +252,11 @@ public class Texture {
 		float u_ratio = u - x0;
 		float v_ratio = v - y0;
 
-		x0 = clampToWidth(x0);
-		x1 = clampToWidth(x1);
-		y0 = clampToHeight(y0);
-		y1 = clampToHeight(y1);
+		// Texels outside of the texture: according to the wrap mode (clamped to the border by default)
+		x0 = wrap(x0, width);
+		x1 = wrap(x1, width);
+		y0 = wrap(y0, height);
+		y1 = wrap(y1, height);
 
 		int argb00 = tex[y0 * width + x0];
 		int argb01 = tex[y1 * width + x0];
@@ -405,16 +432,16 @@ public class Texture {
 	 * getInterpolatedColor(s, t), on the texels of that level. Returns a packed RGB int rather than a Color, so that
 	 * the two levels of a trilinear filtering create a single Color, at the end.
 	 */
-	private static int bilinear(int[] texels, int width, int height, float s, float t) {
+	private int bilinear(int[] texels, int width, int height, float s, float t) {
 		float u = s * width - 0.5f;
 		float v = t * height - 0.5f;
 		int x0 = (int) Math.floor(u);
 		int y0 = (int) Math.floor(v);
 		float uRatio = u - x0, vRatio = v - y0;
-		int x1 = Math.max(0, Math.min(x0 + 1, width - 1));
-		int y1 = Math.max(0, Math.min(y0 + 1, height - 1));
-		x0 = Math.max(0, Math.min(x0, width - 1));
-		y0 = Math.max(0, Math.min(y0, height - 1));
+		int x1 = wrap(x0 + 1, width);
+		int y1 = wrap(y0 + 1, height);
+		x0 = wrap(x0, width);
+		y0 = wrap(y0, height);
 
 		int argb00 = texels[y0 * width + x0], argb01 = texels[y1 * width + x0];
 		int argb10 = texels[y0 * width + x1], argb11 = texels[y1 * width + x1];
@@ -441,16 +468,59 @@ public class Texture {
 		return (argb & 0xFF) / 255f;
 	}
 
-	private int clampToWidth(int x) {
-		if (x < 0) return 0;
-		if (x >= width) return width - 1;
-		return x;
+	// ------------------------------------------------------------------
+	// Wrap mode: the texture outside of itself
+	// ------------------------------------------------------------------
+
+	/**
+	 * Sets what this Texture shows at texture coordinates outside of 0 to 1 (see WrapMode): its border (CLAMP, the
+	 * default), itself again (REPEAT) or itself again, every other time flipped (MIRROR).
+	 *
+	 * This is how a texture is repeated over a large surface, like tiles: the surface gives texture coordinates that
+	 * go beyond 1, e.g. from 0 to 24 for 24 tiles (see Trellis.setTextureRepeat()), and the Texture folds them back,
+	 * texel by texel. The surface does not need a vertex at each border of a tile, and the number of tiles does not
+	 * need to be an integer. The mode applies wherever the Texture is used; it has no effect on a surface whose
+	 * coordinates stay between 0 and 1, except within half a texel of its borders, where the bilinear interpolation
+	 * reads the texel of the other side (REPEAT) instead of the border one.
+	 *
+	 * To be set before rendering, like the texels.
+	 *
+	 * @return this Texture, to chain the calls
+	 */
+	public Texture setWrapMode(WrapMode wrapMode) {
+		if (wrapMode == null) throw new IllegalArgumentException("The wrap mode of a Texture cannot be null");
+		this.wrapMode = wrapMode;
+		return this;
 	}
 
-	private int clampToHeight(int y) {
-		if (y < 0) return 0;
-		if (y >= height) return height - 1;
-		return y;
+	public WrapMode getWrapMode() {
+		return wrapMode;
+	}
+
+	/**
+	 * The index of the texel to read, in a row or a column of size texels, for an index that may be outside of it
+	 * (0 to size - 1), according to the wrap mode. With size = 4:
+	 * <pre>
+	 *   index:    -3 -2 -1 | 0  1  2  3 | 4  5  6  7 | 8  9
+	 *   CLAMP      0  0  0 | 0  1  2  3 | 3  3  3  3 | 3  3
+	 *   REPEAT     1  2  3 | 0  1  2  3 | 0  1  2  3 | 0  1
+	 *   MIRROR     2  1  0 | 0  1  2  3 | 3  2  1  0 | 0  1
+	 * </pre>
+	 * Working on the indices of the texels rather than on the coordinates makes the bilinear interpolation right at
+	 * the border of a tile: the 4 texels read there are the neighbours in the repeated image.
+	 */
+	private int wrap(int index, int size) {
+		if (index >= 0 && index < size) return index; // Inside the texture: the same for all modes
+		switch (wrapMode) {
+		case REPEAT:
+			return Math.floorMod(index, size); // The remainder of the division, positive also for a negative index
+		case MIRROR:
+			int inTwoTiles = Math.floorMod(index, 2 * size); // A tile and its flipped neighbour are repeated together
+			return inTwoTiles < size ? inTwoTiles : 2 * size - 1 - inTwoTiles;
+		case CLAMP:
+		default:
+			return index < 0 ? 0 : size - 1;
+		}
 	}
 	
 	public Color getColor(int x, int y) {

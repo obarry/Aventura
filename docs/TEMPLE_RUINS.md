@@ -56,10 +56,10 @@ What the demo shows of the API:
 |---|---|
 | Tree of `Element`s, three levels deep, with inherited colors | `Temple` > colonnade > `Column` > drums and capital |
 | New shape from scratch (`GenerativeElement`) | `TaperedDrum`, `Boulder` |
-| Built-in shape enriched by inheritance | `TiledTrellis extends Trellis` |
-| Built-in shapes | `Box` (slabs, beams, walls, abacus), `Disc` (caps), `Trellis` (far sea) |
+| Built-in shapes | `Box` (slabs, beams, walls, abacus), `Disc` (caps), `Trellis` (ground, seas) |
+| A texture repeated like tiles (`Texture.setWrapMode()`, `Trellis.setTextureRepeat()`) | `SceneTextures`, `createGround()`, `createSea()`, `TaperedDrum`, `Boulder` |
 | Smooth and flat normals, on the same shape | `TaperedDrum` (smooth trunk, fluted column), `Boulder` (rock, foliage) |
-| Texture coordinates per triangle | `TiledTrellis`, `TaperedDrum`, `Boulder` |
+| Texture coordinates per triangle | `TaperedDrum`, `Boulder` |
 | `Translation`, `Rotation`, `Scaling`, and their composition | `OliveTree.pose()`, foliage and boulders, fallen drums |
 | Textures from files, read in either direction | `SceneTextures` (marble, ground, rock; bark with its axes exchanged) |
 | Textures computed pixel by pixel | `SceneTextures.createSea()`, `createFoliage()`, `shrink()` |
@@ -85,7 +85,7 @@ window) before going further.
 ```mermaid
 flowchart LR
     A["Read the API<br/>DESIGN, cookbooks,<br/>FractalLandscape, UrbanScape"] --> B["Scale and layout<br/>1 unit = 1 m,<br/>island, plateau, temple"]
-    B --> C["Building blocks<br/>Noise, TiledTrellis,<br/>TaperedDrum, Boulder"]
+    B --> C["Building blocks<br/>Noise,<br/>TaperedDrum, Boulder"]
     C --> D["Assemblies<br/>Column, Temple,<br/>OliveTree"]
     D --> E["Scene<br/>World, sun, air,<br/>contexts"]
     E --> F["Look<br/>render, look,<br/>adjust, repeat"]
@@ -140,7 +140,6 @@ flowchart TB
     subgraph SHAPES["New shapes"]
         TD["TaperedDrum<br/>GenerativeElement"]
         BO["Boulder<br/>GenerativeElement"]
-        TT["TiledTrellis<br/>extends Trellis"]
     end
     subgraph SUPPORT["Support (no Aventura geometry)"]
         IT["IslandTerrain<br/>height field"]
@@ -168,14 +167,15 @@ flowchart TB
 | `OliveTree` | 170 | A tree | Composition of transformations, `Scaling` |
 | `TaperedDrum` | 240 | A section of a column or of a trunk | New shape, smooth or flat normals, sub-Elements as caps |
 | `Boulder` | 190 | A rock or a clump of leaves | New shape, normals computed from the mesh |
-| `TiledTrellis` | 140 | A ground with a repeated texture | Inheritance, texture coordinates per triangle |
 | `IslandTerrain` | 180 | The altitudes of the island | (none: plain Java, feeds a `Trellis`) |
-| `SceneTextures` | 190 | The six textures | `Texture` from a file and pixel by pixel |
+| `SceneTextures` | 200 | The six textures | `Texture` from a file and pixel by pixel, wrap mode |
 | `FlightPath` | 170 | The path of the helicopter | `Vector4`, `Rotation` |
 | `Noise` | 110 | Value noise and fractal noise | (none) |
 
-`TaperedDrum` and `Boulder` use `TiledTrellis.mirror()`, the only link between shapes: the mirrored repetition of a
-texture is the same idea on a ground, around a drum and around a boulder.
+The shapes do not know each other. What they share is in the engine: the repetition of a texture, the same idea on
+a ground, around a drum and around a boulder, is a property of the `Texture` (its wrap mode, see
+[Textures](#textures)). The first version of the demo had a `TiledTrellis extends Trellis` for it, whose folding of
+the texture coordinates was also called by the two other shapes; it went into the engine in a more general form.
 
 ### The six steps
 
@@ -202,12 +202,12 @@ render it in an `ImageView`, without Swing.
 flowchart LR
     W((World)) --> I[island]
     W --> S[sea]
-    I --> G["ground<br/>TiledTrellis<br/>18,432 triangles"]
+    I --> G["ground<br/>Trellis<br/>18,432 triangles"]
     I --> T["temple<br/>12,516"]
     I --> D["debris<br/>12 drums, 5 blocks<br/>1,980"]
     I --> TRS["trees<br/>18 OliveTree<br/>17,884"]
     I --> B["boulders<br/>22 Boulder<br/>3,168"]
-    S --> NS["near sea<br/>TiledTrellis<br/>2,048"]
+    S --> NS["near sea<br/>Trellis<br/>2,048"]
     S --> FS["far sea<br/>Trellis<br/>648"]
     T --> P["platform<br/>3 steps of slabs"]
     T --> C["colonnade<br/>26 Column"]
@@ -326,9 +326,8 @@ should. The method works for any mesh.
 triangles of zero area, whose flat normal is `NaN`. `Boulder` has a single vertex per pole and a fan of triangles
 around it.
 
-**Texture coordinates belong to the triangles.** This is what makes the three shapes simple: a vertex shared by two
-faces can have a different texture coordinate in each, so no vertex is duplicated where a surface closes on itself or
-where two tiles meet.
+**Texture coordinates belong to the triangles.** This is what makes the two shapes simple: a vertex shared by two
+faces can have a different texture coordinate in each, so no vertex is duplicated where a surface closes on itself.
 
 **Caps only where they can be seen.** A drum is a closed surface as far as back-face culling goes, but its two ends
 are optional `Disc` sub-Elements. In a column, only the top of a broken shaft and the underside of the echinus have
@@ -344,15 +343,31 @@ above it, is never under the drawn surface. The idea comes from `FractalLandscap
 
 ### Textures
 
-**Mirrored tiling.** Aventura's texture coordinates stop at 1 (the border is repeated beyond). To repeat a texture
-over 240 m of ground, every other tile is mirrored: the coordinate goes 0 to 1, then 1 to 0. Two neighbor tiles then
-show the same pixels along their common border, so **any image tiles without a seam**. The price: a remarkable detail
-of the image appears twice, face to face, which is why the photograph of the sea was replaced.
+**Mirrored tiling.** Stretched once over the 240 m of the ground, the texture of 600 pixels would have texels of
+40 cm. It is repeated every 10 m instead, like tiles, and the same goes for the sea (every 25 m), the drums and the
+boulders (around them). Two things are needed:
+
+```java
+Texture ground = new Texture(GROUND_FILE).setWrapMode(Texture.WrapMode.MIRROR);   // SceneTextures
+Trellis trellis = new Trellis(240, 240, 96, 96, altitudes, ground);               // createGround()
+trellis.setTextureRepeat(24, 24);                                                 // 24 tiles of 10 m
+```
+
+The Trellis gives texture coordinates that go from 0 to 24 instead of 0 to 1, and the Texture decides what it shows
+beyond 1: its wrap mode. By default (`CLAMP`) its border goes on; with `REPEAT` it starts again; with `MIRROR` it
+starts again, every other tile flipped. Two neighbor tiles then show the same pixels along their common border, so
+**any image tiles without a seam**, even a photograph that was not made for it. The price: a remarkable detail of
+the image appears twice, face to face, which is why the photograph of the sea was replaced.
 
 ```
- tile:        0        1        2        3
- u:       0 ------> 1 ------> 0 ------> 1 ------> 0
+ coordinate:  0        1        2        3        4
+ REPEAT       abcdefgh|abcdefgh|abcdefgh|abcdefgh       a seam where h meets a
+ MIRROR       abcdefgh|hgfedcba|abcdefgh|hgfedcba       no seam
 ```
+
+The folding is done by the Texture, texel by texel: the tiles need not match the cells of the Trellis (4 cells per
+tile on the ground, 1 on the sea, but 3.7 would do), and any shape can use it. `TaperedDrum` and `Boulder` simply
+give a coordinate that goes several times around them.
 
 **The color is in the tint, the detail in the texture.** The engine multiplies the color of a surface by its texture.
 The sea Element is blue and its texture goes from a dark shade to almost white: with the textures switched off, the
@@ -566,7 +581,7 @@ Temple ruins - statistics
 GEOMETRY                                  elements   triangles    vertices   share
 World                                          753      56,676      36,397  100.0%
   island                                       750      53,980      34,947   95.2%
-    ground (TiledTrellis)                        1      18,432       9,409   32.5%
+    ground (Trellis)                             1      18,432       9,409   32.5%
     temple                                     396      12,516      11,770   22.1%
       platform                                 127       1,512       1,008    2.7%
         box x 126                              126       1,512       1,008    2.7%
@@ -593,7 +608,7 @@ World                                          753      56,676      36,397  100.
     boulders                                    23       3,168       1,628    5.6%
       boulder x 22                              22       3,168       1,628    5.6%
   sea                                            3       2,696       1,450    4.8%
-    near sea (TiledTrellis)                      1       2,048       1,089    3.6%
+    near sea (Trellis)                           1       2,048       1,089    3.6%
     far sea (Trellis)                            1         648         361    1.1%
 7 levels of Elements, 72 of them without triangles of their own (groups)
 
@@ -682,7 +697,7 @@ The counting is `FrameTimeStatistics` (`com.aventura.demo`), usable by any demo,
 
 | Test class | Tests | What it checks |
 |---|---|---|
-| `TestTempleGeometry` | 13 | Noise (bounded, continuous, deterministic), mirrored tiles, the three shapes against the contracts of the Geometry Cookbook (`ElementContractChecker`: vertices, normals, winding through the enclosed volume), `Column`, `Temple` against its plan, the terrain (an island, a flat plateau), the flight path (through its waypoints, closed, continuous, banking to the inside) |
+| `TestTempleGeometry` | 13 | Noise (bounded, continuous, deterministic), the ground and its repeated texture, the two shapes against the contracts of the Geometry Cookbook (`ElementContractChecker`: vertices, normals, winding through the enclosed volume), `Column`, `Temple` against its plan, the terrain (an island, a flat plateau), the flight path (through its waypoints, closed, continuous, banking to the inside) |
 | `TestTempleRuins` | 9 | The pure functions of the application, the computed textures, the content of the scene and its statistics, the tour (above the ground, out of the temple), and a rendering in an `ImageView` (sky, ground, marble in the sun and in the shade, shadows that change the image) |
 | `TestGeometryStatistics` (`model.world`) | 8 | `GeometryStatistics` and `GeometryReport` on a small tree of boxes: counts of a branch, of a World, of a list; textures counted once; the lines of the report; the counters of `World`; name and memory of a `Texture` |
 | `TestStatisticsWindow` (`demo`) | 1 | The text of the statistics on a scene that is not a demo, without a window |
@@ -751,7 +766,6 @@ are already in the [backlog](BACKLOG.md) or in the [performance audit](PERFORMAN
 |---|---|---|
 | The sky is a single color | No gradient towards the horizon, no clouds; the haze does the job of the horizon | A sky gradient (zenith and horizon colors), then a sky texture or procedural clouds |
 | No surface without lighting inside a lit scene | No sky dome, no emissive object (a fire, a lamp) | An "unlit" or emissive flag per Element or per material (backlog §3b: emissive geometry) |
-| Texture coordinates clamped to [0, 1] | Mirrored tiling, written three times in three shapes | Wrap modes on `Texture`: clamp, repeat, mirror |
 | Mipmaps without anisotropic filtering | The ground seen at a low angle is a compromise: slightly soft far away, to avoid the noise | Several samples along the stretched direction of the pixel (backlog §4) |
 | No transparency (alpha) | Foliage as solid blobs, opaque water without a sea bed | Alpha test first (leaves as textured cards), then blending |
 | Materials are chosen by the engine (`SolidMaterial`, `TexturedMaterial`); an Element cannot be given its own | No water material (Fresnel, moving ripples), no triplanar rock | `Element.setMaterial(Material)`: the `Material` interface already exists |
@@ -852,7 +866,7 @@ Creating the scene (textures, geometry, normals) takes 0.7 s on that 2-core comp
 | A "Quality" menu: size of the shadow map (1,024 / 2,048 / 4,096), hard shadows while the camera moves and soft ones when it stops | Up to a third while moving | Small |
 | Draw at half the size while the camera moves, at full size when it stops | 3 to 4 times while moving | Small: `GUIView.resize()` and a scaled `drawImage()` |
 | Coarser trees far from the temple (8 x 5 instead of 10 x 6 per clump), or fewer clumps | About 5,000 triangles | Trivial, slightly visible |
-| A coarser ground far from the plateau (cells of 5 m near the shore) | About 9,000 triangles | A second `TiledTrellis`, and a seam to hide |
+| A coarser ground far from the plateau (cells of 5 m near the shore) | About 9,000 triangles | A second `Trellis`, and a seam to hide |
 | A smaller texture for the boulders: `SceneTextures.shrink(rock, 4)` | No time, but 27 MB of memory out of 35.5 MB (and less shimmer on far rocks) | One line; found by the statistics ([§6](#statistics)) |
 | No caps under the echinus of the columns seen from above only | Negligible | Not worth it |
 

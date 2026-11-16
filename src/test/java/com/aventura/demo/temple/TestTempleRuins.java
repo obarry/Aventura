@@ -195,7 +195,7 @@ public class TestTempleRuins {
 		assertTrue(report.contains("column x " + demo.temple.getNbColumns()));
 		assertTrue(report.contains("olive tree x " + TempleRuins.NB_TREES));
 		assertTrue(report.contains("boulder x " + TempleRuins.NB_BOULDERS));
-		assertTrue(report.contains("ground (TiledTrellis)"));
+		assertTrue(report.contains("ground (Trellis)"));
 		assertEquals("no line for each of the " + all.getNbElements() + " Elements", -1, report.indexOf("box x 1 "));
 		assertTrue(lines.length < 60);
 
@@ -207,7 +207,7 @@ public class TestTempleRuins {
 		assertTrue(report.contains("7 textures"));
 		assertEquals(2 * TempleRuins.GROUND_DIVISIONS * TempleRuins.GROUND_DIVISIONS, all.getNbTrianglesUsing(demo.textures.ground));
 
-		assertEquals("ground (TiledTrellis)", GeometryReport.kindOf(demo.ground));
+		assertEquals("ground (Trellis)", GeometryReport.kindOf(demo.ground));
 		assertEquals("temple", GeometryReport.kindOf(demo.temple));
 	}
 
