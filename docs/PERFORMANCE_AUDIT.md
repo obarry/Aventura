@@ -28,6 +28,7 @@ la feuille de route du §8.
 8. [Feuille de route proposée](#8-feuille-de-route-proposée)
 9. [Ce qu'il vaut mieux ne pas faire](#9-ce-quil-vaut-mieux-ne-pas-faire)
 10. [Mise à jour du 6 octobre 2026 : nouvelles fonctions et état d'avancement](#10-mise-à-jour-du-6-octobre-2026--nouvelles-fonctions-et-état-davancement)
+11. [Mise à jour du 17 novembre 2026 : ce qui entoure le rendu](#11-mise-à-jour-du-17-novembre-2026--ce-qui-entoure-le-rendu)
 
 ---
 
@@ -1059,3 +1060,55 @@ Les décisions en attente dans le BACKLOG peuvent maintenant s'appuyer sur ces c
   défaut.
 - **Ombres des lumières ponctuelles** : 6 passes par image, c'est le cas où le cache (N4.4) et l'élimination par
   portée (N4.2) rapportent le plus.
+
+---
+
+## 11. Mise à jour du 17 novembre 2026 : ce qui entoure le rendu
+
+Mesures prises dans `TempleRuins` (56 676 triangles, fenêtre de 996 × 558, options par défaut, carte d'ombres
+conservée), sur des tours complets du vol en hélicoptère : la démo donne à la fin de chaque tour le temps de rendu
+moyen (le moteur seul) et le nombre d'images **affichées** par seconde (nombre d'images / durée du tour). L'écart entre
+les deux est le temps passé hors du moteur, sur le fil Swing : copie de l'image dans la fenêtre, cadence de
+l'animation, reste de l'application. Portable à 20 threads, limité à environ 28 W.
+
+| Conditions | Rendu moyen | Images affichées par seconde | Hors rendu, par image |
+|---|---:|---:|---:|
+| Mode d'alimentation « Équilibré », `Timer` Swing de 15 ms | 63,3 ms | 13,1 | 13,0 ms |
+| « Performances élevées », `Timer` de 1 ms | 36,8 ms | 22,1 | 8,4 ms |
+| « Performances élevées », images enchaînées par `invokeLater()` | 36,5 ms | 25,3 | 3,1 ms |
+| Idem, fenêtre sur l'écran du portable mis à l'échelle à 200 % | 40,3 ms | 21,0 | 7,3 ms |
+
+### 11.1 Le mode d'alimentation
+
+Sur secteur, le portable était en mode « Équilibré », qui bride la fréquence du processeur. En « Performances
+élevées », le moteur va **1,7 fois plus vite** : plus que la plupart des optimisations de cet audit. Toutes les
+mesures antérieures prises sur le portable l'ont été en mode « Équilibré ». **Vérifier ce réglage avant toute mesure**,
+et ne comparer que des mesures prises dans le même mode.
+
+### 11.2 La cadence de l'animation
+
+Un `Timer` Swing ne lance une étape que sur un de ses tops : après chaque image, le fil Swing attendait le top suivant
+(0 à 15 ms avec un délai de 15 ms). Avec un délai de 1 ms, l'attente reste d'environ 5 ms : l'horloge de Windows ne
+réveille les programmes qu'à un pas plus grossier. **Fait** dans `TempleRuins` : chaque image programme la suivante
+par `SwingUtilities.invokeLater()`, qui passe après le redessin de la fenêtre et les événements souris et clavier.
+Rendu inchangé, **+14 % d'images affichées** (92 % de ce que calcule le moteur). Les autres démos animées par un
+`Timer` (`FractalLandscape`, `MovingCamera`…) perdent de la même façon jusqu'à un pas d'horloge par image.
+
+### 11.3 L'affichage sur un écran mis à l'échelle
+
+Sur l'écran du portable (2880 × 1800, mis à l'échelle à 200 % par Windows), Java crée la fenêtre en pixels logiques et
+doit agrandir l'image du moteur × 2 à chaque copie : environ 2,2 millions de pixels écrits au lieu de 0,56 million.
+Le temps hors rendu passe de 3 à 7 ms par image, et le nombre d'images affichées baisse de 17 %. Le rendu lui-même est
+aussi 10 % plus lent, sans explication certaine (piste : la puce graphique intégrée, qui pilote un écran plus grand,
+partage le budget de puissance du processeur ; ou un portable plus chaud, ce tour étant le 5ᵉ).
+
+Pourquoi la puce graphique ne fait-elle pas l'agrandissement ? Java2D l'accélère pour une image qu'il garde dans la
+mémoire graphique, ce qui suppose une image qui change rarement. Celle du moteur change à chaque image, et ses pixels
+sont écrits directement (`getDataBuffer()`, voir D6) : Java2D ne peut plus suivre ses modifications et la traite par
+ses routines logicielles.
+
+**Proposition V1** : copier l'image 1:1 dans une `VolatileImage` (gardée dans la mémoire graphique), puis dessiner
+celle-ci dans la fenêtre, pour que l'agrandissement soit fait par la puce graphique. **Gain** attendu : ramener
+l'affichage à 200 % vers 3 ms par image, à mesurer (dépend du chemin graphique activé par Java sous Windows) ·
+**Effort** S (une vingtaine de lignes, dans `SwingView` ou d'abord dans une démo) · **Lisibilité** = ·
+reportée (BACKLOG §6). Le moteur continue de tout calculer sur le processeur.

@@ -18,7 +18,7 @@
 | **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root) |
 | **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (35.5 MB), 1 sun, 1 ambient light, haze and optional mist |
 | **Cameras** | Orbit, fly, and a helicopter tour of 516 m flown in 57 s |
-| **Speed** | 11 to 124 ms per image (8 to 90 images per second) on a laptop, 55 ms on average over the helicopter tour at 1000 x 562 pixels (110 ms in Full HD, 1920 x 986) |
+| **Speed** | 9 to 81 ms per image (12 to 107 images per second) on a laptop in its "best performance" power mode, 36.5 ms on average over the helicopter tour at 1000 x 562 pixels, 25 images displayed per second (in the "balanced" mode: 55 ms, and 110 ms in Full HD, 1920 x 986) |
 | **Engine changes** | `ShadowingLight.setShadowingElement()` (shadow map limited to an Element) and a depth rule in `shadowFactorAt()`; `GeometryStatistics` and `GeometryReport` (the size of a scene), the name and the memory of a `Texture`; `ShadowingLight.setStaticShadowCasters()` (the shadow map kept from one image to the next) |
 
 ## Contents
@@ -661,7 +661,8 @@ HELICOPTER TOUR, LAP 2 (1000 x 562 pixels, INTERPOLATE, textures, mipmapping, sp
 ```
 
 (the figures of this example are made up). The first rate is what is displayed, the second what the engine renders:
-the display of the image and the pace of the timer make the difference. The average of the last lap also stays in
+the display of the image in the window, and the rest of the application, make the difference (about 3 ms per image,
+see [§10](#10-performance)). The average of the last lap also stays in
 the title of the window, and the report is added to the statistics. To compare two options, fly one whole lap with
 each: change the option, wait for the end of the lap under way (reported with a warning, since it mixes the two),
 then read the next one. A lap entered on the way (after a visit in another camera mode) is not reported, and the
@@ -671,8 +672,8 @@ The counting is `FrameTimeStatistics` (`com.aventura.demo`), usable by any demo,
 
 ### How it is built
 
-- **Closing the window stops the timers.** A Swing `Timer` still running would keep the application alive after its
-  window is gone, rendering images that nobody sees.
+- **Closing the window stops the animations.** A Swing `Timer`, or the chain of images of the tour, still running
+  would keep the application alive after its window is gone, rendering images that nobody sees.
 - **Every action changes the model, then renders.** A menu item is a lambda on the `RenderContext`, the `Lighting`,
   the sun or the `Atmosphere`, followed by `render()`. Nothing else is kept in sync, except the menu itself.
 - **The menus start from the model.** Each check box takes its initial state from the object it controls, so the
@@ -683,9 +684,13 @@ The counting is `FrameTimeStatistics` (`com.aventura.demo`), usable by any demo,
   and draws the disc at its new place.
 - **One `updateCamera()`** places the `Camera` from the state of the current mode; the modes only differ by the state
   they keep (angles and distance, position and angles, distance travelled).
-- **Timers, not threads.** The tour and the easing of the wheel are Swing `Timer`s: their steps run on the Swing
+- **The Swing thread, not other threads.** The easing of the wheel is a Swing `Timer`, and the tour chains its
+  images, each one scheduling the next one with `SwingUtilities.invokeLater()`: all their steps run on the Swing
   thread, like the mouse events, so there is nothing to synchronize. A timer does not queue more than one step, so a
-  slow rendering does not pile up work.
+  slow rendering does not pile up work. The tour does not use a timer because a step can only start on a tick: after
+  each image, the Swing thread would wait for the next one (5 to 8 ms per image, see [§10](#10-performance)), while
+  `invokeLater()` puts the next image in the queue of events right after the display of the previous one and the
+  mouse and keyboard events that came in the meantime.
 - **Resizing** waits 50 ms after the last change of size, then resizes the view (`GUIView.resize()`); the
   `PerspectiveContext` keeps its scale (`KEEP_SCALE`), so a larger window shows more of the scene.
 - **The geometry helpers are static and package-private** (`orbitEye()`, `lineOfSight()`, `advance()`,
@@ -788,8 +793,9 @@ are already in the [backlog](BACKLOG.md) or in the [performance audit](PERFORMAN
 
 ### Measures
 
-**In the application.** Measured by the author on his laptop, in the window of the demo (996 x 558 pixels drawn),
-with the options it starts with (textures with mipmapping, soft shadows, haze, visible sun), over whole laps of the
+**In the application.** Measured by the author on his laptop, in the "balanced" power mode of Windows (see
+[below](#power-mode-and-pace-of-the-tour) for the "best performance" mode), in the window of the demo (996 x 558
+pixels drawn), with the options it starts with (textures with mipmapping, soft shadows, haze, visible sun), over whole laps of the
 helicopter tour: the rendering times that the demo reports at the end of each lap (see [Statistics](#statistics)).
 A lap is 57 s and about 530 images.
 
@@ -829,6 +835,25 @@ than the usual variation from lap to lap. The fastest images, close to the templ
 the shadow pass was most of their time. About 12 ms per image remain between two displayed images, outside of the
 rendering (the Swing timer of the tour and the display of the image), now a fifth of the time between two images.
 
+#### Power mode and pace of the tour
+
+Two later findings, measured the same way, one lap each. The laptop was set to the "balanced" power mode of Windows
+when plugged in: switched to "best performance", the processor keeps higher clock speeds. And the tour was paced by
+a Swing `Timer`, which made the Swing thread wait after each image: a step can only start on a tick of the timer,
+every 15 ms, and even with a delay of 1 ms the tick comes late, the clock of Windows waking programs at a coarser
+pace. The tour now chains its images with `SwingUtilities.invokeLater()` (see [How it is built](#how-it-is-built)).
+
+| Power mode | Pace of the tour | Average | Fastest image | Slowest image | Images displayed per second | Outside of the rendering, per image |
+|---|---|---|---|---|---|---|
+| Balanced | Timer, 15 ms | 63.3 ms (15.8 per second) | 19.3 ms (51.8) | 140.5 ms (7.1) | 13.1 | 13.0 ms |
+| Best performance | Timer, 1 ms | 36.8 ms (27.2 per second) | 9.8 ms (102.2) | 64.7 ms (15.5) | 22.1 | 8.4 ms |
+| Best performance | `invokeLater()`, lap 1 | **36.5 ms (27.4 per second)** | 9.3 ms (107.1) | 80.9 ms (12.4) | **25.3** | **3.1 ms** |
+
+The power mode makes the engine 1.7 times faster: more than most of the optimizations of the engine. **On a laptop,
+check it before measuring anything**, and compare only measures taken in the same mode. The pace of the tour does not
+change the rendering, but the images displayed per second rise from 22.1 to 25.3 (+14%): 92% of what the engine
+renders, the remaining 3 ms per image being the display of the image in the window and the rest of the application.
+
 **Stage by stage.** Measured on the 18 images of a lap of the tour, at the same size, rendered off-screen on a much
 slower computer (a **2-core** virtual machine with JDK 21, whose times are two to three times longer): take the
 proportions between the stages rather than the values.
@@ -862,7 +887,7 @@ Creating the scene (textures, geometry, normals) takes 0.7 s on that 2-core comp
 
 | Idea | Expected gain | Cost |
 |---|---|---|
-| Render in a dedicated thread, which always draws the latest camera position (as `SceneViewer` does) | No more images, but a window that responds during a rendering, and no wasted image when the mouse moves faster than the engine draws | Medium; the timers would feed a state instead of rendering |
+| Render in a dedicated thread, which always draws the latest camera position (as `SceneViewer` does) | No more images, but a window that responds during a rendering, and no wasted image when the mouse moves faster than the engine draws | Medium; the tour and the timers would feed a state instead of rendering |
 | A "Quality" menu: size of the shadow map (1,024 / 2,048 / 4,096), hard shadows while the camera moves and soft ones when it stops | Up to a third while moving | Small |
 | Draw at half the size while the camera moves, at full size when it stops | 3 to 4 times while moving | Small: `GUIView.resize()` and a scaled `drawImage()` |
 | Coarser trees far from the temple (8 x 5 instead of 10 x 6 per clump), or fewer clumps | About 5,000 triangles | Trivial, slightly visible |

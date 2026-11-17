@@ -1049,7 +1049,7 @@ xychart-beta
 | Shadows | All lights (orthographic, perspective and cube maps); hard edges by default, optional PCF 3×3 with a fixed-width penumbra |
 | Lights | Invisible by default; optional halo of point and spot lights, and disc, halo, lens flare and optional light shafts of the sun (`setLightGlow`), hidden by the objects |
 | Atmosphere | A haze that depends on the distance only and spherical fogs with a soft edge (one color each, same extinction for each channel, no scattering of the light of the sun), as a post-process (`World.setAtmosphere`, `RenderContext.setAtmosphere`); not in `LINE` rendering nor orthographic |
-| Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener |
+| Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener. The image is copied into the window by Java's software routines: on a screen scaled by the system (HiDPI, e.g. 200%), it is enlarged at each frame, a few ms per image (BACKLOG §6) |
 | Assets | Textures loaded from file paths, not from the classpath |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |
 
