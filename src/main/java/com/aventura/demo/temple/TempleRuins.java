@@ -56,6 +56,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
 
@@ -459,7 +460,12 @@ public class TempleRuins {
 	float tourDistance = 0;
 	boolean tourPaused = false;
 	long tourLastStepNanos;
-	Timer tourTimer;
+	/**
+	 * The tour runs while this number is the one its next step was scheduled with: stopTour() changes it, so that a
+	 * step already scheduled does nothing (see startTour()).
+	 */
+	int tourRun = 0;
+	boolean tourRunning = false;
 
 	/**
 	 * Rendering times of the tour, lap by lap (see finishLap()): the times of the lap being flown, the number of laps
@@ -1109,8 +1115,8 @@ public class TempleRuins {
 	}
 
 	/**
-	 * When the window is closed, the animations are stopped: a running Swing Timer would keep the application alive
-	 * after its window is gone, rendering images that nobody sees.
+	 * When the window is closed, the animations are stopped: a running Swing Timer, or the chain of images of the
+	 * tour, would keep the application alive after its window is gone, rendering images that nobody sees.
 	 */
 	private void stopAnimations() {
 		stopTour();
@@ -1133,7 +1139,7 @@ public class TempleRuins {
 		String title = String.format(Locale.ROOT, "%s - %s - %d ms per image (%.1f per second)", TITLE, mode, lastRenderMillis, imagesPerSecond);
 		if (cameraMode == CameraMode.HELICOPTER && lapCount > 0) {
 			// The average of the last lap of the tour: a steadier figure than the time of the last image. Rendered per
-			// second (1000 / average) and displayed per second: the display and the pace of the timer make the difference.
+			// second (1000 / average) and displayed per second: the display of the image makes the difference.
 			title += String.format(Locale.ROOT, " - lap %d: %.1f ms on average (%.1f per second, %.1f displayed), %.1f to %.1f ms",
 					lapCount, lastLapAverage, 1000 / lastLapAverage, lastLapDisplayRate, lastLapMin, lastLapMax);
 		}
@@ -1559,20 +1565,37 @@ public class TempleRuins {
 	// ****************************************************************************************************************
 
 	/**
-	 * Starts the clock of the tour: a Swing Timer that calls stepTour() again and again, on the Swing thread. If a
-	 * rendering takes longer than the delay of the timer, the next step simply comes right after it: the timer never
-	 * queues more than one step.
+	 * Starts the tour: the images follow one another on the Swing thread, each one scheduling the next one at its end
+	 * (scheduleTourStep()), as long as the tour runs.
+	 *
+	 * Why not a Swing Timer, as for the other animations? A step can only start on a tick of a timer. With a delay of
+	 * 15 ms, the Swing thread stays idle after each image until the next tick: 7.5 ms on average. With a shorter
+	 * delay, it depends on the clock of the system, which may only wake a program every 15 ms or so (on Windows).
+	 * Here the next image starts as soon as the previous one is displayed: SwingUtilities.invokeLater() puts the next
+	 * step at the end of the queue of events of the Swing thread, after the repaint of the window that the rendering
+	 * asked for, and after the mouse and keyboard events that came in the meantime. The speed of the flight does not
+	 * change: the camera moves by the time elapsed, not by the number of images.
 	 */
 	private void startTour() {
+		if (tourRunning) return;
+		tourRunning = true;
 		tourLastStepNanos = System.nanoTime();
-		if (tourTimer == null) {
-			tourTimer = new Timer(ANIMATION_FRAME_MS, e -> stepTour());
-		}
-		tourTimer.start();
+		scheduleTourStep(++tourRun);
+	}
+
+	/** Puts the next step of the tour at the end of the queue of events of the Swing thread. */
+	private void scheduleTourStep(int run) {
+		SwingUtilities.invokeLater(() -> {
+			// A step scheduled before the tour was stopped (and maybe started again: another run) does nothing
+			if (!tourRunning || run != tourRun) return;
+			stepTour();
+			scheduleTourStep(run);
+		});
 	}
 
 	private void stopTour() {
-		if (tourTimer != null) tourTimer.stop();
+		tourRunning = false;
+		tourRun++;
 	}
 
 	/**

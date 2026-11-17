@@ -225,6 +225,16 @@ tested examples (`AtmosphereCookbook`, `GroundMist`). See
 - `ImageView` allocates a new `BufferedImage` for each frame, which keeps the front image immutable
   and thread-safe. A pool (triple buffering) would avoid the allocation.
 - Dedicated views for other toolkits (JavaFX, SWT) or an image-sequence writer, on top of `ImageView`.
+- **Display on a scaled screen (HiDPI) by the graphics chip.** On a screen scaled by Windows (200% on
+  a laptop), Java enlarges the image of the engine at each frame when it copies it into the window,
+  with its software routines: Java2D cannot accelerate a `BufferedImage` that changes at each frame
+  and whose pixels are written directly (`getDataBuffer()`, as `ImageView` does). Measured on the
+  `TempleRuins` tour: about 7 ms per image outside of the rendering at 200%, against 3 ms on a screen
+  at 100%, and 17% fewer images displayed (see PERFORMANCE_AUDIT §11). Idea: copy the image 1:1 into
+  a `VolatileImage` (kept by Java2D in the memory of the graphics chip), then draw that one into the
+  window, so that the enlargement is done by the chip. About twenty lines, in `GUIView`/`SwingView`
+  or in a demo first; to be measured, since it depends on the graphics pipeline Java enables. The
+  engine keeps rendering on the CPU: only the display uses a standard JDK feature.
 
 ## 7. Repository housekeeping
 

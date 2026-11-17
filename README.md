@@ -12,7 +12,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
   <img src="resources/doc/images/temple_ruins.jpg" alt="The TempleRuins demo: the ruins of a Greek temple on an island, rendered by Aventura" width="800">
 </p>
 
-*The `TempleRuins` demo: 56,676 triangles, textures, soft shadows, a visible sun and the haze of the distance, rendered on the CPU at 8 to 90 images per second on a laptop, 18 on average over its helicopter tour (1000 x 562 pixels) and 9 in Full HD, with an orbit camera, a fly camera and a helicopter tour. [How it was made](docs/TEMPLE_RUINS.md).*
+*The `TempleRuins` demo: 56,676 triangles, textures, soft shadows, a visible sun and the haze of the distance, rendered on the CPU at 12 to 107 images per second on a laptop, 27 on average over its helicopter tour (1000 x 562 pixels), with an orbit camera, a fly camera and a helicopter tour. [How it was made](docs/TEMPLE_RUINS.md).*
 
 ## Highlights
 
