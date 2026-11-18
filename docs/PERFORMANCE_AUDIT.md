@@ -1,1114 +1,1092 @@
-# Aventura — Audit de performance
+# Aventura — Performance audit
 
-*Version 1 : 30 septembre 2026. **Version 2 : 6 octobre 2026**, mise à jour sur la branche `Refactoring`
-(commit `d3a2a47`, tag `v2-3-0`). Périmètre : `src/main` (moteur, modèle, maths, vues), pur Java, rendu CPU.*
+*[Version française](PERFORMANCE_AUDIT.fr.md)*
 
-> **Ce qui change dans la version 2.** Depuis la version 1, le moteur a gagné les ombres des spots (shadow map en
-> perspective) et des lumières ponctuelles (cube map à 6 faces), le clipping du plan proche, les ombres douces
-> (PCF 3 × 3, désormais activées par défaut dans `UrbanScape`) et les lumières visibles (halo, soleil, lens flare,
-> rayons de lumière). Le chemin par pixel du moteur, lui, n'a pas changé : **tous les constats de la version 1
-> restent valables**. La version 2 ajoute le **coût mesuré des nouvelles fonctions**, de nouvelles propositions
-> (N1 à N7) et l'**état d'avancement** de chaque proposition : voir le [§10](#10-mise-à-jour-du-6-octobre-2026--nouvelles-fonctions-et-état-davancement).
-> Les §0 à §9 sont ceux de la version 1, complétés par des encadrés « **v2** » là où la situation a changé.
+*Version 1: September 30, 2026. **Version 2: October 6, 2026**, updated on the `Refactoring` branch (commit
+`d3a2a47`, tag `v2-3-0`). Scope: `src/main` (engine, model, math, views), pure Java, CPU rendering.*
 
-L'objectif est d'accélérer le moteur **sans le rendre illisible** : chaque proposition indique son gain (mesuré
-quand c'était possible), son coût et son effet sur la lisibilité. Les identifiants (A1, D3, R5…) sont repris dans
-la feuille de route du §8.
+> **What changes in version 2.** Since version 1, the engine has gained the shadows of spot lights (perspective
+> shadow map) and of point lights (cube map with 6 faces), near-plane clipping, soft shadows (PCF 3 × 3, now on by
+> default in `UrbanScape`) and visible lights (halo, sun, lens flare, light shafts). The per-pixel path of the
+> engine has not changed: **all the findings of version 1 still hold**. Version 2 adds the **measured cost of the
+> new features**, new proposals (N1 to N7) and the **progress** of each proposal: see
+> [§10](#10-update-of-october-6-2026-new-features-and-progress). Sections §0 to §9 are those of version 1, completed
+> with "**v2**" boxes where the situation has changed.
 
-## Contenu
+The goal is to speed up the engine **without making it unreadable**: each proposal gives its gain (measured when
+possible), its cost and its effect on readability. The identifiers (A1, D3, R5…) are used again in the roadmap of
+§8.
 
-0. [Synthèse](#0-synthèse)
-1. [Méthode et mesures](#1-méthode-et-mesures)
-2. [Algorithmique (programmation)](#2-algorithmique-programmation)
-3. [Conception (design)](#3-conception-design)
-4. [Techniques de rendu : éliminer le travail en amont](#4-techniques-de-rendu--éliminer-le-travail-en-amont)
-5. [Les trois dimensions : mémoire, CPU, E/S](#5-les-trois-dimensions--mémoire-cpu-es)
+## Contents
+
+0. [Summary](#0-summary)
+1. [Method and measurements](#1-method-and-measurements)
+2. [Algorithms (programming)](#2-algorithms-programming)
+3. [Design](#3-design)
+4. [Rendering techniques: removing work upstream](#4-rendering-techniques-removing-work-upstream)
+5. [The three dimensions: memory, CPU, I/O](#5-the-three-dimensions-memory-cpu-io)
 6. [Multithreading](#6-multithreading)
-7. [Tracer et instrumentation](#7-tracer-et-instrumentation)
-8. [Feuille de route proposée](#8-feuille-de-route-proposée)
-9. [Ce qu'il vaut mieux ne pas faire](#9-ce-quil-vaut-mieux-ne-pas-faire)
-10. [Mise à jour du 6 octobre 2026 : nouvelles fonctions et état d'avancement](#10-mise-à-jour-du-6-octobre-2026--nouvelles-fonctions-et-état-davancement)
-11. [Mise à jour du 17 novembre 2026 : ce qui entoure le rendu](#11-mise-à-jour-du-17-novembre-2026--ce-qui-entoure-le-rendu)
+7. [Tracer and instrumentation](#7-tracer-and-instrumentation)
+8. [Proposed roadmap](#8-proposed-roadmap)
+9. [What not to do](#9-what-not-to-do)
+10. [Update of October 6, 2026: new features and progress](#10-update-of-october-6-2026-new-features-and-progress)
+11. [Update of November 17, 2026: what surrounds the rendering](#11-update-of-november-17-2026-what-surrounds-the-rendering)
 
 ---
 
-## 0. Synthèse
+## 0. Summary
 
-**Le moteur est limité par le traitement des pixels, pas par la géométrie.** Dans `UrbanScape` (8 912 triangles,
-1280 × 720), **96 %** du temps CPU est passé dans `TriangleRasterizer.rasterizeScanLine()` et les consumers
-qu'il appelle. La transformation des sommets représente environ **1 %**. Le travail doit donc porter sur le
-chemin par pixel, sur le nombre de pixels traités, puis sur la répartition de ce travail entre les cœurs.
+**The engine is limited by the processing of pixels, not by the geometry.** In `UrbanScape` (8,912 triangles,
+1280 × 720), **96%** of the CPU time is spent in `TriangleRasterizer.rasterizeScanLine()` and the consumers it
+calls. Transforming the vertices takes about **1%**. The work must therefore focus on the per-pixel path, on the
+number of pixels processed, then on sharing this work between the cores.
 
-Constats principaux :
+Main findings:
 
-1. **Environ 145 Mo alloués par image**, presque tout dans la boucle par pixel (`java.awt.Color`, `Vector3`,
-   `Vector4`, `int[]` créé par `BufferedImage.setRGB()`). Le principe « zéro allocation par pixel » de DESIGN §5
-   n'est vrai que pour l'objet `Fragment`.
-2. **Z-buffer, shadow map et textures sont stockés en colonnes (`[x][y]`) mais parcourus en lignes** : chaque
-   pixel d'une ligne tombe dans un tableau différent, ce qui provoque des défauts de cache.
-3. **Les compteurs statiques des constructeurs de `Vector3` et `Vector4`** (`count()`, liés à `Tracer.object`)
-   sont écrits à chaque allocation. Ils coûtent peu en mono-thread, mais **ils empêchent tout gain en
-   multithread** : dans le prototype, 2 threads étaient *plus lents* qu'un seul tant qu'ils étaient là.
-4. **Les ombres doublent le temps d'une image** : la shadow map (2000 × 2000 dans UrbanScape) est réallouée et
-   recalculée à chaque image, alors qu'avec une lumière et une scène fixes elle ne change pas.
-5. **Environ 46 % des triangles envoyés au rasterizer ne couvrent aucun centre de pixel**, et **1,18 million de
-   pixels sont ombrés pour 0,92 million de pixels à l'écran** : il existe une marge côté élimination en amont.
-6. Le **8 à 10 % d'utilisation CPU** que tu observes correspond exactement à **un seul cœur logique occupé**
-   (1/12 ≈ 8 % sur une machine à 12 threads). Le multithreading est donc le levier le plus important, **mais
-   seulement une fois les points 1 à 3 corrigés**.
+1. **About 145 MB allocated per frame**, almost all of it in the per-pixel loop (`java.awt.Color`, `Vector3`,
+   `Vector4`, the `int[]` created by `BufferedImage.setRGB()`). The "zero allocation per pixel" principle of
+   DESIGN §5 only holds for the `Fragment` object.
+2. **Z-buffer, shadow map and textures are stored by columns (`[x][y]`) but traversed by rows**: each pixel of a row
+   falls in a different array, which causes cache misses.
+3. **The static counters of the `Vector3` and `Vector4` constructors** (`count()`, tied to `Tracer.object`) are
+   written at each allocation. They cost little with one thread, but **they prevent any gain with several
+   threads**: in the prototype, 2 threads were *slower* than one as long as they were there.
+4. **Shadows double the time of a frame**: the shadow map (2000 × 2000 in UrbanScape) is allocated and computed
+   again at each frame, whereas with a fixed light and scene it does not change.
+5. **About 46% of the triangles sent to the rasterizer cover no pixel center**, and **1.18 million pixels are
+   shaded for 0.92 million pixels on screen**: there is room for removing work upstream.
+6. The **8 to 10% CPU usage** observed corresponds exactly to **a single busy logical core** (1/12 ≈ 8% on a
+   machine with 12 threads). Multithreading is therefore the biggest lever, **but only once points 1 to 3 are
+   fixed**.
 
-Gains mesurés avec des prototypes (sur une copie jetable, pas dans ton dépôt) :
+Gains measured with prototypes (on a throwaway copy, not in the repository):
 
-| Étape (cumulative) | Sans ombres | Avec ombres |
+| Step (cumulative) | Without shadows | With shadows |
 |---|---:|---:|
-| Référence | 114 ms | 267 ms |
-| + Z-buffer et shadow map en `float[]` 1D, ligne par ligne (D7) | 109 ms | 239 ms |
-| + écriture directe dans le `int[]` de l'image (D6) | 98 ms | 229 ms |
-| + `Matrix4 × Vector4` déroulé, couleur de lumière calculée une fois (A4, A2) | **84 ms** (−26 %) | 214 ms |
-| + shadow map conservée d'une image à l'autre (scène statique, R9) | — | **≈ 137 ms** (−49 %) |
-| Multithread : 2 threads, 8 bandes horizontales (§6), sans les compteurs statiques | **≈ 53 ms** contre ≈ 95 ms en mono-thread avec le même code | non testé |
+| Reference | 114 ms | 267 ms |
+| + Z-buffer and shadow map as 1D `float[]`, row by row (D7) | 109 ms | 239 ms |
+| + writing directly into the `int[]` of the image (D6) | 98 ms | 229 ms |
+| + unrolled `Matrix4 × Vector4`, light color computed once (A4, A2) | **84 ms** (−26%) | 214 ms |
+| + shadow map kept from one frame to the next (static scene, R9) | — | **≈ 137 ms** (−49%) |
+| Multithreaded: 2 threads, 8 horizontal bands (§6), without the static counters | **≈ 53 ms** against ≈ 95 ms single-threaded with the same code | not tested |
 
-Ces mesures ont été prises sur une machine à **2 cœurs** (Xeon 2,8 GHz, Java 21). Les valeurs absolues seront
-différentes sur ton portable ; ce sont les tendances qui comptent. Sur 8 à 12 threads, un gain de **×3 à ×5** sur
-l'étape pixels est réaliste après les phases 1 et 2.
+These measurements were taken on a **2-core** machine (Xeon 2.8 GHz, Java 21). The absolute values will be
+different on the author's laptop; what matters are the trends. On 8 to 12 threads, a gain of **×3 to ×5** on the
+pixel stage is realistic after phases 1 and 2.
 
-> **v2 — synthèse au 6 octobre.** Les nouvelles fonctions ont **déplacé le coût vers les ombres** : avec PCF 3 × 3
-> (défaut d'UrbanScape), une image coûte environ **3,4 fois** une image sans ombres (contre 2 fois en ombres dures).
-> Une lumière ponctuelle ou un spot avec ombres ajoute chacun environ 60 % au temps de l'image. Les mêmes
-> 4 gains rapides (D1, D6, D7, A4) donnent aujourd'hui **−13 à −19 % avec ombres** et divisent par 2 le coût des
-> lumières visibles. En y ajoutant **D2a** (la partie rapide de D2 sur les `Color`), une image sans ombres coûte
-> **45 % de moins** et les allocations passent de ≈ 145 à ≈ 21 Mo par image. Les nouvelles propositions les plus rentables sont le **gradient du PCF par triangle** (N1),
-> l'**élimination, la réutilisation et le cache des passes d'ombre** (N4) et le **calcul unique de la direction et
-> de la distance des lumières** (N3). Détails au [§10](#10-mise-à-jour-du-6-octobre-2026--nouvelles-fonctions-et-état-davancement).
+> **v2 — summary as of October 6.** The new features have **moved the cost towards the shadows**: with PCF 3 × 3
+> (the default of UrbanScape), a frame costs about **3.4 times** a frame without shadows (against 2 times with hard
+> shadows). A point light or a spot light with shadows each add about 60% to the time of a frame. The same 4 quick
+> wins (D1, D6, D7, A4) now give **−13 to −19% with shadows** and halve the cost of the visible lights. Adding
+> **D2a** (the quick part of D2 on the `Color`s), a frame without shadows costs **45% less** and the allocations fall
+> from ≈ 145 to ≈ 21 MB per frame. The most profitable new proposals are the **PCF gradient per triangle** (N1),
+> **culling, reusing and caching the shadow passes** (N4) and **computing the direction and distance of the lights
+> once** (N3). Details in [§10](#10-update-of-october-6-2026-new-features-and-progress).
 
 ---
 
-## 1. Méthode et mesures
+## 1. Method and measurements
 
-### Protocole
+### Protocol
 
-- Un benchmark sans interface (`PerfBench`, laissé dans `Claude outputs/perf-audit/`) rend la scène `UrbanScape`
-  dans une `ImageView` pendant 40 à 80 images le long du vol d'hélicoptère. La moyenne est prise sur les
-  dernières images, une fois le JIT chaud (les premières images prennent 700 à 1 000 ms).
-- Deux configurations : `INTERPOLATE` + spéculaire, avec et sans ombres (shadow map 2000 × 2000).
-- **v2** : `PerfBench2` (même dossier) ajoute les modes `hard`, `pcf`, `point`, `spot`, `sunview` et `sunglow`
-  (§10.2).
-- Profilage avec **Java Flight Recorder** (`-XX:StartFlightRecording`), échantillonnage CPU et allocations.
-- Le benchmark calcule une **somme de contrôle de l'image** : le prototype multithread produit une image
-  identique au bit près à la version mono-thread.
+- A benchmark without a user interface (`PerfBench`, left in `Claude outputs/perf-audit/`) renders the
+  `UrbanScape` scene into an `ImageView` for 40 to 80 frames along the helicopter flight. The average is taken over
+  the last frames, once the JIT is warm (the first frames take 700 to 1,000 ms).
+- Two configurations: `INTERPOLATE` + specular, with and without shadows (shadow map 2000 × 2000).
+- **v2**: `PerfBench2` (same folder) adds the modes `hard`, `pcf`, `point`, `spot`, `sunview` and `sunglow` (§10.2).
+- Profiling with **Java Flight Recorder** (`-XX:StartFlightRecording`), CPU and allocation sampling.
+- The benchmark computes a **checksum of the image**: the multithreaded prototype produces an image identical to
+  the bit to the single-threaded version.
 
-### Où va le temps
+### Where the time goes
 
-Sans ombres (1 169 échantillons) :
+Without shadows (1,169 samples):
 
-| Zone (temps inclusif) | Part |
+| Area (inclusive time) | Share |
 |---|---:|
-| `rasterizeScanLine()` et tout ce qu'il appelle (étape pixels) | 96 % |
-| `ShadingConsumer.consume()` (éclairage par pixel) | 70 % |
-| `ZBuffer.test()`, surtout des défauts de cache dans `MapView.get()` | 16 % |
-| `BufferedImage.setRGB()` | 12 % |
-| `ElementTransform` (sommets et normales) | ≈ 1 % |
+| `rasterizeScanLine()` and everything it calls (pixel stage) | 96% |
+| `ShadingConsumer.consume()` (per-pixel lighting) | 70% |
+| `ZBuffer.test()`, mostly cache misses in `MapView.get()` | 16% |
+| `BufferedImage.setRGB()` | 12% |
+| `ElementTransform` (vertices and normals) | ≈ 1% |
 
-Avec ombres (2 371 échantillons) : `generateShadowMap()` **30 %**, `shadowFactorAt()` **24 %** (dont la majeure
-partie dans `Vector4.times(Matrix4)`, qui passe par `get(i)` et `set(i)` avec un `switch` et un `try`/`catch` pour
-chaque coefficient), `setRGB()` 8 %.
+With shadows (2,371 samples): `generateShadowMap()` **30%**, `shadowFactorAt()` **24%** (most of it in
+`Vector4.times(Matrix4)`, which goes through `get(i)` and `set(i)` with a `switch` and a `try`/`catch` for each
+coefficient), `setRGB()` 8%.
 
-### Allocations et GC
+### Allocations and GC
 
-- Environ **11,7 Go alloués sur 80 images, soit ≈ 145 Mo par image**. Principaux sites d'allocation :
-  `ColorTools.multColor()` (via `Light.getLightColorAtPoint()`, une nouvelle `Color` par pixel et par lumière)
-  et le `float[]` interne de `Color`, 52 % à eux deux ; `DirectColorModel.getDataElements()` (un `int[]` par
-  appel de `setRGB()`), 19 % ; `Vector4.V3()`, 17 %.
-- Environ **1,5 GC jeune par image**, pour 4 ms de pause par image sans ombres et 9 ms avec. Les pauses restent
-  modestes : le vrai coût vient des allocations elles-mêmes et de la pollution des caches qu'elles provoquent.
+- About **11.7 GB allocated over 80 frames, i.e. ≈ 145 MB per frame**. Main allocation sites:
+  `ColorTools.multColor()` (through `Light.getLightColorAtPoint()`, a new `Color` per pixel and per light) and the
+  internal `float[]` of `Color`, 52% together; `DirectColorModel.getDataElements()` (an `int[]` per call of
+  `setRGB()`), 19%; `Vector4.V3()`, 17%.
+- About **1.5 young GCs per frame**, for 4 ms of pause per frame without shadows and 9 ms with. The pauses remain
+  modest: the real cost comes from the allocations themselves and the cache pollution they cause.
 
-### Statistiques du pipeline, par image
+### Pipeline statistics, per frame
 
-- 8 912 triangles : 4 110 éliminés en back-face, 212 hors du frustum, **4 590 rasterisés**.
-- Sur les triangles rasterisés, environ **46 % ne produisent aucun pixel** (compteurs `RasterizerStats` : 160 693
-  triangles avec au moins une ligne, 86 413 avec au moins un pixel).
-- 1,18 million de pixels ombrés et 236 000 rejetés par le Z-test, pour 921 600 pixels à l'écran (dont une partie
-  de ciel). Il y a donc un surcoût d'ombrage dû à la superposition (overdraw).
+- 8,912 triangles: 4,110 removed by back-face culling, 212 outside the frustum, **4,590 rasterized**.
+- Of the rasterized triangles, about **46% produce no pixel** (`RasterizerStats` counters: 160,693 triangles with at
+  least one row, 86,413 with at least one pixel).
+- 1.18 million pixels shaded and 236,000 rejected by the Z-test, for 921,600 pixels on screen (part of them sky).
+  There is therefore a shading overhead due to overlapping (overdraw).
 
-### Pourquoi 8 à 10 % de CPU
+### Why 8 to 10% of CPU
 
-Le rendu tourne sur un seul thread : le thread `main` dans `UrbanScape`, l'**EDT** Swing dans `MovingCamera` et
-`FractalLandscape`. Un thread qui travaille sans arrêt occupe un cœur logique. Sur une machine à
-12 threads logiques, cela affiche 8,3 %. Le moteur est déjà à 100 % de ce qu'un seul thread peut donner.
+The rendering runs on a single thread: the `main` thread in `UrbanScape`, the Swing **EDT** in `MovingCamera` and
+`FractalLandscape`. A thread that works without stopping occupies one logical core. On a machine with 12 logical
+threads, this shows as 8.3%. The engine is already at 100% of what a single thread can give.
 
 ---
 
-## 2. Algorithmique (programmation)
+## 2. Algorithms (programming)
 
-Légende : **Gain** mesuré (m) ou estimé (e) · **Effort** S / M / L · **Lisibilité** + (meilleure), = (neutre), − (plus
-technique).
+Legend: **Gain** measured (m) or estimated (e) · **Effort** S / M / L · **Readability** + (better), = (neutral), −
+(more technical).
 
-### A1. Interpolation par pixel sur des objets → pas incrémentaux sur des `float`
+### A1. Per-pixel interpolation on objects → incremental steps on `float`s
 
 *`TriangleRasterizer.rasterizeScanLine()`, l. 309-340*
 
-- Pour chaque pixel : `Tools.interpolate(Vector4…)` crée **4 objets**, dont un `new Vector4()` qui est
-  immédiatement écrasé. S'y ajoutent `.times(wPixel)`, `lerpV3()` (3 objets), un autre `.times()`, puis la même
-  chose pour les coordonnées de texture. Au total, **jusqu'à 14 allocations par pixel**. L'escape analysis du JIT
-  n'en supprime qu'une partie (JFR le confirme).
-- `z = 1 / interpolate(1/z1, 1/z2, g)` recalcule `1/z1` et `1/z2` pour chaque pixel, alors que `z1` et `z2`
-  viennent eux-mêmes d'une inversion.
-- `xScreen()` et `yScreen()` refont la division `x/w` à chaque appel : 8 divisions par ligne et 6 ou plus par
-  triangle, pour des valeurs qui ne changent pas.
+- For each pixel: `Tools.interpolate(Vector4…)` creates **4 objects**, including a `new Vector4()` that is
+  immediately overwritten. Then come `.times(wPixel)`, `lerpV3()` (3 objects), another `.times()`, then the same for
+  the texture coordinates. In all, **up to 14 allocations per pixel**. The escape analysis of the JIT only removes
+  part of them (JFR confirms it).
+- `z = 1 / interpolate(1/z1, 1/z2, g)` computes `1/z1` and `1/z2` again for each pixel, whereas `z1` and `z2`
+  themselves come from an inversion.
+- `xScreen()` and `yScreen()` redo the division `x/w` at each call: 8 divisions per row and 6 or more per triangle,
+  for values that do not change.
 
-**Proposition.** C'est la méthode classique des rasterizers logiciels, et elle est aussi très pédagogique :
+**Proposal.** This is the classic method of software rasterizers, and it is also very didactic:
 
-- calculer **une fois par sommet** `xs`, `ys`, `invW = 1/w`, et les attributs pré-divisés `attr × invW` ;
-- sur une ligne, calculer le **pas** de chaque grandeur (`d(invW)/dx`, `d(attr×invW)/dx`), puis avancer par
-  **additions** : `invW += dInvW; u += du; …`. Les variables locales sont des `float` ;
-- remplir `Fragment` avec des `set(float…)`, comme c'est déjà prévu.
+- compute **once per vertex** `xs`, `ys`, `invW = 1/w`, and the pre-divided attributes `attr × invW`;
+- on a row, compute the **step** of each quantity (`d(invW)/dx`, `d(attr×invW)/dx`), then move forward by
+  **additions**: `invW += dInvW; u += du; …`. The local variables are `float`s;
+- fill the `Fragment` with `set(float…)`, as already planned.
 
-Le code reste lisible si le calcul des pas est regroupé dans une petite classe `EdgeInterpolant` ou
-`ScanlineSetup` avec un commentaire de 5 lignes (analogue GPU : les « plane equations » des attributs).
-**Gain** e : important (supprime la majorité des allocations et divisions par pixel) · **Effort** M · **Lisibilité** =.
+The code stays readable if the computation of the steps is grouped in a small `EdgeInterpolant` or `ScanlineSetup`
+class with a 5-line comment (GPU analogy: the "plane equations" of the attributes).
+**Gain** e: large (removes most of the allocations and divisions per pixel) · **Effort** M · **Readability** =.
 
-### A2. Éclairage par pixel : calculer une seule fois ce qui ne dépend pas de la lumière
+### A2. Per-pixel lighting: compute once what does not depend on the light
 
 *`ShadingConsumer.consume()` l. 79-101, `Lighting.accumulateContribution()` l. 212-240*
 
-- `material.baseColorAt(fragment)` est appelé **1 + N fois par pixel** (ambiante, puis chaque lumière). Avec un
-  `TexturedMaterial`, la texture est donc **échantillonnée et filtrée plusieurs fois** et une `Color` est créée à
-  chaque fois (+ `ColorTools.multColors()`).
-- `fragment.getNormal().normalize()` est refait pour chaque lumière, **et modifie le fragment en place** (voir D5).
-- `viewerDirection` (2 allocations) est calculé même quand le spéculaire est désactivé.
-- `light.getLightColorAtPoint()` crée une `Color` par pixel via `ColorTools.multColor()`, alors que pour une
-  lumière directionnelle ou ambiante le résultat est **constant sur toute l'image**.
-- L'ordre dans `consume()` : `shadowFactorAt()` (projection et lecture de la shadow map) est appelé **avant** le
-  test `dotNL <= 0` de `accumulateContribution()`. Pour tous les pixels qui tournent le dos à la lumière, on
-  consulte la shadow map pour rien (voir R10).
+- `material.baseColorAt(fragment)` is called **1 + N times per pixel** (ambient, then each light). With a
+  `TexturedMaterial`, the texture is therefore **sampled and filtered several times** and a `Color` is created each
+  time (+ `ColorTools.multColors()`).
+- `fragment.getNormal().normalize()` is done again for each light, **and changes the fragment in place** (see D5).
+- `viewerDirection` (2 allocations) is computed even when specular is off.
+- `light.getLightColorAtPoint()` creates a `Color` per pixel through `ColorTools.multColor()`, whereas for a
+  directional or ambient light the result is **constant over the whole image**.
+- The order in `consume()`: `shadowFactorAt()` (projection and read of the shadow map) is called **before** the
+  `dotNL <= 0` test of `accumulateContribution()`. For all the pixels that face away from the light, the shadow map
+  is read for nothing (see R10).
 
-**Proposition.** Dans `consume()` : couleur de base une fois, normale normalisée une fois, direction de vue
-seulement si le spéculaire est actif, `dotNL` avant l'ombre. Couleurs des lumières pré-multipliées **une fois
-par image** (`Lighting.prepareFrame()`) en trois `float`. Accumuler en `float` et ne produire qu'un `int` RGB à la
-fin (voir D2).
-**Gain** m (partiel, couleur de lumière) : fait partie de la ligne 84 ms du tableau · **Effort** S · **Lisibilité** +.
+**Proposal.** In `consume()`: base color once, normal normalized once, viewing direction only if specular is on,
+`dotNL` before the shadow. Light colors pre-multiplied **once per frame** (`Lighting.prepareFrame()`) as three
+`float`s. Accumulate in `float`s and produce an RGB `int` only at the end (see D2).
+**Gain** m (partial, light color): part of the 84 ms line of the table · **Effort** S · **Readability** +.
 
-### A3. Z-buffer : état caché et double adressage
+### A3. Z-buffer: hidden state and double addressing
 
 *`ZBuffer.test()` / `update()`, l. 107-135*
 
-`test()` mémorise `lastX`, `lastY`, `lastBx`, `lastBy` pour que `update()` évite de recalculer deux additions. Le
-gain est nul, mais cet état partagé rend la classe **impossible à utiliser depuis plusieurs threads**.
-**Proposition** : `test()` et `update()` sans état. L'accès 1D ligne par ligne est traité en D7.
-**Gain** ≈ 0 en mono-thread, prérequis du §6 · **Effort** S · **Lisibilité** +.
+`test()` remembers `lastX`, `lastY`, `lastBx`, `lastBy` so that `update()` avoids computing two additions again. The
+gain is nil, but this shared state makes the class **impossible to use from several threads**.
+**Proposal**: `test()` and `update()` without state. The 1D row-by-row access is handled in D7.
+**Gain** ≈ 0 single-threaded, a prerequisite of §6 · **Effort** S · **Readability** +.
 
-### A4. Produit matrice × vecteur
+### A4. Matrix × vector product
 
 *`Matrix4.times(Vector4)` l. 530 → `Vector4.times(Matrix4)` l. 615*
 
-La boucle double utilise `get(i)` et `set(i, …)` (un `switch` et une exception vérifiée). C'est **24 % du temps
-avec ombres**, parce que `shadowFactorAt()` projette chaque pixel dans l'espace de la lumière.
-**Proposition** : 16 multiplications-additions écrites explicitement (4 lignes lisibles), et `Matrix4` stockée
-dans un `float[16]` ou 16 champs plutôt qu'un `float[][]` (5 objets). Un `transform(Vector4 in, Vector4 out)`
-sans allocation peut servir dans les boucles critiques.
-**Gain** m (inclus dans la ligne 84 ms) · **Effort** S · **Lisibilité** + (le code déroulé est plus lisible que
-la boucle actuelle).
+The double loop uses `get(i)` and `set(i, …)` (a `switch` and a checked exception). It is **24% of the time with
+shadows**, because `shadowFactorAt()` projects each pixel into the space of the light.
+**Proposal**: 16 multiply-adds written out (4 readable lines), and `Matrix4` stored in a `float[16]` or 16 fields
+rather than a `float[][]` (5 objects). A `transform(Vector4 in, Vector4 out)` without allocation can serve in the
+critical loops.
+**Gain** m (included in the 84 ms line) · **Effort** S · **Readability** + (the unrolled code is more readable than
+the current loop).
 
-### A5. Détails par triangle
+### A5. Per-triangle details
 
-- `sortByScreenY()` : `Arrays.sort` avec un `Comparator` créé par lambda et des `Float` en boîte, pour trier
-  **3 éléments**. Trois comparaisons et échanges suffisent. **Effort** S.
-- 3 `RasterVertex`, un tableau, un `Material` et un consumer sont alloués **par triangle** : environ 4 600 par
-  image, peu coûteux, mais à revoir dans le cadre de D3.
-- `ElementTransform.computeNormalMatrix()` teste `M3 · M3ᵀ` **par égalité exacte de float** avec l'identité. Une
-  rotation réelle échoue presque toujours à ce test, si bien qu'une inversion 4 × 4 est calculée pour chaque
-  élément à chaque image. Il faut comparer avec une tolérance et mettre le résultat en cache avec la
-  transformation (D8). **Gain** faible (≈ 1 %).
+- `sortByScreenY()`: `Arrays.sort` with a `Comparator` created by a lambda and boxed `Float`s, to sort **3
+  elements**. Three comparisons and swaps are enough. **Effort** S.
+- 3 `RasterVertex`, an array, a `Material` and a consumer are allocated **per triangle**: about 4,600 per frame,
+  cheap, but to be reviewed as part of D3.
+- `ElementTransform.computeNormalMatrix()` tests `M3 · M3ᵀ` **by exact float equality** with the identity. A real
+  rotation almost always fails this test, so a 4 × 4 inversion is computed for each element at each frame. It must
+  compare with a tolerance and cache the result with the transformation (D8). **Gain** small (≈ 1%).
 
 ### A6. Textures
 
 *`Texture`, l. 70-207*
 
-- Stockage `int[width][height]` (en colonnes) : un échantillon bilinéaire lit deux tableaux différents.
-- `getInterpolatedColor()` renvoie une nouvelle `Color`, et `TexturedMaterial` en crée une seconde pour la
-  teinte.
-- Le chargement appelle `img.getRGB(w, h)` **pixel par pixel**, soit 2,2 millions d'appels pour la texture
-  1706 × 1279 de `MovingCamera`. Ce n'est pas un coût par image, mais le démarrage est lent.
-- **`Texture` contient un `RGBAccumulator` partagé** : deux threads qui échantillonnent la même texture se
-  marchent dessus (voir §6).
+- `int[width][height]` storage (by columns): a bilinear sample reads two different arrays.
+- `getInterpolatedColor()` returns a new `Color`, and `TexturedMaterial` creates a second one for the tint.
+- Loading calls `img.getRGB(w, h)` **pixel by pixel**, i.e. 2.2 million calls for the 1706 × 1279 texture of
+  `MovingCamera`. It is not a cost per frame, but the start-up is slow.
+- **`Texture` holds a shared `RGBAccumulator`**: two threads that sample the same texture step on each other (see
+  §6).
 
-**Proposition** : `int[]` stocké ligne par ligne, lecture en masse avec `img.getRGB(0, 0, w, h, buf, 0, w)`, et un
-échantillonnage qui renvoie un `int` ARGB ou écrit trois `float` dans un accumulateur **fourni par l'appelant**.
-**Effort** S · **Lisibilité** =.
+**Proposal**: an `int[]` stored row by row, bulk read with `img.getRGB(0, 0, w, h, buf, 0, w)`, and a sampling that
+returns an ARGB `int` or writes three `float`s into an accumulator **provided by the caller**.
+**Effort** S · **Readability** =.
 
-### A7. Ombrage FLAT constant et vrai mode Gouraud
+### A7. Constant FLAT shading and a true Gouraud mode
 
-- En `FLAT` sans spéculaire, sans ombres et sans texture, la couleur est **la même pour tout le triangle** : on peut
-  la calculer une fois et remplir le triangle.
-- `INTERPOLATE` est décrit comme « Gouraud » dans le code, mais c'est en réalité du **Phong shading** (normale
-  interpolée, éclairage calculé à chaque pixel). Un vrai mode `GOURAUD` (éclairage aux 3 sommets, couleurs
-  interpolées) coûterait **une fraction** du prix. Il est aussi très intéressant sur le plan pédagogique :
-  comparer Gouraud et Phong sur la même scène est un classique des cours de synthèse d'images.
-**Gain** e : fort pour ces modes · **Effort** M · **Lisibilité** +.
+- In `FLAT` without specular, shadows or texture, the color is **the same for the whole triangle**: it can be
+  computed once and the triangle filled.
+- `INTERPOLATE` is described as "Gouraud" in the code, but it is actually **Phong shading** (interpolated normal,
+  lighting computed at each pixel). A true `GOURAUD` mode (lighting at the 3 vertices, interpolated colors) would
+  cost **a fraction** of the price. It is also very interesting from a teaching point of view: comparing Gouraud and
+  Phong on the same scene is a classic of computer graphics courses.
+**Gain** e: large for these modes · **Effort** M · **Readability** +.
 
 ---
 
-## 3. Conception (design)
+## 3. Design
 
-### D1. Compteurs statiques dans les constructeurs de vecteurs — **priorité 1**
+### D1. Static counters in the vector constructors — **priority 1**
 
 *`Vector3.count()` l. 182, `Vector4.count()` l. 200*
 
-Chaque `new Vector3` et `new Vector4` incrémente `nb_vectors` et `nb_to_display`, deux champs statiques publics.
-Cela a trois conséquences :
+Each `new Vector3` and `new Vector4` increments `nb_vectors` and `nb_to_display`, two public static fields. This has
+three consequences:
 
-- **un effet de bord global dans une classe mathématique** ;
-- une **course de données** dès qu'il y a plusieurs threads (les compteurs deviennent faux) ;
-- surtout, la **ligne de cache de ces champs fait des allers-retours entre les cœurs** à chaque allocation.
-  Mesuré : avec 2 threads, **118 à 150 ms contre 91 ms avec 1 thread**. Après avoir conditionné le compteur à
-  `Tracer.object` : **53 ms**.
+- **a global side effect in a math class**;
+- a **data race** as soon as there are several threads (the counters become wrong);
+- above all, **the cache line of these fields bounces between the cores** at each allocation. Measured: with 2
+  threads, **118 to 150 ms against 91 ms with 1 thread**. After making the counter depend on `Tracer.object`:
+  **53 ms**.
 
-**Proposition** : supprimer ces compteurs. Si le diagnostic est utile, le mettre derrière `if (Tracer.object)` ou
-utiliser un `LongAdder`. C'est exactement le cas « Tracer devenu pénalisant » que tu soupçonnais, à ceci près que ce
-n'est pas `Tracer` lui-même qui coûte, mais cette instrumentation qui s'exécute même quand la trace est
-désactivée. **Effort** S · **Lisibilité** +.
+**Proposal**: remove these counters. If the diagnosis is useful, put it behind `if (Tracer.object)` or use a
+`LongAdder`. This is exactly the "Tracer has become a burden" case that was suspected, except that it is not `Tracer`
+itself that costs, but this instrumentation, which runs even when tracing is off. **Effort** S · **Readability** +.
 
-> **v2 — toujours présent, et plus coûteux.** Les nouvelles fonctions créent encore plus de vecteurs par pixel
-> (PCF : 2 projections supplémentaires, des produits vectoriels et des normalisations ; lumières ponctuelles et
-> spots : un `new Vector3` à chaque calcul de direction ou de distance). Chacune de ces allocations écrit dans ces
-> deux compteurs partagés. C'est toujours le **prérequis n° 1 du multithreading**.
+> **v2 — still there, and more costly.** The new features create even more vectors per pixel (PCF: 2 more
+> projections, cross products and normalizations; point and spot lights: a `new Vector3` at each computation of a
+> direction or a distance). Each of these allocations writes into the two shared counters. It is still the **number
+> one prerequisite of multithreading**.
 
-### D2. `java.awt.Color` comme type de couleur interne
+### D2. `java.awt.Color` as the internal color type
 
-`Color` est immuable (chaque opération alloue), `getRGBColorComponents(null)` alloue un `float[]`, et le
-constructeur `Color(float, float, float)` vérifie ses bornes à chaque appel. C'est **plus de la moitié des
-allocations** mesurées. Cela lie aussi le modèle à AWT.
-**Proposition** : dans le pipeline, les couleurs circulent en trois `float` (accumulateur) ou en `int` RGB compacté.
-`Color` reste le type de l'**API publique** (`Element.setColor()`, lumières), converti **une fois** à l'entrée
-(préparation de l'image ou du matériau). **Effort** M · **Lisibilité** = (les signatures publiques ne changent pas).
+`Color` is immutable (each operation allocates), `getRGBColorComponents(null)` allocates a `float[]`, and the
+`Color(float, float, float)` constructor checks its bounds at each call. This is **more than half of the
+allocations** measured. It also ties the model to AWT.
+**Proposal**: in the pipeline, colors travel as three `float`s (accumulator) or as a packed RGB `int`. `Color` stays
+the type of the **public API** (`Element.setColor()`, lights), converted **once** on input (preparation of the frame
+or of the material). **Effort** M · **Readability** = (the public signatures do not change).
 
-> **v2 — D2 est découpé en deux étapes.**
+> **v2 — D2 is split into two steps.**
 >
-> **D2a — gain rapide (phase 1).** Deux changements locaux qui ne touchent aucune API publique :
-> - la **couleur des lumières dont l'intensité ne dépend pas du point** (ambiante, directionnelle) est calculée une
->   seule fois au lieu d'un `ColorTools.multColor()` par pixel et par lumière. Dans la version finale, cette
->   préparation se fait au début de l'image (`Lighting.prepareFrame()`) plutôt que dans un cache paresseux, pour
->   respecter « Refresh, don't cache » et rester sûre en multithread ;
-> - `RGBAccumulator.toRGB()` produit directement un `int` RGB, écrit par un nouveau
->   `GUIView.drawPixel(x, y, int rgb)` dans le `int[]` de l'image (complète D6). La conversion arrondit comme
->   `new Color(float, float, float)`, d'où une image identique au bit près.
+> **D2a — quick win (phase 1).** Two local changes that touch no public API:
+> - the **color of the lights whose intensity does not depend on the point** (ambient, directional) is computed once
+>   instead of a `ColorTools.multColor()` per pixel and per light. In the final version, this preparation is done at
+>   the start of the frame (`Lighting.prepareFrame()`) rather than in a lazy cache, to respect "Refresh, don't
+>   cache" and stay safe with several threads;
+> - `RGBAccumulator.toRGB()` produces an RGB `int` directly, written by a new `GUIView.drawPixel(x, y, int rgb)` into
+>   the `int[]` of the image (completes D6). The conversion rounds like `new Color(float, float, float)`, hence an
+>   image identical to the bit.
 >
-> **Mesuré** (§10.3) : les allocations passent de **134 à 21 Mo par image**, il y a presque 3 fois moins de GC, et
-> une image sans ombres coûte **≈ 30 % de moins** que l'image avec les seuls 4 gains rapides.
-> **Effort** S · **Lisibilité** =.
+> **Measured** (§10.3): the allocations fall from **134 to 21 MB per frame**, there are almost 3 times fewer GCs,
+> and a frame without shadows costs **≈ 30% less** than the frame with only the 4 quick wins.
+> **Effort** S · **Readability** =.
 >
-> **D2b — refactoring (phase 2).** `Material`, `Texture` et `Light` fournissent leurs composantes en `float` (dans un
-> accumulateur fourni par l'appelant) au lieu de renvoyer une `Color`. C'est nécessaire pour les **textures** (un
-> échantillon bilinéaire produit aujourd'hui une ou deux `Color`) et pour les **lumières ponctuelles et spots**, dont
-> la couleur change à chaque pixel avec l'atténuation, ce qu'aucun cache ne peut éviter. **Effort** M.
+> **D2b — refactoring (phase 2).** `Material`, `Texture` and `Light` provide their components as `float`s (in an
+> accumulator provided by the caller) instead of returning a `Color`. This is needed for the **textures** (a bilinear
+> sample produces one or two `Color`s today) and for the **point and spot lights**, whose color changes at each pixel
+> with the attenuation, which no cache can avoid. **Effort** M.
 
-### D3. Matériaux et consumers créés pour chaque triangle
+### D3. Materials and consumers created for each triangle
 
 *`RenderEngine.rasterizeShadedTriangle()` l. 580-583, `rasterizeUnlitTriangle()` l. 524-527*
 
-Le coût est modéré, mais la conception pose problème pour le multithreading : un consumer contient un accumulateur
-modifiable et doit appartenir à un seul thread. **Proposition** : consumers **réutilisés, un par thread**
-(`consumer.setMaterial(m)`), et matériau résolu **par élément** (ou mis en cache par combinaison élément ×
-texture × couleur).
+The cost is moderate, but the design is a problem for multithreading: a consumer holds a mutable accumulator and
+must belong to a single thread. **Proposal**: consumers **reused, one per thread** (`consumer.setMaterial(m)`), and
+the material resolved **per element** (or cached per combination of element × texture × color).
 
-### D4. L'état du pipeline est stocké dans le modèle de la scène
+### D4. The state of the pipeline is stored in the model of the scene
 
-`Vertex.prj_position`, `wld_position`, `wld_normal`, `prj_normal` et `Triangle.wld_normal` sont **écrits par chaque
-passe**. La passe d'ombre écrase par exemple `prj_position` avec les coordonnées dans l'espace de la lumière
-avant que la passe principale ne les réécrive. Conséquences :
+`Vertex.prj_position`, `wld_position`, `wld_normal`, `prj_normal` and `Triangle.wld_normal` are **written by each
+pass**. The shadow pass, for example, overwrites `prj_position` with the coordinates in the space of the light before
+the main pass writes them again. Consequences:
 
-- les passes doivent être strictement séquentielles (impossible de calculer deux shadow maps en parallèle, ni une
-  shadow map pendant la passe principale) ;
-- chaque `Vertex` porte 7 références vers des objets séparés (cache peu favorable) ;
-- le même objet représente à la fois « la scène » et « le résultat d'une passe », ce qui est déroutant quand on
-  découvre le code.
+- the passes must be strictly sequential (impossible to compute two shadow maps in parallel, or a shadow map during
+  the main pass);
+- each `Vertex` carries 7 references to separate objects (unfriendly to the cache);
+- the same object represents both "the scene" and "the result of a pass", which is confusing when discovering the
+  code.
 
-**Proposition** : chaque passe possède ses **tampons de sortie des sommets** (des `float[]` par élément, par
-exemple `xs, ys, invW, …`). C'est l'analogue direct de la sortie du *vertex shader* sur GPU. `Vertex` redevient une
-simple description de la scène. **Effort** L · **Lisibilité** + (sépare modèle et pipeline). C'est la condition pour
-paralléliser la géométrie et les ombres.
+**Proposal**: each pass owns its **vertex output buffers** (`float[]`s per element, for example `xs, ys, invW, …`).
+This is the direct analogue of the output of the *vertex shader* on a GPU. `Vertex` becomes again a simple
+description of the scene. **Effort** L · **Readability** + (separates the model from the pipeline). It is the
+condition for parallelizing the geometry and the shadows.
 
-### D5. API mathématique à moitié immuable
+### D5. Half-immutable math API
 
-`plus()`, `minus()` et `times()` renvoient de nouveaux objets, mais **`Vector3.normalize()` modifie l'objet et se
-renvoie lui-même**. Conséquences actuelles : `Lighting` normalise en place la normale du `Fragment`, et
-`shadowFactorAt(worldPosition, normal)` normalise en place **la normale de l'appelant**. C'est à la fois un piège
-de lisibilité et un risque de course de données.
-**Proposition** : une convention explicite, `normalize()` qui renvoie un nouveau vecteur et `normalizeInPlace()`
-(ou `…Equals()` comme `timesEquals()`) pour les rares chemins critiques. **Effort** S à M · **Lisibilité** +.
+`plus()`, `minus()` and `times()` return new objects, but **`Vector3.normalize()` changes the object and returns
+itself**. Current consequences: `Lighting` normalizes the normal of the `Fragment` in place, and
+`shadowFactorAt(worldPosition, normal)` normalizes **the normal of the caller** in place. It is both a readability
+trap and a risk of data race.
+**Proposal**: an explicit convention, `normalize()` that returns a new vector and `normalizeInPlace()` (or
+`…Equals()` like `timesEquals()`) for the rare critical paths. **Effort** S to M · **Readability** +.
 
-### D6. Framebuffer : `setRGB()` et une nouvelle image par image
+### D6. Framebuffer: `setRGB()` and a new image per frame
 
 *`ImageView.drawPixel()` l. 200, `initBack()` l. 106*
 
-`BufferedImage.setRGB()` passe par le `ColorModel` et alloue un `int[]` à chaque appel (19 % des allocations).
-`initBack()` alloue en plus une nouvelle image de 3,7 Mo par image (BACKLOG §6).
-**Proposition** : récupérer une fois le `int[]` sous-jacent
-(`((DataBufferInt) img.getRaster().getDataBuffer()).getData()`), écrire directement dedans, effacer avec
-`Arrays.fill`, et garder un pool de 2 ou 3 images (triple buffering) comme prévu dans le backlog. Ajouter
-`GUIView.drawPixel(int x, int y, int rgb)` à côté de la version `Color`.
-**Gain** m : −11 ms · **Effort** S · **Lisibilité** =.
+`BufferedImage.setRGB()` goes through the `ColorModel` and allocates an `int[]` at each call (19% of the
+allocations). `initBack()` also allocates a new 3.7 MB image per frame (BACKLOG §6).
+**Proposal**: get the underlying `int[]` once (`((DataBufferInt) img.getRaster().getDataBuffer()).getData()`), write
+into it directly, clear it with `Arrays.fill`, and keep a pool of 2 or 3 images (triple buffering) as planned in the
+backlog. Add `GUIView.drawPixel(int x, int y, int rgb)` next to the `Color` version.
+**Gain** m: −11 ms · **Effort** S · **Readability** =.
 
-> **v2.** La nouvelle méthode `ImageView.addPixel()` (lumières visibles) évite bien l'allocation de `Color`, mais
-> elle fait un `getRGB()` puis un `setRGB()` par pixel. Dans une vue tournée vers le soleil avec les rayons de
-> lumière, ces deux appels représentent **41 % du temps de l'effet**, qui touche presque tout l'écran. Écrire dans le
-> `int[]` corrige les deux méthodes à la fois (voir N6 au §10).
+> **v2.** The new `ImageView.addPixel()` method (visible lights) does avoid the allocation of a `Color`, but it does
+> a `getRGB()` then a `setRGB()` per pixel. In a view turned towards the sun with the light shafts, these two calls
+> are **41% of the time of the effect**, which covers almost the whole screen. Writing into the `int[]` fixes both
+> methods at once (see N6 in §10).
 
-### D7. `MapView` en `float[][]` par colonnes → `FloatMap` en `float[]` 1D par lignes
+### D7. `MapView` as a `float[][]` by columns → `FloatMap` as a 1D `float[]` by rows
 
-*`MapView` l. 36, utilisé par `ZBuffer` et les shadow maps*
+*`MapView` l. 36, used by `ZBuffer` and the shadow maps*
 
-Le rasterizer parcourt les pixels ligne par ligne (x varie) alors que le stockage est `map[x][y]` : chaque pixel
-accède à un tableau Java différent. Le `clear()` du Z-buffer parcourt aussi 1 281 petits tableaux.
-**Proposition** : c'est l'occasion de réaliser **BACKLOG §2** (classe `FloatMap` hors du paquet `view`) avec un
-`float[width * height]` et un index `y * width + x`, un `clear` par `Arrays.fill`, et l'échantillonnage bilinéaire
-factorisé. `MapView` devient un adaptateur d'affichage.
-**Gain** m : −5 ms sans ombres, −28 ms avec · **Effort** S à M · **Lisibilité** +.
+The rasterizer walks the pixels row by row (x varies) whereas the storage is `map[x][y]`: each pixel accesses a
+different Java array. The `clear()` of the Z-buffer also walks 1,281 small arrays.
+**Proposal**: this is the opportunity to do **BACKLOG §2** (a `FloatMap` class outside of the `view` package) with a
+`float[width * height]` and an index `y * width + x`, a `clear` with `Arrays.fill`, and the bilinear sampling
+factored out. `MapView` becomes a display adapter.
+**Gain** m: −5 ms without shadows, −28 ms with · **Effort** S to M · **Readability** +.
 
-### D8. Tout est recalculé à chaque image
+### D8. Everything is computed again at each frame
 
-`world.worldProject()`, matrices normales, `initShadowing()` et `generateShadowMap()` (avec une nouvelle `ZBuffer`
-de 2001 × 2001 à chaque image), couleurs des lumières… sont recalculés même quand rien n'a bougé.
+`world.worldProject()`, normal matrices, `initShadowing()` and `generateShadowMap()` (with a new 2001 × 2001
+`ZBuffer` at each frame), light colors… are computed again even when nothing has moved.
 
-DESIGN §12 impose la règle « *Refresh, don't cache* », qui répond à de vrais bugs de cache périmé. **Ne pas la
-contourner avec des caches improvisés.** Proposition : des **compteurs de version** explicites (`Element`,
-`Light`, `World` incrémentent un numéro à chaque modification ; un résultat dérivé mémorise la version à partir de
-laquelle il a été calculé). La règle devient « rafraîchir si la version a changé ».
-**Gain** m : shadow map conservée, 214 → ≈ 137 ms · **Effort** M · **Lisibilité** = si c'est fait de façon uniforme.
+DESIGN §12 sets the rule "*Refresh, don't cache*", which answers real bugs of stale caches. **Do not work around it
+with improvised caches.** Proposal: explicit **version counters** (`Element`, `Light`, `World` increment a number at
+each change; a derived result remembers the version from which it was computed). The rule becomes "refresh if the
+version has changed".
+**Gain** m: shadow map kept, 214 → ≈ 137 ms · **Effort** M · **Readability** = if done uniformly.
 
-### D9. Géométrie et rasterisation entrelacées → deux étages
+### D9. Geometry and rasterization interleaved → two stages
 
-Aujourd'hui, `render(Element)` transforme un élément puis rasterise aussitôt ses triangles, de façon récursive.
-Plusieurs techniques des §4 et §6 (tri avant → arrière, Z-prepass, répartition par tuiles, multithreading) ont
-besoin d'un pipeline **en deux étages** :
+Today, `render(Element)` transforms an element and then rasterizes its triangles right away, recursively. Several
+techniques of §4 and §6 (front-to-back sorting, Z-prepass, distribution by tiles, multithreading) need a **two-stage**
+pipeline:
 
-1. **Étage géométrie** : transformation, élimination (frustum, back-face, petits triangles), clipping, puis
-   production d'une **liste de triangles prêts** (coordonnées écran, `1/w`, attributs, matériau) ;
-2. **Étage rasterisation** : parcours de cette liste (séquentiel, par bandes ou par tuiles).
+1. **Geometry stage**: transformation, culling (frustum, back-face, small triangles), clipping, then production of a
+   **list of ready triangles** (screen coordinates, `1/w`, attributes, material);
+2. **Rasterization stage**: walking this list (sequentially, by bands or by tiles).
 
-C'est le découpage « vertex processing → primitive assembly → rasterization » d'un GPU, ce qui en fait un
-**gain pédagogique** autant qu'un gain de performance. **Effort** M à L · **Lisibilité** +.
+This is the "vertex processing → primitive assembly → rasterization" split of a GPU, which makes it a **teaching
+gain** as much as a performance gain. **Effort** M to L · **Readability** +.
 
-### D10. Rendu sur l'EDT dans deux démos
+### D10. Rendering on the EDT in two demos
 
-`MovingCamera` et `FractalLandscape` appellent `renderer.render()` depuis des `Timer` Swing et des
-écouteurs souris, donc **sur le thread de l'interface**. Pendant un rendu de 100 à 300 ms, la fenêtre ne répond pas
-et les événements s'accumulent. `UrbanScape` fait déjà le rendu dans sa propre boucle.
-**Proposition** : une boucle de rendu dédiée (ou un `SwingWorker`) qui ne rend que le **dernier** état de caméra
-demandé. **Effort** S · **Lisibilité** +.
+`MovingCamera` and `FractalLandscape` call `renderer.render()` from Swing `Timer`s and mouse listeners, hence **on
+the thread of the user interface**. During a rendering of 100 to 300 ms, the window does not respond and the events
+pile up. `UrbanScape` already renders in its own loop.
+**Proposal**: a dedicated rendering loop (or a `SwingWorker`) that only renders the **last** camera state requested.
+**Effort** S · **Readability** +.
 
-> **v2.** `SceneViewer` (code de test) montre le bon modèle : un thread de rendu dédié qui lit le dernier état
-> demandé. `MovingCamera` et `FractalLandscape` rendent toujours sur l'EDT : il suffit de reprendre ce
-> modèle.
+> **v2.** `SceneViewer` (test code) shows the right model: a dedicated rendering thread that reads the last state
+> requested. `MovingCamera` and `FractalLandscape` still render on the EDT: following that model is enough.
 
 ---
 
-## 4. Techniques de rendu : éliminer le travail en amont
+## 4. Rendering techniques: removing work upstream
 
-L'idée est d'écarter le plus tôt possible ce qui ne sera pas visible. Du moins coûteux au plus coûteux :
-**élément → triangle → bloc de pixels → pixel**. Aventura ne fait aujourd'hui que le back-face culling (et
-seulement pour les éléments `isClosed`) et un test de frustum par triangle.
+The idea is to discard as early as possible what will not be visible. From the cheapest to the most costly:
+**element → triangle → block of pixels → pixel**. Today Aventura only does back-face culling (and only for the
+`isClosed` elements) and a frustum test per triangle.
 
-### R1. Frustum culling hiérarchique par `Element` (volumes englobants)
+### R1. Hierarchical frustum culling by `Element` (bounding volumes)
 
-Calculer au `build()` une **sphère englobante** (ou une AABB) par élément, qui couvre aussi ses sous-éléments. À
-chaque image, la tester contre les 6 plans du frustum. On peut extraire ces plans directement de la matrice
-`P · V` (méthode de Gribb et Hartmann, une dizaine de lignes).
+Compute at `build()` a **bounding sphere** (or an AABB) per element, which also covers its sub-elements. At each
+frame, test it against the 6 planes of the frustum. These planes can be extracted directly from the `P · V` matrix
+(the Gribb and Hartmann method, about ten lines).
 
-- **Entièrement dehors** : on saute la transformation des sommets, tous les triangles et tous les sous-éléments.
-- **Entièrement dedans** : on saute le test de frustum et le clipping de chacun de ses triangles.
+- **Entirely outside**: skip the transformation of the vertices, all the triangles and all the sub-elements.
+- **Entirely inside**: skip the frustum test and the clipping of each of its triangles.
 
-Dans UrbanScape (toute la ville est à l'écran), le gain est faible. Il est **important** dès que la caméra ne
-voit qu'une partie de la scène (zoom dans `FractalLandscape`, `MovingCamera`). La même méthode s'applique à la
-passe d'ombre, dans l'espace de la lumière. **Effort** M · **Lisibilité** +.
+In UrbanScape (the whole city is on screen), the gain is small. It is **large** as soon as the camera only sees part
+of the scene (zooming in `FractalLandscape`, `MovingCamera`). The same method applies to the shadow pass, in the space
+of the light. **Effort** M · **Readability** +.
 
-### R2. Test de frustum par outcodes, et clipping du plan proche (correction et performance)
+### R2. Frustum test by outcodes, and near-plane clipping (correctness and performance)
 
 *`Triangle.isInViewFrustum()` l. 344, `Vertex.isInViewFrustum()` l. 203*
 
-Le test actuel (« au moins un sommet dans le frustum ») est **faux dans les deux sens** :
+The current test ("at least one vertex in the frustum") is **wrong both ways**:
 
-- il **rejette** un grand triangle dont les 3 sommets sont hors de l'écran mais qui le traverse (un sol vu de près)
-  → trous ;
-- il **accepte** un triangle dont un sommet est derrière la caméra (`w < 0`). La division par `w` produit alors
-  des coordonnées écran absurdes (le commentaire de `ScreenLineRenderer` le reconnaît : « no clipping »).
+- it **rejects** a large triangle whose 3 vertices are off screen but which crosses it (a ground seen from close) →
+  holes;
+- it **accepts** a triangle with a vertex behind the camera (`w < 0`). The division by `w` then produces absurd
+  screen coordinates (the comment of `ScreenLineRenderer` admits it: "no clipping").
 
-De plus, il fait 3 divisions par sommet, **refaites pour chaque triangle** qui partage ce sommet (environ 6 fois).
+Moreover, it does 3 divisions per vertex, **redone for each triangle** that shares this vertex (about 6 times).
 
-**Proposition** : un **outcode** de 6 bits par sommet, calculé **une fois** en espace clip et sans division
-(`x < -w`, `x > w`, …) :
+**Proposal**: a 6-bit **outcode** per vertex, computed **once** in clip space and without division (`x < -w`,
+`x > w`, …):
 
-- `oc1 & oc2 & oc3 != 0` → entièrement d'un même côté d'un plan : **rejet** ;
-- `oc1 | oc2 | oc3 == 0` → entièrement dedans : **pas de clipping** ;
-- sinon, clipper **uniquement contre le plan proche** (Sutherland-Hodgman, 0 à 2 triangles en sortie). Les autres
-  bords sont déjà gérés par le rasterizer, qui limite lignes et colonnes à l'écran (principe de la « guard band »).
+- `oc1 & oc2 & oc3 != 0` → entirely on the same side of one plane: **reject**;
+- `oc1 | oc2 | oc3 == 0` → entirely inside: **no clipping**;
+- otherwise, clip **only against the near plane** (Sutherland-Hodgman, 0 to 2 triangles out). The other edges are
+  already handled by the rasterizer, which limits rows and columns to the screen (the "guard band" principle).
 
-**Effort** M · **Lisibilité** + (un algorithme classique, bien documenté).
+**Effort** M · **Readability** + (a classic, well-documented algorithm).
 
-> **v2 — partiellement fait.** `NearPlaneClipper` (octobre 2026) clippe désormais les triangles contre le plan proche
-> en perspective, dans la passe principale et dans les shadow maps des spots et des lumières ponctuelles : les
-> triangles derrière la caméra ne produisent plus de coordonnées absurdes. Restent à faire : le **test de frustum
-> par outcodes** (`Triangle.isInViewFrustum()` est inchangé, donc les grands triangles qui traversent l'écran avec
-> leurs 3 sommets dehors sont toujours rejetés), et un **chemin rapide** dans le clipper, qui alloue aujourd'hui
-> 5 à 7 objets pour chaque triangle, même entièrement devant le plan proche (voir N5 au §10).
+> **v2 — partly done.** `NearPlaneClipper` (October 2026) now clips the triangles against the near plane in
+> perspective, in the main pass and in the shadow maps of the spot and point lights: the triangles behind the camera
+> no longer produce absurd coordinates. Still to do: the **frustum test by outcodes** (`Triangle.isInViewFrustum()` is
+> unchanged, so the large triangles that cross the screen with their 3 vertices outside are still rejected), and a
+> **fast path** in the clipper, which today allocates 5 to 7 objects for each triangle, even one entirely in front of
+> the near plane (see N5 in §10).
 >
-> **Fait (octobre 2026) : le test de frustum par outcodes.** `Triangle.isInViewFrustum()` rejette un triangle
-> seulement si ses 3 sommets sont du même côté d'un même plan du frustum (`oc1 & oc2 & oc3 != 0`), en espace clip
-> et sans division. Les grands triangles qui traversent l'écran ne sont plus rejetés : la mer de `FractalLandscape`
-> (des triangles d'une unité) disparaissait entièrement quand la caméra de vol passait juste au-dessus. Les outcodes
-> sont encore recalculés pour chaque triangle (pas une fois par sommet), et le cas « entièrement dedans » ne sert
-> pas encore à éviter le clipper.
+> **Done (October 2026): the frustum test by outcodes.** `Triangle.isInViewFrustum()` rejects a triangle only if its
+> 3 vertices are on the same side of the same plane of the frustum (`oc1 & oc2 & oc3 != 0`), in clip space and
+> without division. The large triangles that cross the screen are no longer rejected: the sea of `FractalLandscape`
+> (triangles of one unit) disappeared entirely when the flying camera passed just above it. The outcodes are still
+> computed again for each triangle (not once per vertex), and the "entirely inside" case is not yet used to skip the
+> clipper.
 
-### R3. Back-face culling dans l'espace écran
+### R3. Back-face culling in screen space
 
 *`RenderEngine.isBackFace()` l. 606*
 
-Il suffit de calculer le **signe de l'aire du triangle projeté** (produit vectoriel 2D des arêtes en coordonnées
-écran). C'est le test des GPU :
+Computing the **sign of the area of the projected triangle** (2D cross product of the edges in screen coordinates)
+is enough. It is the test of GPUs:
 
-- exact, et **indépendant du type de projection** (plus de `switch FRUSTUM / ORTHOGRAPHIC`) ;
-- aucune normale à transformer (aujourd'hui, `transformNormal()` et `projectNormal()` ne sont faits que pour ce
-  test en mode `INTERPOLATE`) ;
-- une aire nulle élimine au passage les triangles **dégénérés**.
+- exact, and **independent of the kind of projection** (no more `switch FRUSTUM / ORTHOGRAPHIC`);
+- no normal to transform (today, `transformNormal()` and `projectNormal()` are done only for this test in
+  `INTERPOLATE` mode);
+- a null area removes the **degenerate** triangles along the way.
 
-Pour les éléments ouverts, le drapeau `Triangle.rectoVerso`, déjà présent mais inutilisé (BACKLOG §5), dirait
-« ne pas éliminer ».
-⚠ **Prérequis** : ce test repose sur **l'ordre des sommets (winding)**. Il faut d'abord corriger l'enroulement de
-`Sphere` (BACKLOG §5) et vérifier les autres formes avec `ElementContractChecker`. **Effort** S (plus la correction
-de `Sphere`) · **Lisibilité** +.
+For open elements, the `Triangle.rectoVerso` flag, already there but unused (BACKLOG §5), would say "do not cull".
+⚠ **Prerequisite**: this test relies on **the order of the vertices (winding)**. The winding of `Sphere` must be
+fixed first (BACKLOG §5) and the other shapes checked with `ElementContractChecker`. **Effort** S (plus the fix of
+`Sphere`) · **Readability** +.
 
-### R4. Petits triangles
+### R4. Small triangles
 
-46 % des triangles rasterisés ne couvrent aucun centre de pixel. Or chacun paie aujourd'hui le tri, 3
-`RasterVertex`, un `Material`, un consumer et la préparation des lignes.
-**Proposition** : dès que les coordonnées écran sont connues, tester si la boîte englobante contient au moins un
-centre de pixel (`ceil(minX) < ceil(maxX)` et de même en y). Si ce n'est pas le cas, on rejette le triangle avant
-toute préparation. Plus tard, en option : un **niveau de détail (LOD)** qui réduit le nombre de segments des
-sphères et cylindres lointains. **Effort** S · **Lisibilité** =.
+46% of the rasterized triangles cover no pixel center. Yet each one pays today for the sort, 3 `RasterVertex`, a
+`Material`, a consumer and the preparation of the rows.
+**Proposal**: as soon as the screen coordinates are known, test whether the bounding box contains at least one pixel
+center (`ceil(minX) < ceil(maxX)` and likewise in y). If not, the triangle is rejected before any preparation. Later,
+as an option: a **level of detail (LOD)** that reduces the number of segments of far spheres and cylinders.
+**Effort** S · **Readability** =.
 
-### R5. Ordre avant → arrière
+### R5. Front-to-back order
 
-Le Z-test a lieu **avant** l'ombrage (bon point de conception). Si les éléments proches sont dessinés en premier,
-les pixels cachés derrière eux sont rejetés **avant** d'être ombrés. Il suffit de trier les ~900 éléments par
-distance de leur sphère englobante à la caméra (coût négligeable). Avec 1,18 million de pixels ombrés pour au
-plus 0,92 million visibles, on peut gagner **jusqu'à 20 à 30 % de l'ombrage**. **Effort** S (après R1) ·
-**Lisibilité** =.
+The Z-test happens **before** shading (a good design point). If the near elements are drawn first, the pixels hidden
+behind them are rejected **before** being shaded. Sorting the ~900 elements by the distance of their bounding sphere
+to the camera is enough (negligible cost). With 1.18 million pixels shaded for at most 0.92 million visible, **up to
+20 to 30% of the shading** can be saved. **Effort** S (after R1) · **Readability** =.
 
-### R6. Z-prepass ou « visibility buffer »
+### R6. Z-prepass or "visibility buffer"
 
-C'est la version radicale de R5 : **chaque pixel visible n'est ombré qu'une seule fois**.
+This is the radical version of R5: **each visible pixel is shaded only once**.
 
-1. Passe 1 : rasterisation **profondeur seule** (le `DepthOnlyConsumer` existe déjà) de toute la scène.
-   Variante : écrire aussi l'**identifiant du triangle** dans un tampon `int[]`.
-2. Passe 2 : ombrer uniquement les pixels dont la profondeur est égale à celle du Z-buffer. Avec la variante,
-   on parcourt simplement l'écran et on ombre chaque pixel à partir de son triangle.
+1. Pass 1: **depth-only** rasterization (the `DepthOnlyConsumer` already exists) of the whole scene. Variant: also
+   write the **identifier of the triangle** into an `int[]` buffer.
+2. Pass 2: shade only the pixels whose depth equals that of the Z-buffer. With the variant, simply walk the screen
+   and shade each pixel from its triangle.
 
-C'est rentable quand l'ombrage coûte cher (ombres, plusieurs lumières, textures), ce qui est le cas ici. La
-variante « visibility buffer » est en plus **parfaitement parallélisable** (chaque pixel est indépendant). Analogue
-GPU : deferred shading. **Effort** M à L · **Lisibilité** = à + (deux passes clairement nommées).
+It pays off when shading is expensive (shadows, several lights, textures), which is the case here. The "visibility
+buffer" variant is moreover **perfectly parallelizable** (each pixel is independent). GPU analogue: deferred shading.
+**Effort** M to L · **Readability** = to + (two clearly named passes).
 
 ### R7. Occlusion culling (Hi-Z)
 
-On tient un **Z-buffer grossier** (profondeur maximale par tuile de 8 × 8 pixels). Avant de traiter un élément, on
-compare sa boîte à l'écran et sa profondeur minimale au Hi-Z : si tout ce qu'il couvre est déjà plus proche, on
-saute l'élément entier. UrbanScape s'y prête parfaitement (immeubles cachés derrière d'autres immeubles). Avancé,
-à faire après R1 et R5. **Effort** L.
+Keep a **coarse Z-buffer** (maximum depth per tile of 8 × 8 pixels). Before processing an element, compare its box on
+screen and its minimum depth with the Hi-Z: if everything it covers is already nearer, skip the whole element.
+UrbanScape suits it perfectly (buildings hidden behind other buildings). Advanced, to be done after R1 and R5.
+**Effort** L.
 
-### R8. Et le stencil ?
+### R8. What about the stencil?
 
-Le **stencil buffer** est un masque entier par pixel qui **limite l'endroit où l'on dessine** : miroirs, portails,
-ombres par volumes (shadow volumes), contours, décalques. Il **ne détermine pas la visibilité** à lui seul. Pour
-de la géométrie opaque, les outils d'élimination précoce sont ceux de R1 à R7. Dans Aventura, le stencil n'est
-donc pas un levier de performance. Il deviendrait utile pour une fonctionnalité comme les shadow volumes ou le
-dessin de contours en `MONOCHROME`.
-Son cousin, le **scissor test** (restreindre le dessin à un rectangle), est en revanche exactement ce dont le
-multithreading par tuiles a besoin (§6).
+The **stencil buffer** is an integer mask per pixel that **limits where one draws**: mirrors, portals, shadow volumes,
+outlines, decals. It **does not determine visibility** by itself. For opaque geometry, the tools for early removal are
+those of R1 to R7. In Aventura, the stencil is therefore not a performance lever. It would become useful for a feature
+like shadow volumes or drawing outlines in `MONOCHROME`.
+Its cousin, the **scissor test** (restricting drawing to a rectangle), is on the other hand exactly what
+multithreading by tiles needs (§6).
 
-### R9. Passe d'ombre
+### R9. Shadow pass
 
-- **Conserver la shadow map** tant que la lumière et la scène ne changent pas (D8). Avec `SHADOWING_BOX_WORLD`,
-  elle ne dépend pas de la caméra. Mesuré : **214 → ≈ 137 ms**.
-- **Réutiliser le `ZBuffer`** au lieu d'en allouer un par image (16 Mo pour 2000 × 2000).
-- Éliminer par élément dans l'espace de la lumière (R1), et **éliminer les faces avant** (ne dessiner que les faces
-  arrière). C'est une technique connue qui divise le nombre de triangles et réduit l'acné d'ombre.
-- **Résolution** : 2000² = 4 millions de texels rasterisés par image. `SHADOWING_BOX_VIEWFRUSTUM`, une boîte plus
-  serrée, donne la même netteté avec moins de texels.
-- Note de qualité : `shadowFactorAt()` interpole bilinéairement les **profondeurs**, ce qui n'est pas du PCF (qui
-  interpole les **résultats des comparaisons**, BACKLOG §3).
+- **Keep the shadow map** as long as the light and the scene do not change (D8). With `SHADOWING_BOX_WORLD`, it does
+  not depend on the camera. Measured: **214 → ≈ 137 ms**.
+- **Reuse the `ZBuffer`** instead of allocating one per frame (16 MB for 2000 × 2000).
+- Cull by element in the space of the light (R1), and **cull the front faces** (draw only the back faces). It is a
+  known technique that divides the number of triangles and reduces shadow acne.
+- **Resolution**: 2000² = 4 million texels rasterized per frame. `SHADOWING_BOX_VIEWFRUSTUM`, a tighter box, gives
+  the same sharpness with fewer texels.
+- Quality note: `shadowFactorAt()` interpolates the **depths** bilinearly, which is not PCF (which interpolates the
+  **results of the comparisons**, BACKLOG §3).
 
-> **v2.** Le PCF est maintenant implémenté correctement (pondération des comparaisons, `ShadowFilter.PCF_3X3`).
-> L'enjeu de cette section est **multiplié** : il y a maintenant jusqu'à trois types de shadow maps (orthographique,
-> perspective, cube map à 6 faces), et chaque `PointLight` peut coûter 6 passes d'ombre par image. Aucune des
-> propositions ci-dessus n'est encore faite. Voir N4 au §10.
+> **v2.** PCF is now implemented correctly (weighting of the comparisons, `ShadowFilter.PCF_3X3`). What is at stake
+> in this section is **multiplied**: there are now up to three kinds of shadow maps (orthographic, perspective, cube
+> map with 6 faces), and each `PointLight` can cost 6 shadow passes per frame. None of the proposals above is done
+> yet. See N4 in §10.
 
-### R10. Sortir tôt de l'éclairage
+### R10. Leave the lighting early
 
-Tester `dotNL <= 0` **avant** `shadowFactorAt()` : un pixel qui tourne le dos à la lumière n'est pas éclairé par
-elle, qu'il soit dans l'ombre ou non. On économise une projection et une lecture bilinéaire de la shadow map pour
-environ la moitié des pixels. **Effort** S · **Lisibilité** +.
+Test `dotNL <= 0` **before** `shadowFactorAt()`: a pixel that faces away from the light is not lit by it, whether it
+is in the shadow or not. This saves a projection and a bilinear read of the shadow map for about half of the pixels.
+**Effort** S · **Readability** +.
 
-> **v2 — mesuré, et estimation corrigée.** Le prototype (test de `dotNL` puis de l'intensité de la lumière avant
-> `shadowFactorAt()`, image identique au bit près) ne donne **pas de gain mesurable sur UrbanScape** : le back-face
-> culling a déjà retiré les faces tournées vers l'arrière, et le soleil éclaire la plupart des faces visibles.
-> « La moitié des pixels » était trop optimiste pour cette scène. R10 reste juste et peu coûteux à écrire, mais son
-> gain dépend de la scène : il devient important pour un **spot étroit** ou une **lumière ponctuelle de faible
-> portée**, dont la plupart des pixels sont hors du cône ou hors de portée (voir N2 au §10).
+> **v2 — measured, and estimate corrected.** The prototype (test of `dotNL`, then of the intensity of the light,
+> before `shadowFactorAt()`, image identical to the bit) gives **no measurable gain on UrbanScape**: back-face culling
+> has already removed the faces turned away, and the sun lights most of the visible faces. "Half of the pixels" was
+> too optimistic for this scene. R10 remains right and cheap to write, but its gain depends on the scene: it becomes
+> large for a **narrow spot light** or a **point light of short range**, most of whose pixels are outside the cone or
+> out of range (see N2 in §10).
 
 ---
 
-## 5. Les trois dimensions : mémoire, CPU, E/S
+## 5. The three dimensions: memory, CPU, I/O
 
-### Mémoire
+### Memory
 
-| Sujet | Constat | Action |
+| Topic | Finding | Action |
 |---|---|---|
-| Taux d'allocation | ≈ 145 Mo par image, 1,5 GC par image | A1, A2, D2, D6 |
-| Disposition des données | `float[][]` et `int[][]` en colonnes, parcourus en lignes | D7, A6 |
-| Grosses allocations par image | shadow map 16 Mo, image 3,7 Mo | R9, D6 |
-| Enchaînement de pointeurs | `Vertex` → 7 objets `Vector` ; `Matrix4` → 5 objets | D4, A4 |
-| En-têtes d'objets | un `Vector4` pèse 32 octets pour 16 octets de données | à accepter dans le modèle ; éviter dans les boucles critiques |
+| Allocation rate | ≈ 145 MB per frame, 1.5 GC per frame | A1, A2, D2, D6 |
+| Data layout | `float[][]` and `int[][]` by columns, traversed by rows | D7, A6 |
+| Large allocations per frame | shadow map 16 MB, image 3.7 MB | R9, D6 |
+| Pointer chasing | `Vertex` → 7 `Vector` objects; `Matrix4` → 5 objects | D4, A4 |
+| Object headers | a `Vector4` weighs 32 bytes for 16 bytes of data | acceptable in the model; to be avoided in the critical loops |
 
-Options JVM : fixer `-Xms` = `-Xmx` évite l'agrandissement du tas au démarrage, et `-XX:+UseParallelGC` favorise
-le débit. C'est du réglage d'appoint : **la vraie solution est d'allouer moins**. L'escape analysis du JIT aide,
-mais ne suffit pas à rendre ces allocations gratuites (JFR l'a montré).
+JVM options: setting `-Xms` = `-Xmx` avoids growing the heap at start-up, and `-XX:+UseParallelGC` favors throughput.
+This is secondary tuning: **the real solution is to allocate less**. The escape analysis of the JIT helps, but is not
+enough to make these allocations free (JFR showed it).
 
 ### CPU
 
-- **Un seul cœur utilisé** (§1). Le levier principal est le §6.
-- Points chauds : ombrage (A2, R10), Z-test (D7), écriture des pixels (D6), mathématiques des ombres (A4),
-  génération de la shadow map (R9).
-- **Préchauffage du JIT** : les 2 ou 3 premières images sont 3 à 7 fois plus lentes. C'est normal, mais il faut en
-  tenir compte dans toute mesure.
-- Le calcul du FPS dans `RenderEngine.render()` utilise `currentTimeMillis()`. `System.nanoTime()` est plus
-  précis, et un **découpage par phase** serait plus utile (§7).
+- **A single core used** (§1). The main lever is §6.
+- Hot spots: shading (A2, R10), Z-test (D7), writing the pixels (D6), shadow math (A4), generation of the shadow map
+  (R9).
+- **JIT warm-up**: the first 2 or 3 frames are 3 to 7 times slower. It is normal, but must be taken into account in
+  any measurement.
+- The FPS computation in `RenderEngine.render()` uses `currentTimeMillis()`. `System.nanoTime()` is more precise, and
+  a **breakdown by phase** would be more useful (§7).
 
-### E/S
+### I/O
 
-**Il n'y a pas d'entrée/sortie dans la boucle de rendu**, ce n'est donc pas un goulot d'étranglement. Quelques
-points secondaires :
+**There is no input/output in the rendering loop**, so it is not a bottleneck. A few secondary points:
 
-- `Tracer.stats` affiche une ligne à chaque image (`System.out` est synchronisé, et la console Windows est lente).
-  C'est négligeable, mais ce serait mieux sous forme de moyenne affichée toutes les N images. **Depuis : désactivé
-  par défaut** (`Tracer.stats = false`) ; les démos affichent leurs propres statistiques (`FrameTimeStatistics`).
-- Chargement des textures : lecture pixel par pixel (A6) et chemins relatifs au répertoire courant (roadmap :
-  chargement depuis le classpath). Cela ralentit le démarrage, pas le rendu.
-- Trace vers un fichier : `Tracer.output()` écrit ligne par ligne dans un `FileOutputStream` sans tampon. Un
-  `BufferedWriter` suffit.
-- Enregistrement d'images (`ImageView.saveImage()`) : correct. Pour une future séquence d'images (BACKLOG §6),
-  écrire les fichiers **dans un thread séparé** pour ne pas bloquer le rendu.
+- `Tracer.stats` prints a line at each frame (`System.out` is synchronized, and the Windows console is slow). It is
+  negligible, but an average printed every N frames would be better. **Since then: off by default**
+  (`Tracer.stats = false`); the demos print their own statistics (`FrameTimeStatistics`).
+- Loading the textures: pixel by pixel reads (A6) and paths relative to the current directory (roadmap: loading from
+  the classpath). This slows down the start-up, not the rendering.
+- Tracing to a file: `Tracer.output()` writes line by line into an unbuffered `FileOutputStream`. A `BufferedWriter`
+  is enough.
+- Saving images (`ImageView.saveImage()`): fine. For a future image sequence (BACKLOG §6), write the files **in a
+  separate thread** so as not to block the rendering.
 
 ---
 
 ## 6. Multithreading
 
-### Pourquoi ne pas rasteriser « un triangle par thread »
+### Why not rasterize "one triangle per thread"
 
-Sur un GPU, des milliers de triangles sont rasterisés en parallèle, mais **l'écriture dans le Z-buffer et le
-framebuffer passe par des unités matérielles (ROP) qui garantissent l'ordre et l'atomicité**. Sur CPU, deux
-threads qui rasterisent deux triangles qui se chevauchent se disputent les mêmes pixels. Il faudrait alors :
+On a GPU, thousands of triangles are rasterized in parallel, but **the writes into the Z-buffer and the framebuffer go
+through hardware units (ROPs) that guarantee order and atomicity**. On a CPU, two threads that rasterize two
+overlapping triangles fight over the same pixels. One would then need:
 
-- un verrou ou une opération atomique **par pixel** (bien trop cher) ;
-- et accepter une image **non déterministe** (à profondeur égale, le gagnant dépend du hasard), ce qui casserait
-  les tests.
+- a lock or an atomic operation **per pixel** (far too expensive);
+- and to accept a **non-deterministic** image (at equal depth, the winner depends on chance), which would break the
+  tests.
 
-### La solution classique : découper l'écran
+### The classic solution: split the screen
 
-Chaque thread **possède une zone de l'écran** (sa part du Z-buffer et du framebuffer) et y traite **tous les
-triangles qui la touchent, dans l'ordre d'origine**. Cette organisation s'appelle *sort-middle*. Elle apporte :
+Each thread **owns an area of the screen** (its share of the Z-buffer and of the framebuffer) and processes there
+**all the triangles that touch it, in the original order**. This organization is called *sort-middle*. It brings:
 
-- **aucune synchronisation par pixel** ;
-- une image **identique au bit près** à la version mono-thread (vérifié par somme de contrôle dans le
-  prototype), donc les tests existants restent valables.
+- **no synchronization per pixel**;
+- an image **identical to the bit** to the single-threaded version (checked by checksum in the prototype), so the
+  existing tests remain valid.
 
-Deux niveaux :
+Two levels:
 
-1. **Bandes de lignes** (le plus simple avec un rasterizer par lignes). Il suffit de passer un intervalle
-   `[rowMin, rowMax)` à `TriangleRasterizer`, qui limite déjà les lignes à l'écran. C'est ce qu'a fait le
-   prototype : **environ 40 lignes de code**.
-2. **Tuiles** (par exemple 64 × 64) avec une étape de **répartition (binning)** : la boîte englobante de chaque
-   triangle détermine la liste des tuiles concernées. Les données d'une tuile tiennent dans le cache L2, la
-   répartition de la charge est meilleure, et c'est le modèle des GPU mobiles. À faire après D9.
+1. **Bands of rows** (the simplest with a scanline rasterizer). Passing a range `[rowMin, rowMax)` to
+   `TriangleRasterizer`, which already limits the rows to the screen, is enough. This is what the prototype did:
+   **about 40 lines of code**.
+2. **Tiles** (for example 64 × 64) with a **binning** step: the bounding box of each triangle determines the list of
+   tiles concerned. The data of a tile fit in the L2 cache, the load is better balanced, and it is the model of mobile
+   GPUs. To be done after D9.
 
-### Répartir la charge
+### Balancing the load
 
-Le prototype le montre clairement :
+The prototype shows it clearly:
 
-| Configuration (même code, 2 cœurs) | Temps par image |
+| Configuration (same code, 2 cores) | Time per frame |
 |---|---:|
 | 1 thread | ≈ 95 ms |
-| 2 threads, **2 bandes** | ≈ 100 ms (aucun gain : la bande du haut, c'est surtout du ciel) |
-| 2 threads, **8 bandes** | **≈ 53 ms** (×1,8) |
-| 2 threads, 8 bandes, **avec les compteurs statiques de D1** | 118 à 150 ms (plus lent qu'un seul thread) |
+| 2 threads, **2 bands** | ≈ 100 ms (no gain: the top band is mostly sky) |
+| 2 threads, **8 bands** | **≈ 53 ms** (×1.8) |
+| 2 threads, 8 bands, **with the static counters of D1** | 118 to 150 ms (slower than a single thread) |
 
-Règle : **plus de bandes ou de tuiles que de threads** (4 à 8 fois plus), distribuées **dynamiquement** par la
-file du pool, de sorte qu'un thread qui a fini prend la zone suivante.
+Rule: **more bands or tiles than threads** (4 to 8 times more), distributed **dynamically** by the queue of the pool,
+so that a thread that has finished takes the next area.
 
-### Contrôler le nombre de threads (ton idée de Factory)
+### Controlling the number of threads (the Factory idea)
 
-- **Un pool de taille fixe, créé une seule fois** (pas à chaque image), qui appartient au `RenderEngine` et dont
-  la taille se configure dans `RenderContext` (`setRenderThreads(n)`). Valeur par défaut raisonnable :
-  `Runtime.getRuntime().availableProcessors() - 1`, pour laisser un cœur à l'interface. Ajouter une méthode
-  `close()` ou `shutdown()`.
-  *Réalisé (MT1)* : `RENDER_THREADS_AUTO` (défaut) = **un thread par processeur**, car le thread de rendu ne
-  calcule pas pendant la rasterisation (il attend la fin de `invokeAll`) ; `setRenderThreads(1)` redonne le
-  fonctionnement mono-thread. `RenderEngine.close()` arrête les threads (facultatif : ce sont des démons). Les
-  workers sont des objets créés une fois (`BandRasterizer.Worker`), qui prennent les bandes libres une à une ;
-  leur `TriangleRasterizer` est créé dans leur propre thread. Les consumers restent créés par triangle (D3), mais
-  seulement pour les triangles qui touchent la bande (`TriangleRasterizer.coversNoRow()`).
-- Une **`ThreadFactory`** pour nommer les threads (`aventura-raster-3`, lisible dans un profileur) et en faire des
-  démons.
-- Une **factory de workers** (`RasterWorker`) : chaque worker possède **son** `TriangleRasterizer`, **son**
-  `Fragment`, **ses** consumers et **ses** statistiques, fusionnées à la fin de l'image. C'est là que le pattern
-  Factory prend tout son sens : on fabrique un contexte d'exécution par thread, pas les threads eux-mêmes.
-- `ExecutorService.invokeAll(tâches)` sert de **barrière** en fin d'image : simple et lisible. `ForkJoinPool`
-  n'apporte rien de plus ici.
-- À éviter : les **threads virtuels** (ils sont faits pour les E/S bloquantes, pas pour le calcul) et les
-  `parallelStream()` dans le moteur (moins de contrôle et moins pédagogique).
+- **A fixed-size pool, created only once** (not at each frame), owned by the `RenderEngine` and whose size is set in
+  `RenderContext` (`setRenderThreads(n)`). Reasonable default: `Runtime.getRuntime().availableProcessors() - 1`, to
+  leave one core to the user interface. Add a `close()` or `shutdown()` method.
+  *Done (MT1)*: `RENDER_THREADS_AUTO` (default) = **one thread per processor**, since the rendering thread does not
+  compute during the rasterization (it waits for the end of `invokeAll`); `setRenderThreads(1)` gives back the
+  single-threaded behavior. `RenderEngine.close()` stops the threads (optional: they are daemons). The workers are
+  objects created once (`BandRasterizer.Worker`), which take the free bands one by one; their `TriangleRasterizer` is
+  created in their own thread. The consumers are still created per triangle (D3), but only for the triangles that
+  touch the band (`TriangleRasterizer.coversNoRow()`).
+- A **`ThreadFactory`** to name the threads (`aventura-raster-3`, readable in a profiler) and make them daemons.
+- A **factory of workers** (`RasterWorker`): each worker owns **its** `TriangleRasterizer`, **its** `Fragment`,
+  **its** consumers and **its** statistics, merged at the end of the frame. This is where the Factory pattern makes
+  full sense: it builds an execution context per thread, not the threads themselves.
+- `ExecutorService.invokeAll(tasks)` serves as a **barrier** at the end of the frame: simple and readable.
+  `ForkJoinPool` brings nothing more here.
+- To be avoided: **virtual threads** (they are made for blocking I/O, not for computation) and `parallelStream()` in
+  the engine (less control and less didactic).
 
-### Prérequis : l'état partagé repéré dans le code
+### Prerequisites: the shared state found in the code
 
-| État partagé et modifiable | Où | Correction |
+| Shared mutable state | Where | Fix |
 |---|---|---|
-| Compteurs statiques des vecteurs | `Vector3`, `Vector4` | D1 |
+| Static counters of the vectors | `Vector3`, `Vector4` | D1 |
 | `lastX/lastY/lastBx/lastBy` | `ZBuffer` | A3 |
-| `RGBAccumulator` interne | `Texture` | A6 : accumulateur fourni par l'appelant |
-| Compteurs et `Fragment` | `TriangleRasterizer` | une instance par worker |
-| `RGBAccumulator` | `ShadingConsumer` | un consumer par worker (D3) |
-| `RasterizerStats` | `RenderEngine` | statistiques par worker, fusionnées |
-| `normalize()` en place sur des vecteurs partagés | `Lighting`, `ShadowingLight` | D5 |
-| `prj_position` et autres dans `Vertex` | passes géométrie et ombre | barrière entre les étages (D9), puis D4 |
+| Internal `RGBAccumulator` | `Texture` | A6: accumulator provided by the caller |
+| Counters and `Fragment` | `TriangleRasterizer` | one instance per worker |
+| `RGBAccumulator` | `ShadingConsumer` | one consumer per worker (D3) |
+| `RasterizerStats` | `RenderEngine` | statistics per worker, merged |
+| In-place `normalize()` on shared vectors | `Lighting`, `ShadowingLight` | D5 |
+| `prj_position` and others in `Vertex` | geometry and shadow passes | barrier between the stages (D9), then D4 |
 
-⚠ **Faux partage (false sharing)** : les objets d'un worker doivent être **créés dans le thread du worker** (pour
-qu'ils ne soient pas côte à côte en mémoire avec ceux des autres workers), et les compteurs doivent être des
-variables locales ajoutées au total en fin de tâche.
+⚠ **False sharing**: the objects of a worker must be **created in the thread of the worker** (so that they do not
+sit next to those of other workers in memory), and the counters must be local variables added to the total at the
+end of the task.
 
-### Autres parallélisations possibles, par ordre de rentabilité
+### Other possible parallelizations, by order of profitability
 
-1. **Étape pixels par bandes ou tuiles**, décrite plus haut : environ 95 % du temps.
-2. **Ombrage d'un visibility buffer** (R6) : chaque pixel est indépendant.
-3. **Shadow maps** : une tâche par lumière (après D4), et chaque shadow map elle-même par bandes dans l'espace
-   de la lumière.
-4. **Étage géométrie** : un élément par tâche. Gain faible ici (≈ 1 % du temps), mais utile pour les scènes très
-   détaillées.
-5. **Recouvrement entre images** : rendre l'image N+1 pendant que l'interface affiche l'image N (avec le pool
-   d'images de D6).
+1. **Pixel stage by bands or tiles**, described above: about 95% of the time.
+2. **Shading of a visibility buffer** (R6): each pixel is independent.
+3. **Shadow maps**: one task per light (after D4), and each shadow map itself by bands in the space of the light.
+4. **Geometry stage**: one element per task. Small gain here (≈ 1% of the time), but useful for very detailed scenes.
+5. **Overlap between frames**: render frame N+1 while the user interface displays frame N (with the image pool of
+   D6).
 
-> **v2.** Deux nouvelles sources de parallélisme faciles :
-> - les **6 faces de la cube map** d'une `PointLight` sont 6 rendus indépendants, de même que les shadow maps de
->   plusieurs lumières. Il faut d'abord que chaque passe ait ses propres sorties de sommets (D4), car toutes
->   écrivent aujourd'hui dans `Vertex.prj_position` ;
-> - le **post-traitement des lumières visibles** (`LightGlowRenderer` : halo, rayons de lumière) travaille pixel
->   par pixel sur l'image terminée, et se découpe donc en bandes sans aucune difficulté.
+> **v2.** Two new easy sources of parallelism:
+> - the **6 faces of the cube map** of a `PointLight` are 6 independent renderings, as are the shadow maps of several
+>   lights. Each pass must first have its own vertex outputs (D4), since they all write into `Vertex.prj_position`
+>   today;
+> - the **post-processing of the visible lights** (`LightGlowRenderer`: halo, light shafts) works pixel by pixel on
+>   the finished image, and can therefore be split into bands without any difficulty.
 
-Sur une machine à 8 à 12 threads logiques, la loi d'Amdahl donne un maximum d'environ ×6 à ×8 pour 95 % de code
-parallèle. En pratique, la bande passante mémoire, l'hyperthreading et le déséquilibre de charge ramènent cela à
-**×3 à ×5**. Tu verras alors le moteur utiliser 60 à 90 % du CPU au lieu de 8 %.
+On a machine with 8 to 12 logical threads, Amdahl's law gives a maximum of about ×6 to ×8 for 95% of parallel code.
+In practice, memory bandwidth, hyperthreading and load imbalance bring this down to **×3 to ×5**. The engine would
+then use 60 to 90% of the CPU instead of 8%.
 
 ---
 
-## 7. Tracer et instrumentation
+## 7. Tracer and instrumentation
 
-- **`Tracer` lui-même ne coûte rien de mesurable** : les tests `if (Tracer.info)` sont des lectures de champs
-  statiques bien prédites, et aucune fonction de `Tracer` n'apparaît dans les profils. Les rendre `static final`
-  permettrait au compilateur de les supprimer, mais on perdrait la configuration à l'exécution. **Ce n'est pas
-  nécessaire.**
-- **Le vrai coût lié à la trace est D1** (les compteurs de `Vector3` et `Vector4`, qui s'exécutent même quand
-  `Tracer.object` est désactivé).
-- À ajouter plutôt : un **chronométrage par phase** dans `RenderEngine` (effacement, ombres, géométrie,
-  rasterisation, présentation) avec `System.nanoTime()`, exposé dans `renderStats()` avec une moyenne glissante.
-  Tu auras ainsi en permanence, sans profileur, la réponse à la question « où part le temps ? ».
-- Faire du **benchmark** un outil du projet : `PerfBench` (dans `src/test/java/…/demo`, en tant que programme et
-  non test unitaire), avec la somme de contrôle de l'image comme test de non-régression visuelle pour chaque
-  optimisation.
+- **`Tracer` itself costs nothing measurable**: the `if (Tracer.info)` tests are well-predicted reads of static
+  fields, and no function of `Tracer` appears in the profiles. Making them `static final` would let the compiler
+  remove them, but the configuration at run time would be lost. **It is not necessary.**
+- **The real cost tied to tracing is D1** (the counters of `Vector3` and `Vector4`, which run even when
+  `Tracer.object` is off).
+- Rather to be added: a **timing per phase** in `RenderEngine` (clearing, shadows, geometry, rasterization,
+  presentation) with `System.nanoTime()`, exposed in `renderStats()` with a moving average. This permanently answers,
+  without a profiler, the question "where does the time go?".
+- Make the **benchmark** a tool of the project: `PerfBench` (in `src/test/java/…/demo`, as a program and not a unit
+  test), with the checksum of the image as a visual non-regression test for each optimization.
 
 ---
 
-## 8. Feuille de route proposée
+## 8. Proposed roadmap
 
-### Phase 0 — Mesurer (½ journée)
+### Phase 0 — Measure (½ day)
 
-- `PerfBench` et somme de contrôle de l'image dans le dépôt ; chronométrage par phase (§7).
-- Mesurer la référence sur **ton** portable (sans ombres et avec ombres, 1 thread).
+- `PerfBench` and the checksum of the image in the repository; timing by phase (§7).
+- Measure the reference on **the author's** laptop (without and with shadows, 1 thread).
 
-### Phase 1 — Gains rapides, risque faible, lisibilité égale ou meilleure
+### Phase 1 — Quick wins, low risk, equal or better readability
 
-| # | Action | Gain attendu |
+| # | Action | Expected gain |
 |---|---|---|
-| D1 | Supprimer les compteurs statiques de `Vector3` et `Vector4` | prérequis du multithreading |
-| D7 | `FloatMap` en `float[]` 1D ligne par ligne (réalise BACKLOG §2) | −5 à −28 ms (m) |
-| D6 | Écriture directe dans le `int[]` de l'image, pool d'images (BACKLOG §6) | −11 ms (m) |
-| D2a | **v2** : couleurs des lumières constantes préparées une fois, `RGBAccumulator` → `int` écrit directement | −30 % sans ombres, allocations ÷6 (m, §10.3) |
-| A4 | `Matrix4` déroulée, `float[16]` | inclus dans −14 ms (m) |
-| A2, R10 | Éclairage : valeurs communes calculées une fois, `dotNL` avant l'ombre | fort avec ombres ou textures (e) |
-| R9 | Réutiliser le Z-buffer des ombres | faible à moyen |
-| R4 | Rejeter tôt les petits triangles | moyen (e) |
-| A6 | Textures : `int[]` par lignes, chargement en masse, sans état partagé | moyen avec textures (e) |
-| A3, A5 | `ZBuffer` sans état, tri de 3 sommets | faible |
-| D10 | Plus de rendu sur l'EDT dans les démos | réactivité |
+| D1 | Remove the static counters of `Vector3` and `Vector4` | prerequisite of multithreading |
+| D7 | `FloatMap` as a 1D `float[]` row by row (does BACKLOG §2) | −5 to −28 ms (m) |
+| D6 | Direct writes into the `int[]` of the image, image pool (BACKLOG §6) | −11 ms (m) |
+| D2a | **v2**: constant light colors prepared once, `RGBAccumulator` → `int` written directly | −30% without shadows, allocations ÷6 (m, §10.3) |
+| A4 | Unrolled `Matrix4`, `float[16]` | included in −14 ms (m) |
+| A2, R10 | Lighting: common values computed once, `dotNL` before the shadow | large with shadows or textures (e) |
+| R9 | Reuse the Z-buffer of the shadows | small to medium |
+| R4 | Reject small triangles early | medium (e) |
+| A6 | Textures: `int[]` by rows, bulk loading, no shared state | medium with textures (e) |
+| A3, A5 | Stateless `ZBuffer`, sort of 3 vertices | small |
+| D10 | No more rendering on the EDT in the demos | responsiveness |
 
-### Phase 2 — Restructurer le pipeline (conditions pour la suite)
+### Phase 2 — Restructure the pipeline (conditions for what follows)
 
-- **D9** : étage géométrie → liste de triangles prêts → étage rasterisation.
-- **R2** : outcodes et clipping du plan proche (corrige aussi les triangles derrière la caméra).
-- **R3** : back-face culling dans l'espace écran (après la correction de l'enroulement de `Sphere`).
-- **R1**, **R5** : volumes englobants, élimination par élément, tri avant → arrière.
-- **A1** : interpolation incrémentale sur des `float`.
-- **D2b** : matériaux, textures et lumières en `float` (D2a est en phase 1). **D8** : compteurs de version (conservation de la shadow map).
+- **D9**: geometry stage → list of ready triangles → rasterization stage.
+- **R2**: outcodes and near-plane clipping (also fixes the triangles behind the camera).
+- **R3**: back-face culling in screen space (after fixing the winding of `Sphere`).
+- **R1**, **R5**: bounding volumes, culling by element, front-to-back sorting.
+- **A1**: incremental interpolation on `float`s.
+- **D2b**: materials, textures and lights as `float`s (D2a is in phase 1). **D8**: version counters (keeping the
+  shadow map).
 
 ### Phase 3 — Multithreading
 
-- Pool de threads, factory de workers, bandes (4 à 8 fois plus que de threads), statistiques fusionnées.
-- Puis tuiles avec binning, et shadow maps en parallèle (avec **D4**).
+- Thread pool, factory of workers, bands (4 to 8 times more than threads), merged statistics.
+- Then tiles with binning, and shadow maps in parallel (with **D4**).
 
-### Phase 4 — Optionnel et avancé (à choisir selon l'intérêt pédagogique)
+### Phase 4 — Optional and advanced (to be chosen by teaching interest)
 
-- **R6** Z-prepass ou visibility buffer · **R7** occlusion Hi-Z · **A7** vrai mode Gouraud · LOD · mipmapping.
+- **R6** Z-prepass or visibility buffer · **R7** Hi-Z occlusion · **A7** true Gouraud mode · LOD · mipmapping.
 
-Chaque étape se valide avec : image identique (somme de contrôle), puis gain mesuré. Si une étape n'apporte pas de
-gain mesurable, on ne la garde pas.
-
----
-
-## 9. Ce qu'il vaut mieux ne pas faire
-
-Pour rester dans l'esprit d'un projet pédagogique :
-
-- **Vector API** (`jdk.incubator.vector`, SIMD) : encore en incubation, verbeux, et le gain est incertain sur ce
-  code.
-- `Unsafe`, mémoire hors du tas, calcul en virgule fixe, déroulage manuel généralisé.
-- Passer **toute** la scène en structures de tableaux (`float[]` partout). Il vaut mieux garder les objets
-  (`Element`, `Vertex`, `Triangle`) comme **description de la scène**, et n'utiliser des tableaux de primitives que
-  dans les structures traversées à chaque pixel (Z-buffer, framebuffer, textures, sorties de passes).
-- Des caches improvisés qui contournent la règle « Refresh, don't cache » : utiliser des versions (D8).
-
-Principe directeur : **optimiser les chemins de données, pas les concepts**. `Fragment`, `FragmentConsumer`,
-`Material`, `TriangleRasterizer` et les deux contextes gardent leur rôle. Ce qui change, c'est *comment* les
-données circulent à l'intérieur. Chaque optimisation mérite un commentaire qui donne son équivalent GPU : c'est
-là que le projet reste didactique.
+Each step is validated with: identical image (checksum), then measured gain. If a step brings no measurable gain, it
+is not kept.
 
 ---
 
-## 10. Mise à jour du 6 octobre 2026 : nouvelles fonctions et état d'avancement
+## 9. What not to do
 
-### 10.1 Ce qui a changé dans le code
+To stay in the spirit of a teaching project:
 
-Entre la version 1 (commit `6d7a016`) et la branche `Refactoring` actuelle (`d3a2a47`), les commits concernant le
-moteur sont :
+- **Vector API** (`jdk.incubator.vector`, SIMD): still incubating, verbose, and the gain is uncertain on this code.
+- `Unsafe`, off-heap memory, fixed-point arithmetic, generalized manual unrolling.
+- Turning **the whole** scene into structures of arrays (`float[]` everywhere). It is better to keep the objects
+  (`Element`, `Vertex`, `Triangle`) as the **description of the scene**, and to use arrays of primitives only in the
+  structures traversed at each pixel (Z-buffer, framebuffer, textures, outputs of the passes).
+- Improvised caches that work around the "Refresh, don't cache" rule: use versions (D8).
 
-- **shadow maps en perspective** (`ShadowingLight` généralisé) et **ombres des spots** ;
-- **ombres des lumières ponctuelles** : cube map à 6 faces (`PointLight`, 512 × 512 par face par défaut). Seules
-  les faces qui voient une partie de la scène sont calculées ;
-- **clipping du plan proche** (`NearPlaneClipper`), dans la passe principale et dans les passes d'ombre en
-  perspective ;
-- **ombres douces PCF 3 × 3** (`ShadowFilter`), avec un *receiver plane depth bias* calculé à chaque pixel. Elles
-  sont activées par défaut pour le soleil d'`UrbanScape` ;
-- **lumières visibles** (`LightGlowRenderer`) : halo des lumières ponctuelles et des spots, disque et halo du
-  soleil, lens flare, rayons de lumière (*light shafts*), en post-traitement sur l'image terminée ;
-- le reste du diff (environ 100 fichiers) est l'en-tête de licence et la documentation.
+Guiding principle: **optimize the data paths, not the concepts**. `Fragment`, `FragmentConsumer`, `Material`,
+`TriangleRasterizer` and the two contexts keep their role. What changes is *how* the data flow inside. Each
+optimization deserves a comment that gives its GPU equivalent: that is where the project stays didactic.
 
-Le **chemin par pixel de la passe principale n'a pas changé** : sans ombres, l'image produite est identique au bit
-près à celle de la version 1, et le temps est le même. Aucune des propositions des phases 1 à 3 n'a encore été
-réalisée, à part le clipping du plan proche (R2, en partie).
+---
 
-### 10.2 Mesures
+## 10. Update of October 6, 2026: new features and progress
 
-Même benchmark qu'au §1 (`UrbanScape`, 1280 × 720, 8 912 triangles, `INTERPOLATE` + spéculaire). Médianes de 2 ou 3
-exécutions alternées, 40 images, sur 2 cœurs.
+### 10.1 What changed in the code
 
-⚠ La machine de test était **environ 1,8 fois plus lente** que le 30 septembre, et plus bruitée (±10 %) : l'ancien
-code, mesuré à nouveau dans la même session, donne 214 ms sans ombres et 413 ms avec. Comparer les colonnes
-**entre elles**, pas avec les chiffres du §0.
+Between version 1 (commit `6d7a016`) and the current `Refactoring` branch (`d3a2a47`), the commits about the engine
+are:
 
-| Configuration | Temps par image | Par rapport à « sans ombres » |
+- **perspective shadow maps** (generalized `ShadowingLight`) and **shadows of the spot lights**;
+- **shadows of the point lights**: a cube map with 6 faces (`PointLight`, 512 × 512 per face by default). Only the
+  faces that see part of the scene are computed;
+- **near-plane clipping** (`NearPlaneClipper`), in the main pass and in the perspective shadow passes;
+- **PCF 3 × 3 soft shadows** (`ShadowFilter`), with a *receiver plane depth bias* computed at each pixel. They are on
+  by default for the sun of `UrbanScape`;
+- **visible lights** (`LightGlowRenderer`): halo of the point and spot lights, disc and halo of the sun, lens flare,
+  *light shafts*, as a post-process on the finished image;
+- the rest of the diff (about 100 files) is the license header and the documentation.
+
+The **per-pixel path of the main pass has not changed**: without shadows, the image produced is identical to the bit
+to that of version 1, and the time is the same. None of the proposals of phases 1 to 3 has been done yet, except the
+near-plane clipping (R2, in part).
+
+### 10.2 Measurements
+
+Same benchmark as in §1 (`UrbanScape`, 1280 × 720, 8,912 triangles, `INTERPOLATE` + specular). Medians of 2 or 3
+alternated runs, 40 frames, on 2 cores.
+
+⚠ The test machine was **about 1.8 times slower** than on September 30, and noisier (±10%): the old code, measured
+again in the same session, gives 214 ms without shadows and 413 ms with. Compare the columns **with each other**,
+not with the figures of §0.
+
+| Configuration | Time per frame | Compared with "without shadows" |
 |---|---:|---:|
-| Version 1, sans ombres | 214 ms | — |
-| **Actuel, sans ombres** | **≈ 210 ms** | ×1 (image identique) |
-| Version 1, soleil avec ombres | 413 ms | ×1,9 |
-| Actuel, soleil, ombres dures (`HARD`) | ≈ 430 ms | ×2,1 |
-| **Actuel, soleil, PCF 3 × 3** (défaut d'`UrbanScape`) | **≈ 720 ms** | **×3,4** (+65 % par rapport à `HARD`) |
-| Actuel, soleil `HARD` + **1 lumière ponctuelle** avec ombres | ≈ 680 ms | ×3,2 (+250 ms) |
-| Actuel, soleil `HARD` + **1 spot** avec ombres | ≈ 680 ms | ×3,2 (+250 ms) |
-| Vue tournée vers le soleil, sans lumières visibles | ≈ 40 ms | — |
-| La même vue, avec halo, disque et rayons de lumière | ≈ 120 ms | +80 ms pour l'effet |
+| Version 1, without shadows | 214 ms | — |
+| **Current, without shadows** | **≈ 210 ms** | ×1 (identical image) |
+| Version 1, sun with shadows | 413 ms | ×1.9 |
+| Current, sun, hard shadows (`HARD`) | ≈ 430 ms | ×2.1 |
+| **Current, sun, PCF 3 × 3** (default of `UrbanScape`) | **≈ 720 ms** | **×3.4** (+65% compared with `HARD`) |
+| Current, sun `HARD` + **1 point light** with shadows | ≈ 680 ms | ×3.2 (+250 ms) |
+| Current, sun `HARD` + **1 spot light** with shadows | ≈ 680 ms | ×3.2 (+250 ms) |
+| View turned towards the sun, without visible lights | ≈ 40 ms | — |
+| The same view, with halo, disc and light shafts | ≈ 120 ms | +80 ms for the effect |
 
-Où va le temps (JFR, part des échantillons) :
+Where the time goes (JFR, share of the samples):
 
-| Configuration | Passes d'ombre | `shadowFactorAt()` | Autres points notables |
+| Configuration | Shadow passes | `shadowFactorAt()` | Other notable points |
 |---|---:|---:|---|
-| Soleil `HARD` | ≈ 30 % | 34 % | écriture de la shadow map (`MapView.set`) en tête des méthodes les plus chères |
-| Soleil PCF 3 × 3 | ≈ 15-20 % (même coût absolu qu'en `HARD`) | **59 %** | dont **23 %** pour les 2 projections supplémentaires par pixel (`posInLightSpace1`) |
-| + lumière ponctuelle | ≈ 26 % | 43 % | jusqu'à 6 passes d'ombre ; direction et distance de la lumière recalculées plusieurs fois par pixel |
-| + spot | ≈ 36 % | 42 % | la shadow map est consultée même pour les pixels hors du cône |
-| Lumières visibles | — | — | rayons de lumière **73 %** de l'effet, `addPixel()` (via `getRGB`/`setRGB`) **41 %** |
+| Sun `HARD` | ≈ 30% | 34% | writing of the shadow map (`MapView.set`) at the top of the most expensive methods |
+| Sun PCF 3 × 3 | ≈ 15-20% (same absolute cost as `HARD`) | **59%** | of which **23%** for the 2 extra projections per pixel (`posInLightSpace1`) |
+| + point light | ≈ 26% | 43% | up to 6 shadow passes; direction and distance of the light computed several times per pixel |
+| + spot light | ≈ 36% | 42% | the shadow map is read even for the pixels outside the cone |
+| Visible lights | — | — | light shafts **73%** of the effect, `addPixel()` (through `getRGB`/`setRGB`) **41%** |
 
-### 10.3 Gains rapides, mesurés à nouveau sur le code actuel
+### 10.3 Quick wins, measured again on the current code
 
-Prototype sur une copie jetable : **D1** (compteurs), **D7** (`MapView` en `float[]` 1D), **D6** (`int[]` direct,
-y compris dans `addPixel()`) et **A4** (`Matrix4 × Vector4` déroulé). Les images sont identiques au bit près dans
-les six configurations.
+Prototype on a throwaway copy: **D1** (counters), **D7** (`MapView` as a 1D `float[]`), **D6** (direct `int[]`,
+including in `addPixel()`) and **A4** (unrolled `Matrix4 × Vector4`). The images are identical to the bit in the six
+configurations.
 
-| Configuration | Actuel | Avec les 4 gains rapides | Gain |
+| Configuration | Current | With the 4 quick wins | Gain |
 |---|---:|---:|---:|
-| Sans ombres | ≈ 218 ms | ≈ 207 ms | −5 % (dans le bruit ce jour-là ; −26 % le 30 septembre avec A2 en plus) |
-| Soleil `HARD` | ≈ 427 ms | ≈ 373 ms | −13 % |
-| Soleil PCF 3 × 3 | ≈ 772 ms | ≈ 625 ms | **−19 %** |
-| + lumière ponctuelle | ≈ 665 ms | ≈ 557 ms | −16 % |
-| + spot | ≈ 695 ms | ≈ 650 ms | −7 % (mesure très bruitée) |
-| Vue vers le soleil avec lumières visibles | ≈ 118 ms | ≈ 79 ms | −33 % (le coût de l'effet est divisé par 2) |
+| Without shadows | ≈ 218 ms | ≈ 207 ms | −5% (within the noise that day; −26% on September 30 with A2 in addition) |
+| Sun `HARD` | ≈ 427 ms | ≈ 373 ms | −13% |
+| Sun PCF 3 × 3 | ≈ 772 ms | ≈ 625 ms | **−19%** |
+| + point light | ≈ 665 ms | ≈ 557 ms | −16% |
+| + spot light | ≈ 695 ms | ≈ 650 ms | −7% (very noisy measurement) |
+| View towards the sun with visible lights | ≈ 118 ms | ≈ 79 ms | −33% (the cost of the effect is halved) |
 
-Ces quatre changements sont petits, sans effet sur la lisibilité, et ils profitent davantage aux nouvelles
-fonctions qu'à l'ancienne passe principale.
+These four changes are small, with no effect on readability, and they benefit the new features more than the old
+main pass.
 
-#### Avec D2a en plus (couleurs des lumières préparées une fois, accumulateur → `int` direct)
+#### With D2a in addition (light colors prepared once, accumulator → direct `int`)
 
-Mesuré dans une seconde série alternée (même jour, mêmes réserves sur le bruit), images toujours identiques au bit
-près :
+Measured in a second alternated series (same day, same caveats about the noise), images still identical to the bit:
 
-| Configuration | Actuel | 4 gains rapides | **+ D2a** | Gain total |
+| Configuration | Current | 4 quick wins | **+ D2a** | Total gain |
 |---|---:|---:|---:|---:|
-| Sans ombres | ≈ 222 ms | ≈ 173 ms | **≈ 122 ms** | **−45 %** |
-| Soleil PCF 3 × 3 | ≈ 659 ms | ≈ 581 ms | ≈ 557 ms | −15 % |
-| + lumière ponctuelle | ≈ 677 ms | ≈ 616 ms | ≈ 532 ms | −21 % |
+| Without shadows | ≈ 222 ms | ≈ 173 ms | **≈ 122 ms** | **−45%** |
+| Sun PCF 3 × 3 | ≈ 659 ms | ≈ 581 ms | ≈ 557 ms | −15% |
+| + point light | ≈ 677 ms | ≈ 616 ms | ≈ 532 ms | −21% |
 
-| Allocations, sans ombres | 4 gains rapides | + D2a |
+| Allocations, without shadows | 4 quick wins | + D2a |
 |---|---:|---:|
-| Mémoire allouée par image | ≈ 134 Mo | **≈ 21 Mo** |
-| dont `Color` et leurs `float[]` | ≈ 87 Mo | ≈ 1 Mo |
-| Nombre de GC (40 images) | 47 | 17 |
+| Memory allocated per frame | ≈ 134 MB | **≈ 21 MB** |
+| of which `Color`s and their `float[]`s | ≈ 87 MB | ≈ 1 MB |
+| Number of GCs (40 frames) | 47 | 17 |
 
-Lecture :
+Reading:
 
-- dans cette série, les 4 gains rapides donnent −22 % sans ombres. Le −5 % du tableau précédent était dû au bruit
-  de la machine ;
-- **D2a est le gain rapide le plus rentable de tous** sur la passe principale : il supprime presque toutes les
-  allocations restantes ;
-- avec PCF, le gain de D2a est plus faible (−4 %) : le temps y est dominé par `shadowFactorAt()` (N1). Avec une
-  lumière ponctuelle, il reste −14 %, parce que la lumière ambiante et le soleil n'allouent plus rien. La couleur
-  atténuée de la lumière ponctuelle, elle, est toujours recréée à chaque pixel, ce que corrigera D2b.
+- in this series, the 4 quick wins give −22% without shadows. The −5% of the previous table was due to the noise of
+  the machine;
+- **D2a is the most profitable quick win of all** on the main pass: it removes almost all the remaining allocations;
+- with PCF, the gain of D2a is smaller (−4%): the time there is dominated by `shadowFactorAt()` (N1). With a point
+  light, it stays at −14%, because the ambient light and the sun no longer allocate anything. The attenuated color of
+  the point light, however, is still created again at each pixel, which D2b will fix.
 
-### 10.4 Nouvelles propositions
+### 10.4 New proposals
 
-#### N1. PCF : calculer le plan du récepteur une fois par triangle, pas à chaque pixel
+#### N1. PCF: compute the plane of the receiver once per triangle, not at each pixel
 
 *`ShadowingLight.shadowFactorAt(MapView, …)`, `posInLightSpace1()`*
 
-Pour son *receiver plane depth bias*, le PCF mesure à chaque pixel le gradient de profondeur de la surface :
-2 tangentes (produits vectoriels et normalisations), puis **2 projections supplémentaires** dans l'espace de la
-lumière par le chemin lent de `Matrix4 × Vector4`, soit environ 10 allocations par pixel et par lumière. C'est 23 %
-du temps total d'une image en PCF.
+For its *receiver plane depth bias*, PCF measures at each pixel the depth gradient of the surface: 2 tangents (cross
+products and normalizations), then **2 extra projections** into the space of the light through the slow path of
+`Matrix4 × Vector4`, i.e. about 10 allocations per pixel and per light. It is 23% of the total time of a frame with
+PCF.
 
-Or, sur un triangle plat, **ce gradient est constant** : il ne dépend que du plan du triangle et de la matrice de la
-lumière. Il peut être calculé **une fois par triangle et par lumière** (au moment où le triangle est préparé), à
-partir des 3 sommets projetés dans l'espace de la lumière. Le BACKLOG le pressent déjà (« a gradient computed from
-the geometry instead of two projections »). Pour les surfaces lisses (`INTERPOLATE`), le plan du triangle reste une
-excellente approximation à l'échelle d'un texel.
+Yet on a flat triangle, **this gradient is constant**: it only depends on the plane of the triangle and the matrix of
+the light. It can be computed **once per triangle and per light** (when the triangle is prepared), from the 3 vertices
+projected into the space of the light. The BACKLOG already anticipates it ("a gradient computed from the geometry
+instead of two projections"). For smooth surfaces (`INTERPOLATE`), the plane of the triangle remains an excellent
+approximation at the scale of a texel.
 
-Deux détails en plus :
+Two more details:
 
-- dans le chemin PCF, `map.getInterpolation(s, t)` (lecture bilinéaire de 4 texels) est calculé puis **jamais
-  utilisé** (il ne sert qu'à `HARD`) ;
-- le noyau « 3 × 3 » lit en réalité **16 texels** (4 × 4 pondérés de façon bilinéaire), ce qui est correct pour la
-  qualité. On peut ajouter une **sortie anticipée** classique : lire d'abord les 4 coins, et s'ils donnent tous
-  « éclairé » ou tous « dans l'ombre », ne pas lire les 12 autres. C'est le cas de la grande majorité des pixels,
-  loin des bords d'ombre.
+- in the PCF path, `map.getInterpolation(s, t)` (bilinear read of 4 texels) is computed and then **never used** (it
+  only serves `HARD`);
+- the "3 × 3" kernel actually reads **16 texels** (4 × 4 weighted bilinearly), which is right for quality. A classic
+  **early exit** can be added: first read the 4 corners, and if they all give "lit" or all "in the shadow", do not
+  read the other 12. This is the case for the vast majority of the pixels, far from the shadow edges.
 
-**Gain** e : important en PCF (de l'ordre de −30 %) · **Effort** M · **Lisibilité** + (un calcul géométrique nommé,
-au lieu d'une mesure par différences finies).
+**Gain** e: large with PCF (of the order of −30%) · **Effort** M · **Readability** + (a named geometric computation,
+instead of a measurement by finite differences).
 
-> **Mesure du 8 octobre (après les étapes 1 à 5 de la phase 1) — estimation corrigée.** Le JIT supprime
-> maintenant les allocations des deux projections supplémentaires : `posInLightSpace1()` ne pèse plus que 0,1 %
-> du temps. En PCF, **72 % du temps est dans `shadowFactorAt()`, et presque tout dans la boucle des 16 lectures
-> de la shadow map** : une carte de 2000 × 2000 fait 16 Mo et ne tient dans aucun cache, si bien que chaque pixel
-> paie des défauts de cache. Le calcul du plan par triangle ne rapporterait donc presque rien aujourd'hui. Les
-> leviers efficaces sont, dans l'ordre : la **sortie anticipée** sur les 4 coins (lire 4 texels au lieu de 16
-> loin des bords d'ombre), et une shadow map **plus petite ou mieux cadrée** (`SHADOWING_BOX_VIEWFRUSTUM`, R9).
+> **Measured on October 8 (after steps 1 to 5 of phase 1) — estimate corrected.** The JIT now removes the
+> allocations of the two extra projections: `posInLightSpace1()` weighs only 0.1% of the time. With PCF, **72% of the
+> time is in `shadowFactorAt()`, and almost all of it in the loop of the 16 reads of the shadow map**: a 2000 × 2000
+> map is 16 MB and fits in no cache, so each pixel pays cache misses. Computing the plane per triangle would therefore
+> bring almost nothing today. The effective levers are, in order: the **early exit** on the 4 corners (reading 4
+> texels instead of 16 far from the shadow edges), and a **smaller or better framed** shadow map
+> (`SHADOWING_BOX_VIEWFRUSTUM`, R9).
 
-> **Essayé le 10 octobre, abandonné : la sortie anticipée sur un encadrement min/max.** Le min/max de profondeur
-> par bloc de 4 × 4 texels (une passe sur la carte à chaque image) permet de conclure sans lire les 16 texels quand
-> toute la zone est nettement plus proche (ombre) ou plus loin (éclairé) que le point. Résultat : images
-> identiques, mais **pas de gain, et même +10 %**. Un point éclairé se compare à la profondeur de **sa propre
-> surface**, qui est dans la carte à quelques biais près : pour la grande majorité des pixels (éclairés), seul le
-> plan du récepteur permet de trancher, et l'encadrement ne conclut jamais. Seules les zones d'ombre en profitent,
-> et le calcul des blocs (≈ 15 ms par image pour 2000²) coûte plus que ce qu'il fait gagner. La sortie anticipée
-> « 4 coins » d'abord envisagée aurait le même défaut, et ferait en plus disparaître les ombres des objets fins
-> (une barre d'appui plus fine que 4 texels). Restent, pour le PCF : une shadow map plus petite ou mieux cadrée
-> (R9) et le multithreading.
+> **Tried on October 10, abandoned: the early exit on a min/max bound.** The min/max depth per block of 4 × 4 texels
+> (one pass over the map at each frame) makes it possible to conclude without reading the 16 texels when the whole
+> area is clearly nearer (shadow) or farther (lit) than the point. Result: identical images, but **no gain, and even
+> +10%**. A lit point is compared with the depth of **its own surface**, which is in the map up to a few biases: for
+> the vast majority of the pixels (lit ones), only the plane of the receiver can decide, and the bound never
+> concludes. Only the shadowed areas benefit, and computing the blocks (≈ 15 ms per frame for 2000²) costs more than it
+> saves. The "4 corners" early exit first considered would have the same flaw, and would moreover make the shadows of
+> thin objects disappear (a handrail thinner than 4 texels). What remains for PCF: a smaller or better framed shadow
+> map (R9) and multithreading.
 
-#### N2. Ne pas consulter la shadow map d'une lumière qui n'éclaire pas le pixel
+#### N2. Do not read the shadow map of a light that does not light the pixel
 
 *`ShadingConsumer.consume()`*
 
-C'est R10 élargi aux nouvelles lumières. Aujourd'hui, `shadowFactorAt()` est appelé **avant** de savoir si la
-lumière contribue au pixel : un pixel **hors du cône d'un spot** ou **hors de portée d'une lumière ponctuelle**
-(intensité nulle) paie quand même la projection, la sélection de la face et la lecture de la shadow map (16 texels en
-PCF). Il faut tester dans cet ordre, du moins cher au plus cher : intensité > 0 (portée, cône), puis
-`dotNL > 0`, puis l'ombre.
-**Gain** : dans UrbanScape, le spot de test éclaire une grande partie de l'écran, et le gain est resté dans le
-bruit. Il sera **proportionnel à la part de l'écran hors du cône ou hors de portée** : élevé pour un lampadaire ou un
-spot de scène · **Effort** S · **Lisibilité** +.
+This is R10 extended to the new lights. Today, `shadowFactorAt()` is called **before** knowing whether the light
+contributes to the pixel: a pixel **outside the cone of a spot light** or **out of range of a point light** (zero
+intensity) still pays for the projection, the selection of the face and the read of the shadow map (16 texels with
+PCF). The tests must come in this order, from the cheapest to the most expensive: intensity > 0 (range, cone), then
+`dotNL > 0`, then the shadow.
+**Gain**: in UrbanScape, the test spot light lights a large part of the screen, and the gain stayed within the noise.
+It will be **proportional to the share of the screen outside the cone or out of range**: high for a street lamp or a
+stage spot light · **Effort** S · **Readability** +.
 
-> **v2 — fait (phase 1, étape 6).** `ShadingConsumer` teste, pour chaque lumière, `dotNL` puis l'intensité
-> (portée, cône) avant `shadowFactorAt()`, qui reçoit `dotNL` et la normale unitaire au lieu de les recalculer.
-> Mesuré avec A2 : PCF ≈ −19 % (passe principale −20 %), spot −5 % (passe principale −17 %), lumière ponctuelle
-> −6 %, sans ombres inchangé ; images identiques au bit près.
+> **v2 — done (phase 1, step 6).** For each light, `ShadingConsumer` tests `dotNL` then the intensity (range, cone)
+> before `shadowFactorAt()`, which receives `dotNL` and the unit normal instead of computing them again. Measured
+> with A2: PCF ≈ −19% (main pass −20%), spot light −5% (main pass −17%), point light −6%, without shadows unchanged;
+> images identical to the bit.
 
-#### N3. Lumières ponctuelles et spots : un seul calcul de direction et de distance par pixel
+#### N3. Point and spot lights: a single computation of direction and distance per pixel
 
-Pour une `PointLight` ou un `SpotLight`, un même pixel calcule le vecteur lumière → point **3 ou 4 fois**, avec à
-chaque fois un `new Vector3`, une racine carrée et une normalisation : dans `getIntensity()` (atténuation),
-`getLightVectorAtPoint()` (éclairage), `coneFactor()` (spot, qui appelle à nouveau les deux précédents) et
-`shadowFactorAt()` (sélection de la face, puis encore `getLightVectorAtPoint()` pour le biais).
-**Proposition** : un petit objet réutilisable `LightSample` (direction unitaire, distance, atténuation, facteur de
-cône), calculé une fois par pixel et par lumière, puis passé à l'éclairage et à l'ombre. Le code devient en plus
-plus lisible : il dit clairement ce qui est calculé une fois.
-**Gain** e : moyen · **Effort** S à M · **Lisibilité** +.
+For a `PointLight` or a `SpotLight`, the same pixel computes the light → point vector **3 or 4 times**, each time with
+a `new Vector3`, a square root and a normalization: in `getIntensity()` (attenuation), `getLightVectorAtPoint()`
+(lighting), `coneFactor()` (spot light, which calls the two previous ones again) and `shadowFactorAt()` (selection of
+the face, then `getLightVectorAtPoint()` again for the bias).
+**Proposal**: a small reusable `LightSample` object (unit direction, distance, attenuation, cone factor), computed
+once per pixel and per light, then passed to the lighting and to the shadow. The code also becomes more readable: it
+says clearly what is computed once.
+**Gain** e: medium · **Effort** S to M · **Readability** +.
 
-> **v2 — en partie (phase 1, étape 6).** La couleur d'une lumière est calculée à partir de l'intensité déjà
-> obtenue (`Light.getLightColorAtPoint(point, intensity)`), et le cône du spot et la direction ne sont plus
-> recalculés par la shadow map. Il reste deux calculs du vecteur lumière → point pour une lumière ponctuelle
-> (direction et intensité) : l'objet `LightSample` complet reste à faire, avec D2b.
+> **v2 — in part (phase 1, step 6).** The color of a light is computed from the intensity already obtained
+> (`Light.getLightColorAtPoint(point, intensity)`), and the cone of the spot light and the direction are no longer
+> computed again by the shadow map. Two computations of the light → point vector remain for a point light (direction
+> and intensity): the complete `LightSample` object remains to be done, with D2b.
 
-#### N4. Passes d'ombre : éliminer, mettre en cache, réutiliser
+#### N4. Shadow passes: cull, cache, reuse
 
-La passe d'ombre représente maintenant 25 à 35 % du temps, et une `PointLight` peut en faire 6 par image. Chacune
-de ces passes :
+The shadow pass now represents 25 to 35% of the time, and a `PointLight` can do 6 of them per frame. Each of these
+passes:
 
-- transforme **tous les sommets** et parcourt **tous les triangles** de la scène, sans élimination par élément ;
-- alloue un **nouveau `ZBuffer`** (6 × 513² floats, soit environ 6 Mo par image et par lumière ponctuelle ; 4 Mo pour
-  un spot en 1000²) ;
-- recalcule tout, même quand ni la lumière ni la scène n'ont bougé.
+- transforms **all the vertices** and walks **all the triangles** of the scene, without culling by element;
+- allocates a **new `ZBuffer`** (6 × 513² floats, i.e. about 6 MB per frame and per point light; 4 MB for a spot
+  light at 1000²);
+- computes everything again, even when neither the light nor the scene has moved.
 
-Propositions, par ordre de simplicité :
+Proposals, by order of simplicity:
 
-1. **Réutiliser les buffers** d'une image à l'autre (S).
-2. **Élimination par portée** : un élément entièrement hors de la sphère de portée d'une lumière ponctuelle (ou du
-   cône d'un spot) ne peut pas faire d'ombre sur un point que cette lumière éclaire, puisque le segment lumière →
-   point reste dans la sphère. On peut donc l'ignorer dans la passe d'ombre. Avec des sphères englobantes (R1),
-   c'est un test par élément (M).
-3. **Élimination par face** de la cube map (R1 dans le frustum de chaque face) (M).
-4. **Cache avec indicateur de changement** (D8, déjà noté dans le BACKLOG) : une lampe fixe dans une scène fixe
-   n'a besoin de sa cube map qu'**une seule fois** (M).
-5. Le **`castShadows` par élément** prévu dans le BACKLOG (S).
+1. **Reuse the buffers** from one frame to the next (S).
+2. **Culling by range**: an element entirely outside the sphere of range of a point light (or the cone of a spot
+   light) cannot cast a shadow on a point that this light lights, since the light → point segment stays in the
+   sphere. It can therefore be ignored in the shadow pass. With bounding spheres (R1), it is one test per element
+   (M).
+3. **Culling by face** of the cube map (R1 in the frustum of each face) (M).
+4. **Cache with a change indicator** (D8, already noted in the BACKLOG): a fixed lamp in a fixed scene needs its cube
+   map **only once** (M).
+5. The **`castShadows` per element** planned in the BACKLOG (S).
 
-#### N5. `NearPlaneClipper` : chemin rapide
+#### N5. `NearPlaneClipper`: fast path
 
-`NearPlaneClipper.clip()` alloue 3 `Corner`, 2 `ArrayList`, au moins un `ClippedTriangle` et un itérateur **pour
-chaque triangle** rendu en perspective, alors que dans la quasi-totalité des cas les 3 sommets sont devant le plan
-proche et que rien n'est clippé.
-**Proposition** : si les 3 `w` sont au-dessus du plan proche, rasteriser directement le triangle d'origine. Une
-ligne, sans effet sur le reste. Le coût mesuré est faible (≈ 0,1 %), mais c'est du bruit d'allocation en moins et
-cela prépare le test par outcodes (R2), qui donne le même résultat sans aucune division.
-**Effort** S · **Lisibilité** =.
+`NearPlaneClipper.clip()` allocates 3 `Corner`s, 2 `ArrayList`s, at least one `ClippedTriangle` and an iterator **for
+each triangle** rendered in perspective, whereas in almost all cases the 3 vertices are in front of the near plane and
+nothing is clipped.
+**Proposal**: if the 3 `w`s are above the near plane, rasterize the original triangle directly. One line, without
+effect on the rest. The measured cost is small (≈ 0.1%), but it is allocation noise removed, and it prepares the test
+by outcodes (R2), which gives the same result without any division.
+**Effort** S · **Readability** =.
 
-#### N6. Lumières visibles : écrire dans le `int[]`, et paralléliser plus tard
+#### N6. Visible lights: write into the `int[]`, and parallelize later
 
-`LightGlowRenderer` est bien conçu pour la performance : calculs sur des `float`, rayons de lumière calculés à 1/4 de
-la résolution puis interpolés, visibilité estimée avec 32 à 48 échantillons du Z-buffer. Son coût vient
-surtout de l'écriture : `addPixel()` passe par `getRGB()`/`setRGB()` pour presque chaque pixel de l'écran (rayons de
-lumière). Avec un accès direct au `int[]` (D6), le coût de l'effet est **divisé par 2** environ (mesuré : de ≈ 80 à ≈ 40 ms). Le
-masque des rayons lit aussi le Z-buffer 4 fois par point de grille, via le stockage par colonnes (D7).
-Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
+`LightGlowRenderer` is well designed for performance: computations on `float`s, light shafts computed at 1/4 of the
+resolution then interpolated, visibility estimated with 32 to 48 samples of the Z-buffer. Its cost comes mostly from
+the writes: `addPixel()` goes through `getRGB()`/`setRGB()` for almost every pixel of the screen (light shafts). With
+direct access to the `int[]` (D6), the cost of the effect is **about halved** (measured: from ≈ 80 to ≈ 40 ms). The
+mask of the shafts also reads the Z-buffer 4 times per grid point, through the storage by columns (D7).
+Later, the effect can be parallelized by bands without any precaution (§6).
 
-#### N7. Éclairage : ce que les nouvelles fonctions ajoutent à A2 et D5
+#### N7. Lighting: what the new features add to A2 and D5
 
-- `shadowFactorAt()` appelle `normal.normalize()`, qui **modifie la normale du fragment** (D5) : le résultat est
-  correct aujourd'hui, mais c'est un effet de bord à supprimer avant le multithreading.
-- Avec le PCF, `shadowFactorAt()` renvoie une valeur entre 0 et 1, et la contribution est multipliée par ce facteur.
-  La structure de `ShadingConsumer` (une boucle sur les lumières) se prête bien à la réorganisation proposée en A2,
-  N2 et N3 : **calculer une fois** la couleur de base, la normale unitaire et la direction de vue, puis pour chaque
-  lumière **`LightSample` → test de contribution → ombre → accumulation**.
+- `shadowFactorAt()` calls `normal.normalize()`, which **changes the normal of the fragment** (D5): the result is right
+  today, but it is a side effect to remove before multithreading.
+- With PCF, `shadowFactorAt()` returns a value between 0 and 1, and the contribution is multiplied by this factor.
+  The structure of `ShadingConsumer` (a loop over the lights) lends itself well to the reorganization proposed in A2,
+  N2 and N3: **compute once** the base color, the unit normal and the viewing direction, then for each light
+  **`LightSample` → contribution test → shadow → accumulation**.
 
-### 10.5 État d'avancement des propositions
+### 10.5 Progress of the proposals
 
-| Id | Proposition | État au 5 novembre |
+| Id | Proposal | State as of November 5 |
 |---|---|---|
-| D1 | Compteurs statiques des vecteurs | **Fait** (phase 1, étape 2) : neutre en mono-thread (±5 %, dans le bruit), prérequis du multithreading levé |
-| D7 | `FloatMap` en `float[]` 1D | **Stockage fait** (phase 1, étape 3) : `MapView` en `float[]` ligne par ligne, −10 % sans ombres et en PCF, −15 à −20 % avec une lumière ponctuelle ou un spot (passes d'ombre −15 à −18 %). Reste l'extraction de `FloatMap` hors du paquet `view` (BACKLOG §2) |
-| D6 | Écriture directe dans `int[]` (+ `addPixel()`) | **Fait** (phase 1, étape 4, avec D2a). **Pool d'images fait** (novembre) : `ImageView.setImageReuse(true)`, 3 images en rotation, activé dans les démos animées et `PerfBench` (désactivé par défaut : une image obtenue de `getImageView()` est redessinée deux images plus tard). Sur 2 cœurs, SETUP −0,4 ms, allocations PCF 7,4 → 3,9 Mo par image ; temps total dans le bruit |
-| A4 | `Matrix4 × Vector4` déroulé | **Fait** (phase 1, étape 5) : **sans gain mesurable** (le JIT optimisait déjà la boucle d'origine), gardé pour la lisibilité. Le stockage `float[16]` n'est pas fait (pas d'enjeu mesuré) |
-| A2 | Éclairage : valeurs communes calculées une fois par pixel | **Fait** (phase 1, étape 6, avec N2 et N3 en partie) |
-| A3, A5, A6 | `ZBuffer` sans état, tri des 3 sommets, textures en `int[]` | **Fait** (phase 1, étape 8) : sans ombres −12 % (avec R4), allocations 12 → 7 Mo par image ; chargement d'une texture de 4480 × 4480 ≈ 1,2 → 0,7-0,9 s ; `ZBuffer` et `Texture` sans état partagé (prérequis du multithreading) |
-| A1 | Interpolation sans objets temporaires | **Fait** (sans pas incrémentaux) : `TriangleRasterizer` interpole positions, normales et coordonnées de texture en `float`, avec exactement les mêmes formules, donc des images identiques au bit près ; plus d'`Iterator` par pixel dans `ShadingConsumer`, ni de vecteurs temporaires pour la direction de l'observateur, le reflet spéculaire et les tangentes du PCF. Mesure par JFR : ces vecteurs faisaient ≈ 80 % des allocations. PCF : 26 à 41 → 7,4 Mo par image, **stable** (plus de bimodalité du JIT) ; spot 35 à 56 → 27 Mo ; sur 2 cœurs, image −10 à −15 %. Les pas incrémentaux (une addition par pixel) changeraient les arrondis, donc les images : non faits |
-| A7 | Mode Gouraud | À faire |
-| D2a | Couleurs des lumières et accumulateur sans `Color` | **Fait** (phase 1, étape 4, avec D6) : sans ombres −43 % (91 → 52 ms, 92 → 11 Mo alloués par image), lumière ponctuelle et spot −15 %, lumières visibles −18 % ; PCF dans le bruit (dominé par N1) |
-| D9 | Pipeline en deux étages (géométrie → `DrawList` → rasterisation) | **Fait** (branche `perf-multithreading`) : images identiques dans tous les modes de rendu, temps et mémoire inchangés (liste réutilisée d'une image à l'autre) ; l'étage géométrie ne pèse que ≈ 1,4 ms sur ≈ 50 à 190 ms de passe principale |
-| MT1 | Multithreading de la passe principale par bandes de lignes (`BandRasterizer`, `RenderContext.setRenderThreads(n)`) | **Fait** (branche `perf-multithreading`) : images **et statistiques** identiques pour 1, 2, 3, 5, 8 et 16 threads (tous les modes de rendu, images de la documentation, `PerfBench`, test `TestRenderThreads`). Sur 2 cœurs, passe principale ×1,8 à ×1,9 (PCF ≈ 200 → 110 ms, spot ≈ 150 → 80-100 ms, sans ombres ≈ 48 → 28-32 ms) ; en mono-thread, inchangé. Les arêtes et normales restent dans le thread de rendu (`Graphics2D` non thread-safe). La passe d'ombre, désormais la plus longue avec PCF et spot, reste mono-thread (étape suivante) |
-| MT2 | Shadow maps en deux étages et par bandes (`ShadowingLight` : `prepareShadowMapElement()` → `DrawList` → `BandRasterizer`) | **Fait** (branche `perf-multithreading`) : shadow maps, images et statistiques identiques pour 1 à 16 threads (soleil, spot, lumière ponctuelle à 6 faces). Sur 2 cœurs, phase des ombres ×1,5 à ×1,9 (hard ≈ 67 → 35 ms, PCF ≈ 68 → 45, point ≈ 100 → 61, spot ≈ 120 → 75). L'étage géométrie de la lumière et les faces de la cube map restent séquentiels (D4) |
-| MT3 | Post-traitements par bandes (`BandRasterizer.runRows()` : lumières visibles, brume et brouillards) | **Fait** : mêmes threads que la rasterisation (l'atmosphère utilisait un `parallelStream()` sur le pool commun de Java) ; images identiques pour 1 à 8 threads. Sur 2 cœurs, lumières visibles (sunglow) ≈ 51 → 32 ms ; atmosphère ≈ 16 → 9,5 ms, comme avant. À noter : une boucle sur toutes les lignes appelée une fois par image reste compilée « en cours d'exécution » (OSR) par le JIT et était 30 % plus lente ; d'où un appel par ligne (`runRows()`) |
-| D2b, D4, D5, D8 | Conception | À faire (D8 référencé dans le BACKLOG pour les ombres) |
-| D3 | Consumers créés pour chaque triangle | **Inutile** : mesuré par JFR à ≈ 0,1 % des allocations (un consumer par triangle et par bande, contre un vecteur par pixel avant A1) |
-| D10 | Rendu hors de l'EDT | Fait dans `SceneViewer` ; reste `MovingCamera` et `FractalLandscape` |
-| R4 | Rejet des triangles sans centre de pixel | **Fait** (phase 1, étape 8), avant toute allocation dans `TriangleRasterizer` |
-| R5 | Tri avant → arrière | **Fait** : faces de la `DrawList` triées par la profondeur de leur sommet le plus proche avant la rasterisation (`RenderEngine.sortFrontToBack()`, sauf si la liste contient des arêtes). Sur UrbanScape, pixels éclairés −42 à −53 % (les pixels cachés sont rejetés par le Z-buffer avant l'éclairage) ; sur 2 cœurs, passe principale −30 % sans ombres, −40 à −45 % en PCF et spot. Images inchangées (mêmes checksums) |
-| R1, R3, R6, R7 | Élimination en amont | À faire |
-| R2 | Outcodes et clipping du plan proche | **Fait** : clipping, chemin rapide N5 (phase 1, étape 7), test de rejet par outcodes (octobre 2026) |
-| R9 | Passe d'ombre | **Shadow map conservée fait** (novembre, branche `perf-multithreading`) : `ShadowingLight.setStaticShadowCasters(true)`, la carte de chaque face est reprise si la View·Projection de la lumière, la taille et la profondeur max sont identiques à celles de la génération précédente, sinon redessinée ; `invalidateShadowMap()` quand les objets bougent. Images identiques au pixel près (`TestStaticShadowCasters`, `PerfBench kept` : même checksum que `pcf`) ; sur 2 cœurs, phase des ombres 28 → 0,3 ms sur UrbanScape. Activé dans `TempleRuins`. Reste l'élimination dans l'espace de la lumière et les compteurs de version D8. **N4.1 fait** (phase 1, étape 7) : buffers d'ombre réutilisés d'une image à l'autre ; allocations −20 à −40 %, temps inchangé (allouer un tableau neuf ou le remplir coûtent autant) |
-| R10 | Sortie anticipée de l'éclairage | **Fait** avec N2 (phase 1, étape 6) |
-| §6 | Multithreading | **Fait** : voir D9, MT1, MT2, MT3 (v3-0-0). Restent les shadow maps de plusieurs lumières et des faces de la cube map en parallèle (après D4) |
-| §7 | Chronométrage par phase, `PerfBench` dans le dépôt | **Fait** (phase 0) : `FrameTimer` et `PerfBench`, avec les options `-frames`, `-warmup`, `-threads` et les modes `sunglow` et `atmosphere` |
+| D1 | Static counters of the vectors | **Done** (phase 1, step 2): neutral single-threaded (±5%, within the noise), prerequisite of multithreading lifted |
+| D7 | `FloatMap` as a 1D `float[]` | **Storage done** (phase 1, step 3): `MapView` as a `float[]` row by row, −10% without shadows and with PCF, −15 to −20% with a point or spot light (shadow passes −15 to −18%). Extracting `FloatMap` out of the `view` package remains (BACKLOG §2) |
+| D6 | Direct writes into the `int[]` (+ `addPixel()`) | **Done** (phase 1, step 4, with D2a). **Image pool done** (November): `ImageView.setImageReuse(true)`, 3 images in rotation, enabled in the animated demos and `PerfBench` (off by default: an image obtained from `getImageView()` is drawn again two frames later). On 2 cores, SETUP −0.4 ms, PCF allocations 7.4 → 3.9 MB per frame; total time within the noise |
+| A4 | Unrolled `Matrix4 × Vector4` | **Done** (phase 1, step 5): **no measurable gain** (the JIT already optimized the original loop), kept for readability. The `float[16]` storage is not done (no measured stake) |
+| A2 | Lighting: common values computed once per pixel | **Done** (phase 1, step 6, with N2 and N3 in part) |
+| A3, A5, A6 | Stateless `ZBuffer`, sort of the 3 vertices, textures as `int[]` | **Done** (phase 1, step 8): without shadows −12% (with R4), allocations 12 → 7 MB per frame; loading a 4480 × 4480 texture ≈ 1.2 → 0.7-0.9 s; `ZBuffer` and `Texture` without shared state (prerequisite of multithreading) |
+| A1 | Interpolation without temporary objects | **Done** (without incremental steps): `TriangleRasterizer` interpolates positions, normals and texture coordinates as `float`s, with exactly the same formulas, hence images identical to the bit; no more `Iterator` per pixel in `ShadingConsumer`, nor temporary vectors for the direction of the viewer, the specular reflection and the tangents of PCF. Measured with JFR: these vectors were ≈ 80% of the allocations. PCF: 26 to 41 → 7.4 MB per frame, **stable** (no more bimodal JIT); spot light 35 to 56 → 27 MB; on 2 cores, frame −10 to −15%. Incremental steps (one addition per pixel) would change the rounding, hence the images: not done |
+| A7 | Gouraud mode | To do |
+| D2a | Light colors and accumulator without `Color` | **Done** (phase 1, step 4, with D6): without shadows −43% (91 → 52 ms, 92 → 11 MB allocated per frame), point and spot lights −15%, visible lights −18%; PCF within the noise (dominated by N1) |
+| D9 | Two-stage pipeline (geometry → `DrawList` → rasterization) | **Done** (`perf-multithreading` branch): identical images in all the rendering modes, time and memory unchanged (list reused from one frame to the next); the geometry stage weighs only ≈ 1.4 ms out of ≈ 50 to 190 ms of main pass |
+| MT1 | Multithreading of the main pass by bands of rows (`BandRasterizer`, `RenderContext.setRenderThreads(n)`) | **Done** (`perf-multithreading` branch): identical images **and statistics** for 1, 2, 3, 5, 8 and 16 threads (all rendering modes, documentation images, `PerfBench`, `TestRenderThreads` test). On 2 cores, main pass ×1.8 to ×1.9 (PCF ≈ 200 → 110 ms, spot light ≈ 150 → 80-100 ms, without shadows ≈ 48 → 28-32 ms); single-threaded, unchanged. The edges and normals stay in the rendering thread (`Graphics2D` is not thread-safe). The shadow pass, now the longest with PCF and spot lights, stays single-threaded (next step) |
+| MT2 | Shadow maps in two stages and by bands (`ShadowingLight`: `prepareShadowMapElement()` → `DrawList` → `BandRasterizer`) | **Done** (`perf-multithreading` branch): identical shadow maps, images and statistics for 1 to 16 threads (sun, spot light, point light with 6 faces). On 2 cores, shadow phase ×1.5 to ×1.9 (hard ≈ 67 → 35 ms, PCF ≈ 68 → 45, point ≈ 100 → 61, spot ≈ 120 → 75). The geometry stage of the light and the faces of the cube map stay sequential (D4) |
+| MT3 | Post-processing by bands (`BandRasterizer.runRows()`: visible lights, haze and fogs) | **Done**: same threads as the rasterization (the atmosphere used a `parallelStream()` on the common pool of Java); identical images for 1 to 8 threads. On 2 cores, visible lights (sunglow) ≈ 51 → 32 ms; atmosphere ≈ 16 → 9.5 ms, as before. Note: a loop over all the rows called once per frame stays compiled "on stack replacement" (OSR) by the JIT and was 30% slower; hence one call per row (`runRows()`) |
+| D2b, D4, D5, D8 | Design | To do (D8 referenced in the BACKLOG for the shadows) |
+| D3 | Consumers created for each triangle | **Unnecessary**: measured with JFR at ≈ 0.1% of the allocations (one consumer per triangle and per band, against one vector per pixel before A1) |
+| D10 | Rendering off the EDT | Done in `SceneViewer`; `MovingCamera` and `FractalLandscape` remain |
+| R4 | Rejection of the triangles without a pixel center | **Done** (phase 1, step 8), before any allocation in `TriangleRasterizer` |
+| R5 | Front-to-back order | **Done**: faces of the `DrawList` sorted by the depth of their nearest vertex before the rasterization (`RenderEngine.sortFrontToBack()`, unless the list contains edges). On UrbanScape, lit pixels −42 to −53% (the hidden pixels are rejected by the Z-buffer before the lighting); on 2 cores, main pass −30% without shadows, −40 to −45% with PCF and spot lights. Images unchanged (same checksums) |
+| R1, R3, R6, R7 | Upstream culling | To do |
+| R2 | Outcodes and near-plane clipping | **Done**: clipping, N5 fast path (phase 1, step 7), rejection test by outcodes (October 2026) |
+| R9 | Shadow pass | **Shadow map kept done** (November, `perf-multithreading` branch): `ShadowingLight.setStaticShadowCasters(true)`, the map of each face is reused if the View·Projection of the light, the size and the maximum depth are the same as at the previous generation, otherwise it is drawn again; `invalidateShadowMap()` when the objects move. Images identical to the pixel (`TestStaticShadowCasters`, `PerfBench kept`: same checksum as `pcf`); on 2 cores, shadow phase 28 → 0.3 ms on UrbanScape. Enabled in `TempleRuins`. Culling in the space of the light and the D8 version counters remain. **N4.1 done** (phase 1, step 7): shadow buffers reused from one frame to the next; allocations −20 to −40%, time unchanged (allocating a new array or filling it cost the same) |
+| R10 | Early exit from the lighting | **Done** with N2 (phase 1, step 6) |
+| §6 | Multithreading | **Done**: see D9, MT1, MT2, MT3 (v3-0-0). The shadow maps of several lights and the faces of the cube map in parallel remain (after D4) |
+| §7 | Timing per phase, `PerfBench` in the repository | **Done** (phase 0): `FrameTimer` and `PerfBench`, with the options `-frames`, `-warmup`, `-threads` and the modes `sunglow` and `atmosphere` |
 
-### 10.6 Feuille de route : ce qui change
+### 10.6 Roadmap: what changes
 
-La phase 1 du §8 reste valable telle quelle. On y ajoute **D2a** (en tête, avec D1), **N2, N3, N5** et le point 1 de **N4** (réutiliser les
-buffers d'ombre), tous de petite taille. **N1** (gradient du PCF par triangle) et les points 2 à 4 de **N4**
-(élimination et cache des passes d'ombre) rejoignent la phase 2, avec R1 et D8 dont ils dépendent.
+Phase 1 of §8 remains valid as it is. **D2a** (at the top, with D1), **N2, N3, N5** and point 1 of **N4** (reusing the
+shadow buffers) are added to it, all of them small. **N1** (PCF gradient per triangle) and points 2 to 4 of **N4**
+(culling and caching of the shadow passes) join phase 2, with R1 and D8 on which they depend.
 
-Les décisions en attente dans le BACKLOG peuvent maintenant s'appuyer sur ces chiffres :
+The pending decisions of the BACKLOG can now rely on these figures:
 
-- **PCF 3 × 3 par défaut ?** Aujourd'hui, il coûte environ +65 à +80 % par image avec une seule lumière. Après les
-  gains rapides et N1, l'écart devrait nettement baisser (estimation : de l'ordre de +25 %, à mesurer). Il vaut mieux attendre N1 avant d'en faire le comportement par
-  défaut.
-- **Ombres des lumières ponctuelles** : 6 passes par image, c'est le cas où le cache (N4.4) et l'élimination par
-  portée (N4.2) rapportent le plus.
+- **PCF 3 × 3 by default?** Today, it costs about +65 to +80% per frame with a single light. After the quick wins and
+  N1, the difference should drop clearly (estimate: of the order of +25%, to be measured). It is better to wait for N1
+  before making it the default behavior.
+- **Shadows of the point lights**: 6 passes per frame, this is the case where caching (N4.4) and culling by range
+  (N4.2) pay the most.
 
 ---
 
-## 11. Mise à jour du 17 novembre 2026 : ce qui entoure le rendu
+## 11. Update of November 17, 2026: what surrounds the rendering
 
-Mesures prises dans `TempleRuins` (56 676 triangles, fenêtre de 996 × 558, options par défaut, carte d'ombres
-conservée), sur des tours complets du vol en hélicoptère : la démo donne à la fin de chaque tour le temps de rendu
-moyen (le moteur seul) et le nombre d'images **affichées** par seconde (nombre d'images / durée du tour). L'écart entre
-les deux est le temps passé hors du moteur, sur le fil Swing : copie de l'image dans la fenêtre, cadence de
-l'animation, reste de l'application. Portable à 20 threads, limité à environ 28 W.
+Measurements taken in `TempleRuins` (56,676 triangles, window of 996 × 558, default options, shadow map kept), over
+whole laps of the helicopter flight: at the end of each lap the demo gives the average rendering time (the engine
+alone) and the number of images **displayed** per second (number of images / duration of the lap). The difference
+between the two is the time spent outside of the engine, on the Swing thread: copy of the image into the window, pace
+of the animation, rest of the application. Laptop with 20 threads, limited to about 28 W.
 
-| Conditions | Rendu moyen | Images affichées par seconde | Hors rendu, par image |
+| Conditions | Average rendering | Images displayed per second | Outside of the rendering, per image |
 |---|---:|---:|---:|
-| Mode d'alimentation « Équilibré », `Timer` Swing de 15 ms | 63,3 ms | 13,1 | 13,0 ms |
-| « Performances élevées », `Timer` de 1 ms | 36,8 ms | 22,1 | 8,4 ms |
-| « Performances élevées », images enchaînées par `invokeLater()` | 36,5 ms | 25,3 | 3,1 ms |
-| Idem, fenêtre sur l'écran du portable mis à l'échelle à 200 % | 40,3 ms | 21,0 | 7,3 ms |
+| "Balanced" power mode, Swing `Timer` of 15 ms | 63.3 ms | 13.1 | 13.0 ms |
+| "Best performance", `Timer` of 1 ms | 36.8 ms | 22.1 | 8.4 ms |
+| "Best performance", images chained by `invokeLater()` | 36.5 ms | 25.3 | 3.1 ms |
+| Same, window on the screen of the laptop scaled to 200% | 40.3 ms | 21.0 | 7.3 ms |
 
-### 11.1 Le mode d'alimentation
+### 11.1 The power mode
 
-Sur secteur, le portable était en mode « Équilibré », qui bride la fréquence du processeur. En « Performances
-élevées », le moteur va **1,7 fois plus vite** : plus que la plupart des optimisations de cet audit. Toutes les
-mesures antérieures prises sur le portable l'ont été en mode « Équilibré ». **Vérifier ce réglage avant toute mesure**,
-et ne comparer que des mesures prises dans le même mode.
+When plugged in, the laptop was in the "Balanced" power mode of Windows, which limits the clock speed of the
+processor. In "Best performance", the engine is **1.7 times faster**: more than most of the optimizations of this
+audit. All the earlier measurements taken on the laptop were made in "Balanced" mode. **Check this setting before
+any measurement**, and only compare measurements taken in the same mode.
 
-### 11.2 La cadence de l'animation
+### 11.2 The pace of the animation
 
-Un `Timer` Swing ne lance une étape que sur un de ses tops : après chaque image, le fil Swing attendait le top suivant
-(0 à 15 ms avec un délai de 15 ms). Avec un délai de 1 ms, l'attente reste d'environ 5 ms : l'horloge de Windows ne
-réveille les programmes qu'à un pas plus grossier. **Fait** dans `TempleRuins` : chaque image programme la suivante
-par `SwingUtilities.invokeLater()`, qui passe après le redessin de la fenêtre et les événements souris et clavier.
-Rendu inchangé, **+14 % d'images affichées** (92 % de ce que calcule le moteur). Les autres démos animées par un
-`Timer` (`FractalLandscape`, `MovingCamera`…) perdent de la même façon jusqu'à un pas d'horloge par image.
+A Swing `Timer` starts a step only on one of its ticks: after each image, the Swing thread waited for the next tick
+(0 to 15 ms with a delay of 15 ms). With a delay of 1 ms, the wait is still about 5 ms: the clock of Windows wakes the
+programs at a coarser pace. **Done** in `TempleRuins`: each image schedules the next one with
+`SwingUtilities.invokeLater()`, which comes after the repaint of the window and the mouse and keyboard events.
+Rendering unchanged, **+14% images displayed** (92% of what the engine computes). The other demos animated by a
+`Timer` (`FractalLandscape`, `MovingCamera`…) lose up to one clock step per image in the same way.
 
-### 11.3 L'affichage sur un écran mis à l'échelle
+### 11.3 Display on a scaled screen
 
-Sur l'écran du portable (2880 × 1800, mis à l'échelle à 200 % par Windows), Java crée la fenêtre en pixels logiques et
-doit agrandir l'image du moteur × 2 à chaque copie : environ 2,2 millions de pixels écrits au lieu de 0,56 million.
-Le temps hors rendu passe de 3 à 7 ms par image, et le nombre d'images affichées baisse de 17 %. Le rendu lui-même est
-aussi 10 % plus lent, sans explication certaine (piste : la puce graphique intégrée, qui pilote un écran plus grand,
-partage le budget de puissance du processeur ; ou un portable plus chaud, ce tour étant le 5ᵉ).
+On the screen of the laptop (2880 × 1800, scaled to 200% by Windows), Java creates the window in logical pixels and
+must enlarge the image of the engine × 2 at each copy: about 2.2 million pixels written instead of 0.56 million. The
+time outside of the rendering goes from 3 to 7 ms per image, and the number of images displayed drops by 17%. The
+rendering itself is also 10% slower, without a certain explanation (possible causes: the integrated graphics chip,
+which drives a larger screen, shares the power budget of the processor; or a warmer laptop, this lap being the 5th).
 
-Pourquoi la puce graphique ne fait-elle pas l'agrandissement ? Java2D l'accélère pour une image qu'il garde dans la
-mémoire graphique, ce qui suppose une image qui change rarement. Celle du moteur change à chaque image, et ses pixels
-sont écrits directement (`getDataBuffer()`, voir D6) : Java2D ne peut plus suivre ses modifications et la traite par
-ses routines logicielles.
+Why does the graphics chip not do the enlargement? Java2D accelerates it for an image it keeps in graphics memory,
+which assumes an image that rarely changes. The image of the engine changes at each frame, and its pixels are written
+directly (`getDataBuffer()`, see D6): Java2D can no longer track its changes and processes it with its software
+routines.
 
-**Proposition V1** : copier l'image 1:1 dans une `VolatileImage` (gardée dans la mémoire graphique), puis dessiner
-celle-ci dans la fenêtre, pour que l'agrandissement soit fait par la puce graphique. **Gain** attendu : ramener
-l'affichage à 200 % vers 3 ms par image, à mesurer (dépend du chemin graphique activé par Java sous Windows) ·
-**Effort** S (une vingtaine de lignes, dans `SwingView` ou d'abord dans une démo) · **Lisibilité** = ·
-reportée (BACKLOG §6). Le moteur continue de tout calculer sur le processeur.
+**Proposal V1**: copy the image 1:1 into a `VolatileImage` (kept in graphics memory), then draw that one into the
+window, so that the enlargement is done by the graphics chip. **Expected gain**: bring the display at 200% back to
+about 3 ms per image, to be measured (depends on the graphics pipeline enabled by Java on Windows) · **Effort** S
+(about twenty lines, in `SwingView` or first in a demo) · **Readability** = · postponed (BACKLOG §6). The engine keeps
+computing everything on the CPU.
