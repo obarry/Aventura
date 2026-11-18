@@ -519,6 +519,17 @@ mvn test
 
 The unit tests (JUnit 4, about 620 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, the visible lights, the atmosphere with its haze and its fogs), the textures and their mipmaps, the statistics of a scene, the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) and of the [Atmosphere Cookbook](docs/ATMOSPHERE_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
+## Use cases
+
+Aventura is first a teaching engine: the algorithms of a 3D pipeline, readable, measured and tested. The same constraints (pure Java, CPU only, no native code) make it useful beyond that:
+
+- **A small 3D view inside a pure Java application.** The 3D preview of a part, a terrain, a building or a molecule, next to the rest of a Swing application, without OpenGL bindings (JOGL, LWJGL), JavaFX 3D or Java 3D, and without the native libraries and graphics drivers they depend on: one jar and the JDK, wherever a JVM runs. A scene of a few thousand to a few tens of thousands of triangles renders at interactive rates on a recent laptop (see `TempleRuins`), and the number of rendering threads can be limited (`RenderContext.setRenderThreads()`) so that the 3D view does not compete with the host application.
+- **3D images on a server.** Rendered headless into a `BufferedImage`: thumbnails, images for a report or a web page, batch renderings.
+- **Tests of an application that displays 3D.** The same scene gives the same image from one run to the next, whatever the number of threads (the documentation images and the checksums of `PerfBench` rely on it), so a rendering can be compared with a reference image.
+- **Learning and experimenting.** Every stage of the pipeline is plain Java that can be read, stepped through in a debugger and changed: a place to try a shading model, a shadow technique or an optimization and measure its effect.
+
+What would make Aventura easier to embed in an application (a ready-made Swing component with its camera, rendering on demand, textures from the classpath, model import, picking, a published artifact) is listed in the [backlog](docs/BACKLOG.md#10-embedding-aventura-in-an-application).
+
 ## Use Aventura in your own project
 
 Install it in your local Maven repository:

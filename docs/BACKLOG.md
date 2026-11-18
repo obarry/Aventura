@@ -222,8 +222,11 @@ tested examples (`AtmosphereCookbook`, `GroundMist`). See
 
 ## 6. Views
 
-- `ImageView` allocates a new `BufferedImage` for each frame, which keeps the front image immutable
-  and thread-safe. A pool (triple buffering) would avoid the allocation.
+- **Triple buffering: done (v3.1.0).** By default `ImageView` still allocates a new `BufferedImage`
+  for each frame, which keeps every front image immutable and safe to keep. `setImageReuse(true)`
+  recycles three images in turn instead (front, previous front, spare), so that an animation
+  allocates no image per frame; the condition is that an image is displayed or copied within two
+  frames. Enabled in all the animated demos (`TempleRuins`, `UrbanScape`, `FractalLandscape`...).
 - Dedicated views for other toolkits (JavaFX, SWT) or an image-sequence writer, on top of `ImageView`.
 - **Display on a scaled screen (HiDPI) by the graphics chip.** On a screen scaled by Windows (200% on
   a laptop), Java enlarges the image of the engine at each frame when it copies it into the window,
@@ -238,9 +241,6 @@ tested examples (`AtmosphereCookbook`, `GroundMist`). See
 
 ## 7. Repository housekeeping
 
-- Remove the `Claude outputs` folders (at the project root and under `src/`), left over by earlier
-  working sessions. They are not tracked: both are ignored by `.gitignore` and `src/.gitignore`, so
-  they only exist in local working copies (the one under `src/` holds old shape sources and zip files).
 - Run `mvn test` locally: during these sessions, the code was compiled and tested with `javac` and
   JUnit directly, because Maven could not download its plugins.
 
@@ -288,3 +288,31 @@ the file format, the architecture and the step-by-step plan are in [MODEL_FILE_I
   one over itself in the current version needs a confirmation from the application (never silent); textures are not embedded, they are referenced by a path
   relative to the model file. The product is called "Aventura 3D", but the Maven coordinates and the packages keep the name
   Aventura. Still open: optional compression, and where the demo that opens a file lives.
+
+## 10. Embedding Aventura in an application
+
+Beyond teaching, a use case for the engine is a small 3D view inside a pure Java application, without OpenGL
+bindings, JavaFX 3D or Java 3D and their native dependencies (see the "Use cases" section of the README). The
+engine can already do it; what is missing is mostly around it. Each item stays a good teaching subject.
+
+- **A ready-made Swing component.** A `JComponent` (e.g. `AventuraPanel`) that wraps a `RenderEngine` and a
+  `SwingView`, follows the size of the component, and renders off the Swing thread, always on the latest state
+  of the scene and the camera (the model of `SceneViewer`, PERFORMANCE_AUDIT D10). Today each demo writes its own
+  window, render loop and camera controller.
+- **Camera controllers in the API.** Orbit (drag to turn, wheel to zoom), fly and path cameras, written today in
+  each demo (`TempleRuins`, `SceneViewer`, `FractalLandscape`); see the limitations of TEMPLE_RUINS §9. The
+  component above would offer the orbit one by default.
+- **Rendering on demand.** An image only when the scene, the camera, the lights or the size change, so that a 3D
+  view at rest uses no CPU: a "changed" flag set by the setters of the API or by the component, close to the version
+  counters of PERFORMANCE_AUDIT D8.
+- **Textures from the classpath.** An application ships its textures inside its jar; they can only be loaded from
+  file paths today (DESIGN §11).
+- **Model import.** OBJ at least, and the Aventura format (§9, [MODEL_FILE_IO.md](MODEL_FILE_IO.md)).
+- **Picking.** Which `Element` (and which triangle) is under a pixel, to react to a click: an ID buffer filled by a
+  `FragmentConsumer` during the main pass (listed as an extension point in DESIGN §9), or a ray cast through the
+  pixel and tested against the triangles. Labels (text attached to a 3D point) would go with it.
+- **Packaging.** A published artifact (Maven Central) of the engine alone, without the demos (`com.aventura.demo`
+  is in `src/main` today); a `module-info.java` that exports the API packages only; a pom version that follows the
+  release tags (it is still `0.0.1-SNAPSHOT`, while the releases are at 3.2.0); a stable API with semantic
+  versioning from then on.
+- **Other toolkits.** A JavaFX view (§6), so that the same component exists in both toolkits.

@@ -9,7 +9,9 @@ no third-party runtime library (only the JDK; JUnit 4 for tests). Java 21, Maven
 - **The project is didactic.** Favor readable code and recognizable algorithms over ultimate
   optimization. A performance gain that makes an algorithm hard to follow must be discussed first.
 - Keep the public API stable unless the task is explicitly about changing it.
-- Code, comments, Javadoc and docs are written in **English**.
+- Code, comments, Javadoc and docs are written in **English**. Exception: the two audits
+  (`docs/PERFORMANCE_AUDIT.md`, `docs/JAVADOC_AUDIT.md`) also have a French version (`*.fr.md`) for
+  Olivier. The English one is the reference; any change is made in both versions at the same time.
 
 ## Build, test, run
 
@@ -41,6 +43,7 @@ no third-party runtime library (only the JDK; JUnit 4 for tests). Java 21, Maven
   - `TEMPLE_RUINS.md` the making of the `TempleRuins` demo: architecture, graphic design, tricks, UI,
     limitations, performance (update it when the demo changes)
   - `GEOMETRY_COOKBOOK.md`, `ATMOSPHERE_COOKBOOK.md`, `PERFORMANCE_AUDIT.md`, `JAVADOC_AUDIT.md`
+    (the two audits with a French version `*.fr.md`, kept in step)
 
 ## Conventions (see docs/DESIGN.md §12)
 
