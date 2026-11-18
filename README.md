@@ -9,7 +9,7 @@
 Aventura lets you build a 3D scene through a plain Java API (shapes, textures, lights, shadows, camera), then rasterizes it on the CPU and hands you the pixels: in a Swing window, or straight into a `BufferedImage` you can save, stream or post-process. Because nothing depends on graphics hardware or OpenGL drivers, it runs anywhere a JVM runs, headless servers included.
 
 <p align="center">
-  <img src="resources/doc/images/temple_ruins.jpg" alt="The TempleRuins demo: the ruins of a Greek temple on an island, rendered by Aventura" width="800">
+  <img src="docs/images/temple_ruins.jpg" alt="The TempleRuins demo: the ruins of a Greek temple on an island, rendered by Aventura" width="800">
 </p>
 
 *The `TempleRuins` demo: 56,676 triangles, textures, soft shadows, a visible sun and the haze of the distance, rendered on the CPU at 12 to 107 images per second on a laptop, 27 on average over its helicopter tour (1000 x 562 pixels), with an orbit camera, a fly camera and a helicopter tour. [How it was made](docs/TEMPLE_RUINS.md).*
@@ -30,39 +30,38 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 ## Gallery
 
 <p align="center">
-  <img src="resources/doc/images/temple_ruins_island.jpg" alt="TempleRuins: the island from the helicopter" width="400">
-  <img src="resources/doc/images/temple_ruins_colonnade.jpg" alt="TempleRuins: at the foot of the columns" width="400">
+  <img src="docs/images/temple_ruins_island.jpg" alt="TempleRuins: the island from the helicopter" width="400">
+  <img src="docs/images/temple_ruins_colonnade.jpg" alt="TempleRuins: at the foot of the columns" width="400">
 </p>
 <p align="center">
-  <img src="resources/doc/images/urbanscape_street.jpg" alt="UrbanScape: street level" width="400">
-  <img src="resources/doc/images/urbanscape_flight.jpg" alt="UrbanScape: overview with shadows" width="400">
+  <img src="docs/images/urbanscape_street.jpg" alt="UrbanScape: street level" width="400">
+  <img src="docs/images/urbanscape_flight.jpg" alt="UrbanScape: overview with shadows" width="400">
 </p>
 <p align="center">
-  <img src="resources/doc/images/hello_aventura.png" alt="Hello Aventura: sphere, cone and shadows" width="400">
-  <img src="resources/doc/images/aventura_demo.jpg" alt="AventuraDemo: textured shapes" width="400">
+  <img src="docs/images/hello_aventura.png" alt="Hello Aventura: sphere, cone and shadows" width="400">
+  <img src="docs/images/aventura_demo.jpg" alt="AventuraDemo: textured shapes" width="400">
 </p>
 <p align="center">
-  <img src="resources/doc/images/fractal_landscape.jpg" alt="FractalLandscape: procedural terrain" width="800">
+  <img src="docs/images/fractal_landscape.jpg" alt="FractalLandscape: procedural terrain" width="800">
 </p>
 <p align="center">
-  <img src="Aventura_moon_and_earth.jpg" alt="Earth and Moon rendered by Aventura" width="800">
+  <img src="docs/images/aventura_moon_and_earth.jpg" alt="Earth and Moon rendered by Aventura" width="800">
 </p>
 
 *Left to right, top to bottom: two more views of the `TempleRuins` demo (the island seen from its helicopter tour, the corner of the temple from the ground; see [The Making of a Demo](docs/TEMPLE_RUINS.md)), two frames of the `UrbanScape` helicopter flight (street level, then an overview showing the shadows of the buildings), the "Hello, Aventura" example below (shadows and specular highlight), the `AventuraDemo` textured shapes, the `FractalLandscape` procedural terrain, and the `EarthAndMoon` textured spheres.*
 
-The images of the documentation are rendered off-screen from the scenes of these programs by `com.aventura.demo.DocumentationImages` (in the test sources). Run it from the project root to regenerate them, for instance after a change of the engine:
+The images of the documentation are rendered off-screen from the scenes of these programs by `com.aventura.demo.DocumentationImages` (in the test sources of `aventura-demos`). Run it from the project root to regenerate them, for instance after a change of the engine:
 
 ```bash
-mvn test-compile
-java -Djava.awt.headless=true -cp target/classes:target/test-classes com.aventura.demo.DocumentationImages
+mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.DocumentationImages -Djava.awt.headless=true
 ```
 
-It writes all the images to `resources/doc/images`; a directory and image names can be given to regenerate only some of them, or to write them elsewhere for a comparison (see its Javadoc).
+It writes all the images to `docs/images`; a directory and image names can be given to regenerate only some of them, or to write them elsewhere for a comparison (see its Javadoc).
 
 The same scenes can be explored in a Swing window with `com.aventura.demo.SceneViewer` (with a display, so without the `headless` option):
 
 ```bash
-java -cp target/classes:target/test-classes com.aventura.demo.SceneViewer urbanscape_flight
+mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.SceneViewer -Dexec.args=urbanscape_flight
 ```
 
 Drag the mouse to turn the camera around the point it looks at, use the wheel to come closer or move away. The menus switch between the scenes, the rendering types and the shadows, soft shadows, textures, landmarks, light glow, light shafts, atmosphere, haze and fog options, reset the camera (Ctrl+R) and save the image shown (Ctrl+S). Rendering runs in a background thread, so the window stays responsive with slow scenes. A scene added to `DocumentationImages.scenes()` (a `DemoScene`: world, lights, camera position, rendering and perspective contexts) is available in the viewer without any other code.
@@ -83,11 +82,18 @@ cd Aventura
 mvn clean package
 ```
 
-This compiles the engine, runs the unit tests and produces `target/aventura-3.3.0-SNAPSHOT.jar`.
+This builds the two modules of the project, runs their unit tests and produces two jars:
+
+| Module | Jar | Content |
+|---|---|---|
+| `aventura-engine` | `aventura-engine/target/aventura-engine-3.3.0-SNAPSHOT.jar` | The rendering engine alone, without any dependency: what an application depends on |
+| `aventura-demos` | `aventura-demos/target/aventura-demos-3.3.0-SNAPSHOT.jar` | The demo applications and their textures (in its test sources: the visual test programs, the examples of the cookbooks, the scene viewer and the generator of the documentation images) |
 
 ### Run a demo
 
-Textures are loaded from `resources/texture/` with paths relative to the working directory, so **run the demos from the project root**.
+From the project root: Maven builds the engine, then the demos, and runs the program in `aventura-demos`.
+
+In Windows PowerShell, put each `-D` option in quotes, as PowerShell splits it at the dot: `mvn test-compile exec:java "-Dexec.mainClass=com.aventura.demo.temple.TempleRuins"`.
 
 ```bash
 # Default demo (Earth and Moon)
@@ -100,14 +106,15 @@ mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.UrbanScape
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.test.TestSphereTexture
 
-# Or straight from the jar built above (Earth and Moon)
-java -jar target/aventura-3.3.0-SNAPSHOT.jar
-java -cp target/aventura-3.3.0-SNAPSHOT.jar com.aventura.demo.AventuraDemo
+# Or straight from the jars built above (use ';' instead of ':' on Windows)
+java -cp aventura-engine/target/aventura-engine-3.3.0-SNAPSHOT.jar:aventura-demos/target/aventura-demos-3.3.0-SNAPSHOT.jar com.aventura.demo.temple.TempleRuins
 ```
+
+The textures of the demos are resources of `aventura-demos` (`src/main/resources/texture`), read from the classpath: the demos run from any directory, and from the jar as well.
 
 ### Import in an IDE
 
-Eclipse, IntelliJ IDEA and VS Code all open the project as an existing Maven project (`pom.xml` at the root). Sources are in `src/main/java`, tests in `src/test/java`.
+Eclipse, IntelliJ IDEA and VS Code all open the project as an existing Maven project: import the root folder, and the IDE finds the parent `pom.xml` and its two modules, `aventura-engine` and `aventura-demos` (in Eclipse: *File > Import > Maven > Existing Maven Projects*). Each module has its sources in `src/main/java` and its tests in `src/test/java`.
 
 ## Hello, Aventura
 
@@ -180,14 +187,14 @@ public class HelloAventura {
 }
 ```
 
-This program is also in the test sources (`com.aventura.demo.HelloAventura`, where the output file can be given as argument). Compile and run it against the classes built by Maven (use `;` instead of `:` on Windows):
+This program is also in the test sources of `aventura-demos` (`com.aventura.demo.HelloAventura`, where the output file can be given as argument). Compile and run it against the engine built by Maven (use `;` instead of `:` on Windows):
 
 ```bash
-javac -cp target/classes HelloAventura.java
-java -Djava.awt.headless=true -cp target/classes:. HelloAventura
+javac -cp aventura-engine/target/classes HelloAventura.java
+java -Djava.awt.headless=true -cp aventura-engine/target/classes:. HelloAventura
 ```
 
-To show the result in a Swing window instead, use a `SwingView` created with a Swing component (`new SwingView(perspective, frame)`) and draw `view.getImageView()` in its `paintComponent()`, as `EarthAndMoon` does. With another GUI toolkit, keep the `ImageView` and register a listener called with each new frame: `view.setFrameListener(image -> ...)`. To use textures, pass a `Texture` to the shape constructor, e.g. `new Sphere(1f, 48, new Texture("resources/texture/texture_moon_2048x1024.jpg"))`, or, for an image packaged with your application (in its classes or its jar), `new Texture(MyApp.class.getResource("/texture/moon.jpg"))`.
+To show the result in a Swing window instead, use a `SwingView` created with a Swing component (`new SwingView(perspective, frame)`) and draw `view.getImageView()` in its `paintComponent()`, as `EarthAndMoon` does. With another GUI toolkit, keep the `ImageView` and register a listener called with each new frame: `view.setFrameListener(image -> ...)`. To use textures, pass a `Texture` to the shape constructor, either from a file, e.g. `new Sphere(1f, 48, new Texture("images/moon.jpg"))`, or, for an image packaged with your application (in its resources, hence in its jar), from the classpath: `new Texture(MyApp.class.getResource("/texture/moon.jpg"))`, as the demos do.
 
 In the demos and in this example, the **Z axis points up** (it is used as the camera's "up" vector).
 
@@ -217,7 +224,7 @@ spot.setAngles(outerAngle, innerAngle); // ...and open or close the cone
 ```
 
 <p align="center">
-  <img src="resources/doc/images/spotlights.jpg" alt="Two spot lights: soft edge and sharp edge" width="600">
+  <img src="docs/images/spotlights.jpg" alt="Two spot lights: soft edge and sharp edge" width="600">
 </p>
 
 *Two spot lights (`TestLightingSpot1`): a white one with a soft edge aimed at the sphere and a warm one with a sharp edge aimed at the cube, over a dim ambient light.*
@@ -225,7 +232,7 @@ spot.setAngles(outerAngle, innerAngle); // ...and open or close the cone
 Shadow maps are only computed when shadowing is enabled in the `RenderContext`. Every kind of light then casts shadows, and each one keeps its own shadow map: the shadows of a sun, of a spot light and of a point light add up in the same scene.
 
 <p align="center">
-  <img src="resources/doc/images/spot_shadows.jpg" alt="A spot light casting the shadows of a column and a cone" width="600">
+  <img src="docs/images/spot_shadows.jpg" alt="A spot light casting the shadows of a column and a cone" width="600">
 </p>
 
 *A moving spot light with a dim directional moonlight (`TestLightingSpot3Shadows`): the spot lights only part of the floor, and the column and the cone cast their own shadow across it.*
@@ -233,7 +240,7 @@ Shadow maps are only computed when shadowing is enabled in the `RenderContext`. 
 A spot light looks at the scene through one perspective shadow map, whose field of view follows its outer angle. A point light shines in every direction, so it renders six maps, one for each face of a cube centered on it (+X, -X, +Y, -Y, +Z, -Z), and every point of the scene reads the map of the face it lies in. A light can be moved between two renderings (`setPosition`, `setLightVector`, `setAngles`) and its shadows follow:
 
 <p align="center">
-  <img src="resources/doc/images/point_shadows.jpg" alt="A point light in an open-top room casting shadows on the floor and the walls" width="600">
+  <img src="docs/images/point_shadows.jpg" alt="A point light in an open-top room casting shadows on the floor and the walls" width="600">
 </p>
 
 *A point light orbiting in an open-top room (`TestLightingPoint1Shadows`): the shadows of the column, the sphere, the cone and the cube spread on the floor and climb the walls.*
@@ -245,7 +252,7 @@ spot.setShadowFilter(ShadowFilter.PCF_3X3); // soft edges (default: ShadowFilter
 ```
 
 <p align="center">
-  <img src="resources/doc/images/soft_shadows.png" alt="Hard shadows on the left, soft shadows on the right" width="720">
+  <img src="docs/images/soft_shadows.png" alt="Hard shadows on the left, soft shadows on the right" width="720">
 </p>
 
 *The same spot light with a coarse shadow map (200 pixels), with hard shadows on the left and `PCF_3X3` on the right (`TestLightingSoftShadows`). The moonlight, whose filter is left to its default, keeps its hard edge.*
@@ -305,7 +312,7 @@ sun.setAppearance(new LightAppearance().setShaftsGain(1f)); // 0 (default) = no 
 ```
 
 <p align="center">
-  <img src="resources/doc/images/sun_street.jpg" alt="TestLightingSun: the sun behind a building, with its halo, lens flare and light shafts" width="600">
+  <img src="docs/images/sun_street.jpg" alt="TestLightingSun: the sun behind a building, with its halo, lens flare and light shafts" width="600">
 </p>
 
 `TestLightingGlow` shows a lamp circling around the objects of the spot light scene, passing behind them, with the visible lights switched on and off in turn; `TestLightingSun` is a street where the camera turns to bring the sun behind the buildings (with its lens flare and its light shafts); the same scene is `sun_street` in the SceneViewer, where the camera can be moved with the mouse.
@@ -319,10 +326,10 @@ In a landscape, the far objects look paler and less contrasted than the near one
 
 ### Step by step
 
-The scene of this tutorial is [`AtmosphereCookbook`](src/test/java/com/aventura/cookbook/AtmosphereCookbook.java): a lawn and two rows of pillars, one every 8 units, seen from the start of the row at the height of a walker's eye, under a blue sky. Every step is a few lines on top of the previous one; the picture shows the four atmospheres of the tutorial.
+The scene of this tutorial is [`AtmosphereCookbook`](aventura-demos/src/test/java/com/aventura/cookbook/AtmosphereCookbook.java): a lawn and two rows of pillars, one every 8 units, seen from the start of the row at the height of a walker's eye, under a blue sky. Every step is a few lines on top of the previous one; the picture shows the four atmospheres of the tutorial.
 
 <p align="center">
-  <img src="resources/doc/images/atmosphere_steps.jpg" alt="The same avenue of pillars: clear air, with the haze, with a bank of fog, with both" width="800">
+  <img src="docs/images/atmosphere_steps.jpg" alt="The same avenue of pillars: clear air, with the haze, with a bank of fog, with both" width="800">
 </p>
 
 *Clear air (step 1, top left), the haze (step 2, top right), a bank of fog (step 3, bottom left), both (step 4, bottom right).*
@@ -368,7 +375,7 @@ bank.setCenter(new Vector4(10f, 30f, 2.2f, 1f));   // a fog is a plain object: m
 **Step 5: your own fog.** A `Fog` only gives the optical depth of a ray and a sphere that contains it, so a new kind is one class, and the renderer does the rest. The cookbook writes a `GroundMist`, a layer of mist that hugs the ground, in about 40 lines:
 
 <p align="center">
-  <img src="resources/doc/images/ground_mist.jpg" alt="The avenue of pillars in a mist that hugs the ground" width="600">
+  <img src="docs/images/ground_mist.jpg" alt="The avenue of pillars in a mist that hugs the ground" width="600">
 </p>
 
 The [Atmosphere Cookbook](docs/ATMOSPHERE_COOKBOOK.md) goes further: the contracts of an effect, the toolbox, the five recipes of this tutorial in depth (the haze, the bank of fog, the switches, a fog that moves, a new kind of fog), and how to test an atmosphere; its examples are compiled and tested. A [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) does the same for the shapes of the `World`.
@@ -380,23 +387,23 @@ Everything can be switched, from the largest to the smallest scope: `RenderConte
 The strength of a haze or of a fog is a **visibility**, like in meteorology: the distance, in the units of the scene, at which the contrast of an object with its background falls to 5% (for a fog, in the densest part of it). Three models give the share of haze `f(d)`: `EXPONENTIAL` (the default, the law of the extinction of light in a homogeneous medium), `EXPONENTIAL_SQUARED` (clear air near the camera, then a faster fading) and `LINEAR` (from the start distance to the visibility). `setStartDistance()` keeps the first units clear, `setMaxFactor()` (0.95 by default) leaves a trace of their color to the farthest objects, and `setColor()` gives the haze a color of its own, which is needed when the background is not a sky (a black background would darken the objects). The distance is the real distance to the camera, so the haze does not change when the camera turns. A fog has a `setColor()` too (a light grey by default). For each pixel, the renderer follows the ray of the eye through the fog up to the surface that was drawn there (up to infinity for the sky) and integrates the density along it: the formula is exact, so the image does not depend on any sampling. A pixel gets `color * exp(-t) + fog color * (1 - exp(-t))`, with `t` the optical depth of the ray in the fog. Several fogs are drawn from the farthest to the nearest, after the haze.
 
 <p align="center">
-  <img src="resources/doc/images/haze_compare.jpg" alt="TestAtmosphere: an avenue without and with the haze" width="800">
+  <img src="docs/images/haze_compare.jpg" alt="TestAtmosphere: an avenue without and with the haze" width="800">
 </p>
 
 *An avenue seen from its start (`TestAtmosphere`), without the atmosphere on the left and with the haze on the right: without it, the last buildings have the same colors as the first ones.*
 
 <p align="center">
-  <img src="resources/doc/images/haze_landscape.jpg" alt="The fractal landscape with the haze of the distance" width="800">
+  <img src="docs/images/haze_landscape.jpg" alt="The fractal landscape with the haze of the distance" width="800">
 </p>
 
 <p align="center">
-  <img src="resources/doc/images/fog_compare.jpg" alt="TestFog: the avenue without and with a bank of fog, soft at its edges" width="800">
+  <img src="docs/images/fog_compare.jpg" alt="TestFog: the avenue without and with a bank of fog, soft at its edges" width="800">
 </p>
 
 *The same avenue with a bank of fog (`TestFog`), without it on the left and with it on the right: a sphere whose density falls to nothing at its surface; the buildings behind it are dimmed, the sky too, the ones in front of it are not.*
 
 <p align="center">
-  <img src="resources/doc/images/fog_landscape.jpg" alt="The fractal landscape with two random banks of fog on its hills" width="800">
+  <img src="docs/images/fog_landscape.jpg" alt="The fractal landscape with two random banks of fog on its hills" width="800">
 </p>
 
 *The `FractalLandscape` demo with two banks of fog on its hills (Landscape / Generate fog), and its haze.*
@@ -503,13 +510,13 @@ All demos live in `com.aventura.demo` (`TempleRuins`, made of several classes, i
 | `TempleRuins` | The ruins of a Greek temple on an island, with olive trees, boulders and the sea up to the horizon. A scene of about 57,000 triangles that uses most of the API: a three-level tree of `Element`s built from a plan, two new shapes (`TaperedDrum`, `Boulder`), textures from files and computed ones, repeated like tiles over the ground and the sea, Scaling / Rotation / Translation, a warm sun with soft shadows limited to the island (`setShadowingElement()`), a bluish ambient light, haze and sea mist | Orbit camera (`O`), fly camera (`F`) and helicopter tour (`H`, a Catmull-Rom spline flown at constant speed, banking in the turns; `Space` pauses it, dragging the mouse takes the controls); mouse and wheel as in `FractalLandscape`; `Sun` menu (`Page Up` / `Page Down`, `Left` / `Right`): move the sun; `Rendering` and `Effects` menus as in `FractalLandscape`; `Camera` / `Statistics` (`I`): the size of the scene and the work of the engine for the last image, also printed in the console when the window is closed |
 
 <p align="center">
-  <img src="resources/doc/images/temple_ruins_debris.jpg" alt="TempleRuins: the ruined south side of the temple" width="400">
-  <img src="resources/doc/images/temple_ruins_sun.jpg" alt="TempleRuins: against the light, the sun and its lens flare" width="400">
+  <img src="docs/images/temple_ruins_debris.jpg" alt="TempleRuins: the ruined south side of the temple" width="400">
+  <img src="docs/images/temple_ruins_sun.jpg" alt="TempleRuins: against the light, the sun and its lens flare" width="400">
 </p>
 
 *The `TempleRuins` demo: the ruined side of the temple, and the sun seen from behind it. [TempleRuins — The Making of a Demo](docs/TEMPLE_RUINS.md) tells how it was built: its architecture, its graphic design, the tricks and the design choices, its controls and menus, its limitations and its performance.*
 
-The `src/test/java/com/aventura/test` folder holds about eighty additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows), `TestLightingGlow` (a lamp with a visible halo, hidden behind the objects) and `TestLightingSun` (a street where the camera turns to bring the sun behind the buildings), `TestAtmosphere` (an avenue whose buildings fade into the sky with the distance) and `TestFog` (the same avenue with banks of fog that the camera crosses). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
+The `aventura-demos/src/test/java/com/aventura/test` folder holds about eighty additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows), `TestLightingGlow` (a lamp with a visible halo, hidden behind the objects) and `TestLightingSun` (a street where the camera turns to bring the sun behind the buildings), `TestAtmosphere` (an avenue whose buildings fade into the sky with the distance) and `TestFog` (the same avenue with banks of fog that the camera crosses). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
 
 ## Tests
 
@@ -517,7 +524,7 @@ The `src/test/java/com/aventura/test` folder holds about eighty additional visua
 mvn test
 ```
 
-The unit tests (JUnit 4, about 620 of them) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, the visible lights, the atmosphere with its haze and its fogs), the textures and their mipmaps, the statistics of a scene, the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) and of the [Atmosphere Cookbook](docs/ATMOSPHERE_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
+The unit tests (JUnit 4, about 640 of them, in both modules) cover the math library (vectors, matrices, quaternions, translations, rotations, scalings, geometry tools, bounding boxes), the Z-buffer, elements, the lighting model (point and spot light attenuation and cone, the shadow maps of the spot and point lights, including the choice of the cube face, the soft shadow filter, the visible lights, the atmosphere with its haze and its fogs), the textures and their mipmaps, the statistics of a scene, the perspective bounds, a smoke render of every light type with and without shadows, off-screen renders of the rendering types checked pixel by pixel, the render context, the pure logic of the interactive demos, the examples of the [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) and of the [Atmosphere Cookbook](docs/ATMOSPHERE_COOKBOOK.md), and the generation of the images of the documentation. They run without a display. A few placeholder tests that were never written are marked `@Ignore` so they show up as skipped rather than failing.
 
 ## Use cases
 
@@ -528,7 +535,7 @@ Aventura is first a teaching engine: the algorithms of a 3D pipeline, readable, 
 - **Tests of an application that displays 3D.** The same scene gives the same image from one run to the next, whatever the number of threads (the documentation images and the checksums of `PerfBench` rely on it), so a rendering can be compared with a reference image.
 - **Learning and experimenting.** Every stage of the pipeline is plain Java that can be read, stepped through in a debugger and changed: a place to try a shading model, a shadow technique or an optimization and measure its effect.
 
-What would make Aventura easier to embed in an application (a ready-made Swing component with its camera, rendering on demand, textures from the classpath, model import, picking, a published artifact) is listed in the [backlog](docs/BACKLOG.md#10-embedding-aventura-in-an-application).
+What would make Aventura easier to embed in an application (a ready-made Swing component with its camera, rendering on demand, model import, picking, a published artifact) is listed in the [backlog](docs/BACKLOG.md#10-embedding-aventura-in-an-application).
 
 ## Use Aventura in your own project
 
@@ -538,28 +545,33 @@ Install it in your local Maven repository:
 mvn install
 ```
 
-then declare it as a dependency:
+then declare the engine as a dependency (the demos are not needed):
 
 ```xml
 <dependency>
   <groupId>com.aventura</groupId>
-  <artifactId>aventura</artifactId>
+  <artifactId>aventura-engine</artifactId>
   <version>3.3.0-SNAPSHOT</version>
 </dependency>
 ```
+
+Or simply put `aventura-engine-3.3.0-SNAPSHOT.jar` on the classpath of your application: it has no dependency of its own.
 
 ## Project layout
 
 ```
 Aventura/
-├── pom.xml
-├── src/
-│   ├── main/java/com/aventura/   engine, math, model, view, demo
-│   └── test/java/com/aventura/   JUnit tests + visual test programs (com.aventura.test)
-├── resources/
-│   ├── texture/                  sample textures used by the demos
-│   └── doc/                      design notes (LightsAndShadowsDesign.pptx) and images
-└── Aventura_moon_and_earth.jpg
+├── pom.xml                        parent: builds the two modules, holds their shared settings
+├── aventura-engine/               the rendering engine (no dependency but the JDK)
+│   ├── src/main/java/com/aventura/   context, engine, math, model, tools, view
+│   └── src/test/java/com/aventura/   JUnit tests
+├── aventura-demos/                the demos (depends on the engine)
+│   ├── src/main/java/com/aventura/demo/      demo applications (temple/: TempleRuins)
+│   ├── src/main/resources/texture/           the textures of the demos
+│   └── src/test/java/com/aventura/           tests of the demos, cookbook examples (cookbook/),
+│                                             visual test programs (test/), SceneViewer, PerfBench,
+│                                             DocumentationImages (demo/)
+└── docs/                          documentation; images/: its images; LightsAndShadowsDesign.pptx
 ```
 
 ## Current scope and limitations
@@ -570,11 +582,11 @@ Aventura/
 - Soft shadows have a penumbra of a fixed width of a few texels (no wider penumbra far from the object that casts the shadow), they are off by default, and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
 - Lights are invisible by default. `RenderContext.setLightGlow(true)` draws a halo around point and spot lights (hidden by the objects in front of them); the sun (directional lights) is drawn as a disc and a halo in the sky, with a lens flare, and optionally light shafts; and the halos are not drawn in `LINE` rendering nor under an orthographic perspective.
 - The atmosphere has a haze that depends on the distance only (a single color for the whole sky, no warmer haze towards the sun, no mist in the valleys) and spherical fogs with a soft parabolic profile; the extinction is the same for the three color channels, nothing is lit by the sun through a fog (no light scattering, the fog has its own color) and the fogs do not fade the sun or the halos of the point lights. It is not drawn in `LINE` rendering nor under an orthographic perspective.
-- Textures are loaded from an image file or from a URL, such as a resource of the classpath (`new Texture(MyApp.class.getResource("/texture/moon.jpg"))`). The demos still read theirs from `resources/texture`, relative to the working directory: run them from the project root.
+- Textures are loaded from an image file or from a URL, such as a resource of the classpath (`new Texture(MyApp.class.getResource("/texture/moon.jpg"))`), as the demos do.
 
 ## License
 
-Aventura is released under the [MIT License](LICENSE.md). The license covers the source code; the sample images in `resources/texture` are provided to run the demos and come from various sources.
+Aventura is released under the [MIT License](LICENSE.md). The license covers the source code; the sample images in `aventura-demos/src/main/resources/texture` are provided to run the demos and come from various sources.
 
 ## Author
 

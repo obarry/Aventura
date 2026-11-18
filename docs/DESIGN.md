@@ -8,7 +8,7 @@
 |---|---|
 | **What** | A software 3D rendering engine: scene API → CPU rasterizer → pixels |
 | **Language** | Java 21, JDK only (`java.desktop`), no native code, no GPU |
-| **Size** | ~30 k lines in `src/main` (~130 classes), ~150 test classes (~60 JUnit classes, ~80 visual test programs), ~620 JUnit tests |
+| **Size** | ~30 k lines of main sources (~130 classes, engine and demos), ~150 test classes (~60 JUnit classes, ~80 visual test programs), ~640 JUnit tests |
 | **License** | MIT |
 | **Status** | `3.3.0-SNAPSHOT` — stable core, lighting & shadows actively evolving |
 
@@ -97,7 +97,7 @@ flowchart TB
 
 ```mermaid
 pie showData
-    title Lines of code per package (src/main)
+    title Lines of code per package (main sources; demo is the aventura-demos module)
     "model" : 10908
     "demo" : 6848
     "math" : 5509
@@ -106,6 +106,11 @@ pie showData
     "context" : 866
     "tools" : 593
 ```
+
+The code is split into two Maven modules under a parent `pom.xml`: **`aventura-engine`**, every package below
+but `demo`, with no dependency but the JDK, and **`aventura-demos`**, the `demo` package (the demo applications,
+with their textures as resources of the module), whose tests also hold the visual test programs, the examples of
+the cookbooks, `SceneViewer`, `PerfBench` and `DocumentationImages`. The engine never depends on the demos.
 
 | Package | Responsibility |
 |---|---|
@@ -527,7 +532,7 @@ xychart-beta
 ```
 
 <p align="center">
-  <img src="../resources/doc/images/spotlights.jpg" alt="Two spot lights, soft and sharp edge" width="560"><br/>
+  <img src="images/spotlights.jpg" alt="Two spot lights, soft and sharp edge" width="560"><br/>
   <em>Soft-edged (white) and sharp-edged (warm) spot lights — <code>TestLightingSpot1</code>.</em>
 </p>
 
@@ -800,12 +805,12 @@ with the distance to the light, so acne may show on very distant surfaces (see t
 [backlog](BACKLOG.md#3-shadows)).
 
 <p align="center">
-  <img src="../resources/doc/images/spot_shadows.jpg" alt="A spot light and a dim moonlight casting shadows" width="560"><br/>
+  <img src="images/spot_shadows.jpg" alt="A spot light and a dim moonlight casting shadows" width="560"><br/>
   <em>One perspective shadow map for a spot light — <code>TestLightingSpot3Shadows</code>.</em>
 </p>
 
 <p align="center">
-  <img src="../resources/doc/images/point_shadows.jpg" alt="A point light in an open-top room casting shadows on the floor and walls" width="560"><br/>
+  <img src="images/point_shadows.jpg" alt="A point light in an open-top room casting shadows on the floor and walls" width="560"><br/>
   <em>A cube map of six faces for a point light, shadows climbing the walls — <code>TestLightingPoint1Shadows</code>.</em>
 </p>
 
@@ -840,7 +845,7 @@ The edge of a shadow becomes a penumbra two or three texels wide, without stair 
   projections to measure the gradient of the surface.
 
 <p align="center">
-  <img src="../resources/doc/images/soft_shadows.png" alt="Hard shadows on the left, soft shadows on the right" width="560"><br/>
+  <img src="images/soft_shadows.png" alt="Hard shadows on the left, soft shadows on the right" width="560"><br/>
   <em>Hard (left) and <code>PCF_3X3</code> (right) shadows of a spot light with a coarse map — <code>TestLightingSoftShadows</code>.</em>
 </p>
 
@@ -850,7 +855,7 @@ tuning constants of the bias are fixed. A point light costs up to six shadow pas
 some faces are empty.
 
 <p align="center">
-  <img src="../resources/doc/images/urbanscape_flight.jpg" alt="UrbanScape overview with building shadows" width="560"><br/>
+  <img src="images/urbanscape_flight.jpg" alt="UrbanScape overview with building shadows" width="560"><br/>
   <em>Directional-light shadows in the <code>UrbanScape</code> demo.</em>
 </p>
 
@@ -1050,7 +1055,7 @@ xychart-beta
 | Lights | Invisible by default; optional halo of point and spot lights, and disc, halo, lens flare and optional light shafts of the sun (`setLightGlow`), hidden by the objects |
 | Atmosphere | A haze that depends on the distance only and spherical fogs with a soft edge (one color each, same extinction for each channel, no scattering of the light of the sun), as a post-process (`World.setAtmosphere`, `RenderContext.setAtmosphere`); not in `LINE` rendering nor orthographic |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener. The image is copied into the window by Java's software routines: on a screen scaled by the system (HiDPI, e.g. 200%), it is enlarged at each frame, a few ms per image (BACKLOG §6) |
-| Assets | Textures loaded from an image file or a URL (e.g. a classpath resource, `new Texture(URL)`); the demos still read theirs from file paths, relative to the project root |
+| Assets | Textures loaded from an image file or a URL (e.g. a classpath resource, `new Texture(URL)`, as the demos do) |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |
 
 ### Roadmap (candidate items)
@@ -1066,7 +1071,7 @@ flowchart LR
     end
     subgraph NEXT["Mid term"]
         m1[Distance culling of<br/>cube map faces]
-        m2[Maven modules: engine and demos,<br/>runnable demo jars]
+        m2[Runnable demo jars,<br/>published engine artifact]
         m3[Multi-threaded rasterization<br/>by screen tiles]
     end
     subgraph LATER["Ideas"]
@@ -1090,7 +1095,8 @@ flowchart LR
   `Perspective` setters replace its projection, so derived matrices go through
   `ViewProjection.refresh()` once per frame. A result kept from one frame to the next must be checked against
   its inputs at each frame, as the shadow map kept by `setStaticShadowCasters()` is (§7), never kept on trust.
-- **Run demos from the project root**: texture paths are relative to the working directory.
+- **Textures of the demos are resources** of `aventura-demos`, read from the classpath (`DemoTextures`): a demo runs
+  from any directory, and from a jar.
 - **Tests must run headless**: Surefire sets `-Djava.awt.headless=true`.
 
 ---

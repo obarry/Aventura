@@ -235,7 +235,7 @@ L'index affiche aujourd'hui 19 packages par ordre alphabétique (`context` en pr
 
 ### S4. Les images et les schémas
 
-- Copier les images de `resources/doc/images` dans des dossiers `doc-files` (à côté des `package-info.java`, ou
+- Copier les images de `docs/images` dans des dossiers `doc-files` (à côté des `package-info.java`, ou
   sous `src/main/javadoc/doc-files` pour la page d'accueil) : rendus de la galerie, éclairage, `UrbanScape`.
 - Les schémas **Mermaid** de DESIGN (architecture, pipeline, contextes, points d'extension) ne sont pas interprétés
   par Javadoc. Le plus simple et le plus durable : les exporter une fois en SVG (`mermaid-cli`) dans `doc-files`.

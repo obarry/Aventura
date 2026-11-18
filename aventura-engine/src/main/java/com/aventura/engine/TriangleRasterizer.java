@@ -1,0 +1,601 @@
+/*
+ * ------------------------------------------------------------------------------ 
+ * MIT License
+ * 
+ * Copyright (c) 2016-2026 Olivier BARRY
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ------------------------------------------------------------------------------
+ */
+package com.aventura.engine;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.math.vector.Tools;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.world.Vertex;
+import com.aventura.model.world.triangle.Triangle;
+import com.aventura.tools.tracing.Tracer;
+
+import com.aventura.model.perspective.PerspectiveType;
+
+/**
+ * TriangleRasterizer is the pure geometric core of the rendering pipeline: it
+ * knows how to walk the pixels covered by a triangle on screen, interpolate
+ * per-vertex attributes (world position, normal, texture coordinates) with
+ * perspective correction, test depth against a ZBuffer, and hand each
+ * surviving pixel to a FragmentConsumer.
+ *
+ * It deliberately knows NOTHING about lighting, materials, or shadows — that
+ * is entirely the responsibility of whichever FragmentConsumer is passed in.
+ * This same class is used both for normal rendering (with a ShadingConsumer)
+ * and for shadow map generation (with a DepthOnlyConsumer): the only
+ * difference is which consumer is supplied.
+ *
+ * It also does not know or care whether a triangle is flat-shaded or
+ * smooth-shaded: the caller decides which 3 normals to pass in (either each
+ * vertex's own normal for smooth shading, or the triangle's single face
+ * normal repeated 3 times for flat shading) — interpolating 3 identical
+ * values naturally produces a constant result, so no special case is needed
+ * here.
+ *
+ * @author Olivier BARRY
+ * @since 2026 (replaces the rasterizeTriangle/rasterizeScanLine pair on the
+ *              legacy Rasterizer)
+ *
+ */
+public class TriangleRasterizer {
+
+	private final PerspectiveContext perspectiveCtx;
+	private final ZBuffer zBuffer;
+
+	// Reused across every pixel of every triangle rasterized by this instance.
+	// See Fragment's class-level lifecycle contract.
+	private final Fragment fragment = new Fragment();
+
+	// Minimal pixel statistics for now; extended in the tactical clean-up phase.
+	private int renderedPixels = 0;
+	private int discardedPixels = 0;
+	private int rasterizedLines = 0; // scan lines (rows) inside the screen, whether or not they cover a pixel center
+
+	// Rows of the screen this rasterizer draws, from firstBandRow (inclusive) to endBandRow (exclusive): the whole
+	// screen by default, one band of it when several threads share the rasterization (see BandRasterizer)
+	private int firstBandRow = Integer.MIN_VALUE;
+	private int endBandRow = Integer.MAX_VALUE;
+
+	public TriangleRasterizer(PerspectiveContext perspectiveCtx, ZBuffer zBuffer) {
+		this.perspectiveCtx = perspectiveCtx;
+		this.zBuffer = zBuffer;
+	}
+
+	public int getRenderedPixels() {
+		return renderedPixels;
+	}
+
+	public int getDiscardedPixels() {
+		return discardedPixels;
+	}
+
+	/**
+	 * @return the number of scan lines (screen rows) processed since the last resetStats(), same
+	 *         meaning as the legacy Rasterizer's rasterized_lines: rows of the triangle inside the
+	 *         screen, including those on which no pixel center is covered.
+	 */
+	public int getRasterizedLines() {
+		return rasterizedLines;
+	}
+
+	/**
+	 * Restricts the drawing to a band of rows of the screen: the pixels outside of it are neither drawn nor
+	 * counted. A triangle crossing several bands is cut at the same rows as it would be drawn on the whole screen,
+	 * so the bands drawn one by one (or by different threads) give exactly the image of the whole screen.
+	 *
+	 * @param firstRow first row of the band (inclusive), in screen coordinates (-halfHeight .. halfHeight, Y up)
+	 * @param endRow   end of the band (exclusive)
+	 */
+	public void setRows(int firstRow, int endRow) {
+		this.firstBandRow = firstRow;
+		this.endBandRow = endRow;
+	}
+
+	/**
+	 * Cancels setRows(): draws on the whole screen (the default).
+	 */
+	public void setAllRows() {
+		setRows(Integer.MIN_VALUE, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * Quick test, before any set-up: true if the triangle has no row in the screen and in the band of setRows(),
+	 * so that rasterize() would draw and count nothing. Lets a caller skip a triangle entirely (e.g. not even create
+	 * its FragmentConsumer) when it does not cross the band of this rasterizer. Only valid for corners that are all
+	 * in front of the camera (see NearPlaneClipper.isInFront()): otherwise their projection is meaningless.
+	 */
+	public boolean coversNoRow(Vertex v1, Vertex v2, Vertex v3) {
+		float y1 = yScreen(v1), y2 = yScreen(v2), y3 = yScreen(v3);
+		return firstRow(y1, y2, y3) >= endRow(y1, y2, y3);
+	}
+
+	/** First row (inclusive) of a triangle whose corners are at screen heights y1, y2, y3, clipped to the screen and the band */
+	private int firstRow(float y1, float y2, float y3) {
+		int first = Math.max((int) Math.ceil(Math.min(y1, Math.min(y2, y3))), -perspectiveCtx.getPixelHalfHeight());
+		return Math.max(first, firstBandRow);
+	}
+
+	/** End row (exclusive) of a triangle whose corners are at screen heights y1, y2, y3, clipped to the screen and the band */
+	private int endRow(float y1, float y2, float y3) {
+		int end = Math.min((int) Math.ceil(Math.max(y1, Math.max(y2, y3))), perspectiveCtx.getPixelHalfHeight() + 1);
+		return Math.min(end, endBandRow);
+	}
+
+	/**
+	 * Resets the pixel counters to zero. The legacy Rasterizer used to do this at the start of
+	 * every rasterizeTriangle() call, giving per-triangle stats; call this at the same point if
+	 * you need to preserve that granularity across multiple rasterize() calls sharing one
+	 * TriangleRasterizer instance (as the Rasterizer façade does, one instance per frame).
+	 */
+	public void resetStats() {
+		renderedPixels = 0;
+		discardedPixels = 0;
+		rasterizedLines = 0;
+	}
+
+	/**
+	 * Rasterizes a triangle for a depth-only pass (e.g. shadow map generation): no normal, world
+	 * position, or texture coordinate is interpolated at all, since a depth-only FragmentConsumer
+	 * (DepthOnlyConsumer) never reads Fragment.getNormal()/getWorldPosition()/getTexU() etc. This
+	 * is not just a convenience overload -- it skips real per-pixel work (world position + normal
+	 * interpolation) that a full rasterize() call would otherwise waste on every pixel of a shadow
+	 * map, and it means normals do NOT need to have been computed for this triangle beforehand
+	 * (transformElement(e, false) deliberately skips that, exactly for this pass).
+	 *
+	 * IMPORTANT: a FragmentConsumer used with THIS overload must only read
+	 * Fragment.getScreenX()/getScreenY()/getZ() -- getWorldPosition()/getNormal()/getTexU() etc.
+	 * are left untouched (still holding whatever a previous triangle's rasterize() call last wrote
+	 * into the reused Fragment instance) and must not be relied upon.
+	 */
+	public void rasterize(Triangle t, FragmentConsumer consumer) {
+		rasterize(t.getV1(), t.getV2(), t.getV3(), null, null, null, null, null, null, consumer);
+	}
+
+	/**
+	 * Rasterizes a triangle without texture (e.g. an untextured material, or a depth-only pass
+	 * that still wants normal/world-position interpolation for some reason). Equivalent to calling
+	 * the full overload with a null texture coordinate for all 3 corners.
+	 */
+	public void rasterize(Triangle t, Vector3 normal1, Vector3 normal2, Vector3 normal3, FragmentConsumer consumer) {
+		rasterize(t.getV1(), t.getV2(), t.getV3(), normal1, normal2, normal3, null, null, null, consumer);
+	}
+
+	/**
+	 * Rasterizes a triangle, producing one Fragment per covered, depth-test-passing pixel and
+	 * handing it to consumer.
+	 *
+	 * @param t				the triangle to rasterize (used for screen/world vertex positions and texture)
+	 *						Deprecated as the primary entry point in favor of the Vertex-based overload below
+	 *						(e.g. NearPlaneClipper's clipped corners aren't backed by a Triangle); kept for
+	 *						callers that already have one.
+	 * @param normal1..3	per-corner normals to interpolate; pass each vertex's own normal for
+	 *						smooth shading, or the same face normal 3 times for flat shading —
+	 *						this class does not distinguish between the two cases. Pass null for
+	 *						all three (see the depth-only overload above) to skip normal AND world
+	 *						position interpolation entirely for a pure depth-only pass.
+	 * @param texCoord1..3	per-corner homogeneous texture coordinates (as stored on Triangle), or
+	 *						null (all three) if this triangle has no texture. Interpolated here with
+	 *						perspective correction but left UN-divided by W — Fragment exposes the
+	 *						raw (u, v, w), and it's up to Material (which knows the texture's
+	 *						orientation) to apply the right projective divide. This class has no
+	 *						notion of texture orientation at all.
+	 * @param consumer		receives one Fragment per surviving pixel
+	 */
+	public void rasterize(
+			Triangle t,
+			Vector3 normal1, Vector3 normal2, Vector3 normal3,
+			Vector4 texCoord1, Vector4 texCoord2, Vector4 texCoord3,
+			FragmentConsumer consumer) {
+		rasterize(t.getV1(), t.getV2(), t.getV3(), normal1, normal2, normal3, texCoord1, texCoord2, texCoord3, consumer);
+	}
+
+	/**
+	 * Rasterizes a triangle given its 3 corners directly as Vertex (rather than through a
+	 * Triangle), producing one Fragment per covered, depth-test-passing pixel and handing it to
+	 * consumer. This is the primary implementation -- the Triangle-based overloads above just
+	 * extract t.getV1()/getV2()/getV3() and delegate here. The Vertex-based entry point exists for
+	 * callers that build their own corners without a backing Triangle, e.g. NearPlaneClipper's
+	 * clipped sub-triangles (new, temporary Vertex instances at a cut corner, carrying
+	 * interpolated position/world position/normal/texture coordinate, exactly like a real one).
+	 *
+	 * @param v1,v2,v3    the triangle's 3 corners (projected: getProjPos() already set)
+	 * @param normal1..3  per-corner normals to interpolate; pass each vertex's own normal for
+	 *                    smooth shading, or the same face normal 3 times for flat shading --
+	 *                    this class does not distinguish between the two cases. Pass null for
+	 *                    all three to skip normal AND world position interpolation entirely for
+	 *                    a pure depth-only pass.
+	 * @param texCoord1..3 per-corner homogeneous texture coordinates, or null (all three) if this
+	 *                    triangle has no texture. Interpolated here with perspective correction
+	 *                    but left UN-divided by W -- Fragment exposes the raw (u, v, w), and it's
+	 *                    up to Material (which knows the texture's orientation) to apply the right
+	 *                    projective divide. This class has no notion of texture orientation at all.
+	 * @param consumer    receives one Fragment per surviving pixel
+	 */
+	public void rasterize(
+			Vertex pv1, Vertex pv2, Vertex pv3,
+			Vector3 normal1, Vector3 normal2, Vector3 normal3,
+			Vector4 texCoord1, Vector4 texCoord2, Vector4 texCoord3,
+			FragmentConsumer consumer) {
+
+		if (Tracer.debug) Tracer.traceDebug(this.getClass(), "Rasterizing triangle.");
+
+		// Early rejection (performance audit R4): about half of the triangles of a detailed scene cover no pixel
+		// center at all (small or far triangles, between two pixel centers). The bounding box of the triangle on the
+		// screen tells it before any allocation, sort or set-up. It uses exactly the bounds of the rows and columns
+		// below, so it only rejects triangles that would draw nothing. The rows are still counted, as the full
+		// rasterization would (rasterizedLines, see RasterizerStats).
+		// The rows are also clipped to the band of setRows(), if any: a triangle outside of the band stops here.
+		int halfWidth = perspectiveCtx.getPixelHalfWidth();
+		float x1 = xScreen(pv1), x2 = xScreen(pv2), x3 = xScreen(pv3);
+		float y1 = yScreen(pv1), y2 = yScreen(pv2), y3 = yScreen(pv3);
+		int firstRow = firstRow(y1, y2, y3);
+		int endRow = endRow(y1, y2, y3); // exclusive
+		int firstColumn = Math.max((int) Math.ceil(Math.min(x1, Math.min(x2, x3))), -halfWidth);
+		int endColumn = Math.min((int) Math.ceil(Math.max(x1, Math.max(x2, x3))), halfWidth + 1); // exclusive
+		if (firstRow >= endRow || firstColumn >= endColumn) {
+			if (endRow > firstRow) rasterizedLines += endRow - firstRow;
+			return; // No pixel center inside the triangle
+		}
+
+		// The scale of the texture on the screen, the same computation for all the pixels of the triangle (mipmapping)
+		if (texCoord1 != null) {
+			boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
+			fragment.setTexScale(texLog2PixelSize(x1, y1, x2, y2, x3, y3, texCoord1, texCoord2, texCoord3,
+					frustum ? pv1.getProjPos().getW() : 1, frustum ? pv2.getProjPos().getW() : 1, frustum ? pv3.getProjPos().getW() : 1), frustum);
+		}
+
+		RasterVertex a = new RasterVertex(pv1, normal1, texCoord1);
+		RasterVertex b = new RasterVertex(pv2, normal2, texCoord2);
+		RasterVertex c = new RasterVertex(pv3, normal3, texCoord3);
+
+		RasterVertex[] ordered = sortByScreenY(a, b, c);
+		RasterVertex v1 = ordered[0];
+		RasterVertex v2 = ordered[1];
+		RasterVertex v3 = ordered[2];
+
+		float dP1P2, dP1P3;
+
+		if (yScreen(v2.vertex) - yScreen(v1.vertex) > 0) {
+			dP1P2 = (xScreen(v2.vertex) - xScreen(v1.vertex)) / (yScreen(v2.vertex) - yScreen(v1.vertex));
+		} else { // horizontal segment, infinite invert slope
+			dP1P2 = Float.MAX_VALUE;
+		}
+
+		if (yScreen(v3.vertex) - yScreen(v1.vertex) > 0) {
+			dP1P3 = (xScreen(v3.vertex) - xScreen(v1.vertex)) / (yScreen(v3.vertex) - yScreen(v1.vertex));
+		} else { // horizontal segment, infinite invert slope
+			dP1P3 = Float.MAX_VALUE;
+		}
+
+		// Pixel-center convention: pixel (x, y) is the unit square centered on the integer point
+		// (x, y), i.e. it covers [x - 0.5, x + 0.5) x [y - 0.5, y + 0.5), and it belongs to the
+		// triangle if its CENTER does. Rows are the y with y1 <= y < y3 (half-open, so a row
+		// exactly on the edge shared by two stacked triangles is drawn once, not twice), clipped
+		// to the screen. This replaces the former (int) truncation toward zero, which made row 0
+		// (and column 0, see rasterizeScanLine) cover [-1, 1): twice the size of the others.
+		// These rows are [firstRow, endRow), computed above (v1 has the lowest Y, v3 the highest), also clipped to
+		// the band of setRows().
+
+		if (dP1P2 > dP1P3) {
+			for (int y = firstRow; y < endRow; y++) {
+				if (y < yScreen(v2.vertex)) {
+					rasterizeScanLine(y, v1, v3, v1, v2, consumer);
+				} else {
+					rasterizeScanLine(y, v1, v3, v2, v3, consumer);
+				}
+			}
+		} else {
+			for (int y = firstRow; y < endRow; y++) {
+				if (y < yScreen(v2.vertex)) {
+					rasterizeScanLine(y, v1, v2, v1, v3, consumer);
+				} else {
+					rasterizeScanLine(y, v2, v3, v1, v3, consumer);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Rasterizes one horizontal scan line of pixels, from segment [va, vb] to segment [vc, vd] —
+	 * same geometry as the legacy rasterizeScanLine, minus every bit of lighting/texture-color/
+	 * shadow logic, which now lives entirely in whatever FragmentConsumer is supplied.
+	 */
+	private void rasterizeScanLine(int y, RasterVertex va, RasterVertex vb, RasterVertex vc, RasterVertex vd, FragmentConsumer consumer) {
+
+		// Screen-row clipping is done by rasterize() (row range), so every call here is a row of
+		// the screen: counted as a rasterized line (diagnostics, see RasterizerStats).
+		rasterizedLines++;
+
+		float ya = yScreen(va.vertex), yb = yScreen(vb.vertex);
+		float yc = yScreen(vc.vertex), yd = yScreen(vd.vertex);
+		float xa = xScreen(va.vertex), xb = xScreen(vb.vertex);
+		float xc = xScreen(vc.vertex), xd = xScreen(vd.vertex);
+
+		float gradient1 = ya != yb ? (y - ya) / (yb - ya) : 1;
+		float gradient2 = yc != yd ? (y - yc) / (yd - yc) : 1;
+
+		// Continuous (sub-pixel) X of the two edges on this row, kept as floats: they are both
+		// the coverage bounds and the reference points of the attribute interpolation below.
+		// Clamped to each edge's own X range to guard against extrapolation (float rounding of
+		// the gradients at the very ends of an edge).
+		float sx = clamp(Tools.interpolate(xa, xb, gradient1), Math.min(xa, xb), Math.max(xa, xb));
+		float ex = clamp(Tools.interpolate(xc, xd, gradient2), Math.min(xc, xd), Math.max(xc, xd));
+
+		// Pixel-center convention (see rasterize()): the pixels whose center x satisfies
+		// left <= x < right, i.e. [ceil(left), ceil(right)) -- half-open so that a pixel center
+		// exactly on the edge shared by two side-by-side triangles is drawn once -- clipped to
+		// the screen.
+		int startX = Math.max((int) Math.ceil(Math.min(sx, ex)), -perspectiveCtx.getPixelHalfWidth());
+		int endX = Math.min((int) Math.ceil(Math.max(sx, ex)), perspectiveCtx.getPixelHalfWidth() + 1); // exclusive
+
+		if (startX >= endX) {
+			return; // No pixel center on this line
+		}
+
+		boolean frustum = perspectiveCtx.getPerspectiveType() == PerspectiveType.FRUSTUM;
+
+		// Depth at the 4 corners of this scan line's two edges.
+		// Frustum: W of the projected position (= -Z in camera space before projection).
+		// Orthographic: Z directly (W is always 1 in an orthographic projection).
+		float za = frustum ? va.vertex.getProjPos().getW() : va.vertex.getProjPos().getZ();
+		float zb = frustum ? vb.vertex.getProjPos().getW() : vb.vertex.getProjPos().getZ();
+		float zc = frustum ? vc.vertex.getProjPos().getW() : vc.vertex.getProjPos().getZ();
+		float zd = frustum ? vd.vertex.getProjPos().getW() : vd.vertex.getProjPos().getZ();
+
+		float z1 = frustum ? 1 / Tools.interpolate(1 / za, 1 / zb, gradient1) : Tools.interpolate(za, zb, gradient1);
+		float z2 = frustum ? 1 / Tools.interpolate(1 / zc, 1 / zd, gradient2) : Tools.interpolate(zc, zd, gradient2);
+
+		// Perspective-correction weight for attribute interpolation: under Frustum projection,
+		// attributes must be divided by z at the edges then multiplied back by the pixel's
+		// interpolated z (hyperbolic interpolation), otherwise textures/shading warp incorrectly.
+		// Under Orthographic projection there is no foreshortening, so the weight is simply 1
+		// (no correction) — unlike the legacy code, which applied the same z-weighting formula to
+		// both cases; see the note in the accompanying message about that latent inconsistency.
+		float wa = frustum ? 1 / za : 1;
+		float wb = frustum ? 1 / zb : 1;
+		float wc = frustum ? 1 / zc : 1;
+		float wd = frustum ? 1 / zd : 1;
+
+		// The attributes on the two edges of this scan line, divided by z (perspective correction, see above), as plain
+		// floats: written component by component rather than with Vector3/Vector4 operations, so that no object is
+		// created for each scan line and each pixel (performance audit A1: these temporary vectors were most of the
+		// memory allocated per frame, unless the JIT happened to remove them). The formulas are exactly those of
+		// Tools.interpolate() (a * (1 - t) + b * t) and of the former lerpV3() (a + (b - a) * t), so the values,
+		// hence the images, are the same to the bit.
+		float wx1 = 0, wy1 = 0, wz1 = 0, wx2 = 0, wy2 = 0, wz2 = 0; // world position on edges 1 and 2
+		float nx1 = 0, ny1 = 0, nz1 = 0, nx2 = 0, ny2 = 0, nz2 = 0; // normal on edges 1 and 2
+
+		// Depth-only convention: normal == null means "skip normal AND world position
+		// interpolation entirely" -- used by the no-attribute rasterize(Triangle, FragmentConsumer)
+		// overload for shadow map generation, where a DepthOnlyConsumer never reads either, and
+		// where normals may not even have been computed for this triangle at all (transformElement
+		// is called with normals=false for that pass).
+		boolean needsShadingAttributes = va.normal != null;
+		if (needsShadingAttributes) {
+			Vector4 pa = va.vertex.getWorldPos(), pb = vb.vertex.getWorldPos(), pc = vc.vertex.getWorldPos(), pd = vd.vertex.getWorldPos();
+			wx1 = lerp(pa.getX() * wa, pb.getX() * wb, gradient1);
+			wy1 = lerp(pa.getY() * wa, pb.getY() * wb, gradient1);
+			wz1 = lerp(pa.getZ() * wa, pb.getZ() * wb, gradient1);
+			wx2 = lerp(pc.getX() * wc, pd.getX() * wd, gradient2);
+			wy2 = lerp(pc.getY() * wc, pd.getY() * wd, gradient2);
+			wz2 = lerp(pc.getZ() * wc, pd.getZ() * wd, gradient2);
+
+			nx1 = step(va.normal.getX() * wa, vb.normal.getX() * wb, gradient1);
+			ny1 = step(va.normal.getY() * wa, vb.normal.getY() * wb, gradient1);
+			nz1 = step(va.normal.getZ() * wa, vb.normal.getZ() * wb, gradient1);
+			nx2 = step(vc.normal.getX() * wc, vd.normal.getX() * wd, gradient2);
+			ny2 = step(vc.normal.getY() * wc, vd.normal.getY() * wd, gradient2);
+			nz2 = step(vc.normal.getZ() * wc, vd.normal.getZ() * wd, gradient2);
+		}
+
+		// Homogeneous texture coordinates (u, v, w) on edges 1 and 2
+		boolean hasTexture = va.texCoord != null;
+		float tu1 = 0, tv1 = 0, tw1 = 0, tu2 = 0, tv2 = 0, tw2 = 0;
+		if (hasTexture) {
+			tu1 = lerp(va.texCoord.getX() * wa, vb.texCoord.getX() * wb, gradient1);
+			tv1 = lerp(va.texCoord.getY() * wa, vb.texCoord.getY() * wb, gradient1);
+			tw1 = lerp(va.texCoord.getW() * wa, vb.texCoord.getW() * wb, gradient1);
+			tu2 = lerp(vc.texCoord.getX() * wc, vd.texCoord.getX() * wd, gradient2);
+			tv2 = lerp(vc.texCoord.getY() * wc, vd.texCoord.getY() * wd, gradient2);
+			tw2 = lerp(vc.texCoord.getW() * wc, vd.texCoord.getW() * wd, gradient2);
+		}
+
+		float invSpan = 1 / (ex - sx); // ex != sx here, otherwise startX >= endX above
+
+		for (int x = startX; x < endX; x++) {
+
+			// Position of this pixel's center between the two edges (0 at sx, 1 at ex): exact
+			// sub-pixel interpolation of depth and attributes at the sampled point.
+			float gradient = (x - sx) * invSpan;
+
+			float z = frustum
+					? 1 / Tools.interpolate(1 / z1, 1 / z2, gradient)
+					: Tools.interpolate(z1, z2, gradient);
+
+			// Depth test first, before any interpolation work below, so a discarded pixel costs
+			// as little as possible.
+			if (!zBuffer.test(x, y, z)) {
+				discardedPixels++;
+				continue;
+			}
+
+			float wPixel = frustum ? z : 1; // undoes the /z weighting above; no-op under Orthographic
+
+			fragment.setScreen(x, y, z);
+
+			if (needsShadingAttributes) {
+				fragment.setWorldPosition(lerp(wx1, wx2, gradient) * wPixel, lerp(wy1, wy2, gradient) * wPixel, lerp(wz1, wz2, gradient) * wPixel);
+				fragment.setNormal(step(nx1, nx2, gradient) * wPixel, step(ny1, ny2, gradient) * wPixel, step(nz1, nz2, gradient) * wPixel);
+			}
+			// else: depth-only pass -- Fragment.getWorldPosition()/getNormal() are left untouched
+			// (stale from a previous triangle) on purpose; the consumer must not read them, see
+			// the depth-only rasterize() overload's Javadoc.
+
+			if (hasTexture) {
+				// Left un-divided on purpose: Fragment exposes raw (u, v, w) and it is up to
+				// Material (TexturedMaterial) to apply the projective divide appropriate to this
+				// triangle's texture orientation — this class has no notion of it.
+				fragment.setTexCoord(lerp(tu1, tu2, gradient) * wPixel, lerp(tv1, tv2, gradient) * wPixel, lerp(tw1, tw2, gradient) * wPixel);
+			} else {
+				fragment.clearTexCoord();
+			}
+
+			consumer.consume(fragment);
+			renderedPixels++;
+		}
+	}
+
+	//
+	// Scale of the texture (mipmapping)
+	//
+
+	/**
+	 * Share of the stretching of the texture that is added to the size of a pixel (see texLog2PixelSize()): 0 would
+	 * keep the average size (the sharpest image, but still some noise on a ground seen at a low angle), 1 would take
+	 * the largest size (no noise at all, but a blurred ground far away).
+	 */
+	static final float TEX_STRETCH_SHARE = 0.5f;
+	/** The stretching taken into account is limited to this ratio between the largest and the smallest size of a pixel. */
+	static final float TEX_MAX_STRETCH = 16f;
+
+	private static final double LN_2 = Math.log(2);
+
+	/**
+	 * The size of a pixel of the screen on a textured triangle, in texture coordinates, as a base 2 logarithm, where
+	 * the depth is 1 (see Fragment.getTexLog2PixelSize(), which adds the effect of the depth of each pixel).
+	 *
+	 * 1. The average size. On the screen the triangle covers an area of Ascreen pixels, and in the texture an area of
+	 *    Atexture (in texture coordinates). Without perspective, a pixel therefore covers Atexture / Ascreen of the
+	 *    texture, wherever it is in the triangle, and its size (the side of a square of that area) is the square root
+	 *    of it. With perspective, the far part of the triangle is squeezed into fewer pixels than the near part: at a
+	 *    pixel of depth w, a pixel covers exactly
+	 *    <pre>
+	 *        Atexture / Ascreen x w^3 / (w1 x w2 x w3)        (w1, w2, w3: depths of the 3 corners)
+	 *    </pre>
+	 *    The part that does not depend on the pixel is computed here; the w^3 is left to the Fragment.
+	 *
+	 * 2. The stretching. A ground seen at a low angle is squeezed on the screen in one direction only: a pixel covers
+	 *    a long and thin strip of texture, e.g. 1 texel wide and 30 texels long, which the average size (5.5 texels
+	 *    here) does not describe well. Reading the texture at the average size leaves noise along the strip; at the
+	 *    largest size, it blurs across it. A part of the stretching (TEX_STRETCH_SHARE) is added, as a compromise.
+	 *    The two sizes are the singular values of the 2 x 2 matrix that turns a move on the screen into a move in the
+	 *    texture (how much a circle is stretched into an ellipse).
+	 *
+	 * @param x1..y3 the 3 corners on the screen, in pixels
+	 * @param t1..t3 their texture coordinates
+	 * @param w1..w3 their depths (1 under an orthographic projection)
+	 * @return the logarithm, or a very low value (the finest level of detail) for a triangle without area on the
+	 *         screen or in the texture
+	 */
+	static float texLog2PixelSize(float x1, float y1, float x2, float y2, float x3, float y3,
+			Vector4 t1, Vector4 t2, Vector4 t3, float w1, float w2, float w3) {
+
+		// Two sides of the triangle, on the screen (in pixels) and in the texture (in texture coordinates)
+		float ax = x2 - x1, ay = y2 - y1, bx = x3 - x1, by = y3 - y1;
+		float au = t2.getX() - t1.getX(), av = t2.getY() - t1.getY(), bu = t3.getX() - t1.getX(), bv = t3.getY() - t1.getY();
+
+		// Twice the areas (cross products of the sides): the factor 2 cancels out in their ratio
+		float screenArea = Math.abs(ax * by - ay * bx);
+		float textureArea = Math.abs(au * bv - av * bu);
+		if (screenArea <= 0 || textureArea <= 0 || w1 <= 0 || w2 <= 0 || w3 <= 0) {
+			return -1000f;
+		}
+		double log2Size = 0.5 * Math.log(textureArea / screenArea) / LN_2 - 0.5 * Math.log((double) w1 * w2 * w3) / LN_2;
+
+		// The matrix J that turns a move (dx, dy) on the screen into a move (du, dv) in the texture: it turns the
+		// side a of the screen into the side a of the texture, and likewise for b. Its determinant is the ratio of the
+		// areas, the product of its two singular values (the largest and the smallest size of a pixel), and the sum
+		// of the squares of its 4 terms is the sum of their squares: enough to get their ratio.
+		float j11 = (au * by - bu * ay) / (ax * by - ay * bx), j12 = (bu * ax - au * bx) / (ax * by - ay * bx);
+		float j21 = (av * by - bv * ay) / (ax * by - ay * bx), j22 = (bv * ax - av * bx) / (ax * by - ay * bx);
+		double sumOfSquares = (double) j11 * j11 + j12 * j12 + j21 * j21 + j22 * j22;
+		double product = textureArea / screenArea;
+		// largest^2 + smallest^2 = sumOfSquares and largest x smallest = product, hence the ratio largest / smallest
+		double root = Math.sqrt(Math.max(0, sumOfSquares * sumOfSquares - 4 * product * product));
+		double stretch = Math.min(TEX_MAX_STRETCH, Math.sqrt((sumOfSquares + root) / Math.max(sumOfSquares - root, 1e-30)));
+		// The largest size is the average one times the square root of the stretch
+		log2Size += TEX_STRETCH_SHARE * 0.5 * Math.log(stretch) / LN_2;
+
+		return (float) log2Size;
+	}
+
+	//
+	// Small helpers
+	//
+
+	/** Linear interpolation a * (1 - t) + b * t, as Tools.interpolate() (world positions, texture coordinates) */
+	private static float lerp(float a, float b, float t) {
+		return a * (1 - t) + b * t;
+	}
+
+	/** Linear interpolation written a + (b - a) * t (normals): same value as lerp() in exact arithmetic, but not
+	 *  always to the last bit in float, so each attribute keeps the formula it has always been interpolated with */
+	private static float step(float a, float b, float t) {
+		return a + (b - a) * t;
+	}
+
+	private float xScreen(Vertex v) {
+		return v.getProjPos().get3DX() * perspectiveCtx.getPixelHalfWidth();
+	}
+
+	private float yScreen(Vertex v) {
+		return v.getProjPos().get3DY() * perspectiveCtx.getPixelHalfHeight();
+	}
+
+	private static float clamp(float v, float min, float max) {
+		return v < min ? min : (v > max ? max : v);
+	}
+
+	/**
+	 * Sorts 3 corners by ascending screen Y (v1 lowest Y, v3 highest Y). Only 3 elements and
+	 * called once per triangle (not in the per-pixel hot path), so a plain Comparator-based sort
+	 * is preferred here for readability over the legacy nested if/else, which encoded the same
+	 * ascending order but required tracing 8 branches by hand to verify.
+	 */
+	private RasterVertex[] sortByScreenY(RasterVertex a, RasterVertex b, RasterVertex c) {
+		// Three comparisons instead of Arrays.sort() with a Comparator (performance audit A5). The order of equal
+		// values is kept (stable sort) and Float.compare() orders the values like the former Comparator did
+		// (e.g. -0.0 before 0.0), so the vertices come out in exactly the same order.
+		RasterVertex t;
+		if (Float.compare(yScreen(b.vertex), yScreen(a.vertex)) < 0) { t = a; a = b; b = t; }
+		if (Float.compare(yScreen(c.vertex), yScreen(b.vertex)) < 0) { t = b; b = c; c = t; }
+		if (Float.compare(yScreen(b.vertex), yScreen(a.vertex)) < 0) { t = a; a = b; b = t; }
+		return new RasterVertex[] { a, b, c };
+	}
+
+	/** Bundles one triangle corner's geometry with the attributes the caller wants interpolated. */
+	private static class RasterVertex {
+		final Vertex vertex;
+		final Vector3 normal;
+		final Vector4 texCoord; // null if this triangle has no texture
+
+		RasterVertex(Vertex vertex, Vector3 normal, Vector4 texCoord) {
+			this.vertex = vertex;
+			this.normal = normal;
+			this.texCoord = texCoord;
+		}
+	}
+}

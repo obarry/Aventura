@@ -1,0 +1,349 @@
+/*
+ * ------------------------------------------------------------------------------ 
+ * MIT License
+ * 
+ * Copyright (c) 2016-2026 Olivier BARRY
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ------------------------------------------------------------------------------
+ */
+package com.aventura.demo;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Toolkit;
+
+import javax.swing.JPanel;
+import javax.swing.Timer;
+import javax.swing.WindowConstants;
+
+import com.aventura.context.PerspectiveContext;
+import com.aventura.context.RenderContext;
+import com.aventura.engine.RenderEngine;
+import com.aventura.math.transform.Rotation;
+import com.aventura.math.transform.Translation;
+import com.aventura.math.vector.Quaternion;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.light.AmbientLight;
+import com.aventura.model.light.DirectionalLight;
+import com.aventura.model.light.Lighting;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.Element;
+import com.aventura.model.world.World;
+import com.aventura.model.world.WrongArraySizeException;
+import com.aventura.model.world.shape.Box;
+import com.aventura.model.world.shape.ClosedCylinder;
+import com.aventura.model.world.shape.Cone;
+import com.aventura.model.world.shape.Cube;
+import com.aventura.model.world.shape.Pyramid;
+import com.aventura.model.world.shape.Sphere;
+import com.aventura.model.world.shape.Trellis;
+import com.aventura.view.SwingView;
+import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
+
+/**
+ * This class is a demo application using Aventura Render Engine API
+ */
+
+public class MovingCamera {
+
+	// GUIView to be displayed
+	private SwingView view;
+	private static Vector4 eye;
+	private static Vector4 direction;
+	private static float increment_direction = 0.1f;
+	private static float increment_rotation = (float)Math.PI/180;
+	private static Camera camera;
+	private static RenderEngine renderer;
+
+	// Rotation-key smoothing (new - Quaternion.slerp() integration): each rotateCameraXxx() call
+	// used to snap "direction" straight to its new value with a single Matrix4 Rotation. It now
+	// eases into that same target over ROTATION_ANIM_DURATION_MS via Quaternion.slerp(), driven by
+	// a Swing Timer firing on the EDT (same thread as keyTyped(), so no synchronization is needed
+	// between the two). The rotation angle and axis themselves are unchanged -- only how it's
+	// reached is smoothed.
+	private static final int ROTATION_ANIM_DURATION_MS = 150;
+	private static final int ROTATION_ANIM_FRAME_MS = 15; // ~60 fps
+
+	private static Timer rotationAnimTimer;
+	private static Vector4 rotationAnimStartDirection;
+	private static Quaternion rotationAnimTargetDelta;
+	private static long rotationAnimStartMillis;
+
+	// This method will create a basic Swing view
+	public GUIView createView(PerspectiveContext context) {
+
+		// Create the frame of the application 
+		KeyFrame frame = new KeyFrame(this, "MovingCamera");
+		// Set the size of the frame based on PerspectiveContext
+		frame.setSize(context.getPixelWidth(), context.getPixelHeight());
+		
+		// Create the view to be displayed
+		view = new SwingView(context, frame);
+		view.setImageReuse(true); // An animation: the 3 images are recycled (see ImageView.setImageReuse())
+		
+		// Create a panel and add it to the frame
+		JPanel panel = new JPanel() {
+			
+		    public void paintComponent(Graphics graph) {
+		    	graph.drawImage(view.getImageView(), 0, 0, null);
+		    }
+		};
+		frame.getContentPane().add(panel);
+		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+ 
+		// Locate application frame in the center of the screen
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+		frame.setLocation(dim.width/2 - frame.getWidth()/2, dim.height/2 - frame.getHeight()/2);
+		
+		// Render the frame on the display
+		frame.setVisible(true);
+		
+		return view;
+	}
+	
+	public void rotateCameraLeft() {
+		startRotationAnimation(increment_rotation, Vector3.zAxis());
+	}
+
+	public void rotateCameraRight() {
+		startRotationAnimation(-increment_rotation, Vector3.zAxis());
+	}
+
+	public void rotateCameraUp() {
+		startRotationAnimation(-increment_rotation, Vector4.zAxis().cross(direction).V3());
+	}
+
+	public void rotateCameraDown() {
+		startRotationAnimation(increment_rotation, Vector4.zAxis().cross(direction).V3());
+	}
+
+	/**
+	 * Starts (or retargets) the eased rotation of "direction" by angle around axis. Called by each
+	 * rotateCameraXxx() above with exactly the angle/axis it used to apply instantly.
+	 *
+	 * If a previous rotation animation is still in progress (e.g. a key held down, or a different
+	 * rotation key pressed before the last one finished easing in), this retargets from the CURRENT,
+	 * already-interpolated direction rather than restarting from the direction "direction" held
+	 * before that still-running animation began -- otherwise rapid or held key presses would look
+	 * like the camera snapping backwards before each new increment, instead of one continuous ease.
+	 */
+	private void startRotationAnimation(float angle, Vector3 axis) {
+		rotationAnimStartDirection = new Vector4(direction);
+		rotationAnimTargetDelta = new Quaternion(axis, angle);
+		rotationAnimStartMillis = System.currentTimeMillis();
+
+		if (rotationAnimTimer == null) {
+			rotationAnimTimer = new Timer(ROTATION_ANIM_FRAME_MS, e -> stepRotationAnimation());
+		}
+		if (!rotationAnimTimer.isRunning()) {
+			rotationAnimTimer.start();
+		}
+	}
+
+	/** One animation frame: advances "direction" to its slerp-interpolated value and renders. */
+	private void stepRotationAnimation() {
+		long elapsed = System.currentTimeMillis() - rotationAnimStartMillis;
+		float t = Math.min(1f, (float) elapsed / ROTATION_ANIM_DURATION_MS);
+
+		direction = interpolateDirection(rotationAnimStartDirection, rotationAnimTargetDelta, t);
+
+		Vector4 poi = new Vector4(eye.plus(direction));
+		camera.updateCamera(eye, poi, Vector4.zAxis());
+		renderer.render();
+
+		if (t >= 1f) {
+			rotationAnimTimer.stop();
+		}
+	}
+
+	/**
+	 * Computes "direction" eased a fraction t of the way from startDirection to startDirection
+	 * rotated by targetDelta, via Quaternion.slerp() from the identity rotation to targetDelta.
+	 * (slerp(identity, Q(axis,angle), t) is exactly Q(axis, t*angle) -- so this sweeps smoothly
+	 * through the same rotation targetDelta represents, scaled by t, rather than any other path.)
+	 *
+	 * Package-private and static purely so it can be unit-tested (TestMovingCamera) without a live
+	 * Camera/RenderEngine/Swing GUIView -- this method touches none of those.
+	 */
+	static Vector4 interpolateDirection(Vector4 startDirection, Quaternion targetDelta, float t) {
+		Quaternion interpolated = Quaternion.slerp(new Quaternion(), targetDelta, t);
+		return startDirection.times(new Rotation(interpolated));
+	}
+
+	public void moveCameraFront() {
+		eye.plusEquals(direction.times(increment_direction));
+		Vector4 poi = new Vector4(eye.plus(direction));
+		camera.updateCamera(eye, poi, Vector4.zAxis());
+		renderer.render();
+	}
+
+	public void moveCameraBack() {
+		eye.minusEquals(direction.times(increment_direction));
+		Vector4 poi = new Vector4(eye.plus(direction));
+		camera.updateCamera(eye, poi, Vector4.zAxis());
+		renderer.render();	
+	}
+
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+
+		System.out.println("********* STARTING APPLICATION *********");
+
+		Texture texdamier = new Texture(DemoTextures.url("texture_damier_600x591.gif"));
+		Texture texcremedemarron = new Texture(DemoTextures.url("texture_sticker_cremedemarrons_351x201.jpg"), Texture.TEXTURE_DIRECTION_VERTICAL, Texture.TEXTURE_ORIENTATION_NORMAL, Texture.TEXTURE_ORIENTATION_OPPOSITE);
+		Texture texfoot = new Texture(DemoTextures.url("texture_football_320x160.jpg"));
+		Texture textop = new Texture(DemoTextures.url("texture_top_can_667x661.jpg"));
+		Texture texbricks = new Texture(DemoTextures.url("texture_stone_wall_700x700.jpg"));
+		Texture texmetalplate = new Texture(DemoTextures.url("texture_multimetal_500x600.jpg"));
+		Texture texcarpet = new Texture(DemoTextures.url("texture_painting_2_596x460.jpg"));
+		Texture texgrass = new Texture(DemoTextures.url("texture_stone_1706x1279.jpg"));
+	
+		// Camera
+		eye = new Vector4(10,6,3,1);
+		Vector4 poi = new Vector4(0,0,0,1);
+		camera = new Camera(eye, poi, Vector4.zAxis());
+		direction = new Vector4(poi.minus(eye));
+		direction.normalize();
+				
+		MovingCamera appli = new MovingCamera();
+				
+		// Create a new World
+		System.out.println("********* Creating World");
+		World world = new World();
+		world.setBackgroundColor(Color.BLACK);
+		Element e;
+		
+		int num_element = 0;
+		
+		// Build a series of elements to display in a cube fashion
+		for (int i=0; i<=1; i++) {
+			for (int j=0; j<=1; j++) {
+				for (int k=0; k<=1; k++) {			
+					// Create an Element of a random type
+					//switch((int)(Math.random()*7)) {
+					switch(num_element%7) {
+					case 0:
+						e = new Cone(1,0.5f,32, texdamier);
+						break;
+					case 1:
+						e = new ClosedCylinder(1,0.5f,32,texcremedemarron);
+						e.setTopTexture(textop);
+						e.setBottomTexture(textop);
+						break;
+					case 2:
+						e = new Sphere(0.667f,32, texfoot);
+						e.setSpecularExp(3);
+						e.setSpecularColor(new Color(100,100,100));
+						e.setColor(new Color(200,150,255));
+						break;
+					case 3:
+						e = new Cube(1, texmetalplate);
+						break;
+					case 4:
+						e = new Box(1.5f,1,0.5f, texbricks);
+						break;
+					case 5:				
+						float size = 1.5f;
+						int n = 16;
+						int nb_sin = 2;
+						float array[][] = new float[n+1][n+1];
+						for (int p=0; p<=n; p++) {
+							for (int q=0; q<=n; q++) {
+								float a = (float)Math.PI*(float)nb_sin*(float)p/(float)n;
+								float b = (float)Math.PI*(float)nb_sin*(float)q/(float)n;
+								array[p][q] = size*(float)Math.sin(a)*(float)Math.sin(b)/((float)nb_sin*2);
+							}
+						}
+						e = null;
+						try {
+							e = new Trellis(size, size, n, n, array, texgrass);
+						} catch (WrongArraySizeException ex) {
+							// TODO Auto-generated catch block
+							ex.printStackTrace();
+						}
+						break;
+					case 6:
+						e = new Pyramid(1.4f, 1.4f, 1.4f, texcarpet);
+						break;
+						
+					default:
+						e = null;
+					}
+					// Translate this element at some i,j,k indices of a 3D cube:
+					Translation t = new Translation(new Vector3(i*2-1, j*2-1, k*2-1));
+					e.setTransformation(t);
+					// Add the element to the world
+					world.addElement(e);
+					num_element++;
+				}
+			}
+		}
+		
+		System.out.println(world);
+		for (int i=0; i<world.getNbElements(); i++)
+			System.out.println(world.getElement(i));
+
+		// Calculate normals
+		world.build();
+
+		// Create lighting
+		System.out.println("********* Creating Lighting");
+		DirectionalLight dl = new DirectionalLight(new Vector3(-1,0.5f,-0.5f), 0.7f);
+		AmbientLight al = new AmbientLight(0.3f);
+		Lighting lighting = new Lighting(dl, al, true);
+
+		PerspectiveContext context = new PerspectiveContext(1.5f, 0.9f, 1, 100, PerspectiveType.FRUSTUM, 1000);
+		GUIView guiView = appli.createView(context);
+
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE_WITH_LANDMARKS);
+		rContext.setTextureProcessing(true);
+		//rContext.setRenderingLines(true);
+		//rContext.setDisplayNormals(true);
+		rContext.setShadowing(true);
+		
+		renderer = new RenderEngine(world, lighting, camera, rContext, context);
+		renderer.setView(guiView);
+		renderer.render();
+		
+//		System.out.println("********* Rendering...");
+//		int nb_images = 360;
+//		Rotation r1 = new Rotation((float)Math.PI*2/(float)nb_images, Vector3.xAxis());
+//		Rotation r2 = new Rotation((float)Math.PI*2*1.5f/(float)nb_images, Vector3.yAxis());
+//		Rotation r3 = new Rotation((float)Math.PI*2*2.5f/(float)nb_images, Vector3.zAxis());
+//		Vector4 camera_trans = new Vector4(new Vector4(0,-10,-2,1).minus(eye).times((float)1/(nb_images)));
+//		Matrix4 r = r1.times(r2).times(r3);
+//		renderer.render();
+//		for (int i=0; i<=nb_images; i++) {
+//			world.expandTransformation(r);
+//			eye.plusEquals(camera_trans);
+//			camera.updateCamera(eye, poi, Vector4.zAxis());
+//			renderer.render();
+//		}
+		System.out.println("********* ENDING APPLICATION *********");
+
+	}
+}

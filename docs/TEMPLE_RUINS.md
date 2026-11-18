@@ -7,15 +7,15 @@
 > [Geometry Cookbook](GEOMETRY_COOKBOOK.md).
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins.jpg" alt="TempleRuins as it starts: the main front of the temple" width="800"><br/>
+  <img src="images/temple_ruins.jpg" alt="TempleRuins as it starts: the main front of the temple" width="800"><br/>
   <em>The demo as it starts: the main front of the temple, lit by the sun.</em>
 </p>
 
 | | |
 |---|---|
 | **What** | The ruins of a Doric temple on a small island, among olive trees and boulders, the sea up to the horizon, the sun halfway up the sky |
-| **Where** | `com.aventura.demo.temple` (11 classes, about 3,600 lines, comments included), tests in the same package of `src/test` |
-| **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root) |
+| **Where** | `com.aventura.demo.temple` (11 classes, about 3,600 lines, comments included), tests in the same package of the test sources, in the `aventura-demos` module |
+| **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root, or the class `TempleRuins` run from the IDE) |
 | **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (10.7 MB), 1 sun, 1 ambient light, haze and optional mist |
 | **Cameras** | Orbit, fly, and a helicopter tour of 516 m flown in 57 s |
 | **Speed** | 9 to 81 ms per image (12 to 107 images per second) on a laptop in its "best performance" power mode, 36.5 ms on average over the helicopter tour at 1000 x 562 pixels, 25 images displayed per second (in the "balanced" mode: 55 ms, and 110 ms in Full HD, 1920 x 986) |
@@ -61,7 +61,7 @@ What the demo shows of the API:
 | Smooth and flat normals, on the same shape | `TaperedDrum` (smooth trunk, fluted column), `Boulder` (rock, foliage) |
 | Texture coordinates per triangle | `TaperedDrum`, `Boulder` |
 | `Translation`, `Rotation`, `Scaling`, and their composition | `OliveTree.pose()`, foliage and boulders, fallen drums |
-| Textures from files, read in either direction | `SceneTextures` (marble, ground, rock; bark with its axes exchanged) |
+| Textures from image files, resources read from the classpath, in either direction | `SceneTextures` with `DemoTextures` (marble, ground, rock; bark with its axes exchanged) |
 | Textures computed pixel by pixel | `SceneTextures.createSea()`, `createFoliage()`, `shrink()` |
 | Mipmapping of the textures (`RenderContext.setMipmapping()`) | `createRenderContext()`, Effects menu |
 | Colors per triangle, tinting a texture | `TempleRuins.colorGround()` |
@@ -168,7 +168,7 @@ flowchart TB
 | `TaperedDrum` | 240 | A section of a column or of a trunk | New shape, smooth or flat normals, sub-Elements as caps |
 | `Boulder` | 190 | A rock or a clump of leaves | New shape, normals computed from the mesh |
 | `IslandTerrain` | 180 | The altitudes of the island | (none: plain Java, feeds a `Trellis`) |
-| `SceneTextures` | 200 | The six textures | `Texture` from a file and pixel by pixel, wrap mode |
+| `SceneTextures` | 200 | The six textures | `Texture` from a classpath resource and pixel by pixel, wrap mode |
 | `FlightPath` | 170 | The path of the helicopter | `Vector4`, `Rotation` |
 | `Noise` | 110 | Value noise and fractal noise | (none) |
 
@@ -231,7 +231,7 @@ its capital, a drum to its caps, the `sea` group to its two surfaces.
 ## 4. Graphic design
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_island.jpg" alt="The whole island from above the sea" width="800"><br/>
+  <img src="images/temple_ruins_island.jpg" alt="The whole island from above the sea" width="800"><br/>
   <em>The whole island, as the helicopter sees it from the south-west.</em>
 </p>
 
@@ -269,7 +269,7 @@ The warm/cool contrast is the oldest trick of outdoor painting, and it costs not
 not only an intensity.
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_sun.jpg" alt="Against the light: the sun, its halo and its lens flare" width="800"><br/>
+  <img src="images/temple_ruins_sun.jpg" alt="Against the light: the sun, its halo and its lens flare" width="800"><br/>
   <em>Against the light, from behind the temple: the disc of the sun, its halo and the ghosts of the lens flare.</em>
 </p>
 
@@ -293,7 +293,7 @@ lie along the side with the missing columns), and **irregularity in what remains
 angle, each broken column its own height, the walls of the cella crumble in a continuous profile).
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_debris.jpg" alt="The ruined south side: broken columns, fallen drums, walls of the cella" width="800"><br/>
+  <img src="images/temple_ruins_debris.jpg" alt="The ruined south side: broken columns, fallen drums, walls of the cella" width="800"><br/>
   <em>The south side: broken columns, fallen drums and blocks, what remains of the walls of the cella.</em>
 </p>
 
@@ -309,7 +309,7 @@ ridge and the bottom of a groove, 3 cm deeper. The grooves are V-shaped, not rou
 times the triangles for a difference visible only from a meter away.
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_colonnade.jpg" alt="At the foot of the main front: drums, flutes, capitals and beams" width="800"><br/>
+  <img src="images/temple_ruins_colonnade.jpg" alt="At the foot of the main front: drums, flutes, capitals and beams" width="800"><br/>
   <em>At the foot of the main front: the drums and their tints, the flutes, the capitals, the three layers of the entablature.</em>
 </p>
 
@@ -348,7 +348,7 @@ above it, is never under the drawn surface. The idea comes from `FractalLandscap
 boulders (around them). Two things are needed:
 
 ```java
-Texture ground = new Texture(GROUND_FILE).setWrapMode(Texture.WrapMode.MIRROR);   // SceneTextures
+Texture ground = new Texture(DemoTextures.url(GROUND_FILE)).setWrapMode(Texture.WrapMode.MIRROR);   // SceneTextures
 Trellis trellis = new Trellis(240, 240, 96, 96, altitudes, ground);               // createGround()
 trellis.setTextureRepeat(24, 24);                                                 // 24 tiles of 10 m
 ```
@@ -559,7 +559,7 @@ the camera at once: the movement eases over 150 ms.
 | | Sun, Sun halo, Lens flare, Light shafts | | The visible sun and its `LightAppearance` |
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_rendering.jpg" alt="The same view in four renderings" width="800"><br/>
+  <img src="images/temple_ruins_rendering.jpg" alt="The same view in four renderings" width="800"><br/>
   <em>The Rendering and Effects menus on the initial view: lines, monochrome, flat shading without textures, shadows nor atmosphere, and the full rendering.</em>
 </p>
 
@@ -716,9 +716,8 @@ The images of this page are rendered by `DocumentationImages`, like the others o
 of the demo and fixed camera positions:
 
 ```
-java -Djava.awt.headless=true -cp target/classes:target/test-classes com.aventura.demo.DocumentationImages \
-     resources/doc/images temple_ruins.jpg temple_ruins_colonnade.jpg temple_ruins_debris.jpg \
-     temple_ruins_sun.jpg temple_ruins_island.jpg temple_ruins_rendering.jpg
+mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.DocumentationImages -Djava.awt.headless=true \
+    "-Dexec.args=docs/images temple_ruins.jpg temple_ruins_colonnade.jpg temple_ruins_debris.jpg temple_ruins_sun.jpg temple_ruins_island.jpg temple_ruins_rendering.jpg"
 ```
 
 ---
@@ -762,8 +761,6 @@ With an evolution of the engine: see the table of the next section.
 - **The sea does not move**, and neither do the trees.
 - **The rendering runs on the Swing thread**: the window does not respond during an image (see
   [§10](#10-performance)).
-- **Textures are read from `resources/texture`**, relative to the directory the program is run from: the demo must be
-  started from the project root.
 
 ### Of the engine, as met by the demo
 
@@ -788,7 +785,6 @@ are already in the [backlog](BACKLOG.md) or in the [performance audit](PERFORMAN
 | The haze has one color and ignores the sun; the sun and its halo are not dimmed by the haze or the fog | No warm glow towards the sun, a sharp sun through the mist | Backlog §5b |
 | The same geometry cannot be shared by several Elements | 26 columns, each with its own vertices and triangles | Instancing: one mesh, many transformations (audit D4) |
 | No camera controller in the API | Orbit and fly cameras written in the demo | A small `camera` toolbox: orbit, fly, path |
-| Textures loaded from file paths only | Run from the project root | Loading from the classpath (roadmap) |
 
 ---
 

@@ -7,14 +7,14 @@ object assembled from simpler ones.
 |---|---|
 | **For** | Programmers who build scenes in code and need a shape Aventura does not provide |
 | **Prerequisites** | The [README](../README.md) "Hello, Aventura" example; [DESIGN.md §3](DESIGN.md#3-domain-model) for the big picture |
-| **Examples** | [`src/test/java/com/aventura/cookbook`](../src/test/java/com/aventura/cookbook): every class shown here is compiled and tested ([`TestGeometryCookbook`](../src/test/java/com/aventura/cookbook/TestGeometryCookbook.java)) |
+| **Examples** | [`aventura-demos/src/test/java/com/aventura/cookbook`](../aventura-demos/src/test/java/com/aventura/cookbook): every class shown here is compiled and tested ([`TestGeometryCookbook`](../aventura-demos/src/test/java/com/aventura/cookbook/TestGeometryCookbook.java)) |
 | **See also** | The [Atmosphere Cookbook](ATMOSPHERE_COOKBOOK.md): the air the `World` bathes in (haze, fogs, a new kind of fog), the counterpart of this one for what is not geometry |
 
 <p align="center">
-  <img src="../resources/doc/images/cookbook_gallery.png" alt="The cookbook examples: a pyramid frustum, a closed cone frustum and two street lamps" width="800">
+  <img src="images/cookbook_gallery.png" alt="The cookbook examples: a pyramid frustum, a closed cone frustum and two street lamps" width="800">
 </p>
 
-*The examples of this cookbook, rendered by [`CookbookGallery`](../src/test/java/com/aventura/cookbook/CookbookGallery.java):
+*The examples of this cookbook, rendered by [`CookbookGallery`](../aventura-demos/src/test/java/com/aventura/cookbook/CookbookGallery.java):
 a `PyramidFrustum` written from scratch (recipe 1), a `ClosedConeFrustum` obtained by inheritance
 (recipe 3), and two `StreetLamp` assemblies (recipe 4), one of them turned and with a tilted arm.*
 
@@ -273,7 +273,7 @@ On an element:
 
 Aventura has a `Pyramid` and a `ConeFrustum`, but no truncated pyramid — the shape of a lamp shade,
 a plinth, a roof or a tower base. Full code:
-[`PyramidFrustum.java`](../src/test/java/com/aventura/cookbook/PyramidFrustum.java).
+[`PyramidFrustum.java`](../aventura-demos/src/test/java/com/aventura/cookbook/PyramidFrustum.java).
 
 ### Step 1 — Draw it, choose the frame and the parameters
 
@@ -455,7 +455,7 @@ Rules of thumb:
 
 `ConeFrustum` is only the **lateral surface** of a truncated cone: open at both ends. A bucket, a
 lamp base or a flower pot needs it closed. Rather than rewriting it, extend it and add the two
-caps. Full code: [`ClosedConeFrustum.java`](../src/test/java/com/aventura/cookbook/ClosedConeFrustum.java)
+caps. Full code: [`ClosedConeFrustum.java`](../aventura-demos/src/test/java/com/aventura/cookbook/ClosedConeFrustum.java)
 (the same approach as the built-in `ClosedCylinder` and `ClosedCone`).
 
 ```
@@ -557,7 +557,7 @@ This is how the checker spotted the same mistake in the built-in `ClosedCylinder
 ## 7. Recipe 4 — Assembling elements into a complex object
 
 A street lamp: a base, a pole, and an arm carrying a shade and a bulb. Full code:
-[`StreetLamp.java`](../src/test/java/com/aventura/cookbook/StreetLamp.java). The `UrbanScape` demo
+[`StreetLamp.java`](../aventura-demos/src/test/java/com/aventura/cookbook/StreetLamp.java). The `UrbanScape` demo
 (building → floors → windows) is a larger example of the same technique.
 
 ```mermaid
@@ -686,12 +686,12 @@ primitives written from scratch (`TaperedDrum`, a tapered and optionally fluted 
 ## 8. Testing your geometry
 
 Unit tests run headless and fast: no window is needed, not even for rendering.
-[`TestGeometryCookbook`](../src/test/java/com/aventura/cookbook/TestGeometryCookbook.java) is a
+[`TestGeometryCookbook`](../aventura-demos/src/test/java/com/aventura/cookbook/TestGeometryCookbook.java) is a
 template.
 
 ### Contracts: `ElementContractChecker`
 
-[`ElementContractChecker`](../src/test/java/com/aventura/cookbook/ElementContractChecker.java)
+[`ElementContractChecker`](../aventura-demos/src/test/java/com/aventura/cookbook/ElementContractChecker.java)
 (test code, copy it in your project if needed) inspects a **built** element and its sub-elements:
 
 ```java
@@ -737,7 +737,7 @@ A test can render at low resolution and check pixel colors; a program can save a
 To look at a shape from every side, wrap its scene in a `DemoScene` and add it to
 `DocumentationImages.scenes()`, like `CookbookGallery.createScene()`: the `SceneViewer` then shows it
 in a window, with the camera turned by the mouse and the rendering types in a menu
-(`java -cp target/classes:target/test-classes com.aventura.demo.SceneViewer cookbook_gallery`).
+(`mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.SceneViewer -Dexec.args=cookbook_gallery`).
 
 ### Looking for problems by eye
 

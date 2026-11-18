@@ -1,0 +1,204 @@
+package com.aventura.test;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Toolkit;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.WindowConstants;
+
+import com.aventura.demo.DemoTextures;
+import com.aventura.context.PerspectiveContext;
+import com.aventura.context.RenderContext;
+import com.aventura.engine.RasterizerStats;
+import com.aventura.engine.RenderEngine;
+import com.aventura.math.transform.Rotation;
+import com.aventura.math.vector.Vector3;
+import com.aventura.math.vector.Vector4;
+import com.aventura.model.camera.Camera;
+import com.aventura.model.light.AmbientLight;
+import com.aventura.model.light.DirectionalLight;
+import com.aventura.model.light.Lighting;
+import com.aventura.model.texture.Texture;
+import com.aventura.model.world.World;
+import com.aventura.model.world.shape.Box;
+import com.aventura.view.SwingView;
+import com.aventura.view.GUIView;
+import com.aventura.model.perspective.PerspectiveType;
+
+/**
+ * ------------------------------------------------------------------------------ 
+ * MIT License
+ * 
+ * Copyright (c) 2016-2026 Olivier BARRY
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ------------------------------------------------------------------------------
+ * 
+ * This class is a Test class demonstrating usage of the API of the Aventura rendering engine 
+ */
+
+public class TestBoxTexture {
+	
+	// GUIView to be displayed
+	private SwingView view;
+
+	public GUIView createView(PerspectiveContext context) {
+
+		// Create the frame of the application 
+		JFrame frame = new JFrame("Test Box with Texture");
+		// Set the size of the frame
+		frame.setSize(1500,900);
+		
+		// Create the view to be displayed
+		view = new SwingView(context, frame);
+		
+		// Create a panel and add it to the frame
+		JPanel panel = new JPanel() {
+			
+		    public void paintComponent(Graphics graph) {
+		    	graph.drawImage(view.getImageView(), 0, 0, null);
+		    }
+		};
+		frame.getContentPane().add(panel);
+		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+ 
+		// Locate application frame in the center of the screen
+		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+		frame.setLocation(dim.width/2 - frame.getWidth()/2, dim.height/2 - frame.getHeight()/2);
+		
+		// Render the frame on the display
+		frame.setVisible(true);
+		
+		return view;
+	}
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		
+		System.out.println("********* STARTING APPLICATION *********");
+
+//		Tracer.info = true;
+//		Tracer.function = true;
+
+		// Camera
+		Vector4 eye = new Vector4(-4,-8,5,1);
+		//Vector4 eye = new Vector4(16,6,12,1);
+		//Vector4 eye = new Vector4(3,2,2,1);
+		Vector4 poi = new Vector4(0,0,0,1);
+		Camera camera = new Camera(eye, poi, Vector4.zAxis());		
+				
+		TestBoxTexture test = new TestBoxTexture();
+		
+		System.out.println("********* Creating World");
+		
+		//Texture tex = new Texture(DemoTextures.url("texture_bricks_204x204.jpg"));
+		//Texture tex = new Texture(DemoTextures.url("texture_blueground_204x204.jpg"));
+		//Texture tex = new Texture(DemoTextures.url("texture_woodfloor_160x160.jpg"));
+		//Texture tex = new Texture(DemoTextures.url("texture_damier_600x591.gif"));
+		//Texture tex = new Texture(DemoTextures.url("texture_grass_900x600.jpg"));
+		//Texture tex = new Texture(DemoTextures.url("texture_ground_stone_600x600.jpg"));
+		//Texture tex = new Texture(DemoTextures.url("texture_snow_590x590.jpg"));
+		//Texture tex = new Texture(DemoTextures.url("texture_metal_mesh_463x463.jpg"));
+		//Texture tex = new Texture(DemoTextures.url("texture_old_leather_box_800x610.jpg"));
+		Texture tex = new Texture(DemoTextures.url("texture_metal_plate_626x626.jpg"));
+		//Texture tex = new Texture(DemoTextures.url("texture_stone1_1700x1133.jpg"));
+		//Texture tex = new Texture(DemoTextures.url("texture_rock_stone_400x450.jpg"));
+
+		
+		// Create World
+		World world = new World();
+		
+		Box elm = new Box(3,2,1.5f, tex);
+		//elm.setColor(new Color(100,200,255));
+		//elm.setSpecularExp(8);
+		world.addElement(elm);
+		world.setBackgroundColor(new Color(20,10,5));
+		
+		System.out.println(world);
+		System.out.println(elm);
+		System.out.println("********* Calculating normals");
+		
+		world.build();
+		
+		DirectionalLight dl = new DirectionalLight(new Vector3(0.5f,0,-1f), 0.8f);
+		AmbientLight al = new AmbientLight(0.2f);
+		Lighting light = new Lighting(dl, al, false);
+		
+		PerspectiveContext pContext = new PerspectiveContext(0.8f, 0.45f, 1, 100, PerspectiveType.FRUSTUM, 1250+625);
+		GUIView guiView = test.createView(pContext);
+
+		//RenderContext rContext = new RenderContext(RenderContext.RENDER_DEFAULT);
+		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
+		rContext.setTextureProcessing(true);
+		//rContext.setDisplayNormals(true);
+		//rContext.setDisplayLandmark(true);
+
+		//rContext.setRendering(RenderContext.RenderingType.INTERPOLATE);
+		
+		RenderEngine renderer = new RenderEngine(world, light, camera, rContext, pContext);
+		renderer.setView(guiView);
+		renderer.render();
+
+		System.out.println("********* Rendering...");
+		int nb_images = 180;
+		int totalFrames = 3*nb_images + 1;
+		int statsIntervalFrames = 60; // Print a lightweight progress line every N frames, to avoid flooding the console
+
+		for (int i=0; i<=3*nb_images; i++) {
+			Rotation r = new Rotation((float)Math.PI*2*(float)i/(float)nb_images, Vector3.xAxis());
+			elm.setTransformation(r);
+			renderer.render();
+
+			if (i % statsIntervalFrames == 0) {
+				// This-frame deltas (RasterizerStats.endFrame() is called automatically at the end
+				// of every RenderEngine.render()) -- shows per-frame cost without wading through
+				// the full cumulative report below.
+				RasterizerStats frameStats = renderer.getRasterizerStats();
+				System.out.println("--- Frame " + i + "/" + totalFrames + " -- this frame: "
+						+ frameStats.getTrianglesThisFrame() + " triangles, "
+						+ frameStats.getRenderedPixelsThisFrame() + " px rendered, "
+						+ frameStats.getDiscardedPixelsThisFrame() + " px discarded ---");
+			}
+		}
+
+		System.out.println("********* Rendering complete *********");
+		System.out.println();
+		System.out.println("--- Final report (RenderEngine + Rasterizer, cumulative over " + totalFrames + " frames) ---");
+		System.out.println(renderer.renderStats());
+
+		// Individual cumulative counters, straight from RasterizerStats, for anything not already
+		// folded into the renderStats() summary string above.
+		RasterizerStats finalStats = renderer.getRasterizerStats();
+		System.out.println("--- RasterizerStats detail ---");
+		System.out.println("Rendered triangles (lifetime): " + finalStats.getRenderedTriangles());
+		System.out.println("Triangles with pixels (lifetime): " + finalStats.getTrianglesWithPixels());
+		System.out.println("Rendered pixels (lifetime): " + finalStats.getTotalRenderedPixels());
+		System.out.println("Discarded pixels (lifetime): " + finalStats.getTotalDiscardedPixels());
+		System.out.println("Last frame -- triangles: " + finalStats.getTrianglesThisFrame()
+				+ ", pixels rendered: " + finalStats.getRenderedPixelsThisFrame()
+				+ ", pixels discarded: " + finalStats.getDiscardedPixelsThisFrame());
+
+		System.out.println("********* ENDING APPLICATION *********");
+	}
+}

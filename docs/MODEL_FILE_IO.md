@@ -277,7 +277,14 @@ Two ways to organize the repository:
 | **B. Multi-module reactor** | A parent `pom.xml` (packaging `pom`) with `<modules>`; the engine moves to `aventura-engine/`, the I/O module is `aventura-io/`. | A single `mvn test` at the root builds and tests both in the right order; the cleanest long-term structure. | Every engine file moves, which breaks the Eclipse project and the relative `./resources/texture` paths, and rewrites a large part of the Git history view. A root `pom.xml` cannot be both a `jar` and an aggregator. |
 
 **Decision: option A, a sibling folder** (`aventura-io/` next to the root `pom.xml`). Moving to **B** stays
-possible later if more modules appear (for example several formats or tools). Whatever the option:
+possible later if more modules appear (for example several formats or tools).
+
+> **Superseded (November 2026): option B.** The project became a multi-module reactor when the demos left the
+> engine: a parent `pom.xml` with `aventura-engine` and `aventura-demos`, the textures of the demos read from the
+> classpath. `aventura-io` will simply be a third module, depending on `aventura-engine`, and one `mvn test` at the
+> root builds and tests the three. The rest of this section still applies.
+
+Whatever the option:
 
 - Do not edit `.project`, `.classpath` or `.settings/` (see `CLAUDE.md`); in Eclipse, `aventura-io` can be
   imported as its own Maven project.
@@ -320,10 +327,10 @@ Each step ends with `mvn test` green (engine, and I/O module once it exists).
    questions of [section 11](#11-open-questions-and-decisions) (compression, normals, demo location).
 3. **Engine prerequisites** ([section 7](#7-changes-required-in-the-engine)): the local matrix getter, and the
    texture source information. One small commit each, with unit tests.
-4. **Create the module** (option A of [section 6](#6-maven-structure-a-separate-build-target)): `aventura-io/pom.xml`
-   (parent-less, depends on the engine and on the JSON library, JUnit 4 in `test` scope), the empty
-   `com.aventura.io` packages, a first test that proves the engine artifact is on the classpath. Document the
-   two-step build in `README.md`.
+4. **Create the module** (a module of the reactor, see [section 6](#6-maven-structure-a-separate-build-target)):
+   `aventura-io/pom.xml` (parent `aventura-parent`, depends on `aventura-engine` and on the JSON library, JUnit 4 in
+   `test` scope), listed in the `<modules>` of the parent, the empty `com.aventura.io` packages, a first test that
+   proves the engine is on the classpath.
 5. **DTOs and interfaces**: `ModelReader`, `ModelWriter`, `ModelIOException`, the DTO classes.
 6. **Writer for phase 1**: element tree, local matrices, vertices, normals, triangles, colors, textures table.
 7. **Reader for phase 1**: the reverse, including the validation of [section 10](#10-errors-and-validation).
@@ -370,8 +377,8 @@ Unit tests only (JUnit 4, headless, as everywhere in the project):
 - **Relative texture paths**: save a model in a temporary folder next to a copy of a small texture, check the
   stored path is relative with `/` separators, then load it with a different working directory and check the
   texture is found; move the whole folder and load again.
-- Texture files are read from `./resources/texture`; tests that need a texture run from the project root
-  like the others, and the I/O module tests use a tiny generated image rather than the large ones.
+- The textures of the demos are resources of `aventura-demos`; the I/O module tests use a tiny generated image
+  rather than the large ones.
 
 ---
 
