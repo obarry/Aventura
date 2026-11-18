@@ -29,6 +29,9 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 import javax.imageio.ImageIO;
 
@@ -109,25 +112,37 @@ public class Texture {
 	 *         img.getHeight() (the previous behavior when ImageIO.read() failed).
 	 */
 	public Texture(String fileName) {
-        BufferedImage img = null;
-        try {
-            img = ImageIO.read(new File(fileName));
-        } catch (IOException e) {
-        	throw new TextureLoadException("Failed to load texture file: " + fileName, e);
-        }
-        if (img == null) {
-        	// ImageIO.read() returns null (no exception) when the file exists but isn't a
-        	// recognized image format -- same fail-fast treatment as the IOException case above.
-        	throw new TextureLoadException("Failed to load texture file (unrecognized image format): " + fileName);
-        }
-        this.height = img.getHeight();
-        this.width = img.getWidth();
-        this.name = new File(fileName).getName();
-        
-        // All the pixels in one call, already row by row (getRGB(x, y) converted them one by one)
-        tex = img.getRGB(0, 0, width, height, null, 0, width);
-        // Flush BufferedImage data, they are no longer needed
-        img.flush();
+		this(readImage(fileName), new File(fileName).getName());
+	}
+
+	/**
+	 * Create a Texture from an image found by a URL: typically a resource of the classpath, which works the same
+	 * whether the application runs from its classes or from a jar, and whatever the current directory.
+	 * <pre>
+	 *   Texture marble = new Texture(MyApp.class.getResource("/texture/marble.jpg"));
+	 * </pre>
+	 * Class.getResource() is the way to read a resource of the caller's own module or jar: it is given the class
+	 * of the application, so that the engine does not need to see the resources of the application.
+	 *
+	 * @param url the image, in any format read by ImageIO (JPEG, PNG, GIF...)
+	 * @throws TextureLoadException if the URL is null (e.g. a resource that was not found: getResource() returns
+	 *         null), or if the image cannot be read or decoded
+	 * @since 3.3
+	 */
+	public Texture(URL url) {
+		this(readImage(url), nameOf(url));
+	}
+
+	/** Create a Texture from an image already read, with the name of its source (see getName()) */
+	private Texture(BufferedImage img, String name) {
+		this.height = img.getHeight();
+		this.width = img.getWidth();
+		this.name = name;
+
+		// All the pixels in one call, already row by row (getRGB(x, y) converted them one by one)
+		tex = img.getRGB(0, 0, width, height, null, 0, width);
+		// Flush BufferedImage data, they are no longer needed
+		img.flush();
 	}
 
 	/**
@@ -137,16 +152,23 @@ public class Texture {
 	 *         other String constructor's Javadoc for why.
 	 */
 	public Texture(String fileName, int direction, int horizontal_orientation, int vertical_orientation) {
-		BufferedImage img = null;
-		try {
-			img = ImageIO.read(new File(fileName));
-		} catch (IOException e) {
-			throw new TextureLoadException("Failed to load texture file: " + fileName, e);
-		}
-		if (img == null) {
-			throw new TextureLoadException("Failed to load texture file (unrecognized image format): " + fileName);
-		}
-		this.name = new File(fileName).getName();
+		this(readImage(fileName), new File(fileName).getName(), direction, horizontal_orientation, vertical_orientation);
+	}
+
+	/**
+	 * Create a Texture from an image found by a URL (see Texture(URL)), with a direction and orientations (see
+	 * Texture(String, int, int, int)).
+	 *
+	 * @throws TextureLoadException if the URL is null or if the image cannot be read or decoded
+	 * @since 3.3
+	 */
+	public Texture(URL url, int direction, int horizontal_orientation, int vertical_orientation) {
+		this(readImage(url), nameOf(url), direction, horizontal_orientation, vertical_orientation);
+	}
+
+	/** Create a Texture from an image already read, with a direction and orientations */
+	private Texture(BufferedImage img, String name, int direction, int horizontal_orientation, int vertical_orientation) {
+		this.name = name;
 
 		if (direction == TEXTURE_DIRECTION_VERTICAL) {
 			this.height = img.getHeight();
@@ -220,6 +242,49 @@ public class Texture {
 		img.flush();
 	}
 	
+	/**
+	 * Reads an image file.
+	 * @throws TextureLoadException if the file cannot be read/decoded as an image: fails fast with a clear message
+	 *         rather than a NullPointerException later on (ImageIO.read() returns null, without an exception, when
+	 *         the file exists but is not a recognized image format).
+	 */
+	private static BufferedImage readImage(String fileName) {
+		BufferedImage img;
+		try {
+			img = ImageIO.read(new File(fileName));
+		} catch (IOException e) {
+			throw new TextureLoadException("Failed to load texture file: " + fileName, e);
+		}
+		if (img == null) {
+			throw new TextureLoadException("Failed to load texture file (unrecognized image format): " + fileName);
+		}
+		return img;
+	}
+
+	/** Reads an image from a URL, with the same checks as readImage(String) */
+	private static BufferedImage readImage(URL url) {
+		if (url == null) {
+			throw new TextureLoadException("Failed to load texture: no URL (a resource that was not found?)");
+		}
+		BufferedImage img;
+		try {
+			img = ImageIO.read(url);
+		} catch (IOException e) {
+			throw new TextureLoadException("Failed to load texture: " + url, e);
+		}
+		if (img == null) {
+			throw new TextureLoadException("Failed to load texture (unrecognized image format): " + url);
+		}
+		return img;
+	}
+
+	/** The name of the file a URL points to: what follows its last '/' (e.g. "marble.jpg") */
+	private static String nameOf(URL url) {
+		String path = url.getPath();
+		String name = path.substring(path.lastIndexOf('/') + 1);
+		return URLDecoder.decode(name, StandardCharsets.UTF_8);
+	}
+
 	/**
 	 * Calculate the bilinear interpolated Color of this Texture at coordinates <s,t> with 0 <= s <= 1 and 0 <= t <= 1
 	 *

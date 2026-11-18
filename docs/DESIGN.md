@@ -10,7 +10,7 @@
 | **Language** | Java 21, JDK only (`java.desktop`), no native code, no GPU |
 | **Size** | ~30 k lines in `src/main` (~130 classes), ~150 test classes (~60 JUnit classes, ~80 visual test programs), ~620 JUnit tests |
 | **License** | MIT |
-| **Status** | `0.0.1-SNAPSHOT` — stable core, lighting & shadows actively evolving |
+| **Status** | `3.3.0-SNAPSHOT` — stable core, lighting & shadows actively evolving |
 
 ## Contents
 
@@ -1050,7 +1050,7 @@ xychart-beta
 | Lights | Invisible by default; optional halo of point and spot lights, and disc, halo, lens flare and optional light shafts of the sun (`setLightGlow`), hidden by the objects |
 | Atmosphere | A haze that depends on the distance only and spherical fogs with a soft edge (one color each, same extinction for each channel, no scattering of the light of the sun), as a post-process (`World.setAtmosphere`, `RenderContext.setAtmosphere`); not in `LINE` rendering nor orthographic |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener. The image is copied into the window by Java's software routines: on a screen scaled by the system (HiDPI, e.g. 200%), it is enlarged at each frame, a few ms per image (BACKLOG §6) |
-| Assets | Textures loaded from file paths, not from the classpath |
+| Assets | Textures loaded from an image file or a URL (e.g. a classpath resource, `new Texture(URL)`); the demos still read theirs from file paths, relative to the project root |
 | API | `PerspectiveContext` mixes lens and pixel size (see §8) |
 
 ### Roadmap (candidate items)
@@ -1066,7 +1066,7 @@ flowchart LR
     end
     subgraph NEXT["Mid term"]
         m1[Distance culling of<br/>cube map faces]
-        m2[Classpath texture loading]
+        m2[Maven modules: engine and demos,<br/>runnable demo jars]
         m3[Multi-threaded rasterization<br/>by screen tiles]
     end
     subgraph LATER["Ideas"]

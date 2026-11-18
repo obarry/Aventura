@@ -51,7 +51,7 @@ public class SceneTextures {
 	static final String DIRECTORY = "resources/texture/";
 	static final String MARBLE_FILE = DIRECTORY + "texture_stone_1023x852.jpg";
 	static final String GROUND_FILE = DIRECTORY + "texture_ground_stone_600x600.jpg";
-	static final String ROCK_FILE = DIRECTORY + "texture_gray_concrete_wall_with_cracks_2748x2748.jpg";
+	static final String ROCK_FILE = DIRECTORY + "texture_gray_concrete_wall_with_cracks_1024x1024.jpg";
 	static final String BARK_FILE = DIRECTORY + "texture_barnwood_576x358.jpg";
 	/** Size in pixels (the side of a square) and seed of the computed texture of the sea. */
 	static final int SEA_SIZE = 512;

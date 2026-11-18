@@ -305,14 +305,15 @@ engine can already do it; what is missing is mostly around it. Each item stays a
 - **Rendering on demand.** An image only when the scene, the camera, the lights or the size change, so that a 3D
   view at rest uses no CPU: a "changed" flag set by the setters of the API or by the component, close to the version
   counters of PERFORMANCE_AUDIT D8.
-- **Textures from the classpath.** An application ships its textures inside its jar; they can only be loaded from
-  file paths today (DESIGN §11).
+- **Textures from the classpath.** An application ships its textures inside its jar. **API done (3.3):**
+  `new Texture(URL)`, e.g. `new Texture(MyApp.class.getResource("/texture/marble.jpg"))`. The demos still read
+  their textures from file paths, until they move to their own module with their textures as resources.
 - **Model import.** OBJ at least, and the Aventura format (§9, [MODEL_FILE_IO.md](MODEL_FILE_IO.md)).
 - **Picking.** Which `Element` (and which triangle) is under a pixel, to react to a click: an ID buffer filled by a
   `FragmentConsumer` during the main pass (listed as an extension point in DESIGN §9), or a ray cast through the
   pixel and tested against the triangles. Labels (text attached to a 3D point) would go with it.
 - **Packaging.** A published artifact (Maven Central) of the engine alone, without the demos (`com.aventura.demo`
   is in `src/main` today); a `module-info.java` that exports the API packages only; a pom version that follows the
-  release tags (it is still `0.0.1-SNAPSHOT`, while the releases are at 3.2.0); a stable API with semantic
+  release tags (**done**: `3.3.0-SNAPSHOT`, after the 3.2.0 release; it was `0.0.1-SNAPSHOT`); a stable API with semantic
   versioning from then on.
 - **Other toolkits.** A JavaFX view (§6), so that the same component exists in both toolkits.

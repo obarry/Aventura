@@ -83,7 +83,7 @@ cd Aventura
 mvn clean package
 ```
 
-This compiles the engine, runs the unit tests and produces `target/aventura-0.0.1-SNAPSHOT.jar`.
+This compiles the engine, runs the unit tests and produces `target/aventura-3.3.0-SNAPSHOT.jar`.
 
 ### Run a demo
 
@@ -101,8 +101,8 @@ mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins
 mvn test-compile exec:java -Dexec.mainClass=com.aventura.test.TestSphereTexture
 
 # Or straight from the jar built above (Earth and Moon)
-java -jar target/aventura-0.0.1-SNAPSHOT.jar
-java -cp target/aventura-0.0.1-SNAPSHOT.jar com.aventura.demo.AventuraDemo
+java -jar target/aventura-3.3.0-SNAPSHOT.jar
+java -cp target/aventura-3.3.0-SNAPSHOT.jar com.aventura.demo.AventuraDemo
 ```
 
 ### Import in an IDE
@@ -187,7 +187,7 @@ javac -cp target/classes HelloAventura.java
 java -Djava.awt.headless=true -cp target/classes:. HelloAventura
 ```
 
-To show the result in a Swing window instead, use a `SwingView` created with a Swing component (`new SwingView(perspective, frame)`) and draw `view.getImageView()` in its `paintComponent()`, as `EarthAndMoon` does. With another GUI toolkit, keep the `ImageView` and register a listener called with each new frame: `view.setFrameListener(image -> ...)`. To use textures, pass a `Texture` to the shape constructor, e.g. `new Sphere(1f, 48, new Texture("resources/texture/texture_moon_2048x1024.jpg"))`.
+To show the result in a Swing window instead, use a `SwingView` created with a Swing component (`new SwingView(perspective, frame)`) and draw `view.getImageView()` in its `paintComponent()`, as `EarthAndMoon` does. With another GUI toolkit, keep the `ImageView` and register a listener called with each new frame: `view.setFrameListener(image -> ...)`. To use textures, pass a `Texture` to the shape constructor, e.g. `new Sphere(1f, 48, new Texture("resources/texture/texture_moon_2048x1024.jpg"))`, or, for an image packaged with your application (in its classes or its jar), `new Texture(MyApp.class.getResource("/texture/moon.jpg"))`.
 
 In the demos and in this example, the **Z axis points up** (it is used as the camera's "up" vector).
 
@@ -481,7 +481,7 @@ The [Geometry Cookbook](docs/GEOMETRY_COOKBOOK.md) covers it in depth: the contr
 How large is a scene? `World.getStatistics()` (or `Element.getStatistics()` for one branch of the tree) returns its `GeometryStatistics`: number of Elements, triangles and vertices at every level, depth of the tree, textures used with the triangles that use them and their memory. `GeometryReport` makes a text of it, one line per kind of Element of each level:
 
 ```java
-System.out.println(world.getStatistics());    // 753 elements (72 groups), 56,676 triangles, 36,397 vertices, depth 7, 7 textures (35.5 MB)
+System.out.println(world.getStatistics());    // 753 elements (72 groups), 56,676 triangles, 36,397 vertices, depth 7, 7 textures (10.7 MB)
 System.out.println(GeometryReport.of(world)); // The composition of the geometry, then the textures
 ```
 
@@ -544,7 +544,7 @@ then declare it as a dependency:
 <dependency>
   <groupId>com.aventura</groupId>
   <artifactId>aventura</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>3.3.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -570,7 +570,7 @@ Aventura/
 - Soft shadows have a penumbra of a fixed width of a few texels (no wider penumbra far from the object that casts the shadow), they are off by default, and the tuning constants of the bias that prevents shadow acne are fixed. For spot and point lights the bias is sized from a texel at the near plane and does not grow with the distance to the light, so a few acne artifacts may appear on surfaces very far from the light.
 - Lights are invisible by default. `RenderContext.setLightGlow(true)` draws a halo around point and spot lights (hidden by the objects in front of them); the sun (directional lights) is drawn as a disc and a halo in the sky, with a lens flare, and optionally light shafts; and the halos are not drawn in `LINE` rendering nor under an orthographic perspective.
 - The atmosphere has a haze that depends on the distance only (a single color for the whole sky, no warmer haze towards the sun, no mist in the valleys) and spherical fogs with a soft parabolic profile; the extinction is the same for the three color channels, nothing is lit by the sun through a fog (no light scattering, the fog has its own color) and the fogs do not fade the sun or the halos of the point lights. It is not drawn in `LINE` rendering nor under an orthographic perspective.
-- Texture files are loaded from file paths (relative to the working directory or absolute), not from the classpath.
+- Textures are loaded from an image file or from a URL, such as a resource of the classpath (`new Texture(MyApp.class.getResource("/texture/moon.jpg"))`). The demos still read theirs from `resources/texture`, relative to the working directory: run them from the project root.
 
 ## License
 

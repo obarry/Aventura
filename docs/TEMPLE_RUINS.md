@@ -16,7 +16,7 @@
 | **What** | The ruins of a Doric temple on a small island, among olive trees and boulders, the sea up to the horizon, the sun halfway up the sky |
 | **Where** | `com.aventura.demo.temple` (11 classes, about 3,600 lines, comments included), tests in the same package of `src/test` |
 | **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root) |
-| **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (35.5 MB), 1 sun, 1 ambient light, haze and optional mist |
+| **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (10.7 MB), 1 sun, 1 ambient light, haze and optional mist |
 | **Cameras** | Orbit, fly, and a helicopter tour of 516 m flown in 57 s |
 | **Speed** | 9 to 81 ms per image (12 to 107 images per second) on a laptop in its "best performance" power mode, 36.5 ms on average over the helicopter tour at 1000 x 562 pixels, 25 images displayed per second (in the "balanced" mode: 55 ms, and 110 ms in Full HD, 1920 x 986) |
 | **Engine changes** | `ShadowingLight.setShadowingElement()` (shadow map limited to an Element) and a depth rule in `shadowFactorAt()`; `GeometryStatistics` and `GeometryReport` (the size of a scene), the name and the memory of a `Texture`; `ShadowingLight.setStaticShadowCasters()` (the shadow map kept from one image to the next) |
@@ -617,11 +617,11 @@ TEXTURES                                                        pixels      memo
   texture_stone_1023x852.jpg                                1023 x 852      4.4 MB      14,496
   texture_barnwood_576x358.jpg                               358 x 576      1.0 MB       1,784
   foliage (computed)                                         256 x 256    341.3 KB      16,100
-  texture_gray_concrete_wall_with_cracks_2748x2748.jpg     2748 x 2748     38.4 MB       3,168
+  texture_gray_concrete_wall_with_cracks_1024x1024.jpg     1024 x 1024      5.3 MB       3,168
   sea (computed)                                             512 x 512      1.3 MB       2,048
   sea, average color                                             1 x 1         4 B         648
   (no texture)                                                                               0
-7 textures                                                                 47.4 MB      56,676
+7 textures                                                                 14.3 MB      56,676
 
 LAST IMAGE (1000 x 562 pixels, Helicopter tour)
 Frame 208.9 ms (SETUP 3.1, SHADOWS 42.1, GEOMETRY 10.4, MAIN_PASS 148.3, OVERLAYS 4.9, PRESENT 0.1)
@@ -647,8 +647,11 @@ The only things the demo does for its statistics are to **name** what has no tel
 seas (a `Trellis` is called "trellis" by default) and the computed textures (which have no file name).
 
 **What the statistics showed at once.** The foliage is 28% of the triangles, more than the whole temple with its
-platform (22%); and the texture of the boulders is 81% of the texture memory (38.4 MB, mipmaps included: one third more than the texture alone) for 5.6% of the triangles, drawn on
-rocks that seldom cover more than a few hundred pixels. Both are in the list of [§10](#10-performance).
+platform (22%); and the texture of the boulders was 81% of the texture memory (38.4 MB, mipmaps included: one third
+more than the texture alone) for 5.6% of the triangles, drawn on rocks that seldom cover more than a few hundred
+pixels. The foliage is in the list of [§10](#10-performance). The boulders now use a copy of the texture reduced to
+1024 x 1024 (a file of 0.5 MB instead of 3.8 MB): 5.3 MB of memory instead of 38.4, for images that differ by a few
+pixels on the rocks seen from close. The full-size texture stays for the ground of `FractalLandscape`.
 
 **Rendering times, lap by lap.** The time of one image, in the title of the window, changes with what the camera
 sees and from an image to the next: it cannot tell whether an option costs or saves a few percent. The helicopter
@@ -892,7 +895,6 @@ Creating the scene (textures, geometry, normals) takes 0.7 s on that 2-core comp
 | Draw at half the size while the camera moves, at full size when it stops | 3 to 4 times while moving | Small: `GUIView.resize()` and a scaled `drawImage()` |
 | Coarser trees far from the temple (8 x 5 instead of 10 x 6 per clump), or fewer clumps | About 5,000 triangles | Trivial, slightly visible |
 | A coarser ground far from the plateau (cells of 5 m near the shore) | About 9,000 triangles | A second `Trellis`, and a seam to hide |
-| A smaller texture for the boulders: `SceneTextures.shrink(rock, 4)` | No time, but 27 MB of memory out of 35.5 MB (and less shimmer on far rocks) | One line; found by the statistics ([§6](#statistics)) |
 | No caps under the echinus of the columns seen from above only | Negligible | Not worth it |
 
 The first one is the most useful: it does not make the engine faster, it makes the application feel faster.
