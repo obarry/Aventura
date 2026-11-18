@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.aventura</groupId>
+    <artifactId>aventura-parent</artifactId>
+    <version>3.3.0-SNAPSHOT</version>
+  </parent>
+
+  <!-- The rendering engine alone: math, model, engine, contexts, views, tools. Pure Java, no runtime dependency
+       but the JDK (java.desktop for Swing and image loading). This is the jar an application depends on. -->
+  <artifactId>aventura-engine</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Aventura engine</name>
+  <description>The Aventura 3D rendering engine: pure Java, CPU only, no dependency but the JDK.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- "mvn package" also builds target/aventura-engine-*-javadoc.jar -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

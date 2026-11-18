@@ -2,10 +2,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <!-- The parent of the Aventura modules: it builds them all, in the right order, with a single command
+       ("mvn test", "mvn package"...), and holds what they share (versions, plugins, settings).
+         aventura-engine  the rendering engine: no dependency but the JDK
+         aventura-demos   the demo applications, their textures, the visual test programs and the
+                          examples of the cookbooks; depends on the engine -->
   <groupId>com.aventura</groupId>
-  <artifactId>aventura</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <packaging>jar</packaging>
+  <artifactId>aventura-parent</artifactId>
+  <version>3.3.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
   <name>Aventura</name>
   <description>A lightweight 3D rendering engine 100% written in Java (no hardware dependency), with a Java API to build world geometry, define graphic and rendering parameters and render the scene on any Java application display.</description>
@@ -33,94 +38,91 @@
     <developerConnection>scm:git:https://github.com/obarry/Aventura.git</developerConnection>
   </scm>
 
+  <modules>
+    <module>aventura-engine</module>
+    <module>aventura-demos</module>
+  </modules>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.release>21</maven.compiler.release>
 
-    <!-- Defaults for "mvn exec:java" (run a demo). Override on the command line, e.g.
-         mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.AventuraDemo -->
-    <exec.mainClass>com.aventura.demo.EarthAndMoon</exec.mainClass>
-    <!-- "test" scope also puts the visual test programs (com.aventura.test.*) on the classpath -->
-    <exec.classpathScope>test</exec.classpathScope>
+    <!-- "mvn test-compile exec:java -Dexec.mainClass=..." from the project root runs a demo: the reactor builds
+         the engine, then the demos, and only aventura-demos runs it (exec.skip is false there only) -->
+    <exec.skip>true</exec.skip>
   </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.aventura</groupId>
+        <artifactId>aventura-engine</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.13.2</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
-    <!-- Standard Maven layout:
-           src/main/java  engine, math, model, view and demo applications
-           src/test/java  JUnit 4 unit tests + visual test programs (com.aventura.test.*)
-         Textures are read from ./resources/texture at run time (paths are relative to the
-         project root, so run the demos from the project root). -->
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
-      </plugin>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+        </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.2</version>
-        <configuration>
-          <!-- Unit tests must not need a display (CI, servers) -->
-          <argLine>-Djava.awt.headless=true</argLine>
-        </configuration>
-      </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.2</version>
+          <configuration>
+            <!-- Unit tests must not need a display (CI, servers) -->
+            <argLine>-Djava.awt.headless=true</argLine>
+          </configuration>
+        </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.4.2</version>
-        <configuration>
-          <archive>
-            <manifest>
-              <!-- java -jar target/aventura-*.jar (from the project root) launches this demo -->
-              <mainClass>${exec.mainClass}</mainClass>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.4.2</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              </manifest>
+            </archive>
+          </configuration>
+        </plugin>
 
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.5.0</version>
-      </plugin>
-      <!-- Javadoc: "mvn javadoc:javadoc" generates the HTML API docs in target/reports/apidocs
-           ("mvn package" also builds target/aventura-*-javadoc.jar) -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.11.2</version>
-        <configuration>
-          <doctitle>Aventura ${project.version} API</doctitle>
-          <windowtitle>Aventura ${project.version} API</windowtitle>
-          <!-- Do not fail the build on missing or malformed Javadoc comments -->
-          <doclint>none</doclint>
-          <failOnError>false</failOnError>
-          <quiet>true</quiet>
-        </configuration>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <phase>package</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+
+        <!-- Javadoc: "mvn javadoc:javadoc" generates the HTML API docs of the engine in
+             aventura-engine/target/reports/apidocs -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.11.2</version>
+          <configuration>
+            <doctitle>Aventura ${project.version} API</doctitle>
+            <windowtitle>Aventura ${project.version} API</windowtitle>
+            <!-- Do not fail the build on missing or malformed Javadoc comments -->
+            <doclint>none</doclint>
+            <failOnError>false</failOnError>
+            <quiet>true</quiet>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 </project>

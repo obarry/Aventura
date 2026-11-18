@@ -16,7 +16,9 @@
     ],
     "deny": [
       "Read(./target/**)",
+      "Read(./*/target/**)",
       "Read(./bin/**)",
+      "Read(./*/bin/**)",
       "Edit(./.project)",
       "Edit(./.classpath)",
       "Edit(./.settings/**)"

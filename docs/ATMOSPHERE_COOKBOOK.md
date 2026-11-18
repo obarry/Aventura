@@ -7,13 +7,13 @@ application, and your own kind of fog.
 |---|---|
 | **For** | Programmers who build scenes in code and want the `World` to bathe in an atmosphere, or need a phenomenon Aventura does not provide |
 | **Prerequisites** | The [README](../README.md) "Hello, Aventura" example and its [Atmosphere](../README.md#atmosphere) section; [DESIGN.md](DESIGN.md) for the big picture. For the geometry of the `World` itself, see the [Geometry Cookbook](GEOMETRY_COOKBOOK.md) |
-| **Examples** | [`src/test/java/com/aventura/cookbook`](../src/test/java/com/aventura/cookbook): [`AtmosphereCookbook`](../src/test/java/com/aventura/cookbook/AtmosphereCookbook.java) (the scene and the recipes) and [`GroundMist`](../src/test/java/com/aventura/cookbook/GroundMist.java) (a new fog) are compiled and tested ([`TestAtmosphereCookbook`](../src/test/java/com/aventura/cookbook/TestAtmosphereCookbook.java)) |
+| **Examples** | [`aventura-demos/src/test/java/com/aventura/cookbook`](../aventura-demos/src/test/java/com/aventura/cookbook): [`AtmosphereCookbook`](../aventura-demos/src/test/java/com/aventura/cookbook/AtmosphereCookbook.java) (the scene and the recipes) and [`GroundMist`](../aventura-demos/src/test/java/com/aventura/cookbook/GroundMist.java) (a new fog) are compiled and tested ([`TestAtmosphereCookbook`](../aventura-demos/src/test/java/com/aventura/cookbook/TestAtmosphereCookbook.java)) |
 
 <p align="center">
-  <img src="../resources/doc/images/atmosphere_steps.jpg" alt="The same avenue of pillars: clear air, with the haze, with a bank of fog, with both" width="800">
+  <img src="images/atmosphere_steps.jpg" alt="The same avenue of pillars: clear air, with the haze, with a bank of fog, with both" width="800">
 </p>
 
-*The scene of this cookbook ([`AtmosphereCookbook`](../src/test/java/com/aventura/cookbook/AtmosphereCookbook.java)), in four
+*The scene of this cookbook ([`AtmosphereCookbook`](../aventura-demos/src/test/java/com/aventura/cookbook/AtmosphereCookbook.java)), in four
 atmospheres: clear air (top left), the haze of recipe 1 (top right), the bank of fog of recipe 2 (bottom left) and both,
 what recipe 3 switches on and off (bottom right).*
 
@@ -272,7 +272,7 @@ the same time (`setCenter()` with the world position of the vehicle).
 
 A bank is a sphere. What about a mist that hugs the ground, thickest on the lawn and gone 4 units higher, as wide as the
 World? Nothing in the engine has to change: a `Fog` only gives its optical depth along a ray and its bounding sphere
-(§2). The whole class is [`GroundMist`](../src/test/java/com/aventura/cookbook/GroundMist.java).
+(§2). The whole class is [`GroundMist`](../aventura-demos/src/test/java/com/aventura/cookbook/GroundMist.java).
 
 ### Step 1 — Define the density, and the integral
 
@@ -349,7 +349,7 @@ atmosphere.addFog(new GroundMist(0f, 4f, 30f));   // from the lawn up to 4 units
 ```
 
 <p align="center">
-  <img src="../resources/doc/images/ground_mist.jpg" alt="The avenue of pillars in a mist that hugs the ground" width="800">
+  <img src="images/ground_mist.jpg" alt="The avenue of pillars in a mist that hugs the ground" width="800">
 </p>
 
 *The avenue in the ground mist (`AtmosphereCookbook.createGroundMistAtmosphere()`): the camera is inside the layer, at
@@ -358,7 +358,7 @@ lost in the mist, and the sky gets back its blue higher in the image, where the 
 
 ### Step 6 — Test it (§9)
 
-[`TestAtmosphereCookbook`](../src/test/java/com/aventura/cookbook/TestAtmosphereCookbook.java) checks `GroundMist` against
+[`TestAtmosphereCookbook`](../aventura-demos/src/test/java/com/aventura/cookbook/TestAtmosphereCookbook.java) checks `GroundMist` against
 closed-form values (straight down: `σ0·height/2`; horizontal at the foot: `σ0` per unit of length), against a numerical
 integration of rays of every kind (up, down, through the layer, to the sky), and in the image.
 
@@ -398,7 +398,7 @@ The `FractalLandscape` demo does it on a terrain: `Landscape` menu → *Generate
 places and sizes, and the `Effects` menu switches the haze and the fog (no fog by default).
 
 <p align="center">
-  <img src="../resources/doc/images/fog_landscape.jpg" alt="The fractal landscape with banks of fog in its valleys" width="800">
+  <img src="images/fog_landscape.jpg" alt="The fractal landscape with banks of fog in its valleys" width="800">
 </p>
 
 ## 10. Pitfalls

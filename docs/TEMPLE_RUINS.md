@@ -7,16 +7,16 @@
 > [Geometry Cookbook](GEOMETRY_COOKBOOK.md).
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins.jpg" alt="TempleRuins as it starts: the main front of the temple" width="800"><br/>
+  <img src="images/temple_ruins.jpg" alt="TempleRuins as it starts: the main front of the temple" width="800"><br/>
   <em>The demo as it starts: the main front of the temple, lit by the sun.</em>
 </p>
 
 | | |
 |---|---|
 | **What** | The ruins of a Doric temple on a small island, among olive trees and boulders, the sea up to the horizon, the sun halfway up the sky |
-| **Where** | `com.aventura.demo.temple` (11 classes, about 3,600 lines, comments included), tests in the same package of `src/test` |
-| **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root) |
-| **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (35.5 MB), 1 sun, 1 ambient light, haze and optional mist |
+| **Where** | `com.aventura.demo.temple` (11 classes, about 3,600 lines, comments included), tests in the same package of the test sources, in the `aventura-demos` module |
+| **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins` (from the project root, or the class `TempleRuins` run from the IDE) |
+| **Scene** | 753 `Element`s, 56,676 triangles, 36,397 vertices, 4 image textures and 3 computed ones (10.7 MB), 1 sun, 1 ambient light, haze and optional mist |
 | **Cameras** | Orbit, fly, and a helicopter tour of 516 m flown in 57 s |
 | **Speed** | 9 to 81 ms per image (12 to 107 images per second) on a laptop in its "best performance" power mode, 36.5 ms on average over the helicopter tour at 1000 x 562 pixels, 25 images displayed per second (in the "balanced" mode: 55 ms, and 110 ms in Full HD, 1920 x 986) |
 | **Engine changes** | `ShadowingLight.setShadowingElement()` (shadow map limited to an Element) and a depth rule in `shadowFactorAt()`; `GeometryStatistics` and `GeometryReport` (the size of a scene), the name and the memory of a `Texture`; `ShadowingLight.setStaticShadowCasters()` (the shadow map kept from one image to the next) |
@@ -61,7 +61,7 @@ What the demo shows of the API:
 | Smooth and flat normals, on the same shape | `TaperedDrum` (smooth trunk, fluted column), `Boulder` (rock, foliage) |
 | Texture coordinates per triangle | `TaperedDrum`, `Boulder` |
 | `Translation`, `Rotation`, `Scaling`, and their composition | `OliveTree.pose()`, foliage and boulders, fallen drums |
-| Textures from files, read in either direction | `SceneTextures` (marble, ground, rock; bark with its axes exchanged) |
+| Textures from image files, resources read from the classpath, in either direction | `SceneTextures` with `DemoTextures` (marble, ground, rock; bark with its axes exchanged) |
 | Textures computed pixel by pixel | `SceneTextures.createSea()`, `createFoliage()`, `shrink()` |
 | Mipmapping of the textures (`RenderContext.setMipmapping()`) | `createRenderContext()`, Effects menu |
 | Colors per triangle, tinting a texture | `TempleRuins.colorGround()` |
@@ -168,7 +168,7 @@ flowchart TB
 | `TaperedDrum` | 240 | A section of a column or of a trunk | New shape, smooth or flat normals, sub-Elements as caps |
 | `Boulder` | 190 | A rock or a clump of leaves | New shape, normals computed from the mesh |
 | `IslandTerrain` | 180 | The altitudes of the island | (none: plain Java, feeds a `Trellis`) |
-| `SceneTextures` | 200 | The six textures | `Texture` from a file and pixel by pixel, wrap mode |
+| `SceneTextures` | 200 | The six textures | `Texture` from a classpath resource and pixel by pixel, wrap mode |
 | `FlightPath` | 170 | The path of the helicopter | `Vector4`, `Rotation` |
 | `Noise` | 110 | Value noise and fractal noise | (none) |
 
@@ -231,7 +231,7 @@ its capital, a drum to its caps, the `sea` group to its two surfaces.
 ## 4. Graphic design
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_island.jpg" alt="The whole island from above the sea" width="800"><br/>
+  <img src="images/temple_ruins_island.jpg" alt="The whole island from above the sea" width="800"><br/>
   <em>The whole island, as the helicopter sees it from the south-west.</em>
 </p>
 
@@ -269,7 +269,7 @@ The warm/cool contrast is the oldest trick of outdoor painting, and it costs not
 not only an intensity.
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_sun.jpg" alt="Against the light: the sun, its halo and its lens flare" width="800"><br/>
+  <img src="images/temple_ruins_sun.jpg" alt="Against the light: the sun, its halo and its lens flare" width="800"><br/>
   <em>Against the light, from behind the temple: the disc of the sun, its halo and the ghosts of the lens flare.</em>
 </p>
 
@@ -293,7 +293,7 @@ lie along the side with the missing columns), and **irregularity in what remains
 angle, each broken column its own height, the walls of the cella crumble in a continuous profile).
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_debris.jpg" alt="The ruined south side: broken columns, fallen drums, walls of the cella" width="800"><br/>
+  <img src="images/temple_ruins_debris.jpg" alt="The ruined south side: broken columns, fallen drums, walls of the cella" width="800"><br/>
   <em>The south side: broken columns, fallen drums and blocks, what remains of the walls of the cella.</em>
 </p>
 
@@ -309,7 +309,7 @@ ridge and the bottom of a groove, 3 cm deeper. The grooves are V-shaped, not rou
 times the triangles for a difference visible only from a meter away.
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_colonnade.jpg" alt="At the foot of the main front: drums, flutes, capitals and beams" width="800"><br/>
+  <img src="images/temple_ruins_colonnade.jpg" alt="At the foot of the main front: drums, flutes, capitals and beams" width="800"><br/>
   <em>At the foot of the main front: the drums and their tints, the flutes, the capitals, the three layers of the entablature.</em>
 </p>
 
@@ -348,7 +348,7 @@ above it, is never under the drawn surface. The idea comes from `FractalLandscap
 boulders (around them). Two things are needed:
 
 ```java
-Texture ground = new Texture(GROUND_FILE).setWrapMode(Texture.WrapMode.MIRROR);   // SceneTextures
+Texture ground = new Texture(DemoTextures.url(GROUND_FILE)).setWrapMode(Texture.WrapMode.MIRROR);   // SceneTextures
 Trellis trellis = new Trellis(240, 240, 96, 96, altitudes, ground);               // createGround()
 trellis.setTextureRepeat(24, 24);                                                 // 24 tiles of 10 m
 ```
@@ -559,7 +559,7 @@ the camera at once: the movement eases over 150 ms.
 | | Sun, Sun halo, Lens flare, Light shafts | | The visible sun and its `LightAppearance` |
 
 <p align="center">
-  <img src="../resources/doc/images/temple_ruins_rendering.jpg" alt="The same view in four renderings" width="800"><br/>
+  <img src="images/temple_ruins_rendering.jpg" alt="The same view in four renderings" width="800"><br/>
   <em>The Rendering and Effects menus on the initial view: lines, monochrome, flat shading without textures, shadows nor atmosphere, and the full rendering.</em>
 </p>
 
@@ -617,11 +617,11 @@ TEXTURES                                                        pixels      memo
   texture_stone_1023x852.jpg                                1023 x 852      4.4 MB      14,496
   texture_barnwood_576x358.jpg                               358 x 576      1.0 MB       1,784
   foliage (computed)                                         256 x 256    341.3 KB      16,100
-  texture_gray_concrete_wall_with_cracks_2748x2748.jpg     2748 x 2748     38.4 MB       3,168
+  texture_gray_concrete_wall_with_cracks_1024x1024.jpg     1024 x 1024      5.3 MB       3,168
   sea (computed)                                             512 x 512      1.3 MB       2,048
   sea, average color                                             1 x 1         4 B         648
   (no texture)                                                                               0
-7 textures                                                                 47.4 MB      56,676
+7 textures                                                                 14.3 MB      56,676
 
 LAST IMAGE (1000 x 562 pixels, Helicopter tour)
 Frame 208.9 ms (SETUP 3.1, SHADOWS 42.1, GEOMETRY 10.4, MAIN_PASS 148.3, OVERLAYS 4.9, PRESENT 0.1)
@@ -647,8 +647,11 @@ The only things the demo does for its statistics are to **name** what has no tel
 seas (a `Trellis` is called "trellis" by default) and the computed textures (which have no file name).
 
 **What the statistics showed at once.** The foliage is 28% of the triangles, more than the whole temple with its
-platform (22%); and the texture of the boulders is 81% of the texture memory (38.4 MB, mipmaps included: one third more than the texture alone) for 5.6% of the triangles, drawn on
-rocks that seldom cover more than a few hundred pixels. Both are in the list of [§10](#10-performance).
+platform (22%); and the texture of the boulders was 81% of the texture memory (38.4 MB, mipmaps included: one third
+more than the texture alone) for 5.6% of the triangles, drawn on rocks that seldom cover more than a few hundred
+pixels. The foliage is in the list of [§10](#10-performance). The boulders now use a copy of the texture reduced to
+1024 x 1024 (a file of 0.5 MB instead of 3.8 MB): 5.3 MB of memory instead of 38.4, for images that differ by a few
+pixels on the rocks seen from close. The full-size texture stays for the ground of `FractalLandscape`.
 
 **Rendering times, lap by lap.** The time of one image, in the title of the window, changes with what the camera
 sees and from an image to the next: it cannot tell whether an option costs or saves a few percent. The helicopter
@@ -713,9 +716,8 @@ The images of this page are rendered by `DocumentationImages`, like the others o
 of the demo and fixed camera positions:
 
 ```
-java -Djava.awt.headless=true -cp target/classes:target/test-classes com.aventura.demo.DocumentationImages \
-     resources/doc/images temple_ruins.jpg temple_ruins_colonnade.jpg temple_ruins_debris.jpg \
-     temple_ruins_sun.jpg temple_ruins_island.jpg temple_ruins_rendering.jpg
+mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.DocumentationImages -Djava.awt.headless=true \
+    "-Dexec.args=docs/images temple_ruins.jpg temple_ruins_colonnade.jpg temple_ruins_debris.jpg temple_ruins_sun.jpg temple_ruins_island.jpg temple_ruins_rendering.jpg"
 ```
 
 ---
@@ -759,8 +761,6 @@ With an evolution of the engine: see the table of the next section.
 - **The sea does not move**, and neither do the trees.
 - **The rendering runs on the Swing thread**: the window does not respond during an image (see
   [§10](#10-performance)).
-- **Textures are read from `resources/texture`**, relative to the directory the program is run from: the demo must be
-  started from the project root.
 
 ### Of the engine, as met by the demo
 
@@ -785,7 +785,6 @@ are already in the [backlog](BACKLOG.md) or in the [performance audit](PERFORMAN
 | The haze has one color and ignores the sun; the sun and its halo are not dimmed by the haze or the fog | No warm glow towards the sun, a sharp sun through the mist | Backlog §5b |
 | The same geometry cannot be shared by several Elements | 26 columns, each with its own vertices and triangles | Instancing: one mesh, many transformations (audit D4) |
 | No camera controller in the API | Orbit and fly cameras written in the demo | A small `camera` toolbox: orbit, fly, path |
-| Textures loaded from file paths only | Run from the project root | Loading from the classpath (roadmap) |
 
 ---
 
@@ -892,7 +891,6 @@ Creating the scene (textures, geometry, normals) takes 0.7 s on that 2-core comp
 | Draw at half the size while the camera moves, at full size when it stops | 3 to 4 times while moving | Small: `GUIView.resize()` and a scaled `drawImage()` |
 | Coarser trees far from the temple (8 x 5 instead of 10 x 6 per clump), or fewer clumps | About 5,000 triangles | Trivial, slightly visible |
 | A coarser ground far from the plateau (cells of 5 m near the shore) | About 9,000 triangles | A second `Trellis`, and a seam to hide |
-| A smaller texture for the boulders: `SceneTextures.shrink(rock, 4)` | No time, but 27 MB of memory out of 35.5 MB (and less shimmer on far rocks) | One line; found by the statistics ([§6](#statistics)) |
 | No caps under the echinus of the columns seen from above only | Negligible | Not worth it |
 
 The first one is the most useful: it does not make the engine faster, it makes the application feel faster.

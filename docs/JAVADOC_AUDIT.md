@@ -235,7 +235,7 @@ follows the layers of DESIGN §2:
 
 ### S4. Images and diagrams
 
-- Copy the images of `resources/doc/images` into `doc-files` folders (next to the `package-info.java` files, or
+- Copy the images of `docs/images` into `doc-files` folders (next to the `package-info.java` files, or
   under `src/main/javadoc/doc-files` for the home page): renderings of the gallery, lighting, `UrbanScape`.
 - The **Mermaid** diagrams of DESIGN (architecture, pipeline, contexts, extension points) are not interpreted by
   Javadoc. The simplest and most durable: export them once as SVG (`mermaid-cli`) into `doc-files`. Loading Mermaid

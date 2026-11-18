@@ -275,10 +275,9 @@ the file format, the architecture and the step-by-step plan are in [MODEL_FILE_I
   (2) built-in shapes written as type + parameters, (3) camera, lights and atmosphere, (4) other formats
   (OBJ, already listed as an idea in [DESIGN.md §11](DESIGN.md#11-history-limitations-and-roadmap)).
 - **Separate Maven target.** The reader and writer, and the JSON library they need, live in their own module
-  (`aventura-io`, built and released separately) so that the rendering engine keeps no dependency other than
-  the JDK. The engine never references the module. Layout decided: a sibling
-  folder `aventura-io/` next to the root `pom.xml` (the engine build and the Eclipse configuration do not change); a
-  multi-module reactor remains possible later, see [MODEL_FILE_IO.md §6](MODEL_FILE_IO.md#6-maven-structure-a-separate-build-target).
+  (`aventura-io`) so that the rendering engine keeps no dependency other than the JDK. The engine never references
+  the module. Since the project is a multi-module reactor (`aventura-engine`, `aventura-demos`), `aventura-io` will
+  be a third module of it (see [MODEL_FILE_IO.md §6](MODEL_FILE_IO.md#6-maven-structure-a-separate-build-target)).
 - **Small engine changes needed first** ([§7](MODEL_FILE_IO.md#7-changes-required-in-the-engine)): a getter for the
   local model matrix of an `Element` (`getTransformation()` returns the accumulated one), and a `Texture` that
   remembers its source file and orientation arguments (it keeps only its texels today). Phase 2 also needs getters
@@ -305,14 +304,17 @@ engine can already do it; what is missing is mostly around it. Each item stays a
 - **Rendering on demand.** An image only when the scene, the camera, the lights or the size change, so that a 3D
   view at rest uses no CPU: a "changed" flag set by the setters of the API or by the component, close to the version
   counters of PERFORMANCE_AUDIT D8.
-- **Textures from the classpath.** An application ships its textures inside its jar; they can only be loaded from
-  file paths today (DESIGN §11).
+- **Textures from the classpath: done (3.3).** `new Texture(URL)`, e.g.
+  `new Texture(MyApp.class.getResource("/texture/marble.jpg"))`; the demos read theirs this way, as resources of
+  their module (`DemoTextures`).
 - **Model import.** OBJ at least, and the Aventura format (§9, [MODEL_FILE_IO.md](MODEL_FILE_IO.md)).
 - **Picking.** Which `Element` (and which triangle) is under a pixel, to react to a click: an ID buffer filled by a
   `FragmentConsumer` during the main pass (listed as an extension point in DESIGN §9), or a ray cast through the
   pixel and tested against the triangles. Labels (text attached to a 3D point) would go with it.
-- **Packaging.** A published artifact (Maven Central) of the engine alone, without the demos (`com.aventura.demo`
-  is in `src/main` today); a `module-info.java` that exports the API packages only; a pom version that follows the
-  release tags (it is still `0.0.1-SNAPSHOT`, while the releases are at 3.2.0); a stable API with semantic
+- **Packaging.** **Done (3.3):** the engine alone is its own module and jar (`aventura-engine`), the demos and
+  their textures another (`aventura-demos`). Still to do: runnable jars of the demos (`TempleRuins` first), a
+  published artifact (Maven Central: the `groupId` must be a domain one owns, or `io.github.obarry`), a
+  `module-info.java` that exports the API packages only; a pom version that follows the
+  release tags (**done**: `3.3.0-SNAPSHOT`, after the 3.2.0 release; it was `0.0.1-SNAPSHOT`); a stable API with semantic
   versioning from then on.
 - **Other toolkits.** A JavaFX view (§6), so that the same component exists in both toolkits.

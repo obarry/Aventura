@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.aventura</groupId>
+    <artifactId>aventura-parent</artifactId>
+    <version>3.3.0-SNAPSHOT</version>
+  </parent>
+
+  <!-- The demo applications (com.aventura.demo, com.aventura.demo.temple) and their textures, read from the
+       classpath (src/main/resources/texture). The tests hold the visual test programs (com.aventura.test), the
+       examples of the cookbooks (com.aventura.cookbook), the scene viewer, the benchmark and the generator of the
+       documentation images. -->
+  <artifactId>aventura-demos</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Aventura demos</name>
+  <description>Demo applications of the Aventura 3D rendering engine.</description>
+
+  <properties>
+    <!-- Defaults for "mvn test-compile exec:java" (run a demo) from the project root. Override on the command line,
+         e.g. mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.temple.TempleRuins -->
+    <exec.skip>false</exec.skip>
+    <exec.mainClass>com.aventura.demo.EarthAndMoon</exec.mainClass>
+    <!-- "test" scope also puts the visual test programs (com.aventura.test.*) on the classpath -->
+    <exec.classpathScope>test</exec.classpathScope>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.aventura</groupId>
+      <artifactId>aventura-engine</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
