@@ -27,7 +27,6 @@ package com.aventura.math.vector;
 
 import com.aventura.math.Constants;
 import com.aventura.math.tools.MathTools;
-import com.aventura.tools.tracing.Tracer;
 
 /**
  * @author Olivier BARRY
@@ -149,20 +148,7 @@ public class Vector2 {
 	 * @return W, a new Vector2, result of the multiplication
 	 */
 	public Vector2 times(Matrix2 A) {
-		Vector2 r = new Vector2();
-
-		for (int i=0; i<Constants.SIZE_2; i++) {
-			for (int j=0; j<Constants.SIZE_2; j++) {
-				try {
-					r.set(i, r.get(i)+A.get(i,j)*this.get(j));
-				} catch (IndexOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector2 and Matrix2)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();
-				}
-			}
-		}
-		return r;
+		return new Vector2(A.array[0][0]*this.x + A.array[0][1]*this.y, A.array[1][0]*this.x + A.array[1][1]*this.y);
 	}
 
 	/**
@@ -172,22 +158,9 @@ public class Vector2 {
 	 * @param A the Matrix2
 	 */
 	public void timesEquals(Matrix2 A) {
-		float[] array = new float[Constants.SIZE_2];
-
-		for (int i=0; i<Constants.SIZE_2; i++) {
-			array[i] = 0;
-			for (int j=0; j<Constants.SIZE_2; j++) {
-				try {
-					array[i]+=A.get(i,j)*this.get(j);
-				} catch (IndexOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector2 and Matrix2)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();
-				}
-			}
-		}
-		this.x = array[0];
-		this.y = array[1];
+		float x = this.x, y = this.y;
+		this.x = A.array[0][0]*x + A.array[0][1]*y;
+		this.y = A.array[1][0]*x + A.array[1][1]*y;
 	}
 
 	/**

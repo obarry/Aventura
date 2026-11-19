@@ -28,7 +28,6 @@ package com.aventura.math.vector;
 import java.util.Arrays;
 
 import com.aventura.math.Constants;
-import com.aventura.tools.tracing.Tracer;
 
 public class Matrix4 {
 
@@ -205,22 +204,7 @@ public class Matrix4 {
 	 */
 	public Vector4 getRow(int r) throws IndexOutOfBoundException {
 		if (r<0 || r>=Constants.SIZE_4) throw new IndexOutOfBoundException("Index out of bound while getting Row ("+r+") of Matrix4");
-		float[] array = new float[Constants.SIZE_4];
-		Vector4 v = null;
-		// No loop for optimization
-		array[0] = this.array[r][0];
-		array[1] = this.array[r][1];
-		array[2] = this.array[r][2];
-		array[3] = this.array[r][3];
-		
-		try {
-			v = new Vector4(array);
-		} catch (VectorArrayWrongSizeException e) {
-			// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-			e.printStackTrace();
-		}
-		 return v;
+		return new Vector4(this.array[r][0], this.array[r][1], this.array[r][2], this.array[r][3]);
 	}
 	
 	/**
@@ -247,22 +231,7 @@ public class Matrix4 {
 	 */
 	public Vector4 getColumn(int c) throws IndexOutOfBoundException {
 		if (c<0 || c>=Constants.SIZE_4) throw new IndexOutOfBoundException("Index out of bound while getting Column ("+c+") of Matrix4");
-		float[] array = new float[Constants.SIZE_4];
-		Vector4 v = null;
-		// No loop for optimization
-		array[0] = this.array[0][c];
-		array[1] = this.array[1][c];
-		array[2] = this.array[2][c];
-		array[3] = this.array[3][c];
-		
-		try {
-			v = new Vector4(array);
-		} catch (VectorArrayWrongSizeException e) {
-			// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector4 and Matrix4)
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-			e.printStackTrace();
-		}
-		return v;	
+		return new Vector4(this.array[0][c], this.array[1][c], this.array[2][c], this.array[3][c]);
 	}
 	
 	/**

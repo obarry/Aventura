@@ -25,6 +25,7 @@
  */
 package com.aventura.model.world.shape;
 
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Element;
@@ -41,7 +42,7 @@ public class Disc extends GenerativeElement {
 	protected CircularMesh mesh;
 	float ray;
 	int half_seg;
-	protected Vector4 center;
+	protected Vector3 center; // Offset of the vertices from the Element's origin (a displacement, hence a Vector3)
 	
 	protected Texture tex = null;
 		
@@ -56,7 +57,7 @@ public class Disc extends GenerativeElement {
 		subelements = null;
 		this.ray = ray;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
+		this.center = new Vector3(0,0,0);
 	}
 
 
@@ -65,7 +66,7 @@ public class Disc extends GenerativeElement {
 		subelements = null;
 		this.ray = ray;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
+		this.center = new Vector3(0,0,0);
 		this.tex = t;
 	}
 

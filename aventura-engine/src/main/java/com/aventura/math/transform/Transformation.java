@@ -27,7 +27,6 @@ package com.aventura.math.transform;
 
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
-import com.aventura.tools.tracing.Tracer;
 
 /**
  * This class is a transformation that represents a rotation having its center at origin O through a Matrix 4
@@ -62,9 +61,6 @@ public class Transformation extends Matrix4 {
 	public Transformation(Scaling h, Rotation r, Translation t) {
 
 		super((t.times(r)).times(h));
-		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of new Transformation Matrix.\n"+"Scaling:\n"+h+"\nRotation:\n"+r+"\nTranslation:\n"+t);
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of new Transformation Matrix.");
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Transformation:\n"+this);
 	}
 	
 	public Transformation(Matrix4 matrix) {

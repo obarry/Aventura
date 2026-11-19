@@ -193,8 +193,8 @@ public class TestGeometryCookbook {
 		assertEquals(3, lamp.getSubElements().size()); // base, pole, arm
 		assertEquals(3, lamp.getArm().getSubElements().size()); // bar, shade, bulb
 
-		// The bulb is a Sphere, which does not fulfill C6 (wound inwards, non-unit normals: known issues,
-		// see docs/BACKLOG.md): check every other part.
+		// The bulb is a Sphere, which does not fulfill C6 (wound inwards: known issue, see docs/BACKLOG.md):
+		// check every other part.
 		for (Element part : lamp.getSubElements()) {
 			if (part != lamp.getArm()) {
 				assertEquals(part.getName(), NO_VIOLATION, ElementContractChecker.check(part));

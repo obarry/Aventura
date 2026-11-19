@@ -89,8 +89,8 @@ public class Cylinder extends GenerativeElement {
 	public void generateVertices() {
 		
 		// Create centers
-		this.top_center = new Vector4(0,0,height/2,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
+		this.top_center = new Vector4(0,0,height/2,1);
+		this.bottom_center = new Vector4(0,0,-height/2,1);
 
 		// Create mesh to wrap Cylinder
 		rectangleMesh = new RectangleMesh(this, half_seg*2+1, 2, tex); // (n) x 2 vertices on each circles + 1 x 2 duplicate Vertex for RectangleMesh / Texture
@@ -125,7 +125,7 @@ public class Cylinder extends GenerativeElement {
 		// Create normals of vertices
 		for (int i=0; i<=half_seg*2; i++) {
 			// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it 
-			n = rectangleMesh.getVertex(i,0).getPos().minus(bottom_center).V3();
+			n = new Vector3(bottom_center, rectangleMesh.getVertex(i,0).getPos());
 			n.normalize();
 			rectangleMesh.getVertex(i,0).setNormal(n);
 			// Same normal vector can be used for the corresponding top Vertex

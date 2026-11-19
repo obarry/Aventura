@@ -25,7 +25,6 @@
  */
 package com.aventura.math.transform;
 
-import com.aventura.tools.tracing.Tracer;
 import com.aventura.math.vector.Matrix4;
 import com.aventura.math.vector.Vector4;
 import com.aventura.math.vector.Vector3;
@@ -101,27 +100,15 @@ public class Translation extends Transformation {
 	}
 	
 	protected void createTranslation(Vector4 v) {
-		try {
-			this.set(0, 3, v.getX());
-			this.set(1, 3, v.getY());
-			this.set(2, 3, v.getZ());
-			if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Translation matrix:\n");
-		} catch (Exception e) {
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected Error while creating new Translation with Vector4: "+v);			
-			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			
-		}
+		this.set(0, 3, v.getX());
+		this.set(1, 3, v.getY());
+		this.set(2, 3, v.getZ());
 	}
 
 	protected void createTranslation(Vector3 v) {
-		try {
-			this.set(0, 3, v.getX());
-			this.set(1, 3, v.getY());
-			this.set(2, 3, v.getZ());
-			if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Translation matrix:\n");
-		} catch (Exception e) {
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected Error while creating new Translation with Vector3: "+v);			
-			if (Tracer.exception) Tracer.traceException(this.getClass(), e.toString());			
-		}
+		this.set(0, 3, v.getX());
+		this.set(1, 3, v.getY());
+		this.set(2, 3, v.getZ());
 	}
 
 	

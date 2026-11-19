@@ -27,7 +27,6 @@ package com.aventura.engine;
 
 import com.aventura.math.vector.Matrix3;
 import com.aventura.math.vector.Matrix4;
-import com.aventura.math.vector.NotInvertibleMatrixException;
 import com.aventura.math.vector.Vector3;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Vertex;
@@ -39,6 +38,9 @@ import com.aventura.tools.tracing.Tracer;
  * projection pair (constant for this object's lifetime) and a current Model
  * matrix (changes for every Element, potentially every frame), computes each
  * Vertex's clip-space position and world-space normal in place.
+ *
+ * The normals are directions: no translation applies to them. They are therefore transformed by Matrix3s (the
+ * linear 3x3 part of the transformation), not by the Matrix4s that transform the points.
  *
  * Replaces the model/model_normals/full/full_normals fields and the
  * setModel()+calculateNormalMatrix()+calculateMVPMatrix() trio that used to
@@ -65,9 +67,9 @@ public class ElementTransform {
 	private final ViewProjection viewProjection;
 
 	private Matrix4 model;
-	private Matrix4 modelNormals; // null whenever the current Model was set with withNormals=false
+	private Matrix3 modelNormals; // null whenever the current Model was set with withNormals=false
 	private Matrix4 full;         // vp * model
-	private Matrix4 fullNormals;  // vp * modelNormals -- null whenever modelNormals is null
+	private Matrix3 fullNormals;  // linear part of vp * modelNormals -- null whenever modelNormals is null
 
 	/**
 	 * @param viewProjection the same ViewProjection instance shared with anything else that needs
@@ -98,7 +100,7 @@ public class ElementTransform {
 
 		if (withNormals) {
 			this.modelNormals = computeNormalMatrix(model);
-			this.fullNormals = vp.times(modelNormals);
+			this.fullNormals = vp.getMatrix3().times(modelNormals);
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Full transformation normal matrix:\n" + fullNormals);
 		} else {
 			this.modelNormals = null;
@@ -108,35 +110,28 @@ public class ElementTransform {
 	}
 
 	/**
-	 * Model matrix for orthogonal transformations (preserve lengths/angles) directly; its inverse
-	 * transpose otherwise (needed for correct normal transformation under non-uniform scaling).
-	 * Orthogonality test: Transpose(A).A = I, within a rounding-error tolerance margin.
+	 * Matrix transforming the normals: the inverse transpose of the linear 3x3 part of the Model matrix, which keeps
+	 * the normals perpendicular to the surfaces under any transformation (a non-uniform scaling included). For a
+	 * rotation, it is the rotation itself, so there is a single computation for every Model matrix.
+	 *
+	 * Only the 3x3 part is used: the translation of the Model matrix does not apply to a direction. (When the normals
+	 * were transformed by the inverse transpose of the whole Matrix4, the translation ended up in its bottom row and
+	 * gave the normals a non-zero w, which corrupted the ORTHOGRAPHIC backface test; it had to be removed by hand.)
+	 *
+	 * The inverse transpose is computed without any inversion: transpose(inverse(A)) = cofactors(A) / det(A).
+	 * (There used to be two paths, the Model matrix itself when it was orthogonal within an epsilon, the inverse
+	 * transpose otherwise: a matrix drifting by rounding errors could jump from one to the other between two frames.)
 	 */
-	private Matrix4 computeNormalMatrix(Matrix4 model) {
+	private Matrix3 computeNormalMatrix(Matrix4 model) {
 		Matrix3 model3 = model.getMatrix3();
-		if (model3.times(model3.transpose()).equals(Matrix3.identity())) {
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Model normals matrix = Model matrix");
-			return model;
+		float det = model3.determinant();
+		if (det == 0) {
+			// A flattening transformation (e.g. a scaling by 0 on one axis): no inverse. Fall back to the Model
+			// matrix rather than fail, as before.
+			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Singular model matrix, falling back to Model matrix for normals");
+			return model3;
 		}
-		try {
-			// Normals are directions (w=0): only the linear 3x3 part of the Model matrix applies to them.
-			// The translation MUST be removed before the inverse transpose: otherwise it ends up in the
-			// bottom row of transpose(inverse(model)), giving the transformed normal a non-zero w
-			// (w = -t.(R.n)). That w is then multiplied by the translation terms of View and Projection
-			// in fullNormals = vp * modelNormals, corrupting the clip-space normal Z used by the
-			// ORTHOGRAPHIC backface test (faces of translated Elements wrongly culled).
-			Matrix4 linear = new Matrix4(model);
-			linear.set(0, 3, 0);
-			linear.set(1, 3, 0);
-			linear.set(2, 3, 0);
-			return linear.transpose().inverse();
-		} catch (NotInvertibleMatrixException e) {
-			// Should never happen but fall back to the Model matrix rather than propagate, exactly
-			// like the legacy behavior.
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Error inverting model matrix for normals, falling back to Model matrix");
-			e.printStackTrace();
-			return model;
-		}
+		return model3.cofactors().times(1 / det);
 	}
 
 	/**
@@ -176,10 +171,10 @@ public class ElementTransform {
 	}
 
 	private Vector3 transformNormalToWorld(Vector3 n) {
-		return modelNormals.times(n.V4()).V3();
+		return modelNormals.times(n);
 	}
 
 	private Vector3 transformNormalToClip(Vector3 n) {
-		return fullNormals.times(n.V4()).V3();
+		return fullNormals.times(n);
 	}
-}
+}
