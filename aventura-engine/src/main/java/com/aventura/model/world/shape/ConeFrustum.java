@@ -55,7 +55,8 @@ public class ConeFrustum extends GenerativeElement {
 	float cone_height, frustum_height, mid_height;
 	float ray;
 	int half_seg;
-	protected Vector4 center, top_center, bottom_center;
+	protected Vector3 center; // Offset of the vertices from the Element's origin (a displacement, hence a Vector3)
+	protected Vector4 top_center, bottom_center; // Points (w = 1), moved by center like the vertices
 	protected Texture tex;
 	
 	/**
@@ -72,9 +73,9 @@ public class ConeFrustum extends GenerativeElement {
 		this.frustum_height = frustum_height;
 		this.mid_height = frustum_height/2;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
-		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
-		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
+		this.center = new Vector3(0,0,0);
+		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),1).plus(this.center);
+		this.bottom_center = new Vector4(0,0,-cone_height/2,1).plus(this.center);
 		this.tex = null;
 	}
 
@@ -92,9 +93,9 @@ public class ConeFrustum extends GenerativeElement {
 		this.frustum_height = frustum_height;
 		this.mid_height = frustum_height/2;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
-		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
-		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
+		this.center = new Vector3(0,0,0);
+		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),1).plus(this.center);
+		this.bottom_center = new Vector4(0,0,-cone_height/2,1).plus(this.center);
 		this.tex = tex;
 	}
 
@@ -113,9 +114,9 @@ public class ConeFrustum extends GenerativeElement {
 		this.frustum_height = frustum_height;
 		this.mid_height = frustum_height/2;
 		this.half_seg = half_seg;
-		this.center = new Vector4(center);
-		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
-		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
+		this.center = new Vector3(center);
+		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),1).plus(this.center);
+		this.bottom_center = new Vector4(0,0,-cone_height/2,1).plus(this.center);
 		this.tex = null;
 	}
 	
@@ -124,7 +125,8 @@ public class ConeFrustum extends GenerativeElement {
 	 * @param height of the Cylinder
 	 * @param ray of the top and bottom circles of the Cylinder
 	 * @param half_seg is half the number of segments for 360 degrees circles
-	 * @param center to which the Vertices are moved at creation (Vector4)
+	 * @param center to which the Vertices are moved at creation (Vector4): only its x, y and z are used, its w is ignored,
+	 *               so a point (w = 1) and a vector (w = 0) give the same ConeFrustum
 	 */
 	public ConeFrustum(float cone_height, float frustum_height, float ray, int half_seg, Vector4 center) {
 		super();
@@ -134,9 +136,9 @@ public class ConeFrustum extends GenerativeElement {
 		this.frustum_height = frustum_height;
 		this.mid_height = frustum_height/2;
 		this.half_seg = half_seg;
-		this.center = center;
-		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),0);
-		this.bottom_center = new Vector4(0,0,-cone_height/2,0);
+		this.center = new Vector3(center); // Only x, y and z: a point (w = 1) used to be added as is, giving every Vertex w = 2
+		this.top_center = new Vector4(0,0,(frustum_height-(cone_height/2)),1).plus(this.center);
+		this.bottom_center = new Vector4(0,0,-cone_height/2,1).plus(this.center);
 		this.tex = null;
 	}
 

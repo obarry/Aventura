@@ -25,6 +25,7 @@
  */
 package com.aventura.model.world.shape;
 
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Element;
@@ -57,7 +58,7 @@ public class Trellis extends GenerativeElement {
 	protected RectangleMesh rectangleMesh;
 	protected int nx, ny;
 	protected float width, length;
-	protected Vector4 position;
+	protected Vector3 position; // Offset of the vertices from the Element's origin (a displacement, hence a Vector3)
 
 	/**
 	 * Create a new Trellis of size width and length on x and y axis and made of nx and ny segments (respectively nx+1 and ny+1 vertices)
@@ -75,7 +76,7 @@ public class Trellis extends GenerativeElement {
 		this.length = length;
 		this.nx = nx;
 		this.ny = ny;
-		this.position = new Vector4(-width/2,-length/2,0,0);
+		this.position = new Vector3(-width/2,-length/2,0);
 		rectangleMesh = new RectangleMesh(this, nx+1, ny+1);
 		initTrellis(position);
 		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);
@@ -97,7 +98,7 @@ public class Trellis extends GenerativeElement {
 		this.length = length;
 		this.nx = nx;
 		this.ny = ny;
-		this.position = new Vector4(-width/2,-length/2,0,0);
+		this.position = new Vector3(-width/2,-length/2,0);
 		rectangleMesh = new RectangleMesh(this, nx+1, ny+1, tex);
 		initTrellis(position);
 	}
@@ -119,7 +120,7 @@ public class Trellis extends GenerativeElement {
 		this.length = length;
 		this.nx = nx;
 		this.ny = ny;
-		this.position = new Vector4(-width/2,-length/2,0,0);
+		this.position = new Vector3(-width/2,-length/2,0);
 		if ((array.length != nx+1) || (array[0].length != ny+1)) {
 			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
 		}
@@ -144,7 +145,7 @@ public class Trellis extends GenerativeElement {
 		this.length = length;
 		this.nx = nx;
 		this.ny = ny;
-		this.position = new Vector4(-width/2,-length/2,0,0);
+		this.position = new Vector3(-width/2,-length/2,0);
 		if ((array.length != nx+1) || (array[0].length != ny+1)) {
 			throw new WrongArraySizeException("Array should be of size("+nx+1+","+ny+1+") but is of size("+array.length+","+array[0].length+")");
 		}
@@ -182,7 +183,7 @@ public class Trellis extends GenerativeElement {
 //		rectangleMesh.createTriangles(RectangleMesh.MESH_ALTERNATE_TRIANGLES);		
 //	}
 
-	protected void initTrellis(Vector4 position) {
+	protected void initTrellis(Vector3 position) {
 				
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {
@@ -192,7 +193,7 @@ public class Trellis extends GenerativeElement {
 		}
 	}
 
-	protected void initTrellis(Vector4 position, float [][] array) throws WrongArraySizeException {
+	protected void initTrellis(Vector3 position, float [][] array) throws WrongArraySizeException {
 		
 		// Create Vertices
 		for (int i=0; i<=nx; i++) {

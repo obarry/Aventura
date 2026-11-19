@@ -28,7 +28,6 @@ package com.aventura.math.vector;
 import java.util.Arrays;
 
 import com.aventura.math.Constants;
-import com.aventura.tools.tracing.Tracer;
 
 public class Matrix3 {
 
@@ -188,21 +187,7 @@ public class Matrix3 {
 	 */
 	public Vector3 getRow(int r) throws IndexOutOfBoundException {
 		if (r<0 || r>=Constants.SIZE_3) throw new IndexOutOfBoundException("Index out of bound while getting Row ("+r+") of Matrix3");
-		float[] array = new float[Constants.SIZE_3];
-		Vector3 v = null;
-		// No loop for optimization
-		array[0] = this.array[r][0];
-		array[1] = this.array[r][1];
-		array[2] = this.array[r][2];
-
-		try {
-			v = new Vector3(array);
-		} catch (VectorArrayWrongSizeException e) {
-			// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-			e.printStackTrace();
-		}
-		return v;
+		return new Vector3(this.array[r][0], this.array[r][1], this.array[r][2]);
 	}
 
 	/**
@@ -213,21 +198,7 @@ public class Matrix3 {
 	 */
 	public Vector3 getColumn(int c) throws IndexOutOfBoundException {
 		if (c<0 || c>=Constants.SIZE_3) throw new IndexOutOfBoundException("Index out of bound while getting Column ("+c+") of Matrix3");
-		float[] array = new float[Constants.SIZE_3];
-		Vector3 v = null;
-		// No loop for optimization
-		array[0] = this.array[0][c];
-		array[1] = this.array[1][c];
-		array[2] = this.array[2][c];
-
-		try {
-			v = new Vector3(array);
-		} catch (VectorArrayWrongSizeException e) {
-			// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
-			if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-			e.printStackTrace();
-		}
-		return v;
+		return new Vector3(this.array[0][c], this.array[1][c], this.array[2][c]);
 	}
 
 	/**
@@ -356,13 +327,7 @@ public class Matrix3 {
 	 */
 	public Matrix3 times(Matrix3 b) {
 		Matrix3 r = new Matrix3();
-
-		for (int i=0; i<Constants.SIZE_3; i++) {
-			for (int j=0; j<Constants.SIZE_3; j++) {
-				r.set(i,j, this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j));
-			}
-		}
-
+		multiply(this.array, b.array, r.array);
 		return r;
 	}
 
@@ -371,13 +336,21 @@ public class Matrix3 {
 	 * @param B
 	 */
 	public void timesEquals(Matrix3 b) {
-		float[][] array = new float[Constants.SIZE_3][Constants.SIZE_3];
+		float[][] result = new float[Constants.SIZE_3][Constants.SIZE_3];
+		multiply(this.array, b.array, result);
+		this.array = result;
+	}
+
+	/**
+	 * c = a.b, on the arrays directly (c must be a different array from a and b), as Matrix4.multiply().
+	 */
+	private static void multiply(float[][] a, float[][] b, float[][] c) {
 		for (int i=0; i<Constants.SIZE_3; i++) {
+			float[] ai = a[i];
 			for (int j=0; j<Constants.SIZE_3; j++) {
-				array[i][j] = this.get(i,0)*b.get(0,j) + this.get(i,1)*b.get(1,j) + this.get(i,2)*b.get(2,j);
+				c[i][j] = ai[0]*b[0][j] + ai[1]*b[1][j] + ai[2]*b[2][j];
 			}
 		}
-		this.array = array;
 	}
 
 	/**
@@ -496,10 +469,42 @@ public class Matrix3 {
 	}
 
 
+	/**
+	 * W = A.V: product of this Matrix3 A by a Vector3 V.
+	 *
+	 * Written out (9 multiplications, 6 additions) as Matrix4.times(Vector4): this is the product that transforms the
+	 * normals of the vertices (see ElementTransform).
+	 * @param v the Vector3 V
+	 * @return W, a new Vector3
+	 */
 	public Vector3 times(Vector3 v) {
-		// Rely on the service provided by the Vector3D class
-		// Optimal call is to use Vector3D method directly
-		return v.times(this);
+		float x = v.x, y = v.y, z = v.z;
+		float[] r0 = array[0], r1 = array[1], r2 = array[2];
+		return new Vector3(
+				r0[0]*x + r0[1]*y + r0[2]*z,
+				r1[0]*x + r1[1]*y + r1[2]*z,
+				r2[0]*x + r2[1]*y + r2[2]*z);
+	}
+
+	/**
+	 * Matrix of the cofactors of this Matrix: the element (i, j) is the determinant of the 2x2 minor without row i
+	 * and column j, with the sign (-1)^(i+j) (new method).
+	 *
+	 * It is the transpose of the adjugate, so that inverse(A) = transpose(cofactors(A)) / det(A), hence:
+	 * transpose(inverse(A)) = cofactors(A) / det(A). This is the matrix that transforms the normals when A transforms
+	 * the points (see ElementTransform): without any division, so it also exists for a singular A, and its direction
+	 * is the same as the one of the inverse transpose when det(A) > 0 (opposite when det(A) < 0).
+	 * @return a new Matrix3, the matrix of the cofactors
+	 */
+	public Matrix3 cofactors() {
+		float[] r0 = array[0], r1 = array[1], r2 = array[2];
+		float[][] c = {
+				{ r1[1]*r2[2] - r1[2]*r2[1], r1[2]*r2[0] - r1[0]*r2[2], r1[0]*r2[1] - r1[1]*r2[0] },
+				{ r2[1]*r0[2] - r2[2]*r0[1], r2[2]*r0[0] - r2[0]*r0[2], r2[0]*r0[1] - r2[1]*r0[0] },
+				{ r0[1]*r1[2] - r0[2]*r1[1], r0[2]*r1[0] - r0[0]*r1[2], r0[0]*r1[1] - r0[1]*r1[0] } };
+		Matrix3 r = new Matrix3();
+		r.array = c;
+		return r;
 	}
 
 	/**

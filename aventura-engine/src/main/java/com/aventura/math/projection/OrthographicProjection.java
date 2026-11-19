@@ -25,7 +25,6 @@
  */
 package com.aventura.math.projection;
 
-import com.aventura.tools.tracing.Tracer;
 
 /**
  * Orthographic Projection Matrix
@@ -42,7 +41,6 @@ public class OrthographicProjection extends Projection {
 	
 	public OrthographicProjection(float left, float right, float bottom, float top, float near, float far) {
 		
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Orthographic projection");
 
 		// Using matrix generating positive z after transformation (unlike OpenGL matrix) hence opposite signs on line 3 of the matrix
 //		float[][] array = { { 2/(right-left)       , 0.0f            ,  0.0f          , -(right+left)/(right-left) },
@@ -61,7 +59,6 @@ public class OrthographicProjection extends Projection {
 			// Should never happen
 		}
 
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Orthographic matrix:\n"+ this);						
 
 	}
 

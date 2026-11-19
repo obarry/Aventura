@@ -26,7 +26,6 @@
 package com.aventura.math.transform;
 
 import com.aventura.math.vector.Matrix4;
-import com.aventura.tools.tracing.Tracer;
 
 /**
  * This class is a transformation that represents a scaling (or homothety) having its center at origin O through a Matrix 4
@@ -40,7 +39,6 @@ public class Scaling extends Matrix4 {
 	public Scaling() {
 		super(Matrix4.identity());
 		// TODO Auto-generated constructor stub
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Scaling matrix:\n");
 	}
 	
 	public Scaling(float s) {
@@ -48,7 +46,6 @@ public class Scaling extends Matrix4 {
 		this.array[0][0] = s;
 		this.array[1][1] = s;
 		this.array[2][2] = s;
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Scaling matrix with parameter (s="+s+"):\n");
 	}
 
 	public Scaling(float a, float b, float c) {
@@ -56,7 +53,6 @@ public class Scaling extends Matrix4 {
 		this.array[0][0] = a;
 		this.array[1][1] = b;
 		this.array[2][2] = c;
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Scaling matrix with parameters (a="+a+", b="+b+", c="+c+"):\n");
 	}
 
 }

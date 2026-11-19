@@ -126,6 +126,9 @@ the cookbooks, `SceneViewer`, `PerfBench` and `DocumentationImages`. The engine 
 | `engine` | The pipeline itself |
 | `view` | `GUIView` abstraction, `ImageView` (GUI-independent double buffer) and `SwingView`; `MapView` (maps of values, displayable in a view) |
 
+The three `math` packages depend only on the JDK: no tracing, no other package of Aventura. They can be lifted
+as they are into another project.
+
 ---
 
 ## 3. Domain model
@@ -268,7 +271,7 @@ Two engine classes own this maths:
 | Class | Role |
 |---|---|
 | `ViewProjection` | Pure `P · V` projector, refreshed once per frame from the **current** camera matrix and perspective projection (so camera moves and perspective changes such as a zoom are both picked up). Also reused by shadow lookup and debug-vector drawing. |
-| `ElementTransform` | Per-element `P · V · M` plus the **normal matrix** (`M` itself if orthogonal, `(Mᵀ)⁻¹` otherwise, so non-uniform scaling keeps normals correct). `setModel()` computes everything atomically. |
+| `ElementTransform` | Per-element `P · V · M` plus the **normal matrix**: a `Matrix3`, the inverse transpose `(M₃ᵀ)⁻¹` of the 3x3 part of `M` (the rotation itself for a rotation; correct normals under non-uniform scaling; no translation, since a normal is a direction), computed as `cofactors(M₃) / det(M₃)`. `setModel()` computes everything atomically. |
 
 ### One frame, step by step
 

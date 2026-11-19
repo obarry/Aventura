@@ -25,7 +25,6 @@
  */
 package com.aventura.math.projection;
 
-import com.aventura.tools.tracing.Tracer;
 
 /**
  * Frustum projection Matrix
@@ -42,8 +41,6 @@ public class FrustumProjection extends Projection {
 	
 	public FrustumProjection(float left, float right, float bottom, float top, float near, float far) {
 		
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "New Frustrum projection");
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Projection range: left: "+left+" right: "+right+" bottom: "+bottom+" top: "+top+" near: "+near+" far: "+far);						
 		
 		float[][] array = { { 2*near/(right-left)  , 0.0f                  , (right+left)/(right-left) , 0.0f                   },
 				 			{ 0.0f                 , 2*near/(top-bottom)   , (top+bottom)/(top-bottom) , 0.0f                   },
@@ -55,7 +52,6 @@ public class FrustumProjection extends Projection {
 		} catch (Exception e) {
 			// Should never happen
 		}
-		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Frustrum matrix:\n"+ this);						
 
 	}
 

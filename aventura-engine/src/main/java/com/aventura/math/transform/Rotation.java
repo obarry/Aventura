@@ -33,7 +33,6 @@ import com.aventura.math.vector.MatrixArrayWrongSizeException;
 import com.aventura.math.vector.Quaternion;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
-import com.aventura.tools.tracing.Tracer;
 
 /**
  * This class is a transformation that represents a rotation having its center at origin O through a Matrix 4
@@ -59,13 +58,11 @@ public class Rotation extends Transformation {
 	public Rotation(float a, Vector3 v) {
 		super(Matrix4.identity());
 		initRotation(a, v);
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix:\n");
 	}
 	
 	public Rotation(float a, Vector4 v) {
 		super(Matrix4.identity());
 		initRotation(a, v.V3());
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix:\n");
 	}
 	
 	protected void initRotation(float a, Vector3 v) {
@@ -164,7 +161,6 @@ public class Rotation extends Transformation {
 	 */
 	public Rotation(Quaternion q) {
 		super(q.toMatrix4());
-		if (Tracer.function) Tracer.traceFunction(this.getClass(), "Creation of Rotation matrix from Quaternion:\n");
 	}
 
 	protected boolean isRotation() {
@@ -178,8 +174,7 @@ public class Rotation extends Transformation {
 			v2=this.getColumn(1);
 			v3=this.getColumn(2);
 		} catch (IndexOutOfBoundException e) {
-			if (Tracer.exception) Tracer.traceException(this.getClass(), "Unexpected exception: "+e);
-			return false;
+			return false; // Cannot happen: the columns 0 to 2 exist
 		}
 		
 		// A matrix is a Rotation matrix when the 3 column vectors represent a direct orthonormal basis (length of vectors is 1, 2 first vectors are orthogonal and the 3d 1 is eqals to the vector product of 2 first problems
@@ -188,15 +183,12 @@ public class Rotation extends Transformation {
 		// on floating-point noise alone (see TestRotation.testRotationMatrix). Now uses the same MathTools.EPSILON
 		// tolerance already used everywhere else in the lib (e.g. Vector3/Vector4.equals()).
 		if (!MathTools.equals(v1.length(), 1f) || !MathTools.equals(v2.length(), 1f) || !MathTools.equals(v3.length(), 1f)) {
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column vectors length is not equals to 1. V1 length: "+v1.length()+" V2 length: "+v2.length()+"  V3 length: "+v3.length());
 			return false;
 		}
 		if(!MathTools.equals(v1.dot(v2), 0f)) {
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Column Vectors V1 and V2 are not orthogonal. V1: "+v1+" V2: "+v2+" V1.V2: "+v1.dot(v2));
 			return false;
 		}
 		if(!(v1.cross(v2)).equals(v3)) {
-			if (Tracer.info) Tracer.traceInfo(this.getClass(), "V3 is not equals to V1^V2. V3: "+v3+" V1^V2: "+v1.cross(v2));
 			return false;
 		}
 		

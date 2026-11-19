@@ -27,8 +27,6 @@ package com.aventura.math.vector;
 
 import com.aventura.math.Constants;
 import com.aventura.math.tools.MathTools;
-import com.aventura.tools.tracing.Tracer;
-
 
 /**
  * @author Olivier BARRY
@@ -448,20 +446,7 @@ public void set(float x, float y, float z) {
 	 * @return W, a new Vector3, result of the multiplication
 	 */
 	public Vector3 times(Matrix3 A) {
-		Vector3 r = new Vector3();
-		
-		for (int i=0; i<Constants.SIZE_3; i++) {
-			for (int j=0; j<Constants.SIZE_3; j++) {
-				try {
-					r.set(i, r.get(i)+A.get(i,j)*this.get(j));
-				} catch (IndexOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();
-				}
-			}
-		}		
-		return r;
+		return A.times(this); // Written out in Matrix3.times(Vector3)
 	}
 	
 	/**
@@ -470,23 +455,11 @@ public void set(float x, float y, float z) {
 	 * @param A the Matrix3
 	 */
 	public void timesEquals(Matrix3 A) {
-		float[] array = new float[3];
-
-		for (int i=0; i<Constants.SIZE_3; i++) {
-			array[i] = 0;
-			for (int j=0; j<Constants.SIZE_3; j++) {
-				try {
-					array[i]+=A.get(i,j)*this.get(j);
-				} catch (IndexOutOfBoundException e) {
-					// Do nothing, this won't happen as all arrays are controlled in size (coming from Vector3 and Matrix3)
-					if (Tracer.error) Tracer.traceError(this.getClass(), "Unexpected exception: "+e);
-					e.printStackTrace();
-				}
-			}
-		}		
-		this.x = array[0];
-		this.y = array[1];
-		this.z = array[2];
+		float[] r0 = A.array[0], r1 = A.array[1], r2 = A.array[2];
+		float x = this.x, y = this.y, z = this.z;
+		this.x = r0[0]*x + r0[1]*y + r0[2]*z;
+		this.y = r1[0]*x + r1[1]*y + r1[2]*z;
+		this.z = r2[0]*x + r2[1]*y + r2[2]*z;
 	}
 	
 	/**
@@ -548,4 +521,4 @@ public void set(float x, float y, float z) {
 		dest[2] = this.z;
 		return dest;
 	}
-}
+}

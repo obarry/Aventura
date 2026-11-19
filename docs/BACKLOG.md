@@ -157,9 +157,8 @@ Follow-ups identified while doing it:
   re-orients the face normal along the vertex normals (`RenderEngine.orientLikeVertexNormals()`),
   but the root cause is the vertex order of the mesh in `Sphere.generateVertices()`; fixing it
   there changes the texture mapping, so it must be checked with the textured sphere tests.
-  Its vertex normals are not unit either (`Vector4.normalize()` applied to a point, `w = 1`, so their
-  length depends on the radius): harmless today since lighting renormalizes per pixel, but to fix
-  with the winding. Both are reported by the cookbook's `ElementContractChecker`.
+  It is reported by the cookbook's `ElementContractChecker`. (Its vertex normals, which were not unit
+  either, are fixed: see §8.)
 - `Triangle.setRectoVerso()` is set by the meshes but not used by the renderer, and
   `Vertex.setColor()` is ignored (colors resolve from the triangle, then the elements): implement
   or remove.
@@ -260,10 +259,29 @@ now removed before the inverse transpose. Follow-ups:
   The elements are then slightly sheared and scaled. Options: re-orthonormalize the 3x3 part from time to time
   (Gram-Schmidt), store a rotation (angle, axis or quaternion) and rebuild the matrix from it, or let the
   callers compute the transformation from the total angle rather than accumulating increments.
-- **Two code paths for the normal matrix.** The switch on an epsilon orthogonality test means a matrix can
-  jump from one path to the other between two frames, which is what made this bug appear only after a while.
-  Always using the inverse transpose of the 3x3 part (cached per Element when its transformation changes)
-  would give a single, continuous behavior.
+- **Two code paths for the normal matrix. Done (November 2026).** The switch on an epsilon orthogonality test
+  meant a matrix could jump from one path to the other between two frames, which is what made this bug appear
+  only after a while. `ElementTransform` now always uses the inverse transpose of the 3x3 part of the Model
+  matrix, as a `Matrix3`, computed without any inversion (`Matrix3.cofactors()` / determinant): a single,
+  continuous behavior, and the translation can no longer reach the normals. Not cached per Element: it is
+  computed once per Element and per frame, a few dozen multiplications.
+
+**Done (November 2026): 3D types where 3D is meant** (vector and matrix audit, Refactoring branch). Directions
+and displacements are `Vector3`, points `Vector4` (`w = 1`), the transformation of the normals a `Matrix3`:
+
+- The normal matrix of `ElementTransform` is a `Matrix3` (above). `Matrix3` is written out like `Matrix4`
+  (`times(Vector3)`, `times(Matrix3)`), and gets `cofactors()`.
+- The offsets of the shapes (`center` of `Sphere`, `Cone`, `ConeFrustum`, `Disc`, `position` of `Trellis`) are
+  `Vector3` displacements, added to the points with `Vector4.plus(Vector3)`, and their reference points
+  (`bottom_center`, `top_center`) are points. Three bugs came from offsets stored as `Vector4` with `w = 0`:
+  the vertex normals of `Sphere` were not unit (0.707 for a radius of 1: the `w` of the point was normalized
+  with x, y and z); `new ConeFrustum(..., Vector4 center)` with a point (`w = 1`) gave every vertex `w = 2`
+  (shape halved and moved); a `ConeFrustum` moved by its center got wrong normals. Tests: `TestShapeVectors`,
+  `TestElementTransform`, `TestMatrix3`. Images of the documentation unchanged (at most 8 pixels differ by
+  one level, rounding); `PerfBench` checksums unchanged.
+- The `math` packages no longer use `Tracer`: they depend only on the JDK. The `try`/`catch` blocks that only
+  traced impossible exceptions are gone (`getRow()`/`getColumn()` of `Matrix3`/`Matrix4`, `Translation`), and
+  `Vector2 × Matrix2` is written out like the other products.
 
 ## 9. Reading and writing 3D model files
 

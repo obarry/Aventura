@@ -26,6 +26,7 @@
 package com.aventura.model.world.shape;
 
 
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Element;
@@ -53,7 +54,8 @@ public class Cone extends GenerativeElement {
 	float height;
 	float ray;
 	int half_seg;
-	protected Vector4 center, bottom_center;
+	protected Vector3 center; // Offset of the vertices from the Element's origin (a displacement, hence a Vector3)
+	protected Vector4 bottom_center; // A point (w = 1)
 	protected Texture tex = null;
 	
 	/**
@@ -68,8 +70,8 @@ public class Cone extends GenerativeElement {
 		this.ray = ray;
 		this.height = height;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
-		this.bottom_center = new Vector4(0,0,-height/2,0);
+		this.center = new Vector3(0,0,0);
+		this.bottom_center = new Vector4(0,0,-height/2,1);
 	}
 
 	/**
@@ -85,8 +87,8 @@ public class Cone extends GenerativeElement {
 		this.ray = ray;
 		this.height = height;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
-		this.bottom_center = new Vector4(0,0f,-height/2,0);
+		this.center = new Vector3(0,0,0);
+		this.bottom_center = new Vector4(0,0,-height/2,1);
 		this.tex = tex;
 	}
 	

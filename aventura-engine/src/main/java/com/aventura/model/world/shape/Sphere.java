@@ -25,6 +25,7 @@
  */
 package com.aventura.model.world.shape;
 
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Element;
@@ -69,7 +70,7 @@ public class Sphere extends GenerativeElement {
 	protected Vector4 northPole, southPole;
 	float ray;
 	int half_seg;
-	protected Vector4 center;
+	protected Vector3 center; // A position relative to the Element's origin: a Vector3, so that no w can leak into a computation
 	protected Texture tex = null;
 	
 	public Sphere(float ray, int half_seg) {
@@ -77,7 +78,7 @@ public class Sphere extends GenerativeElement {
 		subelements = null;
 		this.ray = ray;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
+		this.center = new Vector3(0,0,0);
 		this.northPole = new Vector4(0, 0, ray,  1);
 		this.southPole = new Vector4(0, 0, -ray,  1);
 	}
@@ -87,7 +88,7 @@ public class Sphere extends GenerativeElement {
 		subelements = null;
 		this.ray = ray;
 		this.half_seg = half_seg;
-		this.center = new Vector4(0,0,0,0);
+		this.center = new Vector3(0,0,0);
 		this.northPole = new Vector4(0, 0, ray,  1);
 		this.southPole = new Vector4(0, 0, -ray,  1);
 		this.tex = t;
@@ -134,10 +135,12 @@ public class Sphere extends GenerativeElement {
 		// Create normals of vertices
 		for (int i=0; i<=half_seg*2; i++) {
 			for (int j=0; j<=half_seg; j++) {
-				// For each Vertex, use the ray vector passing through the Vertex and normalize it 
-				Vector4 n = rectangleMesh.getVertex(i,j).getPos().minus(center);
+				// For each Vertex, use the ray vector passing through the Vertex and normalize it. Computed as a
+				// Vector3: with Vector4s, the w of the point (1) used to stay in the difference and be normalized
+				// along with x, y and z, giving normals shorter than 1 (0.707 for a ray of 1)
+				Vector3 n = rectangleMesh.getVertex(i,j).getPos().V3().minus(center);
 				n.normalize();
-				rectangleMesh.getVertex(i,j).setNormal(n.V3());
+				rectangleMesh.getVertex(i,j).setNormal(n);
 			}
 		}
 		// Sub-Element recursion is build()/rebuild()'s job, not calculateNormals()'s -- see Generable's

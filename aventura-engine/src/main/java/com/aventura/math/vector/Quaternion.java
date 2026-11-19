@@ -27,7 +27,6 @@ package com.aventura.math.vector;
 
 import com.aventura.math.Constants;
 import com.aventura.math.tools.MathTools;
-import com.aventura.tools.tracing.Tracer;
 
 /**
  * A Quaternion (x,y,z,w) represents a rotation: w is the scalar (real) part, (x,y,z) is the

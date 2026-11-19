@@ -687,4 +687,42 @@ public class TestMatrix3 {
 		assertEquals(7f, m.get(0,0), 0f);
 		assertEquals(1f, m.get(2,0), 0f);
 	}
+
+	@Test
+	public void testMatrix3_timesVector3_writtenOut() {
+		System.out.println("***** Test Matrix3 : times(Vector3) and Vector3.times/timesEquals(Matrix3) *****");
+
+		Matrix3 a = new Matrix3(new float[][] {
+			{1f, 2f, 3f},
+			{4f, 5f, 6f},
+			{7f, 8f, 10f}
+		});
+		Vector3 v = new Vector3(1f, -2f, 3f);
+		Vector3 expected = new Vector3(1 - 4 + 9, 4 - 10 + 18, 7 - 16 + 30);
+		assertTrue(expected.equals(a.times(v)));
+		assertTrue(expected.equals(v.times(a)));
+		v.timesEquals(a);
+		assertTrue(expected.equals(v));
+	}
+
+	@Test
+	public void testMatrix3_cofactors_isTheInverseTransposeTimesTheDeterminant() throws Exception {
+		System.out.println("***** Test Matrix3 : cofactors() = transpose(inverse(A)) * det(A) *****");
+
+		Matrix3 a = new Matrix3(new float[][] {
+			{2f, 0.5f, -1f},
+			{0f, 3f, 1f},
+			{1f, -2f, 0.5f}
+		});
+		Matrix3 expected = a.inverse().transpose().times(a.determinant());
+		assertTrue(expected.equals(a.cofactors()));
+
+		// A singular matrix has no inverse, but it has cofactors
+		Matrix3 singular = new Matrix3(new float[][] {
+			{1f, 2f, 3f},
+			{2f, 4f, 6f},
+			{0f, 1f, 1f}
+		});
+		assertNotNull(singular.cofactors());
+	}
 }
