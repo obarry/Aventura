@@ -175,7 +175,7 @@ public class Boulder extends GenerativeElement {
 		Map<Vertex, Vector3> sums = new IdentityHashMap<Vertex, Vector3>();
 		for (Triangle triangle : getTriangles()) {
 			Vector4 p1 = triangle.getV1().getPos(), p2 = triangle.getV2().getPos(), p3 = triangle.getV3().getPos();
-			Vector3 cross = p2.minus(p1).V3().cross(p3.minus(p1).V3());
+			Vector3 cross = new Vector3(p1, p2).cross(new Vector3(p1, p3));
 			for (Vertex vertex : new Vertex[] { triangle.getV1(), triangle.getV2(), triangle.getV3() }) {
 				Vector3 sum = sums.get(vertex);
 				if (sum == null) {

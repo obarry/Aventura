@@ -418,8 +418,10 @@ public class RenderEngine {
 		// Single call replaces the legacy setModel()+calculateNormalMatrix()+calculateMVPMatrix()
 		// trio -- see ElementTransform.setModel()'s Javadoc.
 		elementTransform.setModel(e.getTransformation(), true);
-		// Then transform the Element with this MVP matrix
-		elementTransform.transformElement(e, true); // Calculate projection for all vertices of this Element with normals calculation (and recursively for SubElements)
+		// Then transform the vertices of this Element with this MVP matrix, with their normals (the clip-space normals
+		// only under an ORTHOGRAPHIC projection: its backface test is the only reader, see isBackFace())
+		boolean clipNormals = perspectiveContext.getPerspectiveType() == PerspectiveType.ORTHOGRAPHIC;
+		elementTransform.transformElement(e, true, clipNormals);
 				
 		// Now all vertices of this Element are "transformed" into Clip coordinates, then process each Triangle
 		for (int j=0; j<e.getTriangles().size(); j++) {
@@ -820,8 +822,7 @@ public class RenderEngine {
 				switch (perspectiveContext.getPerspectiveType()) {
 				case FRUSTUM:
 					// Take any vertex of the triangle -> same result as a triangle is a plan
-					Vector3 ey = t.getV1().getWorldPos().minus(camera.getEye()).V3();
-					return t.getWorldNormal().dot(ey)>0;
+					return facesAway(t.getWorldNormal(), t.getV1().getWorldPos());
 				case ORTHOGRAPHIC:
 					// Need only to test the normal in homogeneous coordinate has a non-null positive Z component (hence pointing behind camera)
 					return elementTransform.projectNormal(t).getZ()>0;
@@ -835,7 +836,9 @@ public class RenderEngine {
 				switch (perspectiveContext.getPerspectiveType()) {
 				case FRUSTUM:
 					// return true if the Z coord all vertex normals are > 0 (more precise than triangle normal in order to not exclude triangles having visible vertices (sides)
-					return t.getV1().getWorldNormal().dot(t.getV1().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV2().getWorldNormal().dot(t.getV2().getWorldPos().minus(camera.getEye()).V3())>0 && t.getV3().getWorldNormal().dot(t.getV3().getWorldPos().minus(camera.getEye()).V3())>0;
+					return facesAway(t.getV1().getWorldNormal(), t.getV1().getWorldPos())
+							&& facesAway(t.getV2().getWorldNormal(), t.getV2().getWorldPos())
+							&& facesAway(t.getV3().getWorldNormal(), t.getV3().getWorldPos());
 				case ORTHOGRAPHIC:
 					return t.getV1().getProjNormal().getZ() > 0 && t.getV2().getProjNormal().getZ() > 0 && t.getV3().getProjNormal().getZ() > 0;
 				default:
@@ -851,6 +854,14 @@ public class RenderEngine {
 			//return t.getWorldNormal().dot(ey)>0;
 			return elementTransform.projectNormal(t).getZ()>0;
 		}
+	}
+
+	/**
+	 * Is true if a surface of normal n (world space) at the point p (world space) faces away from the eye of the
+	 * camera, i.e. if n points the same way as the vector from the eye to p: n . (p - eye) &gt; 0
+	 */
+	private boolean facesAway(Vector3 n, Vector4 p) {
+		return n.dot(new Vector3(camera.getEye(), p)) > 0;
 	}
 	
 

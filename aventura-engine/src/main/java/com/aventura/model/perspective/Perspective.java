@@ -199,7 +199,7 @@ public abstract class Perspective {
 		Vector4 eye = camera.getEye();
 		// Camera basis: forward (normalized), up, and side = forward x up (same convention as LookAt,
 		// where side is the +X axis of eye space)
-		Vector4 fwd = camera.getForward().normalize();
+		Vector4 fwd = new Vector4(camera.getForward()).normalize(); // A copy: normalize() would modify the camera's own vector
 		Vector4 up = camera.getUp();
 		Vector4 side = fwd.cross(up).normalize();
 		

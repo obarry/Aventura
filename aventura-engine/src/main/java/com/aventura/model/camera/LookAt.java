@@ -192,7 +192,7 @@ public class LookAt extends Matrix4 {
 		if (Tracer.function) Tracer.traceFunction(this.getClass(), "createLookAt(f, u)");
 
 		// From forward vector, build up and side Vectors
-		this.f = fwd.normalize();
+		this.f = new Vector4(fwd).normalize(); // A copy: fwd belongs to the caller, normalize() modifies its Vector4
 		s =  (f.cross(u)).normalize();
 		up = (s.cross(f)).normalize();
 

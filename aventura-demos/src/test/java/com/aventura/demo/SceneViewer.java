@@ -38,6 +38,7 @@ import javax.swing.WindowConstants;
 import com.aventura.context.RenderContext.RenderingType;
 import com.aventura.context.RenderContext;
 import com.aventura.engine.RenderEngine;
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.atmosphere.Atmosphere;
 import com.aventura.model.camera.Camera;
@@ -154,7 +155,7 @@ public class SceneViewer {
 
 	/** Elevation of eye above the horizontal plane of poi, in radians */
 	static double elevation(Vector4 eye, Vector4 poi) {
-		return Math.asin((eye.getZ() - poi.getZ()) / eye.minus(poi).V3().length());
+		return Math.asin((eye.getZ() - poi.getZ()) / new Vector3(poi, eye).length());
 	}
 
 	/** Distance factor for a number of wheel notches (positive: farther, negative: closer) */
