@@ -237,10 +237,11 @@ public class World {
 	 * delegates to Element.accumulateMaxDistance(), which does recurse.
 	 */
 	public float getMaxDistance(Vector4 p) {
-		if (p.isVector()) p.point();
+		// A vector is taken as the point it leads to from the origin. On a copy: p belongs to the caller
+		Vector4 from = p.isVector() ? new Vector4(p.getX(), p.getY(), p.getZ(), 1) : p;
 		float[] runningMax = { 0f };
 		for (int i=0; i<elements.size(); i++) {
-			elements.get(i).accumulateMaxDistance(p, runningMax);
+			elements.get(i).accumulateMaxDistance(from, runningMax);
 		}
 		return runningMax[0];
 	}

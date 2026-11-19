@@ -135,21 +135,38 @@ public class ElementTransform {
 	}
 
 	/**
-	 * Transforms one Vertex in place: clip-space position always; world-space (and clip-space)
-	 * normal only if normals is true AND the current Model was set with withNormals=true.
+	 * Transforms one Vertex in place: clip-space position always; world-space and clip-space
+	 * normals only if normals is true AND the current Model was set with withNormals=true.
 	 */
 	public void transformVertex(Vertex v, boolean normals) {
+		transformVertex(v, normals, true);
+	}
+
+	/**
+	 * Transforms one Vertex in place: clip-space position always; world-space normal only if normals is true AND
+	 * the current Model was set with withNormals=true; clip-space normal only if clipNormals is also true (it is
+	 * set to null otherwise, so that no stale value can be read).
+	 *
+	 * The clip-space normal is only read by the backface test of an ORTHOGRAPHIC projection (see
+	 * RenderEngine.isBackFace()): under a FRUSTUM projection, computing it for every Vertex would be wasted.
+	 */
+	public void transformVertex(Vertex v, boolean normals, boolean clipNormals) {
 		v.setProjPos(full.times(v.getPos()));
 		if (normals && v.getNormal() != null) {
 			v.setWorldNormal(transformNormalToWorld(v.getNormal()));
-			v.setProjNormal(transformNormalToClip(v.getNormal()));
+			v.setProjNormal(clipNormals ? transformNormalToClip(v.getNormal()) : null);
 		}
 	}
 
-	/** Transforms every Vertex of an Element in place. */
+	/** Transforms every Vertex of an Element in place (world-space and clip-space normals included if normals is true). */
 	public void transformElement(Element e, boolean normals) {
+		transformElement(e, normals, true);
+	}
+
+	/** Transforms every Vertex of an Element in place: see transformVertex(Vertex, boolean, boolean). */
+	public void transformElement(Element e, boolean normals, boolean clipNormals) {
 		for (int i = 0; i < e.getNbVertices(); i++) {
-			transformVertex(e.getVertex(i), normals);
+			transformVertex(e.getVertex(i), normals, clipNormals);
 		}
 	}
 

@@ -25,6 +25,7 @@
  */
 package com.aventura.model.world.shape;
 
+import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Element;
@@ -128,15 +129,15 @@ public class Torus extends GenerativeElement {
 
 	@Override
 	public void calculateNormals() {
-		Vector4 n;
+		Vector3 n;
 			
 		// Create normals of vertices
 		for (int i=0; i<=half_circ*2; i++) {
 			for (int j=0; j<=half_seg*2; j++) {
 				// For each bottom Vertex, use the ray vector from bottom center to the Vertex and normalize it 
-				n = rectangleMesh.getVertex(i,j).getPos().minus(centers[i]);
+				n = new Vector3(centers[i], rectangleMesh.getVertex(i,j).getPos());
 				n.normalize();
-				rectangleMesh.getVertex(i,j).setNormal(n.V3());
+				rectangleMesh.getVertex(i,j).setNormal(n);
 			}
 		}
 

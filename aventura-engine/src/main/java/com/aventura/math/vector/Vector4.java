@@ -360,7 +360,9 @@ public class Vector4 {
 	}
 
 	/**
-	 * Get length of the vector4 including 4th coordinate
+	 * Get length of the vector4 including 4th coordinate.
+	 * Meant for a vector (w = 0), where it is the usual 3D length. For a point (w = 1) it is NOT its distance to the
+	 * origin (the w adds 1 under the square root): use distance(Vector4.zeroPoint()), or getX/Y/Z().
 	 * @return the length or 'norm' of the Vector4
 	 */
 	public float length() {
@@ -368,11 +370,12 @@ public class Vector4 {
 	}
 	
 	/**
-	 * Normalize the vector. Vector is modified (same direction, length becomes 1)
+	 * Normalize the vector. Vector is modified (same direction, length becomes 1), all 4 coordinates included.
+	 * Meant for a vector (w = 0). A point (w = 1) or any other Vector4 with a non-zero w would also have its w
+	 * divided, and its x, y and z divided by a length that includes w: the result is no longer a unit 3D vector
+	 * (this made the vertex normals of a Sphere shorter than 1). Normalize a Vector3 in that case.
+	 * As this Vector4 is modified, normalize a copy of a vector that belongs to someone else: new Vector4(v).normalize().
 	 * @return this vector (modified)
-	 */
-	/**
-	 * @return
 	 */
 	public Vector4 normalize() {
 		float length = this.length();
@@ -513,9 +516,10 @@ public class Vector4 {
 	}
 	
 	/**
-	 * V.W : Dot product of this Vector4 with W, another Vector4. 
+	 * V.W : Dot product of this Vector4 with W, another Vector4, all 4 coordinates included.
+	 * It is the usual 3D dot product as soon as one of the two is a vector (w = 0).
 	 * @param w, the other Vector4
-	 * @return s, the dot product (double)
+	 * @return s, the dot product
 	 */
 	public float dot(Vector4 w) {
 		return this.x*w.x+this.y*w.y+this.z*w.z+this.w*w.w;

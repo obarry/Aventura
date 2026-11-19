@@ -53,7 +53,7 @@ public class TestSceneViewer {
 	private static final Vector4 EYE = new Vector4(7, -4, 3.5f, 1);
 
 	private static float distance(Vector4 a, Vector4 b) {
-		return a.minus(b).V3().length();
+		return new Vector3(b, a).length();
 	}
 
 	@Test

@@ -111,4 +111,21 @@ public class TestElementTransform {
 		// The backface test of the ORTHOGRAPHIC projection reads the sign of the z of the clip-space normal
 		assertSameDirection("clip normal", atOrigin.getProjNormal(), translated.getProjNormal());
 	}
+
+	@Test
+	public void testClipNormals_onlyWhenAsked() {
+		System.out.println("***** Test ElementTransform : the clip-space normal is computed only when asked (ORTHOGRAPHIC backface test) *****");
+		ElementTransform transform = orthographicTransform();
+		transform.setModel(new Scaling(2, 1, 1), true);
+
+		Vertex withClip = new Vertex(new Vector4(1, 2, 3, 1), Vector3.zAxis());
+		transform.transformVertex(withClip, true, true);
+		assertNotNull(withClip.getProjNormal());
+
+		Vertex withoutClip = new Vertex(new Vector4(1, 2, 3, 1), Vector3.zAxis());
+		withoutClip.setProjNormal(Vector3.xAxis()); // A stale value from a previous frame must not survive
+		transform.transformVertex(withoutClip, true, false);
+		assertNull(withoutClip.getProjNormal());
+		assertSameDirection("world normal computed all the same", withClip.getWorldNormal(), withoutClip.getWorldNormal());
+	}
 }

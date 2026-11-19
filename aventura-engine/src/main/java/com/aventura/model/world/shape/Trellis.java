@@ -240,7 +240,8 @@ public class Trellis extends GenerativeElement {
 			for (int j=0; j<=ny; j++) {
 				// Calculate 2 vectors averaging the plane around the considered Vertex
 				// One is aligned on the X axis
-				Vector4 xa, xb, ya, yb, xavg, yavg;
+				Vector4 xa, xb, ya, yb;
+				Vector3 xavg, yavg;
 				
 				if (i>0) {
 					xa = rectangleMesh.getVertex(i-1, j).getPos();
@@ -252,7 +253,7 @@ public class Trellis extends GenerativeElement {
 				} else {
 					xb = rectangleMesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
-				xavg = xb.minus(xa);
+				xavg = new Vector3(xa, xb);
 				
 				// The second one is aligned on the Y axis
 				if (j>0) {
@@ -265,12 +266,12 @@ public class Trellis extends GenerativeElement {
 				} else {
 					yb = rectangleMesh.getVertex(i,j).getPos(); // When on the side: take the vertex itself to calculate the average
 				}
-				yavg = yb.minus(ya);
+				yavg = new Vector3(ya, yb);
 								
 				// The normal vector is the cross product of both vectors.
-				Vector4 normal = xavg.cross(yavg);
+				Vector3 normal = xavg.cross(yavg);
 				// Need to be normalized
-				rectangleMesh.getVertex(i,j).setNormal(normal.normalize().V3());
+				rectangleMesh.getVertex(i,j).setNormal(normal.normalize());
 			}
 		}
 		// Sub-Element recursion is build()/rebuild()'s job, not calculateNormals()'s -- see Generable's

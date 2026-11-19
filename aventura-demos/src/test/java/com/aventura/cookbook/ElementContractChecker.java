@@ -167,7 +167,7 @@ public final class ElementContractChecker {
 	/** V1V2 x V1V3 (not normalized): the orientation given by the winding of the triangle. */
 	public static Vector3 faceNormal(Triangle t) {
 		Vector4 p1 = t.getV1().getPos(), p2 = t.getV2().getPos(), p3 = t.getV3().getPos();
-		return p2.minus(p1).V3().cross(p3.minus(p1).V3());
+		return new Vector3(p1, p2).cross(new Vector3(p1, p3));
 	}
 
 	private static boolean isUnit(Vector3 n) {

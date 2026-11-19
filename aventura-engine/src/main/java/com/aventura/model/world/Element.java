@@ -766,7 +766,7 @@ public class Element implements Transformable, Shape, Generable {
 			if (p == null) {
 				continue;
 			}
-			float d = p.minus(from).length();
+			float d = p.distance(from);
 			if (d > runningMax[0]) runningMax[0] = d;
 		}
 		if (subelements != null) {

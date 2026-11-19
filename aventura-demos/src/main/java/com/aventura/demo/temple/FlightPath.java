@@ -108,7 +108,7 @@ public class FlightPath {
 	 */
 	public Vector4 up(float distance, float bankPerTurn, float maxBank) {
 		float roll = Math.max(-maxBank, Math.min(maxBank, bankPerTurn * turnRate(distance)));
-		Vector3 lineOfSight = target(distance).minus(eye(distance)).V3().normalize();
+		Vector3 lineOfSight = new Vector3(eye(distance), target(distance)).normalize();
 		// The Z axis, turned around the line of sight. Seen from behind the camera, a rotation by a negative angle
 		// leans it to the left: the inside of a turn to the left (positive turn rate, hence positive roll)
 		return new Rotation(-roll, lineOfSight).times(Vector4.zAxis());

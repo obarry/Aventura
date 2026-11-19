@@ -128,23 +128,23 @@ public class Cone extends GenerativeElement {
 		
 	@Override
 	public void calculateNormals() {
-		Vector4 n, u;
+		Vector3 n, u;
 		Vector4 summit = mesh.getSummit(0).getPos();
 		// Create normals of vertices
 		for (int i=0; i<=half_seg*2; i++) {
 
 			// For each bottom Vertex, calculate a ray vector that is orthogonal to the slope of the cone
 			// u = OS^OP (O = bottom center, S = summit, P = bottom Vertex)
-			u = (summit.minus(bottom_center)).cross(mesh.getVertex(i).getPos().minus(bottom_center));
-			n = (mesh.getVertex(i).getPos().minus(summit)).cross(u);
+			u = new Vector3(bottom_center, summit).cross(new Vector3(bottom_center, mesh.getVertex(i).getPos()));
+			n = new Vector3(summit, mesh.getVertex(i).getPos()).cross(u);
 			n.normalize();
-			mesh.getVertex(i).setNormal(n.V3());
+			mesh.getVertex(i).setNormal(n);
 
 			// For each summit, use the ray vector from top center to the Vertex and normalize it
 			if (i<half_seg*2) {
-				n = (mesh.getVertex(i).getPos().minus(summit)).cross(mesh.getVertex(i+1).getPos().minus(summit));
+				n = new Vector3(summit, mesh.getVertex(i).getPos()).cross(new Vector3(summit, mesh.getVertex(i+1).getPos()));
 				n.normalize();
-				mesh.getSummit(i).setNormal(n.V3());
+				mesh.getSummit(i).setNormal(n);
 			}
 		}
 		// Sub-Element recursion is build()/rebuild()'s job, not calculateNormals()'s -- see Generable's

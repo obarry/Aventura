@@ -282,6 +282,17 @@ and displacements are `Vector3`, points `Vector4` (`w = 1`), the transformation 
 - The `math` packages no longer use `Tracer`: they depend only on the JDK. The `try`/`catch` blocks that only
   traced impossible exceptions are gone (`getRow()`/`getColumn()` of `Matrix3`/`Matrix4`, `Translation`), and
   `Vector2 × Matrix2` is written out like the other products.
+- The clip-space normals of the vertices are computed only under an `ORTHOGRAPHIC` projection, the only one whose
+  backface test reads them (`ElementTransform.transformElement(e, normals, clipNormals)`). Back-face culling in
+  screen space (performance audit R3) would remove them altogether.
+- Differences of points are built directly as `Vector3`s (`new Vector3(a, b)`, the vector from a to b) rather than
+  `b.minus(a).V3()`: `RenderEngine.isBackFace()`, `Triangle.calculateNormal()`, the vertex normals of `Cone`,
+  `ConeFrustum`, `Torus` and `Trellis`, `Boulder`, `FlightPath`.
+- `Vector4.normalize()`, `length()` and `dot()` include `w`: their Javadoc says so. Three methods no longer modify a
+  `Vector4` they receive (`LookAt.generateLookAt(fwd, up)`, `Perspective.getFrustumFromEye()`,
+  `World.getMaxDistance(p)`; test `TestArgumentsNotModified`).
+- Still to do from the audit: a single computation of the light → point vector per pixel and per light
+  (performance audit N3, the `LightSample` object, with D2b).
 
 ## 9. Reading and writing 3D model files
 

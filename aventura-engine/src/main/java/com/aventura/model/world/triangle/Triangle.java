@@ -320,10 +320,10 @@ public class Triangle {
 	 */
 	public void calculateNormal() {
 		//P = V1V2 as a Vector3
-		Vector3 p = (v2.getPos().minus(v1.getPos())).V3();
+		Vector3 p = new Vector3(v1.getPos(), v2.getPos());
 
 		//P = V1V3 as a Vector3
-		Vector3 q = (v3.getPos().minus(v1.getPos())).V3();
+		Vector3 q = new Vector3(v1.getPos(), v3.getPos());
 
 		// Calculate the cross product
 		normal = p.cross(q);
