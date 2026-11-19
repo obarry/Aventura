@@ -945,6 +945,14 @@ says clearly what is computed once.
 > (`Light.getLightColorAtPoint(point, intensity)`), and the cone of the spot light and the direction are no longer
 > computed again by the shadow map. Two computations of the light → point vector remain for a point light (direction
 > and intensity): the complete `LightSample` object remains to be done, with D2b.
+>
+> **v3 — done (November 2026, Refactoring branch).** `Light.sample(point, LightSample)` gives the unit direction, the
+> distance and the intensity in one call; `PointLight` computes them from a single light → point vector (one square
+> root), `SpotLight` adds its cone factor from the same direction. `ShadingConsumer` reuses one `LightSample` for all
+> its pixels and lights: no allocation. The default implementation in `Light` asks `getLightVectorAtPoint()` and
+> `getIntensity()`, so every light keeps working. Measured with `PerfBench` (1 thread): allocations 40 → 25 MB per
+> frame for `point`, 26 → 11 MB for `spot`, main pass about −5%; images identical to the bit. The selection of the
+> face of the cube map (`PointLight.shadowFactorAt()`) still builds its own light → point vector (no square root).
 
 #### N4. Shadow passes: cull, cache, reuse
 
@@ -1004,7 +1012,7 @@ Later, the effect can be parallelized by bands without any precaution (§6).
 | D7 | `FloatMap` as a 1D `float[]` | **Storage done** (phase 1, step 3): `MapView` as a `float[]` row by row, −10% without shadows and with PCF, −15 to −20% with a point or spot light (shadow passes −15 to −18%). Extracting `FloatMap` out of the `view` package remains (BACKLOG §2) |
 | D6 | Direct writes into the `int[]` (+ `addPixel()`) | **Done** (phase 1, step 4, with D2a). **Image pool done** (November): `ImageView.setImageReuse(true)`, 3 images in rotation, enabled in the animated demos and `PerfBench` (off by default: an image obtained from `getImageView()` is drawn again two frames later). On 2 cores, SETUP −0.4 ms, PCF allocations 7.4 → 3.9 MB per frame; total time within the noise |
 | A4 | Unrolled `Matrix4 × Vector4` | **Done** (phase 1, step 5): **no measurable gain** (the JIT already optimized the original loop), kept for readability. The `float[16]` storage is not done (no measured stake) |
-| A2 | Lighting: common values computed once per pixel | **Done** (phase 1, step 6, with N2 and N3 in part) |
+| A2 | Lighting: common values computed once per pixel | **Done** (phase 1, step 6, with N2 and N3 in part; N3 completed in November with `Light.sample()`) |
 | A3, A5, A6 | Stateless `ZBuffer`, sort of the 3 vertices, textures as `int[]` | **Done** (phase 1, step 8): without shadows −12% (with R4), allocations 12 → 7 MB per frame; loading a 4480 × 4480 texture ≈ 1.2 → 0.7-0.9 s; `ZBuffer` and `Texture` without shared state (prerequisite of multithreading) |
 | A1 | Interpolation without temporary objects | **Done** (without incremental steps): `TriangleRasterizer` interpolates positions, normals and texture coordinates as `float`s, with exactly the same formulas, hence images identical to the bit; no more `Iterator` per pixel in `ShadingConsumer`, nor temporary vectors for the direction of the viewer, the specular reflection and the tangents of PCF. Measured with JFR: these vectors were ≈ 80% of the allocations. PCF: 26 to 41 → 7.4 MB per frame, **stable** (no more bimodal JIT); spot light 35 to 56 → 27 MB; on 2 cores, frame −10 to −15%. Incremental steps (one addition per pixel) would change the rounding, hence the images: not done |
 | A7 | Gouraud mode | To do |

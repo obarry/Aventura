@@ -81,6 +81,21 @@ public abstract class Light {
 	public abstract float getIntensity(Vector4 point);
 
 	/**
+	 * Fills out with what this light gives to a point: the unit vector towards the light, the distance and the
+	 * intensity (see LightSample). This is what the shading asks for every pixel and every light.
+	 *
+	 * This default implementation asks getLightVectorAtPoint() and getIntensity(), so any Light works as it is. A
+	 * light whose direction and intensity come from the same computation (PointLight, SpotLight) overrides it to do
+	 * this computation once.
+	 * @param point the lit point (world space)
+	 * @param out   the sample to fill, reused from one point to the next
+	 */
+	public void sample(Vector4 point, LightSample out) {
+		Vector3 v = getLightVectorAtPoint(point);
+		out.set(v.getX(), v.getY(), v.getZ(), Float.NaN, getIntensity(point));
+	}
+
+	/**
 	 * Get color of light at a given point. Default implementation: lightColor weighted by this
 	 * point's intensity — correct for every light we have today (none of them actually vary in
 	 * hue by position, only in intensity). Override only if a future light needs to vary its hue

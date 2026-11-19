@@ -49,7 +49,7 @@ import com.aventura.model.world.World;
  *   (smoothstep on the cosine of the angle) from full intensity at the inner angle to zero at the outer angle.
  *   With inner == outer the edge of the cone is sharp.
  * - the intensity at a point is: (Point Light distance attenuation) x (intensity factor) x (cone factor).
- *   Since Lighting only goes through getLightVectorAtPoint() and getIntensity() / getLightColorAtPoint(),
+ *   Since the shading only goes through sample() (or getLightVectorAtPoint() and getIntensity()),
  *   the cone is fully handled here and Lighting does not need to know about it.
  *
  * So it inherits from PointLight from a class standpoint: the light vector at a point, the distance
@@ -209,7 +209,17 @@ public class SpotLight extends PointLight {
 	 */
 	public float coneFactor(Vector4 point) {
 		// Unit vector from the lit point towards the light (zero vector if the point is the light's position)
-		Vector3 toLight = super.getLightVectorAtPoint(point);
+		LightSample sample = new LightSample();
+		super.sample(point, sample);
+		return coneFactor(sample.getDirection());
+	}
+
+	/**
+	 * The cone factor (see coneFactor(Vector4)) from the unit vector from the lit point towards the light.
+	 * @param toLight the unit vector from the lit point towards the light (zero vector if the point is the light's position)
+	 * @return the cone factor, in [0, 1]
+	 */
+	protected float coneFactor(Vector3 toLight) {
 		if (toLight.lengthSquared() == 0) {
 			return 1f; // At the apex: nothing to attenuate (and no light vector, so Lighting ignores it anyway)
 		}
@@ -227,15 +237,17 @@ public class SpotLight extends PointLight {
 	}
 
 	/**
-	 * Intensity at a point: distance attenuation and intensity factor (PointLight) x cone factor.
+	 * The sample of a PointLight (direction, distance, attenuated intensity), with the intensity multiplied by the
+	 * cone factor, computed from the same direction. getLightVectorAtPoint() and getIntensity() of PointLight go
+	 * through it too.
 	 */
 	@Override
-	public float getIntensity(Vector4 point) {
-		float coneFactor = coneFactor(point);
-		if (coneFactor == 0f) {
-			return 0f; // Outside of the cone: skip the rest
-		}
-		return super.getIntensity(point) * coneFactor;
+	public void sample(Vector4 point, LightSample out) {
+		super.sample(point, out);
+		Vector3 toLight = out.getDirection();
+		float coneFactor = coneFactor(toLight);
+		float coneIntensity = coneFactor == 0f ? 0f : out.getIntensity() * coneFactor; // Outside of the cone: no light
+		out.set(toLight.getX(), toLight.getY(), toLight.getZ(), out.getDistance(), coneIntensity);
 	}
 
 	// getLightVectorAtPoint(), setIntensity() are the ones of PointLight.

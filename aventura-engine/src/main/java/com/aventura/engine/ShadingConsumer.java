@@ -31,6 +31,7 @@ import java.util.List;
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.camera.Camera;
+import com.aventura.model.light.LightSample;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowingLight;
 import com.aventura.model.material.Material;
@@ -65,6 +66,10 @@ public class ShadingConsumer implements FragmentConsumer {
 	// Reused across every pixel this consumer processes -- see its own class Javadoc, same
 	// lifecycle pattern as Fragment.
 	private final RGBAccumulator accumulator = new RGBAccumulator();
+
+	// What each light gives to the pixel (direction, distance, intensity), computed at once by Light.sample(): reused
+	// across every pixel and every light, like the accumulator (performance audit N3)
+	private final LightSample sample = new LightSample();
 
 	public ShadingConsumer(Material material, Lighting lighting, Camera camera, ZBuffer zBuffer, GUIView view, boolean shadowsEnabled) {
 		this.material = material;
@@ -101,14 +106,17 @@ public class ShadingConsumer implements FragmentConsumer {
 			for (int i = 0; i < lights.size(); i++) {
 				ShadowingLight light = lights.get(i);
 
+				// Direction, distance and intensity of the light at this point, in a single computation
+				light.sample(position, sample);
+
 				// From the cheapest test to the most expensive one (performance audit N2): a light that
 				// cannot light this point is skipped before its shadow map is read.
-				Vector3 lightVector = light.getLightVectorAtPoint(position);
+				Vector3 lightVector = sample.getDirection();
 				float dotNL = lightVector.dot(normal);
 				if (dotNL <= 0) {
 					continue; // The surface faces away from this light
 				}
-				float intensity = light.getIntensity(position);
+				float intensity = sample.getIntensity();
 				if (intensity <= 0) {
 					continue; // Out of the range of a point light, or out of the cone of a spot light
 				}

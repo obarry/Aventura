@@ -222,6 +222,7 @@ classDiagram
       color, intensity
       +getLightVectorAtPoint(p)*
       +getIntensity(p)*
+      +sample(p, LightSample)
       +getLightColorAtPoint(p)
     }
     class ShadowingLight {
@@ -961,7 +962,7 @@ flowchart LR
 | A material | `Material` | `baseColorAt(Fragment)` etc.; the fragment gives position and normal for triplanar, Fresnel… | `TexturedMaterial` |
 | A pass | `FragmentConsumer` | `consume(Fragment)` — e.g. a normal buffer, an ID buffer for picking | `DepthOnlyConsumer` |
 | A display | `ImageView` (or `GUIView`) | `frameRendered` (or `initView`, `drawPixel`, `drawLine`, `renderView`) | `SwingView` |
-| A light | `Light` or `ShadowingLight` | `getLightVectorAtPoint`, `getIntensity` (+ shadow map) | `SpotLight` |
+| A light | `Light` or `ShadowingLight` | `getLightVectorAtPoint`, `getIntensity` (+ shadow map); override `sample` when direction and intensity come from one computation | `SpotLight` |
 | A fog | `Fog` | `getBoundingCenter`, `getBoundingRadius`, `opticalDepth` (exact integral of the density along a ray) | `SphericalFog`, `GroundMist` (cookbook) |
 
 Custom geometry without subclassing is also possible: feed `Element.addVertex()` and
