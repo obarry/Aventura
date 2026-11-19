@@ -291,8 +291,8 @@ and displacements are `Vector3`, points `Vector4` (`w = 1`), the transformation 
 - `Vector4.normalize()`, `length()` and `dot()` include `w`: their Javadoc says so. Three methods no longer modify a
   `Vector4` they receive (`LookAt.generateLookAt(fwd, up)`, `Perspective.getFrustumFromEye()`,
   `World.getMaxDistance(p)`; test `TestArgumentsNotModified`).
-- Still to do from the audit: a single computation of the light → point vector per pixel and per light
-  (performance audit N3, the `LightSample` object, with D2b).
+- A single computation of the light → point vector per pixel and per light: `Light.sample(point, LightSample)`
+  (performance audit N3, done).
 
 ## 9. Reading and writing 3D model files
 

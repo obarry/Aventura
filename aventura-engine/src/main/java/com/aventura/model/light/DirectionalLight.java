@@ -157,6 +157,14 @@ public class DirectionalLight extends ShadowingLight {
 		return LightGlowMode.SUN;
 	}
 	
+	/**
+	 * Same direction and intensity everywhere, at an infinite distance.
+	 */
+	@Override
+	public void sample(Vector4 point, LightSample out) {
+		out.set(light_vector.getX(), light_vector.getY(), light_vector.getZ(), Float.POSITIVE_INFINITY, intensity);
+	}
+
 	@Override
 	public float getIntensity(Vector4 point) {
 		// Same intensity in any point of world space as Directional light have infinite range

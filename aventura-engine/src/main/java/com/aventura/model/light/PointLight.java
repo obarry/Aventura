@@ -142,15 +142,30 @@ public class PointLight extends ShadowingLight {
 	 */
 	@Override
 	public Vector3 getLightVectorAtPoint(Vector4 point) {
-		Vector3 light_dir = new Vector3(point, this.light_point);
-		float distance = light_dir.length();
+		LightSample sample = new LightSample();
+		sample(point, sample);
+		return sample.getDirection();
+	}
+
+	/**
+	 * The vector from the point to the light gives everything at once: its length is the distance, which gives the
+	 * attenuation (see attenuationFunc()), and divided by this length it is the direction.
+	 */
+	@Override
+	public void sample(Vector4 point, LightSample out) {
+		float dx = light_point.getX() - point.getX();
+		float dy = light_point.getY() - point.getY();
+		float dz = light_point.getZ() - point.getZ();
+		float distance = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
+		float attenuatedIntensity = attenuationFunc(distance) * intensity; // The intensity factor is used here
 		if (distance < MIN_DISTANCE) {
 			// The lit point is at the light's own position: there is no direction to speak of and
-			// normalizing would give NaN. Return the zero vector: its dot product with any normal is 0,
+			// normalizing would give NaN. Give the zero vector: its dot product with any normal is 0,
 			// so Lighting reads it as "not lit by this light" instead of propagating NaN into the shading.
-			return new Vector3(0, 0, 0);
+			out.set(0, 0, 0, distance, attenuatedIntensity);
+		} else {
+			out.set(dx / distance, dy / distance, dz / distance, distance, attenuatedIntensity);
 		}
-		return light_dir.normalize();
 	}
 	
 	/**
@@ -196,11 +211,9 @@ public class PointLight extends ShadowingLight {
 
 	@Override
 	public float getIntensity(Vector4 point) {
-		// TODO Auto-generated method stub
-		Vector3 light_dir = new Vector3(point, this.light_point);
-		float distance = light_dir.length();
-		
-		return attenuationFunc(distance) * intensity; // The intensity factor is used here
+		LightSample sample = new LightSample();
+		sample(point, sample);
+		return sample.getIntensity();
 	}
 
 	// getLightColorAtPoint() removed: was a broken stub returning null. Light's default

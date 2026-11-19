@@ -969,6 +969,15 @@ plus lisible : il dit clairement ce qui est calculé une fois.
 > obtenue (`Light.getLightColorAtPoint(point, intensity)`), et le cône du spot et la direction ne sont plus
 > recalculés par la shadow map. Il reste deux calculs du vecteur lumière → point pour une lumière ponctuelle
 > (direction et intensité) : l'objet `LightSample` complet reste à faire, avec D2b.
+>
+> **v3 — fait (novembre 2026, branche Refactoring).** `Light.sample(point, LightSample)` donne en un appel la direction
+> unitaire, la distance et l'intensité ; `PointLight` les calcule à partir d'un seul vecteur lumière → point (une racine
+> carrée), `SpotLight` y ajoute son facteur de cône à partir de la même direction. `ShadingConsumer` réutilise un seul
+> `LightSample` pour tous ses pixels et toutes ses lumières : aucune allocation. L'implémentation par défaut de `Light`
+> appelle `getLightVectorAtPoint()` et `getIntensity()`, donc toute lumière continue de fonctionner. Mesuré avec
+> `PerfBench` (1 thread) : allocations 40 → 25 Mo par image pour `point`, 26 → 11 Mo pour `spot`, passe principale
+> environ −5 % ; images identiques au bit près. Le choix de la face de la cube map (`PointLight.shadowFactorAt()`)
+> construit encore son propre vecteur lumière → point (sans racine carrée).
 
 #### N4. Passes d'ombre : éliminer, mettre en cache, réutiliser
 
@@ -1028,7 +1037,7 @@ Plus tard, l'effet se parallélise par bandes sans aucune précaution (§6).
 | D7 | `FloatMap` en `float[]` 1D | **Stockage fait** (phase 1, étape 3) : `MapView` en `float[]` ligne par ligne, −10 % sans ombres et en PCF, −15 à −20 % avec une lumière ponctuelle ou un spot (passes d'ombre −15 à −18 %). Reste l'extraction de `FloatMap` hors du paquet `view` (BACKLOG §2) |
 | D6 | Écriture directe dans `int[]` (+ `addPixel()`) | **Fait** (phase 1, étape 4, avec D2a). **Pool d'images fait** (novembre) : `ImageView.setImageReuse(true)`, 3 images en rotation, activé dans les démos animées et `PerfBench` (désactivé par défaut : une image obtenue de `getImageView()` est redessinée deux images plus tard). Sur 2 cœurs, SETUP −0,4 ms, allocations PCF 7,4 → 3,9 Mo par image ; temps total dans le bruit |
 | A4 | `Matrix4 × Vector4` déroulé | **Fait** (phase 1, étape 5) : **sans gain mesurable** (le JIT optimisait déjà la boucle d'origine), gardé pour la lisibilité. Le stockage `float[16]` n'est pas fait (pas d'enjeu mesuré) |
-| A2 | Éclairage : valeurs communes calculées une fois par pixel | **Fait** (phase 1, étape 6, avec N2 et N3 en partie) |
+| A2 | Éclairage : valeurs communes calculées une fois par pixel | **Fait** (phase 1, étape 6, avec N2 et N3 en partie ; N3 terminé en novembre avec `Light.sample()`) |
 | A3, A5, A6 | `ZBuffer` sans état, tri des 3 sommets, textures en `int[]` | **Fait** (phase 1, étape 8) : sans ombres −12 % (avec R4), allocations 12 → 7 Mo par image ; chargement d'une texture de 4480 × 4480 ≈ 1,2 → 0,7-0,9 s ; `ZBuffer` et `Texture` sans état partagé (prérequis du multithreading) |
 | A1 | Interpolation sans objets temporaires | **Fait** (sans pas incrémentaux) : `TriangleRasterizer` interpole positions, normales et coordonnées de texture en `float`, avec exactement les mêmes formules, donc des images identiques au bit près ; plus d'`Iterator` par pixel dans `ShadingConsumer`, ni de vecteurs temporaires pour la direction de l'observateur, le reflet spéculaire et les tangentes du PCF. Mesure par JFR : ces vecteurs faisaient ≈ 80 % des allocations. PCF : 26 à 41 → 7,4 Mo par image, **stable** (plus de bimodalité du JIT) ; spot 35 à 56 → 27 Mo ; sur 2 cœurs, image −10 à −15 %. Les pas incrémentaux (une addition par pixel) changeraient les arrondis, donc les images : non faits |
 | A7 | Mode Gouraud | À faire |
