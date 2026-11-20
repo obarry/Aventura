@@ -100,6 +100,9 @@ public class ShadingConsumer implements FragmentConsumer {
 			// Indexed loop rather than for-each: an Iterator would be created for each pixel (performance audit A1)
 			for (int i = 0; i < lights.size(); i++) {
 				ShadowingLight light = lights.get(i);
+				if (!light.isEnabled()) {
+					continue; // Switched off (Light.setEnabled()): it lights nothing
+				}
 
 				// From the cheapest test to the most expensive one (performance audit N2): a light that
 				// cannot light this point is skipped before its shadow map is read.

@@ -79,6 +79,11 @@ returns a copy. The extraction of `FloatMap` out of the `view` package remains t
     remains where the hard shadows already show a few specks (very thin gaps): a smaller or smarter
     clamp of the plane correction, or a gradient computed from the geometry instead of two projections,
     could be tried.
+- **Done (November 2026): a light switched off**, `Light.setEnabled(boolean)` (on by default): the light stays in
+  its `Lighting` but adds nothing to the shading, draws no shadow map (the last one is kept, and reused when the
+  light is switched on again with static casters) and is not drawn as a visible light. Lets a scene with many
+  lights keep on only those near the camera (the corridors of the spaceship demo). `TestLightEnabled`. Follow-up:
+  a helper that switches the lights on and off by distance or by zone, if several demos need the same logic.
 - **Performance of the shadows** (cache of the shadow maps: done for static casters, `setStaticShadowCasters()`; version counters on the Elements to detect moving casters by themselves (audit D8), a `castShadows` switch per
   light, reuse of the buffers, timing before and after on UrbanScape) is not handled here: it belongs to the
   performance audit, see [PERFORMANCE_AUDIT.md](PERFORMANCE_AUDIT.md) (§R9, R10). A point light costs up to six
@@ -111,7 +116,11 @@ returns a copy. The extraction of `FloatMap` out of the `view` package remains t
     restricted to the pixels the beams reach, could halve it); the beams are computed from the sky only (no
     clouds or fog density), and the fixed constants (decay, weight, exposure, radius of the bright sky) are not
     adjustable per light.
-  - **Emissive geometry** beyond the core of the light (a lamp mesh that glows by itself).
+  - **Emissive geometry and emission maps** beyond the core of the light: a surface that glows by itself, not lit
+    by the lights and not darkened by the shadows (the screen of a console, a dial, an indicator lamp, a neon tube,
+    a lamp mesh). First a uniform emissive color per Element, then an **emission map**: a texture whose pixels add
+    their color to the shaded color (black = no emission), so that only the digits of a dial or the lines of a
+    screen glow. Wanted for the spaceship demo (consoles and dials); planned after `Light.setEnabled()`.
   - The glow of a point light is not scaled by its `intensity` or its range (only by `LightAppearance.gain`);
     a halo that fades with the distance to the camera, and a visibility measured on the whole halo (an edge
     that covers only the core makes the whole halo vanish) could be tried.

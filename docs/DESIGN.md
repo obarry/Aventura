@@ -216,7 +216,8 @@ classDiagram
     direction TB
     class Light {
       <<abstract>>
-      color, intensity
+      color, intensity, enabled
+      +setEnabled(boolean)
       +getLightVectorAtPoint(p)*
       +getIntensity(p)*
       +getLightColorAtPoint(p)
@@ -509,6 +510,14 @@ Specular has two switches: a global one on `Lighting` (a "fast mode") and a per-
 | `DirectionalLight` | constant (sun) | constant | ✅ orthographic shadow map |
 | `PointLight` | towards its position | linear fall-off to 0 at `maxDistance` | ✅ cube map: six perspective shadow maps |
 | `SpotLight` | towards its position | point fall-off × **cone factor** | ✅ one perspective shadow map |
+
+**Switching a light off.** `Light.setEnabled(false)` keeps a light in its `Lighting` but takes it out of the
+rendering: `ShadingConsumer` skips it (an `AmbientLight` switched off adds no ambient term), `RenderEngine` does
+not draw its shadow map and `LightGlowRenderer` does not draw it. A scene with many lights (the ceiling lights of
+a building, the lamps of a street) then pays only for those it keeps on, typically the ones near the camera: the
+cost of a frame grows with the lights switched on, not with the lights of the scene. The shadow map of a light
+switched off is not freed: with static shadow casters (`setStaticShadowCasters()`), a light switched on again
+reuses it if neither the light nor its shadowing box moved. Tested by `TestLightEnabled`.
 
 The two attenuation laws, for a light with `maxDistance = 10` and a spot with inner half-angle
 10° and outer half-angle 30°:
