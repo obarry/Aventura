@@ -23,7 +23,7 @@
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  */
-package com.aventura.demo.temple;
+package com.aventura.demo;
 
 import com.aventura.math.transform.Rotation;
 import com.aventura.math.vector.Vector3;
@@ -157,7 +157,7 @@ public class FlightPath {
 	 * </pre>
 	 * which is p1 for t = 0 and p2 for t = 1, with the derivatives (p2 - p0) / 2 and (p3 - p1) / 2 there.
 	 */
-	static Vector4 catmullRom(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, float t) {
+	public static Vector4 catmullRom(Vector4 p0, Vector4 p1, Vector4 p2, Vector4 p3, float t) {
 		return new Vector4(
 				catmullRom(p0.getX(), p1.getX(), p2.getX(), p3.getX(), t),
 				catmullRom(p0.getY(), p1.getY(), p2.getY(), p3.getY(), t),
@@ -165,7 +165,7 @@ public class FlightPath {
 				1);
 	}
 
-	static float catmullRom(float p0, float p1, float p2, float p3, float t) {
+	public static float catmullRom(float p0, float p1, float p2, float p3, float t) {
 		return 0.5f * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (3 * p1 - p0 - 3 * p2 + p3) * t * t * t);
 	}
 }

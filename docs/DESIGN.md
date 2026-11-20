@@ -521,7 +521,9 @@ not draw its shadow map and `LightGlowRenderer` does not draw it. A scene with m
 a building, the lamps of a street) then pays only for those it keeps on, typically the ones near the camera: the
 cost of a frame grows with the lights switched on, not with the lights of the scene. The shadow map of a light
 switched off is not freed: with static shadow casters (`setStaticShadowCasters()`), a light switched on again
-reuses it if neither the light nor its shadowing box moved. Tested by `TestLightEnabled`.
+reuses it if neither the light nor its shadowing box moved. Tested by `TestLightEnabled`. The `StarshipInterior` demo
+keeps 3 of its 42 lights on, chosen before each image by the `LightBudget` of the demos (see
+[STARSHIP_INTERIOR.md](STARSHIP_INTERIOR.md#the-light-budget)).
 
 The two attenuation laws, for a light with `maxDistance = 10` and a spot with inner half-angle
 10° and outer half-angle 30°:

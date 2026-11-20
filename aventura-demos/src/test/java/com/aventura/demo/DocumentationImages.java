@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
@@ -16,6 +17,7 @@ import com.aventura.context.PerspectiveContext;
 import com.aventura.context.RenderContext;
 import com.aventura.cookbook.AtmosphereCookbook;
 import com.aventura.cookbook.CookbookGallery;
+import com.aventura.demo.ship.StarshipInterior;
 import com.aventura.demo.temple.TempleRuins;
 import com.aventura.math.transform.Transformation;
 import com.aventura.math.transform.Translation;
@@ -34,6 +36,7 @@ import com.aventura.model.light.PointLight;
 import com.aventura.model.light.ShadowFilter;
 import com.aventura.model.light.SpotLight;
 import com.aventura.test.TestAtmosphere;
+import com.aventura.view.ImageView;
 import com.aventura.test.TestFog;
 import com.aventura.test.TestLightingPoint1Shadows;
 import com.aventura.test.TestLightingSpot1;
@@ -94,6 +97,12 @@ import com.aventura.test.TestLightingSun;
  *     temple_ruins_sun.jpg    TempleRuins, against the light from behind the temple: the sun, its halo and its lens flare
  *     temple_ruins_island.jpg TempleRuins, the whole island from above the sea, as in the helicopter tour
  *     temple_ruins_rendering.jpg  TempleRuins, the same view in four renderings: lines, monochrome, flat without textures, full
+ *     starship_corridor.jpg   StarshipInterior, the south corridor, as the walk starts
+ *     starship_bend.jpg       StarshipInterior, the east bend, during the visit
+ *     starship_control_room.jpg  StarshipInterior, the consoles of the control room
+ *     starship_hatch.jpg      StarshipInterior, the hatch of the hold, glanced at from the south junction during the visit
+ *     starship_store.jpg      StarshipInterior, the north door half open on the store
+ *     starship_plan.jpg       StarshipInterior, the plan view: the whole ship from above, through the ceilings, all its lights on
  *
  * Run it headless, from the project root or from the aventura-demos folder (the textures are read from the
  * classpath, see DemoTextures):
@@ -198,6 +207,16 @@ public class DocumentationImages {
 		images.put("haze_compare.jpg", DocumentationImages::hazeCompare);
 		images.put("fog_compare.jpg", DocumentationImages::fogCompare);
 		images.put("temple_ruins_rendering.jpg", DocumentationImages::templeRenderingTypes);
+		// The images of StarshipInterior are not scenes: the lights switched on depend on the camera (the light budget)
+		images.put("starship_corridor.jpg", () -> starship(demo -> demo.showWalk(4.5f, -12.2f, 0, 2), 1000));
+		images.put("starship_bend.jpg", () -> starship(demo -> demo.showVisitAt(30), 1000));
+		images.put("starship_control_room.jpg", () -> starship(demo -> demo.showWalk(-1.2f, -1.8f, 20, -10), 1000));
+		images.put("starship_hatch.jpg", () -> starship(demo -> demo.showVisitAt(demo.getTour().startOf(5) + 1.2f), 1000));
+		images.put("starship_store.jpg", () -> starship(demo -> {
+			demo.setNorthDoorOpening(0.75f);
+			demo.showWalk(0.2f, 10.2f, 88, 4);
+		}, 1000));
+		images.put("starship_plan.jpg", () -> starship(StarshipInterior::showPlan, 1000));
 		for (Map.Entry<String, Supplier<DemoScene>> scene : scenes().entrySet()) {
 			images.put(scene.getKey(), () -> scene.getValue().get().render());
 		}
@@ -470,6 +489,28 @@ public class DocumentationImages {
 		g.drawImage(bottom, 0, top.getHeight() + 6, null);
 		g.dispose();
 		return out;
+	}
+
+	/** The StarshipInterior demo, whose scene is created once for all its images. */
+	private static StarshipInterior starshipDemo;
+
+	/**
+	 * An image of the StarshipInterior demo, as the demo renders it (the light budget switches on the lights near the
+	 * camera first): the camera is placed by the given action, the north door closed unless the action opens it.
+	 */
+	static synchronized BufferedImage starship(Consumer<StarshipInterior> camera, int width) {
+		if (starshipDemo == null) {
+			starshipDemo = new StarshipInterior();
+			starshipDemo.createScene();
+		}
+		ImageView view = new ImageView(StarshipInterior.createPerspectiveContext(width));
+		starshipDemo.getRenderer().setView(view);
+		starshipDemo.setNorthDoorOpening(0);
+		camera.accept(starshipDemo);
+		starshipDemo.renderImage();
+		BufferedImage image = view.getImageView();
+		starshipDemo.setNorthDoorOpening(0);
+		return image;
 	}
 
 	/** The TempleRuins demo, whose scene is created once for all its images (it takes about a second, textures included). */

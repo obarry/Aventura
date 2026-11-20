@@ -25,6 +25,7 @@
  */
 package com.aventura.demo.temple;
 
+import com.aventura.demo.Noise;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
