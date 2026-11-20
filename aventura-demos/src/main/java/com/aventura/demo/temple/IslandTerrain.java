@@ -25,6 +25,7 @@
  */
 package com.aventura.demo.temple;
 
+import com.aventura.demo.Noise;
 /**
  * The relief of the island: a height field (an altitude for each point of a regular grid), computed from a formula
  * rather than stored in a file, and the questions the scene asks about it (how high is the ground here? how steep?).

@@ -23,7 +23,7 @@
  * SOFTWARE.
  * ------------------------------------------------------------------------------
  */
-package com.aventura.demo.temple;
+package com.aventura.demo;
 
 /**
  * A small "value noise" generator, the source of every irregular shape of the demo: the relief of the island, the
@@ -39,7 +39,7 @@ package com.aventura.demo.temple;
  *
  * @since Nov 2026
  */
-final class Noise {
+public final class Noise {
 
 	private Noise() {
 	}
@@ -48,7 +48,7 @@ final class Noise {
 	 * Pseudo-random value of a point of the integer grid, in [0, 1[: an integer hash that scrambles the bits of the
 	 * coordinates and of the seed.
 	 */
-	static float hash(int x, int y, int z, int seed) {
+	public static float hash(int x, int y, int z, int seed) {
 		int h = seed + x * 374761393 + y * 668265263 + z * 1274126177;
 		h = (h ^ (h >>> 13)) * 1274126177;
 		h = h ^ (h >>> 16);
@@ -60,7 +60,7 @@ final class Noise {
 	 * interpolated along x, then y, then z. The interpolation weights follow an S curve ({@link #fade}) rather than a
 	 * line, so that the result has no crease at the cell borders.
 	 */
-	static float value(float x, float y, float z, int seed) {
+	public static float value(float x, float y, float z, int seed) {
 		int ix = (int) Math.floor(x), iy = (int) Math.floor(y), iz = (int) Math.floor(z);
 		float fx = fade(x - ix), fy = fade(y - iy), fz = fade(z - iz);
 
@@ -77,7 +77,7 @@ final class Noise {
 	 *
 	 * @param octaves number of octaves: 1 is the plain value noise, more octaves add finer details
 	 */
-	static float fbm(float x, float y, float z, int octaves, int seed) {
+	public static float fbm(float x, float y, float z, int octaves, int seed) {
 		float sum = 0, amplitude = 1, total = 0;
 		for (int o = 0; o < octaves; o++) {
 			sum += amplitude * value(x, y, z, seed + o);
@@ -91,12 +91,12 @@ final class Noise {
 	}
 
 	/** S curve from 0 to 1 with a zero slope at both ends (3t² - 2t³). */
-	static float fade(float t) {
+	public static float fade(float t) {
 		return t * t * (3 - 2 * t);
 	}
 
 	/** Linear interpolation: the value a fraction t of the way from a to b. */
-	static float lerp(float a, float b, float t) {
+	public static float lerp(float a, float b, float t) {
 		return a + (b - a) * t;
 	}
 
@@ -104,7 +104,7 @@ final class Noise {
 	 * Smooth step: 0 below edge0, 1 above edge1, and an S curve in between. Used to blend two shapes without a crease
 	 * (the plateau of the temple into the slopes of the hill, the beach into the grass...).
 	 */
-	static float smoothstep(float edge0, float edge1, float x) {
+	public static float smoothstep(float edge0, float edge1, float x) {
 		float t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
 		return fade(t);
 	}

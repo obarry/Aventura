@@ -498,7 +498,7 @@ The engine can also print the timing of each image in the console (`Tracer.stats
 
 ## Demos
 
-All demos live in `com.aventura.demo` (`TempleRuins`, made of several classes, in its own `com.aventura.demo.temple` package).
+All demos live in `com.aventura.demo` (`TempleRuins` and `StarshipInterior`, made of several classes, in their own packages `com.aventura.demo.temple` and `com.aventura.demo.ship`). The classes shared by the demos are in `com.aventura.demo` too: `StatisticsWindow`, `FrameTimeStatistics`, `LightBudget`, `Noise`, `FlightPath`, `DemoTextures`.
 
 | Demo | What it shows | Interaction |
 | --- | --- | --- |
@@ -515,6 +515,17 @@ All demos live in `com.aventura.demo` (`TempleRuins`, made of several classes, i
 </p>
 
 *The `TempleRuins` demo: the ruined side of the temple, and the sun seen from behind it. [TempleRuins — The Making of a Demo](docs/TEMPLE_RUINS.md) tells how it was built: its architecture, its graphic design, the tricks and the design choices, its controls and menus, its limitations and its performance.*
+
+| Demo | What it shows | Interaction |
+| --- | --- | --- |
+| `StarshipInterior` | The inside of a spaceship, as in the science fiction films of the late seventies: a loop of metal corridors, straight and curved, a shortcut through a control room full of consoles, junctions, airlock doors open and closed, pipes everywhere. A scene lit by its own lights only: 42 point and spot lights with their shadows, of which only the 3 nearest to the camera are switched on (`Light.setEnabled()`, `LightBudget`), faded so that none pops in or out; one new shape swept along straight and curved paths (`SweptSection`) for the walls, the pipes and the cable trays; computed textures (plates, grating, stripes, screens); a door that opens (`D`) | Walk (`W`: drag to look around, wheel or `Up` / `Down` to walk, kept in the corridors), guided visit (`V`: looks ahead in the turns and at the points of interest, banks like an FPV drone; `Space` pauses it) and plan view (`P`: the whole ship from above, through its ceilings, all its lights on); `Lights` menu: the size of the light budget (1 to 6) or all the lights on, the halo of the lights, the north door; `Rendering` and `Effects` menus; `Camera` / `Statistics` (`I`), with the lights switched on and the times of the last lap of the visit |
+
+<p align="center">
+  <img src="docs/images/starship_bend.jpg" alt="StarshipInterior: the east bend of the corridors" width="400">
+  <img src="docs/images/starship_control_room.jpg" alt="StarshipInterior: the consoles of the control room" width="400">
+</p>
+
+*The `StarshipInterior` demo: a curved corridor, and the consoles of the control room. [StarshipInterior — The Making of a Demo](docs/STARSHIP_INTERIOR.md) tells how it was built: the plan, the shape swept along the corridors, the light budget, the visit, its limitations and its performance.*
 
 The `aventura-demos/src/test/java/com/aventura/test` folder holds about eighty additional visual test programs (textured shapes, meshes, lighting, shadow maps, rasterizer experiments...). Each has a `main()` and can be launched with `-Dexec.mainClass=com.aventura.test.<Name>` as shown above. The lighting ones are meant to be checked by eye: `TestLighting1` and `TestLighting2` (point lights), `TestLightingSpot1` (soft and sharp spot cones), `TestLightingSpot2` (a moving spot with a changing cone), `TestLightingSpot2Shadows` and `TestLightingSpot3Shadows` (a moving spot light with its shadows), `TestLightingPoint1Shadows` (a point light orbiting in a room, with its cube-map shadows) `TestLightingSoftShadows` (hard then soft shadows of a moving spot light with a coarse map) and `TestLightingMixedShadows` (every kind of light with shadows enabled, to spot regressions in the shadows), `TestLightingGlow` (a lamp with a visible halo, hidden behind the objects) and `TestLightingSun` (a street where the camera turns to bring the sun behind the buildings), `TestAtmosphere` (an avenue whose buildings fade into the sky with the distance) and `TestFog` (the same avenue with banks of fog that the camera crosses). `TestRenderingModes` shows the same scene in every rendering mode, one image per press on Return in the console (the mode is printed there).
 
@@ -566,7 +577,7 @@ Aventura/
 │   ├── src/main/java/com/aventura/   context, engine, math, model, tools, view
 │   └── src/test/java/com/aventura/   JUnit tests
 ├── aventura-demos/                the demos (depends on the engine)
-│   ├── src/main/java/com/aventura/demo/      demo applications (temple/: TempleRuins)
+│   ├── src/main/java/com/aventura/demo/      demo applications (temple/: TempleRuins, ship/: StarshipInterior)
 │   ├── src/main/resources/texture/           the textures of the demos
 │   └── src/test/java/com/aventura/           tests of the demos, cookbook examples (cookbook/),
 │                                             visual test programs (test/), SceneViewer, PerfBench,

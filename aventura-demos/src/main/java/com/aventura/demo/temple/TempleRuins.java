@@ -25,6 +25,8 @@
  */
 package com.aventura.demo.temple;
 
+import com.aventura.demo.Noise;
+import com.aventura.demo.FlightPath;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;

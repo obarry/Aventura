@@ -41,7 +41,9 @@ engine then the demos.
     - `tools/` color, tracing
   - `src/test/java/com/aventura/` unit tests mirroring the main packages (`src/test/resources`: a texture)
 - `aventura-demos/` depends on the engine
-  - `src/main/java/com/aventura/demo/` demo applications (`temple/`: the `TempleRuins` demo), `DemoTextures`
+  - `src/main/java/com/aventura/demo/` demo applications (`temple/`: the `TempleRuins` demo, `ship/`: the
+    `StarshipInterior` demo), and what the demos share: `DemoTextures`, `StatisticsWindow`, `FrameTimeStatistics`,
+    `LightBudget`, `Noise`, `FlightPath`
   - `src/main/resources/texture/` the textures, read from the classpath (`DemoTextures.url("name.jpg")`)
   - `src/test/java/com/aventura/` `demo/` tests of the demos, `SceneViewer`, `PerfBench`,
     `DocumentationImages`; `test/` ~80 visual test programs with a `main()`; `cookbook/` the Geometry and
@@ -52,6 +54,8 @@ engine then the demos.
   - `DESIGN.md` architecture, pipeline, lighting, shadows, contexts, conventions
   - `TEMPLE_RUINS.md` the making of the `TempleRuins` demo: architecture, graphic design, tricks, UI,
     limitations, performance (update it when the demo changes)
+  - `STARSHIP_INTERIOR.md` the making of the `StarshipInterior` demo, on the same model (update it when the demo
+    changes)
   - `GEOMETRY_COOKBOOK.md`, `ATMOSPHERE_COOKBOOK.md`, `PERFORMANCE_AUDIT.md`, `JAVADOC_AUDIT.md`
     (the two audits with a French version `*.fr.md`, kept in step)
 

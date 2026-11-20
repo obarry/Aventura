@@ -169,8 +169,8 @@ flowchart TB
 | `Boulder` | 190 | A rock or a clump of leaves | New shape, normals computed from the mesh |
 | `IslandTerrain` | 180 | The altitudes of the island | (none: plain Java, feeds a `Trellis`) |
 | `SceneTextures` | 200 | The six textures | `Texture` from a classpath resource and pixel by pixel, wrap mode |
-| `FlightPath` | 170 | The path of the helicopter | `Vector4`, `Rotation` |
-| `Noise` | 110 | Value noise and fractal noise | (none) |
+| `FlightPath` | 170 | The path of the helicopter (since moved to `com.aventura.demo`, shared by the demos) | `Vector4`, `Rotation` |
+| `Noise` | 110 | Value noise and fractal noise (since moved to `com.aventura.demo`, shared by the demos) | (none) |
 
 The shapes do not know each other. What they share is in the engine: the repetition of a texture, the same idea on
 a ground, around a drum and around a boulder, is a property of the `Texture` (its wrap mode, see
