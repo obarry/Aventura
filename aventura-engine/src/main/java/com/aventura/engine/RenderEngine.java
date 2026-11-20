@@ -324,6 +324,7 @@ public class RenderEngine {
 				if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendering: lighting has shadowing. Number of shadowing lights: "+shadowingLights.size());
 				
 				for (int i = 0; i < shadowingLights.size(); i++) { // Loop on all Shadowing lights
+					if (!shadowingLights.get(i).isEnabled()) continue; // Switched off: no shadow map to draw (the last one is kept)
 					if (Tracer.info) Tracer.traceInfo(this.getClass(), "Shadowing Light #" + i + " : "+shadowingLights.get(i));
 
 					// Initiate the Shadowing by calculating the light(s) camera/projection matrix(ces)
@@ -957,6 +958,7 @@ public class RenderEngine {
 		// Entirely in world space now, same simplification as displayLandMarkLines().
 		Vector4 origin = Vector4.zeroPoint();
 		for (int i=0; i<lighting.getDirectionalLights().size(); i++) {
+			if (!lighting.getDirectionalLights().get(i).isEnabled()) continue;
 			Vector3 lightDirection = lighting.getDirectionalLights().get(i).getLightVectorAtPoint(null);
 			screenLineRenderer.drawVector(origin, lightDirection, renderContext.getLightVectorsColor());
 		}

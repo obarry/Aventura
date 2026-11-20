@@ -150,11 +150,13 @@ public class LightGlowRenderer {
 		int drawn = 0;
 		// The Spot lights are in the same list as the Point lights
 		for (PointLight light : lighting.getPointLights()) {
+			if (!light.isEnabled()) continue; // A light switched off is not drawn
 			LightGlowMode mode = resolveMode(light, renderContext);
 			if (mode != LightGlowMode.HALO && mode != LightGlowMode.EMISSIVE) continue;
 			if (drawPointLight(light, mode, camera, zBuffer, bands)) drawn++;
 		}
 		for (DirectionalLight light : lighting.getDirectionalLights()) {
+			if (!light.isEnabled()) continue;
 			if (resolveMode(light, renderContext) != LightGlowMode.SUN) continue;
 			if (drawSun(light, renderContext, zBuffer, bands)) drawn++;
 		}

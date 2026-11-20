@@ -50,6 +50,35 @@ public abstract class Light {
 	// How this light shows in the picture, null = as the RenderContext and the default of its type say (see LightAppearance)
 	private LightAppearance appearance = null;
 
+	// A light switched off stays in its Lighting but is ignored by the rendering (see setEnabled())
+	private boolean enabled = true;
+
+	/**
+	 * @return true if this light takes part in the rendering (the default), false if it was switched off
+	 */
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * Switches this light on or off without removing it from its Lighting. A light switched off:
+	 * <ul>
+	 * <li>adds nothing to the shading of the pixels (an AmbientLight switched off adds no ambient term),</li>
+	 * <li>does not generate its shadow map: a scene with many lights (the ceiling lights of a building, the lamps of a
+	 *     street) pays only for the lights it keeps on, typically those near the camera,</li>
+	 * <li>is not drawn when the lights are visible (RenderContext.setLightGlow()).</li>
+	 * </ul>
+	 * Its shadow map is not freed: with static shadow casters (ShadowingLight.setStaticShadowCasters()), a light
+	 * switched on again reuses the map it had, if neither the light nor its shadowing box moved in the meantime.
+	 * <p>
+	 * To be called between two frames, not while an image is being rendered.
+	 *
+	 * @param enabled true to switch the light on, false to switch it off
+	 */
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
 	/**
 	 * @return the look of this light in the picture, null if it was not set (see LightAppearance, LightGlowMode)
 	 */

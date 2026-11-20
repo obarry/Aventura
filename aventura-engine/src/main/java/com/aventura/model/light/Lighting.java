@@ -113,8 +113,11 @@ public class Lighting {
 		this.ambient = ambient;
 	}
 
+	/**
+	 * @return true if there is an AmbientLight and it is switched on (see Light.setEnabled())
+	 */
 	public boolean hasAmbient() {
-		return ambient != null;
+		return ambient != null && ambient.isEnabled();
 	}
 	
 	public boolean hasDirectional() {
