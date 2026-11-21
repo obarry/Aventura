@@ -64,6 +64,7 @@ public class ControlRoom extends Element {
 	public static final Color BEAM_COLOR = new Color(92, 104, 96);
 	public static final Color RING_COLOR = new Color(230, 236, 255);
 	public static final Color SCREEN_FRAME_COLOR = new Color(60, 64, 68);
+	static final float SCREEN_FRAME_DEPTH = 0.04f;
 
 	protected final Vector4 center;
 	protected final List<AirlockDoor> doors = new ArrayList<AirlockDoor>();
@@ -150,12 +151,15 @@ public class ControlRoom extends Element {
 		for (int side = -1; side <= 1; side += 2) {
 			Vector3 inward = new Vector3(-side, 0, 0);
 			Vector3 u = inward.cross(Vector3.zAxis()).times(-1); // Along the wall, so that u x Z points inwards
-			Vector4 corner = at(side * (half - 0.04f), 0, z).minus(u.times(width / 2));
+			// The screen stands 1 cm in front of its frame: in the same plane as the front of the frame, the two surfaces
+			// would fight for each pixel in the Z-buffer (z-fighting), and the screen would show lines of the frame
+			Vector4 corner = at(side * (half - SCREEN_FRAME_DEPTH - 0.01f), 0, z).minus(u.times(width / 2));
 			Panel screen = new Panel("wall screen", corner, u, Vector3.zAxis(), width, height, null, side > 0 ? textures.screenRadar : textures.screenGraphs, 0);
 			group.addElement(screen);
-			Box frame = new Box(0.05f, width + 0.12f, height + 0.12f, "screen frame");
+			// The frame: a Box against the wall, SCREEN_FRAME_DEPTH thick
+			Box frame = new Box(SCREEN_FRAME_DEPTH, width + 0.12f, height + 0.12f, "screen frame");
 			frame.setColor(SCREEN_FRAME_COLOR);
-			frame.setTransformation(new Translation(new Vector3(center.getX() + side * (half - 0.015f), center.getY(), z + height / 2)));
+			frame.setTransformation(new Translation(new Vector3(center.getX() + side * (half - SCREEN_FRAME_DEPTH / 2), center.getY(), z + height / 2)));
 			group.addElement(frame);
 		}
 		return group;

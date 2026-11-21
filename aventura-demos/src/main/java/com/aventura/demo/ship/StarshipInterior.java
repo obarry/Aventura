@@ -124,8 +124,8 @@ import com.aventura.view.SwingView;
  *
  * <h2>Menus</h2>
  * <ul>
- * <li>Camera: the camera, pause of the visit, reset, and the statistics (key I), with the rendering times of the last
- *     lap of the visit and the lights switched on.</li>
+ * <li>Camera: the camera, pause of the visit, reset, the field of view (presets, or keys + and -), and the statistics
+ *     (key I), with the rendering times of the last lap of the visit and the lights switched on.</li>
  * <li>Lights: the size of the light budget (1 to 6 lights), or all the lights on; the halo of the lights; the north
  *     door (key D).</li>
  * <li>Rendering: the rendering type.</li>
@@ -149,10 +149,22 @@ public class StarshipInterior {
 	/** The haze: the far end of a long corridor fades into the dark (visibility in meters, see TempleRuins). */
 	static final float HAZE_VISIBILITY = 45f;
 
-	/** Near and far planes of the view frustum. The near plane is close: in a doorway, the frame is 0.5 m away. */
-	static final float NEAR_DISTANCE = 0.05f;
+	/**
+	 * The view plane: VIEW_WIDTH wide at IMAGE_WIDTH pixels. With a frustum, it is also the near plane, close to the eye:
+	 * in a doorway, the frame is 0.5 m away. Its distance to the eye sets the field of view (see setFieldOfView()).
+	 */
+	static final float VIEW_WIDTH = 0.05f;
 	static final float FAR_DISTANCE = 300f;
 	static final int IMAGE_WIDTH = 1000;
+
+	/**
+	 * Horizontal field of view, in degrees: rather wide, as for a first person view (TempleRuins: 53 degrees). The Camera
+	 * menu offers the presets; the + and - keys change it by FIELD_OF_VIEW_STEP, between the minimum and the maximum.
+	 */
+	static final float DEFAULT_FIELD_OF_VIEW = 72;
+	static final float[] FIELD_OF_VIEW_PRESETS = { 50, 60, 72, 85, 100 };
+	static final float FIELD_OF_VIEW_STEP = 2;
+	static final float MIN_FIELD_OF_VIEW = 30, MAX_FIELD_OF_VIEW = 120;
 
 	/** Where the walk starts: in the south corridor, near the south junction, looking east. */
 	static final Vector4 WALK_START = new Vector4(3f, -Ship.LOOP_HALF_WIDTH, ShipTour.EYE_HEIGHT, 1);
@@ -227,6 +239,9 @@ public class StarshipInterior {
 	int lightsOn;
 
 	CameraMode cameraMode = CameraMode.WALK;
+	float fieldOfView = DEFAULT_FIELD_OF_VIEW;
+	Map<Float, JRadioButtonMenuItem> fieldOfViewItems = new java.util.LinkedHashMap<Float, JRadioButtonMenuItem>();
+	ButtonGroup fieldOfViewGroup = new ButtonGroup();
 	Vector4 lookTarget; // The point the camera looks at: the light budget prefers the lights in front of the camera
 
 	/** Walk: position of the eye, and direction of the look (yaw around Z from the X axis, pitch above the horizontal). */
@@ -347,15 +362,18 @@ public class StarshipInterior {
 	// ***** 4. The contexts
 	// ****************************************************************************************************************
 
-	/** A perspective projection, a horizontal field of view of 53 degrees, an image IMAGE_WIDTH pixels wide (see TempleRuins). */
+	/**
+	 * A perspective projection, a horizontal field of view of DEFAULT_FIELD_OF_VIEW, an image IMAGE_WIDTH pixels wide
+	 * (see TempleRuins).
+	 */
 	public static PerspectiveContext createPerspectiveContext() {
 		return createPerspectiveContext(IMAGE_WIDTH);
 	}
 
 	public static PerspectiveContext createPerspectiveContext(int imageWidth) {
-		float viewWidth = NEAR_DISTANCE, viewHeight = NEAR_DISTANCE * 9 / 16;
-		PerspectiveContext pContext = new PerspectiveContext(viewWidth, viewHeight, NEAR_DISTANCE, FAR_DISTANCE, PerspectiveType.FRUSTUM,
-				Math.round(imageWidth / viewWidth));
+		float viewWidth = VIEW_WIDTH, viewHeight = VIEW_WIDTH * 9 / 16;
+		PerspectiveContext pContext = new PerspectiveContext(viewWidth, viewHeight, viewDistance(viewWidth, DEFAULT_FIELD_OF_VIEW), FAR_DISTANCE,
+				PerspectiveType.FRUSTUM, Math.round(imageWidth / viewWidth));
 		pContext.setResizeMode(PerspectiveContext.ResizeMode.KEEP_SCALE);
 		return pContext;
 	}
@@ -369,6 +387,40 @@ public class StarshipInterior {
 		rContext.setAtmosphere(true);
 		rContext.setLightGlow(true);
 		return rContext;
+	}
+
+	/**
+	 * The distance from the eye at which a view plane of the given width sees the given horizontal field of view: the
+	 * plane and the eye make an isosceles triangle, of half-angle fieldOfView / 2, so tan(fieldOfView / 2) = (width / 2)
+	 * / distance. The nearer the plane, the wider the view.
+	 */
+	static float viewDistance(float viewWidth, float fieldOfViewDegrees) {
+		return viewWidth / 2 / (float) Math.tan(Math.toRadians(fieldOfViewDegrees) / 2);
+	}
+
+	/**
+	 * Changes the field of view: the view plane keeps its width (its pixels, see PerspectiveContext.ResizeMode.KEEP_SCALE),
+	 * and is moved nearer to the eye or farther from it (Perspective.setDist()). The projection follows.
+	 */
+	public void setFieldOfView(float degrees) {
+		fieldOfView = clamp(degrees, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
+		applyFieldOfView();
+	}
+
+	public float getFieldOfView() {
+		return fieldOfView;
+	}
+
+	/**
+	 * Places the view plane for the current field of view. Called before each image: when the window is resized, the
+	 * width of the view plane changes with it (the RenderEngine resizes the PerspectiveContext at the start of the image),
+	 * and the field of view is kept by moving the plane.
+	 */
+	private void applyFieldOfView() {
+		int pixels = guiView != null ? guiView.getViewWidth() : pContext.getPixelWidth();
+		float viewWidth = (float) pixels / pContext.getPPU(); // The width the view plane will have for this image
+		float distance = viewDistance(viewWidth, fieldOfView);
+		if (distance != pContext.getPerspective().getDist()) pContext.getPerspective().setDist(distance);
 	}
 
 	// ****************************************************************************************************************
@@ -461,10 +513,19 @@ public class StarshipInterior {
 		bindKey(root, KeyEvent.VK_DOWN, "backward", () -> dollyCamera(-1));
 		bindKey(root, KeyEvent.VK_LEFT, "turnLeft", () -> turnCamera(-0.12f, 0));
 		bindKey(root, KeyEvent.VK_RIGHT, "turnRight", () -> turnCamera(0.12f, 0));
+		// The field of view: + and -, typed (whatever the keyboard layout) or on the numeric keypad
+		bindKey(root, KeyStroke.getKeyStroke('+'), "wider", () -> changeFieldOfView(fieldOfView + FIELD_OF_VIEW_STEP));
+		bindKey(root, KeyStroke.getKeyStroke('-'), "narrower", () -> changeFieldOfView(fieldOfView - FIELD_OF_VIEW_STEP));
+		bindKey(root, KeyEvent.VK_ADD, "widerKeypad", () -> changeFieldOfView(fieldOfView + FIELD_OF_VIEW_STEP));
+		bindKey(root, KeyEvent.VK_SUBTRACT, "narrowerKeypad", () -> changeFieldOfView(fieldOfView - FIELD_OF_VIEW_STEP));
 	}
 
 	private static void bindKey(JComponent component, int keyCode, String name, Runnable action) {
-		component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(keyCode, 0), name);
+		bindKey(component, KeyStroke.getKeyStroke(keyCode, 0), name, action);
+	}
+
+	private static void bindKey(JComponent component, KeyStroke key, String name, Runnable action) {
+		component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, name);
 		component.getActionMap().put(name, new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -504,6 +565,7 @@ public class StarshipInterior {
 	 * or when asked by the Lights menu). Every rendering of the application goes through here.
 	 */
 	void render() {
+		applyFieldOfView();
 		updateLights();
 		// The haze is for the long corridors: from above, 70 m away, it would hide the whole ship
 		rContext.setAtmosphere(atmosphere.isHaze() && cameraMode != CameraMode.PLAN);
@@ -513,8 +575,8 @@ public class StarshipInterior {
 		if (frame == null) return; // Without a window (tests)
 		long millis = Math.round(lastRenderNanos / 1e6);
 		String mode = cameraMode.label + (cameraMode == CameraMode.VISIT && tourPaused ? " (paused)" : "");
-		String title = String.format(Locale.ROOT, "%s - %s - %d ms per image (%.1f per second) - %d lights on", TITLE, mode, millis,
-				1e9 / Math.max(lastRenderNanos, 1), lightsOn);
+		String title = String.format(Locale.ROOT, "%s - %s, %.0f\u00b0 - %d ms per image (%.1f per second) - %d lights on", TITLE, mode, fieldOfView,
+				millis, 1e9 / Math.max(lastRenderNanos, 1), lightsOn);
 		if (cameraMode == CameraMode.VISIT && lapCount > 0) {
 			title += String.format(Locale.ROOT, " - lap %d: %.1f ms on average", lapCount, lastLapAverage);
 		}
@@ -546,8 +608,41 @@ public class StarshipInterior {
 		addMenuItem(menu, "Pause / resume the visit", KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), this::pauseTour);
 		addMenuItem(menu, "Reset camera", KeyStroke.getKeyStroke(KeyEvent.VK_R, 0), this::resetCamera);
 		menu.addSeparator();
+		menu.add(createFieldOfViewMenu());
+		menu.addSeparator();
 		menu.add(statistics.createMenuItem());
 		return menu;
+	}
+
+	/**
+	 * Field of view submenu: the presets (an exclusive choice), and a wider or narrower view by FIELD_OF_VIEW_STEP (keys
+	 * + and -, on the main keyboard or the numeric keypad). A value between two presets selects none of them.
+	 */
+	private JMenu createFieldOfViewMenu() {
+		JMenu menu = new JMenu("Field of view");
+		ButtonGroup group = fieldOfViewGroup;
+		for (float preset : FIELD_OF_VIEW_PRESETS) {
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem(String.format(Locale.ROOT, "%.0f\u00b0%s", preset,
+					preset == DEFAULT_FIELD_OF_VIEW ? " (default)" : preset < 60 ? " (narrow)" : preset > 90 ? " (wide)" : ""), preset == fieldOfView);
+			item.addActionListener(e -> changeFieldOfView(preset));
+			group.add(item);
+			menu.add(item);
+			fieldOfViewItems.put(preset, item);
+		}
+		menu.addSeparator();
+		addMenuItem(menu, "Wider (+)", null, () -> changeFieldOfView(fieldOfView + FIELD_OF_VIEW_STEP));
+		addMenuItem(menu, "Narrower (-)", null, () -> changeFieldOfView(fieldOfView - FIELD_OF_VIEW_STEP));
+		return menu;
+	}
+
+	/** Sets the field of view, shows it in the menu and renders. */
+	private void changeFieldOfView(float degrees) {
+		setFieldOfView(degrees);
+		// The preset matching the new value is selected, or none (a ButtonGroup can be cleared)
+		JRadioButtonMenuItem item = fieldOfViewItems.get(fieldOfView);
+		if (item != null) item.setSelected(true);
+		else fieldOfViewGroup.clearSelection();
+		render();
 	}
 
 	private void addCameraItem(JMenu menu, ButtonGroup group, CameraMode mode, int keyCode) {
@@ -937,6 +1032,15 @@ public class StarshipInterior {
 	public void showPlan() {
 		cameraMode = CameraMode.PLAN;
 		updateCamera();
+	}
+
+	/**
+	 * For the tests and DocumentationImages: renders into the given view (an ImageView, without a window), of any size.
+	 * The field of view is kept.
+	 */
+	public void setView(GUIView view) {
+		guiView = view;
+		renderer.setView(view);
 	}
 
 	/** Renders an image with the current camera (the budget switches the lights first), without a window. */

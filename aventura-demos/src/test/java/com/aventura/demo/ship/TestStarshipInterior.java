@@ -34,6 +34,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.aventura.model.light.PointLight;
+import com.aventura.model.perspective.Perspective;
 import com.aventura.model.world.GeometryStatistics;
 import com.aventura.view.ImageView;
 
@@ -53,7 +54,7 @@ public class TestStarshipInterior {
 		demo = new StarshipInterior();
 		demo.createScene();
 		view = new ImageView(StarshipInterior.createPerspectiveContext(160));
-		demo.getRenderer().setView(view);
+		demo.setView(view);
 	}
 
 	@Test
@@ -114,6 +115,25 @@ public class TestStarshipInterior {
 		assertTrue("drawn again once the door moved", hubLight.getDrawnShadowMapFaces() > drawn);
 		door.setOpening(0);
 		demo.invalidateShadowsNear(door.getCenter());
+	}
+
+	@Test
+	public void testFieldOfView() {
+		System.out.println("***** Test StarshipInterior : the field of view *****");
+		assertEquals(StarshipInterior.DEFAULT_FIELD_OF_VIEW, demo.getFieldOfView(), 0);
+		for (float degrees : new float[] { 90, 50, StarshipInterior.DEFAULT_FIELD_OF_VIEW }) {
+			demo.setFieldOfView(degrees);
+			demo.showVisitAt(10);
+			demo.renderImage();
+			// The field of view of the image rendered, from its view plane: 2 atan((width / 2) / distance)
+			Perspective perspective = demo.pContext.getPerspective();
+			assertEquals("the view plane follows the image", 160, Math.round(perspective.getWidth() * demo.pContext.getPPU()));
+			float measured = (float) Math.toDegrees(2 * Math.atan(perspective.getWidth() / 2 / perspective.getDist()));
+			assertEquals(degrees, measured, 0.01f);
+		}
+		demo.setFieldOfView(500);
+		assertEquals("kept within its limits", StarshipInterior.MAX_FIELD_OF_VIEW, demo.getFieldOfView(), 0);
+		demo.setFieldOfView(StarshipInterior.DEFAULT_FIELD_OF_VIEW);
 	}
 
 	private int enabledLights() {
