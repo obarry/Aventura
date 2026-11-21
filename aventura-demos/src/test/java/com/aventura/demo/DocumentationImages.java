@@ -504,7 +504,7 @@ public class DocumentationImages {
 			starshipDemo.createScene();
 		}
 		ImageView view = new ImageView(StarshipInterior.createPerspectiveContext(width));
-		starshipDemo.getRenderer().setView(view);
+		starshipDemo.setView(view);
 		starshipDemo.setNorthDoorOpening(0);
 		camera.accept(starshipDemo);
 		starshipDemo.renderImage();

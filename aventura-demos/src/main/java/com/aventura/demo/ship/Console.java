@@ -78,12 +78,13 @@ public class Console extends Element {
 		cabinet.setTransformation(new Translation(new Vector3(0, 0, HEIGHT / 2)));
 		addElement(cabinet);
 
-		// The desk: a thin Box tilted around the Y axis (towards the operator), on top of the cabinet
-		float tilt = (float) Math.toRadians(-22);
+		// The desk: a thin Box tilted around the Y axis, its front edge lower, towards the operator. A rotation by a
+		// positive angle around Y turns +X towards -Z: the front edge (+X) goes down
+		float tilt = (float) Math.toRadians(22);
 		Box desk = new Box(DEPTH * 0.85f, width, 0.05f, textures.paintedMetal, "desk");
 		desk.setColor(DESK_COLOR);
 		desk.setTransformation(new Rotation(tilt, Vector3.yAxis()));
-		desk.combineTransformation(new Translation(new Vector3(0.02f, 0, HEIGHT + 0.09f)));
+		desk.combineTransformation(new Translation(new Vector3(0.02f, 0, HEIGHT + 0.12f)));
 		addElement(desk);
 
 		// The buttons: small boxes in rows on the desk, tilted with it
@@ -97,7 +98,7 @@ public class Console extends Element {
 				float x = -0.12f + r * 0.14f, y = -width / 2 + (c + 0.5f) * width / columns;
 				button.setTransformation(new Translation(new Vector3(x, y, 0.035f)));
 				button.combineTransformation(new Rotation(tilt, Vector3.yAxis()));
-				button.combineTransformation(new Translation(new Vector3(0.02f, 0, HEIGHT + 0.09f)));
+				button.combineTransformation(new Translation(new Vector3(0.02f, 0, HEIGHT + 0.12f)));
 				buttons.addElement(button);
 			}
 		}
@@ -109,11 +110,13 @@ public class Console extends Element {
 		Box back = new Box(0.06f, screenWidth + 0.06f, screenHeight + 0.06f, textures.paintedMetal, "screen case");
 		back.setColor(DESK_COLOR);
 		display.addElement(back);
-		// The Panel is seen from +X: its axes are Y (along the bottom edge: seen from the front, it goes from left to right)
+		// The Panel is seen from +X, 1 cm in front of the case (in its plane, the two would fight in the Z-buffer): its
+		// axes are Y (along the bottom edge: seen from the front, it goes from left to right)
 		// and Z, and Y x Z = X
-		Panel face = new Panel("screen", new Vector4(0.031f, -screenWidth / 2, -screenHeight / 2, 1), Vector3.yAxis(), Vector3.zAxis(),
+		Panel face = new Panel("screen", new Vector4(0.04f, -screenWidth / 2, -screenHeight / 2, 1), Vector3.yAxis(), Vector3.zAxis(),
 				screenWidth, screenHeight, null, screen, 0); // Tile 0: the texture of the screen is stretched once over it
 		display.addElement(face);
+		// Leaning back: the opposite rotation, its top (+Z) turned towards -X
 		display.setTransformation(new Rotation((float) Math.toRadians(-12), Vector3.yAxis()));
 		display.combineTransformation(new Translation(new Vector3(-DEPTH / 2 + 0.05f, 0, HEIGHT + 0.2f + screenHeight / 2)));
 		addElement(display);

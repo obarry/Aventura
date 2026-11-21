@@ -273,6 +273,14 @@ A rib is a `SectionFrame` between the outline of the corridor and the same outli
 inwards, the floor edge would rise by 10 cm: a step every 2.5 m. `ShipSections.insetAboveFloor()` slides the two points
 of the floor back down along their chamfer, and the ring is open (`setOpen()`): no rib across the floor.
 
+### Two surfaces in the same plane
+
+The screens are Panels with the texture of a screen, in front of a case or a frame (a `Box`). In the first version the
+large screens of the control room were exactly in the plane of the front of their frame: the two surfaces had the same
+depth at each pixel, and the Z-buffer kept one or the other depending on the rounding — lines of the frame across the
+screen (z-fighting). The small screens, 1 mm in front of their case, were spared at short range only. All the screens now
+stand 1 cm in front: well within the precision of the Z-buffer at the distances of the ship.
+
 ### Doors
 
 A door is a frame from the outline of the corridor to the smaller outline of the door, and two leaves (`Box`es) inside
@@ -359,9 +367,22 @@ door is closed.
 
 `R` puts the current camera back at its start.
 
+### Field of view
+
+The horizontal field of view is 72 degrees by default, wider than the 53 degrees of TempleRuins: a first person view
+needs to see the walls on both sides of a corridor. The Camera menu offers presets (50, 60, 72, 85 and 100 degrees),
+and the `+` and `-` keys (typed, or on the numeric keypad) change it by 2 degrees, from 30 to 120.
+
+With a frustum, the field of view is set by the width of the view plane and its distance to the eye:
+`tan(fieldOfView / 2) = (width / 2) / distance`. The width is the number of pixels divided by the pixels per unit
+(`ResizeMode.KEEP_SCALE`), so the demo changes the distance instead (`Perspective.setDist()`): the nearer the plane, the
+wider the view (`StarshipInterior.setFieldOfView()`). The view plane is also the near plane: between 30 and 120 degrees
+it stays between 9 cm and 1.5 cm from the eye, near enough for the doorways. Before each image the distance is
+computed again for the width of the window, so that resizing the window keeps the field of view.
+
 ### Menus
 
-- **Camera**: the camera, pause of the visit, reset, Statistics (`I`): the size of the scene and the work of the engine
+- **Camera**: the camera, pause of the visit, reset, the field of view (presets, `+` / `-`), Statistics (`I`): the size of the scene and the work of the engine
   (the `StatisticsWindow` shared by the demos), with the lights switched on for the last image, ranked, and the rendering
   times of the last lap of the visit.
 - **Lights**: the size of the budget (1, 2, 3, 4 or 6 lights), or all the lights on (42): the cost of the lights can be
@@ -369,7 +390,7 @@ door is closed.
 - **Rendering**: the rendering type.
 - **Effects**: textures, mipmapping, specular highlights, shadows, soft shadows, haze.
 
-The title of the window shows the camera, the time of the last image, the number of lights switched on and, during the
+The title of the window shows the camera and its field of view, the time of the last image, the number of lights switched on and, during the
 visit, the average time of the last lap.
 
 ---
@@ -379,7 +400,7 @@ visit, the average time of the last lap.
 | Test | What it checks |
 |---|---|
 | `TestShipGeometry` | Lines and arcs (points, directions, curvature, nearest point, lateral offset); the outlines turn counter-clockwise, the inset and the ribs above the floor; the walls of every corridor are seen from inside, the pipes from outside, the floors from above and the ceilings from below; where a visitor can walk; the visit is closed, without corners, and stays inside |
-| `TestStarshipInterior` | The scene; 3 lights switched on during the visit, all of them in the plan view; images rendered without a window; the north door opens and the lights near it draw their shadow map again |
+| `TestStarshipInterior` | The scene; 3 lights switched on during the visit, all of them in the plan view; images rendered without a window; the north door opens and the lights near it draw their shadow map again; the field of view of the images rendered |
 | `TestLightBudget` (in `com.aventura.demo`) | The nearest lights on, the others off; the fading; the lights in front first; all the lights on; the size of the budget |
 | `TestLightEnabled` (in the engine) | A light switched off: the same image as without it, no shadow map, no halo, the map kept when it is switched on again |
 
