@@ -44,6 +44,12 @@ import com.aventura.engine.Fragment;
  * needs from it (world position for triplanar mapping, normal for a Fresnel
  * effect, etc.) without changing this interface.
  *
+ * A surface may also emit light by itself: emissionAt() (none by default). The emission is added to the shaded
+ * color, whatever the lights and the shadows: a screen, a dial, an indicator lamp glows in the dark.
+ *
+ * AbstractMaterial holds what the materials of the engine share (specular, ambient, emission, reading a map at the
+ * texture coordinates of a fragment); SolidMaterial and TexturedMaterial differ only by their base color.
+ *
  * @author Olivier BARRY
  * @since 2026
  *
@@ -62,4 +68,15 @@ public interface Material {
 	/** Ka: how strongly this surface reacts to ambient light, typically in [0, 1]. */
 	float ambientReflectivity();
 
-}
+	/**
+	 * The light this surface emits by itself at this fragment, added to the shaded color after the lights: not lit by
+	 * the lights, not darkened by the shadows (see AbstractMaterial.setEmission()). Black, or null, emits nothing.
+	 *
+	 * @return the emitted color, or null if this surface emits nothing (the default)
+	 * @since Nov 2026
+	 */
+	default Color emissionAt(Fragment fragment) {
+		return null;
+	}
+
+}

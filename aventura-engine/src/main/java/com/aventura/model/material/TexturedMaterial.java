@@ -46,25 +46,18 @@ import com.aventura.tools.tracing.Tracer;
  *
  * TriangleRasterizer only ever hands this class the raw, un-divided
  * homogeneous texture coordinates (Fragment.getTexU()/getTexV()/getTexW());
- * this class decides which of u, v (or both) to divide by w before sampling,
- * based on textureOrientation.
- *
- * ASSUMPTION: Texture.getInterpolatedColor(float u, float v) is the sampling
- * method, mirroring its use in the legacy Rasterizer. Adjust if the real
- * signature differs.
+ * AbstractMaterial.read() decides which of u, v (or both) to divide by w before
+ * sampling, based on textureOrientation.
  *
  * @author Olivier BARRY
  * @since 2026
  *
  */
-public class TexturedMaterial implements Material {
+public class TexturedMaterial extends AbstractMaterial {
 
 	private final Texture texture;
 	private final int textureOrientation;
 	private final Color diffuseTint; // "D" -- may be null, see baseColorAt()
-	private final Color specularColor;
-	private final float specularExponent;
-	private final float ambientReflectivity;
 	private final boolean mipmapping;
 
 	/**
@@ -84,13 +77,11 @@ public class TexturedMaterial implements Material {
 	 */
 	public TexturedMaterial(Texture texture, int textureOrientation, Color diffuseTint, Color specularColor, float specularExponent,
 			float ambientReflectivity, boolean mipmapping) {
+		super(specularColor, specularExponent, ambientReflectivity);
 		this.mipmapping = mipmapping;
 		this.texture = texture;
 		this.textureOrientation = textureOrientation;
 		this.diffuseTint = diffuseTint;
-		this.specularColor = specularColor;
-		this.specularExponent = specularExponent;
-		this.ambientReflectivity = ambientReflectivity;
 	}
 
 	@Override
@@ -103,50 +94,12 @@ public class TexturedMaterial implements Material {
 			return Color.MAGENTA;
 		}
 
-		float rawU = fragment.getTexU();
-		float rawV = fragment.getTexV();
-		float w = fragment.getTexW();
-
-		float u, v;
-		switch (textureOrientation) {
-		case Triangle.TEXTURE_VERTICAL:
-			u = rawU / w;
-			v = rawV;
-			break;
-		case Triangle.TEXTURE_HORIZONTAL:
-			u = rawU;
-			v = rawV / w;
-			break;
-		case Triangle.TEXTURE_ISOTROPIC:
-		default:
-			u = rawU / w;
-			v = rawV / w;
-			break;
-		}
-
-		// getInterpolatedColor() no longer throws a checked exception nor returns null (see its
-		// Javadoc) -- the try/catch this used to need has been removed accordingly.
-		Color textureSample = mipmapping
-				? texture.getInterpolatedColor(u, v, fragment.getTexLog2PixelSize())
-				: texture.getInterpolatedColor(u, v);
+		// The texture at the texture coordinates of the fragment, divided by w according to the orientation (see
+		// AbstractMaterial.read(), which reads the emission map the same way)
+		Color textureSample = read(texture, fragment, textureOrientation, mipmapping);
 
 		// D * T -- diffuseTint (D) is ALWAYS applied when present, matching the legacy behavior;
 		// null means "no tint", i.e. the texture is shown as-is (equivalent to D = white).
 		return diffuseTint != null ? ColorTools.multColors(diffuseTint, textureSample) : textureSample;
-	}
-
-	@Override
-	public Color specularColorAt(Fragment fragment) {
-		return specularColor;
-	}
-
-	@Override
-	public float specularExponent() {
-		return specularExponent;
-	}
-
-	@Override
-	public float ambientReflectivity() {
-		return ambientReflectivity;
 	}
 }

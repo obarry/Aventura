@@ -32,7 +32,7 @@ import java.awt.Color;
 import org.junit.Test;
 
 import com.aventura.math.vector.Vector4;
-import com.aventura.model.texture.Texture.WrapMode;
+import com.aventura.model.texture.SurfaceMap.WrapMode;
 import com.aventura.model.world.shape.Trellis;
 import com.aventura.model.world.triangle.Triangle;
 

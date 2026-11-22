@@ -120,7 +120,7 @@ the cookbooks, `SceneViewer`, `PerfBench` and `DocumentationImages`. The engine 
 | `model.world` | `World`, hierarchical `Element`, `Triangle`, `Vertex`; built-in shapes and meshes |
 | `model.light` | Light types and the `Lighting` system that gathers them |
 | `model.atmosphere` | The `Atmosphere` of a world and its phenomena: `Haze`, `Fog` / `SphericalFog` (see §6) |
-| `model.material`, `model.texture` | `SolidMaterial`, `TexturedMaterial`, image `Texture` |
+| `model.material`, `model.texture` | `Material` (`AbstractMaterial`, `SolidMaterial`, `TexturedMaterial`); the maps laid on the surfaces (`SurfaceMap`, image `Texture`) |
 | `model.camera`, `model.perspective` | `Camera` / `LookAt`, `FrustumPerspective`, `OrthographicPerspective` |
 | `context` | `RenderContext` (how to rasterize) and `PerspectiveContext` (how to project) |
 | `engine` | The pipeline itself |
@@ -385,6 +385,12 @@ classDiagram
       +specularColorAt(Fragment)
       +specularExponent()
       +ambientReflectivity()
+      +emissionAt(Fragment)
+    }
+    class AbstractMaterial {
+      <<abstract>>
+      specular, ambient, emission
+      #read(Texture, Fragment)
     }
     TriangleRasterizer --> ZBuffer : depth test
     TriangleRasterizer --> Fragment : fills
@@ -394,8 +400,9 @@ classDiagram
     FragmentConsumer <|.. DepthOnlyConsumer
     ShadingConsumer --> Material
     UnlitConsumer --> Material
-    Material <|.. SolidMaterial
-    Material <|.. TexturedMaterial
+    Material <|.. AbstractMaterial
+    AbstractMaterial <|-- SolidMaterial
+    AbstractMaterial <|-- TexturedMaterial
 ```
 
 **How a triangle is walked.** Vertices are sorted by screen Y, then the triangle is filled
@@ -424,10 +431,49 @@ consumer changes:
 and `ShadingConsumer` accumulates colour in a reused `RGBAccumulator`. The contract for
 implementers: **never keep a reference to a `Fragment` after `consume()` returns**.
 
-**Textures.** The rasterizer passes raw, undivided `(u, v, w)`; `TexturedMaterial` performs the
+**Textures.** The rasterizer passes raw, undivided `(u, v, w)`; the material performs the
 projective divide according to the triangle's texture orientation (isotropic, vertical or
-horizontal) and multiplies the sample by the surface colour (`D × T`), so one texture can be
-tinted differently per element.
+horizontal: `AbstractMaterial.read()`), and `TexturedMaterial` multiplies the sample by the surface
+colour (`D × T`), so one texture can be tinted differently per element.
+
+**Maps and their roles.** A map is a grid of values laid on a surface and read at its texture
+coordinates. `SurfaceMap`, abstract, holds what all the maps share: the size, the name, the wrap
+mode and the folding of the indices (`wrap()`), the sizes of the mipmap levels and the choice of the
+level (`buildMipmaps()`, `mipmapLevel()`). A subclass holds the values: how they are stored, averaged
+into the next level (`buildLevels()`) and interpolated. `Texture` is the map of colours (an ARGB int
+per texel); a map of floats (bump, height) will be the next one (see BACKLOG §2).
+
+```mermaid
+classDiagram
+    class SurfaceMap {
+      <<abstract>>
+      width, height, name, wrapMode
+      #wrap(index, size)
+      +buildMipmaps()
+      #buildLevels(widths, heights)*
+      +mipmapLevel(log2PixelSize)
+    }
+    class Texture {
+      ARGB int per texel
+      +getInterpolatedColor(s, t)
+      +getInterpolatedColor(s, t, log2PixelSize)
+    }
+    SurfaceMap <|-- Texture
+    SurfaceMap <|-- FloatMap : later (bump, height)
+```
+
+The role of a map is not its class but the place where it is put, as in glTF or OpenGL: the same
+`Texture` gives the colour of a surface (`Triangle.setTexture()`, read by `TexturedMaterial`) or the
+light it emits (`Element.setEmissionMap()`, read by `AbstractMaterial.emissionAt()`). Both are read
+by the same `AbstractMaterial.read()`, at the same texture coordinates.
+
+**Emission.** A surface may emit light by itself (`Element.setEmissionColor()`,
+`setEmissionMap()`, overridden per `Triangle`, inherited by the sub-elements like the colour). The
+`RenderEngine` resolves it with the material of each triangle (`AbstractMaterial.setEmission()`), and
+interpolates the texture coordinates of a triangle that has an emission map even without a texture.
+`ShadingConsumer` adds `Material.emissionAt()` after the lights (`E` in §6): a screen glows in the
+dark and in the shadows. The emission lights nothing else, and is not drawn by the `UNLIT` and
+`MONOCHROME` types, whose base colour is already shown at full brightness.
 
 **Wrap mode** (`Texture.setWrapMode()`). Texture coordinates are not limited to [0, 1]: what a
 texture shows beyond is its wrap mode. `CLAMP` (the default): its border texels go on. `REPEAT`:
@@ -476,6 +522,7 @@ K  =  D·T·A                                  ambient
     + Σᵢ  Cᵢ · D·T · max(0, N·Lᵢ)            diffuse, per light i
     + Σᵢ  Cᵢ · S  · max(0, Rᵢ·V)ⁿ            specular, per light i
                                              with Rᵢ = 2(N·Lᵢ)N − Lᵢ
+    + E                                      emission, whatever the lights and the shadows
 ```
 
 | Symbol | Meaning | Source |
@@ -485,6 +532,7 @@ K  =  D·T·A                                  ambient
 | `Cᵢ` | Light colour × intensity at that point | `Light.getLightColorAtPoint()` |
 | `N`, `Lᵢ`, `V` | Normal, direction to light, direction to eye | `Fragment`, `Light`, `Camera` |
 | `S`, `n` | Specular colour and exponent | `Material` |
+| `E` | Light emitted by the surface: emission colour × emission map | `Material.emissionAt()` |
 
 ```mermaid
 flowchart LR
@@ -970,10 +1018,11 @@ flowchart LR
 | To add… | Extend / implement | What you write | Example |
 |---|---|---|---|
 | A shape | `GenerativeElement` | `generateVertices()`, `generateTriangles()` (compiler-enforced); override `calculateNormals()` for smooth shapes | `Sphere`, `Torus`, `Trellis` |
-| A material | `Material` | `baseColorAt(Fragment)` etc.; the fragment gives position and normal for triplanar, Fresnel… | `TexturedMaterial` |
+| A material | `AbstractMaterial` (or `Material`) | `baseColorAt(Fragment)`; the fragment gives position and normal for triplanar, Fresnel…; specular, ambient and emission come with `AbstractMaterial` | `TexturedMaterial` |
 | A pass | `FragmentConsumer` | `consume(Fragment)` — e.g. a normal buffer, an ID buffer for picking | `DepthOnlyConsumer` |
 | A display | `ImageView` (or `GUIView`) | `frameRendered` (or `initView`, `drawPixel`, `drawLine`, `renderView`) | `SwingView` |
 | A light | `Light` or `ShadowingLight` | `getLightVectorAtPoint`, `getIntensity` (+ shadow map); override `sample` when direction and intensity come from one computation | `SpotLight` |
+| A map | `SurfaceMap` | storage of the values, `buildLevels()` (mipmaps), `getMemorySize()`, an interpolated read | `Texture` |
 | A fog | `Fog` | `getBoundingCenter`, `getBoundingRadius`, `opticalDepth` (exact integral of the density along a ray) | `SphericalFog`, `GroundMist` (cookbook) |
 
 Custom geometry without subclassing is also possible: feed `Element.addVertex()` and

@@ -41,7 +41,8 @@ import com.aventura.view.GUIView;
 /**
  * The "normal rendering" FragmentConsumer: for each fragment, combines the
  * ambient contribution with each ShadowingLight's diffuse + specular
- * contribution (optionally weighted by that light's shadow factor), draws the
+ * contribution (optionally weighted by that light's shadow factor), adds the
+ * light the surface emits by itself (Material.emissionAt()), draws the
  * resulting pixel, and updates the ZBuffer.
  *
  * This replaces the per-pixel color-combination block that used to live
@@ -139,7 +140,13 @@ public class ShadingConsumer implements FragmentConsumer {
 			}
 		}
 
+		// The light the surface emits by itself (Material.emissionAt()): added whatever the lights and the shadows
+		Color emission = material.emissionAt(fragment);
+		if (emission != null) {
+			accumulator.add(emission, 1f);
+		}
+
 		view.drawPixel(fragment.getScreenX(), fragment.getScreenY(), accumulator.toRGB());
 		zBuffer.update(fragment.getScreenX(), fragment.getScreenY(), fragment.getZ());
 	}
-}
+}

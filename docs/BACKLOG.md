@@ -47,6 +47,15 @@ row, so they are now consecutive in memory (performance audit D7: about −10 % 
 −20 % with point or spot light shadows). The accessors keep the `(x, y)` convention; `getMap()` now
 returns a copy. The extraction of `FloatMap` out of the `view` package remains to be done.
 
+**Done (November 2026): the base class of the maps.** `SurfaceMap` (in `model.texture`, abstract) holds what all
+the maps laid on a surface share: size, name, wrap mode (`WrapMode` moved there from `Texture`; `Texture.WrapMode`
+still names it, but an `import ...Texture.WrapMode` must become `import ...SurfaceMap.WrapMode`), the folding of the
+indices, the sizes of the mipmap levels and the choice of the level. `Texture` extends it (colors); the role of a map
+is given by where it is put (the texture of a triangle, its emission map), not by its class. A future `FloatMap` for
+bump or height maps would extend `SurfaceMap` too, storing a float per texel and averaging them in `buildLevels()`;
+the bilinear interpolation, still written in `Texture` for its packed ARGB texels, could then move to the base class
+behind a "read one texel" method.
+
 ## 3. Shadows
 
 - **Done (October 2026): spot and point light shadows.** A `SpotLight` has one perspective (frustum)
@@ -118,12 +127,16 @@ returns a copy. The extraction of `FloatMap` out of the `view` package remains t
     restricted to the pixels the beams reach, could halve it); the beams are computed from the sky only (no
     clouds or fog density), and the fixed constants (decay, weight, exposure, radius of the bright sky) are not
     adjustable per light.
-  - **Emissive geometry and emission maps** beyond the core of the light: a surface that glows by itself, not lit
-    by the lights and not darkened by the shadows (the screen of a console, a dial, an indicator lamp, a neon tube,
-    a lamp mesh). First a uniform emissive color per Element, then an **emission map**: a texture whose pixels add
-    their color to the shaded color (black = no emission), so that only the digits of a dial or the lines of a
-    screen glow. Wanted for the spaceship demo (consoles and dials, fixtures of the lights switched off: see
-    [STARSHIP_INTERIOR.md §10](STARSHIP_INTERIOR.md#10-limitations)); planned after `Light.setEnabled()`.
+  - **Done (November 2026): emissive surfaces and emission maps.** `Element.setEmissionColor()` and
+    `setEmissionMap()` (inherited by the sub-elements, overridden by `Triangle.setEmissionColor()` /
+    `setEmissionMap()`): a color, or a `Texture` read at the texture coordinates of the surface, added to the shaded
+    color whatever the lights and the shadows (`Material.emissionAt()`, `AbstractMaterial`). `TestEmission`, and the
+    visual test `TestEmissionMap`. See [DESIGN.md §5](DESIGN.md#5-rasterization-and-fragments). Follow-ups: the
+    emission lights nothing around it (a light must be added for that) and does not make a halo (a bloom pass on the
+    bright pixels could); it is not drawn by the `UNLIT` and `MONOCHROME` types; its intensity is a color (at most
+    white): an emission stronger than white, for a bloom, would need a gain. To be used by the spaceship demo
+    (consoles and dials, fixtures of the lights switched off: see
+    [STARSHIP_INTERIOR.md §10](STARSHIP_INTERIOR.md#10-limitations)).
   - The glow of a point light is not scaled by its `intensity` or its range (only by `LightAppearance.gain`);
     a halo that fades with the distance to the camera, and a visibility measured on the whole halo (an edge
     that covers only the core makes the whole halo vanish) could be tried.
@@ -152,7 +165,8 @@ Not handled yet:
   width, would be sharp and smooth at the same time (for 2 to 8 times the texel reads).
 - **Mipmapping on by default?** It is off so that the existing renderings do not change. Since it
   only changes minified textures, for the better, the default could be reversed.
-- **Other maps.** The pyramid is in `Texture`; a future bump or normal map (§2) would need the same.
+- **Other maps.** The pyramid is now built by `SurfaceMap` (sizes of the levels) and its subclass (the values):
+  a future bump or normal map (§2) gets it by extending `SurfaceMap`.
 
 ## 5. Rendering options
 
