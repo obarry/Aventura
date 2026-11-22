@@ -17,7 +17,7 @@
 | **Where** | `com.aventura.demo.ship` (16 classes), tests in the same package of the test sources, in the `aventura-demos` module; `LightBudget` in `com.aventura.demo`, shared by the demos |
 | **Run** | `mvn test-compile exec:java -Dexec.mainClass=com.aventura.demo.ship.StarshipInterior` (from the project root, or the class `StarshipInterior` run from the IDE) |
 | **Scene** | 550 `Element`s, about 15,500 triangles and 15,000 vertices, 10 textures (9 computed, 1 photograph, 3.8 MB), 42 lights (36 point lights, 6 spot lights) and a faint ambient light, a haze |
-| **Cameras** | Walk, a guided visit of 201 m walked in 87 s, and a plan view of the whole ship from above |
+| **Cameras** | Walk, a guided visit of 202 m walked in about 98 s with its stop in front of the north door, and a plan view of the whole ship from above |
 | **Lights on** | 3 at a time, the nearest to the camera, those in front first, faded in and out (all of them in the plan view) |
 | **Engine changes** | `Light.setEnabled()`: a light switched off stays in its `Lighting` but costs nothing (no shading, no shadow map, no halo); its shadow map is kept |
 | **Shared by the demos** | `LightBudget` (new), `Noise` and `FlightPath` (moved from `temple` to `com.aventura.demo`) |
@@ -133,7 +133,7 @@ lights, and the path of the visit is made of the same kind of segments (§6, [Th
 | Junction | 4 x 4 m, 3.2 m high | `Hub` |
 | Control room | 10 x 10 m, 3.4 m high | `ControlRoom` |
 | Bends | radius 12 m, half circles | `Ship` |
-| Loop | 40 m long, 24 m wide, 201 m of visit with the shortcut walked twice | `ShipTour` |
+| Loop | 40 m long, 24 m wide, 202 m of visit with the shortcut walked twice | `ShipTour` |
 
 ---
 
@@ -156,6 +156,8 @@ lights, and the path of the visit is made of the same kind of segments (§6, [Th
 | `AirlockDoor` | A frame with hazard stripes and two leaves that slide |
 | `ControlRoom` | The room: walls with doorways, consoles, wall screens, beams, ring of light |
 | `Console` | A console: cabinet, desk, buttons, screen |
+| `WallMarking` | A code painted on a wall with a stencil (S-12, E-28...): the texture of a decal |
+| `WallCabinet` | A cabinet against a wall, low or high: a box and its front |
 | `ShipTextures` | The textures, computed or read from a file |
 | `ShipLights` | The lights and their budget |
 | `ShipTour` | The path of the visit, and where the camera looks |
@@ -181,11 +183,12 @@ World "starship interior"
       ├── corridors                 Corridor x 8: the loop (6) and the shortcut (2)
       │    └── Corridor
       │         ├── floor           SweptSection (1 edge: the grating)
-      │         ├── walls           SweptSection (7 edges: plates, seen from inside)
+      │         ├── walls           SweptSection (7 edges: plates, seen from inside), its decals: the codes painted on it
       │         ├── ribs            SectionFrame every 2.5 m
       │         ├── pipes           SweptSection x 3 (circles, seen from outside)
       │         ├── cable tray      SweptSection (an open U)
-      │         └── light fixtures  Box every 5 m
+      │         ├── light fixtures  Box every 5 m
+      │         └── cabinets        WallCabinet: Box, Panel (front), on some corridors
       ├── airlock corridor          Corridor, to the hatch
       ├── hatch                     end wall (Panel), Disc, Torus x 2, Cylinders
       ├── store, store end          Corridor behind the north door, end wall, crates
@@ -286,6 +289,44 @@ band followed the outline of the corridor exactly, in the plane of its walls —
 corridor side only. The band now stands 3 cm inside the walls (`Hub.FRAME_INSET`). The other frames were spared: the
 ribs end in the thickness of the walls, and the band of an airlock door follows the smaller outline of the door.
 
+### Codes on the walls, and cabinets
+
+Ten meters of the same plates and the same ribs, then the same bend, then again: the first visit was monotonous, and
+nothing told where one was. The films answer with codes painted on the walls and with things fixed to them. Two
+additions break the rhythm:
+
+- **Codes painted with a stencil** (`WallMarking`): the name of the place in large letters (`S-12`, `E-20`, `N-07`...: the
+  corridor, south, east, north or west, and a number), a smaller line under it (`DECK C - SECTION 2`, `EAST RING`), in
+  yellow or black; in red at the door of the control room and of the hold. Ten of them, at the height of the eyes, on
+  either wall, in the straight corridors as in the bends. The font is Black Ops One, a military stencil from Google
+  Fonts, under the SIL Open Font License: the file and its license are in the resources of the demos
+  (`font/BlackOpsOne-Regular.ttf`, `font/OFL.txt`), read with `Font.createFont()` — nothing to install.
+- **Cabinets** (`WallCabinet`): low ones standing on the floor, against the lower chamfer, and high ones hung under the
+  pipes. Fifteen of them, of various widths and colors, placed differently in the two long corridors and in the two
+  bends, so that the loop is not too symmetric. They are no deeper than the chamfers (33 cm, 30 cm for the high ones, and
+  1 cm for the front): the walk is never narrowed. Their front is a picture computed for each width (doors, handles,
+  louvers, a label, a warning triangle). In a bend, the back of a cabinet is flat and the wall curved: the cabinet is
+  pushed into the wall by the sag of the arc, so that it touches the wall at its ends and is hidden in it at its middle.
+
+The engine has no transparency: letters alone on a Panel in front of the wall would show their background. So a code is
+**a decal of the wall itself**: `SweptSection.addDecal()` gives a piece of an edge of the section (from one distance
+along the path to another) a texture of its own, shown once. The section gets a step at each end of the decal, so that
+the decal has its own triangles. Its texture starts as the plates of the wall: for each of its pixels,
+`pictureToSurface()` finds the point of the wall it covers and `tileCoordinates()` the pixel of the tiled texture at
+that point. The plates, their seams and their rivets go on through the code as if it were not there; the letters are
+then drawn with Java2D in a mask and painted over, worn at places by a noise, darker where the plate is darker, and
+rust running over the paint. The texture is upright as seen from inside, whichever wall it is on: the direction of the
+path and of the edge as seen are deduced from the normal of the edge.
+
+A bug was found on the way: a `Panel` stretched its picture upside down (the first row of a texture is at v = 0). The
+screens of the consoles and of the control room were upside down too; nobody had noticed on pictures of radars and
+curves. The fronts of the cabinets, with their labels, showed it at once.
+
+<p align="center">
+  <img src="images/starship_markings.jpg" alt="StarshipInterior: a code painted on the wall of the south corridor, cabinets" width="600"><br/>
+  <em>A code painted on the wall of the south corridor, a high and a low cabinet further on.</em>
+</p>
+
 ### Doors
 
 A door is a frame from the outline of the corridor to the smaller outline of the door, and two leaves (`Box`es) inside
@@ -339,17 +380,36 @@ there.
 ### The visit
 
 `ShipTour` builds the path of the visit from the plan: lines along the middle of the corridors, arcs of 1.5 m in the
-junctions, each segment starting where the previous one ends, in the same direction (a test checks it). A closed visit
+junctions, each segment starting where the previous one ends, in the same direction (a test checks it) — but one corner,
+in the middle of the north junction, where the visitor stops (below). A closed visit
 of the loop and of the shortcut must walk one of their parts twice (the two junctions each have three corridors): the
 shortcut, through the control room, is walked twice, southwards both times.
 
 - The eye moves at 2.3 m/s, by the time elapsed since the previous image (as in TempleRuins).
 - It looks at the point of the path 3.5 m ahead: in a turn, the head turns before the body.
-- At four places the look leaves the path for a point of interest (`Glance`): the consoles of the control room, east
-  then west, the hatch from the south junction, the closed door from the north one. The directions are blended, not
-  the points, with a weight that rises and falls smoothly over 2 m.
+- At three places the look leaves the path for a point of interest (`Glance`): the consoles of the control room, east
+  then west, and the hatch from the south junction. The directions are blended, not the points, with a weight that
+  rises and falls smoothly over 2 m.
 - The camera banks slightly in the turns, like an FPV drone: up to 5 degrees in the junctions, less than one in the
   large bends.
+
+**The stop in front of the north door** (`ShipTour.Stop`). Walking past the closed door at 2.3 m/s, the visitor only
+caught a glimpse of it. The visit now stops in front of it, at each lap:
+
+1. In the north corridor, the visitor slows down over the last 2.5 m (to an eighth of the speed: never 0, or the stop
+   would never be reached), and stops in the middle of the junction, in the axis of the door, 2 m from it. The look does
+   not turn the corner before the stop: it looks ahead along the corridor, prolonged.
+2. The camera turns right to the door (1.5 s), the door opens on the store (2.5 s), the visitor looks at it (2 s), then
+   turns left, back past the west, to the south (1.5 s), and walks on, faster and faster, while the door closes behind
+   (2.5 s).
+
+The stop is driven by the clock of the visit (`StarshipInterior.advanceTour()`), not by a timer of its own: a pause
+(`Space`) pauses the stop too, and a test can step through it without a window. The look turns by angles (yaw and
+pitch) at a regular pace, rather than by blending directions: going to the door, the shortest way (a quarter turn
+right); coming back, past the direction of arrival to the direction of departure — never a turn on itself, which a
+blend of two opposite directions (the door to the north, the way out to the south) cannot guarantee. The camera stays
+upright around the stop: the corner of the path is not a turn to bank in. The door moves, so the lights near it draw
+their shadow map again, as when it is opened with the `D` key.
 
 ### Walking
 
@@ -404,8 +464,8 @@ visit, the average time of the last lap.
 
 | Test | What it checks |
 |---|---|
-| `TestShipGeometry` | Lines and arcs (points, directions, curvature, nearest point, lateral offset); the outlines turn counter-clockwise, the inset and the ribs above the floor; the walls of every corridor are seen from inside, the pipes from outside, the floors from above and the ceilings from below; where a visitor can walk; the visit is closed, without corners, and stays inside |
-| `TestStarshipInterior` | The scene; 3 lights switched on during the visit, all of them in the plan view; images rendered without a window; the north door opens and the lights near it draw their shadow map again; the field of view of the images rendered |
+| `TestShipGeometry` | Lines and arcs (points, directions, curvature, nearest point, lateral offset); the outlines turn counter-clockwise, the inset and the ribs above the floor; the walls of every corridor are seen from inside, the pipes from outside, the floors from above and the ceilings from below; where a visitor can walk; the visit is closed, without corners but at its stop, and stays inside; the stop: where it is, its timeline, the slowing down, a look that turns without a jump and never on itself; a decal has its own triangles and is upright on both walls; the codes painted, read with the stencil font; the cabinets no deeper than the chamfers, out of the walk |
+| `TestStarshipInterior` | The scene; 3 lights switched on during the visit, all of them in the plan view; images rendered without a window; the north door opens and the lights near it draw their shadow map again; the field of view of the images rendered; the visit stops in front of the north door, which opens, then walks on while it closes |
 | `TestLightBudget` (in `com.aventura.demo`) | The nearest lights on, the others off; the fading; the lights in front first; all the lights on; the size of the budget |
 | `TestLightEnabled` (in the engine) | A light switched off: the same image as without it, no shadow map, no halo, the map kept when it is switched on again |
 
@@ -419,7 +479,7 @@ included: they are not `DemoScene`s, whose lights do not depend on the camera.
 | Feature | How | Effort |
 |---|---|---|
 | Doors that open as the visitor comes | The distance of the camera to each door, an animation, the shadows invalidated as for the north door | Small |
-| Signs on the walls (deck, directions) | A texture drawn with Java2D (`drawString()` into a `BufferedImage`), copied into a `Texture` | Small |
+| Arrows and directions on the walls | Decals like the codes (`WallMarking`): an arrow to the control room, to the hold | Small |
 | A budget by zones | The lights of the corridor or the room where the camera is, and of the next ones through the open doors: no light behind a wall | Medium |
 | Steam from a pipe | A `SphericalFog` of a light gray near a pipe, perhaps moving | Small |
 | Blinking lights, an alarm | The intensity of a light changed at each image (a red spot light turning, on a beacon) | Small |
@@ -474,5 +534,5 @@ Where the time goes, on six images of the visit (same workspace):
 
 The main pass takes nearly all the time: for each pixel, three lights, each with a lookup in its shadow map (nine with
 soft shadows), and a texture read with mipmapping. The shadow pass costs 1 to 3 ms (the maps are kept), the geometry 2 to
-6 ms (15,500 triangles). The budget is what keeps it there: with all the 42 lights on, a pixel would need fourteen times
+6 ms (16,000 triangles). The budget is what keeps it there: with all the 42 lights on, a pixel would need fourteen times
 the lighting work.

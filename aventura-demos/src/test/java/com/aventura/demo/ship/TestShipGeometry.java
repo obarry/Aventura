@@ -33,6 +33,7 @@ import org.junit.Test;
 
 import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
+import com.aventura.model.texture.Texture;
 import com.aventura.model.world.World;
 import com.aventura.model.world.triangle.Triangle;
 
@@ -189,7 +190,7 @@ public class TestShipGeometry {
 
 	@Test
 	public void testTour_closedWithoutCorners() {
-		System.out.println("***** Test ship geometry : the visit is a closed path without corners *****");
+		System.out.println("***** Test ship geometry : the visit is a closed path without corners, but at its stop *****");
 		ShipTour tour = new ShipTour();
 		int n = tour.getSegments().size();
 		float length = 0;
@@ -197,7 +198,8 @@ public class TestShipGeometry {
 			PathSegment a = tour.getSegments().get(k), b = tour.getSegments().get((k + 1) % n);
 			assertPoint("segment " + k + " ends where the next starts", b.start().getX(), b.start().getY(), a.end(), 1e-3f);
 			Vector3 ta = a.tangent(a.getLength()), tb = b.tangent(0);
-			assertEquals("segment " + k + ": same direction", 1, ta.dot(tb), 1e-4f);
+			boolean stop = Math.abs(tour.startOf((k + 1) % n) - tour.getNorthDoorStop().getDistance()) < 1e-3f;
+			if (!stop) assertEquals("segment " + k + ": same direction", 1, ta.dot(tb), 1e-4f);
 			length += a.getLength();
 		}
 		assertEquals(length, tour.getLength(), 1e-3f);
@@ -216,6 +218,139 @@ public class TestShipGeometry {
 			Vector4 target = tour.target(d);
 			assertTrue("looks ahead, not at its feet", new Vector3(eye, target).length() > 1);
 		}
+	}
+
+	@Test
+	public void testTour_stopInFrontOfTheNorthDoor() {
+		System.out.println("***** Test ship geometry : the stop of the visit in front of the north door *****");
+		ShipTour tour = new ShipTour();
+		ShipTour.Stop stop = tour.getNorthDoorStop();
+		// In the north junction, 2 to 3 m from the door
+		Vector4 eye = tour.eye(stop.getDistance());
+		Vector4 door = new Vector4(0, Ship.LOOP_HALF_WIDTH + Hub.SIZE / 2, eye.getZ(), 1);
+		float distance = new Vector3(eye, door).length();
+		assertTrue("near the door: " + distance, distance > 1.5f && distance < 3);
+		assertEquals("in its axis", 0, eye.getX(), 1e-4f);
+		// The timeline: the look turns to the door, the door opens, the look comes back
+		float turn = ShipTour.Stop.TURN_SECONDS, open = ShipTour.Stop.OPEN_SECONDS;
+		assertEquals(0, stop.lookWeight(0), 0);
+		assertEquals(1, stop.lookWeight(turn + open), 1e-6f);
+		assertEquals(0, stop.lookWeight(ShipTour.Stop.DURATION), 1e-6f);
+		assertEquals("closed while the camera turns", 0, stop.doorOpening(turn), 0);
+		assertEquals("open before the look comes back", 1, stop.doorOpening(turn + open), 1e-6f);
+		assertEquals(1, stop.doorClosing(0), 0);
+		assertEquals(0, stop.doorClosing(open), 1e-6f);
+		// The visitor slows down near the stop, and walks at full speed far from it
+		assertEquals(ShipTour.Stop.MIN_SPEED_FACTOR, tour.speedFactor(stop.getDistance()), 1e-6f);
+		assertTrue(tour.speedFactor(stop.getDistance() - 1) < 1);
+		assertEquals(1, tour.speedFactor(stop.getDistance() + ShipTour.Stop.EASE_DISTANCE), 1e-6f);
+		assertEquals(1, tour.speedFactor(0), 1e-6f);
+		// Arriving: looking ahead, westwards, not round the corner
+		Vector3 arriving = new Vector3(tour.eye(stop.getDistance() - 1), tour.target(stop.getDistance() - 1)).normalize();
+		assertTrue("westwards", arriving.getX() < -0.95f);
+		// The look: westwards, then to the door (north), then back past the west to the south, without a jump
+		Vector3 previous = null;
+		float maxStep = 0;
+		for (float t = 0; t <= ShipTour.Stop.DURATION; t += 0.05f) {
+			Vector3 sight = new Vector3(eye, tour.stopTarget(t)).normalize();
+			if (previous != null) maxStep = Math.max(maxStep, (float) Math.acos(Math.min(1, previous.dot(sight))));
+			previous = sight;
+			assertEquals("upright", 0, tour.stopUp(t).dot(new Vector4(sight.getX(), sight.getY(), sight.getZ(), 0)), 1e-5f);
+			assertTrue("never eastwards: no turn on himself", sight.getX() < 0.05f);
+		}
+		assertTrue("no jump: " + Math.toDegrees(maxStep), Math.toDegrees(maxStep) < 10);
+		assertTrue("at the start, westwards", new Vector3(eye, tour.stopTarget(0)).normalize().getX() < -0.95f);
+		assertTrue("then at the door, northwards", new Vector3(eye, tour.stopTarget(ShipTour.Stop.DURATION / 2)).normalize().getY() > 0.95f);
+		Vector3 leaving = new Vector3(eye, tour.stopTarget(ShipTour.Stop.DURATION)).normalize();
+		assertTrue("at the end, southwards", leaving.getY() < -0.95f);
+		// And the visit goes on in the same direction
+		Vector3 after = new Vector3(tour.eye(stop.getDistance() + 1e-3f), tour.target(stop.getDistance() + 1e-3f)).normalize();
+		assertEquals(1, leaving.dot(after), 1e-3f);
+	}
+
+	// ***** Codes on the walls, cabinets *****
+
+	@Test
+	public void testDecal_ownTrianglesAndUpright() {
+		System.out.println("***** Test ship geometry : a decal on a wall, upright as seen *****");
+		PathSegment path = PathSegment.line(0, 0, 10, 0);
+		SweptSection walls = new SweptSection("walls", path, ShipSections.corridor(), false, SweptSection.Facing.INSIDE,
+				SweptSection.Shading.SHARP_EDGES);
+		Texture decal = new Texture(4, 4);
+		walls.addDecal(new SweptSection.Decal(1, 4.5f, 6.5f, decal));
+		World world = new World("decal");
+		world.addElement(walls);
+		world.build();
+		int withDecal = 0;
+		for (Triangle t : walls.getTriangles()) {
+			if (t.getTexture() == decal) {
+				withDecal++;
+				Vector4 c = centerOf(t);
+				assertTrue("on the piece of wall", c.getX() > 4.5f && c.getX() < 6.5f && c.getY() > 1.29f);
+			}
+		}
+		assertEquals("its own two triangles: the section got a step at each end", 2, withDecal);
+		// The left wall (edge 1), seen from inside (looking towards +Y): the path goes to the right of the picture, the
+		// edge goes up. The top left corner of the picture is at the start of the decal, at the top of the wall
+		float[] topLeft = walls.pictureToSurface(1, 4.5f, 6.5f, 0, 0);
+		assertEquals(4.5f, topLeft[0], EPSILON);
+		assertEquals("top of the edge", 1, topLeft[1], EPSILON);
+		// The right wall (edge 5): seen from inside (towards -Y), the path goes to the left, the edge goes down
+		float[] right = walls.pictureToSurface(5, 4.5f, 6.5f, 0, 0);
+		assertEquals(6.5f, right[0], EPSILON);
+		assertEquals("the edge starts at the top", 0, right[1], EPSILON);
+		// The background of a decal continues the tiled texture: same coordinates as the wall around it
+		float[] uv = walls.tileCoordinates(1, 4.5f, 0);
+		assertEquals(4.5f / 2f, uv[0], EPSILON);
+	}
+
+	@Test
+	public void testMarkings_painted() {
+		System.out.println("***** Test ship geometry : the codes painted on the walls *****");
+		assertTrue("the stencil font is read from the resources", WallMarking.stencilFont().getFamily().toLowerCase().contains("black ops"));
+		int decals = 0;
+		for (Corridor corridor : ship.getCorridors()) {
+			SweptSection walls = (SweptSection) corridor.getSubElements().get(1);
+			java.util.Set<Texture> textures = new java.util.HashSet<Texture>();
+			for (Triangle t : walls.getTriangles()) {
+				if (t.getTexture() != null && t.getTexture().getName().startsWith("marking")) textures.add(t.getTexture());
+			}
+			decals += textures.size();
+		}
+		assertEquals("8 codes in the loop, 1 in the shortcut, 1 in the airlock corridor", 10, decals);
+	}
+
+	@Test
+	public void testCabinets_doNotReachTheFloorWherePeopleWalk() {
+		System.out.println("***** Test ship geometry : the cabinets stay within the chamfers *****");
+		// No deeper than the chamfers (the low ones stand on the lower chamfer, their front 1 cm further, the Panel)
+		assertTrue(WallCabinet.Type.LOW.getDepth() + 0.01f <= ShipSections.CORRIDOR_LOWER_CHAMFER);
+		assertTrue(WallCabinet.Type.HIGH.getDepth() + 0.01f <= ShipSections.CORRIDOR_UPPER_CHAMFER);
+		// The high ones under the thinnest pipe of the left wall
+		float[] pipe = Corridor.PIPES[2];
+		assertTrue(WallCabinet.Type.HIGH.bottom + WallCabinet.Type.HIGH.height < pipe[1] - pipe[2]);
+		int cabinets = 0;
+		for (Corridor corridor : ship.getCorridors()) {
+			PathSegment path = corridor.getPath();
+			for (com.aventura.model.world.Element e : corridor.getSubElements()) {
+				if (!e.getName().startsWith("cabinets")) continue;
+				for (com.aventura.model.world.Element cabinet : e.getSubElements()) {
+					cabinets++;
+					// The corners of its front (the Panel, 1 cm in front of the Box), placed by the transformation of the
+					// cabinet (built at the origin, its back on x = 0, its front towards +X)
+					WallCabinet wallCabinet = (WallCabinet) cabinet;
+					float front = wallCabinet.getType().getDepth() + 0.01f, half = wallCabinet.getWidth() / 2;
+					for (float y : new float[] { -half, 0, half }) {
+						Vector4 p = cabinet.getTransformation().transform(new Vector4(front, y, 0, 1));
+						float lateral = Math.abs(path.lateralOffset(p.getX(), p.getY()));
+						assertTrue(corridor.getName() + ": " + lateral,
+								lateral >= ShipSections.CORRIDOR_WIDTH / 2 - ShipSections.CORRIDOR_LOWER_CHAMFER - 0.02f);
+						assertTrue("beyond the walk", lateral > Ship.CORRIDOR_WALK_HALF_WIDTH);
+					}
+				}
+			}
+		}
+		assertEquals(15, cabinets);
 	}
 
 	// ***** Helpers *****

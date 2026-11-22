@@ -47,8 +47,10 @@ import com.aventura.model.world.shape.Box;
  *    ├── ribs (group)     SectionFrame every RIB_SPACING meters, across the corridor
  *    ├── pipes (group)    SweptSection x 3: circles along the upper left corner, seen from outside
  *    ├── cable tray       SweptSection: an open U along the upper right corner
- *    └── fixtures (group) Box under the ceiling every LIGHT_SPACING meters, where the lights hang
+ *    ├── fixtures (group) Box under the ceiling every LIGHT_SPACING meters, where the lights hang
+ *    └── cabinets (group) WallCabinet against the walls, between the ribs (added by the Ship, see addCabinet())
  * </pre>
+ * Codes can be painted on the walls between the ribs ({@link #addMarking}): decals of the walls (see WallMarking).
  * The same few shapes, given the same path, make a straight corridor or a curved one: only the PathSegment changes.
  * The corridor also tells where its lights are ({@link #getLightPoints()}): the ship creates them (see ShipLights).
  *
@@ -81,6 +83,9 @@ public class Corridor extends Element {
 	protected final PathSegment path;
 	protected final List<Vector4> lightPoints = new ArrayList<Vector4>();
 	protected boolean endClosed = false;
+	protected SweptSection walls;
+	protected final ShipTextures textures;
+	protected Element fittings;      // The cabinets, created with the first one
 	protected AirlockDoor door;
 
 	/**
@@ -92,6 +97,7 @@ public class Corridor extends Element {
 	public Corridor(String name, PathSegment path, ShipTextures textures, boolean ribsAtEnds) {
 		super(name);
 		this.path = path;
+		this.textures = textures;
 		float[][] section = ShipSections.corridor();
 
 		// The floor: the edge from o7 to o0 alone, an open profile (its order says it is seen from above)
@@ -102,7 +108,7 @@ public class Corridor extends Element {
 		addElement(floor);
 
 		// The walls: the 7 other edges, from o0 up the left side, across the ceiling and down the right side to o7
-		SweptSection walls = new SweptSection("walls", path, section, false, SweptSection.Facing.INSIDE, SweptSection.Shading.SHARP_EDGES);
+		walls = new SweptSection("walls", path, section, false, SweptSection.Facing.INSIDE, SweptSection.Shading.SHARP_EDGES);
 		Texture plates = textures.hullPlates;
 		walls.setTextures(new Texture[] { plates, plates, plates, textures.ceilingPlates, plates, plates, plates },
 				ShipTextures.PLATE_TILE, ShipTextures.PLATE_TILE);
@@ -142,6 +148,74 @@ public class Corridor extends Element {
 			ribs.addElement(rib);
 		}
 		return ribs;
+	}
+
+	// ****************************************************************************************************************
+	// ***** Markings and cabinets, between the ribs
+	// ****************************************************************************************************************
+
+	/** The walls: +1 the left one (edge o1-o2 of the octagon), -1 the right one (edge o5-o6), in the direction of the path. */
+	public static final int LEFT = 1, RIGHT = -1;
+	/** The width of a marking on the wall, along the corridor. */
+	public static final float MARKING_WIDTH = 1.9f;
+
+	/** The number of places between two ribs: slots 1 to getNbSlots() (slot k is between rib k - 1 and rib k). */
+	public int getNbSlots() {
+		return Math.max(1, Math.round(path.getLength() / RIB_SPACING)) - 1;
+	}
+
+	/** The distance along the path of the middle of the slot k, between two ribs (see createRibs()). */
+	public float slotDistance(int slot) {
+		if (slot < 1 || slot > getNbSlots()) throw new IllegalArgumentException("No slot " + slot + " in " + getName());
+		return path.getLength() / (getNbSlots() + 1) * slot;
+	}
+
+	/**
+	 * Paints a code on a wall, in the slot k (see WallMarking). To be called before the World is built.
+	 *
+	 * @param side    LEFT or RIGHT
+	 * @param code    the code, in large letters
+	 * @param caption a smaller line under it, or null
+	 */
+	public Corridor addMarking(int slot, int side, String code, String caption, Color paint) {
+		int edge = side == LEFT ? 1 : 5;
+		float s = slotDistance(slot);
+		float from = s - MARKING_WIDTH / 2, to = s + MARKING_WIDTH / 2;
+		walls.addDecal(new SweptSection.Decal(edge, from, to,
+				WallMarking.create(walls, edge, from, to, textures.hullPlates, code, caption, paint, code.hashCode())));
+		return this;
+	}
+
+	/**
+	 * Puts a cabinet against a wall, in the slot k. To be called before the World is built.
+	 *
+	 * @param side  LEFT or RIGHT
+	 * @param type  low or high
+	 * @param width its width along the wall (at most the space between two ribs)
+	 */
+	public Corridor addCabinet(int slot, int side, WallCabinet.Type type, float width, int seed) {
+		float s = slotDistance(slot);
+		Vector3 left = path.left(s);
+		float wall = ShipSections.CORRIDOR_WIDTH / 2;
+		// In a bend, the wall is curved and the back of the cabinet flat: on the inner wall (convex) the back is pushed in
+		// by the sag of the curve, so that its corners touch the wall rather than float in front of it
+		float curvature = path.curvature() * side;
+		if (curvature > 0) {
+			float radius = 1 / curvature - wall;
+			wall += width * width / (8 * radius);
+		}
+		Vector4 p = path.point(s);
+		Vector4 back = new Vector4(p.getX() + side * wall * left.getX(), p.getY() + side * wall * left.getY(), 0, 1);
+		java.util.Random random = new java.util.Random(seed);
+		Texture doors = ShipTextures.createCabinetDoors(width, type.height, type.doors, type == WallCabinet.Type.LOW, seed);
+		WallCabinet cabinet = new WallCabinet("cabinet", type, width, doors, textures, WallCabinet.COLORS[random.nextInt(WallCabinet.COLORS.length)]);
+		cabinet.place(back, left.times(-side));
+		if (fittings == null) {
+			fittings = new Element("cabinets");
+			addElement(fittings);
+		}
+		fittings.addElement(cabinet);
+		return this;
 	}
 
 	/**
