@@ -168,6 +168,38 @@ public class TestStarshipInterior {
 		assertEquals(-1, demo.stopTime, 0);
 	}
 
+	@Test
+	public void testEmission_screensAndLampsGlow() {
+		System.out.println("***** Test StarshipInterior : the screens and the lamps glow by themselves *****");
+		Glow.Switch emission = demo.getEmission();
+		assertTrue(emission.isOn());
+		// The screens: 10 consoles and 2 wall screens, each its picture as emission map
+		assertEquals(12, emission.getNbMaps());
+		// The lamps: a lens under each fixture of the corridors (one per corridor light), the lamp of each junction, the
+		// ring of the control room, the warning lamp of the hatch, and the lit buttons of the consoles
+		int lenses = 0;
+		for (Corridor corridor : demo.getShip().getCorridors()) lenses += corridor.getLightPoints().size();
+		int lamps = lenses + demo.getShip().getHubs().size() + 1 + 1;
+		assertTrue(emission.size() + " glowing elements", emission.size() > emission.getNbMaps() + lamps);
+
+		// In the control room, the screens glow: the image is brighter with the emission, and the same again after the
+		// emission was switched off and on
+		demo.showWalk(-1.2f, -1.8f, 20, -10);
+		demo.renderImage();
+		int[] on = pixels(view.getImageView());
+		emission.setOn(false);
+		demo.renderImage();
+		double without = meanBrightness(view.getImageView());
+		emission.setOn(true);
+		demo.renderImage();
+		assertTrue("brighter with the emission: " + without, meanBrightness(view.getImageView()) > without + 1);
+		assertTrue("the same image again", java.util.Arrays.equals(on, pixels(view.getImageView())));
+	}
+
+	private static int[] pixels(BufferedImage image) {
+		return image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
+	}
+
 	private int enabledLights() {
 		int n = 0;
 		for (PointLight light : demo.getLighting().getPointLights()) {

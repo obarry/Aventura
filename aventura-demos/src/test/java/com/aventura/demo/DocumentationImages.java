@@ -102,6 +102,7 @@ import com.aventura.test.TestLightingSun;
  *     starship_control_room.jpg  StarshipInterior, the consoles of the control room
  *     starship_hatch.jpg      StarshipInterior, the hatch of the hold, glanced at from the south junction during the visit
  *     starship_store.jpg      StarshipInterior, the north door half open on the store
+ *     starship_screens.jpg    StarshipInterior, the screens of the control room glowing in the half light
  *     starship_markings.jpg   StarshipInterior, a code painted on the wall of the south corridor, cabinets further on
  *     starship_plan.jpg       StarshipInterior, the plan view: the whole ship from above, through the ceilings, all its lights on
  *
@@ -217,6 +218,7 @@ public class DocumentationImages {
 			demo.setNorthDoorOpening(0.75f);
 			demo.showWalk(0.2f, 10.2f, 88, 4);
 		}, 1000));
+		images.put("starship_screens.jpg", () -> starship(demo -> demo.showWalk(0, 2.4f, -25, -8), 1000));
 		images.put("starship_markings.jpg", () -> starship(demo -> demo.showWalk(2.4f, -12.4f, -12, 2), 1000));
 		images.put("starship_plan.jpg", () -> starship(StarshipInterior::showPlan, 1000));
 		for (Map.Entry<String, Supplier<DemoScene>> scene : scenes().entrySet()) {

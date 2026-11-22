@@ -134,9 +134,9 @@ behind a "read one texel" method.
     visual test `TestEmissionMap`. See [DESIGN.md §5](DESIGN.md#5-rasterization-and-fragments). Follow-ups: the
     emission lights nothing around it (a light must be added for that) and does not make a halo (a bloom pass on the
     bright pixels could); it is not drawn by the `UNLIT` and `MONOCHROME` types; its intensity is a color (at most
-    white): an emission stronger than white, for a bloom, would need a gain. To be used by the spaceship demo
-    (consoles and dials, fixtures of the lights switched off: see
-    [STARSHIP_INTERIOR.md §10](STARSHIP_INTERIOR.md#10-limitations)).
+    white): an emission stronger than white, for a bloom, would need a gain. Used by the StarshipInterior demo:
+    its screens, lamps and buttons glow (see
+    [STARSHIP_INTERIOR.md §6](STARSHIP_INTERIOR.md#screens-and-lamps-that-glow)).
   - The glow of a point light is not scaled by its `intensity` or its range (only by `LightAppearance.gain`);
     a halo that fades with the distance to the camera, and a visibility measured on the whole halo (an edge
     that covers only the core makes the whole halo vanish) could be tried.
