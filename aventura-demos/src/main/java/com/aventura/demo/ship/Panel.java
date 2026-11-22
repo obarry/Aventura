@@ -66,7 +66,7 @@ public class Panel extends ShipShape {
 	 * @param doorway the octagon of a doorway in (u, v) coordinates (see the class comment), or null
 	 * @param texture texture of the panel, or null
 	 * @param tile    the texture is repeated every tile meters; 0 to stretch it once over the whole rectangle (a screen,
-	 *                a sign)
+	 *                a sign), upright: its first row at the top of the panel, its first column on the left as seen
 	 */
 	public Panel(String name, Vector4 origin, Vector3 axisU, Vector3 axisV, float width, float height, float[][] doorway, Texture texture, float tile) {
 		super(name);
@@ -111,9 +111,11 @@ public class Panel extends ShipShape {
 	/** A triangle of points given in (u, v) coordinates; its texture coordinates are the same, in tiles. */
 	private void triangle(float[] a, float[] b, float[] c, Vector3 seenFrom) {
 		Vertex va = point(a), vb = point(b), vc = point(c);
-		// Texture coordinates: the position in tiles, or in fractions of the rectangle when the texture is stretched once
-		float su = tile > 0 ? tile : width, sv = tile > 0 ? tile : height;
-		float[][] uv = { { a[0] / su, a[1] / sv }, { b[0] / su, b[1] / sv }, { c[0] / su, c[1] / sv } };
+		// Texture coordinates: the position in tiles, or, when the texture is stretched once, a picture shown upright: the
+		// first row of a texture is at v = 0, and the first row of a picture is its top, so v goes down the panel
+		float[][] uv = tile > 0
+				? new float[][] { { a[0] / tile, a[1] / tile }, { b[0] / tile, b[1] / tile }, { c[0] / tile, c[1] / tile } }
+				: new float[][] { { a[0] / width, 1 - a[1] / height }, { b[0] / width, 1 - b[1] / height }, { c[0] / width, 1 - c[1] / height } };
 		addTriangle(va, vb, vc, seenFrom, texture, uv, null);
 	}
 

@@ -116,7 +116,7 @@ import com.aventura.view.SwingView;
  * <li><b>Walk</b> (key W): a visitor at the height of the eyes. Mouse drag: look around. Mouse wheel (or Up / Down
  *     arrow keys): walk forward / backward, horizontally, in the corridors and the rooms ({@link Ship#keepInside}).</li>
  * <li><b>Visit</b> (key V): the camera walks the {@link ShipTour}, looking ahead in the turns and at the points of
- *     interest, at a constant speed. Space pauses and resumes the visit. A drag or the wheel takes the controls: the
+ *     interest, at a constant speed; it stops in front of the north door, which opens, then closes behind. Space pauses and resumes the visit. A drag or the wheel takes the controls: the
  *     walk starts from there.</li>
  * <li><b>Plan</b> (key P): the whole ship seen from above, through its ceilings, all its lights switched on. Mouse
  *     drag: turn around the ship. Mouse wheel: zoom.</li>
@@ -259,6 +259,8 @@ public class StarshipInterior {
 	/** The visit: the path, the distance walked, its clock. */
 	ShipTour tour;
 	float tourDistance = 0;
+	float stopTime = -1;          // Time since the visit stopped in front of the north door, -1 when walking
+	float doorClosingTime = -1;   // Time since the door started closing after the stop, -1 when it does not
 	boolean tourPaused = false, tourRunning = false;
 	long tourLastStepNanos;
 	int tourRun = 0;
@@ -865,8 +867,9 @@ public class StarshipInterior {
 			camera.updateCamera(walkEye, lookTarget, Vector4.zAxis());
 			break;
 		case VISIT:
-			lookTarget = tour.target(tourDistance);
-			camera.updateCamera(tour.eye(tourDistance), lookTarget, tour.up(tourDistance));
+			// During the stop in front of the north door, the look turns to the door and back (see ShipTour.Stop)
+			lookTarget = stopTime >= 0 ? tour.stopTarget(stopTime) : tour.target(tourDistance);
+			camera.updateCamera(tour.eye(tourDistance), lookTarget, stopTime >= 0 ? tour.stopUp(stopTime) : tour.up(tourDistance));
 			break;
 		case PLAN:
 			Vector4 eye = PLAN_CENTER.plus(lineOfSight(planAzimuth, planElevation).times(planDistance));
@@ -887,6 +890,8 @@ public class StarshipInterior {
 			applyDolly(dollyTarget);
 		}
 		stopTour();
+		stopTime = -1;      // A stop in progress is abandoned; the door stays as it is (key D)
+		doorClosingTime = -1;
 		if (mode == CameraMode.WALK && cameraMode == CameraMode.VISIT) {
 			Vector4 eye = camera.getEye();
 			Vector4 direction = tour.target(tourDistance).minus(eye).normalize();
@@ -916,6 +921,8 @@ public class StarshipInterior {
 			break;
 		case VISIT:
 			tourDistance = 0;
+			stopTime = -1;
+			doorClosingTime = -1;
 			startLap(true);
 			break;
 		case PLAN:
@@ -953,18 +960,62 @@ public class StarshipInterior {
 		tourRun++;
 	}
 
-	/** One image of the visit: the camera walks on by the speed times the time elapsed. */
+	/** One image of the visit: the camera walks on by the speed times the time elapsed (see advanceTour()). */
 	void stepTour() {
 		long now = System.nanoTime();
 		float elapsed = (now - tourLastStepNanos) / 1e9f;
 		tourLastStepNanos = now;
-		float previous = tourDistance;
-		tourDistance = (tourDistance + VISIT_SPEED * Math.min(elapsed, VISIT_MAX_STEP_SECONDS)) % tour.getLength();
-		if (tourDistance < previous) finishLap();
-		updateCamera();
+		advanceTour(Math.min(elapsed, VISIT_MAX_STEP_SECONDS));
 		render();
 		lapTimes.add(lastRenderNanos / 1e6);
 		lapTimes.addDuration(elapsed);
+	}
+
+	/**
+	 * Moves the visit on by the given time:
+	 * <ul>
+	 * <li>walking: by the speed of the visit times the time, slower near the stop (ShipTour.speedFactor());</li>
+	 * <li>reaching the stop in front of the north door: the visitor stands still, the clock of the stop runs, the camera
+	 *     turns to the door and the door opens (ShipTour.Stop);</li>
+	 * <li>after the stop: the visitor walks on, and the door closes behind.</li>
+	 * </ul>
+	 * The door moves: the lights near it are told to draw their shadow map again (invalidateShadowsNear()).
+	 */
+	void advanceTour(float seconds) {
+		ShipTour.Stop stop = tour.getNorthDoorStop();
+		if (stopTime >= 0) {
+			// Standing in front of the door
+			stopTime += seconds;
+			if (stopTime < ShipTour.Stop.DURATION) {
+				moveNorthDoor(stop.doorOpening(stopTime));
+				updateCamera();
+				return;
+			}
+			stopTime = -1; // The stop is over: the visit goes on, the door closes (below)
+			doorClosingTime = 0;
+		}
+		if (doorClosingTime >= 0) {
+			doorClosingTime += seconds;
+			moveNorthDoor(stop.doorClosing(doorClosingTime));
+			if (doorClosingTime >= ShipTour.Stop.OPEN_SECONDS) doorClosingTime = -1;
+		}
+		float previous = tourDistance;
+		float next = tourDistance + VISIT_SPEED * tour.speedFactor(tourDistance) * seconds;
+		if (previous < stop.getDistance() && next >= stop.getDistance()) {
+			// The stop is reached: stand on it
+			next = stop.getDistance();
+			stopTime = 0;
+		}
+		tourDistance = next % tour.getLength();
+		if (tourDistance < previous) finishLap();
+		updateCamera();
+	}
+
+	/** Moves the leaves of the north door, if they are not already there, and invalidates the shadows near it. */
+	private void moveNorthDoor(float opening) {
+		if (northDoor.getOpening() == opening) return;
+		northDoor.setOpening(opening);
+		invalidateShadowsNear(northDoor.getCenter());
 	}
 
 	private void startLap(boolean fromStart) {
@@ -1013,6 +1064,7 @@ public class StarshipInterior {
 	public void showVisitAt(float distance) {
 		cameraMode = CameraMode.VISIT;
 		tourDistance = distance;
+		stopTime = -1;
 		updateCamera();
 	}
 

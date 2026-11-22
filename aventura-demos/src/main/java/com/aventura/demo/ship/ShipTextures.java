@@ -390,6 +390,68 @@ public class ShipTextures {
 		return texture;
 	}
 
+	/**
+	 * The front of a technical cabinet, for a front of the given size (meters): a frame, doors side by side with their
+	 * gaps, a handle near the meeting edge of each door, the louvers of a vent at the bottom of the low cabinets, a white
+	 * label with lines of "text", and on one door a yellow warning triangle. A picture, its first row at the top (shown
+	 * upright by a Panel, see Panel).
+	 */
+	public static Texture createCabinetDoors(float widthMeters, float heightMeters, int doors, boolean vents, int seed) {
+		int ppm = 160; // Pixels per meter
+		int width = Math.max(16, Math.round(widthMeters * ppm)), height = Math.max(16, Math.round(heightMeters * ppm));
+		Texture texture = new Texture(width, height);
+		java.util.Random random = new java.util.Random(seed);
+		int warningDoor = random.nextInt(doors), labelDoor = (warningDoor + 1) % doors;
+		float doorWidth = (float) width / doors;
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				float value = 0.84f + 0.08f * Noise.fbm(x / 40f, y / 40f, 0, 3, seed);
+				value *= 0.97f + 0.06f * Noise.hash(x, y, 0, seed);
+				Color color;
+				int door = Math.min(doors - 1, (int) (x / doorWidth));
+				float dx = x - door * doorWidth, dy = y;               // Position in the door, pixels
+				float border = Math.min(Math.min(x, width - 1 - x), Math.min(y, height - 1 - y));
+				if (border < 4) {
+					color = gray(value * 0.55f);                     // The frame of the cabinet
+				} else if (dx < 2 || dx > doorWidth - 2) {
+					color = gray(0.15f);                             // The gap between two doors
+				} else {
+					color = gray(value);
+					float doorBorder = Math.min(Math.min(dx - 2, doorWidth - 2 - dx), Math.min(dy - 4, height - 5 - dy));
+					if (doorBorder < 3) color = gray(value * 1.1f);  // The edge of the door, lighter
+					// The handle: a vertical bar near the edge where the doors meet (left doors on their right, and so on)
+					boolean handleOnRight = door < doors / 2.0f;
+					float handleX = handleOnRight ? doorWidth - 12 : 12;
+					if (Math.abs(dx - handleX) < 2.5f && Math.abs(dy - height * 0.45f) < height * 0.12f) color = gray(0.25f);
+					// Louvers of a vent at the bottom
+					if (vents && dy > height * 0.72f && dy < height * 0.9f && dx > 10 && dx < doorWidth - 10) {
+						if (((int) dy / 5) % 2 == 0) color = gray(0.2f);
+					}
+					// A label: a white plate with lines of text
+					if (door == labelDoor && dy > height * 0.12f && dy < height * 0.12f + 26 && dx > doorWidth * 0.25f && dx < doorWidth * 0.75f) {
+						color = gray(0.95f);
+						int line = ((int) (dy - height * 0.12f)) / 6;
+						if (line >= 1 && line <= 3 && ((int) (dy - height * 0.12f)) % 6 < 3 && Noise.hash((int) (dx / 4), line, 2, seed) > 0.3f) {
+							color = gray(0.25f);
+						}
+					}
+					// A warning triangle, yellow with a black border and a mark
+					if (door == warningDoor) {
+						float cx = doorWidth * 0.5f, top = height * (vents ? 0.25f : 0.18f), size = Math.min(doorWidth, height) * 0.28f;
+						float ty = (dy - top) / size, tx = Math.abs(dx - cx) / size; // In the triangle: 0 <= ty <= 1, tx <= ty / 2
+						if (ty >= 0 && ty <= 1 && tx <= ty * 0.58f) {
+							boolean edge = ty > 0.86f || tx > ty * 0.58f - 0.1f;
+							boolean mark = tx < 0.05f && (ty > 0.3f && ty < 0.66f || ty > 0.72f && ty < 0.8f);
+							color = edge || mark ? new Color(30, 28, 26) : new Color(238, 190, 40);
+						}
+					}
+				}
+				texture.setColor(x, y, color);
+			}
+		}
+		return texture.setName("cabinet doors (computed)");
+	}
+
 	// ----- Helpers -----
 
 	/**

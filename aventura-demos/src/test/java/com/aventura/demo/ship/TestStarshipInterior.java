@@ -136,6 +136,38 @@ public class TestStarshipInterior {
 		demo.setFieldOfView(StarshipInterior.DEFAULT_FIELD_OF_VIEW);
 	}
 
+	@Test
+	public void testVisit_stopsInFrontOfTheNorthDoor() {
+		System.out.println("***** Test StarshipInterior : the visit stops in front of the north door, which opens *****");
+		ShipTour.Stop stop = demo.getTour().getNorthDoorStop();
+		demo.showVisitAt(stop.getDistance() - 3);
+		assertEquals(0, demo.northDoor.getOpening(), 0);
+		// Walk to the stop, a tenth of a second at a time: it is reached, and the visitor stands on it
+		float time = 0;
+		while (demo.stopTime < 0 && time < 10) {
+			demo.advanceTour(0.1f);
+			time += 0.1f;
+		}
+		assertTrue("the stop is reached", demo.stopTime >= 0);
+		assertTrue("slowly: more than 3 m at full speed would take", time > 3 / StarshipInterior.VISIT_SPEED);
+		assertEquals(stop.getDistance(), demo.tourDistance, 1e-4f);
+		// The stop: standing still, the door opens
+		float opening = 0;
+		for (float t = 0; t < ShipTour.Stop.DURATION - 0.2f; t += 0.1f) {
+			demo.advanceTour(0.1f);
+			assertEquals("standing still", stop.getDistance(), demo.tourDistance, 1e-4f);
+			assertTrue("the door does not close during the stop", demo.northDoor.getOpening() >= opening);
+			opening = demo.northDoor.getOpening();
+		}
+		assertEquals("open", 1, opening, 1e-6f);
+		demo.renderImage();
+		// The visit goes on, the door closes behind
+		for (float t = 0; t < 4; t += 0.1f) demo.advanceTour(0.1f);
+		assertTrue("walking again", demo.tourDistance > stop.getDistance() + 1);
+		assertEquals("closed", 0, demo.northDoor.getOpening(), 0);
+		assertEquals(-1, demo.stopTime, 0);
+	}
+
 	private int enabledLights() {
 		int n = 0;
 		for (PointLight light : demo.getLighting().getPointLights()) {

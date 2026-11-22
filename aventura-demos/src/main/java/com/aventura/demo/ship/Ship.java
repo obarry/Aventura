@@ -126,6 +126,9 @@ public class Ship extends Element {
 		addElement(airlockCorridor);
 		addElement(createHatch(airlock.end(), textures));
 
+		// The codes on the walls and the cabinets (the corridors must exist)
+		addMarkingsAndCabinets();
+
 		// Behind the closed door of the north junction: a short store room, a dead end with a few crates
 		PathSegment store = PathSegment.line(0, w + h, 0, w + h + STORE_LENGTH);
 		Corridor storeCorridor = new Corridor("store", store, textures, false);
@@ -153,6 +156,39 @@ public class Ship extends Element {
 
 		room = new ControlRoom("control room", ROOM_CENTER, textures);
 		addElement(room);
+	}
+
+	/**
+	 * The codes painted on the walls and the cabinets, between the ribs: a few in each corridor and each bend, never at
+	 * the same places in two of them, to break the monotony of the long corridors. Slot k is between rib k - 1 and rib
+	 * k (6 slots in a straight corridor, 14 in a bend); LEFT is the inside of the loop (the side of the pipes).
+	 */
+	private void addMarkingsAndCabinets() {
+		final int L = Corridor.LEFT, R = Corridor.RIGHT;
+		final WallCabinet.Type LOW = WallCabinet.Type.LOW, HIGH = WallCabinet.Type.HIGH;
+		corridor("south corridor, east").addMarking(1, R, "S-12", "DECK C - SECTION 2", WallMarking.YELLOW)
+				.addCabinet(3, L, LOW, 1.7f, 1).addCabinet(4, R, HIGH, 1.3f, 2).addCabinet(6, R, LOW, 1.1f, 3);
+		corridor("east bend").addMarking(2, L, "E-20", "DECK C - EAST RING", WallMarking.BLACK)
+				.addCabinet(5, R, LOW, 1.8f, 4).addCabinet(6, R, LOW, 1.2f, 5).addCabinet(9, L, HIGH, 1.5f, 6)
+				.addMarking(12, R, "E-28", "DECK C - EAST RING", WallMarking.YELLOW);
+		corridor("north corridor, east").addCabinet(2, L, HIGH, 1.4f, 7).addMarking(4, R, "N-07", "DECK C - SECTION 5", WallMarking.YELLOW)
+				.addCabinet(5, L, LOW, 1.6f, 8);
+		corridor("north corridor, west").addCabinet(1, R, LOW, 1.3f, 9).addMarking(3, L, "N-15", "DECK C - SECTION 6", WallMarking.BLACK)
+				.addCabinet(5, R, HIGH, 1.6f, 10);
+		corridor("west bend").addCabinet(3, L, LOW, 1.5f, 11).addMarking(5, R, "W-33", "DECK C - WEST RING", WallMarking.YELLOW)
+				.addCabinet(8, R, HIGH, 1.2f, 12).addCabinet(9, R, LOW, 1.7f, 13).addMarking(13, L, "W-39", "DECK C - WEST RING", WallMarking.BLACK);
+		corridor("south corridor, west").addMarking(2, L, "S-04", "DECK C - SECTION 1", WallMarking.BLACK)
+				.addCabinet(4, R, LOW, 1.4f, 14).addCabinet(5, L, HIGH, 1.2f, 15);
+		corridor("shortcut, south").addMarking(1, L, "CTRL", "CONTROL ROOM", WallMarking.RED);
+		corridor("airlock corridor").addMarking(1, R, "HOLD 2", "AIRLOCK - AUTHORIZED ONLY", WallMarking.RED);
+	}
+
+	/** The corridor of the given name. */
+	private Corridor corridor(String name) {
+		for (Corridor corridor : corridors) {
+			if (corridor.getName().startsWith(name)) return corridor;
+		}
+		throw new IllegalArgumentException("No corridor " + name);
 	}
 
 	private void addCorridor(Element group, String name, PathSegment path, ShipTextures textures) {
