@@ -33,43 +33,24 @@ import com.aventura.engine.Fragment;
  * A Material with a uniform, flat color across the whole surface — no
  * texture. The Fragment is deliberately ignored by baseColorAt()/
  * specularColorAt(): the color is always the same regardless of where on the
- * surface it's evaluated.
+ * surface it's evaluated. It may still have an emission map (see AbstractMaterial), read at the texture
+ * coordinates of the fragment.
  *
  * @author Olivier BARRY
  * @since 2026
  *
  */
-public class SolidMaterial implements Material {
+public class SolidMaterial extends AbstractMaterial {
 
 	private final Color diffuseColor;
-	private final Color specularColor;
-	private final float specularExponent;
-	private final float ambientReflectivity;
 
 	public SolidMaterial(Color diffuseColor, Color specularColor, float specularExponent, float ambientReflectivity) {
+		super(specularColor, specularExponent, ambientReflectivity);
 		this.diffuseColor = diffuseColor;
-		this.specularColor = specularColor;
-		this.specularExponent = specularExponent;
-		this.ambientReflectivity = ambientReflectivity;
 	}
 
 	@Override
 	public Color baseColorAt(Fragment fragment) {
 		return diffuseColor;
-	}
-
-	@Override
-	public Color specularColorAt(Fragment fragment) {
-		return specularColor;
-	}
-
-	@Override
-	public float specularExponent() {
-		return specularExponent;
-	}
-
-	@Override
-	public float ambientReflectivity() {
-		return ambientReflectivity;
 	}
 }

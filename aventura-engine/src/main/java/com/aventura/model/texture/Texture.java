@@ -41,11 +41,15 @@ import com.aventura.tools.tracing.Tracer;
  * This class provides functionalites to load a texture file and then provide interpolated color using normalized coordinates
  * It is possible to load the bitmap file horizontally or vertically (just exchanging what is width and height, this is like portrait and landscape for pictures)
  * but also to "reverse" the bitmap (left/right) which is important for file having a "direction" (e.g. text written etc.) and how it is supposed to be used.
+ * <p>
+ * A Texture is the map of colors of the engine (see {@link SurfaceMap}: the size, the name, the wrap mode and the
+ * mipmap levels are common to all the maps). Its role is given by where it is put: the color of a surface
+ * (Triangle.setTexture()), or the light the surface emits by itself (Element.setEmissionMap()).
  * 
  * @author Olivier BARRY
  * @since April 2017
  */
-public class Texture {
+public class Texture extends SurfaceMap {
 	
 	public static final int TEXTURE_DIRECTION_HORIZONTAL = 1;
 	public static final int TEXTURE_DIRECTION_VERTICAL = 2;
@@ -56,41 +60,10 @@ public class Texture {
 	// neighbors in memory, as the bilinear filtering below reads them (performance audit A6; it used to be an
 	// int[x][y] array).
 	protected int[] tex;
-	protected int width, height;
-	// Name of the texture, for the reports (see getName()): the name of its file, or the one given by setName()
-	protected String name = null;
-
-	/**
-	 * What a Texture shows outside of itself: at texture coordinates below 0 or above 1 (see setWrapMode()).
-	 * <pre>
-	 *   coordinate:   -1        0        1        2        3
-	 *   CLAMP          aaaaaaaaa|abcdefgh|hhhhhhhhhhhhhhhhhh     the border texel goes on
-	 *   REPEAT         abcdefgh |abcdefgh|abcdefgh|abcdefgh      the texture starts again
-	 *   MIRROR         hgfedcba |abcdefgh|hgfedcba|abcdefgh      every other copy is flipped
-	 * </pre>
-	 */
-	public enum WrapMode {
-		/** The texture is there once, from 0 to 1; beyond, its border texels go on. The default. */
-		CLAMP,
-		/**
-		 * The texture is repeated like tiles: only the fractional part of the coordinate counts (2.3 is read at 0.3).
-		 * For a texture made to be repeated, whose opposite borders match; otherwise a seam shows between two tiles.
-		 */
-		REPEAT,
-		/**
-		 * The texture is repeated, every other tile flipped like in a mirror (2.3 is read at 0.3, but 1.3 at 0.7).
-		 * Two neighbouring tiles then share the same border: no seam, whatever the texture, e.g. a photograph.
-		 */
-		MIRROR
-	}
-
-	protected WrapMode wrapMode = WrapMode.CLAMP;
-
 	// Mipmaps: smaller and smaller copies of the texture, each one half the size of the previous one, down to 1 x 1
-	// (see buildMipmaps()). mipTexels[n] holds the texels of level n, row by row like tex; level 0 is tex itself.
-	// null until they are built: they are only needed by getInterpolatedColor(s, t, pixelSize).
+	// (see SurfaceMap.buildMipmaps()). mipTexels[n] holds the texels of level n, row by row like tex; level 0 is tex
+	// itself. null until they are built: they are only needed by getInterpolatedColor(s, t, pixelSize).
 	protected int[][] mipTexels = null;
-	protected int[] mipWidths, mipHeights;
 
 	
 	/**
@@ -99,8 +72,7 @@ public class Texture {
 	 * @param height
 	 */
 	public Texture(int width, int height) {
-		this.width = width;
-		this.height = height;
+		super(width, height);
 		tex = new int[width * height];
 	}
 	
@@ -348,37 +320,14 @@ public class Texture {
 	// Mipmapping
 	// ------------------------------------------------------------------
 
-	/**
-	 * Builds the mipmaps of this texture, if they are not built yet: a pyramid of copies of the texture, each level
-	 * half the size of the previous one (rounded down, at least 1), down to a single texel. A texel of a level is the
-	 * average of the 2 x 2 texels it covers in the level below (a "box filter").
-	 * <pre>
-	 *   level 0: 8 x 8 (the texture)   level 1: 4 x 4   level 2: 2 x 2   level 3: 1 x 1
-	 * </pre>
-	 * The pyramid adds one third to the memory of the texture (1/4 + 1/16 + ...). It is built once: the RenderEngine
-	 * calls this method before rasterizing, when mipmapping is enabled (RenderContext.setMipmapping()), so that the
-	 * rasterization threads only read it. setColor() discards it: it is built again at the next call.
-	 */
-	public synchronized void buildMipmaps() {
-		if (mipTexels != null) return;
-
-		// Number of levels: the size is halved until both sides are 1
-		int levels = 1;
-		for (int size = Math.max(width, height); size > 1; size /= 2) levels++;
-
-		int[][] texels = new int[levels][];
-		int[] widths = new int[levels], heights = new int[levels];
+	/** The levels of the mipmaps: each one half of the previous one (see SurfaceMap.buildMipmaps()). */
+	@Override
+	protected void buildLevels(int[] widths, int[] heights) {
+		int[][] texels = new int[widths.length][];
 		texels[0] = tex;
-		widths[0] = width;
-		heights[0] = height;
-		for (int level = 1; level < levels; level++) {
-			int w = Math.max(1, widths[level - 1] / 2), h = Math.max(1, heights[level - 1] / 2);
-			widths[level] = w;
-			heights[level] = h;
-			texels[level] = halve(texels[level - 1], widths[level - 1], heights[level - 1], w, h);
+		for (int level = 1; level < widths.length; level++) {
+			texels[level] = halve(texels[level - 1], widths[level - 1], heights[level - 1], widths[level], heights[level]);
 		}
-		mipWidths = widths;
-		mipHeights = heights;
 		mipTexels = texels; // Assigned last: a texture with mipTexels has all its levels
 	}
 
@@ -405,44 +354,10 @@ public class Texture {
 		return half;
 	}
 
-	/** @return true if the mipmaps of this texture are built (see buildMipmaps()) */
+	@Override
 	public boolean hasMipmaps() {
 		return mipTexels != null;
 	}
-
-	/** @return the number of mipmap levels, the texture itself (level 0) included; 1 if the mipmaps are not built */
-	public int getNbMipmapLevels() {
-		return mipTexels != null ? mipTexels.length : 1;
-	}
-
-	/** @return the width of a mipmap level, in texels (level 0 is the texture itself); the mipmaps must be built */
-	public int getMipmapWidth(int level) {
-		return mipWidths[level];
-	}
-
-	/** @return the height of a mipmap level, in texels; the mipmaps must be built */
-	public int getMipmapHeight(int level) {
-		return mipHeights[level];
-	}
-
-	/**
-	 * The mipmap level whose texels have the size of a pixel of the screen, for a surface seen at a given scale.
-	 * The scale is the size of a pixel on the surface, in texture coordinates (the texture is 1 wide and 1 high), as
-	 * a base 2 logarithm: -10 means that a pixel covers 1/1024 of the texture. A texel of level 0 covers
-	 * 1/width x 1/height of the texture, hence 1/sqrt(width x height) on average, and each level doubles it:
-	 * <pre>
-	 *   level = log2(pixel size / texel size of level 0) = log2PixelSize + log2(sqrt(width x height))
-	 * </pre>
-	 * The level is a float: 2.3 is between the levels 2 and 3, nearer to 2. A negative level means that a pixel is
-	 * smaller than a texel (the texture is magnified): level 0 is the finest there is.
-	 *
-	 * @param log2PixelSize base 2 logarithm of the size of a pixel, in texture coordinates (see Fragment.getTexLog2PixelSize())
-	 */
-	public float mipmapLevel(float log2PixelSize) {
-		return log2PixelSize + 0.5f * (float) (Math.log((double) width * height) / LN_2);
-	}
-
-	private static final double LN_2 = Math.log(2);
 
 	/**
 	 * The Color of this Texture at coordinates <s,t> (0 <= s <= 1 and 0 <= t <= 1) for a surface seen at a given
@@ -533,61 +448,16 @@ public class Texture {
 		return (argb & 0xFF) / 255f;
 	}
 
-	// ------------------------------------------------------------------
-	// Wrap mode: the texture outside of itself
-	// ------------------------------------------------------------------
-
 	/**
-	 * Sets what this Texture shows at texture coordinates outside of 0 to 1 (see WrapMode): its border (CLAMP, the
-	 * default), itself again (REPEAT) or itself again, every other time flipped (MIRROR).
-	 *
-	 * This is how a texture is repeated over a large surface, like tiles: the surface gives texture coordinates that
-	 * go beyond 1, e.g. from 0 to 24 for 24 tiles (see Trellis.setTextureRepeat()), and the Texture folds them back,
-	 * texel by texel. The surface does not need a vertex at each border of a tile, and the number of tiles does not
-	 * need to be an integer. The mode applies wherever the Texture is used; it has no effect on a surface whose
-	 * coordinates stay between 0 and 1, except within half a texel of its borders, where the bilinear interpolation
-	 * reads the texel of the other side (REPEAT) instead of the border one.
-	 *
-	 * To be set before rendering, like the texels.
-	 *
+	 * Sets what this Texture shows at texture coordinates outside of 0 to 1 (see SurfaceMap.setWrapMode()).
 	 * @return this Texture, to chain the calls
 	 */
+	@Override
 	public Texture setWrapMode(WrapMode wrapMode) {
-		if (wrapMode == null) throw new IllegalArgumentException("The wrap mode of a Texture cannot be null");
-		this.wrapMode = wrapMode;
+		super.setWrapMode(wrapMode);
 		return this;
 	}
 
-	public WrapMode getWrapMode() {
-		return wrapMode;
-	}
-
-	/**
-	 * The index of the texel to read, in a row or a column of size texels, for an index that may be outside of it
-	 * (0 to size - 1), according to the wrap mode. With size = 4:
-	 * <pre>
-	 *   index:    -3 -2 -1 | 0  1  2  3 | 4  5  6  7 | 8  9
-	 *   CLAMP      0  0  0 | 0  1  2  3 | 3  3  3  3 | 3  3
-	 *   REPEAT     1  2  3 | 0  1  2  3 | 0  1  2  3 | 0  1
-	 *   MIRROR     2  1  0 | 0  1  2  3 | 3  2  1  0 | 0  1
-	 * </pre>
-	 * Working on the indices of the texels rather than on the coordinates makes the bilinear interpolation right at
-	 * the border of a tile: the 4 texels read there are the neighbours in the repeated image.
-	 */
-	private int wrap(int index, int size) {
-		if (index >= 0 && index < size) return index; // Inside the texture: the same for all modes
-		switch (wrapMode) {
-		case REPEAT:
-			return Math.floorMod(index, size); // The remainder of the division, positive also for a negative index
-		case MIRROR:
-			int inTwoTiles = Math.floorMod(index, 2 * size); // A tile and its flipped neighbour are repeated together
-			return inTwoTiles < size ? inTwoTiles : 2 * size - 1 - inTwoTiles;
-		case CLAMP:
-		default:
-			return index < 0 ? 0 : size - 1;
-		}
-	}
-	
 	public Color getColor(int x, int y) {
 		// TODO Implement x y validation and return exception if outside width and height
 		return new Color(tex[y * width + x]);
@@ -599,25 +469,19 @@ public class Texture {
 		mipTexels = null; // The mipmaps, if any, no longer match: they will be built again (see buildMipmaps())
 	}
 	
-	public int getWidth() {
-		return this.width;
-	}
-
-	/**
-	 * @return the name of this texture, for a report or a trace: the name of the file it was loaded from (without its
-	 *         directory), or the name given by setName(); "width x height texture" for a texture without either
-	 */
-	public String getName() {
-		return name != null ? name : width + " x " + height + " texture";
-	}
-
 	/**
 	 * Gives a name to this texture (e.g. a texture computed pixel by pixel, which has no file name).
 	 * @return this texture, to chain the call
 	 */
+	@Override
 	public Texture setName(String name) {
-		this.name = name;
+		super.setName(name);
 		return this;
+	}
+
+	@Override
+	protected String getKind() {
+		return "texture";
 	}
 
 	/**
@@ -625,6 +489,7 @@ public class Texture {
 	 *         width x height texels, whatever the size of the (compressed) file it was loaded from, plus those of its
 	 *         mipmaps if they are built (about one third more, see buildMipmaps())
 	 */
+	@Override
 	public long getMemorySize() {
 		long texels = tex.length;
 		int[][] mipmaps = mipTexels;
@@ -634,8 +499,4 @@ public class Texture {
 		return 4L * texels;
 	}
 	
-	public int getHeight() {
-		return this.height;
-	}
-
-}
+}

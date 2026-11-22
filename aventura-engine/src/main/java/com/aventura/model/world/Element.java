@@ -102,12 +102,12 @@ import com.aventura.model.world.triangle.Triangle;
  *  by the Render Engine when necessary and the way it is configured for.
  *  
  *     +---------------+
- *     |    Element    |    Color attribute
+ *     |    Element    |    Color attribute (and emission: color, map), inherited by the sub-elements
  *     +---------------+
  *             ^ 0
  *             |     1 Element contains [0..n] Triangles
  *             | n
- *     +---------------+    Color attribute -> overrides Element's color if set
+ *     +---------------+    Color attribute -> overrides Element's color if set (emission too)
  *     |    Triangle   |    Normal attribute -> to be used if specifically indicated (flag triangleNormal set to true) or if FLAT rendering
  *     +---------------+
  *             ^ 1
@@ -143,6 +143,9 @@ public class Element implements Transformable, Shape, Generable {
 	protected Color elementColor = null; // Color of the element unless specified at Triangle or Vertex level (lowest level priority)
 	protected Color specularColor = null; // Specular reflection color for this Element
 	protected float specularExponent = 0; // Specular exponent
+	// Light emitted by the surface itself (see setEmissionColor(), setEmissionMap()), unless specified at Triangle level
+	protected Color emissionColor = null;
+	protected Texture emissionMap = null;
 	
 	// Topology
 	protected boolean isClosed = false; // Defines if the Element is a closed element or not in order to eliminate or not its back faces (internal to the closed element thus not visible)
@@ -440,6 +443,49 @@ public class Element implements Transformable, Shape, Generable {
 		return specularExponent;
 	}
 
+	/**
+	 * Makes this Element emit light by itself: a color added to the shaded color of its surface, whatever the lights
+	 * and the shadows. A lamp, a neon tube, an indicator lamp glows in the dark, even with no light near it.
+	 * <pre>
+	 *   color of the pixel = ambient + sum of the lights (diffuse, specular, shadows) + emission
+	 * </pre>
+	 * Like the color, the emission is inherited by the sub-elements of this Element, and a Triangle can override it
+	 * (Triangle.setEmissionColor()). With an emission map (setEmissionMap()), this color tints the map.
+	 * The emission is drawn in the FLAT and INTERPOLATE rendering types; it does not light the other surfaces (it is
+	 * not a light: add a PointLight for that).
+	 *
+	 * @param c the emitted color, null for none (the default)
+	 * @since Nov 2026
+	 */
+	public void setEmissionColor(Color c) {
+		this.emissionColor = c;
+	}
+
+	public Color getEmissionColor() {
+		return emissionColor;
+	}
+
+	/**
+	 * Gives this Element an emission map: a Texture read at the texture coordinates of its triangles, the same ones as
+	 * their texture, whose texels are added to the shaded color, whatever the lights and the shadows. Black texels emit
+	 * nothing: only the digits of a dial, the lines of a screen glow. The emission color, if any, tints the map.
+	 * <p>
+	 * The map is a Texture like any other (see SurfaceMap): its wrap mode, its mipmaps apply. It is often a variant of
+	 * the texture of the surface, with its dark parts made black. Inherited by the sub-elements, overridden by a
+	 * Triangle (Triangle.setEmissionMap()); ignored on the triangles without texture coordinates, and when the
+	 * textures are off (RenderContext.setTextureProcessing()).
+	 *
+	 * @param map the emission map, null for none (the default)
+	 * @since Nov 2026
+	 */
+	public void setEmissionMap(Texture map) {
+		this.emissionMap = map;
+	}
+
+	public Texture getEmissionMap() {
+		return emissionMap;
+	}
+
 	public boolean isClosed() {
 		return isClosed;
 	}
@@ -469,6 +515,8 @@ public class Element implements Transformable, Shape, Generable {
 		element += "* Element color:      " + getColor() + "\n";
 		element += "* Specular color:     " + getSpecularColor() + "\n";
 		element += "* Specular exponent:  " + getSpecularExp() + "\n";
+		if (emissionColor != null) element += "* Emission color:     " + emissionColor + "\n";
+		if (emissionMap != null) element += "* Emission map:       " + emissionMap.getName() + "\n";
 		element += "* Is closed:          " + (isClosed ? "yes" : "no") + "\n";
 		element += "* Has transformation: " + (hasTransformation ? "yes" : "no");
 		if (hasTransformation) element += "\n* Transformation matrix: \n" + transform;
@@ -776,4 +824,4 @@ public class Element implements Transformable, Shape, Generable {
 		}
 	}
 
-}
+}

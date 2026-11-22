@@ -108,6 +108,11 @@ public class GeometryStatistics {
 				nbTexturedTriangles++;
 				textureUsage.merge(texture, 1, Integer::sum);
 			}
+			// The emission maps are textures too (Triangle.setEmissionMap()): their memory counts the same
+			if (triangle.getEmissionMap() != null) textureUsage.merge(triangle.getEmissionMap(), 1, Integer::sum);
+		}
+		if (element.getEmissionMap() != null && element.getNbTriangles() > 0) {
+			textureUsage.merge(element.getEmissionMap(), element.getNbTriangles(), Integer::sum);
 		}
 
 		if (!element.isLeaf()) {

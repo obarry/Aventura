@@ -42,9 +42,11 @@ import com.aventura.model.camera.Camera;
 import com.aventura.model.light.Lighting;
 import com.aventura.model.light.ShadowingLight;
 import com.aventura.model.perspective.PerspectiveType;
+import com.aventura.model.material.AbstractMaterial;
 import com.aventura.model.material.Material;
 import com.aventura.model.material.SolidMaterial;
 import com.aventura.model.material.TexturedMaterial;
+import com.aventura.model.texture.Texture;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.Vertex;
 import com.aventura.model.world.World;
@@ -407,6 +409,21 @@ public class RenderEngine {
 	 * @param c (optional, should be null for shading calculation) the color for the various elements to be rendered
 	 */
 	protected void prepare(Element e, Color c) {
+		prepare(e, c, null, null);
+	}
+
+	/**
+	 * Geometry stage of a single Element and all its sub-elements recursively, with the emission inherited from the
+	 * parent Elements (see Element.setEmissionColor(), setEmissionMap()): like the color, the emission of an Element
+	 * overrides the inherited one, and passes down to its sub-elements.
+	 *
+	 * @param e             the Element to prepare
+	 * @param c             the color inherited from the parent Elements (may be null)
+	 * @param emissionColor the emission color inherited from the parent Elements (may be null)
+	 * @param emissionMap   the emission map inherited from the parent Elements (may be null)
+	 * @since Nov 2026
+	 */
+	protected void prepare(Element e, Color c, Color emissionColor, Texture emissionMap) {
 		
 		if (Tracer.info) Tracer.traceInfo(this.getClass(), "Rendering Element: "+e.getName());			
 		// Count Element stats
@@ -415,6 +432,9 @@ public class RenderEngine {
 		// Take color of the element else take super-element color passed in parameters
 		Color col = c;
 		if (e.getColor() != null) col = e.getColor();
+		// Same for the emission (color and map are inherited apart)
+		if (e.getEmissionColor() != null) emissionColor = e.getEmissionColor();
+		if (e.getEmissionMap() != null) emissionMap = e.getEmissionMap();
 		
 		// Single call replaces the legacy setModel()+calculateNormalMatrix()+calculateMVPMatrix()
 		// trio -- see ElementTransform.setModel()'s Javadoc.
@@ -428,7 +448,7 @@ public class RenderEngine {
 		for (int j=0; j<e.getTriangles().size(); j++) {
 			
 			// Render triangle 
-			prepare(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor(), e.isClosed());
+			prepare(e.getTriangle(j), col, e.getSpecularExp(), e.getSpecularColor(), e.isClosed(), emissionColor, emissionMap);
 			
 			// Count Triangles stats (total, all triangles whatever in or out view frustum)
 			nbt++;
@@ -440,7 +460,7 @@ public class RenderEngine {
 			for (int i=0; i<e.getSubElements().size(); i++) {
 				// Recursive call
 				//render(e.getSubElements().get(i), model, col);
-				prepare(e.getSubElements().get(i), col);
+				prepare(e.getSubElements().get(i), col, emissionColor, emissionMap);
 			}
 		} else { // Leaf
 			if (Tracer.info) Tracer.traceInfo(this.getClass(), "Element #"+e.getName()+" has no sub elements.");			
@@ -461,7 +481,23 @@ public class RenderEngine {
 	 * @return false if triangle is outside the View Frustum, else true
 	 */
 	protected void prepare(Triangle t, Color c, float se, Color sc, boolean isClosedElement) {
+		prepare(t, c, se, sc, isClosedElement, null, null);
+	}
+
+	/**
+	 * Geometry stage of a single Triangle (see prepare(Triangle, Color, float, Color, boolean)), with the emission of
+	 * its Element, overridden by the one of the triangle if set (Triangle.setEmissionColor(), setEmissionMap()).
+	 *
+	 * @param emissionColor the emission color of the Element (may be null)
+	 * @param emissionMap   the emission map of the Element (may be null)
+	 * @since Nov 2026
+	 */
+	protected void prepare(Triangle t, Color c, float se, Color sc, boolean isClosedElement, Color emissionColor, Texture emissionMap) {
 		
+		// Same priority for the emission: the triangle, then the Element
+		if (t.getEmissionColor() != null) emissionColor = t.getEmissionColor();
+		if (t.getEmissionMap() != null) emissionMap = t.getEmissionMap();
+
 		//if (Tracer.function) Tracer.traceFunction(this.getClass(), "Render triangle");
 		
 		// Priority to lowest level -> if color defined at triangle level, then this overrides the color of above (Element) level 
@@ -521,13 +557,13 @@ public class RenderEngine {
 						// regardless of isTriangleNormal() -- genuine faceted/angular shading.
 						prepareShadedTriangle(t, color, se, sc, false,
 								renderContext.isTextureProcessing(),
-								renderContext.isShadowing());
+								renderContext.isShadowing(), emissionColor, emissionMap);
 						break;
 					case INTERPOLATE:
 						// Draw triangles with shading and interpolation on the triangle face -> Gouraud's Shading
 						prepareShadedTriangle(t, color, se, sc, true,
 								renderContext.isTextureProcessing(),
-								renderContext.isShadowing());
+								renderContext.isShadowing(), emissionColor, emissionMap);
 						break;
 					default:
 						// Invalid rendering type
@@ -619,8 +655,12 @@ public class RenderEngine {
 	 *                    triangle itself already forces flat via isTriangleNormal()
 	 * @param texture     whether to sample t's texture (if it has one) at all
 	 * @param shadows     whether shadow-map testing is applied for this triangle's lighting
+	 * @param emissionColor the light emitted by the surface, or the tint of its emission map; may be null
+	 * @param emissionMap the emission map, read at the texture coordinates of t (only if it has some and the
+	 *                    textures are processed); may be null
 	 */
-	private void prepareShadedTriangle(Triangle t, Color color, float se, Color sc, boolean interpolate, boolean texture, boolean shadows) {
+	private void prepareShadedTriangle(Triangle t, Color color, float se, Color sc, boolean interpolate, boolean texture, boolean shadows,
+			Color emissionColor, Texture emissionMap) {
 
 		// Resolve which 3 normals to interpolate -- see this method's Javadoc.
 		Vector3 normal1, normal2, normal3;
@@ -642,16 +682,25 @@ public class RenderEngine {
 		// color (D) is ALWAYS used, even in textured mode -- it tints the texture sample (D*T),
 		// never replaced by it. Only SolidMaterial needs a non-null fallback (white) since it has
 		// no texture to fall back on if color is null.
-		Material material = useTexture
+		AbstractMaterial material = useTexture
 				? new TexturedMaterial(t.getTexture(), t.getTextureOrientation(), color, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY, useMipmaps(t))
 				: new SolidMaterial(color != null ? color : Color.WHITE, effectiveSpecCol, se, LEGACY_AMBIENT_REFLECTIVITY);
+
+		// The emission: a color, and a map read at the same texture coordinates as the texture. The map needs the
+		// texture coordinates of the triangle, interpolated even if it has no texture.
+		boolean useEmissionMap = emissionMap != null && texture && t.hasTextureCoordinates();
+		if (emissionColor != null || useEmissionMap) {
+			Texture map = useEmissionMap ? emissionMap : null;
+			if (map != null && renderContext.isMipmapping()) map.buildMipmaps();
+			material.setEmission(emissionColor, map, t.getTextureOrientation(), map != null && renderContext.isMipmapping());
+		}
 
 		DrawList.Command command = drawList.next(DrawList.Kind.FILL_SHADED, t);
 		command.normal1 = normal1;
 		command.normal2 = normal2;
 		command.normal3 = normal3;
 		command.material = material;
-		command.textured = useTexture;
+		command.textured = useTexture || useEmissionMap;
 		command.shadows = shadows;
 	}
 
@@ -982,4 +1031,4 @@ public class RenderEngine {
 	}
 
 
-}
+}

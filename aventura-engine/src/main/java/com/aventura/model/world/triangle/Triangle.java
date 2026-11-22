@@ -89,6 +89,10 @@ public class Triangle {
 	
 	// Color if at triangle level
 	protected Color color = null;
+
+	// Emission if at triangle level (see setEmissionColor(), setEmissionMap()): overrides the one of the Element
+	protected Color emissionColor = null;
+	protected Texture emissionMap = null;
 		
 	public Triangle() {
 		this.v1 = null;
@@ -108,6 +112,8 @@ public class Triangle {
 		this.triangleNormal = t.triangleNormal;
 		this.normal = (t.normal != null) ? new Vector3(t.normal) : null;
 		this.color =  t.color;
+		this.emissionColor = t.emissionColor;
+		this.emissionMap = t.emissionMap;
 		this.tex = t.tex;
 		this.tex_orientation = t.tex_orientation;
 		this.rectoVerso = t.rectoVerso;
@@ -266,6 +272,40 @@ public class Triangle {
 	
 	public Color getColor() {
 		return color;
+	}
+
+	/**
+	 * Makes this triangle emit a color by itself, whatever the lights and the shadows (a lamp, a neon tube), instead
+	 * of the emission of its Element (see Element.setEmissionColor()). With an emission map, the color tints it.
+	 * @param c the emitted color, null to take the one of the Element
+	 * @since Nov 2026
+	 */
+	public void setEmissionColor(Color c) {
+		this.emissionColor = c;
+	}
+
+	public Color getEmissionColor() {
+		return emissionColor;
+	}
+
+	/**
+	 * Gives this triangle an emission map, instead of the one of its Element (see Element.setEmissionMap()): a
+	 * Texture read at the texture coordinates of the triangle (setTexture()), the same ones as its texture, whose
+	 * texels are added to the shaded color (black emits nothing). The triangle needs texture coordinates.
+	 * @param map the emission map, null to take the one of the Element
+	 * @since Nov 2026
+	 */
+	public void setEmissionMap(Texture map) {
+		this.emissionMap = map;
+	}
+
+	public Texture getEmissionMap() {
+		return emissionMap;
+	}
+
+	/** @return true if this triangle has texture coordinates (setTexture()), with or without a Texture */
+	public boolean hasTextureCoordinates() {
+		return t1 != null && t2 != null && t3 != null;
 	}
 
 	public void setTexture(Texture t, Vector4 t1, Vector4 t2 , Vector4 t3) {

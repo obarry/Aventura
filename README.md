@@ -20,7 +20,7 @@ Aventura lets you build a 3D scene through a plain Java API (shapes, textures, l
 - **Complete software pipeline.** Model, world and camera transforms, frustum or orthographic projection, triangle rasterization with a Z-buffer and perspective-correct interpolation.
 - **Lighting and shadows.** Ambient, directional, point and spot lights (a spot has an aimable cone with a soft or sharp edge), specular highlights, and shadow mapping for every kind of light: orthographic maps for directional lights, perspective maps for spot lights, and a six-face cube map for point lights, with optional soft edges (see [Lights and shadows](#lights-and-shadows)).
 - **Atmosphere.** A haze that pales the distance, banks of fog (spherical ones, and your own kinds) that dim what is seen through them, each branch with its own switch, with an exact formula for the fog and a step-by-step tutorial (see [Atmosphere](#atmosphere)).
-- **Textures.** Any image format supported by `ImageIO` (JPEG, PNG, GIF...), with per-face textures on boxes and pyramids and control over mapping direction and orientation, wrap modes to repeat a texture like tiles over a large surface (`CLAMP`, `REPEAT`, `MIRROR`), and optional mipmapping (trilinear filtering) so that textures stay smooth, without noise nor flicker, when seen from far away.
+- **Textures.** Any image format supported by `ImageIO` (JPEG, PNG, GIF...), with per-face textures on boxes and pyramids and control over mapping direction and orientation, wrap modes to repeat a texture like tiles over a large surface (`CLAMP`, `REPEAT`, `MIRROR`), and optional mipmapping (trilinear filtering) so that textures stay smooth, without noise nor flicker, when seen from far away. Surfaces can glow by themselves: a uniform emission color, or an emission map whose bright texels only glow (the lines of a screen, the digits of a dial).
 - **Ready-made shapes.** Box, cube, sphere, cone, cone frustum, cylinder, disc, pyramid, torus and height-field grids (`Trellis`), plus your own geometry from triangles and meshes.
 - **Hierarchical scene graph.** Elements can contain sub-elements; translations, rotations and scalings compose down the tree.
 - **A math library you can reuse.** `Vector2/3/4`, `Matrix2/3/4`, `Quaternion` (with `slerp`), a Gauss-Jordan solver and geometry helpers, all unit-tested.
@@ -314,6 +314,21 @@ sun.setAppearance(new LightAppearance().setShaftsGain(1f)); // 0 (default) = no 
 <p align="center">
   <img src="docs/images/sun_street.jpg" alt="TestLightingSun: the sun behind a building, with its halo, lens flare and light shafts" width="600">
 </p>
+
+### Surfaces that glow by themselves
+
+A light is not a surface: to make a screen, a dial, an indicator lamp or a neon tube glow in the dark, give the surface an emission. It is added to the shaded color, whatever the lights and the shadows (`color = ambient + lights + emission`), in the `FLAT` and `INTERPOLATE` rendering types. It lights nothing around it: add a light for that.
+
+```java
+lamp.setEmissionColor(new Color(120, 255, 170));   // the whole surface glows evenly
+
+screen.setEmissionMap(new Texture(MyApp.class.getResource("/texture/screen_glow.png")));
+                                                   // only the bright texels glow, black emits nothing
+```
+
+The emission map is an ordinary `Texture`, read at the same texture coordinates as the texture of the surface, with the same wrap mode and mipmapping: it is often the texture of the surface with its dark parts painted black. The emission color, if set too, tints it. Like the color, the emission of an `Element` is inherited by its sub-elements, and a `Triangle` can override it (`Triangle.setEmissionColor()`, `setEmissionMap()`).
+
+`TestEmissionMap` adds a screen and a glowing ball to the spot light scene, with the emission switched on and off in turn.
 
 `TestLightingGlow` shows a lamp circling around the objects of the spot light scene, passing behind them, with the visible lights switched on and off in turn; `TestLightingSun` is a street where the camera turns to bring the sun behind the buildings (with its lens flare and its light shafts); the same scene is `sun_street` in the SceneViewer, where the camera can be moved with the mouse.
 
