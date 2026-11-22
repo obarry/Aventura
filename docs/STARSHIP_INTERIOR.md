@@ -281,6 +281,11 @@ depth at each pixel, and the Z-buffer kept one or the other depending on the rou
 screen (z-fighting). The small screens, 1 mm in front of their case, were spared at short range only. All the screens now
 stand 1 cm in front: well within the precision of the Z-buffer at the distances of the ship.
 
+The same happened to the frames of the passages of the junctions: half of a frame stands in the corridor, and its inner
+band followed the outline of the corridor exactly, in the plane of its walls — speckles across the stripes, on the
+corridor side only. The band now stands 3 cm inside the walls (`Hub.FRAME_INSET`). The other frames were spared: the
+ribs end in the thickness of the walls, and the band of an airlock door follows the smaller outline of the door.
+
 ### Doors
 
 A door is a frame from the outline of the corridor to the smaller outline of the door, and two leaves (`Box`es) inside
