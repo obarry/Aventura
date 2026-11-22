@@ -71,7 +71,7 @@ public class Hub extends Element {
 
 	public static final float SIZE = 4f;
 	public static final float HEIGHT = 3.2f;
-	public static final float FRAME_THICKNESS = 0.3f, FRAME_WIDTH = 0.15f;
+	public static final float FRAME_THICKNESS = 0.3f, FRAME_WIDTH = 0.15f, FRAME_INSET = 0.03f;
 	static final float PILLAR_SIZE = 0.35f;
 
 	public static final Color FLOOR_COLOR = new Color(160, 156, 148);
@@ -120,9 +120,12 @@ public class Hub extends Element {
 			walls.addElement(new Panel("wall", corner, u, Vector3.zAxis(), SIZE, HEIGHT, doorway, textures.hullPlates, ShipTextures.PLATE_TILE));
 
 			if (sides[k] == Side.PASSAGE) {
-				// A frame around the doorway, a little wider than the corridor: it hides the joint of the corridor and the wall
+				// A frame around the doorway, a little wider than the corridor: it hides the joint of the corridor and the wall.
+				// Its inner band stands FRAME_INSET inside the walls of the corridor: half of the frame is in the corridor,
+				// and a band in the plane of its walls would fight with them in the Z-buffer (z-fighting)
 				float[][] outer = ShipSections.insetAboveFloor(corridor, -FRAME_WIDTH);
-				SectionFrame frame = new SectionFrame("frame", middle, out, outer, corridor, FRAME_THICKNESS, textures.paintedMetal, 0.5f);
+				float[][] inner = ShipSections.insetAboveFloor(corridor, FRAME_INSET);
+				SectionFrame frame = new SectionFrame("frame", middle, out, outer, inner, FRAME_THICKNESS, textures.paintedMetal, 0.5f);
 				frame.setOpen(true);
 				frame.setBand(textures.hazardStripes, Color.WHITE);
 				frame.setColor(AirlockDoor.FRAME_COLOR);
