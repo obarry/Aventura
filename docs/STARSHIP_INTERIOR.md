@@ -51,7 +51,8 @@ What the demo shows of the API, beyond what TempleRuins already shows:
 |---|---|
 | `PointLight`: light all around, linear fall-off, shadows in a cube of six maps | `ShipLights`: the ceiling lights of the corridors, the light of the control room |
 | `SpotLight`: a cone with a soft edge, aimed | `ShipLights`: the junctions (pointing down), the consoles, the hatch |
-| Visible point and spot lights (halo, `LightAppearance`) | `ShipLights.add()`, Lights menu |
+| Visible point and spot lights (halo, `LightAppearance`) | `ShipLights.add()`, Lights menu (off by default, on in the plan view) |
+| Surfaces that glow by themselves: `Element.setEmissionColor()`, `setEmissionMap()` | `Glow`: the screens, the lenses, the lamps, the buttons |
 | `Light.setEnabled()`: many lights, few switched on | `LightBudget`, `StarshipInterior.updateLights()` |
 | Static shadow casters, and a caster that moves (`invalidateShadowMap()`) | `ShipLights`, `StarshipInterior.stepDoor()` |
 | One new shape, swept along straight or curved paths | `SweptSection` along a `PathSegment`: the walls, the floors, the pipes, the cable trays, the ring of light |
@@ -86,7 +87,8 @@ not freed: with static casters, a light switched on again reuses it. The demo th
 switch on before each image: `LightBudget`.
 
 The second engine change asked for, **emission maps** (a texture that glows by itself, for the screens and the dials),
-was put in the [backlog](BACKLOG.md) for later (see [§10](#of-the-engine-as-met-by-the-demo)).
+was put in the [backlog](BACKLOG.md) for later, then made once the demo was finished, on the `features` branch too:
+`Element.setEmissionColor()` and `setEmissionMap()` (see [§6, Screens and lamps that glow](#screens-and-lamps-that-glow)).
 
 The demo was then built in this order, each step checked on images rendered without a window:
 
@@ -160,6 +162,7 @@ lights, and the path of the visit is made of the same kind of segments (§6, [Th
 | `WallCabinet` | A cabinet against a wall, low or high: a box and its front |
 | `ShipTextures` | The textures, computed or read from a file |
 | `ShipLights` | The lights and their budget |
+| `Glow` | What glows by itself: the screens (their picture as emission map), the lamps; switches it all off and on |
 | `ShipTour` | The path of the visit, and where the camera looks |
 | `LightBudget` (in `com.aventura.demo`) | Switches on the few lights nearest to the camera |
 
@@ -187,12 +190,12 @@ World "starship interior"
       │         ├── ribs            SectionFrame every 2.5 m
       │         ├── pipes           SweptSection x 3 (circles, seen from outside)
       │         ├── cable tray      SweptSection (an open U)
-      │         ├── light fixtures  Box every 5 m
+      │         ├── light fixtures  Box every 5 m, and its lens (a Panel that glows)
       │         └── cabinets        WallCabinet: Box, Panel (front), on some corridors
       ├── airlock corridor          Corridor, to the hatch
-      ├── hatch                     end wall (Panel), Disc, Torus x 2, Cylinders
+      ├── hatch                     end wall (Panel), Disc, Torus x 2, Cylinders, the warning lamp
       ├── store, store end          Corridor behind the north door, end wall, crates
-      ├── junctions                 Hub x 2: floor, ceiling, walls (Panel), frames, AirlockDoor, pillars
+      ├── junctions                 Hub x 2: floor, ceiling, lamp, walls (Panel), frames, AirlockDoor, pillars
       └── control room              ControlRoom: Panels, AirlockDoor x 2, Console x 10, wall screens, beams, ring
 ```
 
@@ -209,7 +212,8 @@ Three ideas, taken from the corridors of the science fiction films of the time:
 - **Worn**: plates of a light warm gray with dark seams, rivets, rust running down from some of them, grime at the bottom
   of each plate; paint chipped on the frames; hazard stripes faded.
 - **Lit by its own fixtures**: pools of warm light under the ceiling lights, darkness between them and at the end of the
-  corridors, cold light in the control room, amber in the junctions, red at the hatch.
+  corridors, cold light in the control room, amber in the junctions, red at the hatch. The lamps themselves glow, near
+  and far, and so do the screens and some buttons of the consoles.
 
 ### Palette
 
@@ -224,6 +228,7 @@ Three ideas, taken from the corridors of the science fiction films of the time:
 | Junction lights | amber (255, 176, 92) | spot lights pointing down |
 | Control room | cold white (210, 226, 255), consoles in blue gray | |
 | Hatch | red light (255, 70, 50), yellow rim, red wheel | |
+| Glowing (emission) | lenses (235, 205, 160), junction lamps (230, 150, 70), ring (170, 190, 230), warning lamp (255, 60, 40) | screens: their own picture |
 | Background, haze | nearly black, a little blue (6, 8, 12) | |
 
 <p align="center">
@@ -325,6 +330,42 @@ curves. The fronts of the cabinets, with their labels, showed it at once.
 <p align="center">
   <img src="images/starship_markings.jpg" alt="StarshipInterior: a code painted on the wall of the south corridor, cabinets" width="600"><br/>
   <em>A code painted on the wall of the south corridor, a high and a low cabinet further on.</em>
+</p>
+
+### Screens and lamps that glow
+
+A light is not a surface: until the emission maps of the engine, the screens were lit like the walls, and in the dark
+they went dark; the fixtures of the lights out of the budget were gray boxes. Now some surfaces emit light by themselves
+(`Glow`), added to their shaded color whatever the lights and the shadows:
+
+| What | How | Emission |
+|---|---|---|
+| Screens of the consoles and of the walls (12) | `Glow.screen()`: the picture of the screen is also its **emission map** (`setEmissionMap()`); the glass is darker (`setColor()`, 110 gray) | its own picture, at 85 % |
+| Lenses of the ceiling lights (one per light) | a Panel 1 cm under each fixture, seen from below | a uniform warm white |
+| Lamps of the junctions, ring of the control room, warning lamp of the hatch | a Panel under the ceiling, the torus, a small cylinder | amber, cold white, red |
+| Buttons of the consoles | about half of them, chosen with the seed of the console | their color, darker by a quarter |
+
+The screens show the idea of the emission map best. Their computed pictures are already light on black: the curves, the
+letters and the sweep of the radar are bright, the background nearly black. Used as an emission map, the same picture
+glows where it is bright and emits nearly nothing where it is dark: no second picture was needed. The glass is darker,
+so that a light near the screen adds a little to the picture instead of washing it out.
+
+The lenses do what the halos alone could not: the halo of a light is drawn only while the light is switched on (in the
+budget of 3), so the fixtures farther down a corridor were dark. Their lenses now glow at any distance: a corridor is
+dotted with lamps up to where the haze swallows them. The emission lights nothing around it, which is right: the light
+of the corridor is still the point light under the fixture, switched on by the budget.
+
+The lenses made the halos of the lights redundant, and they now look wrong: a halo is drawn where the light is, 18 cm
+under its fixture, a bright dot floating under the ceiling; and only for the 3 lights of the budget, which made those fixtures look brighter than their neighbours. The
+halos are therefore off by default. They are kept in the Lights menu, where they show where the lights really are and
+which ones the budget switches on, and in the plan view, where they show all the lights of the ship.
+
+`Glow.Switch` finds all the Elements that glow in the ship (122) and switches their emission off and on (`Effects`
+menu), to compare. The emission costs nearly nothing: an addition per pixel, and for the screens a second texture read.
+
+<p align="center">
+  <img src="images/starship_screens.jpg" alt="StarshipInterior: the screens of the control room glow in the half light" width="600"><br/>
+  <em>The screens of the control room and the lit buttons, glowing in the half light.</em>
 </p>
 
 ### Doors
@@ -451,9 +492,10 @@ computed again for the width of the window, so that resizing the window keeps th
   (the `StatisticsWindow` shared by the demos), with the lights switched on for the last image, ranked, and the rendering
   times of the last lap of the visit.
 - **Lights**: the size of the budget (1, 2, 3, 4 or 6 lights), or all the lights on (42): the cost of the lights can be
-  measured on the same lap of the visit. The halo of the lights. The north door (`D`).
+  measured on the same lap of the visit. The halo of the lights, off by default (always on in the plan view): it shows
+  where the lights really are, 18 cm under their fixture, and which ones the budget switches on. The north door (`D`).
 - **Rendering**: the rendering type.
-- **Effects**: textures, mipmapping, specular highlights, shadows, soft shadows, haze.
+- **Effects**: textures, mipmapping, specular highlights, shadows, soft shadows, haze, the screens and lamps that glow.
 
 The title of the window shows the camera and its field of view, the time of the last image, the number of lights switched on and, during the
 visit, the average time of the last lap.
@@ -465,7 +507,7 @@ visit, the average time of the last lap.
 | Test | What it checks |
 |---|---|
 | `TestShipGeometry` | Lines and arcs (points, directions, curvature, nearest point, lateral offset); the outlines turn counter-clockwise, the inset and the ribs above the floor; the walls of every corridor are seen from inside, the pipes from outside, the floors from above and the ceilings from below; where a visitor can walk; the visit is closed, without corners but at its stop, and stays inside; the stop: where it is, its timeline, the slowing down, a look that turns without a jump and never on itself; a decal has its own triangles and is upright on both walls; the codes painted, read with the stencil font; the cabinets no deeper than the chamfers, out of the walk |
-| `TestStarshipInterior` | The scene; 3 lights switched on during the visit, all of them in the plan view; images rendered without a window; the north door opens and the lights near it draw their shadow map again; the field of view of the images rendered; the visit stops in front of the north door, which opens, then walks on while it closes |
+| `TestStarshipInterior` | The scene; 3 lights switched on during the visit, all of them in the plan view; images rendered without a window; the north door opens and the lights near it draw their shadow map again; the field of view of the images rendered; the visit stops in front of the north door, which opens, then walks on while it closes; the screens (12 emission maps) and the lamps glow, switched off and on again: the same image |
 | `TestLightBudget` (in `com.aventura.demo`) | The nearest lights on, the others off; the fading; the lights in front first; all the lights on; the size of the budget |
 | `TestLightEnabled` (in the engine) | A light switched off: the same image as without it, no shadow map, no halo, the map kept when it is switched on again |
 
@@ -483,7 +525,8 @@ included: they are not `DemoScene`s, whose lights do not depend on the camera.
 | A budget by zones | The lights of the corridor or the room where the camera is, and of the next ones through the open doors: no light behind a wall | Medium |
 | Steam from a pipe | A `SphericalFog` of a light gray near a pipe, perhaps moving | Small |
 | Blinking lights, an alarm | The intensity of a light changed at each image (a red spot light turning, on a beacon) | Small |
-| A window on the stars | A Panel with a computed star field, once the engine has emissive surfaces | Small, after the engine |
+| A window on the stars | A Panel with a computed star field as emission map (see `Glow`) | Small |
+| Blinking screens and buttons | The emission of a few Elements changed at each image (a cursor, an alarm button) | Small |
 | More rooms | Quarters, an engine room: Panels, Consoles, and new assemblies | Medium |
 | A shared camera controller | The walk, the orbit and the visit are again written in the demo (see TempleRuins §8) | Medium |
 
@@ -494,7 +537,7 @@ included: they are not `DemoScene`s, whose lights do not depend on the camera.
 ### Of the demo
 
 - **The light budget ignores the walls** (§6): a light behind a wall can take a place.
-- **The screens are lit like the rest**: they look like screens, but do not glow; in the dark they go dark.
+- **The screens do not change**: their pictures are fixed (no moving radar sweep, no scrolling text).
 - **Collisions are approximate**: the visitor stays in the corridors and away from the walls, but walks through the
   consoles and the crates.
 - **No outside**: the ship has no hull seen from outside, and no window (as the brief asked).
@@ -504,8 +547,8 @@ included: they are not `DemoScene`s, whose lights do not depend on the camera.
 
 | Limitation of the engine | Effect on the demo | Possible evolution |
 |---|---|---|
-| No emissive surface | The screens, the dials, the fixtures and the ring of light are lit, not glowing; only the halo of the lights glows | Emission maps: a texture that adds its color to the shaded one (backlog §3b, asked for this demo) |
-| A light switched off cannot keep its halo | The fixtures of the lights out of the budget are dark | With emission maps, the fixtures glow without a light |
+| The emission lights nothing and makes no halo | A screen does not light the console in front of it; a lens glows but its neighbourhood is dark when its light is out of the budget | A bloom pass on the bright pixels; the light itself stays the job of the lights (backlog §3b) |
+| A light switched off cannot keep its halo | The halo of the lights out of the budget is gone (their lens still glows) | A halo that does not need the light |
 | A point light costs a cube of six maps | 512 x 512 x 6 depths per light, about 6 MB each, 250 MB for the 42 lights of the ship once all have been switched on | Maps sized by the range of the light; a `castShadows` switch per light for the small ones (backlog §3) |
 | Shadows of thin objects at a grazing angle | Without soft shadows, the shadows of the pipes and of the cable tray show the pixels of the maps as teeth on the walls: the soft shadows are on by default | Larger maps near the camera, or a smarter filter |
 | No culling of whole Elements | The corridors behind the walls go through the geometry stage (a few ms) | A bounding box per Element, tested against the frustum (performance audit) |
@@ -526,7 +569,7 @@ Where the time goes, on six images of the visit (same workspace):
 
 | Options | ms per image |
 |---|---|
-| As the demo starts (3 lights, soft shadows, haze, mipmapping, halos) | 299 |
+| As the demo started (3 lights, soft shadows, haze, mipmapping, halos) | 299 |
 | Hard shadows | 206 |
 | + no haze | 183 |
 | + no shadows | 172 |

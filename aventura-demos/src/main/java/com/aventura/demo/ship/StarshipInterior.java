@@ -92,7 +92,8 @@ import com.aventura.view.SwingView;
  * <ul>
  * <li><b>A scene lit by point lights and spot lights only</b> ({@link ShipLights}): {@link PointLight}s under the
  *     fixtures of the ceilings, SpotLights in the junctions, on the consoles and on the hatch of the hold, each one
- *     casting shadows (a cube of six shadow maps for a point light), with a colored halo when the lights are visible.</li>
+ *     casting shadows (a cube of six shadow maps for a point light), with a colored halo when the lights are made
+ *     visible (Lights menu, off by default: the lenses of the fixtures glow instead, see Glow; on in the plan view).</li>
  * <li><b>Many lights, few switched on</b>: {@link Light#setEnabled(boolean)} and the {@link LightBudget} shared by the
  *     demos. Before each image, the lights nearest to the camera are switched on, faded so that none pops in or out,
  *     and the others off: the cost of an image depends on the lights switched on, not on the forty lights of the ship.
@@ -126,10 +127,11 @@ import com.aventura.view.SwingView;
  * <ul>
  * <li>Camera: the camera, pause of the visit, reset, the field of view (presets, or keys + and -), and the statistics
  *     (key I), with the rendering times of the last lap of the visit and the lights switched on.</li>
- * <li>Lights: the size of the light budget (1 to 6 lights), or all the lights on; the halo of the lights; the north
- *     door (key D).</li>
+ * <li>Lights: the size of the light budget (1 to 6 lights), or all the lights on; the halo of the lights (off by
+ *     default), which shows where the lights are and which ones the budget switches on; the north door (key D).</li>
  * <li>Rendering: the rendering type.</li>
- * <li>Effects: textures, mipmapping, specular highlights, shadows, soft shadows, haze.</li>
+ * <li>Effects: textures, mipmapping, specular highlights, shadows, soft shadows, haze, the screens and lamps that glow by
+ *     themselves (see Glow).</li>
  * </ul>
  *
  * <h2>Conventions</h2>
@@ -217,10 +219,12 @@ public class StarshipInterior {
 	Atmosphere atmosphere;
 	ShipTextures textures;
 	Ship ship;
+	Glow.Switch emission;     // The screens and lamps that glow by themselves, switched off and on (Effects menu)
 	ShipLights lights;
 	Lighting lighting;
 	LightBudget budget;
 	boolean allLightsOn = false;
+	boolean lightHalo = false;    // The halo of the lights, at their position (Lights menu): off, the lenses glow instead
 	AirlockDoor northDoor;       // The door the Lights menu opens and closes
 
 	Camera camera;
@@ -234,7 +238,7 @@ public class StarshipInterior {
 	Timer resizeTimer;
 	StatisticsWindow statistics;
 	Map<CameraMode, JRadioButtonMenuItem> cameraItems = new EnumMap<CameraMode, JRadioButtonMenuItem>(CameraMode.class);
-	JCheckBoxMenuItem textureItem, mipmappingItem, specularItem, shadowsItem, softShadowsItem, hazeItem, glowItem;
+	JCheckBoxMenuItem textureItem, mipmappingItem, specularItem, shadowsItem, softShadowsItem, hazeItem, glowItem, emissionItem;
 	long lastRenderNanos;
 	int lightsOn;
 
@@ -332,6 +336,11 @@ public class StarshipInterior {
 		return lighting;
 	}
 
+	/** The screens and lamps that glow by themselves (see Glow). */
+	public Glow.Switch getEmission() {
+		return emission;
+	}
+
 	public Ship getShip() {
 		return ship;
 	}
@@ -354,6 +363,7 @@ public class StarshipInterior {
 		ship = new Ship(textures);
 		world.addElement(ship);
 		northDoor = ship.getHubs().get(1).getDoors().get(0); // The first door of the north junction (its north side): the closed one
+		emission = new Glow.Switch(ship); // What glows by itself: screens, lenses, buttons (Effects menu)
 
 		System.out.println("********* Building World");
 		world.build();
@@ -380,14 +390,18 @@ public class StarshipInterior {
 		return pContext;
 	}
 
-	/** Smooth shading with textures, mipmapping, shadows, the haze, and the halo of the lights. */
+	/**
+	 * Smooth shading with textures, mipmapping, shadows and the haze. The halo of the lights is off: the lenses of the
+	 * fixtures glow by themselves (see Glow), where a halo would float under them, at the position of the light, and only
+	 * for the few lights of the budget (see render(), and the Lights menu).
+	 */
 	public static RenderContext createRenderContext() {
 		RenderContext rContext = new RenderContext(RenderContext.RENDER_STANDARD_INTERPOLATE);
 		rContext.setTextureProcessing(true);
 		rContext.setMipmapping(true);
 		rContext.setShadowing(true);
 		rContext.setAtmosphere(true);
-		rContext.setLightGlow(true);
+		rContext.setLightGlow(false);
 		return rContext;
 	}
 
@@ -569,6 +583,9 @@ public class StarshipInterior {
 	void render() {
 		applyFieldOfView();
 		updateLights();
+		// The halo of the lights: on demand (Lights menu), and always in the plan view, where it shows all the lights of
+		// the ship (the lenses, seen from below only, cannot be seen through the ceilings)
+		rContext.setLightGlow(lightHalo || cameraMode == CameraMode.PLAN);
 		// The haze is for the long corridors: from above, 70 m away, it would hide the whole ship
 		rContext.setAtmosphere(atmosphere.isHaze() && cameraMode != CameraMode.PLAN);
 		long start = System.nanoTime();
@@ -683,7 +700,7 @@ public class StarshipInterior {
 		group.add(all);
 		menu.add(all);
 		menu.addSeparator();
-		glowItem = addEffectItem(menu, "Visible lights (halo)", rContext.isLightGlow(), on -> rContext.setLightGlow(on));
+		glowItem = addEffectItem(menu, "Visible lights (halo)", lightHalo, on -> lightHalo = on); // See render()
 		menu.addSeparator();
 		addMenuItem(menu, "Open / close the north door", KeyStroke.getKeyStroke(KeyEvent.VK_D, 0), this::toggleNorthDoor);
 		return menu;
@@ -725,6 +742,7 @@ public class StarshipInterior {
 		});
 		menu.addSeparator();
 		hazeItem = addEffectItem(menu, "Haze", atmosphere.isHaze(), on -> atmosphere.setHaze(on)); // See render()
+		emissionItem = addEffectItem(menu, "Glowing screens and lamps", emission.isOn(), on -> emission.setOn(on));
 		return menu;
 	}
 
@@ -750,6 +768,7 @@ public class StarshipInterior {
 		shadowsItem.setEnabled(lit);
 		softShadowsItem.setEnabled(lit && shadowsItem.isSelected());
 		hazeItem.setEnabled(type != RenderingType.LINE);
+		emissionItem.setEnabled(lit); // The emission is drawn by the lit rendering types only
 		glowItem.setEnabled(type != RenderingType.LINE);
 	}
 

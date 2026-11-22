@@ -71,6 +71,10 @@ public class Hub extends Element {
 
 	public static final float SIZE = 4f;
 	public static final float HEIGHT = 3.2f;
+	/** The lamp in the middle of the ceiling: its size, its color, the light it emits by itself (see Glow). */
+	public static final float LAMP_SIZE = 0.5f;
+	public static final Color LAMP_COLOR = new Color(255, 214, 160);
+	public static final Color LAMP_GLOW = new Color(230, 150, 70);
 	public static final float FRAME_THICKNESS = 0.3f, FRAME_WIDTH = 0.15f, FRAME_INSET = 0.03f;
 	static final float PILLAR_SIZE = 0.35f;
 
@@ -102,6 +106,13 @@ public class Hub extends Element {
 				ShipTextures.PLATE_TILE);
 		ceiling.setColor(CEILING_COLOR);
 		addElement(ceiling);
+		// The lamp of the junction, in the middle of its ceiling: a square lens 2 cm below it, seen from below, that
+		// glows amber (see Glow), above the spot light (see ShipLights)
+		Panel lamp = new Panel("lamp", at(-LAMP_SIZE / 2, LAMP_SIZE / 2, HEIGHT - 0.02f), Vector3.xAxis(), Vector3.yOppAxis(), LAMP_SIZE,
+				LAMP_SIZE, null, null, 0);
+		lamp.setColor(LAMP_COLOR);
+		Glow.lamp(lamp, LAMP_GLOW);
+		addElement(lamp);
 
 		Element walls = new Element("walls");
 		walls.setColor(WALL_COLOR);

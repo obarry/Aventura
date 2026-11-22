@@ -35,6 +35,7 @@ import com.aventura.math.vector.Vector3;
 import com.aventura.math.vector.Vector4;
 import com.aventura.model.world.Element;
 import com.aventura.model.world.shape.Box;
+import com.aventura.model.world.shape.ClosedCylinder;
 import com.aventura.model.world.shape.Cylinder;
 import com.aventura.model.world.shape.Disc;
 import com.aventura.model.world.shape.Torus;
@@ -65,7 +66,7 @@ import com.aventura.model.world.shape.Torus;
  *    ├── store end           its end wall, and crates
  *    ├── junctions (group)   Hub x 2
  *    ├── control room        ControlRoom
- *    └── hatch               the round door of the hold, at the end of the airlock corridor
+ *    └── hatch               the round door of the hold, at the end of the airlock corridor, its warning lamp
  * </pre>
  *
  * @since Nov 2026
@@ -87,6 +88,9 @@ public class Ship extends Element {
 	public static final Vector4 ROOM_CENTER = new Vector4(0, 0, 0, 1);
 
 	public static final Color HATCH_COLOR = new Color(120, 126, 124);
+	/** The warning lamp above the hatch: its color, and the light it emits by itself (see Glow). */
+	public static final Color WARNING_LAMP_COLOR = new Color(150, 50, 40);
+	public static final Color WARNING_LAMP_GLOW = new Color(255, 60, 40);
 	public static final Color HATCH_RIM_COLOR = new Color(210, 168, 50);
 	public static final Color WHEEL_COLOR = new Color(178, 62, 46);
 
@@ -238,6 +242,19 @@ public class Ship extends Element {
 		hatch.addElement(door);
 
 		hatchLightPoint = new Vector4(end.getX(), end.getY() + 1.2f, ShipSections.CORRIDOR_HEIGHT - 0.35f, 1);
+		// The warning lamp, hanging from the ceiling on a rod, just above the red light (which points down, away from it):
+		// a small cylinder that glows red (see Glow)
+		float lampTop = ShipSections.CORRIDOR_HEIGHT, lampBottom = hatchLightPoint.getZ() + 0.06f;
+		ClosedCylinder lamp = new ClosedCylinder(0.12f, 0.07f, 6);
+		lamp.setName("warning lamp");
+		lamp.setColor(WARNING_LAMP_COLOR);
+		Glow.lamp(lamp, WARNING_LAMP_GLOW);
+		lamp.setTransformation(new Translation(new Vector3(hatchLightPoint.getX(), hatchLightPoint.getY(), lampBottom + 0.06f)));
+		hatch.addElement(lamp);
+		Cylinder rod = new Cylinder(lampTop - lampBottom - 0.12f, 0.012f, 4);
+		rod.setColor(HATCH_COLOR);
+		rod.setTransformation(new Translation(new Vector3(hatchLightPoint.getX(), hatchLightPoint.getY(), (lampTop + lampBottom + 0.12f) / 2)));
+		hatch.addElement(rod);
 		return hatch;
 	}
 

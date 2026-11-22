@@ -59,6 +59,8 @@ public class Console extends Element {
 	public static final float DEPTH = 0.7f, HEIGHT = 0.85f;
 	public static final Color BODY_COLOR = new Color(108, 118, 124);
 	public static final Color DESK_COLOR = new Color(70, 74, 78);
+	/** The share of the buttons that are lit from inside (see Glow). */
+	public static final float LIT_BUTTONS = 0.45f;
 	public static final Color[] BUTTON_COLORS = { new Color(230, 60, 40), new Color(250, 190, 40), new Color(70, 200, 90),
 			new Color(80, 150, 255), new Color(235, 235, 225) };
 
@@ -94,7 +96,10 @@ public class Console extends Element {
 			for (int c = 0; c < columns; c++) {
 				if (random.nextFloat() < 0.3f) continue;
 				Box button = new Box(0.05f, 0.05f, 0.025f, "button");
-				button.setColor(BUTTON_COLORS[random.nextInt(BUTTON_COLORS.length)]);
+				Color color = BUTTON_COLORS[random.nextInt(BUTTON_COLORS.length)];
+				button.setColor(color);
+				// About half of them are lit from inside: they glow in their color (see Glow)
+				if (random.nextFloat() < LIT_BUTTONS) Glow.lamp(button, Glow.dim(color, 0.75f));
 				float x = -0.12f + r * 0.14f, y = -width / 2 + (c + 0.5f) * width / columns;
 				button.setTransformation(new Translation(new Vector3(x, y, 0.035f)));
 				button.combineTransformation(new Rotation(tilt, Vector3.yAxis()));
@@ -115,6 +120,7 @@ public class Console extends Element {
 		// and Z, and Y x Z = X
 		Panel face = new Panel("screen", new Vector4(0.04f, -screenWidth / 2, -screenHeight / 2, 1), Vector3.yAxis(), Vector3.zAxis(),
 				screenWidth, screenHeight, null, screen, 0); // Tile 0: the texture of the screen is stretched once over it
+		Glow.screen(face, screen); // The screen emits its own picture
 		display.addElement(face);
 		// Leaning back: the opposite rotation, its top (+Z) turned towards -X
 		display.setTransformation(new Rotation((float) Math.toRadians(-12), Vector3.yAxis()));

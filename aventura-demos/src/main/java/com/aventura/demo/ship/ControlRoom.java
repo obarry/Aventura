@@ -63,6 +63,8 @@ public class ControlRoom extends Element {
 	public static final Color CEILING_COLOR = new Color(120, 122, 124);
 	public static final Color BEAM_COLOR = new Color(92, 104, 96);
 	public static final Color RING_COLOR = new Color(230, 236, 255);
+	/** The light the ring of the ceiling emits by itself (see Glow). */
+	public static final Color RING_GLOW = new Color(170, 190, 230);
 	public static final Color SCREEN_FRAME_COLOR = new Color(60, 64, 68);
 	static final float SCREEN_FRAME_DEPTH = 0.04f;
 
@@ -154,7 +156,9 @@ public class ControlRoom extends Element {
 			// The screen stands 1 cm in front of its frame: in the same plane as the front of the frame, the two surfaces
 			// would fight for each pixel in the Z-buffer (z-fighting), and the screen would show lines of the frame
 			Vector4 corner = at(side * (half - SCREEN_FRAME_DEPTH - 0.01f), 0, z).minus(u.times(width / 2));
-			Panel screen = new Panel("wall screen", corner, u, Vector3.zAxis(), width, height, null, side > 0 ? textures.screenRadar : textures.screenGraphs, 0);
+			Texture picture = side > 0 ? textures.screenRadar : textures.screenGraphs;
+			Panel screen = new Panel("wall screen", corner, u, Vector3.zAxis(), width, height, null, picture, 0);
+			Glow.screen(screen, picture); // The screen emits its own picture
 			group.addElement(screen);
 			// The frame: a Box against the wall, SCREEN_FRAME_DEPTH thick
 			Box frame = new Box(SCREEN_FRAME_DEPTH, width + 0.12f, height + 0.12f, "screen frame");
@@ -187,6 +191,7 @@ public class ControlRoom extends Element {
 		SweptSection ring = new SweptSection("ring of light", circle, ShipSections.circle(0, 0, 0.07f, 8), true,
 				SweptSection.Facing.OUTSIDE, SweptSection.Shading.SMOOTH, HEIGHT - 0.3f);
 		ring.setColor(RING_COLOR);
+		Glow.lamp(ring, RING_GLOW); // A tube of light: it glows by itself
 		group.addElement(ring);
 		return group;
 	}

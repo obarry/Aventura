@@ -47,7 +47,8 @@ import com.aventura.model.world.shape.Box;
  *    ├── ribs (group)     SectionFrame every RIB_SPACING meters, across the corridor
  *    ├── pipes (group)    SweptSection x 3: circles along the upper left corner, seen from outside
  *    ├── cable tray       SweptSection: an open U along the upper right corner
- *    ├── fixtures (group) Box under the ceiling every LIGHT_SPACING meters, where the lights hang
+ *    ├── fixtures (group) Box under the ceiling every LIGHT_SPACING meters, where the lights hang, and its lens (a
+ *    │                    Panel under it, that glows: see Glow)
  *    └── cabinets (group) WallCabinet against the walls, between the ribs (added by the Ship, see addCabinet())
  * </pre>
  * Codes can be painted on the walls between the ribs ({@link #addMarking}): decals of the walls (see WallMarking).
@@ -74,6 +75,8 @@ public class Corridor extends Element {
 	public static final Color FLOOR_COLOR = new Color(150, 146, 138);
 	public static final Color RIB_COLOR = new Color(92, 104, 96);
 	public static final Color FIXTURE_COLOR = new Color(255, 246, 225);
+	/** The light the lens under a fixture emits by itself (see Glow): the warm white of the corridor lights. */
+	public static final Color LENS_GLOW = new Color(235, 205, 160);
 	public static final Color TRAY_COLOR = new Color(110, 112, 116);
 	public static final Color[] PIPE_COLORS = { new Color(196, 126, 80), new Color(170, 172, 176), new Color(178, 62, 46) };
 	/** The pipes along the upper left corner: (lateral, height, radius). */
@@ -255,6 +258,16 @@ public class Corridor extends Element {
 			fixture.setTransformation(new Rotation(heading, Vector3.zAxis()));
 			fixture.combineTransformation(new Translation(new Vector3(p.getX(), p.getY(), height - 0.03f)));
 			fixtures.addElement(fixture);
+			// The lens: a Panel under the fixture, 1 cm below it (in its plane, the two would fight in the Z-buffer),
+			// given in the World directly. Its axes are the corridor and its right: tangent x right = down, the side
+			// it is seen from
+			Vector3 right = path.left(s).times(-1);
+			Vector4 corner = new Vector4(p.getX() - t.getX() * 0.4f - right.getX() * 0.08f, p.getY() - t.getY() * 0.4f - right.getY() * 0.08f,
+					height - 0.07f, 1);
+			Panel lens = new Panel("lens", corner, t, right, 0.8f, 0.16f, null, null, 0);
+			lens.setColor(FIXTURE_COLOR);
+			Glow.lamp(lens, LENS_GLOW);
+			fixtures.addElement(lens);
 			lightPoints.add(new Vector4(p.getX(), p.getY(), height - LIGHT_DROP, 1));
 		}
 		return fixtures;
