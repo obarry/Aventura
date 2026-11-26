@@ -373,3 +373,19 @@ engine can already do it; what is missing is mostly around it. Each item stays a
   release tags (**done**: `3.3.0-SNAPSHOT`, after the 3.2.0 release; it was `0.0.1-SNAPSHOT`); a stable API with semantic
   versioning from then on.
 - **Other toolkits.** A JavaFX view (§6), so that the same component exists in both toolkits.
+
+## 11. Performance, phase 2
+
+The pixel stages are multithreaded (v3.0.0); what remains sequential now limits the gain of the threads. The
+proposals, their expected gains and their order are in
+[PERFORMANCE_AUDIT.md §12](PERFORMANCE_AUDIT.md#12-update-of-november-26-2026-phase-2-what-remains-sequential),
+on the `perf-multithreading` branch:
+
+- **P0. Measure first**: the `TempleRuins` scene in `PerfBench`, the phases for 1 and N threads.
+- **R1**: hierarchical frustum culling by `Element`, before any new threads.
+- **MT4 / MT5**: the geometry stages of the main pass and of the shadow maps in parallel, by batches of `Element`s,
+  with identical images.
+- **D8**: version counters, first to skip `worldProject()` when nothing has moved.
+- **V2**: render while the window displays (a rendering thread, as in `SceneViewer`), in the Swing component of §10.
+- Later: **MT7** (buffers cleared by bands) if measured worth it; **D4** then **MT8** (several shadow maps at the
+  same time).
