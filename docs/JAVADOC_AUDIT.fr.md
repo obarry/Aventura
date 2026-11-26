@@ -190,8 +190,8 @@ C'est la page que l'on voit en premier. Elle peut reprendre presque tel quel le 
 - « The scene and the engine » : `RenderEngine` + `World` + `Camera` + `Lighting` + les deux contextes, avec le
   schéma du pipeline (S4) ;
 - un **ordre de lecture** : « Start with `RenderEngine`, then `World` and the shapes, then `RenderContext` » ;
-- le tableau des points d'extension de DESIGN §9, avec des `{@link}` ;
-- les conventions de DESIGN §12 (Z vers le haut, sens des lumières directionnelles, ordre S → R → T) : ce sont des
+- le tableau des points d'extension de DESIGN §10, avec des `{@link}` ;
+- les conventions de DESIGN §13 (Z vers le haut, sens des lumières directionnelles, ordre S → R → T) : ce sont des
   informations dont l'utilisateur a besoin **avant** d'écrire sa première scène ;
 - des liens vers DESIGN, le cookbook et le dépôt GitHub pour aller plus loin.
 
@@ -255,7 +255,7 @@ L'index affiche aujourd'hui 19 packages par ordre alphabétique (`context` en pr
 - 26 `@param` dont le nom ne correspond plus à la signature → renommer.
 - Listes à tirets → `<ul><li>` ; paragraphes séparés par `<p>`.
 
-### C2. Une règle de rédaction (à ajouter à DESIGN §12)
+### C2. Une règle de rédaction (à ajouter à DESIGN §13)
 
 Une API de rendu 3D a des questions récurrentes auxquelles chaque commentaire doit répondre quand elles s'appliquent.
 Elles sont aujourd'hui dispersées (ou absentes) :
@@ -286,10 +286,10 @@ Plutôt que de viser 100 % partout, suivre le parcours d'un utilisateur, dans ce
 | Priorité | Classes | Source du contenu |
 |---|---|---|
 | 1. Rendre une scène | `RenderEngine`, `World`, `Camera`, `Lighting`, `ImageView`, `SwingView` | README « Hello, Aventura », « How it works » |
-| 2. Configurer | `RenderContext` (options, presets, `RenderingType`), `PerspectiveContext`, `PerspectiveType` | README « Rendering options », DESIGN §8 |
+| 2. Configurer | `RenderContext` (options, presets, `RenderingType`), `PerspectiveContext`, `PerspectiveType` | README « Rendering options », DESIGN §9 |
 | 3. Peupler la scène | `Element`, les 16 formes de `model.world.shape`, `Texture`, `SolidMaterial`, `TexturedMaterial` | README, cookbook §1 et §3 |
 | 4. Éclairer | `AmbientLight`, `DirectionalLight`, `PointLight`, `SpotLight`, `ShadowingLight` | DESIGN §6 et §7, README « Lights and shadows » |
-| 5. Étendre | `GenerativeElement`, `Material`, `FragmentConsumer`, `Fragment`, `GUIView`, `Light` | DESIGN §9, cookbook §2 (contrats C1 à C10) |
+| 5. Étendre | `GenerativeElement`, `Material`, `FragmentConsumer`, `Fragment`, `GUIView`, `Light` | DESIGN §10, cookbook §2 (contrats C1 à C10) |
 | 6. Mathématiques | compléter `math.transform`, `math.projection`, `math.tools` | tests unitaires |
 
 Les **contrats C1 à C10 du cookbook** ont leur place naturelle dans la Javadoc de `GenerativeElement` (avec
@@ -331,8 +331,8 @@ ils doivent apparaître dans la Javadoc (`@apiNote` ou un paragraphe « <b>Note:
 - `ShadowingLight(int)` (type de boîte) et `ShadowingLight(float)` (intensité) se confondent facilement ;
   `SHADOWING_BOX_ELEMENT` et `SHADOWING_BOX_SPECIFIC` retombent sur `SHADOWING_BOX_WORLD` (BACKLOG §3).
 - `Triangle.setRectoVerso()` et `Vertex.setColor()` sont sans effet sur le rendu (BACKLOG §5).
-- Ne jamais conserver un `Fragment` après `consume()` (DESIGN §12).
-- Les chemins de textures sont relatifs au répertoire de travail (DESIGN §12, « Known limitations »).
+- Ne jamais conserver un `Fragment` après `consume()` (DESIGN §13).
+- Les chemins de textures sont relatifs au répertoire de travail (DESIGN §13, « Known limitations »).
 
 ### C6. Sortir l'historique des commentaires
 
@@ -445,7 +445,7 @@ construit**, et chacun renvoie à l'autre. On évite ainsi de maintenir deux foi
 
 | # | Action |
 |---|---|
-| C2 | Règle de rédaction ajoutée à DESIGN §12 |
+| C2 | Règle de rédaction ajoutée à DESIGN §13 |
 | C3 | Priorités 1 à 4 : `RenderEngine`, `World`, contextes, formes, lumières, vues |
 | C4 | `{@snippet}` des classes du cookbook et des presets |
 | C5 | Pièges connus en `@apiNote` |

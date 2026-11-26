@@ -3,7 +3,7 @@
 Items identified during the September 2026 clean-up phase (Rasterizer removal, contexts audit,
 configurable shadow maps, GUI-independent view) and the October 2026 spot and point light shadows,
 and deliberately **not** handled yet.
-See also the roadmap in [DESIGN.md](DESIGN.md#11-history-limitations-and-roadmap).
+See also the roadmap in [DESIGN.md](DESIGN.md#12-history-limitations-and-roadmap).
 
 ## 1. Perspective / Viewport split
 
@@ -174,7 +174,7 @@ Not handled yet:
 color set by `RenderContext.setMonochromeColor()`, default the `World` background), `UNLIT` (no
 lighting), `FLAT` (faceted shading) and `INTERPOLATE`. `PLAIN` was removed (its uses moved to `FLAT`),
 and textures stay a separate option, honored by `UNLIT`, `FLAT` and `INTERPOLATE`. See
-[DESIGN.md §8](DESIGN.md#8-configuration-the-two-contexts).
+[DESIGN.md §9](DESIGN.md#9-configuration-the-two-contexts).
 
 Follow-ups identified while doing it:
 
@@ -328,7 +328,7 @@ the file format, the architecture and the step-by-step plan are in [MODEL_FILE_I
 - **Aventura JSON format first**, since it describes the whole element tree with its local model matrices,
   colors and textures, which flat formats such as OBJ cannot. Phases: (1) geometry tree with raw geometry,
   (2) built-in shapes written as type + parameters, (3) camera, lights and atmosphere, (4) other formats
-  (OBJ, already listed as an idea in [DESIGN.md §11](DESIGN.md#11-history-limitations-and-roadmap)).
+  (OBJ, already listed as an idea in [DESIGN.md §12](DESIGN.md#12-history-limitations-and-roadmap)).
 - **Separate Maven target.** The reader and writer, and the JSON library they need, live in their own module
   (`aventura-io`) so that the rendering engine keeps no dependency other than the JDK. The engine never references
   the module. Since the project is a multi-module reactor (`aventura-engine`, `aventura-demos`), `aventura-io` will
@@ -364,7 +364,7 @@ engine can already do it; what is missing is mostly around it. Each item stays a
   their module (`DemoTextures`).
 - **Model import.** OBJ at least, and the Aventura format (§9, [MODEL_FILE_IO.md](MODEL_FILE_IO.md)).
 - **Picking.** Which `Element` (and which triangle) is under a pixel, to react to a click: an ID buffer filled by a
-  `FragmentConsumer` during the main pass (listed as an extension point in DESIGN §9), or a ray cast through the
+  `FragmentConsumer` during the main pass (listed as an extension point in DESIGN §10), or a ray cast through the
   pixel and tested against the triangles. Labels (text attached to a 3D point) would go with it.
 - **Packaging.** **Done (3.3):** the engine alone is its own module and jar (`aventura-engine`), the demos and
   their textures another (`aventura-demos`). Still to do: runnable jars of the demos (`TempleRuins` first), a

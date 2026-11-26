@@ -760,7 +760,8 @@ With an evolution of the engine: see the table of the next section.
   with straight sides, a cella without a floor plan.
 - **The sea does not move**, and neither do the trees.
 - **The rendering runs on the Swing thread**: the window does not respond during an image (see
-  [§10](#10-performance)).
+  [§10](#10-performance), and the two models of a Swing application in
+  [DESIGN.md, Integration into a Swing application](DESIGN.md#integration-into-a-swing-application)).
 
 ### Of the engine, as met by the demo
 

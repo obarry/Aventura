@@ -21,11 +21,12 @@
 5. [Rasterization and fragments](#5-rasterization-and-fragments)
 6. [Lighting model](#6-lighting-model)
 7. [Shadow mapping](#7-shadow-mapping)
-8. [Configuration: the two contexts](#8-configuration-the-two-contexts)
-9. [Extension points](#9-extension-points)
-10. [Quality and testing](#10-quality-and-testing)
-11. [History, limitations and roadmap](#11-history-limitations-and-roadmap)
-12. [Contributor conventions](#12-contributor-conventions)
+8. [Multithreading](#8-multithreading)
+9. [Configuration: the two contexts](#9-configuration-the-two-contexts)
+10. [Extension points](#10-extension-points)
+11. [Quality and testing](#11-quality-and-testing)
+12. [History, limitations and roadmap](#12-history-limitations-and-roadmap)
+13. [Contributor conventions](#13-contributor-conventions)
 
 ---
 
@@ -70,7 +71,7 @@ flowchart TB
     end
     subgraph ENGINE["Engine layer"]
         CTX["context<br/>RenderContext · PerspectiveContext"]
-        ENG["engine<br/>RenderEngine · TriangleRasterizer · ZBuffer<br/>ShadingConsumer · UnlitConsumer · DepthOnlyConsumer"]
+        ENG["engine<br/>RenderEngine · TriangleRasterizer · BandRasterizer · ZBuffer<br/>ShadingConsumer · UnlitConsumer · DepthOnlyConsumer"]
     end
     subgraph MODEL["Model layer"]
         WORLD["model.world (+ shape, triangle)<br/>World · Element · Triangle · Vertex"]
@@ -741,8 +742,8 @@ with the haze color, `c = c + (haze - c) · f(distance)`. Three points of the de
 
 The pixels are read and written directly in the back buffer (`GUIView.getBackPixels()`, implemented by `ImageView`;
 a view that does not give access to its pixels is skipped), by rows that are independent of each other, so they are
-computed by several threads (the parallel streams of the JDK) when the `RenderContext` allows more than one rendering
-thread, with exactly the same image. It costs about 2 ms for an image of 1000×562 pixels. Doing it in the fragment
+computed by the raster threads of the engine (`BandRasterizer.runRows()`, §8) when the `RenderContext` allows more
+than one, with exactly the same image. It costs about 2 ms for an image of 1000×562 pixels. Doing it in the fragment
 consumers instead would have changed the hot loops of the rasterization, paid for fragments that are covered later,
 and left the edge lines and the overlays out; the post-process is one pass for every rendering type but `LINE` (no
 Z-buffer), and, like the visible lights, it is not drawn under an orthographic perspective.
@@ -924,7 +925,270 @@ some faces are empty.
 
 ---
 
-## 8. Configuration: the two contexts
+## 8. Multithreading
+
+Aventura renders with all the cores of the processor, while keeping the pipeline readable and the images
+**identical to the bit** whatever the number of threads. This chapter describes how the work of a frame is shared,
+why it was designed this way, what it requires from the code around it, how it compares with a GPU, and how a Swing
+application, which has threading rules of its own, drives the engine. The measurements and the history of the work
+are in the [performance audit](PERFORMANCE_AUDIT.md#6-multithreading) (§6, and items D9, MT1 to MT3 of §10.5).
+
+### The threads of a frame
+
+`RenderEngine.render()` is a **synchronous** call: it runs in the thread of the caller, called here the *rendering
+thread*, and returns when the image is complete. Inside, the stages that weigh the most are handed to a pool of
+*raster threads*, and the rendering thread waits for them at the end of each stage.
+
+| Thread | Created by | What it does |
+|---|---|---|
+| Rendering thread (the caller of `render()`) | The application | Geometry stage (transforms, frustum and back-face culling, `DrawList`), geometry of the shadow maps, building of the mipmaps, front-to-back sort, lines and overlays (edges, normals, axes, light vectors), swap of the buffers, notification of the view |
+| `aventura-raster-1` … `aventura-raster-N` | `RenderEngine`, at the first frame with more than one thread (`BandRasterizer`) | Rasterization of the faces of the main pass and of the shadow maps, post-processes (haze and fogs, visible lights), by bands of rows |
+| GUI thread (e.g. the Swing EDT) | The toolkit | Displays the front buffer, never touches the engine (see [Integration into a Swing application](#integration-into-a-swing-application)) |
+
+```mermaid
+sequenceDiagram
+    participant App as Rendering thread
+    participant BR as BandRasterizer
+    participant W as Raster threads (N)
+    App->>App: geometry stage → DrawList (+ mipmaps, sort)
+    opt shadows
+        loop each shadowing light / face
+            App->>App: geometry in the space of the light → DrawList
+            App->>BR: rasterize(map)
+            BR->>W: invokeAll(workers)
+            W-->>BR: all the bands of the map are drawn
+        end
+    end
+    App->>BR: rasterize(main DrawList)
+    BR->>W: invokeAll(workers)
+    Note over W: each thread takes a free band,<br/>draws ALL the faces in it, takes the next one
+    W-->>BR: all the bands drawn (barrier)
+    BR-->>App: statistics merged face by face
+    App->>BR: runRows(haze, fogs, visible lights)
+    BR->>W: invokeAll
+    W-->>App: done
+    App->>App: lines, overlays, renderView() (swap)
+```
+
+The number of threads is an option of the `RenderContext`: `setRenderThreads(RENDER_THREADS_AUTO)` (0, the
+default) for one per processor, `setRenderThreads(1)` to stay in the rendering thread alone (exactly the behavior of
+the versions before 3.0), or any `n`. The pool is created once and reused from frame to frame (again only if the
+number changes); its threads are daemons, so they never keep a program alive, and `RenderEngine.close()` stops them
+earlier.
+
+### Why bands of rows
+
+On a CPU, the obvious split, "one triangle per thread", does not work: two threads drawing two overlapping triangles
+write the same pixels of the image and of the Z-buffer. It would need a lock or an atomic operation per pixel (far
+too expensive), and the image would depend on which thread wins a tie of depth, which breaks the tests.
+
+Aventura uses the classic **sort-middle** organization instead: each thread **owns a part of the screen**, and draws
+there **every face that touches it, in the order of the list**. With a scanline rasterizer, the simplest part is a
+band of rows: `TriangleRasterizer.setRows()` limits a triangle to `[firstRow, endRow)`, which it already did for the
+edges of the screen. The consequences are the reasons of the choice:
+
+- **No synchronization per pixel**: a pixel of the image or of the Z-buffer is only ever written by the thread of its
+  band.
+- **A deterministic image**: each pixel sees the faces in the same order as with one thread, so the image, the shadow
+  maps and even the statistics are the same for 1, 2, 8 or 16 threads (`TestRenderThreads` checks it in every
+  rendering mode). A bug can always be reproduced, and stepped through in a debugger, with `setRenderThreads(1)`.
+- **Little code, nothing hidden**: the rasterizer and the consumers are unchanged; `BandRasterizer` (≈ 300 lines,
+  comments included) holds all the parallelism of the engine.
+
+**Balancing the load.** The bands do not cost the same: a band of sky costs nothing, a band of foreground costs a
+lot. So the screen is cut into **more bands than threads** (`BANDS_PER_THREAD` = 4), handed out **dynamically**
+(an `AtomicInteger` gives the next free band): a thread whose bands were cheap takes more of them, and all the threads
+finish at about the same time. With 2 threads and 2 bands, the prototype gained nothing (the top band was mostly
+sky); with 8 bands, ×1.8.
+
+**The tools of the JDK, and why these ones.**
+
+| Choice | Reason |
+|---|---|
+| A fixed pool (`Executors.newFixedThreadPool`) created once | Creating threads at each frame would cost more than it saves |
+| A `ThreadFactory` naming the threads `aventura-raster-N`, daemons | Readable in a profiler or a thread dump; never prevents the JVM from ending |
+| One `Worker` object per thread, with its own `TriangleRasterizer`, `Fragment` and counters | Nothing mutable is shared between threads; the counters are merged at the end (the Factory idea of the audit: an execution context per thread) |
+| `ExecutorService.invokeAll()` as the barrier at the end of a stage | Simple and readable; the exceptions of a worker are passed on to the caller of `render()` |
+| One thread per processor by default, not one less | The rendering thread does not compute during `invokeAll()`: it waits |
+| No `parallelStream()`, no `ForkJoinPool` | Less control (the common pool is shared with the whole application) and less didactic; the atmosphere used a parallel stream before MT3 and now shares the raster threads |
+| No virtual threads | They are made for blocking I/O, not for computation |
+
+**Each band goes through all the faces.** This is the price of the bands: with 4 bands per thread, a face is looked
+at by every band, and drawn by the few it touches. `TriangleRasterizer.coversNoRow()` rejects the others before any
+work, so the cost stays small, but it grows with the number of threads and of faces. The next level is the **tiles
+with binning** of the GPUs of mobile phones (a list of the faces of each tile, built once), listed in the roadmap.
+
+### What makes it correct: the shared state and the Java memory model
+
+Making the engine parallel was mostly **removing hidden shared state**, which the performance audit had listed
+(§6, "Prerequisites"): static counters in the constructors of the vectors (D1), the last position cached in the
+`ZBuffer` (A3), the accumulator inside `Texture` (A6), the statistics of the `RenderEngine`. The rules that hold
+now:
+
+1. **Prepare, then read.** Everything the raster threads read (the `DrawList`, the triangles and their projected
+   vertices, the lights, the materials, the textures and their mipmaps, the shadow maps) is prepared by the
+   rendering thread **before** the stage starts, and only read during it. This is why the pipeline has two stages
+   (D9): geometry into a `DrawList`, then rasterization of the list.
+2. **Write only your own rows.** A `FragmentConsumer`, a `BandTask` of a post-process or a shadow consumer writes
+   only the pixels of its band. A consumer that keeps nothing between two calls (`DepthOnlyConsumer`) can be shared;
+   the others are created per face and per band.
+3. **Hand over through the executor.** In Java, a write made by one thread is not guaranteed to be seen by another
+   without a *happens-before* relation. Here it is given by the `ExecutorService`: what the rendering thread wrote
+   before `invokeAll()` is visible to the tasks, and what the tasks wrote is visible to the rendering thread when
+   `Future.get()` returns. No field needs to be `volatile` for that, and there is no lock in the hot loops.
+4. **Publish last.** The few objects built lazily are published once complete: `SurfaceMap.buildMipmaps()` is
+   `synchronized` and makes the levels visible only when they are all built, the front buffer of `ImageView` is a
+   `volatile` reference to an image never modified after the swap.
+5. **Create in the thread that uses it.** The `TriangleRasterizer` of a worker is created in its own thread, so that
+   the objects of two workers do not sit side by side in memory (*false sharing*: two cores writing the same cache
+   line slow each other down), and counters are local variables added to the total at the end.
+
+### What it brings, and its limits
+
+On a laptop with 2 cores (audit §10.5), the main pass goes ×1.8 to ×1.9 faster (PCF shadows ≈ 200 → 110 ms, without
+shadows ≈ 48 → 30 ms), the shadow maps ×1.5 to ×1.9, the visible lights 51 → 32 ms, the atmosphere 16 → 9.5 ms;
+single-threaded, nothing changed. With 95% of the time parallel, Amdahl's law bounds the gain at about ×6 to ×8 on
+8 to 12 logical cores; the bandwidth of the memory, hyper-threading (two logical cores share one core) and the turbo
+of a single busy core bring it down to about ×3 to ×5 in practice. Measure in the same power mode (audit §11.1): on a
+laptop, the "Balanced" mode of Windows alone costs a factor 1.7.
+
+### Constraints and limitations
+
+For the **application**:
+
+- **One `render()` at a time per `RenderEngine`.** It is not reentrant; call it from one thread (or serialize the
+  calls).
+- **Do not change the scene during `render()`.** The `World` and its `Element`s, the `Lighting`, the `Camera`, the
+  `RenderContext`, the `Texture`s are read by all the threads during the frame, without locks. Change them between
+  two frames, in the thread that calls `render()` (or hand the changes over to it, as `SceneViewer` does). A change
+  is taken into account by the next `render()` ("Refresh, don't cache", §13).
+- **Two engines must not render the same `World` at the same time.** Part of the state of the pipeline is still
+  stored in the model (`Vertex.prj_position` and the projected vertices, audit D4): two `RenderEngine`s, or a
+  `RenderEngine` and another computation, would overwrite each other. Two engines on two different worlds are fine.
+- **The frame listener of an `ImageView` is called in the rendering thread**, not in the thread of the GUI.
+
+What **stays sequential** today:
+
+- the geometry stage (≈ 1 to 2% of a frame) and the geometry of each shadow map in the space of the light;
+- the shadow maps of several lights, and the 6 faces of the cube map of a `PointLight`, one after the other (each
+  one is rasterized in parallel; running them side by side needs D4 first);
+- everything drawn with lines: the `LINE` type, edges, normals, overlays. They go through the `Graphics2D` of the
+  view, which is not thread-safe, so a `DrawList` that holds lines is executed by the rendering thread alone;
+- the copy of the image into the window, done by the GUI toolkit.
+
+For **extensions** (§10): a `FragmentConsumer`, a `Material`, a `Fog` or a `BandTask` is **called by several threads
+at the same time**. It must keep no state between calls (or only state created per face and per band), write only its
+own pixel or rows, and never keep a `Fragment` after `consume()` (§13).
+
+### Compared with a GPU
+
+The design borrows the vocabulary and the stages of a GPU on purpose (§1), and its parallelism follows the same
+principle, ownership of the pixels, with very different means.
+
+| | GPU | Aventura (CPU) |
+|---|---|---|
+| Unit of parallelism | Thousands of lanes, in groups of 32 or 64 running the same instruction (SIMT) | A few to a few tens of threads, each running ordinary scalar Java |
+| Who writes a pixel | Any shader core; order and atomicity of the writes guaranteed by fixed-function units (ROPs) | Only the thread of its band: the guarantee comes from the organization, not from hardware |
+| Order of the primitives | Guaranteed per pixel by the APIs (OpenGL, Direct3D, Vulkan): the result is as if drawn in order | The same guarantee, by construction: each band draws the faces in the order of the list |
+| Rasterization | Fixed-function hardware, often by tiles (binning on mobile GPUs) | `TriangleRasterizer`, plain Java, by bands of rows (tiles in the roadmap) |
+| Vertex / fragment stages | Programmable shaders, compiled for the GPU | Geometry stage and `FragmentConsumer`s, plain Java objects |
+| Post-processes | Full-screen passes or compute shaders | `BandTask`s over rows, on the same threads |
+| Hidden surfaces | Early-Z, Hi-Z, in hardware | Front-to-back sort, then the depth test before the shading (audit R5) |
+| CPU and GPU | Asynchronous: the CPU fills command buffers, 2 or 3 frames in flight | Synchronous: `render()` returns with a complete image; the double buffer only separates drawing and display |
+| Memory | Separate (VRAM), textures uploaded once, very high bandwidth | The Java heap, shared by all; the bandwidth of the memory is the first limit of the scaling |
+| Vector instructions | Native | Few: what the JIT vectorizes by itself; the incubating Vector API is not used, to keep the code readable |
+| Cost of a frame | A few ms for millions of triangles | Tens of ms for about 50,000 triangles |
+| Debugging | Specialized tools, results that may vary between drivers | A debugger, a breakpoint in any stage, bit-identical images with 1 thread |
+
+What Aventura gives up is speed: its order of magnitude stays that of the software renderers of the 1990s, now
+spread over several cores. What it keeps is what a GPU hides: every stage, and its parallelism, can be read and
+changed in plain Java, and runs wherever a JVM runs, without a driver, OpenGL or a native library.
+
+### Integration into a Swing application
+
+Swing has its own rule: it is **single-threaded**. Its components are created, read and changed only on the *Event
+Dispatch Thread* (EDT), which also runs the listeners of the mouse and the keyboard, the `javax.swing.Timer`s and the
+painting. Whatever runs long on the EDT freezes the window: the events pile up and nothing is repainted. The engine
+and Swing meet at two points only:
+
+- **`SwingView`** (an `ImageView`, so double buffered): the engine draws into the back buffer; at the end of the
+  frame, `renderView()` swaps it to the front buffer and `frameRendered()` calls `component.repaint()`. `repaint()`
+  is one of the few Swing methods that may be called from any thread: it only puts a request into the queue of the
+  EDT (several requests merge into one).
+- **The `paintComponent()` of the application**, on the EDT, draws `view.getImageView()`: the front buffer, a
+  `volatile` reference to an image that the engine never modifies after the swap, so it is read without tearing and
+  without a lock.
+
+Two models of application then work, both used by the demos.
+
+**A. Rendering on the EDT** (`TempleRuins`, `StarshipInterior`, `FractalLandscape`, `MovingCamera`). The
+listeners and the animations change the camera and call `render()` directly, on the EDT.
+
+- *For it*: the simplest code. The scene is only ever touched by one thread, the EDT, so there is nothing to
+  synchronize: the application code stays single-threaded and only the engine is parallel inside `render()`. The
+  raster threads do the heavy work while the EDT waits, so no core is lost.
+- *Against it*: the window does not respond during a frame. This is acceptable while a frame takes a few tens of
+  ms (≈ 37 ms for `TempleRuins` on a 20-thread laptop); beyond 100 ms or so, the application feels slow, and a long
+  loading freezes it.
+- *The pace of an animation*: rather than a `Timer`, whose ticks make the EDT wait up to one period (and the clock of
+  Windows is coarse even with a 1 ms delay), `TempleRuins` chains its images with `SwingUtilities.invokeLater()`:
+  each step puts the next one at the end of the queue, after the repaint it requested and after the events that came
+  meanwhile. The window stays usable between two images, and 14% more images are displayed (audit §11.2). The camera
+  moves by the time elapsed, not by the number of images.
+
+**B. A dedicated rendering thread** (`SceneViewer`). The EDT renders nothing.
+
+```mermaid
+sequenceDiagram
+    participant EDT as Swing EDT
+    participant S as ViewState (AtomicReference)
+    participant R as Rendering thread
+    participant RE as RenderEngine (+ raster threads)
+    EDT->>S: new immutable state (mouse, menu)
+    EDT->>R: requestRender() (at most one pending)
+    R->>S: read the LATEST state
+    R->>R: apply it to the scene, camera, RenderContext
+    R->>RE: render()
+    RE->>EDT: repaint() (via SwingView)
+    EDT->>EDT: paintComponent(): draw the front buffer
+    R->>EDT: invokeLater(title, menus, errors)
+```
+
+- The EDT only records what the user asks for, in an **immutable** `ViewState` held by an `AtomicReference`, and
+  requests a rendering. Requests made during a frame **collapse into one** more frame, of the latest state.
+- One single background thread **owns** the scene, the camera and the `RenderEngine`: it is the only one to change
+  them, between two frames, so the rule "do not change the scene during `render()`" holds by construction.
+- What goes back to Swing (title, menus, error dialogs) goes through `SwingUtilities.invokeLater()`.
+- *For it*: the window always responds, even for a slow scene or the loading of a new one; a slow scene just shows
+  fewer images. *Against it*: two threads, an explicit hand-over of the state, and more care.
+
+**The rules, whatever the model:**
+
+| Do | Do not |
+|---|---|
+| Call `render()` from one thread: the EDT (model A) or a thread that owns the scene (model B) | Call `render()` from `paintComponent()`: painting must stay short, and Swing paints when it decides |
+| Change the scene in the thread that renders, between two frames | Change the camera or the elements from the EDT while another thread renders (model B) |
+| Touch the Swing components on the EDT only, through `invokeLater()` from the rendering thread | Update a label or a menu from the rendering thread or from a frame listener |
+| Draw `getImageView()` in `paintComponent()` | Read the back buffer, or keep an image obtained from the view across frames with image reuse on (below) |
+| Stop the animations (`Timer`, chain of `invokeLater()`) and the rendering thread when the window closes | Rely on `close()` to end the program: the raster threads are daemons anyway |
+
+**Image reuse.** `ImageView.setImageReuse(true)` recycles three images instead of allocating one per frame (a
+1280 × 720 image is 3.7 MB). An image handed to the GUI is drawn into again **two frames later**, so it must be
+painted by then. In model A, this holds by construction: rendering and painting both run on the EDT, one after the
+other, and the demos turn it on. In model B, the EDT may be late (a slow paint, a scaled screen); `SceneViewer` keeps
+the default, a new image per frame.
+
+**The number of threads.** The default, one raster thread per processor, suits both models: in model A the EDT
+waits during the rasterization; in model B it is mostly idle. An application whose own interface is busy (a large
+table, an editor beside the 3D view) can leave it a core with `setRenderThreads(availableProcessors() - 1)`.
+
+**Other toolkits.** The same principles apply to JavaFX or SWT, which also have a single GUI thread: render in a
+thread of the application, register `ImageView.setFrameListener()`, and hand the image over with
+`Platform.runLater()` (JavaFX) or `Display.asyncExec()` (SWT), converting it if needed.
+
+---
+
+## 9. Configuration: the two contexts
 
 All render parameters live in two objects passed to the `RenderEngine`. Swapping a context
 re-renders the **same scene** differently, from a cheap wireframe preview to full shading with
@@ -987,7 +1251,7 @@ planned (see the roadmap).
 
 ---
 
-## 9. Extension points
+## 10. Extension points
 
 ```mermaid
 flowchart LR
@@ -1033,7 +1297,7 @@ of fog (a ground mist).
 
 ---
 
-## 10. Quality and testing
+## 11. Quality and testing
 
 Two complementary test families run from Maven:
 
@@ -1072,7 +1336,7 @@ the demos adds the timing and the triangle counts of the last image (see the
 
 ---
 
-## 11. History, limitations and roadmap
+## 12. History, limitations and roadmap
 
 ```mermaid
 timeline
@@ -1096,7 +1360,7 @@ timeline
          : Visible lights: halos, sun with lens flare and light shafts, 470+ unit tests
          : Atmosphere: the haze of the distance, spherical fogs, 540+ unit tests
          : Rendering types: MONOCHROME (hidden-line), UNLIT
-         : TempleRuins, scene statistics, texture mipmapping, 610+ unit tests
+         : Multithreading by bands of rows (v3.0.0), TempleRuins, scene statistics, texture mipmapping, 610+ unit tests
 ```
 
 Commit activity reflects this: two intense phases (2016–2017 and 2024–2026) around a quieter period.
@@ -1114,13 +1378,13 @@ xychart-beta
 
 | Area | Current state |
 |---|---|
-| Performance | Single-threaded CPU rasterizer; built for clarity, not large scenes |
+| Performance | CPU rasterizer, multithreaded by bands of rows (§8); built for clarity, not large scenes (tens of ms for ~50,000 triangles) |
 | Shadows | All lights (orthographic, perspective and cube maps); hard edges by default, optional PCF 3×3 with a fixed-width penumbra |
 | Lights | Invisible by default; optional halo of point and spot lights, and disc, halo, lens flare and optional light shafts of the sun (`setLightGlow`), hidden by the objects |
 | Atmosphere | A haze that depends on the distance only and spherical fogs with a soft edge (one color each, same extinction for each channel, no scattering of the light of the sun), as a post-process (`World.setAtmosphere`, `RenderContext.setAtmosphere`); not in `LINE` rendering nor orthographic |
 | Display | Swing is the only toolkit with a dedicated view; others go through `ImageView` and its frame listener. The image is copied into the window by Java's software routines: on a screen scaled by the system (HiDPI, e.g. 200%), it is enlarged at each frame, a few ms per image (BACKLOG §6) |
 | Assets | Textures loaded from an image file or a URL (e.g. a classpath resource, `new Texture(URL)`, as the demos do) |
-| API | `PerspectiveContext` mixes lens and pixel size (see §8) |
+| API | `PerspectiveContext` mixes lens and pixel size (see §9) |
 
 ### Roadmap (candidate items)
 
@@ -1136,7 +1400,7 @@ flowchart LR
     subgraph NEXT["Mid term"]
         m1[Distance culling of<br/>cube map faces]
         m2[Runnable demo jars,<br/>published engine artifact]
-        m3[Multi-threaded rasterization<br/>by screen tiles]
+        m3[Rasterization by screen tiles<br/>with binning, shadow maps in parallel]
     end
     subgraph LATER["Ideas"]
         l1[Other GUIView backends<br/>JavaFX, image sequence]
@@ -1148,7 +1412,7 @@ flowchart LR
 
 ---
 
-## 12. Contributor conventions
+## 13. Contributor conventions
 
 - **Z is up.** Cameras are built with `Vector4.zAxis()` as the up vector.
 - **Directional lights are defined by their propagation direction** (from the light towards the scene).
