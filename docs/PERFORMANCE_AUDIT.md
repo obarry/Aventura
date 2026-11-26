@@ -365,7 +365,7 @@ factored out. `MapView` becomes a display adapter.
 `world.worldProject()`, normal matrices, `initShadowing()` and `generateShadowMap()` (with a new 2001 × 2001
 `ZBuffer` at each frame), light colors… are computed again even when nothing has moved.
 
-DESIGN §12 sets the rule "*Refresh, don't cache*", which answers real bugs of stale caches. **Do not work around it
+DESIGN §13 sets the rule "*Refresh, don't cache*", which answers real bugs of stale caches. **Do not work around it
 with improvised caches.** Proposal: explicit **version counters** (`Element`, `Light`, `World` increment a number at
 each change; a derived result remembers the version from which it was computed). The rule becomes "refresh if the
 version has changed".

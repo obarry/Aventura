@@ -59,7 +59,7 @@ engine then the demos.
   - `GEOMETRY_COOKBOOK.md`, `ATMOSPHERE_COOKBOOK.md`, `PERFORMANCE_AUDIT.md`, `JAVADOC_AUDIT.md`
     (the two audits with a French version `*.fr.md`, kept in step)
 
-## Conventions (see docs/DESIGN.md §12)
+## Conventions (see docs/DESIGN.md §13)
 
 - **Z is up.** Cameras use `Vector4.zAxis()` as up vector.
 - Directional lights are defined by their **propagation direction** (light towards scene).
