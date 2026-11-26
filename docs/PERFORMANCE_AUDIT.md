@@ -31,6 +31,7 @@ possible), its cost and its effect on readability. The identifiers (A1, D3, R5�
 9. [What not to do](#9-what-not-to-do)
 10. [Update of October 6, 2026: new features and progress](#10-update-of-october-6-2026-new-features-and-progress)
 11. [Update of November 17, 2026: what surrounds the rendering](#11-update-of-november-17-2026-what-surrounds-the-rendering)
+12. [Update of November 26, 2026: phase 2, what remains sequential](#12-update-of-november-26-2026-phase-2-what-remains-sequential)
 
 ---
 
@@ -690,6 +691,9 @@ On a machine with 8 to 12 logical threads, Amdahl's law gives a maximum of about
 In practice, memory bandwidth, hyperthreading and load imbalance bring this down to **×3 to ×5**. The engine would
 then use 60 to 90% of the CPU instead of 8%.
 
+> **v3.** With the pixel stages parallel (MT1 to MT3), the next limit is what remains sequential: the geometry
+> stages, `worldProject()`, the display outside the engine. See [§12](#12-update-of-november-26-2026-phase-2-what-remains-sequential).
+
 ---
 
 ## 7. Tracer and instrumentation
@@ -1098,3 +1102,125 @@ window, so that the enlargement is done by the graphics chip. **Expected gain**:
 about 3 ms per image, to be measured (depends on the graphics pipeline enabled by Java on Windows) · **Effort** S
 (about twenty lines, in `SwingView` or first in a demo) · **Readability** = · postponed (BACKLOG §6). The engine keeps
 computing everything on the CPU.
+
+---
+
+## 12. Update of November 26, 2026: phase 2, what remains sequential
+
+With MT1 to MT3 (§10.5), every stage that touches the pixels is shared between the cores: the main pass, the shadow
+maps, the post-processes. What remains in the rendering thread alone was negligible when it was 1 to 2% of a frame
+computed by one core. It is no longer: by **Amdahl's law**, the sequential part is what limits the gain of the
+threads, and its share grows with the number of cores.
+
+An order of magnitude, from the statistics shown in [TEMPLE_RUINS.md](TEMPLE_RUINS.md#statistics) (56,676
+triangles, 753 Elements; the conditions of that image were not recorded, they must be measured again):
+`SETUP 3.1, SHADOWS 42.1, GEOMETRY 10.4, MAIN_PASS 148.3, OVERLAYS 4.9 ms`. If the main pass goes down to about
+30 ms with the threads, SETUP and GEOMETRY, about 13 ms, become **30% of the frame**. On `UrbanScape` (9,000
+triangles) the geometry weighed ≈ 1.4 ms (D9): the question depends on the scene, and `TempleRuins` is the one that
+asks it.
+
+### 12.1 Where the sequential time is
+
+| Phase (`FrameTimer`) | Sequential part today | Parallel today |
+|---|---|---|
+| `SETUP` | `world.worldProject()` (world coordinates of all the vertices), `Lighting.prepareFrame()`, clearing of the back buffer and of the Z-buffer | — |
+| `SHADOWS` | Geometry stage of each light, in its space (`prepareShadowMapElement()`); the lights one after the other, and the 6 faces of a point light one after the other | Rasterization of each map (MT2) |
+| `GEOMETRY` | All of it: transformation, culling, normals, materials, filling of the `DrawList`, building of the mipmaps (once) | — |
+| `MAIN_PASS` | Front-to-back sort (R5) | Rasterization (MT1) |
+| `OVERLAYS` | Lines (landmarks, light vectors): `Graphics2D` | Haze, fogs, visible lights (MT3) |
+| Outside the engine | Copy of the image into the window, on the EDT, while nothing is rendered (`TempleRuins` renders on the EDT): 3 ms per image, 7 ms on a screen scaled to 200% (§11) | — |
+
+### 12.2 Proposals
+
+**P0. Measure the sequential part.** `PerfBench` renders `UrbanScape`, a scene where the geometry is small. Add
+the `TempleRuins` scene to it (its world is built without a window), and print the phases for `-threads 1` and the
+default: the time of each phase that does not decrease with the threads is the sequential part. Take the
+measurements in the "Best performance" power mode (§11.1).
+**Effort** S · **Readability** = · the condition of all that follows.
+
+**R1 first: remove work before sharing it.** The hierarchical frustum culling by `Element` (§4, R1, still to do)
+skips a whole subtree out of view with one test of its bounding volume, instead of transforming and testing each of
+its triangles. In `TempleRuins`, 25,155 of the 56,676 triangles are not displayed. This reduces `GEOMETRY` for every
+number of threads, and is in line with the rule of this audit: remove the work before parallelizing it.
+
+**MT4. Geometry stage of the main pass in parallel.** `prepare()` goes through the tree of `Element`s and appends
+the visible triangles to the `DrawList`. Proposal, with the same principles as the bands of MT1:
+
+- flatten the tree into a list of **batches** (subtrees of a few hundred triangles, with the color and emission they
+  inherit), handed out dynamically to the threads of the `BandRasterizer` (no second pool); a split by root Element
+  would be unbalanced (the temple on one side, a sea of 2,048 triangles on the other);
+- each worker owns its **`ElementTransform`** (mutable: `setModel()`), its **counters** (`nbt_in`, `nbt_out`,
+  `nbt_bf`…) and its **segment of `DrawList`**;
+- the segments are concatenated **in the order of the batches**: the list, hence the sort, the image and the
+  statistics, is the same as with one thread (checked by `TestRenderThreads` as it is);
+- what makes it safe is already there: a vertex belongs to a single `Element` (rule of `prepare()`), so two workers
+  never write the same `prj_position`; `buildMipmaps()` is `synchronized`.
+
+D4 is **not** needed for this: D4 separates the **passes** (a shadow pass and the main pass write the same vertices),
+whereas MT4 splits **one** pass between Elements that share no vertex.
+**Expected gain**: `GEOMETRY` divided by 3 to 5 (≈ 10 → 2-3 ms on `TempleRuins`) · **Effort** M · **Readability** =
+(the batch runner is the generalization of `runBands()`; `prepare()` itself does not change).
+
+**MT5. Geometry stage of the shadow maps in parallel.** The same code, in `ShadowingLight`. It only matters when
+the map is drawn again at each frame: nothing in `TempleRuins` (map kept, R9), a lot in `StarshipInterior` and with
+moving lights.
+**Expected gain**: the geometry part of `SHADOWS` divided by 3 to 5 · **Effort** S after MT4 · **Readability** =.
+
+**D8 for `worldProject()`.** The world coordinates of the vertices are computed again at each frame, even when no
+`Element` has moved (nothing moves in `TempleRuins`). The version counters of D8 avoid the work entirely; a
+parallel `worldProject()` (MT6, trivial: one Element per task) only divides it. D8 first; MT6 only if a scene with
+much movement shows the need.
+**Expected gain**: `worldProject()` → 0 for a static scene · **Effort** M (D8 done uniformly) · **Readability** =.
+
+**MT7. Clear the buffers by bands.** Today the rendering thread clears the whole back buffer and Z-buffer, then the
+workers read them again band by band. Each worker could clear its band at the start of its first pass over it: one
+pass over the memory instead of two, and the band is then in the cache of the core that draws it.
+**Expected gain**: ≈ 1 ms · **Effort** S · **Readability** − (the clear moves away from `initView()`): only if P0
+shows it is worth it.
+
+**The sort of R5 stays sequential**, unless P0 shows more than a few percent: `Arrays.parallelSort()` runs on the
+common pool of Java (against the choice of §6), and the faces at equal depth must keep a deterministic order.
+
+**MT8. Several shadow maps at the same time** (the lights, the 6 faces of a point light): already listed in §6,
+still blocked by **D4** (vertex output buffers per pass). It is the case of `StarshipInterior` (2 to 3 point and spot
+lights). Before it, the culling of the faces of the cube map by the range of the light (N4.2) removes more work, with
+no threads.
+**Effort** L (D4) · **Readability** + (D4 separates the model from the pipeline).
+
+**V2. Render while the window displays.** In `TempleRuins` and `StarshipInterior`, the rendering runs on the EDT
+(model A of [DESIGN §8](DESIGN.md#integration-into-a-swing-application)): while the image is copied into the
+window, nothing is rendered. With a rendering thread that always draws the latest state of the camera (model B, that
+of `SceneViewer`, D10), image N+1 is computed while the EDT displays image N.
+**Expected gain**: the 3 to 7 ms per image outside the engine (§11) overlap with the rendering, **+10 to 20% images
+displayed**, to be measured · **Effort** M · **Readability** = if it is done once, in the Swing component of the
+BACKLOG (§10, "A ready-made Swing component"), rather than in each demo. Image reuse (D6) must then be checked: the
+image must be painted before it is drawn again, two frames later.
+
+**Not proposed:** overlapping two frames inside the engine (geometry of frame N+1 during the rasterization of N, as
+a GPU does). It needs D4, breaks the rule "do not change the scene during `render()`" (DESIGN §8), and would make the
+pipeline much harder to follow. The lines (`Graphics2D`, not thread-safe) stay sequential.
+
+### 12.3 Roadmap of phase 2
+
+On the `perf-multithreading` branch, one step at a time, each one checked by `mvn test`, `TestRenderThreads` and the
+checksums of `PerfBench` (identical images), and measured with P0:
+
+| Step | Content | Condition |
+|---|---|---|
+| 0 | **P0**: `TempleRuins` in `PerfBench`, phases for 1 and N threads | — |
+| 1 | **R1**: hierarchical frustum culling by `Element` | — |
+| 2 | **MT4**, then **MT5** with the same batch runner | P0 shows `GEOMETRY` (and the geometry of `SHADOWS`) above ≈ 10% of the frame |
+| 3 | **D8**: version counters, first for `worldProject()` | — |
+| 4 | **V2**: rendering thread, in the reusable Swing component | — |
+| 5 | **MT7**, sort of R5 | Only if P0 shows a stake |
+| 6 | **D4**, then **MT8** and N4.2 | The heaviest; to be decided after steps 0 to 4 |
+
+| Id | Proposal | State as of November 26 |
+|---|---|---|
+| P0 | Measure the sequential part on `TempleRuins` | To do |
+| MT4 | Geometry stage of the main pass in parallel, by batches of `Element`s | To do |
+| MT5 | Geometry stage of the shadow maps in parallel | To do (after MT4) |
+| MT6 | `worldProject()` in parallel | Not needed if D8 is done |
+| MT7 | Clearing of the buffers by bands | To do if P0 shows a stake |
+| MT8 | Several shadow maps at the same time | To do after D4 |
+| V2 | Rendering thread in the demos (model B) | To do, with the Swing component of the BACKLOG |

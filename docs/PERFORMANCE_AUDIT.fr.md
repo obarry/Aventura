@@ -31,6 +31,7 @@ la feuille de route du §8.
 9. [Ce qu'il vaut mieux ne pas faire](#9-ce-quil-vaut-mieux-ne-pas-faire)
 10. [Mise à jour du 6 octobre 2026 : nouvelles fonctions et état d'avancement](#10-mise-à-jour-du-6-octobre-2026--nouvelles-fonctions-et-état-davancement)
 11. [Mise à jour du 17 novembre 2026 : ce qui entoure le rendu](#11-mise-à-jour-du-17-novembre-2026--ce-qui-entoure-le-rendu)
+12. [Mise à jour du 26 novembre 2026 : phase 2, ce qui reste séquentiel](#12-mise-à-jour-du-26-novembre-2026--phase-2-ce-qui-reste-séquentiel)
 
 ---
 
@@ -706,6 +707,9 @@ Sur une machine à 8 à 12 threads logiques, la loi d'Amdahl donne un maximum d'
 parallèle. En pratique, la bande passante mémoire, l'hyperthreading et le déséquilibre de charge ramènent cela à
 **×3 à ×5**. Tu verras alors le moteur utiliser 60 à 90 % du CPU au lieu de 8 %.
 
+> **v3.** Les étapes des pixels étant parallèles (MT1 à MT3), la limite suivante est ce qui reste séquentiel : les
+> étapes géométrie, `worldProject()`, l'affichage hors du moteur. Voir le [§12](#12-mise-à-jour-du-26-novembre-2026--phase-2-ce-qui-reste-séquentiel).
+
 ---
 
 ## 7. Tracer et instrumentation
@@ -1123,3 +1127,130 @@ celle-ci dans la fenêtre, pour que l'agrandissement soit fait par la puce graph
 l'affichage à 200 % vers 3 ms par image, à mesurer (dépend du chemin graphique activé par Java sous Windows) ·
 **Effort** S (une vingtaine de lignes, dans `SwingView` ou d'abord dans une démo) · **Lisibilité** = ·
 reportée (BACKLOG §6). Le moteur continue de tout calculer sur le processeur.
+
+---
+
+## 12. Mise à jour du 26 novembre 2026 : phase 2, ce qui reste séquentiel
+
+Avec MT1 à MT3 (§10.5), toutes les étapes qui touchent les pixels sont partagées entre les cœurs : la passe
+principale, les shadow maps, les post-traitements. Ce qui reste dans le seul thread de rendu était négligeable quand
+il représentait 1 à 2 % d'une image calculée par un seul cœur. Ce n'est plus le cas : selon la **loi d'Amdahl**, la
+partie séquentielle est ce qui limite le gain des threads, et sa part grandit avec le nombre de cœurs.
+
+Un ordre de grandeur, d'après les statistiques montrées dans [TEMPLE_RUINS.md](TEMPLE_RUINS.md#statistics)
+(56 676 triangles, 753 Elements ; les conditions de cette image n'ont pas été notées, il faut les mesurer à
+nouveau) : `SETUP 3.1, SHADOWS 42.1, GEOMETRY 10.4, MAIN_PASS 148.3, OVERLAYS 4.9 ms`. Si la passe principale
+descend vers 30 ms grâce aux threads, SETUP et GEOMETRY, environ 13 ms, deviennent **30 % de l'image**. Sur
+`UrbanScape` (9 000 triangles), la géométrie pesait ≈ 1,4 ms (D9) : la question dépend de la scène, et c'est
+`TempleRuins` qui la pose.
+
+### 12.1 Où est le temps séquentiel
+
+| Phase (`FrameTimer`) | Partie séquentielle aujourd'hui | Parallèle aujourd'hui |
+|---|---|---|
+| `SETUP` | `world.worldProject()` (coordonnées monde de tous les sommets), `Lighting.prepareFrame()`, effacement du back buffer et du Z-buffer | — |
+| `SHADOWS` | Étape géométrie de chaque lumière, dans son espace (`prepareShadowMapElement()`) ; les lumières l'une après l'autre, et les 6 faces d'une lumière ponctuelle l'une après l'autre | Rastérisation de chaque map (MT2) |
+| `GEOMETRY` | Tout : transformation, culling, normales, matériaux, remplissage de la `DrawList`, construction des mipmaps (une fois) | — |
+| `MAIN_PASS` | Tri d'avant en arrière (R5) | Rastérisation (MT1) |
+| `OVERLAYS` | Les lignes (repères, vecteurs des lumières) : `Graphics2D` | Brume, brouillards, lumières visibles (MT3) |
+| Hors du moteur | Copie de l'image dans la fenêtre, sur l'EDT, pendant laquelle rien n'est rendu (`TempleRuins` rend sur l'EDT) : 3 ms par image, 7 ms sur un écran mis à l'échelle à 200 % (§11) | — |
+
+### 12.2 Propositions
+
+**P0. Mesurer la partie séquentielle.** `PerfBench` rend `UrbanScape`, une scène où la géométrie est petite. Y
+ajouter la scène de `TempleRuins` (son monde se construit sans fenêtre), et afficher les phases pour `-threads 1` et
+la valeur par défaut : le temps de chaque phase qui ne diminue pas avec les threads est la partie séquentielle.
+Mesurer en mode d'alimentation « Meilleures performances » (§11.1).
+**Effort** S · **Lisibilité** = · la condition de tout ce qui suit.
+
+**R1 d'abord : supprimer le travail avant de le partager.** Le frustum culling hiérarchique par `Element` (§4, R1,
+encore à faire) écarte tout un sous-arbre hors de la vue par un seul test de son volume englobant, au lieu de
+transformer et de tester chacun de ses triangles. Dans `TempleRuins`, 25 155 des 56 676 triangles ne sont pas
+affichés. Cela réduit `GEOMETRY` quel que soit le nombre de threads, et suit la règle de cet audit : supprimer le
+travail avant de le paralléliser.
+
+**MT4. Étape géométrie de la passe principale en parallèle.** `prepare()` parcourt l'arbre des `Element`s et ajoute
+les triangles visibles à la `DrawList`. Proposition, sur les mêmes principes que les bandes de MT1 :
+
+- aplatir l'arbre en une liste de **lots** (des sous-arbres de quelques centaines de triangles, avec la couleur et
+  l'émission qu'ils héritent), distribués dynamiquement aux threads du `BandRasterizer` (pas de second pool) ; un
+  découpage par `Element` racine serait déséquilibré (le temple d'un côté, une mer de 2 048 triangles de l'autre) ;
+- chaque worker possède son **`ElementTransform`** (mutable : `setModel()`), ses **compteurs** (`nbt_in`, `nbt_out`,
+  `nbt_bf`…) et son **segment de `DrawList`** ;
+- les segments sont concaténés **dans l'ordre des lots** : la liste, donc le tri, l'image et les statistiques, est
+  la même qu'avec un seul thread (vérifié tel quel par `TestRenderThreads`) ;
+- ce qui rend la chose sûre existe déjà : un sommet appartient à un seul `Element` (règle de `prepare()`), donc deux
+  workers n'écrivent jamais le même `prj_position` ; `buildMipmaps()` est `synchronized`.
+
+D4 n'est **pas** nécessaire ici : D4 sépare les **passes** (une passe d'ombre et la passe principale écrivent les
+mêmes sommets), alors que MT4 découpe **une seule** passe entre des `Element`s qui ne partagent aucun sommet.
+**Gain attendu** : `GEOMETRY` divisé par 3 à 5 (≈ 10 → 2-3 ms sur `TempleRuins`) · **Effort** M · **Lisibilité** =
+(l'exécuteur de lots généralise `runBands()` ; `prepare()` lui-même ne change pas).
+
+**MT5. Étape géométrie des shadow maps en parallèle.** Le même code, dans `ShadowingLight`. Il ne compte que si la
+map est redessinée à chaque image : rien dans `TempleRuins` (map conservée, R9), beaucoup dans `StarshipInterior` et
+avec des lumières qui bougent.
+**Gain attendu** : la partie géométrie de `SHADOWS` divisée par 3 à 5 · **Effort** S après MT4 · **Lisibilité** =.
+
+**D8 pour `worldProject()`.** Les coordonnées monde des sommets sont recalculées à chaque image, même quand aucun
+`Element` n'a bougé (rien ne bouge dans `TempleRuins`). Les compteurs de version de D8 évitent entièrement ce
+travail ; un `worldProject()` parallèle (MT6, trivial : un `Element` par tâche) ne fait que le diviser. D8 d'abord ;
+MT6 seulement si une scène très animée en montre le besoin.
+**Gain attendu** : `worldProject()` → 0 pour une scène statique · **Effort** M (D8 fait de façon uniforme) ·
+**Lisibilité** =.
+
+**MT7. Effacer les buffers par bandes.** Aujourd'hui, le thread de rendu efface tout le back buffer et tout le
+Z-buffer, puis les workers les relisent bande par bande. Chaque worker pourrait effacer sa bande au début de son
+premier passage : un seul parcours de la mémoire au lieu de deux, et la bande est alors dans le cache du cœur qui la
+dessine.
+**Gain attendu** : ≈ 1 ms · **Effort** S · **Lisibilité** − (l'effacement s'éloigne de `initView()`) : seulement si P0
+montre que cela vaut la peine.
+
+**Le tri de R5 reste séquentiel**, sauf si P0 montre plus de quelques pour cent : `Arrays.parallelSort()` tourne sur
+le pool commun de Java (contraire au choix du §6), et les faces de même profondeur doivent garder un ordre
+déterministe.
+
+**MT8. Plusieurs shadow maps en même temps** (les lumières, les 6 faces d'une lumière ponctuelle) : déjà cité au §6,
+toujours bloqué par **D4** (buffers de sortie des sommets par passe). C'est le cas de `StarshipInterior` (2 à 3
+lumières ponctuelles et spots). Avant cela, le culling des faces du cube map par la portée de la lumière (N4.2)
+supprime plus de travail, sans threads.
+**Effort** L (D4) · **Lisibilité** + (D4 sépare le modèle du pipeline).
+
+**V2. Rendre pendant que la fenêtre affiche.** Dans `TempleRuins` et `StarshipInterior`, le rendu se fait sur l'EDT
+(modèle A de [DESIGN §8](DESIGN.md#integration-into-a-swing-application)) : pendant que l'image est copiée dans la
+fenêtre, rien n'est rendu. Avec un thread de rendu qui dessine toujours le dernier état de la caméra (modèle B, celui
+de `SceneViewer`, D10), l'image N+1 se calcule pendant que l'EDT affiche l'image N.
+**Gain attendu** : les 3 à 7 ms par image hors du moteur (§11) se recouvrent avec le rendu, **+10 à 20 % d'images
+affichées**, à mesurer · **Effort** M · **Lisibilité** = si c'est fait une seule fois, dans le composant Swing du
+BACKLOG (§10, « A ready-made Swing component »), plutôt que dans chaque démo. Il faut alors vérifier la réutilisation
+des images (D6) : une image doit être affichée avant d'être redessinée, deux images plus tard.
+
+**Non proposé :** recouvrir deux images à l'intérieur du moteur (géométrie de l'image N+1 pendant la rastérisation
+de N, comme le fait un GPU). Cela exige D4, casse la règle « ne pas modifier la scène pendant `render()` » (DESIGN
+§8) et rendrait le pipeline beaucoup plus difficile à suivre. Les lignes (`Graphics2D`, non thread-safe) restent
+séquentielles.
+
+### 12.3 Feuille de route de la phase 2
+
+Sur la branche `perf-multithreading`, une étape à la fois, chacune vérifiée par `mvn test`, `TestRenderThreads` et
+les checksums de `PerfBench` (images identiques), et mesurée avec P0 :
+
+| Étape | Contenu | Condition |
+|---|---|---|
+| 0 | **P0** : `TempleRuins` dans `PerfBench`, phases pour 1 et N threads | — |
+| 1 | **R1** : frustum culling hiérarchique par `Element` | — |
+| 2 | **MT4**, puis **MT5** avec le même exécuteur de lots | P0 montre `GEOMETRY` (et la géométrie de `SHADOWS`) au-dessus d'environ 10 % de l'image |
+| 3 | **D8** : compteurs de version, d'abord pour `worldProject()` | — |
+| 4 | **V2** : thread de rendu, dans le composant Swing réutilisable | — |
+| 5 | **MT7**, tri de R5 | Seulement si P0 montre un enjeu |
+| 6 | **D4**, puis **MT8** et N4.2 | Le plus lourd ; à décider après les étapes 0 à 4 |
+
+| Id | Proposition | État au 26 novembre |
+|---|---|---|
+| P0 | Mesurer la partie séquentielle sur `TempleRuins` | À faire |
+| MT4 | Étape géométrie de la passe principale en parallèle, par lots d'`Element`s | À faire |
+| MT5 | Étape géométrie des shadow maps en parallèle | À faire (après MT4) |
+| MT6 | `worldProject()` en parallèle | Inutile si D8 est fait |
+| MT7 | Effacement des buffers par bandes | À faire si P0 montre un enjeu |
+| MT8 | Plusieurs shadow maps en même temps | À faire après D4 |
+| V2 | Thread de rendu dans les démos (modèle B) | À faire, avec le composant Swing du BACKLOG |
