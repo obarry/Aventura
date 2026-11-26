@@ -372,7 +372,7 @@ factorisé. `MapView` devient un adaptateur d'affichage.
 `world.worldProject()`, matrices normales, `initShadowing()` et `generateShadowMap()` (avec une nouvelle `ZBuffer`
 de 2001 × 2001 à chaque image), couleurs des lumières… sont recalculés même quand rien n'a bougé.
 
-DESIGN §12 impose la règle « *Refresh, don't cache* », qui répond à de vrais bugs de cache périmé. **Ne pas la
+DESIGN §13 impose la règle « *Refresh, don't cache* », qui répond à de vrais bugs de cache périmé. **Ne pas la
 contourner avec des caches improvisés.** Proposition : des **compteurs de version** explicites (`Element`,
 `Light`, `World` incrémentent un numéro à chaque modification ; un résultat dérivé mémorise la version à partir de
 laquelle il a été calculé). La règle devient « rafraîchir si la version a changé ».

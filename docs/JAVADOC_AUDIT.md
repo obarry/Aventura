@@ -190,8 +190,8 @@ This is the first page one sees. It can take the beginning of the README almost 
 - "The scene and the engine": `RenderEngine` + `World` + `Camera` + `Lighting` + the two contexts, with the diagram
   of the pipeline (S4);
 - a **reading order**: "Start with `RenderEngine`, then `World` and the shapes, then `RenderContext`";
-- the table of the extension points of DESIGN §9, with `{@link}`s;
-- the conventions of DESIGN §12 (Z up, direction of the directional lights, S → R → T order): information the user
+- the table of the extension points of DESIGN §10, with `{@link}`s;
+- the conventions of DESIGN §13 (Z up, direction of the directional lights, S → R → T order): information the user
   needs **before** writing a first scene;
 - links to DESIGN, the cookbook and the GitHub repository to go further.
 
@@ -255,7 +255,7 @@ follows the layers of DESIGN §2:
 - 26 `@param` whose name no longer matches the signature → rename.
 - Dashed lists → `<ul><li>`; paragraphs separated by `<p>`.
 
-### C2. A writing rule (to be added to DESIGN §12)
+### C2. A writing rule (to be added to DESIGN §13)
 
 A 3D rendering API has recurring questions that each comment must answer when they apply. Today they are scattered
 (or missing):
@@ -286,10 +286,10 @@ Rather than aiming at 100% everywhere, follow the path of a user, in this order:
 | Priority | Classes | Source of the content |
 |---|---|---|
 | 1. Render a scene | `RenderEngine`, `World`, `Camera`, `Lighting`, `ImageView`, `SwingView` | README "Hello, Aventura", "How it works" |
-| 2. Configure | `RenderContext` (options, presets, `RenderingType`), `PerspectiveContext`, `PerspectiveType` | README "Rendering options", DESIGN §8 |
+| 2. Configure | `RenderContext` (options, presets, `RenderingType`), `PerspectiveContext`, `PerspectiveType` | README "Rendering options", DESIGN §9 |
 | 3. Populate the scene | `Element`, the 16 shapes of `model.world.shape`, `Texture`, `SolidMaterial`, `TexturedMaterial` | README, cookbook §1 and §3 |
 | 4. Light | `AmbientLight`, `DirectionalLight`, `PointLight`, `SpotLight`, `ShadowingLight` | DESIGN §6 and §7, README "Lights and shadows" |
-| 5. Extend | `GenerativeElement`, `Material`, `FragmentConsumer`, `Fragment`, `GUIView`, `Light` | DESIGN §9, cookbook §2 (contracts C1 to C10) |
+| 5. Extend | `GenerativeElement`, `Material`, `FragmentConsumer`, `Fragment`, `GUIView`, `Light` | DESIGN §10, cookbook §2 (contracts C1 to C10) |
 | 6. Mathematics | complete `math.transform`, `math.projection`, `math.tools` | unit tests |
 
 The **contracts C1 to C10 of the cookbook** naturally belong in the Javadoc of `GenerativeElement` (with
@@ -331,8 +331,8 @@ the Javadoc (`@apiNote` or a "<b>Note:</b>" paragraph):
 - `ShadowingLight(int)` (type of box) and `ShadowingLight(float)` (intensity) are easily confused;
   `SHADOWING_BOX_ELEMENT` and `SHADOWING_BOX_SPECIFIC` fall back to `SHADOWING_BOX_WORLD` (BACKLOG §3).
 - `Triangle.setRectoVerso()` and `Vertex.setColor()` have no effect on the rendering (BACKLOG §5).
-- Never keep a `Fragment` after `consume()` (DESIGN §12).
-- The texture paths are relative to the working directory (DESIGN §12, "Known limitations").
+- Never keep a `Fragment` after `consume()` (DESIGN §13).
+- The texture paths are relative to the working directory (DESIGN §13, "Known limitations").
 
 ### C6. Take the history out of the comments
 
@@ -445,7 +445,7 @@ At this stage, the Javadoc is already a real entry point to the engine.
 
 | # | Action |
 |---|---|
-| C2 | Writing rule added to DESIGN §12 |
+| C2 | Writing rule added to DESIGN §13 |
 | C3 | Priorities 1 to 4: `RenderEngine`, `World`, contexts, shapes, lights, views |
 | C4 | `{@snippet}` of the cookbook classes and of the presets |
 | C5 | Known traps as `@apiNote` |
