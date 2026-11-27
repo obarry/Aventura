@@ -1400,12 +1400,17 @@ flowchart LR
     subgraph NEXT["Mid term"]
         m1[Distance culling of<br/>cube map faces]
         m2[Runnable demo jars,<br/>published engine artifact]
+        m4[Bump and normal mapping]
+        m5[Texture layers:<br/>decals over a material]
         m3[Rasterization by screen tiles<br/>with binning, shadow maps in parallel]
     end
     subgraph LATER["Ideas"]
         l1[Other GUIView backends<br/>JavaFX, image sequence]
         l2[Haze tinted by the sun,<br/>other phenomena: clouds, rain]
         l3[Model import<br/>OBJ]
+        l4[Depth of field<br/>as a post-process]
+        l5[Curves and animation:<br/>Bézier, B-splines, tracks]
+        l6[Collision detection,<br/>bounding volumes]
     end
     NOW --> NEXT --> LATER
 ```
