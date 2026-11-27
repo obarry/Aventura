@@ -56,6 +56,73 @@ bump or height maps would extend `SurfaceMap` too, storing a float per texel and
 the bilinear interpolation, still written in `Texture` for its packed ARGB texels, could then move to the base class
 behind a "read one texel" method.
 
+**Next: bump and normal mapping, the feature itself.** The relief of a surface (the joints of stones, the flutes
+of a worn column, the rivets of a metal panel) without more triangles: the normal used by the lighting is changed
+at each pixel, the geometry is not. Two classic forms, in the order of teaching:
+
+- **Bump map** (Blinn, 1978): a map of heights (the `FloatMap` above). The normal is tilted by the slopes of the
+  height along the two texture directions (finite differences of the map at the texel). It shows the principle
+  best, and a gray image is easy to paint or to compute (`Noise`).
+- **Normal map**: an RGB image storing the normal itself, the usual format of today's assets. Read as a `Texture`,
+  no new map class is needed.
+
+Both need a **tangent frame** per vertex (tangent and bitangent, computed from the texture coordinates of the
+triangles, in the geometry stage) so that the perturbation follows the surface, and a normal **per pixel**: only
+the `INTERPOLATE` rendering type (`FLAT` has one normal per face). Points to watch: the mipmaps of a normal map
+average vectors that must be normalized again; the light vectors and the shadow bias stay those of the geometric
+surface; a surface lit at a grazing angle shows the limit of the technique (the silhouette stays flat; parallax
+mapping is the next step). Options: `Element.setBumpMap()` / `setNormalMap()`, as `setEmissionMap()`, and a
+`RenderContext` switch. The `SurfaceMap` base class and its mipmaps are ready for it.
+
+**Tools to make bump maps, outside the engine.** The engine reads a bump map, it does not make one: the tools go in
+the tools module next to it (`aventura-io`, where the reading and writing of 3D files will live, or a sibling module
+of tools), never in `aventura-engine`. Two families:
+
+- **From an existing texture**: a height guessed from the image. The classic heuristic is the luminance (dark = deep:
+  the joints between stones, the cracks), after a **high-pass filter** that removes the slow changes of light of the
+  photograph (a large blur subtracted from the image), then a light blur against the noise. From the height, a
+  normal map by **convolution** with the Sobel kernels (the slopes along x and y). Parameters: strength, size of the
+  filters, inversion. Limits to be stated: the luminance is not the relief (a dark stain becomes a hole); a smarter
+  analysis (shape from shading, or a trained model) is beyond a didactic pure Java engine.
+- **Generic bump maps**, computed: noise (the `Noise` of the demos, Perlin or value noise, several octaves) for
+  stone, plaster or hammered metal; bricks and tiles with their joints; plates and rivets; wood grain; scratches. All
+  of them **tileable** (they wrap without a seam, for `WrapMode.REPEAT`).
+
+Outputs: a `FloatMap` in memory, or an image file (gray for a height, RGB for a normal map), so that the textures of
+the demos get theirs once, ahead of time. Then the demos use them: the stones and columns of `TempleRuins`, the
+plates of `StarshipInterior`.
+
+## 2b. Several textures on one surface (layers, decals)
+
+A surface often combines a **material** (the metal plates, the stone, repeated over the whole surface) and a
+**decoration** shown once on a part of it (a code painted on a wall, a sign, a stain, an arrow). Today a triangle has
+one texture (and an emission map, §3b), so `StarshipInterior` bakes its codes: `WallMarking` copies, pixel by pixel,
+the plates of the wall into the texture of the decal, then paints the letters over them, and the section of the wall
+gets steps so that the decal has its own triangles (see STARSHIP_INTERIOR.md). It works, at the cost of a texture
+per decal, of extra triangles, and of code that only this demo has.
+
+The possible solutions, by their cost in the rasterization:
+
+| Solution | Cost per pixel | Comments |
+|---|---|---|
+| **Baking** (what the demo does), made a tool | None | The textures are composed once, ahead of time (in the tools module, like the bump maps of §2). Memory: a texture per decal; the decal needs its own triangles |
+| **Separate triangles** in front of the surface | Overdraw, depth bias | Needs transparency, which the engine does not have, and fights z-fighting: not recommended |
+| **A second layer read by the rasterizer** | One more texture read, only on the triangles that have a layer | The proposal below |
+
+**Proposal: a decoration layer placed in the texture coordinates of the surface.** A layer is a `Texture` with
+alpha (the texels are already ARGB), a rectangle in the `(u, v)` space of the base texture where it is shown, and a
+blending mode: *over* (alpha: letters, signs), *multiply* (dirt, stains, a light map), *add* (already covered by the
+emission maps). Its own coordinates are an affine function of the base ones, `(u - u0) / width`, so the vertices need
+**no second set of texture coordinates** and the triangles nothing new: outside the rectangle the layer is simply not
+read (an early test per pixel, or per triangle when its bounding box in `(u, v)` misses the rectangle). Each layer has
+its mipmaps (`SurfaceMap`). The base texture stays tiled, the decal texture holds only its picture: smaller, and the
+seams and rivets of the plates go on under it by construction. A short list of layers per `Element` (like
+`setEmissionMap()`) keeps the cost at zero for the surfaces without one.
+
+Then **update `StarshipInterior`**: `WallMarking` draws only the letters (with alpha) and no longer copies the plates,
+the sections no longer need steps for their decals, and the arrows and signs listed in the ideas of
+STARSHIP_INTERIOR.md become cheap. A visual test program and a pixel test (a layer over a plain texture) go with it.
+
 ## 3. Shadows
 
 - **Done (October 2026): spot and point light shadows.** A `SpotLight` has one perspective (frustum)
@@ -245,6 +312,39 @@ tested examples (`AtmosphereCookbook`, `GroundMist`). See
   (like `getBackPixels()` for the colors) would make it faster if it ever shows in a profile.
 - `GUIView.getBackPixels()` is only implemented by `ImageView` (so `SwingView`): other views are skipped.
 
+## 5c. Depth of field
+
+A camera lens is sharp at one distance only: what is nearer or farther is blurred, the more so as it is far from
+that distance. It draws the eye to the subject and gives a photographic look (a close-up of a capital of the temple
+with the sea blurred behind it).
+
+**Feasible as a post-process, like the haze.** The main Z-buffer already holds the view depth `W` of each pixel, and
+the post-processes already run by bands of rows (`BandRasterizer.runRows()`):
+
+1. **Circle of confusion.** From a thin lens model, the diameter of the blur of a point at depth `z`, for a focus
+   distance `zf`, is proportional to `|1/zf - 1/z|`, times a strength that plays the role of the aperture. Options:
+   `Camera` (or `RenderContext`) `setFocusDistance()`, `setAperture()` or a maximum blur radius in pixels; "focus on
+   the pixel under the mouse" is then one read of the Z-buffer.
+2. **Blur by a variable radius.** For each pixel, the average of the pixels of a disc of that radius, read from a
+   copy of the image (a band must not read what its neighbor is writing).
+
+The difficulties are those of every post-process depth of field, and they are good teaching material:
+
+- **Bleeding**: a blurred background must not spread over a sharp subject in front of it. The samples are weighted
+  by their own circle of confusion and their depth (a sample farther than the pixel only counts as much as it is
+  blurred itself).
+- **The hidden background**: a blurred foreground should let one see a little of what is behind its edges, which an
+  image with one depth per pixel does not have. The usual compromise is two layers (near field and far field)
+  blurred apart, then composed.
+- **Cost**: a disc of radius `r` is about `3 r²` samples per pixel, too much on a CPU for a large blur. Cheaper
+  forms: a pyramid of blurred images (mipmaps of the image, chosen per pixel by the size of its blur), the blur
+  computed at half resolution, or a separable approximation (two passes, exact only for a constant radius).
+
+Order in the frame: after the haze and the fogs (they belong to the scene), before the visible lights (the sun and
+its lens flare are effects of the lens, drawn over the image). Not under an orthographic perspective, not in `LINE`.
+A first version (one layer, weighted gather, half resolution) is a few hundred lines in an `AtmosphereRenderer`-like
+class, with an option in the `SceneViewer` and `TempleRuins`.
+
 ## 6. Views
 
 - **Triple buffering: done (v3.1.0).** By default `ImageView` still allocates a new `BufferedImage`
@@ -389,3 +489,62 @@ on the `perf-multithreading` branch:
 - **V2**: render while the window displays (a rendering thread, as in `SceneViewer`), in the Swing component of §10.
 - Later: **MT7** (buffers cleared by bands) if measured worth it; **D4** then **MT8** (several shadow maps at the
   same time).
+
+## 12. Motion: curves, surfaces and animation
+
+A large evolution, to be split into steps. Today the movements are written by each demo: `FlightPath` (a closed
+Catmull-Rom spline, parametrized by the distance travelled) and `KeyFrame` live in `aventura-demos`, `TempleRuins`
+and `StarshipInterior` have their own paths and easings; the engine only offers `Quaternion.slerp()`. Proposal: a
+pure math package, standalone like the other `math` packages, then a thin animation layer on top of it.
+
+- **Curves** (`math.curve`): Bézier curves (de Casteljau's algorithm, the most didactic), Hermite and Catmull-Rom
+  (from `FlightPath`), uniform cubic B-splines, then rational ones (NURBS: exact circles). One interface: a point,
+  a tangent and a second derivative at a parameter `t`.
+- **Moving at a given speed**: the parameter `t` of a curve is not a distance. Reparametrization by arc length
+  (a table of lengths sampled once, inverted at run time), then **easing** (ease in and out) on top: what each demo
+  does by hand today.
+- **Orientation along a path**: a camera or an object that follows a curve must turn with it. The Frenet frame
+  (tangent, normal, binormal) flips at inflection points; a rotation minimizing frame, or an up vector kept close
+  to `Z`, does not. Orientations given at keyframes are interpolated with quaternions (`slerp`, then `squad` for a
+  smooth chain).
+- **Animation tracks**: keyframes of position, orientation and scale (the `T · R · S` of an `Element`) or of a
+  `Camera` (eye, target, up), each track interpolated by one of the curves above, played by a clock (time elapsed,
+  not number of images). `KeyFrame` and `FlightPath` would move from the demos to the engine through it.
+- **Surfaces**: the same mathematics in two parameters. Bézier patches (the Utah teapot is the classic example),
+  B-spline and NURBS surfaces, as a `GenerativeElement` tessellated into triangles with exact normals (from the
+  two partial derivatives) and texture coordinates `(u, v)`. A fine subject for the Geometry Cookbook.
+- Later, **physical motion**: velocity, acceleration, gravity, and the integration of the equations of movement
+  (explicit Euler, then semi-implicit Euler or Verlet, and why the first one drifts). It goes with §13.
+
+Order: curves and arc length, then the tracks (with `FlightPath` and `KeyFrame` moved), then the surfaces, then the
+physics. Each step can be tested without a window (positions, tangents, lengths against analytical values).
+
+**Then update the demos to use it.** Once the curves and tracks are in the engine, the demos drop their own code:
+the helicopter tour of `TempleRuins` and its easing (`FlightPath`), the visit of `StarshipInterior` and its stops, the
+helicopter flight of `UrbanScape` (`HelicopterFlight`), the fly camera of `FractalLandscape`, `MovingCamera` and its
+`KeyFrame`s. The images must stay the same (or the change be stated): the tests of the demos and
+`DocumentationImages` check it. The same holds for §13: the camera controllers of the demos move to the reusable one.
+
+## 13. Collision detection
+
+Also written by each demo today, each in its own way: the camera stays above the ground in `TempleRuins` and
+`FractalLandscape` (the height of the terrain under it and around it), inside rectangles of the corridors in
+`StarshipInterior` (`Ship`). Proposal, in the same spirit as §12:
+
+- **Bounding volumes**: a sphere and an axis-aligned box per `Element`, and their hierarchy along the tree. They are
+  shared with three other items: the hierarchical frustum culling (PERFORMANCE_AUDIT R1), the culling of the shadow
+  passes (N4), and the picking of §10. To be built once, for all of them, and kept up to date when an `Element`
+  moves (version counters, PERFORMANCE_AUDIT D8).
+- **Queries**: ray / triangle (Möller-Trumbore), which is also the picking of §10 and the "height of the ground
+  under the camera" of the demos; sphere / triangle for a camera or a moving object; box / box and sphere / sphere
+  between objects.
+- **Broad phase and narrow phase**: first the bounding volumes, to find the few pairs that may touch, then the
+  triangles of those pairs only. A structure in space for large scenes: a uniform grid (the simplest), then a BVH
+  or an octree.
+- **Response**: stop, or slide along the surface (the projection of the movement on the plane of contact), which is
+  what the demos do for the camera. Bouncing and friction belong to the physics of §12.
+- **Fast movements**: a moving point can cross a thin wall between two images (tunneling). Continuous detection:
+  test the segment (or the swept sphere) of the movement, not the end position only.
+
+First use: a reusable camera controller (§10) that keeps the camera out of the walls and above the ground, which
+replaces the code of the three demos. Then collisions between moving objects, with §12.
